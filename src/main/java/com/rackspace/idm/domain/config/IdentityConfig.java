@@ -179,9 +179,6 @@ public class IdentityConfig {
     public static final String RACKER_IMPERSONATE_ROLE_NAME_PROP = "racker.impersonate.role";
     public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
 
-    public static final String FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP = "feature.support.v3.provisioned.user.tokens";
-    public static final boolean FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT = false;
-
     public static final String FEATURE_CACHE_AE_TOKENS_PROP = "feature.cache.ae.tokens";
     public static final boolean FEATURE_CACHE_AE_TOKENS_DEFAULT = false;
 
@@ -549,7 +546,6 @@ public class IdentityConfig {
         defaults.put(SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
-        defaults.put(FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT);
         defaults.put(FEATURE_CACHE_AE_TOKENS_PROP, FEATURE_CACHE_AE_TOKENS_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_TTL_SECONDS_PROP, CACHED_AE_TOKEN_TTL_SECONDS_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP, CACHED_AE_TOKEN_CACHE_MAX_SIZE_DEFAULT);
@@ -1491,10 +1487,6 @@ public class IdentityConfig {
             return getStringSafely(reloadableConfiguration, IDENTITY_ROLE_TENANT_DEFAULT);
         }
 
-        @IdmProp(key = FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP, description = "Whether v3 provisioned user tokens can be used within v2 services", versionAdded = "3.0.1")
-        public boolean supportV3ProvisionedUserTokens() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP);
-        }
         @IdmProp(key = FEATURE_CACHE_AE_TOKENS_PROP, versionAdded = "3.0.1")
         public Boolean cacheAETokens() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_CACHE_AE_TOKENS_PROP);

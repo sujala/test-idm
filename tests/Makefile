@@ -4,7 +4,7 @@
 # Commentary:
 # * Makefile for building and running tests
 
-.PHONY: help build test test_nose flake8 test_nose_no_build
+.PHONY: help build test test_nose flake8 test_nose_no_build flake_no_build
 
 SHELL := /bin/bash
 
@@ -30,6 +30,7 @@ help:
 	@echo "test_nose            - build + run nosetests"
 	@echo "build                - build"
 	@echo "test_nose_no_build   - run nosetests"
+	@echo "flake_no_build       - run tox flake8"
 	@echo ""
 
 # clean up ../build/libs
@@ -50,7 +51,7 @@ flake_no_build:
 	# install tox
 	$(VENV)/bin/pip install tox
 	# run flake8
-	$(VENV)/bin/tox -e flake8 || $(MAKE) clean
+	$(VENV)/bin/tox -e flake8
 
 test: build
 	# make sure .venv directory exists prior to creating it
@@ -60,9 +61,7 @@ test: build
 	# run py27
 	$(CAFE_CONFIG_ALL) $(VENV)/bin/tox -e py27
 
-test_nose: build
-	# run test nose
-	$(MAKE) API=${API} test_nose_no_build || $(MAKE) clean
+test_nose: build test_nose_no_build clean
 
 test_nose_no_build:
 	# make sure docker is running
