@@ -61,8 +61,6 @@ public class IdentityConfig {
 
     private static final String EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES = "email.send.to.only.rackspace.addresses.enabled";
     private static final String SETUP_MFA_SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
-    public static final String FEATURE_FORGOT_PWD_ENABLED_PROP_NAME = "feature.forgot.pwd.enabled";
-    private static final boolean FEATURE_FORGOT_PWD_ENABLED_DEFAULT = false;
     public static final String FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME = "token.forgot.password.validity.length";
     private static final int FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT = 600;
     public static final String FORGOT_PWD_VALID_PORTALS_PROP_NAME = "forgot.password.valid.portals";
@@ -570,7 +568,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_SUPPORT_V11_LEGACY_PROP, FEATURE_SUPPORT_V11_LEGACY_DEFAULT);
 
         defaults.put(FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT);
-        defaults.put(FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, FEATURE_FORGOT_PWD_ENABLED_DEFAULT);
         defaults.put(FORGOT_PWD_VALID_PORTALS_PROP_NAME, FORGOT_PWD_VALID_PORTALS_DEFAULT);
         defaults.put(EMAIL_HOST, EMAIL_HOST_DEFAULT);
         defaults.put(EMAIL_PORT, EMAIL_PORT_DEFAULT);
@@ -1640,11 +1637,6 @@ public class IdentityConfig {
         @IdmProp(key = FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, versionAdded = "3.2.0", description = "Timeout for forgot password tokens")
         public int getForgotPasswordTokenLifetime() {
             return getIntSafely(reloadableConfiguration, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME);
-        }
-
-        @IdmProp(key = FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, versionAdded = "3.2.0", description = "Whether or not the forgot password flow is enabled")
-        public boolean isForgotPasswordEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_FORGOT_PWD_ENABLED_PROP_NAME);
         }
 
         @IdmProp(key = FORGOT_PWD_VALID_PORTALS_PROP_NAME, versionAdded = "3.2.0", description = "Comma delimited list of valid portal values for forgot password")
