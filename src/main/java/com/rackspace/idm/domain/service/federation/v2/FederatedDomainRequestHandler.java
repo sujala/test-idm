@@ -13,10 +13,14 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
+import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
-import org.apache.commons.collections.CollectionUtils;
+import com.unboundid.ldap.sdk.DN;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.collections4.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
@@ -40,6 +44,7 @@ public class FederatedDomainRequestHandler {
     private static final BigDecimal NUMBER_SEC_IN_HOUR = BigDecimal.valueOf(3600);
     public static final String DISABLED_DOMAIN_ERROR_MESSAGE = "Domain %s is disabled.";
     public static final String DUPLICATE_USERNAME_ERROR_MSG = "The username already exists under a different domainId for this identity provider";
+    public static final String INVALID_GROUP_FOR_DOMAIN_ERROR_MSG = "Invalid group with name '%s' for domain '%s'.";
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -74,6 +79,9 @@ public class FederatedDomainRequestHandler {
     @Autowired
     private AuthenticationContext authenticationContext;
 
+    @Autowired
+    private UserGroupService userGroupService;
+
     public SamlAuthResponse processAuthRequestForProvider(FederatedDomainAuthRequest authRequest, IdentityProvider originIdentityProvider, boolean applyRcnRoles) {
         // Just a few sanity checks
         Validate.notNull(authRequest, "request must not be null");
@@ -106,7 +114,10 @@ public class FederatedDomainRequestHandler {
         // Validate the requested roles exist
         List<TenantRole> requestedRoles = validateAndGenerateRequestedRoles(authRequest, originIdentityProvider);
 
-        FederatedUser federatedUser = processUserForRequest(authRequest, requestedRoles, domainUserAdmin, originIdentityProvider);
+        // Validate the requested groups exist
+        List<UserGroup> requestedUserGroups = validateAndLoadRequestedGroups(authRequest);
+
+        FederatedUser federatedUser = processUserForRequest(authRequest, requestedRoles, requestedUserGroups, domainUserAdmin, originIdentityProvider);
 
         UserScopeAccess token = createToken(federatedUser, authRequest);
 
@@ -259,6 +270,22 @@ public class FederatedDomainRequestHandler {
         return tenantRoles;
     }
 
+    private List<UserGroup> validateAndLoadRequestedGroups(FederatedDomainAuthRequest authRequest) {
+        List<UserGroup> userGroups = new ArrayList<>();
+
+        for (String groupName : authRequest.getGroupNames()) {
+            UserGroup group = userGroupService.getGroupByNameForDomain(groupName, authRequest.getDomainId());
+
+            if (group == null) {
+                throw new BadRequestException(String.format(INVALID_GROUP_FOR_DOMAIN_ERROR_MSG, groupName, authRequest.getDomainId()), ERROR_CODE_FEDERATION2_INVALID_GROUP_ASSIGNMENT);
+            }
+
+            userGroups.add(group);
+        }
+
+        return userGroups;
+    }
+
     /**
      * If the user already exists, will return a _new_ user object representing the stored user. If the user does not exist, a new user is created in the backend, but the provided
      * user object is altered (updated with ID).
@@ -268,7 +295,7 @@ public class FederatedDomainRequestHandler {
      * @param authRequest
      * @return
      */
-    private FederatedUser processUserForRequest(FederatedDomainAuthRequest authRequest, List<TenantRole> requestedRoles, User domainUserAdmin, IdentityProvider originIdp) {
+    private FederatedUser processUserForRequest(FederatedDomainAuthRequest authRequest, List<TenantRole> requestedRoles, List<UserGroup> requestedUserGroups, User domainUserAdmin, IdentityProvider originIdp) {
         FederatedUser existingUser = federatedUserDao.getUserByUsernameForIdentityProviderId(authRequest.getUsername(), originIdp.getProviderId());
         if (existingUser != null && !authRequest.getDomainId().equalsIgnoreCase(existingUser.getDomainId())) {
             throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG, ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
@@ -291,9 +318,9 @@ public class FederatedDomainRequestHandler {
 
         if (existingUser == null) {
             validateMaxUserCountInDomain(authRequest, originIdp);
-            existingUser = createNewFederatedUser(authRequest, requestedRoles, domainUserAdmin, originIdp);
+            existingUser = createNewFederatedUser(authRequest, requestedRoles, requestedUserGroups, domainUserAdmin, originIdp);
         }  else {
-            existingUser = reconcileExistingUser(authRequest, requestedRoles, existingUser);
+            existingUser = reconcileExistingUser(authRequest, requestedRoles, requestedUserGroups, existingUser);
         }
 
         return existingUser;
@@ -308,7 +335,7 @@ public class FederatedDomainRequestHandler {
      * @param existingUser
      * @return
      */
-    private FederatedUser reconcileExistingUser(FederatedDomainAuthRequest authRequest, List<TenantRole> requestedRoles, FederatedUser existingUser) {
+    private FederatedUser reconcileExistingUser(FederatedDomainAuthRequest authRequest, List<TenantRole> requestedRoles, List<UserGroup> requestedUserGroups, FederatedUser existingUser) {
          /*
         If there is an existing user, must verify that the domains are the same.
          */
@@ -331,6 +358,18 @@ public class FederatedDomainRequestHandler {
         if (existingUser.getExpiredTimestamp() == null ||
                 new DateTime(existingUser.getExpiredTimestamp()).isBefore(authRequest.getRequestedTokenExpiration())) {
             existingUser.setExpiredTimestamp(calculateUserExpirationFromTokenExpiration(authRequest.getRequestedTokenExpiration()).toDate());
+            updateUser = true;
+        }
+
+        Set<DN> requestedUserGroupDns = new HashSet<>(CollectionUtils.collect(requestedUserGroups, new Transformer<UserGroup, DN>() {
+            @Override
+            public DN transform(UserGroup input) {
+                return input.getGroupDn();
+            }
+        }));
+        if (!CollectionUtils.isEqualCollection(requestedUserGroupDns, existingUser.getUserGroupDNs())) {
+            existingUser.getUserGroupDNs().clear();
+            existingUser.getUserGroupDNs().addAll(requestedUserGroupDns);
             updateUser = true;
         }
 
@@ -466,7 +505,7 @@ public class FederatedDomainRequestHandler {
         return modified;
     }
 
-    private FederatedUser createNewFederatedUser(FederatedDomainAuthRequest authRequest, List<TenantRole> requestedRoles, User domainUserAdmin, IdentityProvider originIdp) {
+    private FederatedUser createNewFederatedUser(FederatedDomainAuthRequest authRequest, List<TenantRole> requestedRoles, List<UserGroup> requestedUserGroups, User domainUserAdmin, IdentityProvider originIdp) {
         List<TenantRole> userRoles = calculateStandardRolesForDomainUser(authRequest, domainUserAdmin);
         userRoles.addAll(requestedRoles);
 
@@ -480,6 +519,10 @@ public class FederatedDomainRequestHandler {
 
         for (String groupId : domainUserAdmin.getRsGroupId()) {
             federatedUser.getRsGroupId().add(groupId);
+        }
+
+        for (UserGroup userGroup : requestedUserGroups) {
+            federatedUser.getUserGroupDNs().add(userGroup.getGroupDn());
         }
 
         federatedUserDao.addUser(originIdp, federatedUser);

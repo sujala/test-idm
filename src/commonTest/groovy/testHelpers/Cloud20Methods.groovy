@@ -399,7 +399,7 @@ class Cloud20Methods {
         authenticate(v2Factory.createPasswordAuthenticationRequest(username, password), applyRcnRoles)
     }
 
-    def authenticateForToken(username, String password=DEFAULT_PASSWORD) {
+    String authenticateForToken(username, String password=DEFAULT_PASSWORD) {
         def authResponse = authenticatePassword(username, password).getEntity(AuthenticateResponse)
         assert authResponse.value instanceof AuthenticateResponse
         return authResponse.value.token.id
