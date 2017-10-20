@@ -19,6 +19,8 @@ import static com.rackspace.idm.ErrorCodes.*;
  */
 public class FederatedDomainAuthRequest {
 
+    public static final String INVALID_USER_GROUP_NAME_ERROR_MSG = "Invalid group assignment '%s'. A group name must be provided";
+
     @Delegate
     private FederatedAuthRequest federatedAuthRequest;
 
@@ -40,6 +42,9 @@ public class FederatedDomainAuthRequest {
     private Map<String, Set<String>> roleNames = Collections.EMPTY_MAP;
 
     @Getter
+    private Set<String> groupNames = Collections.EMPTY_SET;
+
+    @Getter
     private AuthenticatedByMethodEnum authenticatedByForRequest;
 
     public FederatedDomainAuthRequest(FederatedAuthRequest federatedAuthRequest) {
@@ -48,6 +53,39 @@ public class FederatedDomainAuthRequest {
         username = federatedAuthRequest.getWrappedSamlResponse().getUsername();
         domainId = getSingleValueAttribute(getBrokerAssertion(), SAMLConstants.ATTR_DOMAIN);
         email = getSingleValueAttribute(getBrokerAssertion(), SAMLConstants.ATTR_EMAIL);
+        populateRoleNames();
+        populateUserGroupNames();
+        authenticatedByForRequest = processAuthenticatedByForRequest();
+
+        validateStructure();
+    }
+
+    public FederatedDomainAuthRequest(Response samlResponse) {
+        this(new FederatedAuthRequest(samlResponse));
+    }
+
+    private void validateStructure() {
+        if (StringUtils.isBlank(username)) {
+            throw new BadRequestException("Invalid username. One, and only one, username must be provided.", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
+        }
+        if (StringUtils.isBlank(domainId)) {
+            throw new BadRequestException("Invalid domain. One, and only one, domain must be provided.", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
+        }
+        if (StringUtils.isBlank(email)) {
+            throw new BadRequestException("Invalid email. One, and only one, email address must be provided.", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
+        }
+        if (authenticatedByForRequest == null) {
+            throw new BadRequestException("Unsupported authentication context class ref.", ERROR_CODE_FEDERATION2_INVALID_AUTH_CONTEXT);
+        }
+    }
+
+    private AuthenticatedByMethodEnum processAuthenticatedByForRequest() {
+        DomainAuthContextEnum val = DomainAuthContextEnum.fromSAMLAuthnContextClassRef(federatedAuthRequest.getIdpAuthContext());
+        return val != null ? val.getIdmAuthBy() : null;
+    }
+
+    private void populateRoleNames() {
+
         List<String> allRoleValues = federatedAuthRequest.getWrappedSamlResponse().getAttributeWithinAssertion(getBrokerAssertion(), SAMLConstants.ATTR_ROLES);
         if (CollectionUtils.isNotEmpty(allRoleValues)) {
             roleNames = new HashMap<>(); // Could store a null key and a null value
@@ -85,33 +123,22 @@ public class FederatedDomainAuthRequest {
                 }
             }
         }
-        authenticatedByForRequest = processAuthenticatedByForRequest();
 
-        validateStructure();
     }
 
-    public FederatedDomainAuthRequest(Response samlResponse) {
-        this(new FederatedAuthRequest(samlResponse));
-    }
+    private void populateUserGroupNames() {
+        List<String> allGroupValues = federatedAuthRequest.getWrappedSamlResponse().getAttributeWithinAssertion(getBrokerAssertion(), SAMLConstants.ATTR_GROUPS);
 
-    private void validateStructure() {
-        if (StringUtils.isBlank(username)) {
-            throw new BadRequestException("Invalid username. One, and only one, username must be provided.", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
+        if (CollectionUtils.isNotEmpty(allGroupValues)) {
+            groupNames = new HashSet<>();
+            for (String groupName : allGroupValues) {
+                if (StringUtils.isBlank(groupName)) {
+                    throw new BadRequestException(String.format(INVALID_USER_GROUP_NAME_ERROR_MSG, groupName), ERROR_CODE_FEDERATION2_INVALID_GROUP_ASSIGNMENT);
+                }
+                groupNames.add(groupName);
+            }
         }
-        if (StringUtils.isBlank(domainId)) {
-            throw new BadRequestException("Invalid domain. One, and only one, domain must be provided.", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
-        }
-        if (StringUtils.isBlank(email)) {
-            throw new BadRequestException("Invalid email. One, and only one, email address must be provided.", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
-        }
-        if (authenticatedByForRequest == null) {
-            throw new BadRequestException("Unsupported authentication context class ref.", ERROR_CODE_FEDERATION2_INVALID_AUTH_CONTEXT);
-        }
-    }
 
-    private AuthenticatedByMethodEnum processAuthenticatedByForRequest() {
-        DomainAuthContextEnum val = DomainAuthContextEnum.fromSAMLAuthnContextClassRef(federatedAuthRequest.getIdpAuthContext());
-        return val != null ? val.getIdmAuthBy() : null;
     }
 
     private enum DomainAuthContextEnum {

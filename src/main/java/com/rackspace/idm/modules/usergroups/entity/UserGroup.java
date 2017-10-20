@@ -4,12 +4,16 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Auditable;
 import com.rackspace.idm.modules.usergroups.Constants;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPDNField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a user group within the LDAP directory. Extending groupOfNames LDAP class for future expansion options when
@@ -20,6 +24,11 @@ import lombok.Setter;
 @Setter
 @LDAPObject(structuralClass = Constants.OBJECTCLASS_USER_GROUP, superiorClass={ "groupOfNames", "top" })
 public class UserGroup implements Auditable, UniqueId {
+
+    public static final String INVALID_GROUP_DN = "Group dn could not be parsed";
+
+    private final Logger logger = LoggerFactory.getLogger(UserGroup.class);
+
     @LDAPDNField
     private String uniqueId;
 
@@ -39,4 +48,15 @@ public class UserGroup implements Auditable, UniqueId {
     public String getAuditContext() {
         return String.format("id=%s", id);
     }
+
+    public DN getGroupDn() {
+        try {
+            return new DN(getUniqueId());
+        } catch (LDAPException e) {
+            String errmsg = INVALID_GROUP_DN;
+            logger.error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+    }
+
 }
