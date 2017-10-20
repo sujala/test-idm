@@ -318,7 +318,7 @@ public class DefaultUserGroupService implements UserGroupService {
 
         tenantRole.getTenantIds().clear();
         tenantRole.getTenantIds().add(tenantId);
-        tenantRoleDao.deleteRoleAssignmentOnGroup(userGroup, tenantRole);
+        tenantRoleDao.deleteOrUpdateRoleAssignmentOnGroup(userGroup, tenantRole);
     }
 
     private UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId) {

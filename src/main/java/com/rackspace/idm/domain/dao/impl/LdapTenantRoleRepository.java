@@ -199,7 +199,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public void deleteRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole) {
+    public void deleteOrUpdateRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole) {
         deleteOrUpdateTenantRole(tenantRole, group.getUniqueId());
     }
 

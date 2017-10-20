@@ -798,7 +798,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * applicationService.getClientRoleById(roleId) >> clientRole
         1 * tenantService.checkAndGetTenant(tenantId)
         1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
-        1 * tenantRoleDao.deleteRoleAssignmentOnGroup(group, tenantRole)
+        1 * tenantRoleDao.deleteOrUpdateRoleAssignmentOnGroup(group, tenantRole)
         tenantRole.tenantIds.size() == 1
         tenantRole.tenantIds.contains(tenantId)
 
@@ -812,7 +812,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * applicationService.getClientRoleById(roleId) >> clientRole
         1 * tenantService.checkAndGetTenant(tenantId)
         1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
-        1 * tenantRoleDao.deleteRoleAssignmentOnGroup(group, tenantRole)
+        1 * tenantRoleDao.deleteOrUpdateRoleAssignmentOnGroup(group, tenantRole)
         tenantRole.tenantIds.size() == 1
         tenantRole.tenantIds.contains(tenantId)
     }

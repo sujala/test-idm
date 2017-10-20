@@ -43,12 +43,14 @@ public interface TenantRoleDao {
     void updateRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole);
 
     /**
-     * Delete an existing tenant role assignment on a group
+     * Delete an existing tenant role assignment on a group.
+     * This method will remove the tenantId from the tenantRole or delete the tenantRole
+     * if the tenantRole contains no tenants after removing the tenantId.
      *
      * @param group
      * @param tenantRole
      */
-    void deleteRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole);
+    void deleteOrUpdateRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole);
 
     /**
      * Retrieve the specified tenant role associated with the specified group. Returns null if doesn't exist.
