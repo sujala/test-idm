@@ -22,7 +22,6 @@ import java.util.*;
 public class LdapUserRepository extends LdapGenericRepository<User> implements UserDao {
 
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
-    public static final String INVALID_GROUP_DN = "Group dn could not be parsed";
     private static final List<String> AUTH_BY_PASSWORD_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
     private static final List<String> AUTH_BY_API_KEY_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY);
 
@@ -101,7 +100,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Override
     public void addUserGroupToUser(UserGroup group, User baseUser) {
-        DN groupDN = getGroupDn(group);
+        DN groupDN = group.getGroupDn();
         if (groupDN != null && !baseUser.getUserGroupDNs().contains(groupDN)) {
             baseUser.getUserGroupDNs().add(groupDN);
             updateUser(baseUser);
@@ -110,23 +109,11 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Override
     public void removeUserGroupFromUser(UserGroup group, User baseUser) {
-        DN groupDN = getGroupDn(group);
+        DN groupDN = group.getGroupDn();
         if (groupDN != null && baseUser.getUserGroupDNs().contains(groupDN)) {
             baseUser.getUserGroupDNs().remove(groupDN);
             updateUser(baseUser);
         }
-    }
-
-    private DN getGroupDn(UserGroup group) {
-        DN groupDN = null;
-        try {
-            groupDN = new DN(group.getUniqueId());
-        } catch (LDAPException e) {
-            String errmsg = INVALID_GROUP_DN;
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-        return groupDN;
     }
 
     @Override

@@ -11,4 +11,5 @@ class FederatedAuthGenerationRequest {
     String username
     Map<String, List<String>> otherAttributes = Collections.EMPTY_MAP
     String authContextRefClass
+    Set<String> groupNames = Collections.EMPTY_SET
 }

@@ -2,21 +2,12 @@ package com.rackspace.idm.domain.security
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-
-import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
-import com.rackspace.idm.domain.entity.Racker
-import com.rackspace.idm.domain.entity.RackerScopeAccess
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.encrypters.KeyCzarAuthenticatedMessageProvider
 import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator
 import com.rackspace.idm.domain.security.tokenproviders.TokenProvider
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.GlobalAuthTokenProvider
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
-import com.rackspace.idm.domain.security.tokenproviders.keystone_keyczar.KeystoneAEMessagePackTokenDataPacker
-import com.rackspace.idm.domain.security.tokenproviders.keystone_keyczar.KeystoneAETokenProvider
 import com.rackspace.idm.domain.service.AETokenRevocationService
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.UserService
@@ -24,7 +15,6 @@ import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.joda.time.DateTime
-import org.springframework.core.env.Environment
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
@@ -48,10 +38,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
     //global auth ae provider
     @Shared GlobalAuthTokenProvider globalAuthTokenProvider
     @Shared MessagePackTokenDataPacker globalAuthTokenDataPacker
-
-    //keystone ae provider
-    @Shared KeystoneAETokenProvider keystoneAETokenProvider
-    @Shared KeystoneAEMessagePackTokenDataPacker keystoneAEMessagePackTokenDataPacker
 
     AETokenRevocationService aeTokenRevocationService
 
@@ -91,22 +77,13 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         globalAuthTokenProvider.tokenDataPacker = globalAuthTokenDataPacker
         globalAuthTokenProvider.identityConfig = identityConfig
 
-        //init keystone ae provider
-        keystoneAEMessagePackTokenDataPacker = new KeystoneAEMessagePackTokenDataPacker()
-        keystoneAEMessagePackTokenDataPacker.identityConfig = identityConfig
-
-        keystoneAETokenProvider = new KeystoneAETokenProvider()
-        keystoneAETokenProvider.tokenDataPacker = keystoneAEMessagePackTokenDataPacker
-        keystoneAETokenProvider.authenticatedMessageProvider = amProvider
-        keystoneAETokenProvider.identityConfig = identityConfig
-
         //AE Cache
         AETokenCache aeTokenCache = new AETokenCache()
         aeTokenCache.identityConfig = identityConfig
         aeTokenCache.ticker = new FakeTicker()
         aeTokenCache.init()
 
-        List<TokenProvider> tokenProviders = [globalAuthTokenProvider, keystoneAETokenProvider]
+        List<TokenProvider> tokenProviders = [globalAuthTokenProvider]
         aeTokenService.tokenProviders = tokenProviders
         aeTokenService.identityConfig = identityConfig
         aeTokenService.aeTokenCache = aeTokenCache
