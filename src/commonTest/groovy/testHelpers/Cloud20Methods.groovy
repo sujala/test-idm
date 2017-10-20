@@ -399,7 +399,7 @@ class Cloud20Methods {
         authenticate(v2Factory.createPasswordAuthenticationRequest(username, password), applyRcnRoles)
     }
 
-    def authenticateForToken(username, String password=DEFAULT_PASSWORD) {
+    String authenticateForToken(username, String password=DEFAULT_PASSWORD) {
         def authResponse = authenticatePassword(username, password).getEntity(AuthenticateResponse)
         assert authResponse.value instanceof AuthenticateResponse
         return authResponse.value.token.id
@@ -1174,6 +1174,11 @@ class Cloud20Methods {
     def revokeRoleAssignmentFromUserGroup(String token, UserGroup userGroup, String roleId, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).path(SERVICE_PATH_ROLES).path(roleId).type(media).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def grantRoleOnTenantToGroup(String token, UserGroup userGroup, String roleId, String tenantId) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).path(SERVICE_PATH_ROLES).path(roleId).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).put(ClientResponse)
     }
 
     def grantRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, RoleAssignments roleAssignments, MediaType media=MediaType.APPLICATION_XML_TYPE) {

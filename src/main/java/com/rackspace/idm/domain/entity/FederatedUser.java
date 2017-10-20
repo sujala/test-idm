@@ -90,6 +90,13 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
 
     private List<TenantRole> roles;
 
+    @DeleteNullValues
+    @LDAPField(attribute=LdapRepository.ATTR_USER_GROUP_DNS,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<DN> userGroupDNs;
+
     public FederatedUser() {
     }
 
@@ -151,8 +158,11 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
         return ImmutableSet.copyOf(ids);
     }
 
-    @Override
     public Set<DN> getUserGroupDNs() {
-        return Collections.emptySet();
+        if (userGroupDNs == null) {
+            userGroupDNs = new HashSet<>();
+        }
+        return userGroupDNs;
     }
+
 }

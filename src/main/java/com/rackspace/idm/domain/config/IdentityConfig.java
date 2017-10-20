@@ -61,8 +61,6 @@ public class IdentityConfig {
 
     private static final String EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES = "email.send.to.only.rackspace.addresses.enabled";
     private static final String SETUP_MFA_SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
-    public static final String FEATURE_FORGOT_PWD_ENABLED_PROP_NAME = "feature.forgot.pwd.enabled";
-    private static final boolean FEATURE_FORGOT_PWD_ENABLED_DEFAULT = false;
     public static final String FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME = "token.forgot.password.validity.length";
     private static final int FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT = 600;
     public static final String FORGOT_PWD_VALID_PORTALS_PROP_NAME = "forgot.password.valid.portals";
@@ -181,9 +179,6 @@ public class IdentityConfig {
     public static final String RACKER_IMPERSONATE_ROLE_NAME_PROP = "racker.impersonate.role";
     public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
 
-    public static final String FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP = "feature.support.v3.provisioned.user.tokens";
-    public static final boolean FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT = false;
-
     public static final String FEATURE_CACHE_AE_TOKENS_PROP = "feature.cache.ae.tokens";
     public static final boolean FEATURE_CACHE_AE_TOKENS_DEFAULT = false;
 
@@ -278,15 +273,6 @@ public class IdentityConfig {
 
     public static final String MAX_CA_DIRECTORY_PAGE_SIZE_PROP = "max.ca.directory.page.size";
     public static final int MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT = 1000;
-
-    public static final String FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP = "feature.restrict.user.manager.list.users.usage";
-    public static final boolean FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_DEFAULT = true;
-
-    public static final String FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP = "feature.restrict.user.manager.list.users.by.email.usage";
-    public static final boolean FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_DEFAULT = true;
-
-    public static final String FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP = "feature.restrict.user.manager.list.users.by.name.usage";
-    public static final boolean FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_DEFAULT = true;
 
     public static final String FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP = "feature.include.endpoints.based.on.rules";
     public static final boolean FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT = false;
@@ -548,7 +534,6 @@ public class IdentityConfig {
         defaults.put(SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
-        defaults.put(FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT);
         defaults.put(FEATURE_CACHE_AE_TOKENS_PROP, FEATURE_CACHE_AE_TOKENS_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_TTL_SECONDS_PROP, CACHED_AE_TOKEN_TTL_SECONDS_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP, CACHED_AE_TOKEN_CACHE_MAX_SIZE_DEFAULT);
@@ -570,7 +555,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_SUPPORT_V11_LEGACY_PROP, FEATURE_SUPPORT_V11_LEGACY_DEFAULT);
 
         defaults.put(FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT);
-        defaults.put(FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, FEATURE_FORGOT_PWD_ENABLED_DEFAULT);
         defaults.put(FORGOT_PWD_VALID_PORTALS_PROP_NAME, FORGOT_PWD_VALID_PORTALS_DEFAULT);
         defaults.put(EMAIL_HOST, EMAIL_HOST_DEFAULT);
         defaults.put(EMAIL_PORT, EMAIL_PORT_DEFAULT);
@@ -615,9 +599,6 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
         defaults.put(FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP, FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_DEFAULT);
 
-        defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_DEFAULT);
-        defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_DEFAULT);
-        defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_DEFAULT);
         defaults.put(FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT);
         defaults.put(FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP, FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_DEFAULT);
         defaults.put(FEATURE_POST_IDP_FEED_EVENTS_PROP, FEATURE_POST_IDP_FEED_EVENTS_DEFAULT);
@@ -1490,10 +1471,6 @@ public class IdentityConfig {
             return getStringSafely(reloadableConfiguration, IDENTITY_ROLE_TENANT_DEFAULT);
         }
 
-        @IdmProp(key = FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP, description = "Whether v3 provisioned user tokens can be used within v2 services", versionAdded = "3.0.1")
-        public boolean supportV3ProvisionedUserTokens() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP);
-        }
         @IdmProp(key = FEATURE_CACHE_AE_TOKENS_PROP, versionAdded = "3.0.1")
         public Boolean cacheAETokens() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_CACHE_AE_TOKENS_PROP);
@@ -1641,11 +1618,6 @@ public class IdentityConfig {
             return getIntSafely(reloadableConfiguration, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME);
         }
 
-        @IdmProp(key = FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, versionAdded = "3.2.0", description = "Whether or not the forgot password flow is enabled")
-        public boolean isForgotPasswordEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_FORGOT_PWD_ENABLED_PROP_NAME);
-        }
-
         @IdmProp(key = FORGOT_PWD_VALID_PORTALS_PROP_NAME, versionAdded = "3.2.0", description = "Comma delimited list of valid portal values for forgot password")
         public Set<String> getForgotPasswordValidPortals() {
             return getSetSafely(reloadableConfiguration, FORGOT_PWD_VALID_PORTALS_PROP_NAME);
@@ -1741,21 +1713,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP, versionAdded = "3.5.0", description = "Whether or not endpoint template creation is allowed using service name and type.")
         public boolean getFeatureEndpointTemplateDisableNameType() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP);
-        }
-
-        @IdmProp(key = FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, versionAdded = "3.7.0", description = "When true, if a user-manager calls the 'list users' service without a filter other user managers within the domain will not be returned.")
-        public boolean restrictUserManagersFromListingOtherUserManagers() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP);
-        }
-
-        @IdmProp(key = FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, versionAdded = "3.7.0", description = "When true, if a user-manager calls the 'list users' service with email filter other user managers within the domain will not be returned.")
-        public boolean restrictUserManagersFromListingOtherUserManagersByEmail() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP);
-        }
-
-        @IdmProp(key = FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, versionAdded = "3.7.0", description = "When true, if a user-manager calls the 'list users' service with name filter they can't get other user managers within the domain.")
-        public boolean restrictUserManagersFromListingOtherUserManagersByName() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP);
         }
 
         @IdmProp(key = FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, versionAdded = "3.8.0", description = "When true, endpoints based on rules are included in 'authentication' and 'list endpoints for token'")

@@ -13,4 +13,5 @@ public final class SAMLConstants {
     public static final String ATTR_DOMAIN = "domain";
     public static final String ATTR_EMAIL = "email";
     public static final String ATTR_ROLES = "roles";
+    public static final String ATTR_GROUPS = "groups";
 }

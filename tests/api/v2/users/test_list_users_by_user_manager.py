@@ -102,47 +102,19 @@ class TestListUsersByUserManager(base.TestBaseV2):
         super(TestListUsersByUserManager, self).setUp()
         self.user_id = []
 
-    def get_feature_flag_value_and_default_value(self, flag_name):
-        feature_flag_resp = (
-            self.devops_client.get_devops_properties(
-                flag_name))
-        feature_flag_value = feature_flag_resp.json()[
-            const.PROPERTIES][0][const.VALUE]
-        feature_flag_default_value = feature_flag_resp.json()[
-            const.PROPERTIES][0][const.DEFAULT_VALUE]
-        return feature_flag_value, feature_flag_default_value
-
     def test_list_users_by_user_manager(self):
         """List users must not return any user-managers except the caller """
 
         resp = self.user_manager_client.list_users()
         self.assertEqual(resp.status_code, 200)
 
-        # get feature flag for restrict.user.manager.list.users.usage
-        feature_flag_value, feature_flag_default_value = (
-            self.get_feature_flag_value_and_default_value(
-                const.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE
-            ))
-
-        # if feature flag not present or feature flag set to true
-        if feature_flag_value & feature_flag_default_value:
-            self.assertIn(self.user_manager_name,
-                          str(resp.json()[const.USERS]))
-            # exclude other user managers
-            self.assertNotIn(self.user_manager_name3,
-                             str(resp.json()[const.USERS]))
-            self.assertNotIn(self.user_manager_name2,
-                             str(resp.json()[const.USERS]))
-        else:
-            # able to list all default user and other user managers same domain
-            # before restriction
-            self.assertIn(self.user_manager_name,
-                          str(resp.json()[const.USERS]))
-            self.assertIn(self.user_manager_name2,
-                          str(resp.json()[const.USERS]))
-            # not in the same domain
-            self.assertNotIn(self.user_manager_name3,
-                             str(resp.json()[const.USERS]))
+        self.assertIn(self.user_manager_name,
+                      str(resp.json()[const.USERS]))
+        # exclude other user managers
+        self.assertNotIn(self.user_manager_name3,
+                         str(resp.json()[const.USERS]))
+        self.assertNotIn(self.user_manager_name2,
+                         str(resp.json()[const.USERS]))
 
     def test_list_users_with_name_query_by_user_manager(self):
         """Return only for caller other 403"""
@@ -158,24 +130,11 @@ class TestListUsersByUserManager(base.TestBaseV2):
         resp3 = self.user_manager_client.list_users(
             option={'name': self.user_manager_name3})
 
-        # get feature flag for restrict.user.manager.list.users.by.name.usage
-        feature_flag_value, feature_flag_default_value = (
-            self.get_feature_flag_value_and_default_value(
-                const.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE
-            ))
-
-        # if feature flag not present or feature flag set to true
-        if feature_flag_value & feature_flag_default_value:
-            self.assertEqual(resp.json()[const.USER][const.USERNAME],
-                             self.user_manager_name)
-            # list other user manager name return 403
-            self.assertEqual(resp2.status_code, 403)
-            self.assertEqual(resp3.status_code, 403)
-        else:
-            # able to list other user manager by name before restriction
-            self.assertEqual(resp2.status_code, 200)
-            # not in the same domain
-            self.assertEqual(resp3.status_code, 403)
+        self.assertEqual(resp.json()[const.USER][const.USERNAME],
+                         self.user_manager_name)
+        # list other user manager name return 403
+        self.assertEqual(resp2.status_code, 403)
+        self.assertEqual(resp3.status_code, 403)
 
     def test_list_users_with_email_query_by_user_manager(self):
         """List users (w/ email queryParam) must not return any user-managers
@@ -206,49 +165,26 @@ class TestListUsersByUserManager(base.TestBaseV2):
         # list with different user email
         resp4 = self.user_manager_client3.list_users(
             option={'email': self.email})
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp4.status_code, 200)
 
-        # get feature flag for restrict.user.manager.list.users.by.email.usage
-        feature_flag_value, feature_flag_default_value = (
-            self.get_feature_flag_value_and_default_value(
-                const.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE
-            ))
+        # list with self email
+        self.assertIn(self.user_manager_name3,
+                      str(resp2.json()[const.USERS]))
 
-        # if feature flag not present or feature flag set to true
-        if feature_flag_value & feature_flag_default_value:
-            # list with self email
-            self.assertIn(self.user_manager_name3,
-                          str(resp2.json()[const.USERS]))
-            # exclude other user managers
-            self.assertNotIn(self.user_manager_name,
-                             str(resp2.json()[const.USERS]))
-            self.assertNotIn(self.user_manager_name2,
-                             str(resp2.json()[const.USERS]))
+        # exclude other user managers
+        self.assertNotIn(self.user_manager_name,
+                         str(resp2.json()[const.USERS]))
+        self.assertNotIn(self.user_manager_name2,
+                         str(resp2.json()[const.USERS]))
 
-            # list with same email
-            self.assertIn(self.user_manager_name,
-                          str(resp3.json()[const.USERS]))
-            # exclude other user managers
-            self.assertNotIn(self.user_manager_name2,
-                             str(resp3.json()[const.USERS]))
-            self.assertNotIn(self.user_manager_name3,
-                             str(resp3.json()[const.USERS]))
-        else:
-            # list with same email
-            self.assertIn(self.user_manager_name,
-                          str(resp3.json()[const.USERS]))
-            self.assertIn(self.user_manager_name2,
-                          str(resp3.json()[const.USERS]))
-            self.assertNotIn(self.user_manager_name3,
-                             str(resp3.json()[const.USERS]))
-
-            # list different user/domaim email
-            self.assertNotIn(self.user_manager_name,
-                             str(resp4.json()[const.USERS]))
-            self.assertNotIn(self.user_manager_name2,
-                             str(resp4.json()[const.USERS]))
-            self.assertNotIn(self.user_manager_name3,
-                             str(resp4.json()[const.USERS]))
+        # list with same email
+        self.assertIn(self.user_manager_name,
+                      str(resp3.json()[const.USERS]))
+        # exclude other user managers
+        self.assertNotIn(self.user_manager_name2,
+                         str(resp3.json()[const.USERS]))
+        self.assertNotIn(self.user_manager_name3,
+                         str(resp3.json()[const.USERS]))
 
     def tearDown(self):
         for id_ in self.domain_ids:
