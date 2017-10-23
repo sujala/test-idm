@@ -266,9 +266,6 @@ public class Cloud20VersionResource {
             , @Context UriInfo uriInfo
             , @HeaderParam(X_AUTH_TOKEN) String authToken
             , IdentityProvider identityProvider) {
-        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.addIdentityProvider(httpHeaders, uriInfo, authToken, identityProvider).build();
     }
 
@@ -280,10 +277,6 @@ public class Cloud20VersionResource {
             , @Context UriInfo uriInfo
             , @HeaderParam(X_AUTH_TOKEN) String authToken
             , String requestBody) throws IOException {
-        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
-
         byte[] bytes = org.apache.commons.codec.binary.StringUtils.getBytesUtf8(requestBody);
         try {
             Document xmlDocument = identityProviderConverterCloudV20.getXMLDocument(bytes);
@@ -307,9 +300,6 @@ public class Cloud20VersionResource {
             , @HeaderParam(X_AUTH_TOKEN) String authToken
             , @PathParam("identityProviderId") String identityProviderId
             , IdentityProvider identityProvider) {
-        if (!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()) {
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.updateIdentityProvider(httpHeaders, uriInfo, authToken, identityProviderId, identityProvider).build();
     }
 
@@ -320,9 +310,6 @@ public class Cloud20VersionResource {
             , @Context UriInfo uriInfo
             , @HeaderParam(X_AUTH_TOKEN) String authToken
             , @PathParam("identityProviderId") String identityProviderId)  {
-        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.getIdentityProvider(httpHeaders, authToken, identityProviderId).build();
     }
 
@@ -337,10 +324,6 @@ public class Cloud20VersionResource {
             @QueryParam("approvedDomainId") String approvedDomainId,
             @QueryParam("idpType") String idpType,
             @QueryParam("approvedTenantId") String approvedTenantId) {
-        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
-
         return cloud20Service.getIdentityProviders(httpHeaders, authToken, name, issuer, approvedDomainId, approvedTenantId, idpType).build();
     }
 
@@ -351,9 +334,6 @@ public class Cloud20VersionResource {
             , @Context UriInfo uriInfo
             , @HeaderParam(X_AUTH_TOKEN) String authToken
             , @PathParam("identityProviderId") String identityProviderId) {
-        if (!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()) {
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.deleteIdentityProvider(httpHeaders, authToken, identityProviderId).build();
     }
 
@@ -365,9 +345,6 @@ public class Cloud20VersionResource {
             , @Context UriInfo uriInfo
             , @HeaderParam(X_AUTH_TOKEN) String authToken
             , @PathParam("identityProviderId") String identityProviderId) {
-        if (!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()) {
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.getIdentityProvidersMetadata(httpHeaders, authToken, identityProviderId).build();
     }
 
@@ -390,9 +367,6 @@ public class Cloud20VersionResource {
                                  @HeaderParam(X_AUTH_TOKEN) String authToken,
                                  @PathParam("identityProviderId") String identityProviderId,
                                  PublicCertificate publicCertificate) {
-        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.addIdentityProviderCert(httpHeaders, authToken, identityProviderId, publicCertificate).build();
     }
 
@@ -402,9 +376,6 @@ public class Cloud20VersionResource {
                                       @HeaderParam(X_AUTH_TOKEN) String authToken,
                                       @PathParam("identityProviderId") String identityProviderId,
                                       @PathParam("certificateId") String certificateId) {
-        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.deleteIdentityProviderCert(httpHeaders, authToken, identityProviderId, certificateId).build();
     }
 
@@ -416,9 +387,6 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("identityProviderId") String identityProviderId,
             String policy) {
-        if (!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()) {
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         Set acceptableMediaTypes = identityConfig.getReloadableConfig().getMappingPolicyAcceptFormats();
         if (!acceptableMediaTypes.contains(httpHeaders.getMediaType().toString().toLowerCase())) {
             String errMsg = String.format(FEDERATION_IDP_MAPPING_POLICY_FORMAT_ERROR_MESSAGE, acceptableMediaTypes);
@@ -434,9 +402,6 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("identityProviderId") String identityProviderId)  {
-        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.getIdentityProviderPolicy(httpHeaders, authToken, identityProviderId).build();
     }
 
