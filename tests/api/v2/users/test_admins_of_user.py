@@ -29,6 +29,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         cls.issuer = 'http://identityqe.rackspace.com'
 
     def setUp(self):
+        super(TestAdminsOfUser, self).setUp()
         self.user_ids = []
         self.clients = []
 

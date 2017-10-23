@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
+
 from tests.api.v2.models import factory, responses
 from tests.api.v2.schema import user_groups
 from tests.api.v2.user_groups import usergroups
@@ -22,9 +24,8 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.user_manager_client = self.generate_client(
             parent_client=self.user_admin_client,
             additional_input_data={'is_user_manager': True})
-        self.role_ids = []
-        self.tenant_ids = []
 
+    @attr(type='smoke_alpha')
     def test_crud_tenant_role_assignments_to_user_group(self):
         group_req = factory.get_add_user_group_request(self.domain_id)
         create_group_resp = self.user_admin_client.add_user_group_to_domain(
@@ -126,7 +127,9 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.assertEqual(assignments[0][const.FOR_TENANTS], ["*"])
 
     def tearDown(self):
-        super(CrudTenantRoleAssignmentsToUserGroup, self).tearDown()
+
+        # Not calling 'log_tearDown_error' as delete_client() method is
+        # already wrapped with it. So, any cleanup failures will be caught.
         # Deleting the user manager first, so that domain can be
         # safely deleted in the subsequent user-admin client cleanup
         self.identity_admin_client.delete_user(
@@ -136,11 +139,4 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         # in that domain. Hence, not explicitly deleting the user groups
         self.delete_client(self.user_admin_client,
                            parent_client=self.identity_admin_client)
-
-        # We are deleting the only tenant we create in the test, within the
-        # test itself. But, this is still kept in for safety, if at all the
-        # test fails prior to tenant deletion, teardown will delete it
-        for tenant_id in self.tenant_ids:
-            self.identity_admin_client.delete_tenant(tenant_id=tenant_id)
-        for role_id in self.role_ids:
-            self.identity_admin_client.delete_role(role_id=role_id)
+        super(CrudTenantRoleAssignmentsToUserGroup, self).tearDown()

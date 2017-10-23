@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
+
 from tests.api.v2.models import factory
 from tests.api.v2.schema import user_groups
 from tests.api.v2.user_groups import usergroups
@@ -32,6 +34,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
         self.assertEqual(user_group_resp.status_code, 201)
         return user_group_resp.json()
 
+    @attr(type='smoke_alpha')
     def test_list_user_groups_in_a_domain(self):
 
         for i in xrange(2):
@@ -61,6 +64,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
             response=list_resp,
             json_schema=user_groups.list_user_groups_for_domain)
 
+    @attr(type='smoke_alpha')
     def test_update_user_group_in_a_domain(self):
 
         user_group = self.add_user_group()
@@ -84,6 +88,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
             get_resp.json()[const.RAX_AUTH_USER_GROUP][const.NAME],
             updated_group_name)
 
+    @attr(type='smoke_alpha')
     def test_delete_user_group_in_a_domain(self):
 
         user_group = self.add_user_group()
@@ -113,6 +118,9 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
         self.assertEqual(len(list_resp.json()[const.RAX_AUTH_USER_GROUPS]), 1)
 
     def tearDown(self):
+
+        # Not calling 'log_tearDown_error' as delete_client() method is
+        # already wrapped with it. So, any cleanup failures will be caught.
         super(UserGroupsInDomain, self).tearDown()
         # This deletes the domain which automatically deletes any user groups
         # in that domain. Hence, not explicitly deleting the user groups.
