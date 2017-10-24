@@ -1039,6 +1039,28 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public List<TenantRole> getExplicitlyAssignedTenantRolesForUserPerformant(EndUser user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+
+        logger.debug("Getting Rbac Roles for user {}", user.getUniqueId());
+        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
+
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        for (TenantRole role : roles) {
+            if (role != null) {
+                ImmutableClientRole cRole = this.applicationService.getCachedClientRoleById(role.getRoleRsId());
+                role.setName(cRole.getName());
+                role.setDescription(cRole.getDescription());
+                tenantRoles.add(role);
+            }
+        }
+
+        return tenantRoles;
+    }
+
+    @Override
     public List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId) {
         logger.debug("Getting Global Roles");
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId);

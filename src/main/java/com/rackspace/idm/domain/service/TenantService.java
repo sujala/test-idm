@@ -290,6 +290,18 @@ public interface TenantService {
     List<TenantRole> getRbacRolesForUser(EndUser user);
 
     /**
+     * Returns all roles assignments explicitly made to the user, including both those assigned on specific tenants and
+     * those assigned globally.
+     *
+     * Also populates the name and description on the returned tenant role with data from the client role.
+     *
+     * Note - This does NOT return any roles the user receives based on user group membership.
+     * @param user
+     * @return
+     */
+    List<TenantRole> getExplicitlyAssignedTenantRolesForUserPerformant(EndUser user);
+
+    /**
      * Returns all roles for the specified application that are explicitly globally assigned to the user (e.g. not via group membership). This will
      * include any RCN roles assigned to the user.
      *
