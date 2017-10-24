@@ -36,6 +36,8 @@ class TestRevokeToken(base.TestBaseV2):
             additional_input_data={'domain_id': domain_id,
                                    'contact_id': contact_id})
 
+        self.user_ids.append(self.user_admin_client.default_headers[
+                                 const.X_USER_ID])
         self.domain_ids.append(domain_id)
 
     def create_user(self):
@@ -150,9 +152,6 @@ class TestRevokeToken(base.TestBaseV2):
                 resp.status_code, 204,
                 msg='Domain with ID {0} failed to delete'.format(_id))
 
-        self.delete_client(
-            client=self.user_admin_client,
-            parent_client=self.identity_admin_client)
         super(TestRevokeToken, self).tearDown()
 
     @classmethod

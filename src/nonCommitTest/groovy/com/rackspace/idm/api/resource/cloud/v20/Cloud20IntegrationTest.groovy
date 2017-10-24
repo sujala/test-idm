@@ -3157,6 +3157,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def getUsersByEmail = cloud20.getUsersByEmail(defaultUserToken, email)
         cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, createSubUser.id)
         def userManageToken = cloud20.authenticate(subUsername, password).getEntity(AuthenticateResponse).value.token.id
+        // Only caller should be returned since user-manager cannot retrieve other user-managers or user-admins
         def getUsersByEmailUserManage = cloud20.getUsersByEmail(userManageToken, email)
         def usersByEmailUserManage = getUsersByEmailUserManage.getEntity(UserList)
 
@@ -3168,7 +3169,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         getUsersByEmail.status == 403
         userManageToken != null
         getUsersByEmailUserManage.status == 200
-        usersByEmailUserManage.value.user.size() == 2
+        usersByEmailUserManage.value.user.size() == 1
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createUser.id)

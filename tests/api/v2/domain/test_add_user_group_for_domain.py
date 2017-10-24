@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
+from nose.plugins.attrib import attr
 
 from tests.api.v2 import base
 from tests.api.v2.schema import user_groups
@@ -29,10 +30,9 @@ class AddUserGroupForDomain(base.TestBaseV2):
             'user_admin': cls.user_admin_client,
             'user_manager': cls.user_manager_client
         }
-        cls.domain_ids = []
-        cls.domain_ids.append(cls.domain_id)
 
     @ddt.data('user_admin', 'user_manager')
+    @attr(type='smoke_alpha')
     def test_add_and_get_user_group_for_domain(self, user_type):
 
         group_name = self.generate_random_string(
@@ -61,6 +61,8 @@ class AddUserGroupForDomain(base.TestBaseV2):
 
     @classmethod
     def tearDownClass(cls):
+        # Not calling 'log_tearDown_error' as delete_client() method is
+        # already wrapped with it. So, any cleanup failures will be caught.
         super(AddUserGroupForDomain, cls).tearDownClass()
         # Deleting the user manager first, so that domain can be
         # safely deleted in the subsequent user-admin client cleanup

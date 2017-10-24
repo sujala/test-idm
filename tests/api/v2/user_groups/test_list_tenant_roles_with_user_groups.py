@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
+
 from tests.api.v2.user_groups import usergroups
 from tests.api.v2.schema import user_groups
 
@@ -66,11 +68,12 @@ class TestListTenantRolesWithUserGroups(usergroups.TestUserGroups):
                 const.X_USER_ID])
 
         self.assertEqual(resp.status_code, 200)
-        list_role_ids = [k[const.ID] for k in resp.json()[const.ROLES]]
+        list_role_ids = [role[const.ID] for role in resp.json()[const.ROLES]]
         self.assertEqual(len(list_role_ids), 1)
         # only retrieve tenant access role
         self.assertIn(self.tenant_access_role_id, list_role_ids)
 
+    @attr(type='smoke_alpha')
     def test_list_user_roles_with_user_group_with_roles(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -113,7 +116,7 @@ class TestListTenantRolesWithUserGroups(usergroups.TestUserGroups):
                 const.X_USER_ID])
 
         self.assertEqual(resp.status_code, 200)
-        list_role_ids = [k[const.ID] for k in resp.json()[const.ROLES]]
+        list_role_ids = [role[const.ID] for role in resp.json()[const.ROLES]]
 
         self.assertEqual(len(list_role_ids), 2)
         # role is not explicitly assigned to user
@@ -124,13 +127,11 @@ class TestListTenantRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertIn(self.tenant_access_role_id, list_role_ids)
 
     def tearDown(self):
-        super(TestListTenantRolesWithUserGroups, self).tearDown()
         # This deletes the domain which automatically deletes any user groups
         # in that domain. Hence, not explicitly deleting the user groups
         self.delete_client(self.user_admin_wl_domain_client,
                            parent_client=self.identity_admin_client)
-        for role_id in self.role_ids:
-            self.identity_admin_client.delete_role(role_id=role_id)
+        super(TestListTenantRolesWithUserGroups, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):

@@ -10,6 +10,7 @@
 """
 
 import ddt
+from nose.plugins.attrib import attr
 
 from tests.api.v2.user_groups import usergroups
 from tests.api.v2.models import responses
@@ -115,6 +116,7 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertEqual(access_resp.access.user.roles[0].name,
                          const.USER_ADMIN_ROLE_NAME)
 
+    @attr(type='smoke_alpha')
     def test_auth_and_validate_group_with_roles(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -187,6 +189,7 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertIn(const.TENANT_ACCESS_ROLE_NAME, role_name_list)
         self.assertIn(const.USER_ADMIN_ROLE_NAME, role_name_list)
 
+    @attr(type='smoke_alpha')
     def test_auth_and_validate_group_domain_not_whitelisted(self):
         domain_id = self.generate_random_string(
             pattern=const.DOMAIN_PATTERN
@@ -202,13 +205,11 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
             self.user_admin_wl_domain_client, 404)
 
     def tearDown(self):
-        super(AuthAndValidateRolesWithUserGroups, self).tearDown()
         # This deletes the domain which automatically deletes any user groups
         # in that domain. Hence, not explicitly deleting the user groups
         self.delete_client(self.user_admin_wl_domain_client,
                            parent_client=self.identity_admin_client)
-        for role_id in self.role_ids:
-            self.identity_admin_client.delete_role(role_id=role_id)
+        super(AuthAndValidateRolesWithUserGroups, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):

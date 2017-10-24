@@ -67,3 +67,22 @@ class TestUserGroups(base.TestBaseV2):
         tenant = responses.Tenant(add_tenant_resp.json())
         self.tenant_ids.append(tenant.id)
         return tenant
+
+    @base.base.log_tearDown_error
+    def tearDown(self):
+        for role_id in self.role_ids:
+            resp = self.identity_admin_client.delete_role(role_id=role_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Role with ID {0} failed to delete'.format(
+                    role_id))
+        for tenant_id in self.tenant_ids:
+            resp = self.identity_admin_client.delete_tenant(
+                tenant_id=tenant_id)
+            # For some cases, tenant is getting deleted by delete_client()
+            # call, prior. Hence checking for either 204 or 404.
+            self.assertIn(
+                resp.status_code, [204, 404],
+                msg='Tenant with ID {0} failed to delete'.format(
+                    tenant_id))
+        super(TestUserGroups, self).tearDown()

@@ -73,9 +73,6 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             email=self.test_email, private_key_path=private_key,
             public_key_path=public_key, response_flavor='v2DomainOrigin',
             output_format='formEncode', roles=roles)
-        # Currently, the jar is returning a line from log file,
-        # hence this split
-        cert = cert.split('\n')[1]
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
