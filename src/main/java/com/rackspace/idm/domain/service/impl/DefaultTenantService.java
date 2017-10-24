@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.ctc.wstx.util.StringUtil;
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
@@ -8,6 +9,7 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.security.ImmutableClientRole;
+import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.TenantDao;
@@ -31,6 +33,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
+import org.apache.http.util.Asserts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -566,14 +569,30 @@ public class DefaultTenantService implements TenantService {
                 if (ArrayUtils.isNotEmpty(tenantIds)) {
                     // Load the auto-assigned role from cache
                     ImmutableClientRole autoAssignedRole = getAutoAssignedRole();
+                    List<String> tenantIdsToGetAutoAssignRole = new ArrayList<>(Arrays.asList(tenantIds));
+
+                    List<String> excludeTenantTypes = identityConfig.getReloadableConfig().getTenantTypesToExcludeAutoAssignRoleFrom();
+                    if (CollectionUtils.isNotEmpty(excludeTenantTypes)) {
+                        // User admins and user managers must get the auto-assign role on all tenants in the domain
+                        IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(user);
+                        if (!(IdentityUserTypeEnum.USER_ADMIN == userType) && !(IdentityUserTypeEnum.USER_MANAGER == userType)) {
+                            for (String tenantId : tenantIds) {
+                                String inferredTenantType = inferTenantTypeForTenantId(tenantId);
+                                if (StringUtils.isNotBlank(inferredTenantType) && excludeTenantTypes.contains(inferredTenantType)) {
+                                    tenantIdsToGetAutoAssignRole.remove(tenantId);
+                                }
+                            }
+                        }
+
+                    }
 
                     if (autoAssignedRole != null) {
-                        // Add the autoassigned role for all tenants in domain.
+                        // Add the auto-assigned role for all tenants in domain.
                         implicitRole = new TenantRole();
                         implicitRole.setClientId(autoAssignedRole.getClientId());
                         implicitRole.setRoleRsId(autoAssignedRole.getId());
                         implicitRole.setUserId(user.getId());
-                        Collections.addAll(implicitRole.getTenantIds(), tenantIds);
+                        implicitRole.getTenantIds().addAll(tenantIdsToGetAutoAssignRole);
                     }
                 }
             }
@@ -1330,7 +1349,7 @@ public class DefaultTenantService implements TenantService {
      * @param applyRcnRoles
      * @return
      */
-    List<TenantRole> getGlobalRoles(Iterable<TenantRole> roles, boolean applyRcnRoles) {
+    private List<TenantRole> getGlobalRoles(Iterable<TenantRole> roles, boolean applyRcnRoles) {
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
             if (role != null
@@ -1386,8 +1405,8 @@ public class DefaultTenantService implements TenantService {
     }
 
     /**
-     * Whether or not the specified tenant is eligible for auto role assignment based on feature flag and tenant
-     * characteristics.
+     * Whether or not the specified tenant is eligible for auto role assignment based on the domain feature flag,
+     * tenant type exclusion feature flag, and tenant characteristics.
      *
      * @param tenant
      * @return
@@ -1411,13 +1430,26 @@ public class DefaultTenantService implements TenantService {
      */
     private List<User> getUsersForAutoRoleAssignmentOnTenant(Tenant tenant) {
         List<User> users = Collections.EMPTY_LIST;
+
         if (isAutoAssignmentOfRoleEnabledForTenantDomain(tenant)) {
             users = new ArrayList<>();
             Iterable<User> domainUsers = userService.getUsersWithDomainAndEnabledFlag(tenant.getDomainId(), true);
+            List<String> excludeTenantTypes = identityConfig.getReloadableConfig().getTenantTypesToExcludeAutoAssignRoleFrom();
+
             for (User domainUser : domainUsers) {
-                users.add(domainUser);
+                if (CollectionUtils.isNotEmpty(excludeTenantTypes)) {
+                    IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(domainUser);
+                    String inferredTenantType = inferTenantTypeForTenantId(tenant.getTenantId());
+                    if ((IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType)
+                            || StringUtils.isBlank(inferredTenantType) || !excludeTenantTypes.contains(inferredTenantType)) {
+                        users.add(domainUser);
+                    }
+                } else {
+                    users.add(domainUser);
+                }
             }
         }
+
         return users;
     }
 

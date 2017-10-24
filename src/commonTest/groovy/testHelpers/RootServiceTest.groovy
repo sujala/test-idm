@@ -102,6 +102,7 @@ class RootServiceTest extends Specification {
     @Shared ScopeAccessService scopeAccessService
     @Shared PasswordComplexityService passwordComplexityService
     @Shared TenantService tenantService
+    @Shared TenantTypeService tenantTypeService
     @Shared TokenService tokenService
     @Shared SecretQAService secretQAService
     @Shared EndpointService endpointService
@@ -373,6 +374,11 @@ class RootServiceTest extends Specification {
     def mockTenantService(service) {
         tenantService = Mock()
         service.tenantService = tenantService
+    }
+
+    def mockTenantTypeService(service) {
+        tenantTypeService = Mock()
+        service.tenantTypeService = tenantTypeService
     }
 
     def mockFederatedIdentityService(service) {
