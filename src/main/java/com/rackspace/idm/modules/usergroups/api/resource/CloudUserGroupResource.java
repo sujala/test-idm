@@ -163,6 +163,18 @@ public class CloudUserGroupResource {
     }
 
     @DELETE
+    @Path("/{groupId}/roles/{roleId}/tenants/{tenantId}")
+    public Response revokeRoleFromTenantOnGroup(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
+            @PathParam("groupId") String groupId,
+            @PathParam("roleId") String roleId,
+            @PathParam("tenantId") String tenantId) {
+        return userGroupCloudService.revokeRoleOnTenantToGroup(authToken, domainId, groupId, roleId, tenantId);
+    }
+
+    @DELETE
     @Path("/{groupId}/roles/{roleId}")
     public Response revokeRoleFromGroup(
             @Context HttpHeaders httpHeaders,

@@ -284,6 +284,43 @@ public class DefaultUserGroupService implements UserGroupService {
         }
     }
 
+    @Override
+    public void revokeRoleAssignmentOnGroup(UserGroup userGroup, String roleId, String tenantId) {
+        Validate.notNull(userGroup);
+        Validate.notNull(roleId);
+        Validate.notNull(tenantId);
+
+        // Verify the role exist
+        ClientRole clientRole = applicationService.getClientRoleById(roleId);
+        if (clientRole == null) {
+            String errMsg = String.format("Role '%s' does not exist.", roleId);
+            throw new NotFoundException(errMsg);
+        }
+
+        // Verify the role's administrator is user-manager
+        if (clientRole.getRsWeight() != RoleLevelEnum.LEVEL_1000.getLevelAsInt()) {
+            throw new ForbiddenException("Not authorized to create role assignment.");
+        }
+
+        // Verify the tenant exist
+        tenantService.checkAndGetTenant(tenantId);
+
+        TenantRole tenantRole = getRoleAssignmentOnGroup(userGroup, roleId);
+        if (tenantRole == null ||
+                tenantRole.getTenantIds().isEmpty() ||
+                !tenantRole.getTenantIds().contains(tenantId) && !tenantRole.getTenantIds().contains(USER_GROUP_ROLE_ASSIGNMENT_FOR_ALL_TENANTS)) {
+            String errMsg = String.format("Role assignemnt does not exist.", roleId);
+            throw new NotFoundException(errMsg);
+        } else if (tenantRole.getTenantIds().contains(USER_GROUP_ROLE_ASSIGNMENT_FOR_ALL_TENANTS)) {
+            String errMsg = "Role assignment exist as global role.";
+            throw new BadRequestException(errMsg);
+        }
+
+        tenantRole.getTenantIds().clear();
+        tenantRole.getTenantIds().add(tenantId);
+        tenantRoleDao.deleteOrUpdateRoleAssignmentOnGroup(userGroup, tenantRole);
+    }
+
     private UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId) {
         Validate.notEmpty(groupName);
         Validate.notEmpty(userId);
@@ -357,7 +394,7 @@ public class DefaultUserGroupService implements UserGroupService {
     }
 
     @Override
-    public void revokeRoleAssignmentFromGroup(UserGroup userGroup, String roleId) {
+    public void revokeRoleAssignmentOnGroup(UserGroup userGroup, String roleId) {
         Validate.notNull(userGroup);
         Validate.notNull(userGroup.getUniqueId());
         Validate.notEmpty(roleId);

@@ -345,7 +345,7 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
             com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
 
-            userGroupService.revokeRoleAssignmentFromGroup(group, roleId);
+            userGroupService.revokeRoleAssignmentOnGroup(group, roleId);
 
             Response.ResponseBuilder response = Response.noContent();
             return response.build();
@@ -357,7 +357,24 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Override
     public Response revokeRoleOnTenantToGroup(String authToken, String domainId, String groupId, String roleId, String tenantId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+
+            // Verify userGroup exists for domain
+            com.rackspace.idm.modules.usergroups.entity.UserGroup userGroup = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
+
+            userGroupService.revokeRoleAssignmentOnGroup(userGroup, roleId, tenantId);
+
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error revoking role '%s' on tenant '%s' to user group for domain '%s' and groupId '%s'", roleId, tenantId, domainId, groupId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override
