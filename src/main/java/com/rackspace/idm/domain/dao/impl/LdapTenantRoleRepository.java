@@ -199,6 +199,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
+    public void deleteOrUpdateRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole) {
+        deleteOrUpdateTenantRole(tenantRole, group.getUniqueId());
+    }
+
+    @Override
     public TenantRole getRoleAssignmentOnGroup(UserGroup group, String roleId) {
         SearchResultEntry entry = getLdapContainer(group.getUniqueId(), CONTAINER_ROLES);
         if (entry == null) {

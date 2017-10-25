@@ -77,7 +77,7 @@ class RevokeRoleAssignmentFromUserGroupCloudServiceTest extends RootServiceTest 
 
         then:
         1 * userGroupService.checkAndGetGroupByIdForDomain(groupid, domainId) >> entityGroup
-        1 * userGroupService.revokeRoleAssignmentFromGroup(entityGroup, roleId)
+        1 * userGroupService.revokeRoleAssignmentOnGroup(entityGroup, roleId)
 
         // Creates a 204 response w/ not entity
         response.status == HttpStatus.SC_NO_CONTENT
