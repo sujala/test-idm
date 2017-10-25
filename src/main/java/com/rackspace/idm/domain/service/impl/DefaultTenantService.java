@@ -1040,9 +1040,7 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<TenantRole> getExplicitlyAssignedTenantRolesForUserPerformant(EndUser user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null.");
-        }
+        Assert.notNull(user);
 
         logger.debug("Getting Rbac Roles for user {}", user.getUniqueId());
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
