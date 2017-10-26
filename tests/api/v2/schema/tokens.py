@@ -55,9 +55,32 @@ validate_token = {
     'required': [const.ACCESS]
 }
 
+endpoint_item = {
+    'type': 'object', 'properties': {
+        const.TENANT_ID: {'type': 'string'},
+        const.PUBLIC_URL: {'type': 'string'},
+        const.INTERNAL_URL: {'type': 'string'},
+        const.REGION: {'type': 'string'},
+        const.VERSION_LIST: {'type': 'string'},
+        const.VERSION_INFO: {'type': 'string'},
+        const.VERSION_ID: {'type': 'string'}
+    },
+    'required': [const.TENANT_ID, const.PUBLIC_URL]
+}
+
+service_catalog_item = {
+    'type': 'object',
+    'properties': {
+        const.ENDPOINTS: {'type': 'array', 'items': endpoint_item},
+        const.NAME: {'type': 'string'},
+        const.TYPE: {'type': 'string'}
+    },
+    'required': [const.ENDPOINTS, const.NAME, const.TYPE],
+    'additionalProperties': False
+}
 auth = copy.deepcopy(validate_token)
 auth['properties'][const.ACCESS]['properties'][const.SERVICE_CATALOG] = {
-    'type': 'array'}
+    'type': 'array', 'items': service_catalog_item}
 auth['properties'][const.ACCESS]['required'] += [const.SERVICE_CATALOG]
 
 analyze_token_item = {

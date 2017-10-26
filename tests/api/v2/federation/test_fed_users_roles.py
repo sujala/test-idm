@@ -1,7 +1,6 @@
-from tests.api.v2.federation import federation
-
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.utils import saml_helper
+from tests.api.v2.federation import federation
 
 from tests.package.johny import constants as const
 
@@ -58,6 +57,8 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
             saml=cert, content_type=const.X_WWW_FORM_URLENCODED,
             base64_url_encode=True, new_url=True)
         self.assertEqual(auth.status_code, 200)
+        self.assertSchema(auth, json_schema=self.updated_fed_auth_schema)
+
         fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
         fed_user_client = self.generate_client(
             token=auth.json()[const.ACCESS][const.TOKEN][const.ID])
