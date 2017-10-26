@@ -365,7 +365,7 @@ class DomainAdminChangeServiceTest extends Specification {
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
 
         then:
-        tenantService.getRbacRolesForUserPerformant(_) >> userRoles
+        tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(_) >> userRoles
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             IdmAssert.assertIdmExceptionWithMessagePattern(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, "Promote user is already an admin")
             Response.ok() //just always return ok. Return value here isn't important as we trust exceptionHandler works
@@ -398,8 +398,8 @@ class DomainAdminChangeServiceTest extends Specification {
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
 
         then:
-        tenantService.getRbacRolesForUserPerformant(promoteUser) >> [createTenantRole(USER_MANAGER.roleName)]
-        tenantService.getRbacRolesForUserPerformant(demoteUser) >> userRoles
+        tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(promoteUser) >> [createTenantRole(USER_MANAGER.roleName)]
+        tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(demoteUser) >> userRoles
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             IdmAssert.assertIdmExceptionWithMessagePattern(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, "Demote user is not an admin")
             Response.ok() //just always return ok. Return value here isn't important as we trust exceptionHandler works
@@ -432,8 +432,8 @@ class DomainAdminChangeServiceTest extends Specification {
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
 
         then:
-        tenantService.getRbacRolesForUserPerformant(promoteUser) >> promoteUserRoles
-        tenantService.getRbacRolesForUserPerformant(demoteUser) >> demoteUserRoles
+        tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(promoteUser) >> promoteUserRoles
+        tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(demoteUser) >> demoteUserRoles
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             IdmAssert.assertIdmExceptionWithMessagePattern(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, "The promote and demote users must have the same propagating roles")
             Response.ok() //just always return ok. Return value here isn't important as we trust exceptionHandler works
@@ -471,8 +471,8 @@ class DomainAdminChangeServiceTest extends Specification {
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
 
         then:
-        1 * tenantService.getRbacRolesForUserPerformant(promoteUser) >> promoteUserRoles
-        1 * tenantService.getRbacRolesForUserPerformant(demoteUser) >> demoteUserRoles
+        1 * tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(promoteUser) >> promoteUserRoles
+        1 * tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(demoteUser) >> demoteUserRoles
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             IdmAssert.assertIdmExceptionWithMessagePattern(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, "The promote and demote users must have the same propagating roles")
             Response.ok() //just always return ok. Return value here isn't important as we trust exceptionHandler works
@@ -496,8 +496,8 @@ class DomainAdminChangeServiceTest extends Specification {
         def promoteUser = createUser("promoteUser")
         def demoteUser = createUser("demoteUser")
 
-        tenantService.getRbacRolesForUserPerformant(promoteUser) >> [createTenantRole(DEFAULT_USER.roleName)]
-        tenantService.getRbacRolesForUserPerformant(demoteUser) >> [createTenantRole(USER_ADMIN.roleName)]
+        tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(promoteUser) >> [createTenantRole(DEFAULT_USER.roleName)]
+        tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(demoteUser) >> [createTenantRole(USER_ADMIN.roleName)]
 
         DomainAdministratorChange changeRequest = new DomainAdministratorChange().with{
             it.promoteUserId = "promoteUser"
@@ -544,8 +544,8 @@ class DomainAdminChangeServiceTest extends Specification {
         def callerToken = "atoken"
         def promoteUser = createUser("promoteUser")
         def demoteUser = createUser("demoteUser")
-        tenantService.getTenantRolesForUserPerformant(promoteUser) >> [createTenantRole("promoteRBAC"), createTenantRole("promote"),createTenantRole(DEFAULT_USER.roleName),createTenantRole(USER_MANAGER.roleName)]
-        tenantService.getTenantRolesForUserPerformant(demoteUser) >> [createTenantRole("demoteRBAC"), createTenantRole("demote"), createTenantRole(USER_ADMIN.roleName)]
+        tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(promoteUser) >> [createTenantRole("promoteRBAC"), createTenantRole("promote"),createTenantRole(DEFAULT_USER.roleName),createTenantRole(USER_MANAGER.roleName)]
+        tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(demoteUser) >> [createTenantRole("demoteRBAC"), createTenantRole("demote"), createTenantRole(USER_ADMIN.roleName)]
 
         DomainAdministratorChange changeRequest = new DomainAdministratorChange().with{
             it.promoteUserId = "promoteUser"
