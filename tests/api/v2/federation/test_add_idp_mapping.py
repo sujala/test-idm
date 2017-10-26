@@ -173,6 +173,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             public_key=cert_path, issuer=issuer,
             auth_client=api_client)
         self.assertEqual(fed_auth.status_code, 200)
+        self.assertSchema(fed_auth, self.updated_fed_auth_schema)
         fed_token, _, _ = self.parse_auth_response(fed_auth)
 
     @data_file_iterator.data_file_provider((

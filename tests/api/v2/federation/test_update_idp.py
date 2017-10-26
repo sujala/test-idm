@@ -207,6 +207,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             test_data=test_data, domain_id=domain_id, private_key=key_path,
             public_key=cert_path, issuer=issuer)
         self.assertEqual(fed_auth.status_code, 200)
+        self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_enable_disable_idp(self, test_data):
@@ -223,6 +224,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             test_data=test_data, domain_id=domain_id, private_key=key_path,
             public_key=cert_path, issuer=issuer)
         self.assertEqual(fed_auth.status_code, 200)
+        self.assertSchema(fed_auth, self.updated_fed_auth_schema)
         fed_token, _, _ = self.parse_auth_response(fed_auth)
 
         # Disable IDP
@@ -259,6 +261,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             test_data=test_data, domain_id=domain_id, private_key=key_path,
             public_key=cert_path, issuer=issuer)
         self.assertEqual(fed_auth.status_code, 200)
+        self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
     def verify_re_auth_after_idp_update(
             self, test_data, key_path, cert_path, issuer, domain_1, domain_2):
@@ -274,6 +277,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             test_data=test_data, domain_id=domain_2, private_key=key_path,
             public_key=cert_path, issuer=issuer)
         self.assertEqual(fed_auth.status_code, 200)
+        self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_verify_delete_logs_and_re_auth(self, test_data):

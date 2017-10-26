@@ -141,6 +141,8 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             private_key=key_path, public_key=cert_path, issuer=issuer,
             roles=[role_to_add])
         self.assertEqual(fed_auth.status_code, 200)
+        self.assertSchema(fed_auth, json_schema=self.updated_fed_auth_schema)
+
         self.validate_role_present(auth_resp=fed_auth, role=role_0)
         fed_user_id = fed_auth.json()[const.ACCESS][const.USER][const.ID]
         # IdP deletion will automatically delete the fed users. But, we are
@@ -164,6 +166,9 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
                 private_key=key_path, public_key=cert_path, issuer=issuer,
                 roles=roles_to_add)
             self.assertEqual(fed_auth.status_code, 200)
+            self.assertSchema(
+                fed_auth, json_schema=self.updated_fed_auth_schema)
+
             fed_user_id = fed_auth.json()[const.ACCESS][const.USER][const.ID]
             self.users.append(fed_user_id)
             for role in roles:
