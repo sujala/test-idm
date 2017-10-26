@@ -500,13 +500,24 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         }
         cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup2, assignments)
 
-        when: "Invalid user group"
+        when: "Invalid domain"
         UserGroup invalidGroup = new UserGroup().with {
+            it.domainId = "invalid"
+            it.id = createdGroup1.id
+            it
+        }
+        def response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, invalidGroup, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "Invalid user group"
+        invalidGroup = new UserGroup().with {
             it.domainId = sharedUserAdmin.domainId
             it.id = "invalid"
             it
         }
-        def response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, invalidGroup, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
+        response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, invalidGroup, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
 
         then:
         response.status == HttpStatus.SC_NOT_FOUND
