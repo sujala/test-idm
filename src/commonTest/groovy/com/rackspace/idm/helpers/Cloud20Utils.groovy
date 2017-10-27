@@ -110,7 +110,7 @@ class Cloud20Utils {
         entity.token.id
     }
 
-    def authenticate(String username, password=DEFAULT_PASSWORD) {
+    AuthenticateResponse authenticate(String username, password=DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(username, password)
         assert (response.status == SC_OK)
         return response.getEntity(AuthenticateResponse).value
@@ -122,7 +122,7 @@ class Cloud20Utils {
         return response.getEntity(AuthenticateResponse).value
     }
 
-    def authenticate(User user, password=DEFAULT_PASSWORD) {
+    AuthenticateResponse authenticate(User user, password=DEFAULT_PASSWORD) {
         return authenticate(user.username, password)
     }
 
@@ -174,7 +174,7 @@ class Cloud20Utils {
         return entity
     }
 
-    def createUser(token, username=testUtils.getRandomUUID(), domainId=null, defaultRegion=null) {
+    User createUser(token, username=testUtils.getRandomUUID(), domainId=null, defaultRegion=null) {
         def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@rackspace.com", true, defaultRegion, domainId, DEFAULT_PASSWORD))
 
         assert (response.status == SC_CREATED)
@@ -218,11 +218,11 @@ class Cloud20Utils {
      * @param domainId
      * @return
      */
-    def createCloudAccount(identityAdminToken = getIdentityAdminToken(), int domainId = testUtils.getRandomInteger()) {
+    User createCloudAccount(identityAdminToken = getIdentityAdminToken(), int domainId = testUtils.getRandomInteger()) {
         createUserWithTenants(identityAdminToken, testUtils.getRandomUUID("userAdmin"), String.valueOf(domainId))
     }
 
-    def createUserWithTenants(token=getIdentityAdminToken(), username=testUtils.getRandomUUID(), domainId=RandomStringUtils.randomNumeric(6)) {
+    User createUserWithTenants(token=getIdentityAdminToken(), username=testUtils.getRandomUUID(), domainId=RandomStringUtils.randomNumeric(6)) {
         def user = factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
         user.secretQA = v1Factory.createRaxKsQaSecretQA()
         user.groups = new Groups()
@@ -654,6 +654,12 @@ class Cloud20Utils {
         response.getEntity(RoleList).value
     }
 
+    RoleList listRolesForUserOnTenant(User user, Tenant tenant, String token=getServiceAdminToken()) {
+        def response = methods.listRolesForUserOnTenant(token, tenant.id, user.id)
+        assert response.status == SC_OK
+        response.getEntity(RoleList).value
+    }
+
     def listEndpointsForTenant(token, tenantId) {
         def response = methods.listEndpointsForTenant(token, tenantId)
         assert (response.status == SC_OK)
@@ -715,7 +721,7 @@ class Cloud20Utils {
         }
     }
 
-    def createTenant(name=testUtils.getRandomUUID("tenant"), enabled=true, displayName=testUtils.getRandomUUID("tenant"), domainId=null) {
+    Tenant createTenant(name=testUtils.getRandomUUID("tenant"), enabled=true, displayName=testUtils.getRandomUUID("tenant"), domainId=null) {
         def tenant = factory.createTenant(name, displayName, enabled, domainId)
         def response = methods.addTenant(getServiceAdminToken(), tenant)
         assert (response.status == SC_CREATED)
@@ -1349,6 +1355,12 @@ class Cloud20Utils {
         def response = methods.getUserGroup(token, userGroup)
         assert response.status == 200
         return response.getEntity(UserGroup)
+    }
+
+    RoleAssignments listRoleAssignmentsOnUserGroup(UserGroup group, String token = getServiceAdminToken()) {
+        def response = methods.listRoleAssignmentsOnUserGroup(token, group)
+        assert response.status == 200
+        return response.getEntity(RoleAssignments)
     }
 
     def deleteUserGroup(UserGroup group, String token = getIdentityAdminToken()) {

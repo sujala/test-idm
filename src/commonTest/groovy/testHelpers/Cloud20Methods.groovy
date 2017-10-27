@@ -1154,7 +1154,7 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.getId()).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def listRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, UserGroupRoleSearchParams searchParams, MediaType media=MediaType.APPLICATION_XML_TYPE) {
+    def listRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, UserGroupRoleSearchParams searchParams = null, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         WebResource resource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS)
                 .path(userGroup.id).path(SERVICE_PATH_ROLES)
