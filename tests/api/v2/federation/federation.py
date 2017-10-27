@@ -8,6 +8,7 @@ from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 from tests.api.v2.schema import idp as idp_json
+from tests.api.v2.schema import tokens as tokens_json
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2 import client
@@ -60,6 +61,13 @@ class TestBaseFederation(base.TestBaseV2):
             mapping_rules_role_id = list_resp.json()[const.ROLES][0][const.ID]
             cls.service_admin_client.add_role_to_user(
                 user_id=identity_admin_id, role_id=mapping_rules_role_id)
+
+        cls.updated_fed_auth_schema = copy.deepcopy(tokens_json.auth)
+        cls.updated_fed_auth_schema['properties'][const.ACCESS]['properties'][
+            const.USER]['properties'][const.NS_FEDERATED_IDP] = (
+                {'type': 'string'})
+        cls.updated_fed_auth_schema['properties'][const.ACCESS]['properties'][
+            const.USER]['required'] += [const.NS_FEDERATED_IDP]
 
     def setUp(self):
         super(TestBaseFederation, self).setUp()
