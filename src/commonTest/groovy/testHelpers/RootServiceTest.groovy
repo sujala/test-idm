@@ -78,6 +78,7 @@ class RootServiceTest extends Specification {
 
     // converters
     @Shared AuthConverterCloudV20 authConverter
+    @Shared AuthConverterCloudV20 authConverterCloudV20
     @Shared AuthConverterCloudV11 authConverterCloudV11
     @Shared EndpointConverterCloudV20 endpointConverter
     @Shared RoleConverterCloudV20 roleConverter
@@ -212,6 +213,7 @@ class RootServiceTest extends Specification {
         authConverter = Mock()
         authConverter.toAuthenticationResponse(_, _, _, _) >> v2Factory.createAuthenticateResponse()
         authConverter.toImpersonationResponse(_) >> v1Factory.createImpersonationResponse()
+        authConverterCloudV20 = authConverter
         service.authConverterCloudV20 = authConverter
     }
 

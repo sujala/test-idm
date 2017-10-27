@@ -2769,7 +2769,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             ScopeAccess sa = checkAndGetToken(tokenId);
+            boolean isImpersonationToken = false;
             if (sa instanceof ImpersonatedScopeAccess) {
+                isImpersonationToken = true;
                 ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) sa;
                 String impersonatedTokenId = impersonatedScopeAccess.getImpersonatingToken();
                 sa = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenId);
@@ -2789,7 +2791,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             EndpointList list;
-            if (authorizationService.restrictTokenEndpoints(scInfo)) {
+            if (authorizationService.restrictTokenEndpoints(scInfo)
+                    && (!isImpersonationToken
+                        || !identityConfig.getReloadableConfig().shouldDisplayServiceCatalogForSuspendedUserImpersonationTokens())) {
                 //terminator is in effect. All tenants disabled so blank endpoint list
                 list = jaxbObjectFactories.getOpenStackIdentityV2Factory().createEndpointList();
             } else {
