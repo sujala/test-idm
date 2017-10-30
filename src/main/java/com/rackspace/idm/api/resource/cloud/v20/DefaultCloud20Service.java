@@ -4748,7 +4748,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             // Verify user to promote does NOT have the user-admin role.
-            List<TenantRole> promoteUserRoles = tenantService.getTenantRolesForUserPerformant(promoteUser);
+            List<TenantRole> promoteUserRoles = tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(promoteUser);
             TenantRole promoteUserAdminRole = null;
             for (TenantRole tenantRole : promoteUserRoles) {
                 if (IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(tenantRole.getName())) {
@@ -4762,7 +4762,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             // Verify user to demote has the user-admin role.
-            List<TenantRole> demoteUserRoles = tenantService.getTenantRolesForUserPerformant(demoteUser);
+            List<TenantRole> demoteUserRoles = tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(demoteUser);
             TenantRole demoteUserAdminRole = null;
             for (TenantRole tenantRole : demoteUserRoles) {
                 if (IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(tenantRole.getName())) {
