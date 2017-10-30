@@ -79,9 +79,7 @@ class TenantServiceTests extends RootServiceTest {
         1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
         1 * identityConfig.getReloadableConfig().getTenantTypesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         if (excludeTenantType) {
-            1 * identityConfig.getStaticConfig().getNastTenantPrefix() >> Constants.TENANT_TYPE_FILES
             1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
-            1 * tenantTypeService.listTenantTypes(0, DefaultTenantService.TENANT_TYPE_SEARCH_LIMIT) >> tenantTypePaginatorContext
         } else {
             1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
         }
@@ -140,9 +138,7 @@ class TenantServiceTests extends RootServiceTest {
         1 * identityConfig.getReloadableConfig().getTenantTypesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
         if (excludeTenantType) {
-            1 * identityConfig.getStaticConfig().getNastTenantPrefix() >> Constants.TENANT_TYPE_FILES
             1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
-            1 * tenantTypeService.listTenantTypes(0, DefaultTenantService.TENANT_TYPE_SEARCH_LIMIT) >> tenantTypePaginatorContext
         }
 
         and: "the user is excluded based on the tenant type exclusion property"

@@ -529,12 +529,24 @@ public class DefaultTenantService implements TenantService {
          2 parts for inferring to work so 'asf:' would not attempt to infer 'asf' as a tenant type. However, it would
          for 'asf:a'
           */
-        String[] prefixes = tenantId.split(":");
-        if (prefixes.length >= 2 && existingTenantTypes.contains(prefixes[0])) {
-            return prefixes[0];
+        String tenantPrefix = parseTenantPrefixFromTenantId(tenantId);
+        if (StringUtils.isNotEmpty(tenantPrefix) && existingTenantTypes.contains(tenantPrefix)) {
+            return tenantPrefix;
         }
 
         return null;
+    }
+
+    /**
+     * Given a tenant ID, parse out the tenant prefix. The tenant prefix is anything in the tenant ID up to but excluding
+     * the first ':'. If the tenant ID does not contain a ':', the tenant ID does not have a prefix.
+     *
+     * @param tenantId
+     * @return
+     */
+    private String parseTenantPrefixFromTenantId(String tenantId) {
+        String[] idComponents = tenantId.split(":");
+        return idComponents.length >= 2 ? idComponents[0] : null;
     }
 
     /**
@@ -577,7 +589,7 @@ public class DefaultTenantService implements TenantService {
                         IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(user);
                         if (!(IdentityUserTypeEnum.USER_ADMIN == userType) && !(IdentityUserTypeEnum.USER_MANAGER == userType)) {
                             for (String tenantId : tenantIds) {
-                                String inferredTenantType = inferTenantTypeForTenantId(tenantId);
+                                String inferredTenantType = parseTenantPrefixFromTenantId(tenantId);
                                 if (StringUtils.isNotBlank(inferredTenantType) && excludeTenantTypes.contains(inferredTenantType)) {
                                     tenantIdsToGetAutoAssignRole.remove(tenantId);
                                 }
@@ -1439,7 +1451,7 @@ public class DefaultTenantService implements TenantService {
             for (User domainUser : domainUsers) {
                 if (CollectionUtils.isNotEmpty(excludeTenantTypes)) {
                     IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(domainUser);
-                    String inferredTenantType = inferTenantTypeForTenantId(tenant.getTenantId());
+                    String inferredTenantType = parseTenantPrefixFromTenantId(tenant.getTenantId());
                     if ((IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType)
                             || StringUtils.isBlank(inferredTenantType) || !excludeTenantTypes.contains(inferredTenantType)) {
                         users.add(domainUser);
