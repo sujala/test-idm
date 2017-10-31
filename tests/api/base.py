@@ -37,6 +37,10 @@ class TestBase(fixtures.BaseTestFixture):
         cls.url = urlparse.urljoin(
             cls.identity_config.base_url, cls.identity_config.cloud_url)
         cls.url = urlparse.urljoin(cls.url, cls.identity_config.api_version)
+        cls.internal_url = urlparse.urljoin(
+            cls.identity_config.internal_url, cls.identity_config.cloud_url)
+        cls.internal_url = urlparse.urljoin(cls.internal_url,
+                                            cls.identity_config.api_version)
 
         cls.devops_url = urlparse.urljoin(cls.identity_config.base_url,
                                           const.DEVOPS_URL)

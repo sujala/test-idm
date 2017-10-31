@@ -25,18 +25,19 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
             parent_client=self.user_admin_client,
             additional_input_data={'is_user_manager': True})
 
-    @attr(type='smoke_alpha')
-    def test_crud_tenant_role_assignments_to_user_group(self):
+    def setup_user_group(self):
         group_req = factory.get_add_user_group_request(self.domain_id)
         create_group_resp = self.user_admin_client.add_user_group_to_domain(
             domain_id=self.domain_id, request_object=group_req)
         self.assertEqual(create_group_resp.status_code, 201)
-        group = responses.UserGroup(create_group_resp.json())
+        return responses.UserGroup(create_group_resp.json())
 
+    @attr(type='smoke_alpha')
+    def test_crud_tenant_role_assignments_to_user_group(self):
+        group = self.setup_user_group()
         # create roles
         role_1 = self.create_role()
         role_2 = self.create_role()
-
         # create tenant
         tenant_1 = self.create_tenant()
 
@@ -125,6 +126,30 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.assertEqual(len(assignments), 1)
         self.assertEqual(assignments[0][const.ON_ROLE], role_2.id)
         self.assertEqual(assignments[0][const.FOR_TENANTS], ["*"])
+
+    @attr(type='smoke_alpha')
+    def test_add_role_to_user_group_for_tenant(self):
+        group = self.setup_user_group()
+        role = self.create_role()
+        tenant = self.create_tenant()
+
+        resp = self.user_admin_client.add_role_to_user_group_for_tenant(
+            domain_id=self.domain_id, group_id=group.id, role_id=role.id,
+            tenant_id=tenant.id)
+        self.assertEqual(resp.status_code, 204)
+
+        list_resp = (
+            self.user_admin_client.list_tenant_role_assignments_to_user_group(
+              domain_id=self.domain_id, group_id=group.id))
+        self.assertEqual(list_resp.status_code, 200)
+        self.assertSchema(
+            list_resp,
+            json_schema=user_groups.tenants_role_assignments_for_user_group)
+        assignments = list_resp.json()[
+              const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]
+        self.assertEqual(len(assignments), 1)
+        self.assertEqual(assignments[0][const.ON_ROLE], role.id)
+        self.assertEqual(assignments[0][const.FOR_TENANTS], [tenant.id])
 
     def tearDown(self):
 

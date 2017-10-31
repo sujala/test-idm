@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 
 from tests.api.v2 import base
 from tests.api.v2.schema import tokens as tokens_json
@@ -27,19 +28,18 @@ class TestRackerToken(base.TestBaseV2):
         self.racker_auth_resp = self.racker_client.get_auth_token(
             request_object=request_object)
 
+    @attr(type='smoke_no_log_alpha')
     def test_get_validate_racker_token(self):
+        """
+        Using a separate tag 'smoke_no_log_alpha' for this test, because
+        we want to run it separately from other tests in Staging and avoid
+        creating log file by using --nologcapture option of nosetests.
+        Currently, we do not have a way to mask the credentials in the test
+        log files. Hence, for time being, running this test by preventing
+        log file creation. If something fails, console output can still help
+        and we can mask credentials from appearing in the console output.
+        """
 
-        # racker_client = client.IdentityAPIClient(
-        #     url=self.url,
-        #     serialize_format=self.test_config.serialize_format,
-        #     deserialize_format=self.test_config.deserialize_format)
-
-        # # Get Token with Racker user & password
-        # request_object = requests.AuthenticateAsRackerWithPassword(
-        #     racker_name=self.identity_config.racker_username,
-        #     racker_password=self.identity_config.racker_password)
-
-        # resp = racker_client.get_auth_token(request_object=request_object)
         self.assertEqual(self.racker_auth_resp.status_code, 200)
 
         # Validate Racker Token
@@ -53,7 +53,7 @@ class TestRackerToken(base.TestBaseV2):
     def test_analyze_racker_token(self):
         token_id = self.racker_auth_resp.json()[
             const.ACCESS][const.TOKEN][const.ID]
-        # The identity_admin used should have the 'analyze-token' role inorder
+        # The identity_admin user should have the 'analyze-token' role in order
         # to use the analyze token endpoint, else will result in HTTP 403.
         self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
             token_id

@@ -21,6 +21,11 @@ class IdentityConfig(data_interfaces.ConfigSectionInterface):
         return self.get('cloud_url')
 
     @property
+    def internal_url(self):
+        """identity endpoint."""
+        return self.get('internal_url')
+
+    @property
     def api_version(self):
         """identity API version."""
         return self.get('api_version')
