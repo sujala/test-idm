@@ -1536,8 +1536,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         assert response.status == SC_CREATED
         response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
 
-        then: "Assert badRequest"
-        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault , SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS)
+        then: "Assert conflict w/ specific code/message"
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS, ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS_MSG)
 
         when: "Exceed number of IDPs for the domain's limit"
         reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP, 1)
@@ -3194,91 +3194,91 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "Domain IDP with both approvedDomains and approvedDomainGroup"
         invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, [domainId])
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "Racker IDP with approvedDomainGroup"
         invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "Domain IDP with invalid approvedDomainGroup"
         invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, "Invalid", null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_GROUP)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_GROUP)
 
         when: "Domain IDP with invalid approvedDomains"
         invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, ["non-existent-domain"])
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN)
 
         when: "IDP with issuer already exists"
         invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", Constants.DEFAULT_IDP_URI, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "409"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS)
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS, ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS_MSG)
 
         when: "IDP with issuer length exceeded 255"
         invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", RandomStringUtils.randomAlphabetic(256), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
 
         when: "IDP with missing issuer"
         invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", null, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
 
         when: "IDP with missing fed type"
         invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah",  getRandomUUID(), null, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
 
         when: "IDP with name length exceeded 255"
         invalid = v2Factory.createIdentityProvider(RandomStringUtils.randomAlphabetic(256), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
 
         when: "IDP with name having special characters"
         invalid = v2Factory.createIdentityProvider(getRandomUUID("@"), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE)
 
         when: "IDP with no name"
         invalid = v2Factory.createIdentityProvider(null, "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
 
         when: "IDP with empty name"
         invalid = v2Factory.createIdentityProvider("", "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
     }
 
     def "Update Identity Provider returns errors appropriately"() {

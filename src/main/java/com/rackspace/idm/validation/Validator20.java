@@ -449,7 +449,7 @@ public class Validator20 {
     public void validateIdentityProviderIssuerWithDupCheck(IdentityProvider identityProvider) {
         validateStringNotNullWithMaxLength("issuer", identityProvider.getIssuer(), MAX_IDENTITY_PROVIDER_ISSUER);
         if (federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) != null) {
-            throw new DuplicateException("Provider already exists with this issuer", ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS);
+            throw new DuplicateException(ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS_MSG, ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS);
         }
     }
 

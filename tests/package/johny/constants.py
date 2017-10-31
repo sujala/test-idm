@@ -16,6 +16,9 @@ ADD_ROLE_TO_USER_FOR_TENANT_URL = DEL_ROLE_FROM_USER_FOR_TENANT_URL = (
 ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
 ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL = (
     '/RAX-AUTH/domains/{domain_id}/groups/{group_id}/roles')
+ADD_ROLE_TO_USER_GROUP_ON_TENANT_URL = (
+    ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL +
+    '/{role_id}/tenants/{tenant_id}')
 ADD_TENANT_TO_DOMAIN_URL = DELETE_TENANT_FROM_DOMAIN_URL = (
     '/RAX-AUTH/domains/{domain_id}/tenants/{tenant_id}')
 ADD_TENANT_URL = LIST_TENANTS = '/tenants'
