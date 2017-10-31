@@ -130,12 +130,13 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
         // Verify the user is allowed to login [TERMINATOR]
         // Do not filter the service catalog for these users if the token is an impersonation token of that user
-        if (authorizationService.restrictUserAuthentication(scInfo) && (!authResponseTuple.isImpersonation()
-                || !identityConfig.getReloadableConfig().shouldDisplayServiceCatalogForSuspendedUserImpersonationTokens())) {
-            //terminator is in effect. All tenants disabled so blank service catalog
-            scInfo = new ServiceCatalogInfo(scInfo.getUserTenantRoles(), scInfo.getUserTenants(), Collections.EMPTY_LIST, scInfo.getUserTypeEnum());
-        } else if (restrictingAuthByTenant
-                && (!authResponseTuple.isImpersonation() || !authorizationService.restrictUserAuthentication(scInfo))) {
+        if (authorizationService.restrictUserAuthentication(scInfo)) {
+            if (!authResponseTuple.isImpersonation()
+                    || !identityConfig.getReloadableConfig().shouldDisplayServiceCatalogForSuspendedUserImpersonationTokens()) {
+                //terminator is in effect. All tenants disabled so blank service catalog
+                scInfo = new ServiceCatalogInfo(scInfo.getUserTenantRoles(), scInfo.getUserTenants(), Collections.EMPTY_LIST, scInfo.getUserTypeEnum());
+            }
+        } else if (restrictingAuthByTenant) {
             /**
              * If terminator is in play, doesn't matter if the user specified a disabled tenant. However, if terminator
              * is not in play and user specified tenant, must validate that the tenant the user specified is actually
