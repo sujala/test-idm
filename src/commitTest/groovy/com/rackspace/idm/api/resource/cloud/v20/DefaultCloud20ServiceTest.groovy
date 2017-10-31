@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.exception.*
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
@@ -26,6 +27,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
+import org.openstack.docs.identity.api.v2.EndpointList
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Shared
@@ -3730,7 +3732,55 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         0 * userGroupService.deleteGroup(_)
     }
 
+    @Unroll
+    def "listEndpointsForToken: service catalog is not filtered for impersonation tokens of suspended users, featureEnabled = #featureEnabled"() {
+        given:
+        def authToken = "authToken"
+        def token = "token"
+        def impersonatedToken = "impersonatedToken"
+        def impersonatedTokenEntity = new UserScopeAccess()
+        def impersonatedUser = new User()
+        def serviceCatalogInfo = new ServiceCatalogInfo()
+        allowUserAccess()
+        mockJAXBObjectFactories(service)
+        jaxbObjectFactories.getOpenStackIdentityV2Factory().createEndpoints(_) >> Mock(JAXBElement)
+
+        when:
+        service.listEndpointsForToken(null, authToken, token, false)
+
+        then: "correct services are called to build the service catalog"
+        1 * scopeAccessService.getScopeAccessByAccessToken(token) >> new ImpersonatedScopeAccess().with {
+            it.impersonatingToken = impersonatedToken
+            it
+        }
+        1 * scopeAccessService.getScopeAccessByAccessToken(impersonatedToken) >> impersonatedTokenEntity
+        1 * userService.getUserByScopeAccess(impersonatedTokenEntity, false) >> impersonatedUser
+        1 * scopeAccessService.getServiceCatalogInfo(impersonatedUser) >> serviceCatalogInfo
+
+        and: "services are called to determine if the user is suspended"
+        1 * authorizationService.restrictTokenEndpoints(serviceCatalogInfo) >> true // The user is suspended
+        1 * identityConfig.getReloadableConfig().shouldDisplayServiceCatalogForSuspendedUserImpersonationTokens() >> featureEnabled
+
+        and: "objectFactory or endpoint converter is called based on if the service catalog should be populated"
+        jaxbObjectFactories.getOpenStackIdentityV2Factory().createEndpointList() >> { args ->
+            // This is only called if the feature to display the service catalog for impersonated tokens of suspended users is disabled
+            assert !featureEnabled
+            return new EndpointList()
+        }
+        endpointConverter.toEndpointList(_) >> { args ->
+            assert featureEnabled
+            return new EndpointList()
+        }
+
+        cleanup:
+        service.jaxbObjectFactories = new JAXBObjectFactories()
+
+        where:
+        featureEnabled << [true, false]
+    }
+
     def mockServices() {
+        mockEndpointConverter(service)
         mockAuthenticationService(service)
         mockAuthorizationService(service)
         mockApplicationService(service)

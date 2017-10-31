@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
@@ -15,6 +16,7 @@ import com.rackspacecloud.docs.auth.api.v1.ForbiddenFault
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.EndpointList
+import org.openstack.docs.identity.api.v2.Tenant
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -415,6 +417,88 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
+    }
+
+    @Unroll
+    def "service catalog is filtered for impersonation tokens of suspended users based on feature flag, shouldDisplayFeatureFlag = #shouldDisplay, applyRcn = #applyRcn, domainTenant = #domainTenant"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP, shouldDisplay)
+        def domainId = utils.createDomain()
+        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
+        def role = utils.createRole()
+        def tenant = utils.createTenant()
+        if (domainTenant) {
+            utils.addTenantToDomain(domainId, tenant.id)
+        } else {
+            utils.addRoleToUserOnTenant(userAdmin, tenant, role.id)
+        }
+        utils.updateTenant(tenant.id, false)
+        String impersonationToken = utils.getImpersonatedTokenWithToken(utils.getServiceAdminToken(), userAdmin)
+        String rackerImpersonationToken = utils.getImpersonationTokenWithRacker(userAdmin)
+        utils.addEndpointTemplateToTenant(tenant.id, Integer.parseInt(MOSSO_ENDPOINT_TEMPLATE_ID))
+
+        when: "authenticate as the user admin"
+        def authResponse = utils.authenticate(userAdmin, Constants.DEFAULT_PASSWORD, applyRcn.toString())
+
+        then: "no service catalog"
+        authResponse.serviceCatalog.service.isEmpty()
+
+        when: "list endpoints for token"
+        EndpointList endpoints = utils.listEndpointsForToken(authResponse.token.id, utils.getServiceAdminToken(), applyRcn)
+
+        then: "no endpoints"
+        endpoints.endpoint.isEmpty()
+
+        when: "auth with impersonation token"
+        authResponse = utils.authenticateTokenWithTenant(impersonationToken, tenant.id, applyRcn.toString())
+
+        then: "service catalog populated based on feature flag"
+        if (shouldDisplay) {
+            assert authResponse.serviceCatalog != null
+            assert authResponse.serviceCatalog.service.endpoint.size() > 0
+        } else {
+            assert authResponse.serviceCatalog.service.isEmpty()
+        }
+
+        when: "list endpoints for impersonation token"
+        endpoints = utils.listEndpointsForToken(authResponse.token.id, utils.getServiceAdminToken(), applyRcn)
+
+        then: "endpoints populated based on feature flag"
+        if (shouldDisplay) {
+            assert endpoints.endpoint.size() > 0
+        } else {
+            assert endpoints.endpoint.isEmpty()
+        }
+
+        when: "auth with racker impersonation token"
+        authResponse = utils.authenticateTokenWithTenant(rackerImpersonationToken, tenant.id, applyRcn.toString())
+
+        then: "service catalog populated based on feature flag"
+        if (shouldDisplay) {
+            assert authResponse.serviceCatalog != null
+            assert authResponse.serviceCatalog.service.endpoint.size() > 0
+        } else {
+            assert authResponse.serviceCatalog.service.isEmpty()
+        }
+
+        when: "list endpoints for racker impersonation token"
+        endpoints = utils.listEndpointsForToken(authResponse.token.id, utils.getServiceAdminToken(), applyRcn)
+
+        then: "endpoints populated based on feature flag"
+        if (shouldDisplay) {
+            assert endpoints.endpoint.size() > 0
+        } else {
+            assert endpoints.endpoint.isEmpty()
+        }
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+        utils.deleteTenant(tenant)
+        utils.deleteRole(role)
+        reloadableConfiguration.reset()
+
+        where:
+        [shouldDisplay, applyRcn, domainTenant] << [[true, false], [true, false], [true, false]].combinations()
     }
 
     def addRoleToUserOnTenant(role, tenant, username) {

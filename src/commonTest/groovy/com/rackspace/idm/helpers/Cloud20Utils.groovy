@@ -110,20 +110,20 @@ class Cloud20Utils {
         entity.token.id
     }
 
-    AuthenticateResponse authenticate(String username, password=DEFAULT_PASSWORD) {
-        def response = methods.authenticatePassword(username, password)
+    AuthenticateResponse authenticate(String username, password=DEFAULT_PASSWORD, String applyRcnRoles = null) {
+        def response = methods.authenticatePassword(username, password, applyRcnRoles)
         assert (response.status == SC_OK)
         return response.getEntity(AuthenticateResponse).value
     }
 
-    def authenticateApplyRcnRoles(String username, String applyRcnRolesParam = "true", password=DEFAULT_PASSWORD) {
+    AuthenticateResponse authenticateApplyRcnRoles(String username, String applyRcnRolesParam = "true", password=DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(username, password, applyRcnRolesParam)
         assert (response.status == SC_OK)
         return response.getEntity(AuthenticateResponse).value
     }
 
-    AuthenticateResponse authenticate(User user, password=DEFAULT_PASSWORD) {
-        return authenticate(user.username, password)
+    AuthenticateResponse authenticate(User user, password=DEFAULT_PASSWORD, String applyRcnRoles = null) {
+        return authenticate(user.username, password, applyRcnRoles)
     }
 
     def authenticateApplyRcnRoles(User user, String applyRcnRolesParam = "true", password=DEFAULT_PASSWORD) {
@@ -144,8 +144,8 @@ class Cloud20Utils {
         return response.getEntity(AuthenticateResponse).value
     }
 
-    def authenticateTokenWithTenant(token, tenantId) {
-        def response = methods.authenticateTokenAndTenant(token, tenantId)
+    AuthenticateResponse authenticateTokenWithTenant(token, tenantId, applyRcnRoles=false) {
+        def response = methods.authenticateTokenAndTenant(token, tenantId, applyRcnRoles)
         assert(response.status == 200)
         return response.getEntity(AuthenticateResponse).value
     }
@@ -166,7 +166,7 @@ class Cloud20Utils {
         return entity.token.id
     }
 
-    def listEndpointsForToken(token, authToken=getServiceAdminToken(), applyRcnRoles=false) {
+    EndpointList listEndpointsForToken(token, authToken=getServiceAdminToken(), applyRcnRoles=false) {
         def response = methods.listEndpointsForToken(authToken, token, applyRcnRoles)
         assert response.status == 200
         def entity = response.getEntity(EndpointList).value
@@ -291,13 +291,20 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
-    def Domain getDomain(domainId, String token=getServiceAdminToken()) {
+    Domain getDomain(domainId, String token=getServiceAdminToken()) {
         def response = methods.getDomain(token, domainId)
         assert (response.status == SC_OK)
 
         def entity = response.getEntity(Domain)
         assert (entity != null)
         return entity
+    }
+
+    Tenants listDomainTenants(String domainId, String token=getServiceAdminToken()) {
+        def response = methods.getDomainTenants(token, domainId)
+        assert response.status == SC_OK
+
+        response.getEntity(Tenants).value
     }
 
     def updateDomainPasswordPolicy(String domainId, PasswordPolicy passwordPolicy, token=getServiceAdminToken()) {
@@ -473,7 +480,7 @@ class Cloud20Utils {
         return [userAdmin, [identityAdmin, userAdmin].asList()]
     }
 
-    def createUserAdminWithoutIdentityAdmin(domainId=testUtils.getRandomIntegerString()) {
+    User createUserAdminWithoutIdentityAdmin(domainId=testUtils.getRandomIntegerString()) {
         return createUser(this.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), domainId)
     }
 
@@ -557,41 +564,29 @@ class Cloud20Utils {
         response.getEntity(ImpersonationResponse)
     }
 
-    def impersonate(token, user) {
-        methods.impersonate(token, user)
-    }
-
-    def impersonate(String token, User user, Integer expireTime) {
+    ImpersonationResponse impersonate(String token, User user, Integer expireTime = 10800) {
         def response = methods.impersonate(token, user, expireTime)
         assert (response.status == SC_OK)
         response.getEntity(ImpersonationResponse)
     }
 
-    def impersonateWithRacker(user, expireTime = 10800) {
+    ImpersonationResponse impersonateWithRacker(User user, expireTime = 10800) {
         def auth = authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD)
         def response = methods.impersonate(auth.token.id, user, expireTime)
         assert (response.status == SC_OK)
         response.getEntity(ImpersonationResponse)
     }
 
-    def getImpersonatedToken(impersonator, user) {
-        def response = impersonate(getToken(impersonator.username, DEFAULT_PASSWORD), user)
-
-        assert (response.status == SC_OK)
-
-        def entity = response.getEntity(ImpersonationResponse)
-        assert (entity != null)
-        entity.token.id
+    String getImpersonationTokenWithRacker(User user, expireTime = 10800) {
+        impersonateWithRacker(user, expireTime).token.id
     }
 
-    def getImpersonatedTokenWithToken(token, user) {
-        def response = impersonate(token, user)
+    String getImpersonatedToken(User impersonator, User user) {
+        impersonate(getToken(impersonator.username, DEFAULT_PASSWORD), user).token.id
+    }
 
-        assert (response.status == SC_OK)
-
-        def entity = response.getEntity(ImpersonationResponse)
-        assert (entity != null)
-        entity.token.id
+    String getImpersonatedTokenWithToken(String token, User user) {
+        impersonate(token, user).token.id
     }
 
     def updateUser(user, userId = user.id, MediaType requestMediaType = APPLICATION_XML_TYPE) {
@@ -833,7 +828,7 @@ class Cloud20Utils {
         deleteEndpointTemplate(endpointTemplate)
     }
 
-    def addEndpointTemplateToTenant(tenantId, endpointTemplateId) {
+    def addEndpointTemplateToTenant(tenantId, int endpointTemplateId) {
         def endpointTemplate = new EndpointTemplate().with {
             it.id = endpointTemplateId
             it

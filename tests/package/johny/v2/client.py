@@ -1723,3 +1723,16 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             domain_id=domain_id, group_id=group_id, user_id=user_id)
         return self.request(
             'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
+    def add_role_to_user_group_for_tenant(
+            self, domain_id, group_id, role_id, tenant_id,
+            requestslib_kwargs=None):
+        """
+        PUT RAX-AUTH/domains/{domainId}/groups/{groupId}/roles/{roleId}/
+        tenants/{tenantId}
+        """
+        url = self.url + (
+            const.ADD_ROLE_TO_USER_GROUP_ON_TENANT_URL.format(
+                domain_id=domain_id, group_id=group_id, role_id=role_id,
+                tenant_id=tenant_id))
+        return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)

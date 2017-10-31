@@ -1,12 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.newrelic.api.agent.NewRelic;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.api.resource.cloud.NewRelicTransactionNames;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
@@ -30,7 +28,10 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import static com.rackspace.idm.GlobalConstants.X_PASSWORD_EXPIRATION;
 
@@ -59,7 +60,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     private UserService userService;
 
     @Autowired
-    private JAXBObjectFactories objFactories;
+    private JAXBObjectFactories jaxbObjectFactories;
 
     @Autowired
     private UserConverterCloudV20 userConverterCloudV20;
@@ -128,14 +129,20 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         }
 
         // Verify the user is allowed to login [TERMINATOR]
+        // Do not filter the service catalog for these users if the token is an impersonation token of that user
         if (authorizationService.restrictUserAuthentication(scInfo)) {
-            //terminator is in effect. All tenants disabled so blank service catalog
-            scInfo = new ServiceCatalogInfo(scInfo.getUserTenantRoles(), scInfo.getUserTenants(), Collections.EMPTY_LIST, scInfo.getUserTypeEnum());
+            if (!authResponseTuple.isImpersonation()
+                    || !identityConfig.getReloadableConfig().shouldDisplayServiceCatalogForSuspendedUserImpersonationTokens()) {
+                //terminator is in effect. All tenants disabled so blank service catalog
+                scInfo = new ServiceCatalogInfo(scInfo.getUserTenantRoles(), scInfo.getUserTenants(), Collections.EMPTY_LIST, scInfo.getUserTypeEnum());
+            }
         } else if (restrictingAuthByTenant) {
             /**
-            * If terminator is in play, doesn't matter if the user specified a disabled tenant. However, if terminator
-            * is not in play and user specified tenant, must validate that the tenant the user specified is actually
-            * enabled, otherwise throw an error
+             * If terminator is in play, doesn't matter if the user specified a disabled tenant. However, if terminator
+             * is not in play and user specified tenant, must validate that the tenant the user specified is actually
+             * enabled, otherwise throw an error. Exception to this is when terminator is in play and
+             * the token provided is an impersonation token for the suspended user. In this case, we do not filter
+             * the service catalog and we do not throw an error.
              */
             verifyUserSpecifiedTenantIsEnabled(authResponseTuple.getUser(), scInfo, authenticationRequest);
         }
@@ -177,7 +184,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
             auth.setServiceCatalog(null);
         }
 
-        Response.ResponseBuilder responseBuilder = Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
+        Response.ResponseBuilder responseBuilder = Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
 
         if (tenantInRequest != null) {
             responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantInRequest.getTenantId());
@@ -197,7 +204,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
     @Override
     public AuthenticateResponse buildAuthResponseForValidateToken(RackerScopeAccess rackerScopeAccess) {
-        AuthenticateResponse authenticateResponse = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
+        AuthenticateResponse authenticateResponse = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
         authenticateResponse.setToken(this.tokenConverterCloudV20.toToken(rackerScopeAccess, null));
         Racker racker = userService.getRackerByRackerId(rackerScopeAccess.getRackerId());
         List<TenantRole> roleList = tenantService.getEphemeralRackerTenantRoles(racker.getRackerId());
@@ -217,7 +224,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     }
 
     private AuthenticateResponse buildAuthResponseForValidateTokenInternal(UserScopeAccess sa, String tenantId, boolean applyRcnRoles) {
-        AuthenticateResponse authenticateResponse = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
+        AuthenticateResponse authenticateResponse = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
         // Throws NotFoundException if user can not be retrieved
         EndUser user = (EndUser) userService.getUserByScopeAccess(sa);
@@ -248,7 +255,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     }
 
     private AuthenticateResponse buildAuthResponseForValidateImpersonateTokenInternal(ImpersonatedScopeAccess isa, String tenantId, boolean applyRcnRoles) {
-        AuthenticateResponse authenticateResponse = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
+        AuthenticateResponse authenticateResponse = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
         List<TenantRole> roles;
         ScopeAccess impersonatedToken = scopeAccessService.getScopeAccessByAccessToken(isa.getImpersonatingToken());
@@ -307,7 +314,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         } else {
             throw new IllegalStateException("Unrecognized type of user '" + user.getClass().getName() + "'");
         }
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory();
         JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = objectFactory.createImpersonator(userForAuthenticateResponse);
         authenticateResponse.getAny().add(impersonatorJAXBElement);
 

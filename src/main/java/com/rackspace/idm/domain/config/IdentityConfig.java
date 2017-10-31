@@ -464,6 +464,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_ISSUED_IN_RESPONSE_PROP = "feature.enable.issued_at.in.response";
     public static final boolean FEATURE_ENABLE_ISSUED_IN_RESPONSE_DEFAULT = true;
 
+    public static final String FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP = "feature.should.display.service.catalog.for.suspended.user.impersonate.tokens";
+    public static final boolean FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_DEFAULT = false;
+
     /**
      * Identity Repository Properties
      */
@@ -659,6 +662,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT);
 
         defaults.put(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT);
+
+        defaults.put(FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP, FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_DEFAULT);
 
         return defaults;
     }
@@ -1898,6 +1903,12 @@ public class IdentityConfig {
         public boolean getEnableIssuedInResponse() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_ISSUED_IN_RESPONSE_PROP);
         }
+
+        @IdmProp(key = FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP, versionAdded = "3.17.0", description = "Whether or not to filter the service catalog for impersonation tokens of suspended users (users that belong to a domain with all domain tenants disabled)")
+        public boolean shouldDisplayServiceCatalogForSuspendedUserImpersonationTokens() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP);
+        }
+
     }
 
     public class RepositoryConfig {
