@@ -434,6 +434,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         }
         utils.updateTenant(tenant.id, false)
         String impersonationToken = utils.getImpersonatedTokenWithToken(utils.getServiceAdminToken(), userAdmin)
+        String rackerImpersonationToken = utils.getImpersonationTokenWithRacker(userAdmin)
         utils.addEndpointTemplateToTenant(tenant.id, Integer.parseInt(MOSSO_ENDPOINT_TEMPLATE_ID))
 
         when: "authenticate as the user admin"
@@ -460,6 +461,27 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         }
 
         when: "list endpoints for impersonation token"
+        endpoints = utils.listEndpointsForToken(authResponse.token.id, utils.getServiceAdminToken(), applyRcn)
+
+        then: "endpoints populated based on feature flag"
+        if (shouldDisplay) {
+            assert endpoints.endpoint.size() > 0
+        } else {
+            assert endpoints.endpoint.isEmpty()
+        }
+
+        when: "auth with racker impersonation token"
+        authResponse = utils.authenticateTokenWithTenant(rackerImpersonationToken, tenant.id, applyRcn.toString())
+
+        then: "service catalog populated based on feature flag"
+        if (shouldDisplay) {
+            assert authResponse.serviceCatalog != null
+            assert authResponse.serviceCatalog.service.endpoint.size() > 0
+        } else {
+            assert authResponse.serviceCatalog.service.isEmpty()
+        }
+
+        when: "list endpoints for racker impersonation token"
         endpoints = utils.listEndpointsForToken(authResponse.token.id, utils.getServiceAdminToken(), applyRcn)
 
         then: "endpoints populated based on feature flag"

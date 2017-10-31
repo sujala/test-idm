@@ -570,11 +570,15 @@ class Cloud20Utils {
         response.getEntity(ImpersonationResponse)
     }
 
-    ImpersonationResponse impersonateWithRacker(user, expireTime = 10800) {
+    ImpersonationResponse impersonateWithRacker(User user, expireTime = 10800) {
         def auth = authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD)
         def response = methods.impersonate(auth.token.id, user, expireTime)
         assert (response.status == SC_OK)
         response.getEntity(ImpersonationResponse)
+    }
+
+    String getImpersonationTokenWithRacker(User user, expireTime = 10800) {
+        impersonateWithRacker(user, expireTime).token.id
     }
 
     String getImpersonatedToken(User impersonator, User user) {

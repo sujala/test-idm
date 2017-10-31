@@ -3757,11 +3757,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.getUserByScopeAccess(impersonatedTokenEntity, false) >> impersonatedUser
         1 * scopeAccessService.getServiceCatalogInfo(impersonatedUser) >> serviceCatalogInfo
 
-        and: "services are call to determine of the user is suspended"
+        and: "services are called to determine if the user is suspended"
         1 * authorizationService.restrictTokenEndpoints(serviceCatalogInfo) >> true // The user is suspended
         1 * identityConfig.getReloadableConfig().shouldDisplayServiceCatalogForSuspendedUserImpersonationTokens() >> featureEnabled
 
-        and: "objectFactory or converted is called based on if the service catalog should be populated"
+        and: "objectFactory or endpoint converter is called based on if the service catalog should be populated"
         jaxbObjectFactories.getOpenStackIdentityV2Factory().createEndpointList() >> { args ->
             // This is only called if the feature to display the service catalog for impersonated tokens of suspended users is disabled
             assert !featureEnabled
