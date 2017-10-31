@@ -30,7 +30,7 @@ class TenantServiceTests extends RootServiceTest {
     }
 
     @Unroll
-    def "getTenantRolesForUserPerformant: assigns the auto-assign role based on the exclude tenant type feature flag, excludeTenantType = #excludeTenantType"() {
+    def "getTenantRolesForUserPerformant: assigns the auto-assign role based on the exclude tenant prefix feature flag, excludeTenantType = #excludeTenantType"() {
         given:
         def domainId = RandomStringUtils.randomAlphanumeric(8)
         def user = new User().with {
@@ -40,12 +40,6 @@ class TenantServiceTests extends RootServiceTest {
             it
         }
         def tenantType = RandomStringUtils.randomAlphanumeric(8)
-        def tenantTypeEntity = new TenantType().with {
-            it.name = tenantType
-            it
-        }
-        PaginatorContext tenantTypePaginatorContext = Mock(PaginatorContext)
-        tenantTypePaginatorContext.getValueList() >> [tenantTypeEntity]
         def tenant = new Tenant().with {
             it.tenantId = "$tenantType:${RandomStringUtils.randomAlphanumeric(8)}"
             it.name = it.tenantId
@@ -95,8 +89,114 @@ class TenantServiceTests extends RootServiceTest {
         excludeTenantType << [true, false]
     }
 
+    def "getTenantRolesForUserPerformant: excludes the auto-assign role based on the exclude tenant prefix for all tenant prefixes in the config"() {
+        given:
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def user = new User().with {
+            it.username = RandomStringUtils.randomAlphanumeric(8)
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = domainId
+            it
+        }
+        def tenantPrefix1 = RandomStringUtils.randomAlphanumeric(8)
+        def tenantPrefix2 = RandomStringUtils.randomAlphanumeric(8)
+        def tenant1 = new Tenant().with {
+            it.tenantId = "$tenantPrefix1:${RandomStringUtils.randomAlphanumeric(8)}"
+            it.name = it.tenantId
+            it.domainId = domainId
+            it
+        }
+        def tenant2 = new Tenant().with {
+            it.tenantId = "$tenantPrefix2:${RandomStringUtils.randomAlphanumeric(8)}"
+            it.name = it.tenantId
+            it.domainId = domainId
+            it
+        }
+        def domain = new Domain().with {
+            it.domainId = domainId
+            it.tenantIds = [tenant1.tenantId, tenant2.tenantId]
+            it
+        }
+        def tenantAccessRole = new ImmutableClientRole(new ClientRole().with {
+            it.id = Constants.IDENTITY_TENANT_ACCESS_ROLE_ID
+            it.name = Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
+            it
+        })
+        def excludedTenantTypes = [tenantPrefix1, tenantPrefix2]
+
+        when:
+        def userTenantRoles = service.getTenantRolesForUserPerformant(user)
+
+        then: "the correct backend services are called"
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> []
+        2 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
+        1 * domainService.getDomain(domainId) >> domain
+        1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
+        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
+        1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
+        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
+
+        and: "the user gets the auto-assigned tenant role based on the exclude tenant type config"
+        assert userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantIds.contains(tenant1.tenantId) } == null
+        assert userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantIds.contains(tenant2.tenantId) } == null
+    }
+
     @Unroll
-    def "getEnabledUsersWithEffectiveTenantRole: assigns the auto-assign tenant access role based on the exclude tenant type config, excludeTenantType = #excludeTenantType"() {
+    def "getTenantRolesForUserPerformant: assigns the auto-assign role for excluded tenant prefixed to only user admins and user managers, userType = #userType"() {
+        given:
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def user = new User().with {
+            it.username = RandomStringUtils.randomAlphanumeric(8)
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = domainId
+            it
+        }
+        def tenantPrefix = RandomStringUtils.randomAlphanumeric(8)
+        def tenant = new Tenant().with {
+            it.tenantId = "$tenantPrefix:${RandomStringUtils.randomAlphanumeric(8)}"
+            it.name = it.tenantId
+            it.domainId = domainId
+            it
+        }
+        def domain = new Domain().with {
+            it.domainId = domainId
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+        def tenantAccessRole = new ImmutableClientRole(new ClientRole().with {
+            it.id = Constants.IDENTITY_TENANT_ACCESS_ROLE_ID
+            it.name = Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
+            it
+        })
+        def excludedTenantTypes = [tenantPrefix]
+
+        when:
+        def userTenantRoles = service.getTenantRolesForUserPerformant(user)
+
+        then: "the correct backend services are called"
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> []
+        2 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
+        1 * domainService.getDomain(domainId) >> domain
+        1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
+        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
+        1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
+        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
+
+        and: "the user gets the auto-assigned tenant role based on the exclude tenant type config"
+        if (IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType) {
+            assert userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantIds.contains(tenant.tenantId) } != null
+        } else {
+            assert userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantIds.contains(tenant.tenantId) } == null
+        }
+
+        where:
+        userType << IdentityUserTypeEnum.values()
+    }
+
+    @Unroll
+    def "getEnabledUsersWithEffectiveTenantRole: assigns the auto-assign tenant access role based on the exclude tenant prefix config, excludeTenantType = #excludeTenantType"() {
         given:
         def domainId = RandomStringUtils.randomAlphanumeric(8)
         def user = new User().with {
@@ -106,12 +206,6 @@ class TenantServiceTests extends RootServiceTest {
             it
         }
         def tenantType = RandomStringUtils.randomAlphanumeric(8)
-        def tenantTypeEntity = new TenantType().with {
-            it.name = tenantType
-            it
-        }
-        PaginatorContext tenantTypePaginatorContext = Mock(PaginatorContext)
-        tenantTypePaginatorContext.getValueList() >> [tenantTypeEntity]
         def tenant = new Tenant().with {
             it.tenantId = "$tenantType:${RandomStringUtils.randomAlphanumeric(8)}"
             it.name = it.tenantId
@@ -153,4 +247,110 @@ class TenantServiceTests extends RootServiceTest {
         where:
         excludeTenantType << [true, false]
     }
+
+    def "getEnabledUsersWithEffectiveTenantRole: excludes the auto-assign tenant access role for all tenant prefixes listed in the exclusion config"() {
+        given:
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def user = new User().with {
+            it.username = RandomStringUtils.randomAlphanumeric(8)
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = domainId
+            it
+        }
+        def tenantType1 = RandomStringUtils.randomAlphanumeric(8)
+        def tenantType2 = RandomStringUtils.randomAlphanumeric(8)
+        def tenant1 = new Tenant().with {
+            it.tenantId = "$tenantType1:${RandomStringUtils.randomAlphanumeric(8)}"
+            it.name = it.tenantId
+            it.domainId = domainId
+            it
+        }
+        def tenant2 = new Tenant().with {
+            it.tenantId = "$tenantType2:${RandomStringUtils.randomAlphanumeric(8)}"
+            it.name = it.tenantId
+            it.domainId = domainId
+            it
+        }
+        def tenantAccessRole = new ClientRole().with {
+            it.id = Constants.IDENTITY_TENANT_ACCESS_ROLE_ID
+            it.name = Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
+            it
+        }
+        def excludedTenantPrefixes = [tenantType1, tenantType2]
+
+        when: "get users for the first tenant prefix in the list"
+        PaginatorContext<User> paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant1, tenantAccessRole, 0, 100)
+
+        then: "correct backend services are called"
+        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
+        1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
+        1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
+        1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantPrefixes
+        1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant1.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
+
+        and: "the user is excluded based on the tenant type exclusion property"
+        assert !paginatorContext.getValueList().contains(user)
+
+        when: "get users for the second tenant prefix in the list"
+        paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant2, tenantAccessRole, 0, 100)
+
+        then: "correct backend services are called"
+        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
+        1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
+        1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
+        1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantPrefixes
+        1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant2.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
+
+        and: "the user is excluded based on the tenant type exclusion property"
+        assert !paginatorContext.getValueList().contains(user)
+    }
+
+    @Unroll
+    def "getEnabledUsersWithEffectiveTenantRole: excludes the auto-assign tenant access role for all users except user admins and user managers: userType = #userType"() {
+        given:
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def user = new User().with {
+            it.username = RandomStringUtils.randomAlphanumeric(8)
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = domainId
+            it
+        }
+        def tenantType = RandomStringUtils.randomAlphanumeric(8)
+        def tenant = new Tenant().with {
+            it.tenantId = "$tenantType:${RandomStringUtils.randomAlphanumeric(8)}"
+            it.name = it.tenantId
+            it.domainId = domainId
+            it
+        }
+        def tenantAccessRole = new ClientRole().with {
+            it.id = Constants.IDENTITY_TENANT_ACCESS_ROLE_ID
+            it.name = Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
+            it
+        }
+        def excludedTenantPrefixes = [tenantType]
+
+        when: "get users for the first tenant prefix in the list"
+        PaginatorContext<User> paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant, tenantAccessRole, 0, 100)
+
+        then: "correct backend services are called"
+        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
+        1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
+        1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
+        1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantPrefixes
+        1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
+
+        and: "the user is excluded based on the tenant type exclusion property"
+        if (IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType) {
+            assert paginatorContext.getValueList().contains(user)
+        } else {
+            assert !paginatorContext.getValueList().contains(user)
+        }
+
+        where:
+        userType << IdentityUserTypeEnum.values()
+    }
+
 }
