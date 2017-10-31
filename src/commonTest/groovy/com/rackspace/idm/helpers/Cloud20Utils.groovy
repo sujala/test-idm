@@ -716,6 +716,10 @@ class Cloud20Utils {
         }
     }
 
+    Tenant createTenantInDomain(String domainId) {
+        createTenant(testUtils.getRandomUUID("tenant"), true, testUtils.getRandomUUID("tenant"), domainId)
+    }
+
     Tenant createTenant(name=testUtils.getRandomUUID("tenant"), enabled=true, displayName=testUtils.getRandomUUID("tenant"), domainId=null) {
         def tenant = factory.createTenant(name, displayName, enabled, domainId)
         def response = methods.addTenant(getServiceAdminToken(), tenant)
@@ -730,7 +734,7 @@ class Cloud20Utils {
         response.getEntity(Tenant).value
     }
 
-    def createTenantType(name=testUtils.getRandomUUID("type")[0..15], description="description") {
+    TenantType createTenantType(name=testUtils.getRandomUUID("type")[0..15], description="description") {
         def tenantType = factory.createTenantType(name, description)
         def response = methods.addTenantType(getServiceAdminToken(), tenantType)
         assert (response.status == SC_CREATED)
@@ -953,6 +957,18 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
         List<User> users = response.getEntity(UserList).value.user
         users
+    }
+
+    UserList listUsersWithTenant(String tenantId, String token = getServiceAdminToken()) {
+        def response = methods.listUsersWithTenantId(token, tenantId)
+        assert response.status == SC_OK
+        response.getEntity(UserList).value
+    }
+
+    UserList listUsersWithTenantAndRole(String tenantId, String roleId, String token = getServiceAdminToken()) {
+        def response = methods.listUsersWithTenantIdAndRole(token, tenantId, roleId)
+        assert response.status == SC_OK
+        response.getEntity(UserList).value
     }
 
     def addUserToGroupWithId(String groupId, User user, String token=getServiceAdminToken()) {
