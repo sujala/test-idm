@@ -22,7 +22,7 @@ class AutoAssignRoleIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def tenantType = utils.createTenantType()
         if (excludeTenantType) {
-            reloadableConfiguration.setProperty(IdentityConfig.FEATURE_TENANT_TYPES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, "${tenantType.name}".toString())
+            reloadableConfiguration.setProperty(IdentityConfig.FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, "${tenantType.name}".toString())
         }
         def users, identityAdmin, userAdmin, userManager, defaultUser
         (identityAdmin, userAdmin, userManager, defaultUser) = utils.createUsers(domainId)

@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.ctc.wstx.util.StringUtil;
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
@@ -9,7 +8,6 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.security.ImmutableClientRole;
-import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.TenantDao;
@@ -33,7 +31,6 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
-import org.apache.http.util.Asserts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -583,19 +580,23 @@ public class DefaultTenantService implements TenantService {
                     ImmutableClientRole autoAssignedRole = getAutoAssignedRole();
                     List<String> tenantIdsToGetAutoAssignRole = new ArrayList<>(Arrays.asList(tenantIds));
 
-                    List<String> excludeTenantTypes = identityConfig.getReloadableConfig().getTenantTypesToExcludeAutoAssignRoleFrom();
-                    if (CollectionUtils.isNotEmpty(excludeTenantTypes)) {
-                        // User admins and user managers must get the auto-assign role on all tenants in the domain
-                        IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(user);
-                        if (!(IdentityUserTypeEnum.USER_ADMIN == userType) && !(IdentityUserTypeEnum.USER_MANAGER == userType)) {
-                            for (String tenantId : tenantIds) {
-                                String inferredTenantType = parseTenantPrefixFromTenantId(tenantId);
-                                if (StringUtils.isNotBlank(inferredTenantType) && excludeTenantTypes.contains(inferredTenantType)) {
+                    List<String> excludeTenantPrefixes = identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom();
+                    if (CollectionUtils.isNotEmpty(excludeTenantPrefixes)) {
+                        IdentityUserTypeEnum userType = null;
+                        for (String tenantId : tenantIds) {
+                            String tenantPrefix = parseTenantPrefixFromTenantId(tenantId);
+                            if (StringUtils.isNotBlank(tenantPrefix) && excludeTenantPrefixes.contains(tenantPrefix)) {
+                                if (userType == null) {
+                                    // Note - if user doesn't have a identity type role then this would be called once per excluded tenant
+                                    // However, since that shouldn't happen, not worried about that inefficiency
+                                    userType = authorizationService.getIdentityTypeRoleAsEnum(user);
+                                }
+                                if (!(IdentityUserTypeEnum.USER_ADMIN == userType) && !(IdentityUserTypeEnum.USER_MANAGER == userType)) {
                                     tenantIdsToGetAutoAssignRole.remove(tenantId);
                                 }
+
                             }
                         }
-
                     }
 
                     if (autoAssignedRole != null) {
@@ -1446,14 +1447,14 @@ public class DefaultTenantService implements TenantService {
         if (isAutoAssignmentOfRoleEnabledForTenantDomain(tenant)) {
             users = new ArrayList<>();
             Iterable<User> domainUsers = userService.getUsersWithDomainAndEnabledFlag(tenant.getDomainId(), true);
-            List<String> excludeTenantTypes = identityConfig.getReloadableConfig().getTenantTypesToExcludeAutoAssignRoleFrom();
+            List<String> excludeTenantPrefixes = identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom();
+            String inferredTenantType = parseTenantPrefixFromTenantId(tenant.getTenantId());
 
             for (User domainUser : domainUsers) {
-                if (CollectionUtils.isNotEmpty(excludeTenantTypes)) {
+                if (CollectionUtils.isNotEmpty(excludeTenantPrefixes) && StringUtils.isNotBlank(inferredTenantType)
+                        && excludeTenantPrefixes.contains(inferredTenantType)) {
                     IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(domainUser);
-                    String inferredTenantType = parseTenantPrefixFromTenantId(tenant.getTenantId());
-                    if ((IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType)
-                            || StringUtils.isBlank(inferredTenantType) || !excludeTenantTypes.contains(inferredTenantType)) {
+                    if (IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType) {
                         users.add(domainUser);
                     }
                 } else {

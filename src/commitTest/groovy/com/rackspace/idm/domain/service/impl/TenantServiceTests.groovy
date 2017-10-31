@@ -72,16 +72,16 @@ class TenantServiceTests extends RootServiceTest {
 
         then: "the correct backend services are called"
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
-        1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
+        2 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * domainService.getDomain(domainId) >> domain
-        1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
-        1 * identityConfig.getReloadableConfig().getTenantTypesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
+        1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
+        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
         if (excludeTenantType) {
             1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
         } else {
-            1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
+            0 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
         }
 
         and: "the user gets the auto-assigned tenant role based on the exclude tenant type config"
@@ -135,10 +135,12 @@ class TenantServiceTests extends RootServiceTest {
         1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
         1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
-        1 * identityConfig.getReloadableConfig().getTenantTypesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
+        1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
         if (excludeTenantType) {
             1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
+        } else {
+            0 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
         }
 
         and: "the user is excluded based on the tenant type exclusion property"

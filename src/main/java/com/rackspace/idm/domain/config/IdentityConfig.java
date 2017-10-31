@@ -352,7 +352,7 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP = "enable.user.groups.globally";
     public static final boolean FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT = false;
 
-    public static final String FEATURE_TENANT_TYPES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP = "tenant.types.to.exclude.auto.assign.role.from";
+    public static final String FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP = "tenant.prefixes.to.exclude.auto.assign.role.from";
 
     /**
      * Required static prop
@@ -1565,9 +1565,9 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP);
         }
 
-        @IdmProp(key = FEATURE_TENANT_TYPES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, versionAdded = "3.17.0", description = "The list of tenant types to exclude the auto-assigned (identity:tenant-access) role from.")
-        public List<String> getTenantTypesToExcludeAutoAssignRoleFrom() {
-            return getListSafely(reloadableConfiguration, FEATURE_TENANT_TYPES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP);
+        @IdmProp(key = FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, versionAdded = "3.17.0", description = "The list of tenant prefixes to exclude the auto-assigned (identity:tenant-access) role from.")
+        public List<String> getTenantPrefixesToExcludeAutoAssignRoleFrom() {
+            return getListSafely(reloadableConfiguration, FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP);
         }
 
         @IdmProp(key = IDP_MAX_SEACH_RESULT_SIZE_PROP, versionAdded = "3.1.0", description = "Maximum numbers of identity providers allowed to be returned in list providers call")
