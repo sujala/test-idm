@@ -223,8 +223,7 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         def analyzeAdminToken = utils.getToken(identityAdmin.username)
         utils.addRoleToUser(identityAdmin, Constants.IDENTITY_ANALYZE_TOKEN_ROLE_ID)
 
-        def user
-        (user) = utils.createUserAdmin()
+        def user = utils.createUserAdminWithoutIdentityAdmin()
         def impersonationToken = utils.getImpersonatedTokenWithToken(analyzeAdminToken, user)
 
         when: "valid x-auth-token and valid subject token is passed"

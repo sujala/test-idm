@@ -400,7 +400,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "auth w/ token"
         def token = utils.getToken(userAdmin.username)
-        response = cloud20.authenticateTokenAndTenant(token, domainId, request, accept)
+        response = cloud20.authenticateTokenAndTenant(token, domainId, false, request, accept)
 
         then:
         response.status == 200
@@ -421,7 +421,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "auth w/ impersonation token and tenant"
         def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), userAdmin)
-        response = cloud20.authenticateTokenAndTenant(impersonationToken, domainId, request, accept)
+        response = cloud20.authenticateTokenAndTenant(impersonationToken, domainId, false, request, accept)
 
         then:
         response.status == 200
@@ -467,7 +467,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "auth w/ token"
         def token = utils.getToken(userAdmin.username)
-        response = cloud20.authenticateTokenAndTenant(token, domainId, request, accept)
+        response = cloud20.authenticateTokenAndTenant(token, domainId, false, request, accept)
 
         then:
         response.status == 200
@@ -488,7 +488,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "auth w/ impersonation token and tenant"
         def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), userAdmin)
-        response = cloud20.authenticateTokenAndTenant(impersonationToken, domainId, request, accept)
+        response = cloud20.authenticateTokenAndTenant(impersonationToken, domainId, false, request, accept)
 
         then:
         response.status == 200

@@ -383,10 +383,12 @@ class Cloud20Methods {
         request.header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def authenticateTokenAndTenant(token, tenantId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def authenticateTokenAndTenant(token, tenantId, applyRcnRoles = false, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         def request = v2Factory.createTokenAuthenticationRequest(token, tenantId.toString(), null)
-        resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(request).post(ClientResponse)
+        def queryParams = new MultivaluedMapImpl()
+        queryParams.add("apply_rcn_roles", applyRcnRoles)
+        resource.path(path20).path(TOKENS).queryParams(queryParams).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(request).post(ClientResponse)
     }
 
     def authenticateTokenAndTenantApplyRcn(token, tenantId, String applyRcnRoles = null) {
