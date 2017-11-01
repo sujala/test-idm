@@ -125,6 +125,7 @@
     <element name="publicCertificate" type="RAX-AUTH:PublicCertificate"/>
     <element name="publicCertificates" type="RAX-AUTH:PublicCertificates"/>
     <element name="approvedDomainIds" type="RAX-AUTH:ApprovedDomainIds"/>
+    <element name="emailDomains" type="RAX-AUTH:EmailDomains"/>
     <element name="otpDevice" type="RAX-AUTH:OTPDevice" >
         <annotation>
             <xsd:documentation>
@@ -943,10 +944,17 @@
         </sequence>
     </complexType>
 
+    <complexType name="EmailDomains">
+        <sequence>
+            <element name="emailDomain" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
     <complexType name="IdentityProvider">
         <sequence>
             <element ref="RAX-AUTH:publicCertificates" minOccurs="0" maxOccurs="1"/>
             <element ref="RAX-AUTH:approvedDomainIds" minOccurs="0" maxOccurs="1" />
+            <element ref="RAX-AUTH:emailDomains" minOccurs="0" maxOccurs="1" />
         </sequence>
         <attribute name="id" type="xsd:string" use="optional">
             <annotation>

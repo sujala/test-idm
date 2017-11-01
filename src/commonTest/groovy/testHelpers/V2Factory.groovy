@@ -1,58 +1,26 @@
 package testHelpers
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ChangePasswordCredentials
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordReset
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypeEndpointRule
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
-import com.rackspace.idm.RaxAuthConstants
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
-import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang.BooleanUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.*
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import org.springframework.stereotype.Component
 
-import javax.xml.bind.JAXBElement
-import javax.xml.datatype.DatatypeConstants
 import javax.xml.datatype.DatatypeFactory
-import javax.xml.datatype.Duration
 import javax.xml.namespace.QName
 
-import static com.rackspace.idm.Constants.ROLE_RBAC2_ID
-import static com.rackspace.idm.RaxAuthConstants.*
+import static com.rackspace.idm.RaxAuthConstants.QNAME_PROPAGATE
 
 /**
  * Created with IntelliJ IDEA.
@@ -67,7 +35,7 @@ class V2Factory {
     private static ID = "id"
     private static USERNAME = "username"
     private static NAME = "name"
-    private static objFactory = new ObjectFactory()
+    private static objFactory = new org.openstack.docs.identity.api.v2.ObjectFactory()
     private static raxAuthObjFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     def createAuthenticationRequest() {
@@ -702,7 +670,7 @@ class V2Factory {
         }
     }
 
-    def createIdentityProvider(name, description, issuerUri, federationType, approvedDomainGroup, List<String> approvedDomainIdsList) {
+    def createIdentityProvider(name, description, issuerUri, federationType, approvedDomainGroup, List<String> approvedDomainIdsList, List<String> emailDomainsList = null) {
         new IdentityProvider().with {
             it.name = name
             it.description = description
@@ -715,6 +683,11 @@ class V2Factory {
                 ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
                 approvedDomainIds.getApprovedDomainId().addAll(approvedDomainIdsList)
                 it.approvedDomainIds = approvedDomainIds
+            }
+            if (emailDomainsList != null) {
+                EmailDomains emailDomains = new EmailDomains()
+                emailDomains.getEmailDomain().addAll(emailDomainsList)
+                it.emailDomains = emailDomains
             }
             it
         }

@@ -49,6 +49,11 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
     }
 
     @Override
+    public IdentityProvider getIdentityProviderByEmailDomain(String emailDomain) {
+        return getObject(searchFilterGetIdentityProviderByEmailDomain(emailDomain));
+    }
+
+    @Override
     public IdentityProvider getIdentityProviderWithMetadataById(String id) {
         return getObject(searchByIdFilter(id), getBaseDn(), SearchScope.ONE, LdapRepository.ATTR_DEFAULT_SEARCH_ATTRIBUTES);
     }
@@ -295,6 +300,19 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER)
                 .addPresenceAttribute(ATTR_APPROVED_DOMAIN_IDS)
+                .build();
+    }
+
+    /**
+     * Search filter for IDP where rsEmailDomains contains emailDomain
+     *
+     * @param emailDomain
+     * @return
+     */
+    private Filter searchFilterGetIdentityProviderByEmailDomain(String emailDomain) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER)
+                .addEqualAttribute(ATTR_EMAIL_DOMAINS, emailDomain)
                 .build();
     }
 

@@ -70,6 +70,14 @@ public interface FederatedIdentityService {
     IdentityProvider getIdentityProviderByName(String name);
 
     /**
+     * Return the identity provider with the given email domain.
+     * @param emailDomain
+     * @return
+     * @throws IllegalArgumentException when emailDomain is null
+     */
+    IdentityProvider getIdentityProviderByEmailDomain(String emailDomain);
+
+    /**
      * Return the identity provider by id with only metadata attribute populated.
      * @param id
      * @return

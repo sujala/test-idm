@@ -162,4 +162,23 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         1 * rackerSourceFederationHandler.processRequestForProvider(_, rackerIdentityProvider) >> samlResponse
     }
 
+    def "getIdentityProviderByEmailDomain: calls backend service"() {
+        given:
+        def emailDomain = "emailDomain"
+
+        when:
+        service.getIdentityProviderByEmailDomain(emailDomain)
+
+        then:
+        1 * identityProviderDao.getIdentityProviderByEmailDomain(emailDomain)
+    }
+
+    def "getIdentityProviderByEmailDomain: invalid case"() {
+        when:
+        service.getIdentityProviderByEmailDomain(null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
 }

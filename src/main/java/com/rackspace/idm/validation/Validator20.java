@@ -68,6 +68,7 @@ public class Validator20 {
     public static final Pattern ROLE_NAME_REGEX = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9_\\-]*(?:\\:[a-zA-Z0-9][a-zA-Z0-9_\\-]*)?$");
     public static final String INVALID_IDENTITY_PROVIDER_NAME_ERROR_MSG = "Identity provider name must consist of only alphanumeric, '.', and '-' characters.";
     public static final String DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG = "Identity provider with name %s already exist.";
+    public static final String DUPLICATE_IDENTITY_PROVIDER_EMAIL_DOMAIN_ERROR_MSG = "Email domain '%s' already belongs to another identity provider.";
     public static final String INVALID_IDENTITY_PROVIDER_APPROVED_DOMAIN_ERROR_MSG = "The provided approved domain '%s' does not exist.";
     public static final String EMPTY_IDENTITY_PROVIDER_APPROVED_DOMAIN_ERROR_MSG = "ApprovedDomainIds must contain at least one valid domain Id.";
     public static final Pattern IDENTITY_PROVIDER_NAME_REGEX = Pattern.compile("[\\p{Alnum}.\\-_:']*");
@@ -374,6 +375,8 @@ public class Validator20 {
             throw new BadRequestException("Do not provide an id when creating a new Identity Provider. An id will be generated.");
         }
 
+        validateIdentityProviderEmailDomainsOnCreation(identityProvider);
+
         PublicCertificates publicCertificatesWrapper = identityProvider.getPublicCertificates();
         if (publicCertificatesWrapper != null && CollectionUtils.isNotEmpty(publicCertificatesWrapper.getPublicCertificate())) {
             for (PublicCertificate publicCertificate : publicCertificatesWrapper.getPublicCertificate()) {
@@ -552,9 +555,68 @@ public class Validator20 {
     }
 
     /**
+     * Validates the identity provider's emailDomains list has values of <=255 characters and are only set on a single
+     * IDP on creation.
+     *
+     * @param identityProvider
+     */
+    private void validateIdentityProviderEmailDomainsOnCreation(IdentityProvider identityProvider) {
+        EmailDomains emailDomains = identityProvider.getEmailDomains();
+
+        if (emailDomains != null && !emailDomains.getEmailDomain().isEmpty()) {
+            // Avoid duplicates
+            Set<String> emailDomainSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            emailDomainSet.addAll(emailDomains.getEmailDomain());
+            for (String emailDomain : emailDomainSet) {
+                validateStringMaxLength("emailDomain", emailDomain, MAX_LENGTH_255);
+                com.rackspace.idm.domain.entity.IdentityProvider foundIdentityProvider = federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain);
+                if (foundIdentityProvider != null) {
+                    throw new DuplicateException(String.format(DUPLICATE_IDENTITY_PROVIDER_EMAIL_DOMAIN_ERROR_MSG, emailDomain), ErrorCodes.ERROR_CODE_IDP_EMAIL_DOMAIN_ALREADY_ASSIGNED);
+                }
+            }
+        }
+    }
+
+    /**
+     * Validates the identity provider's emailDomains list has values of <=255 characters and are only set on a single
+     * IDP on update.
+     *
+     * @param identityProvider
+     */
+    private void validateIdentityProviderEmailDomainsOnUpdate(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingIdentityProvider) {
+        EmailDomains emailDomains = identityProvider.getEmailDomains();
+
+        if (emailDomains != null && !emailDomains.getEmailDomain().isEmpty()) {
+            // Avoid duplicates
+            Set<String> emailDomainSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            emailDomainSet.addAll(emailDomains.getEmailDomain());
+            for (String emailDomain : emailDomainSet) {
+                validateStringMaxLength("emailDomain", emailDomain, MAX_LENGTH_255);
+
+                // Check if existing IDP already contains the emailDomain provided.
+                if (existingIdentityProvider.getEmailDomains() == null ||
+                        !containsIgnoreCase(existingIdentityProvider.getEmailDomains(), emailDomain)) {
+
+                    com.rackspace.idm.domain.entity.IdentityProvider foundIdentityProvider = federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain);
+                    if (foundIdentityProvider != null) {
+                        throw new DuplicateException(String.format(DUPLICATE_IDENTITY_PROVIDER_EMAIL_DOMAIN_ERROR_MSG, emailDomain), ErrorCodes.ERROR_CODE_IDP_EMAIL_DOMAIN_ALREADY_ASSIGNED);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean containsIgnoreCase(List<String> list, String value) {
+        for (String s : list) {
+            if (s.equalsIgnoreCase(value)) return true;
+        }
+        return false;
+    }
+
+    /**
      * Validates the provided identity provider for update provides valid values
      *
-     * This performs validation applicable for identity-provider-admin. THe following fields can be updated:
+     * This performs validation applicable for identity-provider-admin. The following fields can be updated:
      * <ul>
      *     <li>name</li>
      *     <li>description</li>
@@ -605,6 +667,7 @@ public class Validator20 {
         }
 
         validateIdentityProviderDescription(identityProvider);
+        validateIdentityProviderEmailDomainsOnUpdate(identityProvider, existingProvider);
 
         if (identityProvider.getAuthenticationUrl() != null && !identityProvider.getAuthenticationUrl().equalsIgnoreCase(existingProvider.getAuthenticationUrl())) {
             validateStringMaxLength("authenticationUrl", identityProvider.getAuthenticationUrl(), MAX_IDENTITY_PROVIDER_AUTH_URL);
@@ -618,6 +681,7 @@ public class Validator20 {
         }
 
         validateIdentityProviderDescription(identityProvider);
+        validateIdentityProviderEmailDomainsOnUpdate(identityProvider, existingProvider);
     }
 
     public void validateIdentityProviderForUpdateForRcnAdmin(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
@@ -629,6 +693,7 @@ public class Validator20 {
         }
 
         validateIdentityProviderDescription(identityProvider);
+        validateIdentityProviderEmailDomainsOnUpdate(identityProvider, existingProvider);
 
         ApprovedDomainIds providedApprovedDomainIds = identityProvider.getApprovedDomainIds();
 

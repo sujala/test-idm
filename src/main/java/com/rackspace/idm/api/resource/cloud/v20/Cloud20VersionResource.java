@@ -323,8 +323,9 @@ public class Cloud20VersionResource {
             @QueryParam("issuer") String issuer,
             @QueryParam("approvedDomainId") String approvedDomainId,
             @QueryParam("idpType") String idpType,
-            @QueryParam("approvedTenantId") String approvedTenantId) {
-        return cloud20Service.getIdentityProviders(httpHeaders, authToken, name, issuer, approvedDomainId, approvedTenantId, idpType).build();
+            @QueryParam("approvedTenantId") String approvedTenantId,
+            @QueryParam("emailDomain") String emailDomain) {
+        return cloud20Service.getIdentityProviders(httpHeaders, authToken, new IdentityProviderSearchParams(name, issuer, approvedDomainId, approvedTenantId, idpType, emailDomain)).build();
     }
 
     @DELETE

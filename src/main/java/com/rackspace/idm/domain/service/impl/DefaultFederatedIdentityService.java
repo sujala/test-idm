@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import javax.naming.ServiceUnavailableException;
 import java.nio.charset.StandardCharsets;
@@ -173,6 +174,13 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Override
     public IdentityProvider getIdentityProviderByName(String name) {
         return identityProviderDao.getIdentityProviderByName(name);
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderByEmailDomain(String emailDomain) {
+        Assert.notNull(emailDomain);
+
+        return identityProviderDao.getIdentityProviderByEmailDomain(emailDomain);
     }
 
     @Override

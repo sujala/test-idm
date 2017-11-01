@@ -114,6 +114,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String FEDERATION_IDP_POLICY_TYPE_NOT_FOUND_ERROR_MESSAGE = "No %s mapping policy found for IDP with ID %s.";
     public static final String FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE = "IDP creation is currently unavailable due to missing default for IDP policy.";
     public static final String FEDERATION_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP_MESSAGE = "IDP certificates cannot be updated outside of providing a new IDP metadata xml.";
+    public static final String FEDERATION_LIST_IDP_EMAIL_DOMAIN_WITH_OTHER_PARAMS_ERROR_MSG = "The email domain search is mutually exclusive from all other search fields";
 
     public static final String DUPLICATE_SERVICE_NAME_ERROR_MESSAGE = "More than one service exists with the given name. Please specify a different service name for the endpoint template.";
     public static final String DUPLICATE_SERVICE_ERROR_MESSAGE = "Unable to fulfill request. More than one service exists with the given name.";
@@ -1336,6 +1337,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 existingProvider.setAuthenticationUrl(provider.getAuthenticationUrl());
             }
 
+            if (provider.getEmailDomains() != null) {
+                EmailDomains suppliedEmailDomains = provider.getEmailDomains();
+                if (!suppliedEmailDomains.getEmailDomain().isEmpty()) {
+                    Set<String> emailDomains = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+                    emailDomains.addAll(suppliedEmailDomains.getEmailDomain());
+                    existingProvider.setEmailDomains(new ArrayList<>(emailDomains));
+                }
+            }
+
             boolean revokeAllIdpTokens = false;
             if (provider.isEnabled() != null && IdentityProviderFederationTypeEnum.DOMAIN == existingProvider.getFederationTypeAsEnum()) {
                 if (existingProvider.getEnabled() != null && existingProvider.getEnabled() && !provider.isEnabled()) {
@@ -1527,7 +1537,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String name, String issuer, String approvedDomainId, String approvedTenantId, String idpType) {
+    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, IdentityProviderSearchParams identityProviderSearchParams) {
         try {
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
@@ -1544,22 +1554,24 @@ public class DefaultCloud20Service implements Cloud20Service {
             verifyUserIsNotInDefaultDomain(caller);
             verifyUserIsNotInRaxRestrictedGroup(caller);
 
+            // TODO: Move all filter logic to methods within the federatedIdentityService consuming an IdentityProviderSearchCriteria object
+
             IdentityProviderTypeFilterEnum idpFilter = null;
-            if (StringUtils.isNotBlank(idpType)) {
-                idpFilter = IdentityProviderTypeFilterEnum.parseIdpTypeFilter(idpType);
+            if (StringUtils.isNotBlank(identityProviderSearchParams.idpType)) {
+                idpFilter = IdentityProviderTypeFilterEnum.parseIdpTypeFilter(identityProviderSearchParams.idpType);
                 if(idpFilter == null) {
                     throw new BadRequestException(String.format(FEDERATION_IDP_TYPE_ERROR_MESSAGE, IdentityProviderTypeFilterEnum.EXPLICIT.name()));
                 }
             }
 
             //prevent use of domain and tenant filter at the same time
-            if (StringUtils.isNotBlank(approvedDomainId) && StringUtils.isNotBlank(approvedTenantId)) {
+            if (StringUtils.isNotBlank(identityProviderSearchParams.approvedDomainId) && StringUtils.isNotBlank(identityProviderSearchParams.approvedTenantId)) {
                 throw new BadRequestException(FEDERATION_IDP_FILTER_CONFLICT_ERROR_MESSAGE);
             }
 
-            if (StringUtils.isNotBlank(approvedTenantId)) {
+            if (StringUtils.isNotBlank(identityProviderSearchParams.approvedTenantId)) {
                 //verify that the tenant exists if trying to filter by tenant
-                Tenant tenantForFilter = tenantService.getTenant(approvedTenantId);
+                Tenant tenantForFilter = tenantService.getTenant(identityProviderSearchParams.approvedTenantId);
                 //return empty list if the tenant does not exist
                 if (tenantForFilter == null) {
                     return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProviders(identityProviderConverterCloudV20.toIdentityProviderList(new ArrayList<com.rackspace.idm.domain.entity.IdentityProvider>())).getValue());
@@ -1569,57 +1581,65 @@ public class DefaultCloud20Service implements Cloud20Service {
                         identityConfig.getReloadableConfig().getTenantDefaultDomainId().equals(tenantForFilter.getDomainId())) {
                     throw new BadRequestException(FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE);
                 }
-                approvedDomainId = tenantForFilter.getDomainId();
+                identityProviderSearchParams.approvedDomainId = tenantForFilter.getDomainId();
             }
 
             //return an empty list if trying to filter by a domain that does not exist
-            if (StringUtils.isNotBlank(approvedDomainId)) {
-                Domain domain = domainService.getDomain(approvedDomainId);
+            if (StringUtils.isNotBlank(identityProviderSearchParams.approvedDomainId)) {
+                Domain domain = domainService.getDomain(identityProviderSearchParams.approvedDomainId);
                 if (domain == null) {
                     return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProviders(identityProviderConverterCloudV20.toIdentityProviderList(new ArrayList<com.rackspace.idm.domain.entity.IdentityProvider>())).getValue());
                 }
             }
 
             List<com.rackspace.idm.domain.entity.IdentityProvider> providerEntities = new ArrayList<>();
-            if (StringUtils.isNotBlank(name)) {
+            if (StringUtils.isNotBlank(identityProviderSearchParams.emailDomain)) {
+                if (identityProviderSearchParams.getSearchParamsMap().size() != 1) {
+                    throw new BadRequestException(FEDERATION_LIST_IDP_EMAIL_DOMAIN_WITH_OTHER_PARAMS_ERROR_MSG);
+                }
+                com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.getIdentityProviderByEmailDomain(identityProviderSearchParams.emailDomain);
+                if (identityProvider != null) {
+                    providerEntities = Collections.singletonList(identityProvider);
+                }
+            } else if (StringUtils.isNotBlank(identityProviderSearchParams.name)) {
                 com.rackspace.idm.domain.entity.IdentityProvider identityProvider = null;
-                if (StringUtils.isNotBlank(approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
-                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForDomain(name, approvedDomainId);
-                } else if (StringUtils.isNotBlank(approvedDomainId)) {
-                    identityProvider = federatedIdentityService.getIdentityProviderApprovedForDomain(name, approvedDomainId);
+                if (StringUtils.isNotBlank(identityProviderSearchParams.approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForDomain(identityProviderSearchParams.name, identityProviderSearchParams.approvedDomainId);
+                } else if (StringUtils.isNotBlank(identityProviderSearchParams.approvedDomainId)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderApprovedForDomain(identityProviderSearchParams.name, identityProviderSearchParams.approvedDomainId);
                 } else if (IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
-                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForAnyDomain(name);
+                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForAnyDomain(identityProviderSearchParams.name);
                 } else {
-                    identityProvider = federatedIdentityService.getIdentityProviderByName(name);
+                    identityProvider = federatedIdentityService.getIdentityProviderByName(identityProviderSearchParams.name);
                 }
 
                 if (identityProvider != null) {
                     // issuer is case sensitive
-                    if (StringUtils.isNotBlank(issuer) && !identityProvider.getUri().equals(issuer)) {
+                    if (StringUtils.isNotBlank(identityProviderSearchParams.issuer) && !identityProvider.getUri().equals(identityProviderSearchParams.issuer)) {
                         providerEntities = new ArrayList<>();
                     } else {
                         providerEntities = Collections.singletonList(identityProvider);
                     }
                 }
-            } else if (StringUtils.isNotBlank(issuer)) {
+            } else if (StringUtils.isNotBlank(identityProviderSearchParams.issuer)) {
                 com.rackspace.idm.domain.entity.IdentityProvider identityProvider = null;
-                if (StringUtils.isNotBlank(approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
-                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForDomainByIssuer(issuer, approvedDomainId);
-                } else if (StringUtils.isNotBlank(approvedDomainId)) {
-                    identityProvider = federatedIdentityService.getIdentityProviderApprovedForDomainByIssuer(issuer, approvedDomainId);
+                if (StringUtils.isNotBlank(identityProviderSearchParams.approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForDomainByIssuer(identityProviderSearchParams.issuer, identityProviderSearchParams.approvedDomainId);
+                } else if (StringUtils.isNotBlank(identityProviderSearchParams.approvedDomainId)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderApprovedForDomainByIssuer(identityProviderSearchParams.issuer, identityProviderSearchParams.approvedDomainId);
                 } else if (IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
-                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForAnyDomainByIssuer(issuer);
+                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForAnyDomainByIssuer(identityProviderSearchParams.issuer);
                 } else {
-                    identityProvider = federatedIdentityService.getIdentityProviderByIssuer(issuer);
+                    identityProvider = federatedIdentityService.getIdentityProviderByIssuer(identityProviderSearchParams.issuer);
                 }
 
                 if (identityProvider != null) {
                     providerEntities = Collections.singletonList(identityProvider);
                 }
-            } else if (StringUtils.isNotBlank(approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
-                providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomain(approvedDomainId);
-            } else if (StringUtils.isNotBlank(approvedDomainId)) {
-                providerEntities = federatedIdentityService.findIdentityProvidersApprovedForDomain(approvedDomainId);
+            } else if (StringUtils.isNotBlank(identityProviderSearchParams.approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+                providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomain(identityProviderSearchParams.approvedDomainId);
+            } else if (StringUtils.isNotBlank(identityProviderSearchParams.approvedDomainId)) {
+                providerEntities = federatedIdentityService.findIdentityProvidersApprovedForDomain(identityProviderSearchParams.approvedDomainId);
             } else if (IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
                 providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForAnyDomain();
             } else {

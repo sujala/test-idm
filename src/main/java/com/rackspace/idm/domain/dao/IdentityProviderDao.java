@@ -19,6 +19,14 @@ public interface IdentityProviderDao {
     IdentityProvider getIdentityProviderByName(String name);
 
     /**
+     * Return the identity provider by email domain
+     *
+     * @param emailDomain
+     * @return
+     */
+    IdentityProvider getIdentityProviderByEmailDomain(String emailDomain);
+
+    /**
      * Return the identity provider by id with only metadata attribute populated.
      *
      * @param id

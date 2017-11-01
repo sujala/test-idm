@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.*
@@ -3732,6 +3733,33 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         0 * userGroupService.deleteGroup(_)
     }
 
+    def "updateIdentityProvider: avoid duplicate emailDomains"() {
+        given:
+        allowUserAccess()
+        mockFederatedIdentityService(service)
+
+        def emailDomain = "emailDomain.com"
+
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider identityProvider = new com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider().with {
+            it.emailDomains = new EmailDomains().with {
+                it.emailDomain = [emailDomain, emailDomain, emailDomain.toUpperCase()].asList()
+                it
+            }
+            it
+        }
+
+        when:
+        service.updateIdentityProvider(headers, uriInfo(), authToken, "id", identityProvider)
+
+        then:
+        1 * defaultFederatedIdentityService.checkAndGetIdentityProviderWithMetadataById("id") >> new IdentityProvider()
+        1 * defaultFederatedIdentityService.updateIdentityProvider(_ as IdentityProvider) >> { args ->
+            IdentityProvider provider = args[0]
+            assert provider.emailDomains.size() == 1
+            null
+        }
+    }
+  
     @Unroll
     def "listEndpointsForToken: service catalog is not filtered for impersonation tokens of suspended users, featureEnabled = #featureEnabled"() {
         given:
@@ -3777,6 +3805,44 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         featureEnabled << [true, false]
+    }
+
+    def "getIdentityProviders: list provider using emailDomain query param"() {
+        given:
+        allowUserAccess()
+        mockFederatedIdentityService(service)
+
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def emailDomain = "emailDomain.com"
+        IdentityProviderSearchParams identityProviderSearchParams = new IdentityProviderSearchParams()
+        identityProviderSearchParams.emailDomain = emailDomain
+
+        when:
+        service.getIdentityProviders(headers, authToken, identityProviderSearchParams)
+
+        then:
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.getGroupsForUser(_) >> []
+        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+    }
+
+    def "getIdentityProviders: error check"() {
+        given:
+        allowUserAccess()
+
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def emailDomain = "emailDomain.com"
+        IdentityProviderSearchParams identityProviderSearchParams = new IdentityProviderSearchParams()
+
+        when: "emailDomain with other query params"
+        identityProviderSearchParams.emailDomain = emailDomain
+        identityProviderSearchParams.name = "name"
+        def response = service.getIdentityProviders(headers, authToken, identityProviderSearchParams)
+
+        then:
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.getGroupsForUser(_) >> []
+        response.build().status == 400
     }
 
     def mockServices() {

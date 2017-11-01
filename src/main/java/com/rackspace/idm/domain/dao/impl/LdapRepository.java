@@ -106,6 +106,7 @@ public abstract class LdapRepository {
     public static final String ATTR_TARGET_USER_SOURCE = "rsTargetUserSource";
     public static final String ATTR_APPROVED_DOMAIN_GROUP = "rsApprovedDomainGroup";
     public static final String ATTR_APPROVED_DOMAIN_IDS = "rsApprovedDomainIds";
+    public static final String ATTR_EMAIL_DOMAINS = "rsEmailDomains";
     public static final String ATTR_AUTHENTICATION_URL = "rsAuthenticationUrl";
     public static final String ATTR_FEDERATED_USER_EXPIRED_TIMESTAMP = "rsFederatedUserExpiredTimestamp";
     public static final String ATTR_ASSIGNMENT = "rsAssignment";
@@ -287,7 +288,7 @@ public abstract class LdapRepository {
                                                                          ATTR_USER_CERTIFICATES, ATTR_TARGET_USER_SOURCE,
                                                                          ATTR_APPROVED_DOMAIN_GROUP, ATTR_APPROVED_DOMAIN_IDS,
                                                                          ATTR_AUTHENTICATION_URL, ATTR_IDP_POLICY, ATTR_ENABLED,
-                                                                         ATTR_IDP_POLICY_FORMAT};
+                                                                         ATTR_IDP_POLICY_FORMAT, ATTR_EMAIL_DOMAINS};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     //LDAP Change Event

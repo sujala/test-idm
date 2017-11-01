@@ -39,10 +39,7 @@ import java.io.StringWriter;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.opensaml.saml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.saml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
@@ -79,6 +76,15 @@ public class IdentityProviderConverterCloudV20 {
                 approvedDomainIds.getApprovedDomainId().add(domainId);
             }
             provider.setApprovedDomainIds(approvedDomainIds);
+        }
+
+        // Map emailDomains
+        if (CollectionUtils.isNotEmpty(identityProvider.getEmailDomains())) {
+            EmailDomains emailDomains = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createEmailDomains();
+            for (String emailDomain : identityProvider.getEmailDomains()) {
+                emailDomains.getEmailDomain().add(emailDomain);
+            }
+            provider.setEmailDomains(emailDomains);
         }
 
         //map defaults to what we want to display to user
@@ -247,6 +253,17 @@ public class IdentityProviderConverterCloudV20 {
                 provider.setApprovedDomainIds(new ArrayList<String>());
             }
             provider.getApprovedDomainIds().addAll(domainIdSet);
+        }
+
+        // Map emailDomains - only accepting unique values
+        Set<String> emailDomainsSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        EmailDomains emailDomainsWrapper = jaxbProvider.getEmailDomains();
+        if (emailDomainsWrapper != null && CollectionUtils.isNotEmpty(emailDomainsWrapper.getEmailDomain())) {
+            emailDomainsSet.addAll(emailDomainsWrapper.getEmailDomain());
+            if (provider.getEmailDomains() == null) {
+                provider.setEmailDomains(new ArrayList<String>());
+            }
+            provider.getEmailDomains().addAll(emailDomainsSet);
         }
 
         //convert empty strings to nulls since they can't be persisted to LDAP

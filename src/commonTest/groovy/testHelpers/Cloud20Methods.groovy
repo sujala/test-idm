@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.resource.cloud.v20.IdentityProviderSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.PasswordPolicy
@@ -504,23 +505,26 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(SERVICE_PATH_METADATA).header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
     }
 
-    def listIdentityProviders(token, name = null, issuer = null, domainId = null, idpType = null, tenantId = null, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def listIdentityProviders(token, IdentityProviderSearchParams identityProviderSearchParams = new IdentityProviderSearchParams(), MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         WebResource webResource = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS)
-        if (StringUtils.isNotBlank(name)) {
-            webResource = webResource.queryParam("name", name)
+        if (StringUtils.isNotBlank(identityProviderSearchParams.name)) {
+            webResource = webResource.queryParam("name", identityProviderSearchParams.name)
         }
-        if (StringUtils.isNotBlank(issuer)) {
-            webResource = webResource.queryParam("issuer", issuer)
+        if (StringUtils.isNotBlank(identityProviderSearchParams.issuer)) {
+            webResource = webResource.queryParam("issuer", identityProviderSearchParams.issuer)
         }
-        if (StringUtils.isNotBlank(domainId)) {
-            webResource = webResource.queryParam("approvedDomainId", domainId)
+        if (StringUtils.isNotBlank(identityProviderSearchParams.approvedDomainId)) {
+            webResource = webResource.queryParam("approvedDomainId", identityProviderSearchParams.approvedDomainId)
         }
-        if (StringUtils.isNotBlank(idpType)) {
-            webResource = webResource.queryParam("idpType", idpType)
+        if (StringUtils.isNotBlank(identityProviderSearchParams.idpType)) {
+            webResource = webResource.queryParam("idpType", identityProviderSearchParams.idpType)
         }
-        if (StringUtils.isNotBlank(tenantId)) {
-            webResource = webResource.queryParam("approvedTenantId", tenantId)
+        if (StringUtils.isNotBlank(identityProviderSearchParams.approvedTenantId)) {
+            webResource = webResource.queryParam("approvedTenantId", identityProviderSearchParams.approvedTenantId)
+        }
+        if (StringUtils.isNotBlank(identityProviderSearchParams.emailDomain)) {
+            webResource = webResource.queryParam("emailDomain", identityProviderSearchParams.emailDomain)
         }
         return webResource.header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).get(ClientResponse)
     }

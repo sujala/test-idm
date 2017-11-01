@@ -63,6 +63,9 @@ public class IdentityProvider implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_APPROVED_DOMAIN_IDS, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
     private List<String> approvedDomainIds;
 
+    @LDAPField(attribute = LdapRepository.ATTR_EMAIL_DOMAINS, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
+    private List<String> emailDomains;
+
     @LDAPField(attribute = LdapRepository.ATTR_AUTHENTICATION_URL, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
     private String authenticationUrl;
 
