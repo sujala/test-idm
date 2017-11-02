@@ -128,7 +128,7 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.assertEqual(assignments[0][const.FOR_TENANTS], ["*"])
 
     @attr(type='smoke_alpha')
-    def test_add_role_to_user_group_for_tenant(self):
+    def test_add_and_delete_role_from_user_group_for_tenant(self):
         group = self.setup_user_group()
         role = self.create_role()
         tenant = self.create_tenant()
@@ -150,6 +150,19 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.assertEqual(len(assignments), 1)
         self.assertEqual(assignments[0][const.ON_ROLE], role.id)
         self.assertEqual(assignments[0][const.FOR_TENANTS], [tenant.id])
+
+        # Verify delete role from user group for tenant works
+        resp = self.user_manager_client.delete_role_from_user_group_on_tenant(
+            domain_id=self.domain_id, group_id=group.id, role_id=role.id,
+            tenant_id=tenant.id)
+        self.assertEqual(resp.status_code, 204)
+
+        list_resp = (
+            self.user_admin_client.list_tenant_role_assignments_to_user_group(
+              domain_id=self.domain_id, group_id=group.id))
+        assignments = list_resp.json()[
+              const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]
+        self.assertEqual(len(assignments), 0)
 
     def tearDown(self):
 
