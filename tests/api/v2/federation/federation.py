@@ -230,9 +230,8 @@ class TestBaseFederation(base.TestBaseV2):
         fed_username = response.json()[const.ACCESS][const.USER][const.NAME]
         return fed_token, fed_user_id, fed_username
 
-    def update_mapping_policy(self, idp_id, client):
-
-        file_path = 'yaml/default_mapping_policy.yaml'
+    def update_mapping_policy(self, idp_id, client,
+                              file_path='yaml/default_mapping_policy.yaml'):
         curr_dir = os.path.dirname(os.path.realpath(__file__))
         absolute_file_path = os.path.join(curr_dir, file_path)
         with open(absolute_file_path) as file_read:

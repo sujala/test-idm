@@ -1617,8 +1617,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + const.ADD_USER_GROUP_TO_DOMAIN_URL.format(
             domain_id=domain_id)
+        headers = {
+            const.CONTENT_TYPE: const.CONTENT_TYPE_VALUE.format(
+                const.JSON)
+        }
         return self.request(
-            'POST', url, request_entity=request_object,
+            'POST', url, headers=headers, request_entity=request_object,
             requestslib_kwargs=requestslib_kwargs)
 
     def list_user_groups_for_domain(self, domain_id, option=None,
@@ -1649,7 +1653,13 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + (
             const.ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL.format(
                 domain_id=domain_id, group_id=group_id))
-        return self.request('PUT', url, request_entity=request_object,
+        headers = {
+            const.CONTENT_TYPE: const.CONTENT_TYPE_VALUE.format(
+                const.JSON)
+        }
+        return self.request('PUT', url,
+                            headers=headers,
+                            request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
 
     def delete_user_group_from_domain(

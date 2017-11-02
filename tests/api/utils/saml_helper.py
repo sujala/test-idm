@@ -192,13 +192,15 @@ def create_saml_assertion(
 def create_saml_assertion_v2(
         domain=None, issuer=None, email=None, username=None,
         seconds_to_expiration=86400, roles=None, public_key_path=None,
-        private_key_path=None, response_flavor=None, output_format=None):
+        private_key_path=None, response_flavor=None, output_format=None,
+        groups=None):
     """
     New saml generator created for v2 federation auth.
     issuer: The URI of the issuer for the saml assertion.
     username: The username of the federated user.
     domain: The domain ID for the federated user.
     roles: A list of role names for the federated user.
+    groups: A list of group names for the federated user.
     email: The email address of the federated user.
     response_flavor: Which SAML response to generate. Valid
         options are 'v2Broker' and 'v1Origin'. Default: v2DomainBroker
@@ -223,6 +225,8 @@ def create_saml_assertion_v2(
         command_list.extend(['-email={}'.format(email)])
     if roles is not None:
         command_list.extend(['-roles={}'.format(','.join(roles))])
+    if groups is not None:
+        command_list.extend(['-groups={}'.format(','.join(groups))])
     if username is not None:
         command_list.extend(['-username={}'.format(username)])
     command_list.extend([

@@ -29,6 +29,8 @@ services:
         image: docker.ciidentity.com/cloud-identity
         ports:
             - "8083:8080"
+        environment:
+            EDIRECTORY_PORT: 636
         links:
             - cloudfeeds
             - edir
@@ -39,7 +41,7 @@ services:
             - ../src/test/resources/keys:/etc/idm/config/keys
 
     repose:
-        image: docker.ciidentity.com/repose
+        image: docker.ciidentity.com/repose:8.7.1.0
         ports:
             - "8080:8080"
         links:
