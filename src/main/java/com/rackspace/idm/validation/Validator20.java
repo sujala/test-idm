@@ -117,12 +117,15 @@ public class Validator20 {
     public static final int MAX_IDENTITY_PROVIDER_DESCRIPTION = Constants.MAX_255;
     public static final String APPROVED_DOMAIN_GROUP_NAME = "approvedDomainGroup";
     public static final String APPROVED_DOMAINS = "approvedDomains";
+    private static final String EMAIL_DOMAIN = "emailDomain";
     public static final String BROKER_DOMAIN_GROUP_NAME = "GLOBAL";
 
     public static final String REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
     private static final String INVALID_ATTR_MESSAGE = "'%s' is not a valid attribute for this service";
     public static final String EMPTY_ATTR_MESSAGE = "'%s' attribute cannot be empty for this service";
 
+    public static final String BLANK_ERROR_MSG = "%s cannot be empty or blank.";
+    public static final String WHITESPACE_CHARACTERS_ERROR_MSG = "%s cannot contain whitespace characters.";
     public static final String LENGTH_EXCEEDED_ERROR_MSG = "%s length cannot exceed %s characters";
 
     public static final String ERROR_APPROVED_DOMAIN_GROUP_NAME_SHOULD_BE_GLOBAL = "When BROKER IDP is specified, the approvedDomainGroup must be set, and specified as GLOBAL";
@@ -563,12 +566,19 @@ public class Validator20 {
     private void validateIdentityProviderEmailDomainsOnCreation(IdentityProvider identityProvider) {
         EmailDomains emailDomains = identityProvider.getEmailDomains();
 
-        if (emailDomains != null && !emailDomains.getEmailDomain().isEmpty()) {
+        if (emailDomains != null) {
+            if (CollectionUtils.isEmpty(emailDomains.getEmailDomain())) {
+                throw new BadRequestException("When providing emailDomains, you must provide a valid emailDomain.", ErrorCodes.ERROR_CODE_IDP_INVALID_EMAIL_DOMAIN_OPTIONS);
+            }
+
             // Avoid duplicates
             Set<String> emailDomainSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             emailDomainSet.addAll(emailDomains.getEmailDomain());
             for (String emailDomain : emailDomainSet) {
-                validateStringMaxLength("emailDomain", emailDomain, MAX_LENGTH_255);
+                validateStringNotBlank(EMAIL_DOMAIN, emailDomain);
+                validateStringNonWhitespace(EMAIL_DOMAIN, emailDomain);
+                validateStringMaxLength(EMAIL_DOMAIN, emailDomain, MAX_LENGTH_255);
+
                 com.rackspace.idm.domain.entity.IdentityProvider foundIdentityProvider = federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain);
                 if (foundIdentityProvider != null) {
                     throw new DuplicateException(String.format(DUPLICATE_IDENTITY_PROVIDER_EMAIL_DOMAIN_ERROR_MSG, emailDomain), ErrorCodes.ERROR_CODE_IDP_EMAIL_DOMAIN_ALREADY_ASSIGNED);
@@ -582,6 +592,7 @@ public class Validator20 {
      * IDP on update.
      *
      * @param identityProvider
+     * @param existingIdentityProvider
      */
     private void validateIdentityProviderEmailDomainsOnUpdate(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingIdentityProvider) {
         EmailDomains emailDomains = identityProvider.getEmailDomains();
@@ -591,7 +602,9 @@ public class Validator20 {
             Set<String> emailDomainSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             emailDomainSet.addAll(emailDomains.getEmailDomain());
             for (String emailDomain : emailDomainSet) {
-                validateStringMaxLength("emailDomain", emailDomain, MAX_LENGTH_255);
+                validateStringNotBlank(EMAIL_DOMAIN, emailDomain);
+                validateStringNonWhitespace(EMAIL_DOMAIN, emailDomain);
+                validateStringMaxLength(EMAIL_DOMAIN, emailDomain, MAX_LENGTH_255);
 
                 // Check if existing IDP already contains the emailDomain provided.
                 if (existingIdentityProvider.getEmailDomains() == null ||
@@ -967,6 +980,20 @@ public class Validator20 {
     public void validateStringMaxLength(String propertyName, String value, int maxLength) {
         if (StringUtils.isNotBlank(value) && value.length() > maxLength) {
            throw new BadRequestException(generateLengthExceededMsg(propertyName, maxLength), ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED);
+        }
+    }
+
+    private void validateStringNonWhitespace(String propertyName, String value) {
+        if (StringUtils.isNotBlank(value) && value.matches(".*[\\s].*")) {
+            String errMsg = String.format(WHITESPACE_CHARACTERS_ERROR_MSG, propertyName);
+            throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_INVALID_VALUE);
+        }
+    }
+
+    private void validateStringNotBlank(String propertyName, String value) {
+        if (StringUtils.isBlank(value)) {
+            String errMsg = String.format(BLANK_ERROR_MSG, propertyName);
+            throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_INVALID_VALUE);
         }
     }
 

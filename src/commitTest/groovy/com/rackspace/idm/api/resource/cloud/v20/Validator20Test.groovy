@@ -119,6 +119,37 @@ class Validator20Test extends RootServiceTest {
         then:
         thrown(BadRequestException)
 
+        when: "Empty emailDomain"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("")
+        service.validateIdentityProviderForCreation(identityProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "Blank emailDomain"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("      ")
+        service.validateIdentityProviderForCreation(identityProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "EmailDomain containing whitespace characters"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("bad      ")
+        service.validateIdentityProviderForCreation(identityProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "Empty emailDomains"
+        identityProvider.emailDomains.emailDomain.clear()
+        service.validateIdentityProviderForCreation(identityProvider)
+
+        then:
+        thrown(BadRequestException)
+
         when: "Duplicate emailDomain"
         identityProvider.emailDomains.emailDomain.clear()
         identityProvider.emailDomains.emailDomain.add("emailDomain")
@@ -307,6 +338,30 @@ class Validator20Test extends RootServiceTest {
         then:
         thrown(BadRequestException)
 
+        when: "Manager: Empty emailDomain"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("")
+        service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "Manager: Blank emailDomain"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("      ")
+        service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "Manager: EmailDomain containing whitespace characters"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("bad      ")
+        service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
+
+        then:
+        thrown(BadRequestException)
+
         when: "Manager: duplicate emailDomain"
         identityProvider.emailDomains.emailDomain.clear()
         existingProvider.emailDomains.add(emailDomain)
@@ -322,6 +377,30 @@ class Validator20Test extends RootServiceTest {
         identityProvider.emailDomains.emailDomain.clear()
         existingProvider.emailDomains.clear()
         identityProvider.emailDomains.emailDomain.add(testUtils.getRandomUUIDOfLength(emailDomain, 256))
+        service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "RcnAdmin: Empty emailDomain"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("")
+        service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "RcnAdmin: Blank emailDomain"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("      ")
+        service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "RcnAdmin: EmailDomain containing whitespace characters"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("bad      ")
         service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
 
         then:
@@ -343,6 +422,30 @@ class Validator20Test extends RootServiceTest {
         identityProvider.emailDomains.emailDomain.clear()
         existingProvider.emailDomains.clear()
         identityProvider.emailDomains.emailDomain.add(testUtils.getRandomUUIDOfLength(emailDomain, 256))
+        service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "UserAdminOrUserManage: Empty emailDomain"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("")
+        service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "UserAdminOrUserManage: Blank emailDomain"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("      ")
+        service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
+
+        then:
+        thrown(BadRequestException)
+
+        when: "UserAdminOrUserManage: EmailDomain containing whitespace characters"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add("bad      ")
         service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
 
         then:
@@ -410,5 +513,53 @@ class Validator20Test extends RootServiceTest {
 
         then:
         !result
+    }
+
+    @Unroll
+    def "validateStringNonWhitespace - assert non whitespace character: value = #value"() {
+        when:
+        service.validateStringNonWhitespace("property", value)
+
+        then:
+        noExceptionThrown()
+
+        where:
+        value << ["good", "sp3ci@l"]
+    }
+
+    @Unroll
+    def "validateStringNonWhitespace - assert BadRequestException: value = #value"() {
+        when:
+        service.validateStringNonWhitespace("property", value)
+
+        then:
+        thrown(BadRequestException)
+
+        where:
+        value << ["   bad", "bad   ", "bad bad", "bad\n", "\nbad"]
+    }
+
+    @Unroll
+    def "validateStringIsNotBlank - assert not blank: value = #value"() {
+        when:
+        service.validateStringNotBlank("property", value)
+
+        then:
+        noExceptionThrown()
+
+        where:
+        value << ["good", "sp3ci@l"]
+    }
+
+    @Unroll
+    def "validateStringIsNotBlank - assert BadRequestException: value = #value"() {
+        when:
+        service.validateStringNotBlank("property", value)
+
+        then:
+        thrown(BadRequestException)
+
+        where:
+        value << ["  ", "", null, "\n"]
     }
 }
