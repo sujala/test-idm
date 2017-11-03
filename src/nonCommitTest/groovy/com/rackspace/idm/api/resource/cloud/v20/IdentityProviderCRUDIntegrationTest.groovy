@@ -789,6 +789,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         idp.approvedDomainIds.approvedDomainId.get(0) == domainId
         idp.description == domainId
         idp.publicCertificates.publicCertificate.get(0).pemEncoded != null
+        idp.emailDomains == null
 
         cleanup:
         utils.deleteUsers(users)
@@ -5098,6 +5099,19 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         invalidIdentityProvider = new IdentityProvider().with {
             it.emailDomains = new EmailDomains().with {
                 it.emailDomain = [emailDomain].asList()
+                it
+            }
+            it
+        }
+        response = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp2.id, invalidIdentityProvider, requestContentType, requestContentType)
+
+        then: "Assert Duplicate"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_EMAIL_DOMAIN_ALREADY_ASSIGNED)
+
+        when: "Update multiple emailDomains with one belonging to another IDP"
+            invalidIdentityProvider = new IdentityProvider().with {
+            it.emailDomains = new EmailDomains().with {
+                it.emailDomain = [emailDomain, testUtils.getRandomUUID("emailDomain")].asList()
                 it
             }
             it
