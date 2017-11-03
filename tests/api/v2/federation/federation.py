@@ -75,10 +75,13 @@ class TestBaseFederation(base.TestBaseV2):
         self.user_ids = []
         self.domain_ids = []
 
-    def add_idp_with_metadata(self, cert_path, api_client):
+    def add_idp_with_metadata(self, cert_path, api_client, issuer=None):
         # Add IDP with metadata, Validate the response code & body.
-        self.issuer = self.generate_random_string(
-            pattern='https://issuer[\d\w]{12}.com')
+        if issuer:
+            self.issuer = issuer
+        else:
+            self.issuer = self.generate_random_string(
+                pattern='https://issuer[\d\w]{12}.com')
         auth_url = self.generate_random_string(
             pattern='auth[\-]url[\-][\d\w]{12}')
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import copy
 
+from tests.api.utils import func_helper
 from tests.api.v2.federation import federation
 from tests.api.v2.schema import idp as idp_json
 from tests.api.v2.schema import users as user_json
@@ -23,7 +24,8 @@ class TestIDPMetadata(federation.TestBaseFederation):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestIDPMetadata, cls).setUpClass()
-        cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
+        cls.domain_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
@@ -189,6 +191,35 @@ class TestIDPMetadata(federation.TestBaseFederation):
             cert_path=cert_path, api_client=self.idp_user_default_client)
 
         self.assertEquals(resp.status_code, 403)
+
+    def test_add_idp_with_dup_entityid(self):
+        """
+        CID-1156 was found during SIT by other team. Ideally would like to
+        run this in Staging, but currently this module is setup in such a way
+        that it would attempt to use service admin token. Hence, not tagging it
+        as of now.
+        TODO: Tag this test for staging asap once we get rid of service admin
+        usage.
+        """
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        resp = self.add_idp_with_metadata(
+            cert_path=cert_path, api_client=self.user_admin_client)
+        self.assertEquals(resp.status_code, 201)
+        self.provider_ids.append(
+            resp.json()[const.NS_IDENTITY_PROVIDER][const.ID])
+        issuer = resp.json()[const.NS_IDENTITY_PROVIDER][const.ISSUER]
+
+        resp = self.add_idp_with_metadata(
+            cert_path=cert_path, api_client=self.user_admin_client,
+            issuer=issuer)
+
+        self.assertEquals(resp.status_code, 409)
+        self.assertEqual(
+            resp.json()[const.BAD_REQUEST][const.MESSAGE],
+            "Error code: 'FED_IDP-004'; Provider already exists with this "
+            "issuer or entityID")
 
     def tearDown(self):
         super(TestIDPMetadata, self).tearDown()
