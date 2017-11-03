@@ -610,7 +610,13 @@ public class DefaultTenantService implements TenantService {
                 }
             }
         }
-        return implicitRole;
+
+        // Only return the auto-assign role if there are tenants it needs to be assigned to
+        if (implicitRole != null && CollectionUtils.isNotEmpty(implicitRole.getTenantIds())) {
+            return implicitRole;
+        } else {
+            return null;
+        }
     }
 
     /**
