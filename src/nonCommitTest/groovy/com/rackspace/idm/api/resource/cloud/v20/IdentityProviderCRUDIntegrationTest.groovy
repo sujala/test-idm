@@ -848,6 +848,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         responseIdp.issuer == issuer
         responseIdp.authenticationUrl == authenticationUrl
         responseIdp.metadata == null
+        responseIdp.emailDomains == null
 
         cleanup:
         utils.deleteUsers(users)
@@ -1007,6 +1008,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         responseIdp.approvedDomainIds.approvedDomainId.size() == 1
         responseIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
         responseIdp.metadata == null
+        responseIdp.emailDomains == null
 
         when: "get IDP and verify that the values persisted correctly"
         def getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idp.id)
@@ -1017,6 +1019,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getIdp.approvedDomainIds.approvedDomainId.size() == 1
         getIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
         getIdp.metadata == null
+        getIdp.emailDomains == null
+
 
         when: "get the IDP metadata and verify it was updated"
         def updatedMetadata = cloud20.getIdentityProviderMetadata(userAdminToken, idp.id)
