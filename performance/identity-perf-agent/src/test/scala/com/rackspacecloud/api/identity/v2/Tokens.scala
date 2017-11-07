@@ -53,6 +53,7 @@ object Tokens {
   val nastIDFeeder = csv(DATA_LOCATION + "data/identity/nastid_staging.dat").circular
   val userIDFeeder = csv(DATA_LOCATION + "data/identity/user_id.dat").circular
   val fedDomainFeeder = csv(DATA_LOCATION + "data/identity/dom_users_for_fed.dat").circular
+  val defaultUsersFeeder = csv(DATA_LOCATION + "data/identity/default_users_tokens.dat").circular
   // Gives 500,000 numbers  between 1,000,000 and 2,000,000, which is well
   // within Java int range (which we want to force a create one user call)
   // for the domain.
@@ -75,7 +76,18 @@ object Tokens {
       .check(status.is(200)))
       .exitHereIfFailed
   }
-  
+
+  def v20_authenticate_default_user: ChainBuilder = {
+
+    feed(defaultUsersFeeder)
+      .exec(http("POST /v2.0/tokens")
+        .post("/v2.0/tokens")
+        .header("X-Forwarded-For", "${ipaddress}")
+        .body(ElFileBody("request-bodies/identity/v2/tokens_body_v2.json")).asJSON
+        .check(status.is(200)))
+      .exitHereIfFailed
+  }
+
   def v20_authenticate_rcn_roles: ChainBuilder = {
 
     feed(usersFeeder)
@@ -170,7 +182,18 @@ def v20_validate: ChainBuilder = {
       .check(status.is(200)))
       .exitHereIfFailed
   }
-def v20_validate_rcn_roles: ChainBuilder = {
+def v20_validate_default_user: ChainBuilder = {
+    feed(usersFeeder_v20_admin)
+      .feed(defaultUsersFeeder)
+      .exec(http("GET /v2.0/tokens/{tokenid}")
+        .get("/v2.0/tokens/${token}")
+        .header("X-Forwarded-For", "${ipaddress}")
+        .header("x-auth-token", "${admin_token}")
+        .check(status.is(200)))
+      .exitHereIfFailed
+  }
+
+  def v20_validate_rcn_roles: ChainBuilder = {
     feed(usersFeeder_v20_admin)
       .feed(usersFeeder)
       .exec(http("GET /v2.0/tokens/{tokenid}?apply_rcn_roles=true")
