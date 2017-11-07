@@ -789,6 +789,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         idp.approvedDomainIds.approvedDomainId.get(0) == domainId
         idp.description == domainId
         idp.publicCertificates.publicCertificate.get(0).pemEncoded != null
+        idp.emailDomains == null
 
         cleanup:
         utils.deleteUsers(users)
@@ -847,6 +848,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         responseIdp.issuer == issuer
         responseIdp.authenticationUrl == authenticationUrl
         responseIdp.metadata == null
+        responseIdp.emailDomains == null
 
         cleanup:
         utils.deleteUsers(users)
@@ -1006,6 +1008,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         responseIdp.approvedDomainIds.approvedDomainId.size() == 1
         responseIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
         responseIdp.metadata == null
+        responseIdp.emailDomains == null
 
         when: "get IDP and verify that the values persisted correctly"
         def getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idp.id)
@@ -1016,6 +1019,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getIdp.approvedDomainIds.approvedDomainId.size() == 1
         getIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
         getIdp.metadata == null
+        getIdp.emailDomains == null
+
 
         when: "get the IDP metadata and verify it was updated"
         def updatedMetadata = cloud20.getIdentityProviderMetadata(userAdminToken, idp.id)
@@ -5032,6 +5037,42 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
+    def "Create IDP using Metadata and update with emailDomain" () {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+
+        when: "Update IDP's emailDomains"
+        def serviceAdminToken = utils.getServiceAdminToken()
+        def idpForUpdate = new IdentityProvider().with {
+            it.emailDomains = new EmailDomains().with {
+                it.emailDomain = [testUtils.getRandomUUID("emailDomain")].asList()
+                it
+            }
+            it
+        }
+        response = cloud20.updateIdentityProvider(serviceAdminToken, idp.id, idpForUpdate)
+        IdentityProvider updatedIdp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_OK
+        updatedIdp.id == idp.id
+        updatedIdp.emailDomains.emailDomain.size() == 1
+        updatedIdp.emailDomains.emailDomain.get(0) == idpForUpdate.emailDomains.emailDomain.get(0)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+    }
+
     @Unroll
     def "Error check: create IDP with emailDomains - request: #requestContentType"() {
         given:
@@ -5098,6 +5139,19 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         invalidIdentityProvider = new IdentityProvider().with {
             it.emailDomains = new EmailDomains().with {
                 it.emailDomain = [emailDomain].asList()
+                it
+            }
+            it
+        }
+        response = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp2.id, invalidIdentityProvider, requestContentType, requestContentType)
+
+        then: "Assert Duplicate"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_EMAIL_DOMAIN_ALREADY_ASSIGNED)
+
+        when: "Update multiple emailDomains with one belonging to another IDP"
+            invalidIdentityProvider = new IdentityProvider().with {
+            it.emailDomains = new EmailDomains().with {
+                it.emailDomain = [emailDomain, testUtils.getRandomUUID("emailDomain")].asList()
                 it
             }
             it
