@@ -90,6 +90,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_IDP_LIMIT_PER_DOMAIN = "FED_IDP-008";
     public static final String ERROR_CODE_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP = "FED_IDP-009";
     public static final String ERROR_CODE_IDP_EMAIL_DOMAIN_ALREADY_ASSIGNED = "FED_IDP-010";
+    public static final String ERROR_CODE_IDP_INVALID_EMAIL_DOMAIN_OPTIONS = "FED_IDP-011";
 
     //generic errors
     public static final String ERROR_CODE_GENERIC_BAD_REQUEST = "GEN-000";
@@ -99,6 +100,8 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_NOT_FOUND = "GEN-004";
     public static final String ERROR_CODE_INVALID_ATTRIBUTE = "GEN-005";
     public static final String ERROR_CODE_FORBIDDEN_ACTION = "GEN-006";
+    public static final String ERROR_CODE_INVALID_VALUE = "GEN-007";
+
 
     public static final String ERROR_MESSAGE_IDP_NOT_FOUND = "An Identity provider with the specified id was not found";
 

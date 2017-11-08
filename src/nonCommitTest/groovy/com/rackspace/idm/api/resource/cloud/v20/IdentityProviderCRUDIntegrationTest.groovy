@@ -5091,6 +5091,38 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "Assert BadRequest"
         assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
 
+        when: "EmailDomains empty list"
+        emailDomains = [].asList()
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null, emailDomains)
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp)
+
+        then: "Assert BadRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_EMAIL_DOMAIN_OPTIONS)
+
+        when: "Empty emailDomain"
+        emailDomains = ["", testUtils.getRandomUUID("emailDomain")].asList()
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null, emailDomains)
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "Assert BadRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_VALUE)
+
+        when: "Blank emailDomain"
+        emailDomains = ["     ", testUtils.getRandomUUID("emailDomain")].asList()
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null, emailDomains)
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "Assert BadRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_VALUE)
+
+        when: "Whitespace characters in emailDomain"
+        emailDomains = ["bad     ", testUtils.getRandomUUID("emailDomain")].asList()
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null, emailDomains)
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "Assert BadRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_VALUE)
+
         when: "EmailDomain belongs to another IDP"
         domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null, [emailDomain].asList())
         response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
@@ -5134,6 +5166,30 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         then: "Assert BadRequest"
         assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+
+        when: "Empty emailDomain"
+        emailDomains = ["", testUtils.getRandomUUID("emailDomain")].asList()
+        invalidIdentityProvider.emailDomains.emailDomain = emailDomains
+        response = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, invalidIdentityProvider, requestContentType, requestContentType)
+
+        then: "Assert BadRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_VALUE)
+
+        when: "Blank emailDomain"
+        emailDomains = ["     ", testUtils.getRandomUUID("emailDomain")].asList()
+        invalidIdentityProvider.emailDomains.emailDomain = emailDomains
+        response = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, invalidIdentityProvider, requestContentType, requestContentType)
+
+        then: "Assert BadRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_VALUE)
+
+        when: "Whitespace characters in emailDomain"
+        emailDomains = ["bad     ", testUtils.getRandomUUID("emailDomain")].asList()
+        invalidIdentityProvider.emailDomains.emailDomain = emailDomains
+        response = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, invalidIdentityProvider, requestContentType, requestContentType)
+
+        then: "Assert BadRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_VALUE)
 
         when: "EmailDomain belongs to another IDP"
         invalidIdentityProvider = new IdentityProvider().with {
