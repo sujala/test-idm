@@ -2,13 +2,9 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.security.ImmutableClientRole
-import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.Domain
-import com.rackspace.idm.domain.entity.PaginatorContext
-import com.rackspace.idm.domain.entity.Tenant
-import com.rackspace.idm.domain.entity.TenantType
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -71,11 +67,12 @@ class TenantServiceTests extends RootServiceTest {
         1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
-        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
         if (excludeTenantType) {
             1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
+            0 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
         } else {
             0 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
+            1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
         }
 
         and: "the user gets the auto-assigned tenant role based on the exclude tenant type config"
@@ -84,6 +81,9 @@ class TenantServiceTests extends RootServiceTest {
         } else {
             assert userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantIds.contains(tenant.tenantId) } != null
         }
+
+        and: "the user never gets the auto-assign role as a global role"
+        userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && CollectionUtils.isEmpty(role.tenantIds) } == null
 
         where:
         excludeTenantType << [true, false]
@@ -134,12 +134,17 @@ class TenantServiceTests extends RootServiceTest {
         1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
-        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
+
+        and: "the user did not get the tenant-access role and the role was not loaded to populate the role details"
+        0 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
 
         and: "the user gets the auto-assigned tenant role based on the exclude tenant type config"
         assert userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantIds.contains(tenant1.tenantId) } == null
         assert userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantIds.contains(tenant2.tenantId) } == null
+
+        and: "the auto-assign role is not assigned as a global role"
+        userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && CollectionUtils.isEmpty(role.tenantIds) } == null
     }
 
     @Unroll
@@ -181,8 +186,14 @@ class TenantServiceTests extends RootServiceTest {
         1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
-        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
+
+        and: "the auto-assign role is only loaded by id to populate the role details for users that actually get the role"
+        if (IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType) {
+            1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
+        } else {
+            0 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
+        }
 
         and: "the user gets the auto-assigned tenant role based on the exclude tenant type config"
         if (IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType) {
@@ -190,6 +201,9 @@ class TenantServiceTests extends RootServiceTest {
         } else {
             assert userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantIds.contains(tenant.tenantId) } == null
         }
+
+        and: "the user never gets the auto-assign role as a global role"
+        userTenantRoles.find { role -> role.roleRsId == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && CollectionUtils.isEmpty(role.tenantIds) } == null
 
         where:
         userType << IdentityUserTypeEnum.values()

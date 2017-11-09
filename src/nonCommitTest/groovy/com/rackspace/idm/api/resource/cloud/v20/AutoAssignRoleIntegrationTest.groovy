@@ -96,11 +96,15 @@ class AutoAssignRoleIntegrationTest extends RootIntegrationTest {
     }
 
     void assertAutoAssignRoleOnTenantInAuthResponse(AuthenticateResponse authenticateResponse, Tenant tenant, boolean tenantExcluded) {
+        // first assert that the auto-assign role is not displayed as a global role
+        assert authenticateResponse.user.roles.role.find { role -> role.name == identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() && role.tenantId == null } == null
         def autoRoleOnTenant = authenticateResponse.user.roles.role.find { role -> role.name == identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() && role.tenantId == tenant.id }
         assert tenantExcluded ? autoRoleOnTenant == null : autoRoleOnTenant != null
     }
 
     void assertAutoAssignRoleOnTenantInRoleList(RoleList roleList, Tenant tenant, boolean tenantExcluded) {
+        // first assert that the auto-assign role is not a global role
+        assert roleList.role.find { role -> role.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantId == null } == null
         def autoRoleOnTenant = roleList.role.find { role -> role.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantId == tenant.id}
         assert tenantExcluded ? autoRoleOnTenant == null : autoRoleOnTenant != null
     }
