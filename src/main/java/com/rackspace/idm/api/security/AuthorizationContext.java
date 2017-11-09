@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.security;
 
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+
 import java.util.List;
 
 /**
@@ -55,4 +57,29 @@ public class AuthorizationContext {
         return false;
     }
 
+    /**
+     * Returns the lowest weight user type role included in the list of roles or null if no roles match an identity
+     * user type.
+     *
+     * @return
+     */
+    public IdentityUserTypeEnum getIdentityUserType() {
+        IdentityUserTypeEnum userType = null;
+        for (ImmutableTenantRole explicitRole : explicitRoles) {
+            IdentityUserTypeEnum type = IdentityUserTypeEnum.fromRoleName(explicitRole.getName());
+            if (type != null && (userType == null || type.getLevel().isLowerWeightThan(userType.getLevel()))) {
+                userType = type;
+            }
+        }
+
+        //check implicit roles
+        for (ImmutableClientRole implicit : implicitRoles) {
+            IdentityUserTypeEnum type = IdentityUserTypeEnum.fromRoleName(implicit.getName());
+            if (type != null && (userType == null || type.getLevel().isLowerWeightThan(userType.getLevel()))) {
+                userType = type;
+            }
+        }
+
+        return userType;
+    }
 }

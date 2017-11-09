@@ -352,6 +352,19 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP = "enable.user.groups.globally";
     public static final boolean FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP = "feature.enable.send.new.relic.custom.data";
+    public static final boolean FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT = true;
+
+    public static final String FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP = "new.relic.auth.api.resource.attributes";
+    public static final List<String> FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
+
+    public static final String FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP = "new.relic.protected.api.resource.attributes";
+    public static final List<String> FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
+
+    public static final String FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP = "new.relic.unprotected.api.resource.attributes";
+    public static final List<String> FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
+
+
     public static final String FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP = "tenant.prefixes.to.exclude.auto.assign.role.from";
 
     /**
@@ -662,6 +675,11 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT);
 
         defaults.put(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
+        defaults.put(FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_DEFAULT);
+        defaults.put(FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT);
+        defaults.put(FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT);
 
         defaults.put(FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP, FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_DEFAULT);
 
@@ -1481,6 +1499,26 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_CACHE_AE_TOKENS_PROP, versionAdded = "3.0.1")
         public Boolean cacheAETokens() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_CACHE_AE_TOKENS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, versionAdded = "3.17.1", description = "Whether or not to push custom attributes to New Relic for each API transaction")
+        public boolean isFeatureSendNewRelicCustomDataEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP);
+        }
+
+        @IdmProp(key = FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "The custom attributes to push for auth api resources. '*' means all available")
+        public Set<String> getNewRelicCustomDataAttributesForAuthApiResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "The custom attributes to push for protected api resources. '*' means all available")
+        public Set<String> getNewRelicCustomDataAttributesForProtectedApiResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "The custom attributes to push for unprotected api resources. '*' means all available")
+        public Set<String> getNewRelicCustomDataAttributesForUnprotectedApiResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP);
         }
 
         @IdmProp(key = CACHED_AE_TOKEN_TTL_SECONDS_PROP, versionAdded = "3.0.3", description = "The time an entry will exist in the AE token cache before naturally expiring")

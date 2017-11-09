@@ -90,4 +90,13 @@ public class ScopeAccess implements Auditable, UniqueId, Token {
             entry.removeAttribute(LdapRepository.ATTR_RS_TYPE);
         }
     }
+
+    @Override
+    public String getMaskedAccessTokenString() {
+        String masked = null;
+        if (org.apache.commons.lang.StringUtils.isNotBlank(accessTokenString)) {
+            masked = org.apache.commons.lang.StringUtils.repeat("*", 5) + org.apache.commons.lang.StringUtils.right(accessTokenString, 4);
+        }
+        return masked;
+    }
 }

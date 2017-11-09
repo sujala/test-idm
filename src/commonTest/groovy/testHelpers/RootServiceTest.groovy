@@ -4,6 +4,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv20.*
+import com.rackspace.idm.api.resource.IdmPathUtils
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.email.EmailClient
@@ -12,6 +13,7 @@ import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
 import com.rackspace.idm.api.resource.cloud.v20.*
 import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.api.security.AuthenticationContext
+import com.rackspace.idm.api.security.AuthorizationContext
 import com.rackspace.idm.api.security.DefaultRequestContextHolder
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.SecurityContext
@@ -42,6 +44,7 @@ import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.junit.Rule
 import org.openstack.docs.identity.api.v2.ObjectFactory
+import org.springframework.context.ApplicationEventPublisher
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -75,6 +78,8 @@ class RootServiceTest extends Specification {
     @Shared CloudKsGroupBuilder cloudKsGroupBuilder
     @Shared JAXBObjectFactories jaxbObjectFactories
     @Shared ObjectFactory openStackIdentityV2Factory
+    @Shared IdmPathUtils idmPathUtils
+    @Shared ApplicationEventPublisher applicationEventPublisher;
 
     // converters
     @Shared AuthConverterCloudV20 authConverter
@@ -184,6 +189,7 @@ class RootServiceTest extends Specification {
     @Shared RequestContext requestContext
     @Shared AuthenticationContext authenticationContext
     @Shared SecurityContext securityContext
+    @Shared AuthorizationContext authorizationContext
 
     @Shared def jaxbMock
 
@@ -624,13 +630,25 @@ class RootServiceTest extends Specification {
         service.roleService = roleService
     }
 
+    def mockIdmPathUtils(service) {
+        idmPathUtils = Mock()
+        service.idmPathUtils = idmPathUtils
+    }
+
+    def mockApplicationEventPublisher(service) {
+        applicationEventPublisher = Mock()
+        service.applicationEventPublisher = applicationEventPublisher
+    }
+
     def mockRequestContextHolder(service) {
         requestContextHolder = Mock()
         service.requestContextHolder = requestContextHolder
         requestContext = Mock(RequestContext)
         securityContext = Mock(SecurityContext)
+        authorizationContext = Mock(AuthorizationContext)
         requestContextHolder.getRequestContext() >> requestContext
         requestContext.getSecurityContext() >> securityContext
+        securityContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
         authenticationContext = Mock(AuthenticationContext)
         requestContextHolder.getAuthenticationContext() >> authenticationContext
     }

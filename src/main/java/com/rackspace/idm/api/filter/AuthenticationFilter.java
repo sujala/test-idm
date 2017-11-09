@@ -141,7 +141,10 @@ public class AuthenticationFilter implements ContainerRequestFilter {
              //TODO: Move the no token error check up to this filter after verifying that all services except authenticate require an auth token to be provided
              */
             if (!StringUtils.isEmpty(authToken)) {
-                ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken); //throws NotFoundException token string is empty/null
+                /*
+                Throws NotFoundException if token string is empty/null. Returns null if token can't be decrypted
+                 */
+                ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
                 ScopeAccess effectiveToken = callerToken; //assume effective token will be same as caller.
 
                 //PWD-RESET tokens are only allowed to be used for the password reset call
