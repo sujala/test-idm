@@ -352,6 +352,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP = "enable.user.groups.globally";
     public static final boolean FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP = "feature.enable.use.repose.request.id";
+    public static final boolean FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT = true;
+
     public static final String FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP = "feature.enable.send.new.relic.custom.data";
     public static final boolean FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT = true;
 
@@ -676,6 +679,7 @@ public class IdentityConfig {
 
         defaults.put(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT);
 
+        defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
         defaults.put(FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_DEFAULT);
         defaults.put(FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT);
@@ -1499,6 +1503,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_CACHE_AE_TOKENS_PROP, versionAdded = "3.0.1")
         public Boolean cacheAETokens() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_CACHE_AE_TOKENS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, versionAdded = "3.17.1", description = "Whether or not to use the value supplied in the X-Request-Id header as the log transaction id. If set to false (or set to true but the header is null or blank), Identity generates a GUUID for the transaction id.")
+        public boolean isFeatureUseReposeRequestIdEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP);
         }
 
         @IdmProp(key = FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, versionAdded = "3.17.1", description = "Whether or not to push custom attributes to New Relic for each API transaction")
