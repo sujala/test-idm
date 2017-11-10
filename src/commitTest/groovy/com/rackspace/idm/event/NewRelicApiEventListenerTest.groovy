@@ -1,5 +1,6 @@
 package com.rackspace.idm.event
 
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 class NewRelicApiEventListenerTest extends RootServiceTest {
@@ -41,5 +42,22 @@ class NewRelicApiEventListenerTest extends RootServiceTest {
 
         and: "event isn't processed"
         1 * apiEventSpringWrapper.getEvent()
+    }
+
+    @Unroll
+    def "createSecuredAttributeSupport: loads configurable properties: key: '#key'; attributes: #attributes"() {
+        when:
+        SecuredAttributeSupport sas = listener.createSecuredAttributeSupport()
+
+        then: "loads from config file"
+        1 * reloadableConfig.getNewRelicSecuredApiResourceAttributesKey() >> key
+        1 * reloadableConfig.getNewRelicSecuredApiResourceAttributes() >> attributes
+
+        and: "vals copied to support"
+        sas.hashKey == key
+        sas.securedAttributeList == attributes
+
+        where:
+        [key, attributes] << [["asdf", ["a"] as Set], ["", ["a", "b"] as Set], [null, null]]
     }
 }

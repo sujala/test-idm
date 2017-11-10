@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.service.IdentityPropertyService;
+import com.rackspace.idm.event.NewRelicCustomAttributesEnum;
 import com.rackspace.idm.exception.MissingRequiredConfigIdmException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
@@ -367,6 +368,17 @@ public class IdentityConfig {
     public static final String FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP = "new.relic.unprotected.api.resource.attributes";
     public static final List<String> FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
 
+    public static final String FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_PROP = "feature.enable.secure.new.relic.api.resource.attributes";
+    public static final boolean FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_DEFAULT = true;
+
+    public static final String NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_PROP = "new.relic.secured.api.resource.attributes";
+    public static final List<String> NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList(NewRelicCustomAttributesEnum.CALLER_USERNAME.getNewRelicAttributeName()
+            , NewRelicCustomAttributesEnum.CALLER_USER_TYPE.getNewRelicAttributeName()
+            , NewRelicCustomAttributesEnum.EFFECTIVE_CALLER_USERNAME.getNewRelicAttributeName()
+            , NewRelicCustomAttributesEnum.EFFECTIVE_CALLER_USER_TYPE.getNewRelicAttributeName());
+
+    public static final String NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP = "new.relic.secured.api.resource.key";
+    public static final String NEW_RELIC_SECURE_API_RESOURCE_KEY_DEFAULT = "";
 
     public static final String FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP = "tenant.prefixes.to.exclude.auto.assign.role.from";
 
@@ -684,6 +696,9 @@ public class IdentityConfig {
         defaults.put(FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_DEFAULT);
         defaults.put(FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT);
         defaults.put(FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT);
+        defaults.put(FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_DEFAULT);
+        defaults.put(NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_PROP, NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_DEFAULT);
+        defaults.put(NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP, NEW_RELIC_SECURE_API_RESOURCE_KEY_DEFAULT);
 
         defaults.put(FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP, FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_DEFAULT);
 
@@ -1528,6 +1543,21 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "The custom attributes to push for unprotected api resources. '*' means all available")
         public Set<String> getNewRelicCustomDataAttributesForUnprotectedApiResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "Only relevant if sending new relic data is enabled. This controls whether or not to secure a specified set of attributes sent to new relic.")
+        public boolean isFeatureSecureNewRelicApiResourceAttributesEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_PROP);
+        }
+
+        @IdmProp(key = NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP, versionAdded = "3.17.1", description = "When secure attributes are enabled, the key to use for securing the props")
+        public String getNewRelicSecuredApiResourceAttributesKey() {
+            return getStringSafely(reloadableConfiguration, NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP);
+        }
+
+        @IdmProp(key = NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "When secure attributes are enabled, a comma delimited list to secure")
+        public Set<String> getNewRelicSecuredApiResourceAttributes() {
+            return getSetSafely(reloadableConfiguration, NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_PROP);
         }
 
         @IdmProp(key = CACHED_AE_TOKEN_TTL_SECONDS_PROP, versionAdded = "3.0.3", description = "The time an entry will exist in the AE token cache before naturally expiring")
