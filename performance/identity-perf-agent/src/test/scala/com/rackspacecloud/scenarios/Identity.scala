@@ -32,7 +32,9 @@ object Identity {
   // V20 Authenticate
   val v20_apikey_auth                  = scenario("V2.0_Authenticate_External").exec(Tokens.v20_authenticate).exitHereIfFailed
   val v20_apikey_auth_rcn_roles        = scenario("V2.0_Authenticate_External_RCN_Roles").exec(Tokens.v20_authenticate_rcn_roles).exitHereIfFailed
-  
+
+  val v20_apikey_auth_default_user    = scenario("V2.0_Authenticate_Default_Users_External").exec(Tokens.v20_authenticate_default_user).exitHereIfFailed
+
   val v20_apikey_auth_repl             = scenario("V2.0_Authenticate_External_Replication").exec(Tokens.v20_authenticate).exitHereIfFailed
   val v20_apikey_auth_internal         = scenario("V2.0_Authenticate_Internal").exec(Tokens.v20_authenticate).exitHereIfFailed
   val v20_apikey_auth_internal_repl    = scenario("V2.0_Authenticate_Internal_Replication").exec(Tokens.v20_authenticate).exitHereIfFailed
@@ -56,6 +58,9 @@ object Identity {
   val v20_token_validate_repl          = scenario("V2.0_Validate_Replication").exec(Tokens.v20_validate).exitHereIfFailed
   val v20_token_validate_internal      = scenario("V2.0_Validate_Internal").exec(Tokens.v20_validate).exitHereIfFailed
   val v20_token_validate_internal_repl = scenario("V2.0_Validate_Internal_Replication").exec(Tokens.v20_validate).exitHereIfFailed
+
+  // V20 Validate Default User's token
+  val v20_token_validate_default_user        = scenario("V2.0_Validate_Default_User").exec(Tokens.v20_validate_default_user).exitHereIfFailed
 
   // V11 Get User By Mosso Id
   val v11_get_user_by_mosso_id               = scenario("V1.1_Get_User_By_Mosso_Id").exec(Tokens.v11_get_user_by_mosso_id).exitHereIfFailed

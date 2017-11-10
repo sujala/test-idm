@@ -1,0 +1,7 @@
+[{
+    "users" : 700,
+    "region" : "us",
+    "name": "default_users.dat",
+    "columns": ["username", "userid", "apikey", "password", "ipaddress"],
+    "column_mappings" : {}
+}]

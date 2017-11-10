@@ -3,6 +3,7 @@ package com.rackspacecloud.simulations.identity
 import com.rackspacecloud.Options
 import com.rackspacecloud.scenarios.IdentityAdminGeneration
 import com.rackspacecloud.scenarios.IdentityUserTokenGeneration
+import com.rackspacecloud.scenarios.IdentityDefaultUserTokenGeneration
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
@@ -26,15 +27,18 @@ class IdentityConstantTputGenerateTokens extends Simulation {
     .acceptEncodingHeader("gzip, deflate, compress")
     .contentTypeHeader("application/json; charset=utf-8")
     .userAgentHeader( "QEPerf/1.0.0")
-   .shareConnections 
-  
-   val admin_gen_scn = IdentityAdminGeneration.generate_admin_tokens 
-   val valid_gen_scn = IdentityUserTokenGeneration.generate_tokens
+   .shareConnections
+
+  val admin_gen_scn = IdentityAdminGeneration.generate_admin_tokens
+  val valid_gen_scn = IdentityUserTokenGeneration.generate_tokens
+  val default_gen_scn = IdentityDefaultUserTokenGeneration.generate_tokens
   setUp(
     admin_gen_scn
       .inject(constantUsersPerSec(ADMIN_USERS_PER_SEC) during(DATA_GENERATION_PERIOD_SECS seconds)),
-    valid_gen_scn 
-      .inject(constantUsersPerSec(VALIDATE_USERS_PER_SEC) during(DATA_GENERATION_PERIOD_SECS seconds))
+    valid_gen_scn
+      .inject(constantUsersPerSec(VALIDATE_USERS_PER_SEC) during(DATA_GENERATION_PERIOD_SECS seconds)),
+    default_gen_scn
+    .inject(constantUsersPerSec(VALIDATE_USERS_PER_SEC) during(DATA_GENERATION_PERIOD_SECS seconds))
   ).protocols(httpConf).maxDuration(DATA_GENERATION_PERIOD_SECS seconds)
     after {
 
