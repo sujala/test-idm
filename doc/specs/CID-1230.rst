@@ -1,0 +1,32 @@
+.. _CID-1230:
+.. _CID-1241: https://jira.rax.io/browse/CID-1241
+Using emailDomains query param in list IDP with invalid domainId returns 404
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Description
+___________
+
+The List IDP API service query param 'emailDomain' is supposed to be mutually exclusive from other query params. This
+defect can be reproduced by supplying a valid emailDomain and invalid domainId query params on list IDPs.
+
+This issue is related to `CID-1241`_ which mentions another edge case defect related to the mutual exclusivity of this parameter and
+other params. As the AC requested here should address both, combining the two issues.
+
+The application should treat empty string/null values for any query params as if the value was not supplied with respect to
+this restriction.
+
+Business Acceptance Criteria
+____________________________
+
+1. Query params provided to List IDP service that are null/empty string should be treated as if the query param was not provided
+2. If a value is supplied for emailDomain and a value is supplied for any other supported query param, a 400 must be returned
+
+Test Acceptance Criteria
+________________________
+
+1. Supply emailDomain = null/empty string combined with values for other query params.
+    1) The app should respond in the same manner as if the emailDomain query param was not supplied.
+2. Supply approvedDomainId = null/empty string combined with a value for the emailDomain params.
+    1) The app should respond in the same manner as if the approvedDomainId query param was not supplied.
+3. Supply approvedDomainId = existing domain id/non-existing domainId combined with a value for the emailDomain params.
+    1) The app should respond with a 400 error.
