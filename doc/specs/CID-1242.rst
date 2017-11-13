@@ -1,0 +1,24 @@
+.. _CID-1242:
+
+Upgrade Repose to version 8.7.2.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Description
+___________
+
+Must update Identity to the latest version of Repose in order to receive some attribute mapping policy fixes.
+
+
+Business Acceptance Criteria
+____________________________
+
+1. Upgrade the 'repose' docker container to use Repose 8.7.2.0
+    1) Publish the image tagged with the version of repose
+2. Upgrade the 'repose-instance' docker container to use Repose 8.7.2.0
+    1) Publish the image tagged with the version of repose
+3. Update cloud-identity to use Repose 8.7.2.0 for API tests
+
+
+Test Acceptance Criteria
+________________________
+
