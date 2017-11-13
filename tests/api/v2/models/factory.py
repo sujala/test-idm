@@ -235,6 +235,7 @@ def get_add_tenant_request_object(tenant_name=None, tenant_types=None,
 def get_add_idp_request_object(name=None, issuer=None, description=None,
                                federation_type=None, authentication_url=None,
                                public_certificates=None,
+                               email_domains=None,
                                approved_domain_group=None,
                                approved_domain_ids=None):
     if not name:
@@ -256,7 +257,8 @@ def get_add_idp_request_object(name=None, issuer=None, description=None,
                         authentication_url=authentication_url,
                         public_certificates=public_certificates,
                         approved_domain_group=approved_domain_group,
-                        approved_domain_ids=approved_domain_ids)
+                        approved_domain_ids=approved_domain_ids,
+                        email_domains=email_domains)
 
 
 def get_add_user_group_request(domain_id, group_name=None, description=None):

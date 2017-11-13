@@ -9,60 +9,12 @@ from tests.api.v2.federation import federation
 from tests.api.v2.models import factory
 
 from tests.package.johny import constants as const
-from tests.package.johny.v2 import client
-from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt
 class TestAddMappingIDP(federation.TestBaseFederation):
 
     """Add IDP Mapping Tests"""
-
-    # helpers
-    @classmethod
-    def add_role(cls, user_id, role_name):
-        if cls.test_config.run_service_admin_tests:
-            option = {
-                const.PARAM_ROLE_NAME: role_name
-            }
-            list_resp = cls.service_admin_client.list_roles(option=option)
-            mapping_rules_role_id = list_resp.json()[const.ROLES][0][const.ID]
-            cls.service_admin_client.add_role_to_user(
-                user_id=user_id, role_id=mapping_rules_role_id)
-
-    @classmethod
-    def create_user(cls):
-        user_name = cls.generate_random_string()
-        password = cls.generate_random_string(const.PASSWORD_PATTERN)
-        request_object = requests.UserAdd(user_name=user_name,
-                                          password=password)
-        cls.service_admin_client.add_user(request_object)
-
-        req_obj = requests.AuthenticateWithPassword(
-            user_name=user_name,
-            password=password)
-        return req_obj
-
-    @classmethod
-    def create_identity_admin_with_role(cls, role):
-        user_obj = cls.create_user()
-        idp_ia_client = client.IdentityAPIClient(
-            url=cls.url,
-            serialize_format=cls.test_config.serialize_format,
-            deserialize_format=cls.test_config.deserialize_format)
-
-        resp = idp_ia_client.get_auth_token(request_object=user_obj)
-        identity_admin_auth_token = resp.json()[const.ACCESS][const.TOKEN][
-            const.ID]
-        identity_admin_id = resp.json()[const.ACCESS][const.USER][const.ID]
-        idp_ia_client.default_headers[const.X_AUTH_TOKEN] = (
-            identity_admin_auth_token)
-        idp_ia_client.default_headers[const.X_USER_ID] = (
-            identity_admin_id
-        )
-        if role != "None":
-            cls.add_role(user_id=identity_admin_id, role_name=role)
-        return idp_ia_client
 
     @classmethod
     def setUpClass(cls):
