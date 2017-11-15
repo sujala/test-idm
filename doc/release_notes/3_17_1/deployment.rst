@@ -5,25 +5,22 @@ Cloud Identity 3.17.1 Release Notes
 .. _CID-1231:  https://jira.rax.io/browse/CID-1231
 .. _CID-1254:  https://jira.rax.io/browse/CID-1254
 .. _CID-1239:  https://jira.rax.io/browse/CID-1239
-
+.. _CIDM-963:  https://jira.rax.io/browse/CIDM-963
 .. contents::
 
 Info
 ------
 
-Release Ticket  - `CID-1254`_
-
-Staging Deployment Ticket
+Release Ticket - `CID-1254`_
 
 .. csv-table:: Release Progress
    :header: Milestone, Date, Status
 
-   RC Due, Tues - Nov 14 2017  RC1 Build number: XXX
-   QE Signoff for Staging, Thurs - Nov 16 2017
-   Staging Release Week,  
-   Signoff for Production,  
-   Production Release Week,
-
+   RC Due, "Tues, Nov 14 2017", Delivered - RC1 Build number: 3.17.1-1510607797053
+   QE Signoff for Staging, "Thurs, Nov 16 2017",
+   Staging Release, "Mon, Nov 27 - Tues, Nov 28 2017",
+   Signoff for Production, "Fri, Dec 1 2017",
+   Production Release Week, "Mon, Dec 4 - Tues, Dec 5 2017"
 
 Significant Changes
 --------------------
@@ -168,6 +165,7 @@ system-model.cfg.xml change shown below ::
 
 Deployment Notes
 -----------------
+Prior to being deployed `CID-1254`_ must be implemented to add Repose puppet configuration support for the 'X-Request-Id' header.
 
 ---------------
 Pre-Deployment
