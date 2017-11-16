@@ -23,9 +23,10 @@ identity:
         NEXUS_HOST: http://d-build1.iad2.corp.rackspace.com:8100
         VERSION: LATEST
         SPRING_PROFILE: LDAP
+        EDIRECTORY_PORT: 636
 
 repose:
-    image: docker.ciidentity.com/repose-instance:8.4.1.0
+    image: docker.ciidentity.com/repose-instance:8.7.1.0
     links:
         - identity
     ports:

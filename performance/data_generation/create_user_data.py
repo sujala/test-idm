@@ -70,6 +70,43 @@ def get_api_key(baseurl, headers, user_id):
     return apikey
 
 
+def add_default_user_unpack(args):
+    return add_default_user(*args)
+
+
+def add_default_user(username, password):
+    try:
+        user_name = name_generator()
+        create_user_data = {"user": {
+                            "enabled": True,
+                            "username": user_name,
+                            "OS-KSADM:password": "Password1"}}
+        u_url = "{0}/v2.0/users".format(baseurl)
+        user_admin_token = get_token(
+            user_name=username, password=password, alt_url=baseurl)
+
+        ua_headers = {'Accept': 'application/json', 'Content-Type': 'application/json',
+                      'X-Auth-Token': user_admin_token}
+
+        r = requests.post(url=u_url,
+                          json=create_user_data, headers=ua_headers, verify=False)
+        result_data = r.json()
+        user_data = dict()
+        user_data["username"] = result_data["user"]["username"]
+        user_data["userid"] = result_data["user"]["id"]
+        user_data["password"] = "Password1"
+        apikey = get_api_key(baseurl, headers, user_data["userid"])
+        user_data["apikey"] = apikey
+        time.sleep(0.1)
+        return user_data
+    except Exception as excp:
+        print(excp)
+        e = sys.exc_info()
+        print("user error: {0},{1},{2}".format(e[0], e[1], e[2]))
+        traceback.print_tb(e[2], limit=1, file=sys.stdout)
+        return ""
+
+
 def add_user(number):
     try:
         group_name = name_generator() + "perf_test_group"
@@ -191,6 +228,9 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_csv_file",
                         default="users_data.csv",
                         help="Output CSV file")
+    parser.add_argument("-d", "--default_user_output_csv_file",
+                        default="default_users_data.csv",
+                        help="Output CSV file")
 
     parser.add_argument("-f", "--admin_output_csv_file",
                         default="admin_users_data.csv",
@@ -206,6 +246,7 @@ if __name__ == '__main__':
     output_file_name = args.output_csv_file
 
     admin_output_file_name = args.admin_output_csv_file
+    default_user_output_file_name = args.default_user_output_csv_file
     num_users = args.num_users
     num_admin_users = args.num_users
     baseurl = args.server_url
@@ -250,3 +291,19 @@ if __name__ == '__main__':
         for user_data in result_rows:
             if user_data:
                 a_writer.writerow(user_data)
+
+    with open(default_user_output_file_name, 'w') as default_user_data_file:
+
+        with open(output_file_name, 'r') as user_data_file:
+            reader = csv.DictReader(user_data_file)
+            user_admin_creds = []
+            for line in reader:
+                user_admin_creds.append(tuple([line['username'], line['password']]))
+            with terminating(Pool(processes=proc_count)) as p:
+                result_rows = p.map(add_default_user_unpack, user_admin_creds)
+            fieldnames = ['username', 'userid', 'password', 'apikey']
+            writer = csv.DictWriter(default_user_data_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for user_data in result_rows:
+                if user_data:
+                    writer.writerow(user_data)

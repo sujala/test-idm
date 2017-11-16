@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.filter;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.security.SecurityContext;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -45,6 +47,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     public static final String DOMAINS_PATH_PART = "domains";
     public static final String DEVOPS_SERVICE_PATH_PART = "devops";
 
+    public static final int X_REQUEST_ID_MAX_LENGTH = 64;
     /**
      * Pattern to recognize validate call against AE or UUID tokens
      */
@@ -56,6 +59,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     @Context
     private HttpServletRequest req;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Autowired
     private MultiFactorCloud20Service multiFactorCloud20Service;
@@ -96,11 +102,12 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         String path = request.getPath();
         final String method = request.getMethod();
 
+        //TODO: Transition this to use the provided ContainerRequest rather than raw HttpServletRequest
         if (req != null) {
             MDC.put(Audit.REMOTE_IP, req.getRemoteAddr());
             MDC.put(Audit.HOST_IP, req.getLocalAddr());
             MDC.put(Audit.PATH, path);
-            MDC.put(Audit.GUUID, UUID.randomUUID().toString());
+            MDC.put(Audit.GUUID, calculateAuditGuuid(request));
             String xForwardedFor = req.getHeader("X-Forwarded-For");
             if(StringUtils.isNotBlank(xForwardedFor)){
                 MDC.put(Audit.X_FORWARDED_FOR, xForwardedFor);
@@ -141,7 +148,10 @@ public class AuthenticationFilter implements ContainerRequestFilter {
              //TODO: Move the no token error check up to this filter after verifying that all services except authenticate require an auth token to be provided
              */
             if (!StringUtils.isEmpty(authToken)) {
-                ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken); //throws NotFoundException token string is empty/null
+                /*
+                Throws NotFoundException if token string is empty/null. Returns null if token can't be decrypted
+                 */
+                ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
                 ScopeAccess effectiveToken = callerToken; //assume effective token will be same as caller.
 
                 //PWD-RESET tokens are only allowed to be used for the password reset call
@@ -240,6 +250,21 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     }
 
+    private String calculateAuditGuuid(ContainerRequest request) {
+        String requestId = null;
+        if (identityConfig.getReloadableConfig().isFeatureUseReposeRequestIdEnabled()) {
+            requestId = request.getHeaderValue(GlobalConstants.X_REQUEST_ID);
+        }
+
+        if (StringUtils.isBlank(requestId)) {
+            requestId = UUID.randomUUID().toString();
+        } else if (requestId.length() > X_REQUEST_ID_MAX_LENGTH) {
+            requestId = StringUtils.substring(requestId, 0, X_REQUEST_ID_MAX_LENGTH);
+        }
+
+        return requestId;
+    }
+
     /**
      * Populate the security context for a validate call. This must NOT replace the x-auth-token header if the caller
      * is an impersonator.
@@ -335,6 +360,10 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     public void setConfiguration(Configuration config){
         this.config = config;
+    }
+
+    public void setIdentityConfig(IdentityConfig identityConfig) {
+        this.identityConfig = identityConfig;
     }
 
     public void setRequestContextHolder(RequestContextHolder requestContextHolder) {

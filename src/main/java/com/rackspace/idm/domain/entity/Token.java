@@ -23,6 +23,13 @@ public interface Token {
     String getAccessTokenString();
 
     /**
+     * Return a masked version of the access token string suitable for logging
+     *
+     * @return
+     */
+    String getMaskedAccessTokenString();
+
+    /**
      * When the token should be considered expired
      *
      * @return

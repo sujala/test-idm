@@ -29,6 +29,18 @@ public enum RoleLevelEnum {
         return levelAsInt;
     }
 
+    /**
+     * Returns whether the provided role has a higher weight than this role.
+     * @param that
+     * @return
+     */
+    public boolean isLowerWeightThan(RoleLevelEnum that) {
+        if (that == null) {
+            return true;
+        }
+        return getLevelAsInt() < that.levelAsInt;
+    }
+
     public static RoleLevelEnum fromInt(int level) {
         for (RoleLevelEnum roleLevelEnum : values()) {
             if (roleLevelEnum.levelAsInt == level) {

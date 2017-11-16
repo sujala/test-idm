@@ -599,7 +599,7 @@ public class DefaultTenantService implements TenantService {
                         }
                     }
 
-                    if (autoAssignedRole != null) {
+                    if (autoAssignedRole != null && CollectionUtils.isNotEmpty(tenantIdsToGetAutoAssignRole)) {
                         // Add the auto-assigned role for all tenants in domain.
                         implicitRole = new TenantRole();
                         implicitRole.setClientId(autoAssignedRole.getClientId());
@@ -610,6 +610,7 @@ public class DefaultTenantService implements TenantService {
                 }
             }
         }
+
         return implicitRole;
     }
 

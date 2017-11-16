@@ -387,8 +387,11 @@ gretty {
     // This will also require you to install the Java Cryptography Extension
     // systemProperty 'property_encryption_password', 'encryptionPassword'
 
-    // Uncomment this when want to submit new relic metrics to new relic. Need new relic config
-    // jvmArgs = ["-javaagent:/etc/idm/newrelic/newrelic.jar"]
+    // To enable newRelic metrics run via './gradlew appRunDebug -PnewRelic'
+    // Note - you will still need the jar/config locally. See 'https://one.rackspace.com/display/auth/Setting+up+Global+Auth+on+your+Laptop#SettingupGlobalAuthonyourLaptop-NewRelicIntegration(Optional)'
+    if (project.hasProperty('newRelic')) {
+        jvmArgs = ["-javaagent:/etc/idm/newrelic/newrelic.jar"]
+    }
 }
 
 artifacts {

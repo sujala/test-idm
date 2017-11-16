@@ -9,7 +9,9 @@ object Engine extends App {
 	props.bodiesDirectory(IDEPathHelper.bodiesDirectory.toString)
 	props.binariesDirectory(IDEPathHelper.mavenBinariesDirectory.toString)
 	props.simulationClass("com.rackspacecloud.simulations.identity.IdentityConstantTputGenerateTokens")
-	//props.simulationClass("com.rackspacecloud.simulations.identity.IdentityDemo")
+//	props.simulationClass("com.rackspacecloud.simulations.identity.IdentityDemo")
+//	props.simulationClass("com.rackspacecloud.simulations.identity.DefaultUserAuthValidate")
+//	props.simulationClass("com.rackspacecloud.simulations.identity.IdentityConstantTputDefaultUserDeletions")
 
 	Gatling.fromMap(props.build)
 }
