@@ -243,6 +243,52 @@ class TestBaseFederation(base.TestBaseV2):
             idp_id=idp_id, request_data=mapping, content_type=const.YAML)
         assert update_idp_mapping_resp.status_code == 204
 
+    @classmethod
+    def create_user(self):
+        user_name = self.generate_random_string()
+        password = self.generate_random_string(const.PASSWORD_PATTERN)
+        request_object = requests.UserAdd(user_name=user_name,
+                                          password=password)
+        self.service_admin_client.add_user(request_object)
+
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=user_name,
+            password=password)
+        return req_obj
+
+    @classmethod
+    def create_identity_admin_with_role(self, role):
+        user_obj = self.create_user()
+        idp_ia_client = client.IdentityAPIClient(
+            url=self.url,
+            serialize_format=self.test_config.serialize_format,
+            deserialize_format=self.test_config.deserialize_format)
+
+        resp = idp_ia_client.get_auth_token(request_object=user_obj)
+        identity_admin_auth_token = resp.json()[const.ACCESS][const.TOKEN][
+            const.ID]
+        identity_admin_id = resp.json()[const.ACCESS][const.USER][const.ID]
+        idp_ia_client.default_headers[const.X_AUTH_TOKEN] = (
+            identity_admin_auth_token)
+        idp_ia_client.default_headers[const.X_USER_ID] = (
+            identity_admin_id
+        )
+        if role != "None":
+            self.add_role_by_name_to_user(
+                user_id=identity_admin_id, role_name=role)
+        return idp_ia_client
+
+    @classmethod
+    def add_role_by_name_to_user(self, user_id, role_name):
+        if self.test_config.run_service_admin_tests:
+            option = {
+                const.PARAM_ROLE_NAME: role_name
+            }
+            list_resp = self.service_admin_client.list_roles(option=option)
+            mapping_rules_role_id = list_resp.json()[const.ROLES][0][const.ID]
+            self.service_admin_client.add_role_to_user(
+                user_id=user_id, role_id=mapping_rules_role_id)
+
     def tearDown(self):
         # Delete all providers created in the tests
 

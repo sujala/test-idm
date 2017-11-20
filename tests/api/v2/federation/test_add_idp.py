@@ -4,6 +4,7 @@ import ddt
 
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory
+from tests.api.v2.schema import idp as idp_json
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
@@ -12,8 +13,7 @@ from tests.package.johny.v2.models import requests
 @ddt.ddt
 class TestAddIDP(federation.TestBaseFederation):
 
-    """Add IDP Tests
-    Currently only tests which involve setting the name."""
+    """Add IDP Tests."""
 
     @classmethod
     def setUpClass(cls):
@@ -25,6 +25,60 @@ class TestAddIDP(federation.TestBaseFederation):
 
     def setUp(self):
         super(TestAddIDP, self).setUp()
+
+    def test_add_idp_email_domain(self):
+        if not self.test_config.run_service_admin_tests:
+            self.skipTest('Skipping Service Admin Tests per config value')
+        idp_ia_client = self.create_identity_admin_with_role(
+            const.PROVIDER_MANAGEMENT_ROLE_NAME)
+        email_domains = []
+        email_domains.append(self.generate_random_string(const.EMAIL_PATTERN))
+
+        domain_id = self.create_one_user_and_get_domain(
+            auth_client=idp_ia_client)
+
+        # Add IDP with email domain.
+        request_object = factory.get_add_idp_request_object(
+            federation_type='DOMAIN', approved_domain_ids=[domain_id],
+            email_domains=email_domains)
+        resp = self.idp_ia_client.create_idp(request_object)
+        self.assertEquals(resp.status_code, 201)
+        idp_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
+        self.provider_ids.append(idp_id)
+
+        # Get IDP by email domain.
+        option = {const.EMAIL_DOMAIN: email_domains[0]}
+        resp = self.idp_ia_client.list_idp(option=option)
+        idp = resp.json()[const.NS_IDENTITY_PROVIDERS][0]
+        self.assertEqual(idp[const.ID], idp_id)
+        self.assertSchema(
+            response=resp,
+            json_schema=idp_json.list_idps)
+
+        # Update IDP's Email Domain.
+        updated_email_domains = []
+        updated_email_domains.append(self.generate_random_string(
+            const.EMAIL_PATTERN))
+
+        idp_obj = requests.IDP(email_domains=updated_email_domains)
+        resp = self.idp_ia_client.update_idp(idp_id=idp_id,
+                                             request_object=idp_obj)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.json()[const.NS_IDENTITY_PROVIDER][const.EMAIL_DOMAINS],
+            updated_email_domains)
+        self.assertSchema(
+            response=resp,
+            json_schema=idp_json.identity_provider_w_email_domain)
+
+        # Get IDP by ID & verify response.
+        resp = self.idp_ia_client.get_idp(idp_id=idp_id)
+        self.assertEqual(
+            resp.json()[const.NS_IDENTITY_PROVIDER][const.EMAIL_DOMAINS],
+            updated_email_domains)
+        self.assertSchema(
+            response=resp,
+            json_schema=idp_json.identity_provider_w_email_domain)
 
     def test_add_idp_with_name(self):
         '''Add with a name

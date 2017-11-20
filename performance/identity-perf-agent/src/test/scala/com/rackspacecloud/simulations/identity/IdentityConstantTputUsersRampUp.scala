@@ -18,6 +18,8 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val V20_AUTHENTICATE_APIKEY_REPL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_apikey_repl.users_per_sec")
   val V20_AUTHENTICATE_APIKEY_INTERNAL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_apikey_internal.users_per_sec")
   val V20_AUTHENTICATE_APIKEY_INTERNAL_REPL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_apikey_internal_repl.users_per_sec")
+  val V20_AUTHENTICATE_APIKEY_DEFAULT_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_apikey_default_users.users_per_sec")
+
 
   val v20_apikey_auth_scn = Identity.v20_apikey_auth
   val v20_apikey_auth_rcn_roles = Identity.v20_apikey_auth_rcn_roles
@@ -62,6 +64,7 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val V20_VALIDATE_REPL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_validate_repl.users_per_sec")
   val V20_VALIDATE_INTERNAL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_validate_internal.users_per_sec")
   val V20_VALIDATE_INTERNAL_REPL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_validate_internal_repl.users_per_sec")
+  val V20_VALIDATE_DEFAULT_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_validate_default_users.users_per_sec")
 
   val v20_token_validate_scn = Identity.v20_token_validate
   val v20_token_validate_scn_repl = Identity.v20_token_validate_repl
@@ -159,6 +162,8 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   // val v20_create_user_internal_scn = Identity.v20_create_user_internal
   // val v20_create_user_internal_repl_scn = Identity.v20_create_user_internal_repl
 
+  val v20_apikey_auth_default_user_scn = Identity.v20_apikey_auth_default_user
+  val v20_validate_default_user_token_scn = Identity.v20_token_validate_default_user
 
 
 
@@ -223,6 +228,7 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     scn_wrapper(v20_apikey_auth_scn_repl, V20_AUTHENTICATE_APIKEY_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
     scn_wrapper(v20_apikey_auth_scn_internal, V20_AUTHENTICATE_APIKEY_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainInternalConf),
     scn_wrapper(v20_apikey_auth_scn_internal_repl, V20_AUTHENTICATE_APIKEY_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
+    scn_wrapper(v20_apikey_auth_default_user_scn, V20_AUTHENTICATE_APIKEY_DEFAULT_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
     // V20 SAML Authenticate
     scn_wrapper(v20_saml_auth_scn, V20_AUTHENTICATE_SAML_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
     scn_wrapper(v20_saml_auth_scn_repl, V20_AUTHENTICATE_SAML_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
@@ -239,6 +245,8 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     scn_wrapper(v20_token_validate_scn_repl, V20_VALIDATE_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
     scn_wrapper(v20_token_validate_scn_internal, V20_VALIDATE_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainInternalConf),
     scn_wrapper(v20_token_validate_scn_internal_repl, V20_VALIDATE_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
+    scn_wrapper(v20_validate_default_user_token_scn, V20_VALIDATE_DEFAULT_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+
 
     // Get User By Mosso Id
     scn_wrapper(v11_get_user_by_mosso_id_scn, V11_GET_USER_BY_MOSSO_ID_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
