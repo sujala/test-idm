@@ -55,15 +55,16 @@ validate_token = {
     'required': [const.ACCESS]
 }
 
+# Remove 'null' type once CID-1244 is fixed
 endpoint_item = {
     'type': 'object', 'properties': {
         const.TENANT_ID: {'type': 'string'},
         const.PUBLIC_URL: {'type': 'string'},
         const.INTERNAL_URL: {'type': 'string'},
         const.REGION: {'type': 'string'},
-        const.VERSION_LIST: {'type': 'string'},
-        const.VERSION_INFO: {'type': 'string'},
-        const.VERSION_ID: {'type': 'string'}
+        const.VERSION_LIST: {'type': ['string', 'null']},
+        const.VERSION_INFO: {'type': ['string', 'null']},
+        const.VERSION_ID: {'type': ['string', 'null']}
     },
     'required': [const.TENANT_ID, const.PUBLIC_URL]
 }
