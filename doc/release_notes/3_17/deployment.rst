@@ -9,15 +9,16 @@ Info
 
 Release Ticket  - https://jira.rax.io/browse/CID-1202
 Staging Deployment Ticket - https://jira.rax.io/browse/CIDM-951
+Prod Deployment Ticket - https://jira.rax.io/browse/CIDM-973
 
 .. csv-table:: Release Progress
    :header: Milestone, Date, Status
 
    RC Due, Tues - Oct 30 2017 RC1 Build number: 3.17.0-1509513726184, Delivered
-   QE Signoff for Staging, Thurs - Nov 2 2017 , In Progress
-   Staging Release Week,  Week of Nov 6 2017, 
-   Signoff for Production, Nov 8 - 2017, 
-   Production Release Week, Week of Nov 13 2017, 
+   QE Signoff for Staging, Thurs - Nov 2 2017 , Delivered
+   Staging Release Week,  Week of Nov 6 2017, Delivered
+   Signoff for Production, Nov 8 - 2017, Delivered
+   Production Release Week, Week of Nov 13 2017, Delivered
 
 
 Significant Changes
