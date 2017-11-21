@@ -86,7 +86,7 @@ These properties were added as part of this release.
      - true
      - `CID-1252`_
      - reloadable
-   * - relic.secured.api.resource.key
+   * - new.relic.secured.api.resource.key
      - When secure attributes are enabled, the key to use for securing the props
      - 
      - `CID-1252`_
