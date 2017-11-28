@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
@@ -59,7 +60,9 @@ public class IdentityProviderSearchParams {
         for (Field f : this.getClass().getDeclaredFields()) {
             Object value = f.get(this);
             if (value != null && value instanceof String) {
-                params.put(f.getName(), (String) value);
+                if (StringUtils.isNotBlank((String) value)) {
+                    params.put(f.getName(), (String) value);
+                }
             }
         }
         return params;

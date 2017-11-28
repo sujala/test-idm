@@ -1556,6 +1556,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // TODO: Move all filter logic to methods within the federatedIdentityService consuming an IdentityProviderSearchCriteria object
 
+            // emailDomain query param must be mutually exclusive from other query params.
+            if (StringUtils.isNotBlank(identityProviderSearchParams.getEmailDomain())
+                    && identityProviderSearchParams.getSearchParamsMap().size() != 1) {
+                throw new BadRequestException(FEDERATION_LIST_IDP_EMAIL_DOMAIN_WITH_OTHER_PARAMS_ERROR_MSG);
+            }
+
             IdentityProviderTypeFilterEnum idpFilter = null;
             if (StringUtils.isNotBlank(identityProviderSearchParams.idpType)) {
                 idpFilter = IdentityProviderTypeFilterEnum.parseIdpTypeFilter(identityProviderSearchParams.idpType);
@@ -1594,9 +1600,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             List<com.rackspace.idm.domain.entity.IdentityProvider> providerEntities = new ArrayList<>();
             if (StringUtils.isNotBlank(identityProviderSearchParams.emailDomain)) {
-                if (identityProviderSearchParams.getSearchParamsMap().size() != 1) {
-                    throw new BadRequestException(FEDERATION_LIST_IDP_EMAIL_DOMAIN_WITH_OTHER_PARAMS_ERROR_MSG);
-                }
                 com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.getIdentityProviderByEmailDomain(identityProviderSearchParams.emailDomain);
                 if (identityProvider != null) {
                     providerEntities = Collections.singletonList(identityProvider);
