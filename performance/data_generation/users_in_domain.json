@@ -1,0 +1,7 @@
+[{
+    "users" : 20,
+    "region" : "us",
+    "name": "users_in_domain.dat",
+    "columns": ["userid","ipaddress", "domainId"],
+    "column_mappings" : {}
+}]

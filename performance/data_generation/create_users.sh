@@ -7,6 +7,7 @@ num_of_processes=30
 mkdir -p users/
 mkdir -p admins/
 mkdir -p default_users/
+mkdir -p users_in_dom/
 for i in `seq 1 $user_loops`;
 do
     today=`date '+%Y_%m_%d__%H_%M_%S'`;
