@@ -150,7 +150,7 @@ class Validator20Test extends RootServiceTest {
         then:
         thrown(BadRequestException)
 
-        when: "emailDomains containing null values"
+        when: "emailDomains only contain null values"
         identityProvider.emailDomains.emailDomain.clear()
         identityProvider.emailDomains.emailDomain.add(null)
         service.validateIdentityProviderForCreation(identityProvider)
