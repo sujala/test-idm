@@ -5441,6 +5441,15 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then:
         assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, DefaultCloud20Service.FEDERATION_LIST_IDP_EMAIL_DOMAIN_WITH_OTHER_PARAMS_ERROR_MSG)
 
+        when: "Listing identity provider with emailDomain and invalid domainId"
+        identityProviderSearchParams = new IdentityProviderSearchParams()
+        identityProviderSearchParams.emailDomain = emailDomain
+        identityProviderSearchParams.approvedDomainId = "invalid"
+        response = cloud20.listIdentityProviders(idpManagerToken, identityProviderSearchParams, requestContentType)
+
+        then:
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, DefaultCloud20Service.FEDERATION_LIST_IDP_EMAIL_DOMAIN_WITH_OTHER_PARAMS_ERROR_MSG)
+
         cleanup:
         utils.deleteUser(idpManager)
         utils.deleteIdentityProvider(creationResultIdp)

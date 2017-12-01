@@ -1,0 +1,32 @@
+.. _CID-1280: https://jira.rax.io/browse/CID-1280
+.. _CID-1252: https://jira.rax.io/browse/CID-1252
+.. _NIST guidelines: https://csrc.nist.gov/Projects/Hash-Functions/NIST-Policy-on-Hash-Functions
+.. _Rackspace policy: https://inside.rackspace.com/departments/security/Standards/P-RS-GL-CS-005.S001%20Cryptography%20Controls%20Standard.pdf
+
+Upgrade New Relic secured attributes to use sha256
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Description
+___________
+
+3.17.1 introduced new relic custom attributes that could be secured via an HMAC using SHA1 in `CID-1252`_. While NIST states that SHA1
+is acceptable for this use case (`NIST guidelines`_), Rackspace policy requires a minimum of SHA2 regardless of the use case (`Rackspace policy`_).
+
+To abide by the rackspace standard the secured attributes must be upgraded to use SHA2 (for our purposes we'll use sha256).
+The use of SHA256 should be feature flagged. When disabled, the current SHA1 should be used to allow us to continue
+sending the attributes should sha256 unexpectedly impact performance to the point where it can not be used.
+
+Business Acceptance Criteria
+____________________________
+
+1. Modify secure New Relic custom attributes to hash using SHA256 instead of SHA1
+2. Add a feature flag to control whether SHA-256 is used.
+    1) Name is *feature.enable.new.relic.sha256.hmac*
+    2) Default if not specified is *true*
+    3) Default for docker container is *true*
+    4) When set to false, the current SHA1 algorithm is used
+
+Test Acceptance Criteria
+________________________
+1. Regression tests pass
+2. Performance tests do not see degradation with new hashing algorithm

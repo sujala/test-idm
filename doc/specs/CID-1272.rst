@@ -1,0 +1,88 @@
+.. _CID-1272:
+.. _List Users for Tenant: https://pages.github.rackspace.com/ServiceAPIContracts/global-auth-keystone-extensions/api-reference/tenant-operations.html#list-users-for-tenant
+.. _CID-1270: https://jira.rax.io/browse/CID-1270
+
+==============================================================================
+EPS: Find user by Contact ID
+==============================================================================
+
+Description
+~~~~~~~~~~~
+
+EPS need to be able to find a user within Identity by contactId. The contactId
+is stored in Identity as a string on a user. While it *should* be unique to a
+single user within Identity, Identity does not guarantee this. MyRack is
+responsible for managing the contactId users within Identity.
+
+There are a few services which "list users" that could potentially be modified.
+
+List Users
+`(v2.0/users) <https://pages.github.rackspace.com/ServiceAPIContracts/global-auth-keystone-extensions/api-reference/users-operations.html#list-users>`_
+
+List Users for Domain
+`(GET /v2.0/RAX-AUTH/domains/{domainId}/users{?enabled}) <https://pages.github.rackspace.com/ServiceAPIContracts/global-auth-keystone-extensions/api-reference/users-operations.html#list-users>`_
+
+List Users for Tenant
+`(GET /v2.0/tenants/{tenantId}/users{?marker, limit}) <https://pages.github.rackspace.com/ServiceAPIContracts/global-auth-keystone-extensions/api-reference/tenant-operations.html#list-users-for-tenant>`_
+
+After discussing with Bryan Davidson from EPS the decision is to modify the
+`List Users for Tenant`_ service.
+
+Affected API Services
+---------------------
+`List Users for Tenant`_
+
+The current service provides the `roleId`, `marker`, and `limit` query params to
+filter the results to users with the specified role and/or paginate. The call is
+currently accessible by all users of level *user-admin* and above.
+
+A new query param, `contactId`, must be added as part of this story. This new
+param:
+
+1. Is mutually exclusive from `roleId`. If a non-blank value is provided for
+   both `contactId` and `roleId` an error must be returned.
+2. When provided the query params `marker` and `limit` are ignored
+3. When provided, causes the service to filter the results to user(s) with the
+   specified contactId (case insensitive) that also have access to the tenant
+
+All existing authorization logic and rules still apply for this service,
+including:
+
+1. Only enable users returned (See `CID-1270`_ which fixes a bug for this)
+2. The user must have access to the tenant (See `CID-1270`_ which expands
+   support for user groups)
+
+For simplicity we will allow user-admins to filter the results based on the new
+`contactId` param. However, as contactId is really an internal Rackspace
+construct, I don't think this would actually be used by user-admins.
+
+The contactId param only enables the filtering of the results the service would
+have returned had the caller not supplied the contactId param. In other words,
+the results returned when the contactId is supplied **must** be a subset of
+the set of users returned had the `contactId` not been supplied. This
+impact, in particular, the RCN role logic.
+
+---------------
+RCN Role Impact
+---------------
+
+Since this service will not support apply_rcn_roles param until CID-1275, this
+service will likewise not recognize RCN role logic when handling contactId
+searches until that story is implemented.
+
+Business Acceptance Criteria
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Add support for a new optional query param `contactId` that can be specified
+   by all authorized callers
+2. If a non-blank value for `contactId` and `roleId` are provided, the app must
+   return a 400 error
+3. When a non-blank value is supplied for `contactId`
+    1) Any values supplied for `marker` and `limit` query params are ignored
+    2) The user(s) returned by the service is limited to those with the specified
+       contactId (case insensitive)
+4. Update internal documentation to reflect the new optional `contactId` parameter
+5. Update external documentation to reflect the new optional `contactId` parameter
+
+Test Acceptance Criteria
+~~~~~~~~~~~~~~~~~~~~~~~~
+TBD
