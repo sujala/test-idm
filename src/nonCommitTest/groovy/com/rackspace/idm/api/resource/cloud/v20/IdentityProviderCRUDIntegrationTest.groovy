@@ -5037,6 +5037,166 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
+    def "Null elements are ignored when creating/updating IDP with emailDomains - request: application/xml"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when: "Create IDP with only null elements"
+        List<String> emailDomains = [null, null].asList()
+        def domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null, emailDomains)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp)
+
+        then: "Assert BadRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_EMAIL_DOMAIN_OPTIONS)
+
+        when: "Create IDP"
+        String emailDomain = testUtils.getRandomUUID("emailDomain")
+        emailDomains = [emailDomain, null].asList()
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null, emailDomains)
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp)
+        def creationResultIdp = response.getEntity(IdentityProvider)
+
+        then: "Successful"
+        response.status == SC_CREATED
+        creationResultIdp.emailDomains.emailDomain.size() == 1
+        creationResultIdp.emailDomains.emailDomain.containsAll(emailDomain)
+
+        when: "Update IDP"
+        emailDomain = testUtils.getRandomUUID("emailDomain")
+        IdentityProvider updateDomainGroupIdp = new IdentityProvider().with {
+            it.emailDomains = new EmailDomains().with {
+                it.emailDomain = [emailDomain, null].asList()
+                it
+            }
+            it
+        }
+        response = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, updateDomainGroupIdp)
+        IdentityProvider updatedResultIdp = response.getEntity(IdentityProvider)
+
+        then: "Successful"
+        response.status == SC_OK
+        updatedResultIdp.emailDomains.emailDomain.size() == 1
+        updatedResultIdp.emailDomains.emailDomain.containsAll(emailDomain)
+
+        when: "Update IDP with only null elements"
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.emailDomains = new EmailDomains().with {
+                it.emailDomain = [null, null].asList()
+                it
+            }
+            it
+        }
+        response = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, updateDomainGroupIdp)
+        updatedResultIdp = response.getEntity(IdentityProvider)
+
+        then: "Successful"
+        response.status == SC_OK
+        updatedResultIdp.emailDomains.emailDomain.size() == 1
+        updatedResultIdp.emailDomains.emailDomain.containsAll(emailDomain)
+
+        cleanup:
+        utils.deleteUser(idpManager)
+        utils.deleteIdentityProvider(creationResultIdp)
+    }
+
+    /**
+     * The JsonWriterForRaxAuthIdentityProvider does not render null values correctly. This test manually creates JSON
+     * that would set null values for some of the emailDomain.
+     *
+     */
+    def "Null elements are ignored when creating/updating IDP with emailDomains - request: application/json"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def requestContentType = MediaType.APPLICATION_JSON_TYPE
+
+        when: "Create IDP with only null elements"
+        def domainGroupIdp = String.format('''{
+            "RAX-AUTH:identityProvider": {
+                "name": "%s",
+                "issuer": "%s",
+                "approvedDomainGroup": "GLOBAL",
+                "authenticationUrl": "https://my.login.com",
+                "description": "Identity provider for testing",
+                "emailDomains": [
+                    null,
+                    null
+                ],
+                "enabled": true,
+                "federationType": "DOMAIN"
+            }
+        } ''', getRandomUUID(), getRandomUUID())
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "Assert BadRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_EMAIL_DOMAIN_OPTIONS)
+
+        when: "Create IDP"
+        def emailDomain = getRandomUUID("emailDomain")
+        domainGroupIdp = String.format('''{
+            "RAX-AUTH:identityProvider": {
+                "name": "%s",
+                "issuer": "%s",
+                "approvedDomainGroup": "GLOBAL",
+                "authenticationUrl": "https://my.login.com",
+                "description": "Identity provider for testing",
+                "emailDomains": [
+                    "%s",
+                    null
+                ],
+                "enabled": true,
+                "federationType": "DOMAIN"
+            }
+        } ''', getRandomUUID(), testUtils.getRandomUUID(), emailDomain)
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+        def creationResultIdp = response.getEntity(IdentityProvider)
+
+        then: "Successful"
+        response.status == SC_CREATED
+        creationResultIdp.emailDomains.emailDomain.size() == 1
+        creationResultIdp.emailDomains.emailDomain.containsAll(emailDomain)
+
+        when: "Update IDP"
+        emailDomain = getRandomUUID("emailDomain")
+        def updateDomainGroupIdp = String.format('''{
+            "RAX-AUTH:identityProvider": {
+                "emailDomains": [
+                    "%s",
+                    null
+                ]
+            }
+        } ''', emailDomain)
+        response = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        IdentityProvider updatedResultIdp = response.getEntity(IdentityProvider)
+
+        then: "Successful"
+        response.status == SC_OK
+        updatedResultIdp.emailDomains.emailDomain.size() == 1
+        updatedResultIdp.emailDomains.emailDomain.containsAll(emailDomain)
+
+        when: "Update IDP with only null elements"
+        updateDomainGroupIdp = '''{
+            "RAX-AUTH:identityProvider": {
+                "emailDomains": [
+                    null,
+                    null
+                ]
+            }
+        } '''
+        response = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        updatedResultIdp = response.getEntity(IdentityProvider)
+
+        then: "Successful"
+        response.status == SC_OK
+        updatedResultIdp.emailDomains.emailDomain.size() == 1
+        updatedResultIdp.emailDomains.emailDomain.containsAll(emailDomain)
+
+        cleanup:
+        utils.deleteUser(idpManager)
+        utils.deleteIdentityProvider(creationResultIdp)
+    }
+
     def "Create IDP using Metadata and update with emailDomain" () {
         given:
         String issuer = testUtils.getRandomUUID("issuer")
