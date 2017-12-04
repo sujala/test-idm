@@ -1,0 +1,15 @@
+.. _CID-993:
+
+Created a Docker image to run Repose on RSI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Description
+___________
+
+Create Repose rsi compatible image in order to allow running identity in rsi environment.
+
+Business Acceptance Criteria
+____________________________
+
+1. Update repose docker image to work in RSI
+2. Automate building and adding the image to RSI when a commit is merged to master
