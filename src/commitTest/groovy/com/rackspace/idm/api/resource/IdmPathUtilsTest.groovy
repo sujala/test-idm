@@ -2,9 +2,13 @@ package com.rackspace.idm.api.resource
 
 import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.User
+import com.sun.jersey.spi.container.ContainerRequest
+import org.apache.commons.lang3.RandomStringUtils
 import org.junit.Test
 import spock.lang.Specification
+import spock.lang.Unroll
 
+import javax.ws.rs.HttpMethod
 import javax.ws.rs.core.UriBuilder
 import javax.ws.rs.core.UriInfo
 
@@ -146,6 +150,38 @@ class IdmPathUtilsTest extends Specification {
         then:
         prevLink.equalsIgnoreCase(firstLink)
     }
+
+    @Unroll
+    def "classify GET '#path' as unprotected resource"() {
+        given:
+        ContainerRequest req = Mock(ContainerRequest)
+        req.getPath() >> path
+        req.getMethod() >> HttpMethod.GET
+
+        expect:
+        idmPathUtils.isUnprotectedResource(req)
+
+        where:
+        path << ["cloud/v2.0/extensions", "cloud/", "cloud", "cloud/v2.0/extensions/", "cloud/v2.0", "cloud/v2.0/"]
+    }
+
+    @Unroll
+    def "classify GET '#path' as protected resource"() {
+        given:
+        ContainerRequest req = Mock(ContainerRequest)
+        req.getPath() >> path
+        req.getMethod() >> HttpMethod.GET
+
+        expect:
+        !idmPathUtils.isUnprotectedResource(req)
+        idmPathUtils.isProtectedResource(req)
+
+        where:
+        path << ["cloud/v2.0/extensions/" + RandomStringUtils.randomAlphabetic(4)
+                 , "cloud/" + RandomStringUtils.randomAlphabetic(4)
+                 , "cloud/v2.0/" + RandomStringUtils.randomAlphabetic(4)]
+    }
+
 
     def createContext(int offset, int limit, int totalRecords) {
         return new PaginatorContext<Object>().with {

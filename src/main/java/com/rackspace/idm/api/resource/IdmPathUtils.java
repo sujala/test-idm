@@ -20,7 +20,9 @@ import java.util.regex.Pattern;
 public class IdmPathUtils {
 
     public static String PAGE_FORMAT_STRING = "?marker=%s&limit=%s";
-    public static final String V2_CLOUD_RESOURCE_PATH = "cloud/v2.0";
+    public static final Pattern V2_CLOUD_RESOURCE_PATH_PATTERN = Pattern.compile("^cloud/v2.0/?$");
+    public static final Pattern CLOUD_ROOT_RESOURCE_PATH_PATTERN = Pattern.compile("^cloud/?$");
+    public static final Pattern V2_CLOUD_EXTENSIONS_RESOURCE_PATH_PATTERN = Pattern.compile("^cloud/v2.0/extensions/?$");
     public static final String V2_AUTH_PATH = "cloud/v2.0/tokens";
     public static final String V1_0_AUTH_PATH = "cloud/v1.0";
     public static final String V1_0_AUTH_PATH2 = "cloud/auth";
@@ -214,7 +216,12 @@ public class IdmPathUtils {
                     || "tokens".equals(path))) {
                 unprotectedResource = true;
             }
-        } else if (path.equalsIgnoreCase(V2_CLOUD_RESOURCE_PATH) && HttpMethod.GET.equals(method)) {
+        } else if (HttpMethod.GET.equals(method) &&
+                (V2_CLOUD_RESOURCE_PATH_PATTERN.matcher(path).matches()
+                        || CLOUD_ROOT_RESOURCE_PATH_PATTERN.matcher(path).matches()
+                        || V2_CLOUD_EXTENSIONS_RESOURCE_PATH_PATTERN.matcher(path).matches()
+                )) {
+            // One of the version resources
             unprotectedResource = true;
         }
         return unprotectedResource;
