@@ -1,8 +1,8 @@
 ==============================
-Cloud Identity 3.XX.0 Release
+Cloud Identity 3.18.0 Release
 ==============================
 
-Release Notes 
+Release Notes
 --------------
 
 Info
@@ -13,12 +13,11 @@ Release Ticket  - Add JIRA link here.
 .. csv-table:: Release Progress
    :header: Milestone, Date, Status
 
-   RC Due, <DATE> , In Progress.
-   QE Signoff for Staging, , 
-   Staging Release Week, , 
-   Signoff for Production, , 
-   Production Release Week, , The requested resource was not found.
-   Production Release Week, , Status of Production Release.
+   RC Due, "Thurs, Dec 28 2017", In Progress.
+   QE Signoff for Staging, "Thurs, Jan 4 2017",
+   Staging Release Week, "Mon, Jan 8 - Tues, Jan 9 2018",
+   Signoff for Production, "Fri, Jan 12 2018",
+   Production Release Week, "Mon, Jan 15 - Tues, Jan 16 2018",
 
 
 Significant Changes
@@ -31,7 +30,7 @@ Issues Resolved
 Stories
 --------
 
-#. Upgrade Repose to version 8.7.2.0 - https://jira.rax.io/browse/CID-1242
+#. Upgrade Repose to version 8.7.3.0 - https://jira.rax.io/browse/CID-1281
 
 Defects
 --------
@@ -39,7 +38,6 @@ Defects
 #. Summary1 - [Defect in JIRA](https://jira.rax.io/)
 #. Summary2 - [Defect in JIRA](https://jira.rax.io/)
 #. Summary3 - [Defect in JIRA](https://jira.rax.io/)
- 
 
 Technical Debts
 ----------------
@@ -93,7 +91,7 @@ Updates
 Repose Upgrade
 ---------------
 
-Upgrade Repose to version 8.7.2.0 in order to receive some attribute mapping policy fixes.
+Upgrade Repose to version 8.7.3.0.
 
 Deployment Notes
 -----------------
