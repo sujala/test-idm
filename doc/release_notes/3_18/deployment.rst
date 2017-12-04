@@ -13,7 +13,7 @@ Release Ticket  - Add JIRA link here.
 .. csv-table:: Release Progress
    :header: Milestone, Date, Status
 
-   RC Due, "Thurs, Dec 28 2017", In Progress.
+   RC Due, "Thurs, Dec 14 2017", In Progress.
    QE Signoff for Staging, "Thurs, Jan 4 2017",
    Staging Release Week, "Mon, Jan 8 - Tues, Jan 9 2018",
    Signoff for Production, "Fri, Jan 12 2018",
