@@ -982,11 +982,8 @@ public class Cloud20VersionResource {
             @QueryParam("roleId") String roleId,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        if (roleId != null) {
-            return cloud20Service.listUsersWithRoleForTenant(httpHeaders, uriInfo, authToken, tenantId, roleId, validateMarker(marker), validateLimit(limit)).build();
-        } else {
-            return cloud20Service.listUsersForTenant(httpHeaders, uriInfo, authToken, tenantId, validateMarker(marker), validateLimit(limit)).build();
-        }
+        ListUsersForTenantParams params = new ListUsersForTenantParams(roleId, new PaginationParams(validateMarker(marker), validateLimit(limit)));
+        return cloud20Service.listUsersForTenant(httpHeaders, uriInfo, authToken, tenantId, params).build();
     }
 
     @PUT
