@@ -45,19 +45,21 @@ class NewRelicApiEventListenerTest extends RootServiceTest {
     }
 
     @Unroll
-    def "createSecuredAttributeSupport: loads configurable properties: key: '#key'; attributes: #attributes"() {
+    def "createSecuredAttributeSupport: loads configurable properties: key: '#key'; attributes: #attributes; useSha256: #useSha256"() {
         when:
         SecuredAttributeSupport sas = listener.createSecuredAttributeSupport()
 
         then: "loads from config file"
         1 * reloadableConfig.getNewRelicSecuredApiResourceAttributesKey() >> key
         1 * reloadableConfig.getNewRelicSecuredApiResourceAttributes() >> attributes
+        1 * reloadableConfig.getNewRelicSecuredApiResourceAttributesUsingSha256() >> useSha256
 
         and: "vals copied to support"
         sas.hashKey == key
         sas.securedAttributeList == attributes
+        sas.hashAlgorithmEnum == useSha256 ? SecuredAttributeSupport.HashAlgorithmEnum.SHA256 : SecuredAttributeSupport.HashAlgorithmEnum.SHA1
 
         where:
-        [key, attributes] << [["asdf", ["a"] as Set], ["", ["a", "b"] as Set], [null, null]]
+        [key, attributes, useSha256] << [["asdf", ["a"] as Set], ["", ["a", "b"] as Set, true], [null, null, false]]
     }
 }

@@ -380,6 +380,9 @@ public class IdentityConfig {
     public static final String NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP = "new.relic.secured.api.resource.key";
     public static final String NEW_RELIC_SECURE_API_RESOURCE_KEY_DEFAULT = "";
 
+    public static final String NEW_RELIC_SECURED_API_USE_SHA256_PROP = "feature.enable.new.relic.sha256.hmac";
+    public static final boolean NEW_RELIC_SECURED_API_USE_SHA256_DEFAULT = true;
+
     public static final String FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP = "tenant.prefixes.to.exclude.auto.assign.role.from";
 
     /**
@@ -699,6 +702,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_DEFAULT);
         defaults.put(NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_PROP, NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_DEFAULT);
         defaults.put(NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP, NEW_RELIC_SECURE_API_RESOURCE_KEY_DEFAULT);
+        defaults.put(NEW_RELIC_SECURED_API_USE_SHA256_PROP, NEW_RELIC_SECURED_API_USE_SHA256_DEFAULT);
 
         defaults.put(FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP, FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_DEFAULT);
 
@@ -1558,6 +1562,11 @@ public class IdentityConfig {
         @IdmProp(key = NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "When secure attributes are enabled, a comma delimited list to secure")
         public Set<String> getNewRelicSecuredApiResourceAttributes() {
             return getSetSafely(reloadableConfiguration, NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_PROP);
+        }
+
+        @IdmProp(key = NEW_RELIC_SECURED_API_USE_SHA256_PROP, versionAdded = "3.18.0", description = "When secure attributes are enabled, whether to use SHA-256 HMAC or fallback to SHA1")
+        public boolean getNewRelicSecuredApiResourceAttributesUsingSha256() {
+            return getBooleanSafely(reloadableConfiguration, NEW_RELIC_SECURED_API_USE_SHA256_PROP);
         }
 
         @IdmProp(key = CACHED_AE_TOKEN_TTL_SECONDS_PROP, versionAdded = "3.0.3", description = "The time an entry will exist in the AE token cache before naturally expiring")
