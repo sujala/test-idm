@@ -26,7 +26,7 @@ identity:
         EDIRECTORY_PORT: 636
 
 repose:
-    image: docker.ciidentity.com/repose-instance:8.7.1.0
+    image: docker.ciidentity.com/repose-instance:8.7.3.0
     links:
         - identity
     ports:

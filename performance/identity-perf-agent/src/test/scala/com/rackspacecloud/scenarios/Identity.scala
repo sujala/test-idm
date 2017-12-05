@@ -104,7 +104,8 @@ object Identity {
   val v20_list_global_roles_for_user_id_internal      = scenario("V2.0_List_Global_Roles_For_User_Id_Internal").exec(Tokens.v20_list_global_roles_for_user_id).exitHereIfFailed
   val v20_list_global_roles_for_user_id_internal_repl = scenario("V2.0_List_Global_Roles_For_User_Id_Internal_Replication").exec(Tokens.v20_list_global_roles_for_user_id).exitHereIfFailed
 
-  val v20_list_users_in_a_domain = scenario("V2.0_List_Users_In_Domain_Id").exec(Tokens.v20_list_users_in_a_domain).exitHereIfFailed
+  // Can uncomment once we are ready add this memory-leak test to regular perf suite
+  // val v20_list_users_in_a_domain = scenario("V2.0_List_Users_In_Domain_Id").exec(Tokens.v20_list_users_in_a_domain).exitHereIfFailed
 
 def write_created_user(session:Session):Session = {
    println(s"Create user, writing " + session("admin_token").as[String] + "," + session("user_id").as[String] + "")

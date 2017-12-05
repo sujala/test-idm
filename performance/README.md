@@ -26,11 +26,12 @@ In order for us to validate any performance characteristics of the target identi
    4.0. Set `docker_ip` variable to IP that your docker is running under.  Usually localhost on OSs that run native docker and 192.168.x.x on those that run in docker-machine.
    4.1. There are python scripts.  You should run under latest Python 3.x version (use pyenv to set the version and virtualenv to not install packages in your system)
    4.2. Run `pip install -r data-generation/requirements.txt`
-   4.3. Run `mkdir -p identity-perf-agent/localhost/data/identity`
+   4.3. Run `mkdir -p identity-perf-agent/localhost/data/identity`. Please wipe out any any old csv files in admins, users or default_users directories.
    4.4. Generate users in temporary directories (positional values are: ip, loops, normal users per loop, and admin users per loop): `pushd data_generation && ./create_users.sh http://${docker_ip}:8082/idm/cloud 1 10 5 && popd`.  This will create loops * (normal users per loop) users and loops * (admin users per loop) admins.
    4.5. Generate admin user data: `pushd data_generation && ./generate_files.py -u admins -c admin_file_config.json -o ../identity-perf-agent/localhost/data/identity  && popd`
    4.6. Generate regular user data: `pushd data_generation && ./generate_files.py -u users -c file_config.json -o ../identity-perf-agent/localhost/data/identity && popd`
    4.7. Generate regular user data: `pushd data_generation && ./generate_files.py -u default_users -c default_user_file_config.json -o ../identity-perf-agent/localhost/data/identity && popd`
+   The next two sub-steps need to be run only if you want to test `list users in domain` call for memory leak testing.
    4.8. If you want to test `users in a domain` call, you need to create default users in the domain: `pushd data_generation && ./create_users_in_domain.py -p 10 -n 20 -i users -m 1 && popd`. This will also let you specify more than 1 domain, so that you can create users in multiple domains & then the api call will be made for all those domains.
    4.9. Generate users in domain data: `pushd data_generation && ./generate_files.py -u users_in_dom -c users_in_domain.json -o ../identity-perf-agent/localhost/data/identity -i true && popd`
 5. Set up `identity-perf-agent/src/test/resources/application.properties` to the values you want to run with.  While there are many values, you can figure out the ones you need from your Simulation.  An example would be in `com.rackspacecloud.simulations.identity.IdentityDemo`:
