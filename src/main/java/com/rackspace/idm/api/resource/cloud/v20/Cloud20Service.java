@@ -118,9 +118,18 @@ public interface Cloud20Service {
 
 	ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) ;
 
-	ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, String roleId, Integer marker, Integer limit) ;
-
-	ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, Integer marker, Integer limit) ;
+    /**
+     * Returns a list of users which have access to the specified tenant. Optionally filtered by a set of parameters.
+     *
+     * @param httpHeaders
+     * @param uriInfo
+     * @param authToken
+     * @param tenantId
+     * @param params
+     *
+     * @return
+     */
+    ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, ListUsersForTenantParams params);
 
 	ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
 

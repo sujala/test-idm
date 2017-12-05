@@ -13,6 +13,7 @@ import java.security.SignatureException
 
 class SecuredAttributeSupportTest extends Specification {
     private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1"
+    private static final String HMAC_SHA256_ALGORITHM = "HmacSHA256"
 
     def "Doesn't throw exception when used with null arguments"() {
         SecuredAttributeSupport sas = new SecuredAttributeSupport(null, null)
@@ -73,7 +74,7 @@ class SecuredAttributeSupportTest extends Specification {
         String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
 
         then:
-        Base64.decodeBase64(finalValue) == calculateSha1HMAC(value, key)
+        Base64.decodeBase64(finalValue) == calculateHashForSASAndValue(sas, value)
 
         where:
         value << [null, "", "abc", "NotAvailable", ApiEventPostingFilter.DATA_UNAVAILABLE.toLowerCase(), ApiEventPostingFilter.DATA_UNAVAILABLE.toUpperCase()]
@@ -89,10 +90,48 @@ class SecuredAttributeSupportTest extends Specification {
         String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
 
         then:
-        Base64.decodeBase64(finalValue) == calculateSha1HMAC(value, key)
+        Base64.decodeBase64(finalValue) == calculateHashForSASAndValue(sas, value)
 
         where:
         setVal << [["*"],[NewRelicCustomAttributesEnum.CALLER_TOKEN],[NewRelicCustomAttributesEnum.EVENT_ID, NewRelicCustomAttributesEnum.CALLER_TOKEN]]
+    }
+
+    def "Hashes with SHA1 when specified"() {
+        def value = "asecurevalue"
+        def key = "anykey"
+        SecuredAttributeSupport sas = new SecuredAttributeSupport(SecuredAttributeSupport.HashAlgorithmEnum.SHA1, key, [NewRelicCustomAttributesEnum.CALLER_TOKEN.newRelicAttributeName] as Set)
+
+        when:
+        String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
+
+        then:
+        Base64.decodeBase64(finalValue) == calculateHashForSASAndValue(sas, value)
+    }
+
+    @Unroll
+    def "Hashes with SHA256 when specified as '#hashAlg'"() {
+        def value = "asecurevalue"
+        def key = "anykey"
+        SecuredAttributeSupport sas = new SecuredAttributeSupport(hashAlg, key, [NewRelicCustomAttributesEnum.CALLER_TOKEN.newRelicAttributeName] as Set)
+
+        when:
+        String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
+
+        then:
+        Base64.decodeBase64(finalValue) == calculateHashForSASAndValue(sas, value)
+
+        where:
+        hashAlg << [null, SecuredAttributeSupport.HashAlgorithmEnum.SHA256]
+    }
+
+
+    def calculateHashForSASAndValue(SecuredAttributeSupport sas, String value) {
+        if (sas.hashAlgorithmEnum == SecuredAttributeSupport.HashAlgorithmEnum.SHA256) {
+            return calculateSha256HMAC(value, sas.hashKey)
+        } else if (sas.hashAlgorithmEnum == SecuredAttributeSupport.HashAlgorithmEnum.SHA1) {
+            return calculateSha1HMAC(value, sas.hashKey)
+        }
+        throw new RuntimeException("Invalid algorithm")
     }
 
     /*
@@ -104,6 +143,16 @@ class SecuredAttributeSupportTest extends Specification {
         byte[] dataBytes = data != null ? data.getBytes("UTF-8") : null
         SecretKeySpec signingKey = new SecretKeySpec(key.getBytes(), HMAC_SHA1_ALGORITHM)
         Mac mac = Mac.getInstance(HMAC_SHA1_ALGORITHM)
+        mac.init(signingKey)
+        return mac.doFinal(dataBytes)
+    }
+
+    byte[] calculateSha256HMAC(String data, String key)
+            throws SignatureException, NoSuchAlgorithmException, InvalidKeyException {
+
+        byte[] dataBytes = data != null ? data.getBytes("UTF-8") : null
+        SecretKeySpec signingKey = new SecretKeySpec(key.getBytes(), HMAC_SHA256_ALGORITHM)
+        Mac mac = Mac.getInstance(HMAC_SHA256_ALGORITHM)
         mac.init(signingKey)
         return mac.doFinal(dataBytes)
     }

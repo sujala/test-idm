@@ -111,7 +111,11 @@ public class NewRelicApiEventListener implements ApplicationListener<ApiEventSpr
     private SecuredAttributeSupport createSecuredAttributeSupport() {
         Set<String> securedAttributes = identityConfig.getReloadableConfig().getNewRelicSecuredApiResourceAttributes();
         String hashKey = identityConfig.getReloadableConfig().getNewRelicSecuredApiResourceAttributesKey();
-        return new SecuredAttributeSupport(hashKey, securedAttributes);
+
+        SecuredAttributeSupport.HashAlgorithmEnum hashEnum = identityConfig.getReloadableConfig().getNewRelicSecuredApiResourceAttributesUsingSha256() ?
+                SecuredAttributeSupport.HashAlgorithmEnum.SHA256 : SecuredAttributeSupport.HashAlgorithmEnum.SHA1;
+
+        return new SecuredAttributeSupport(hashEnum, hashKey, securedAttributes);
     }
 
     private void logSecuredAttributeSetupState() {

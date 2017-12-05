@@ -150,6 +150,14 @@ class Validator20Test extends RootServiceTest {
         then:
         thrown(BadRequestException)
 
+        when: "emailDomains only contain null values"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add(null)
+        service.validateIdentityProviderForCreation(identityProvider)
+
+        then:
+        thrown(BadRequestException)
+
         when: "Duplicate emailDomain"
         identityProvider.emailDomains.emailDomain.clear()
         identityProvider.emailDomains.emailDomain.add("emailDomain")
@@ -223,6 +231,16 @@ class Validator20Test extends RootServiceTest {
         then: "Assert duplicates are ignored"
         1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
 
+        when: "Manager: ignore null values for emailDomains"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add(emailDomain)
+        identityProvider.emailDomains.emailDomain.add(null)
+        existingProvider.emailDomains.add(emailDomain)
+        service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
+
+        then:
+        0 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+
         when: "RcnAdmin: one email domain"
         identityProvider.emailDomains.emailDomain.clear()
         existingProvider.emailDomains.clear()
@@ -265,6 +283,16 @@ class Validator20Test extends RootServiceTest {
         then: "Assert duplicates are ignored"
         1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
 
+        when: "RcnAdmin: ignore null values for emailDomains"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add(emailDomain)
+        identityProvider.emailDomains.emailDomain.add(null)
+        existingProvider.emailDomains.add(emailDomain)
+        service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
+
+        then:
+        0 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+
         when: "UserAdminOrUserManage: one email domain"
         identityProvider.emailDomains.emailDomain.clear()
         existingProvider.emailDomains.clear()
@@ -306,6 +334,16 @@ class Validator20Test extends RootServiceTest {
 
         then: "Assert duplicates are ignored"
         1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
+
+        when: "UserAdminOrUserManager: ignore null values for emailDomains"
+        identityProvider.emailDomains.emailDomain.clear()
+        identityProvider.emailDomains.emailDomain.add(emailDomain)
+        identityProvider.emailDomains.emailDomain.add(null)
+        existingProvider.emailDomains.add(emailDomain)
+        service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
+
+        then:
+        0 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
     }
 
     def "ValidateIdentityProviderForUpdate: emailDomains error check"() {

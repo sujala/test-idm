@@ -40,7 +40,8 @@ def get_col_mapping(config_file):
     return mappings
 
 
-def generate_files(users_dir, user_config_file, output_dir):
+def generate_files(users_dir, user_config_file, output_dir,
+                   include_all=False):
     output_file_marker = 0
     user_marker = 0
 
@@ -61,6 +62,7 @@ def generate_files(users_dir, user_config_file, output_dir):
         fieldnames = [mappings[key] for key in config_file[output_file_marker]["columns"]]
 
         users = get_users(users_dir)
+        user_iterator = iter(users)
 
         writer = csv.DictWriter(
             output_file,
@@ -69,7 +71,6 @@ def generate_files(users_dir, user_config_file, output_dir):
         # convert to json
         try:
             while(True):
-                user = random.choice(users)
                 if user_marker >= config_file[output_file_marker]["users"]:
                     output_file_marker += 1
                     output_file.close()
@@ -93,6 +94,12 @@ def generate_files(users_dir, user_config_file, output_dir):
                     writer.writeheader()
 
                 # write (mapped) columns to output file
+                if include_all:
+                    # This is if you do not need randomness but rather want
+                    # all the users included in the data file
+                    user = user_iterator.next()
+                else:
+                    user = random.choice(users)
                 output = dict()
                 output = {mappings[key]: user[key] for key in user
                           if key in mappings}
@@ -114,11 +121,18 @@ if __name__ == '__main__':
                         help="File containing user config")
     parser.add_argument("-o", "--output_dir", default=".",
                         help="Directory that will contain the result files.")
+    parser.add_argument("-i", "--include_all", default="false",
+                        help="Flag to indicate if to use randomness or not.")
 
     args = parser.parse_args()
     users_dir = args.users_dir
     config_file = args.config_file
     output_dir = args.output_dir
+    include_all = args.include_all
+    if include_all in ["false", "False"]:
+        include_all = False
+    else:
+        include_all = True
     print("generate_files({0},{1},{2})".format(users_dir,
                                                config_file, output_dir))
-    generate_files(users_dir, config_file, output_dir)
+    generate_files(users_dir, config_file, output_dir, include_all)

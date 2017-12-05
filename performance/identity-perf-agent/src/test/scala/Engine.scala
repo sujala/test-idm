@@ -12,6 +12,8 @@ object Engine extends App {
 //	props.simulationClass("com.rackspacecloud.simulations.identity.IdentityDemo")
 //	props.simulationClass("com.rackspacecloud.simulations.identity.DefaultUserAuthValidate")
 //	props.simulationClass("com.rackspacecloud.simulations.identity.IdentityConstantTputDefaultUserDeletions")
+//	props.simulationClass("com.rackspacecloud.simulations.identity.ListUsersInDomain")
+//	props.simulationClass("com.rackspacecloud.simulations.identity.DomainUserDeletions")
 
 	Gatling.fromMap(props.build)
 }

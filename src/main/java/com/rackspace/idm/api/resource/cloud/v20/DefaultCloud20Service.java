@@ -1556,6 +1556,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // TODO: Move all filter logic to methods within the federatedIdentityService consuming an IdentityProviderSearchCriteria object
 
+            // emailDomain query param must be mutually exclusive from other query params.
+            if (StringUtils.isNotBlank(identityProviderSearchParams.getEmailDomain())
+                    && identityProviderSearchParams.getSearchParamsMap().size() != 1) {
+                throw new BadRequestException(FEDERATION_LIST_IDP_EMAIL_DOMAIN_WITH_OTHER_PARAMS_ERROR_MSG);
+            }
+
             IdentityProviderTypeFilterEnum idpFilter = null;
             if (StringUtils.isNotBlank(identityProviderSearchParams.idpType)) {
                 idpFilter = IdentityProviderTypeFilterEnum.parseIdpTypeFilter(identityProviderSearchParams.idpType);
@@ -1594,9 +1600,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             List<com.rackspace.idm.domain.entity.IdentityProvider> providerEntities = new ArrayList<>();
             if (StringUtils.isNotBlank(identityProviderSearchParams.emailDomain)) {
-                if (identityProviderSearchParams.getSearchParamsMap().size() != 1) {
-                    throw new BadRequestException(FEDERATION_LIST_IDP_EMAIL_DOMAIN_WITH_OTHER_PARAMS_ERROR_MSG);
-                }
                 com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.getIdentityProviderByEmailDomain(identityProviderSearchParams.emailDomain);
                 if (identityProvider != null) {
                     providerEntities = Collections.singletonList(identityProvider);
@@ -4321,43 +4324,32 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, Integer marker, Integer limit) {
+    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, ListUsersForTenantParams params) {
 
         try {
-            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            ScopeAccess scopeAccess = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            /*
+            This check will verify the caller has a role on the tenant (or user is identity/service admin). Ultimately
+            this means that a user-admin for a domain can list the users for any tenant to which they have access -
+            regardless of whether the tenant is in the user-admin's domain or overall RCN. Issue https://jira.rax.io/browse/CID-1285
+            was created for this.
+             */
             authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
 
+            // TODO: Could optimize this more. The previous call already retrieves the tenant for user-admins.
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-            PaginatorContext<User> pageContext = this.tenantService.getPaginatedEffectiveEnabledUsersForTenant(tenant.getTenantId(), marker, limit);
-            String linkHeader = userPaginator.createLinkHeader(uriInfo, pageContext);
+            PaginatorContext<User> pageContext;
+            if (StringUtils.isNotBlank(params.getRoleId())) {
+                ClientRole role = checkAndGetClientRole(params.getRoleId());
+                pageContext = this.tenantService.getEnabledUsersWithEffectiveTenantRole(tenant, role, params.getPaginationRequest().getEffectiveMarker(), params.getPaginationRequest().getEffectiveLimit());
+            } else {
+                pageContext = this.tenantService.getPaginatedEffectiveEnabledUsersForTenant(tenant.getTenantId(), params.getPaginationRequest().getEffectiveMarker(), params.getPaginationRequest().getEffectiveLimit());
+            }
 
-            return Response.status(200)
-                    .header("Link", linkHeader)
-                    .entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
-                            .createUsers(userConverterCloudV20.toUserList(pageContext.getValueList())).getValue());
-
-        } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    @Override
-    public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId,
-                                                      String roleId, Integer marker, Integer limit) {
-
-        try {
-            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
-            authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
-
-            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
-
-            ClientRole role = checkAndGetClientRole(roleId);
-
-            PaginatorContext<User> pageContext = this.tenantService.getEnabledUsersWithEffectiveTenantRole(tenant, role, marker, limit);
             String linkHeader = userPaginator.createLinkHeader(uriInfo, pageContext);
 
             return Response.status(200)

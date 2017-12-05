@@ -567,6 +567,9 @@ public class Validator20 {
         EmailDomains emailDomains = identityProvider.getEmailDomains();
 
         if (emailDomains != null) {
+            // Remove null elements
+            emailDomains.getEmailDomain().removeAll(Collections.singleton(null));
+
             if (CollectionUtils.isEmpty(emailDomains.getEmailDomain())) {
                 throw new BadRequestException("When providing emailDomains, you must provide a valid emailDomain.", ErrorCodes.ERROR_CODE_IDP_INVALID_EMAIL_DOMAIN_OPTIONS);
             }
@@ -598,9 +601,12 @@ public class Validator20 {
         EmailDomains emailDomains = identityProvider.getEmailDomains();
 
         if (emailDomains != null && !emailDomains.getEmailDomain().isEmpty()) {
+            // Remove null elements
+            emailDomains.getEmailDomain().removeAll(Collections.singleton(null));
             // Avoid duplicates
             Set<String> emailDomainSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             emailDomainSet.addAll(emailDomains.getEmailDomain());
+
             for (String emailDomain : emailDomainSet) {
                 validateStringNotBlank(EMAIL_DOMAIN, emailDomain);
                 validateStringNonWhitespace(EMAIL_DOMAIN, emailDomain);

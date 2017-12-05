@@ -3826,7 +3826,44 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
     }
 
-    def "getIdentityProviders: error check"() {
+    def "getIdentityProviders: ignore empty/blank query params when used with emailDomain query param"() {
+        given:
+        allowUserAccess()
+        mockFederatedIdentityService(service)
+
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def emailDomain = "emailDomain.com"
+        IdentityProviderSearchParams identityProviderSearchParams = new IdentityProviderSearchParams()
+        identityProviderSearchParams.emailDomain = emailDomain
+        identityProviderSearchParams.name = name
+        identityProviderSearchParams.approvedDomainId = domainId
+        identityProviderSearchParams.approvedTenantId = tenantId
+        identityProviderSearchParams.issuer = issuer
+        identityProviderSearchParams.idpType = idpType
+
+        when:
+        service.getIdentityProviders(headers, authToken, identityProviderSearchParams)
+
+        then:
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.getGroupsForUser(_) >> []
+        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+
+        where:
+        name   | domainId | tenantId | issuer | idpType
+        ""     | null     | null     | null   | null
+        " "    | null     | null     | null   | null
+        null   | ""       | null     | null   | null
+        null   | " "      | null     | null   | null
+        null   | null     | ""       | null   | null
+        null   | null     | " "      | null   | null
+        null   | null     | null     | ""     | null
+        null   | null     | null     | " "    | null
+        null   | null     | null     | null   | ""
+        null   | null     | null     | null   | " "
+    }
+
+    def "getIdentityProviders: error check query params"() {
         given:
         allowUserAccess()
 
@@ -3836,13 +3873,25 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         when: "emailDomain with other query params"
         identityProviderSearchParams.emailDomain = emailDomain
-        identityProviderSearchParams.name = "name"
+        identityProviderSearchParams.name = name
+        identityProviderSearchParams.approvedDomainId = domainId
+        identityProviderSearchParams.approvedTenantId = tenantId
+        identityProviderSearchParams.issuer = issuer
+        identityProviderSearchParams.idpType = idpType
         def response = service.getIdentityProviders(headers, authToken, identityProviderSearchParams)
 
         then:
         1 * requestContext.getEffectiveCaller() >> caller
         1 * userService.getGroupsForUser(_) >> []
         response.build().status == 400
+
+        where:
+        name   | domainId | tenantId | issuer | idpType
+        "name" | null     | null     | null   | null
+        null   | "id"     | null     | null   | null
+        null   | null     | "id"     | null   | null
+        null   | null     | null     | "iss"  | null
+        null   | null     | null     | null   | "type"
     }
 
     def mockServices() {
