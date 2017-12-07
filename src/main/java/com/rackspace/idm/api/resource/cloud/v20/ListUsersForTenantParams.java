@@ -18,6 +18,12 @@ public class ListUsersForTenantParams {
     String roleId;
 
     /**
+     * Filters the list to those users which effectively have the specified contactId on the tenant
+     */
+    @Nullable
+    String contactId;
+
+    /**
      * Specifies the page of results to return
      */
     @Nullable

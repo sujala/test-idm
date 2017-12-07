@@ -2,10 +2,15 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import groovy.json.JsonSlurper
+import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.User
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
@@ -28,7 +33,7 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
 
     def "listUsersOnTenant returns 400 if marker < 0"() {
         when:
-        def response = cloud20.listUsersWithTenantId(utils.getServiceAdminToken(), tenant.id, "-1", "100");
+        def response = cloud20.listUsersWithTenantId(utils.getServiceAdminToken(), tenant.id, new ListUsersForTenantParams(null, null, new PaginationParams(-1, 100)));
 
         then:
         response.status == 400
@@ -51,8 +56,8 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         }
 
         when:
-        def withoutRoleResponse = cloud20.listUsersWithTenantId(utils.getServiceAdminToken(), tenant.id, offset, limit)
-        def withRoleResponse = cloud20.listUsersWithTenantIdAndRole(utils.getServiceAdminToken(), tenant.id, role.id, offset, limit)
+        def withoutRoleResponse = cloud20.listUsersWithTenantId(utils.getServiceAdminToken(), tenant.id, new ListUsersForTenantParams(null, null, new PaginationParams(offset, limit)))
+        def withRoleResponse = cloud20.listUsersWithTenantIdAndRole(utils.getServiceAdminToken(), tenant.id, role.id, offset.toString(), limit.toString())
 
         then:
         withoutRoleResponse.status == 200
@@ -68,19 +73,19 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
 
         where:
-        offset  | limit     | numUsersExpected
-        "0"     | "0"       | 6
-        "0"     | "1"       | 1
-        "0"     | "5"       | 5
-        "0"     | "6"       | 6
-        "1"     | "0"       | 5
-        "1"     | "1"       | 1
-        "1"     | "5"       | 5
-        "1"     | "6"       | 5
-        "5"     | "0"       | 1
-        "5"     | "1"       | 1
-        "6"     | "0"       | 0
-        "6"     | "1"       | 0
+        offset | limit | numUsersExpected
+        0      | 0     | 6
+        0      | 1     | 1
+        0      | 5     | 5
+        0      | 6     | 6
+        1      | 0     | 5
+        1      | 1     | 1
+        1      | 5     | 5
+        1      | 6     | 5
+        5      | 0     | 1
+        5      | 1     | 1
+        6      | 0     | 0
+        6      | 1     | 0
     }
 
     /**
@@ -216,13 +221,115 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         utils.deleteTestDomainQuietly(domainId)
     }
 
-    def getUsersFromResponse(response) {
-        def users = response.getEntity(UserList)
+    @Unroll
+    def "List users for tenant using contactId query param: accept = #acceptMediaType"() {
+        given:
+        def adminToken = utils.getIdentityAdminToken()
+        def username = testUtils.getRandomUUID("name")
+        def domainId = testUtils.getRandomUUID("domainId")
+        def user = utils.createUser(adminToken, username, domainId)
+        def userAdminToken = utils.getToken(username)
+        def contactId = testUtils.getRandomUUID("contactId")
 
-        if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
-            users = users.value
+        // Create subUser
+        def subUser = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domainId)
+
+        // Create a non-domain tenant
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["cloud"]))
+
+        // Create non-propagating role
+        def role = utils.createRole()
+
+        when: "List users for tenant"
+        def response = cloud20.listUsersWithTenantId(adminToken, tenantId, new ListUsersForTenantParams(null, contactId, null), acceptMediaType)
+        def users = getUsersFromResponse(response)
+
+        then: "No users for tenant"
+        response.status == HttpStatus.SC_OK
+        users.user.size == 0
+
+        when: "Add userAdmin to tenant"
+        utils.addRoleToUserOnTenant(user, tenant, role.id)
+        response = cloud20.listUsersWithTenantId(adminToken, tenantId, new ListUsersForTenantParams(null, contactId, null), acceptMediaType)
+        users = getUsersFromResponse(response)
+
+        then: "No users for tenant matching contactId"
+        response.status == HttpStatus.SC_OK
+        users.user.size == 0
+
+        when: "Update userAdmin's contactId and list users for tenant"
+        def updateUser = new User().with {
+            it.id = user.id
+            it.contactId = contactId
+            it
         }
-        return users
+        utils.updateUser(updateUser)
+        response = cloud20.listUsersWithTenantId(adminToken, tenantId, new ListUsersForTenantParams(null, contactId, null), acceptMediaType)
+        users = getUsersFromResponse(response)
+
+        then: "UserAdmin is returned"
+        response.status == HttpStatus.SC_OK
+        users.user.size == 1
+        users.user.get(0).id == user.id
+
+        when: "Update subUser's contactId and list users for tenant"
+        updateUser.id = subUser.id
+        utils.updateUser(updateUser)
+        response = cloud20.listUsersWithTenantId(adminToken, tenantId, new ListUsersForTenantParams(null, contactId, null), acceptMediaType)
+        users = getUsersFromResponse(response)
+
+        then: "Only userAdmin is returned"
+        response.status == HttpStatus.SC_OK
+        users.user.size == 1
+        users.user.get(0).id == user.id
+
+        when: "Add subUser to tenant"
+        utils.addRoleToUserOnTenant(subUser, tenant, role.id)
+        response = cloud20.listUsersWithTenantId(adminToken, tenantId, new ListUsersForTenantParams(null, contactId, null), acceptMediaType)
+        users = getUsersFromResponse(response)
+
+        then: "Return userAdmin and subUser"
+        response.status == HttpStatus.SC_OK
+        users.user.size == 2
+        users.user.find{it.id == user.id} != null
+        users.user.find{it.id == subUser.id} != null
+
+        cleanup:
+        utils.deleteUserQuietly(subUser)
+        utils.deleteUserQuietly(user)
+        utils.deleteTenantQuietly(tenant)
+        utils.deleteRoleQuietly(role)
+        utils.deleteTestDomainQuietly(domainId)
+
+        where:
+        acceptMediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
+    @Unroll
+    def "Error check - list users for tenant: mediaType = #mediaType"() {
+        given:
+        def adminToken = utils.getIdentityAdminToken()
+        def tenant = utils.createTenant()
+
+        when:
+        def response = cloud20.listUsersWithTenantId(adminToken, tenant.id, new ListUsersForTenantParams("roleId", "contactId", null), mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, DefaultCloud20Service.LIST_USERS_FOR_TENANT_PARAM_ERROR_MESSAGE)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def getUsersFromResponse(response) {
+        if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            return response.getEntity(UserList).value
+        }
+
+        UserList userList = new UserList()
+        userList.user.addAll(new JsonSlurper().parseText(response.getEntity(String))["users"])
+
+        return userList
+    }
 }

@@ -3,7 +3,9 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.IdentityProviderSearchParams
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams
@@ -579,9 +581,25 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSADM).path(ROLES).path(roleId).path(RAX_AUTH).path(USERS).queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def listUsersWithTenantId(String token, tenantId, offset = "0", limit = "1000") {
+    def listUsersWithTenantId(String token, tenantId, ListUsersForTenantParams listUsersForTenantParams = new ListUsersForTenantParams(null, null, new PaginationParams()), MediaType acceptMediaType = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(TENANTS).path(tenantId).path(USERS).queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        MultivaluedMap<String, String> params = new MultivaluedMapImpl()
+        if (listUsersForTenantParams.contactId != null) {
+            params.add("contactId", listUsersForTenantParams.contactId)
+        }
+        if (listUsersForTenantParams.roleId != null) {
+            params.add("roleId", listUsersForTenantParams.roleId)
+        }
+
+        def pageParams = listUsersForTenantParams.paginationRequest
+        if (pageParams != null && pageParams.limit != null) {
+            params.add("limit", pageParams.limit)
+        }
+        if (pageParams != null && pageParams.marker != null) {
+            params.add("marker", pageParams.marker)
+        }
+
+        resource.path(path20).path(TENANTS).path(tenantId).path(USERS).queryParams(params).header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
     }
 
     def listUsersWithTenantIdAndRole(String token, tenantId, roleId, offset = "0", limit = "1000") {

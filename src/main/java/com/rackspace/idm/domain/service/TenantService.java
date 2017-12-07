@@ -556,6 +556,16 @@ public interface TenantService {
     PaginatorContext<User> getEnabledUsersWithEffectiveTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
 
     /**
+     * Return the list of enabled users with contactId for tenant.
+     * @param tenantId
+     * @param contactId
+     * @throws IllegalArgumentException If supplied tenantId is null or empty string
+     * @throws IllegalArgumentException If supplied contactId is null or empty string
+     * @return
+     */
+    List<User> getEnabledUsersWithContactIdForTenant(String tenantId, String contactId);
+
+    /**
      * Returns all role assignments to users or user groups that are explicitly made for the specified tenant.
      *
      * Populates the description and name from the client role.

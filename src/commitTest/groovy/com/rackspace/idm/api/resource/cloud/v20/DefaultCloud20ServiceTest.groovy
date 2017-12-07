@@ -3894,6 +3894,36 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         null   | null     | null     | null   | "type"
     }
 
+    def "listUsersForTenant: test with contactId query param"() {
+        allowUserAccess()
+        def tenantId = "tenantId"
+        def contactId = "contactId"
+        def scopeAccess = new ScopeAccess()
+
+        when:
+        service.listUsersForTenant(headers, uriInfo(), authToken, tenantId, new ListUsersForTenantParams(null, contactId, new PaginationParams()))
+
+        then:
+        1 * requestContext.securityContext.getAndVerifyEffectiveCallerToken(authToken) >> scopeAccess
+        1 * authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess)
+        1 * tenantService.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
+    }
+
+    def "listUsersForTenant: error check"() {
+        allowUserAccess()
+        def tenantId = "tenantId"
+        def contactId = "contactId"
+        def roleId = "roleId"
+        def scopeAccess = new ScopeAccess()
+
+        when: "provide both roleId and contactId query params"
+        requestContext.securityContext.getAndVerifyEffectiveCallerToken(authToken) >> scopeAccess
+        def response = service.listUsersForTenant(headers, uriInfo(), authToken, tenantId, new ListUsersForTenantParams(roleId, contactId, new PaginationParams()))
+
+        then: "BadRequest"
+        response.build().status == HttpStatus.SC_BAD_REQUEST
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)
