@@ -413,8 +413,30 @@ JSON::
 
 Business Acceptance Criteria
 ----------------------------
-TBD
+#. Create the service GET /v2.0/users/{userId}/RAX-AUTH/roles to return a user's
+   effective roles
+#. Response must show all roles (both global and tenant assigned) the user 
+   receives via
 
+   #. Explicit assignment to user
+   #. User Group membership
+
+#. Dynamically assigned by the Identity System
+#. For each role returned, must
+
+   #. Display roleId, roleName, explicit tenant(s) to which the role applies, 
+      and the source of the assignment(s) as described in the spec
+   #. Role entries must be grouped via role and domain such that multiple 
+      entries for the same role must exist for roles that are assigned to the
+      user on tenants across multiple domains.
+
+#. Caller must be identity:admin or identity:service-admin (else 403)
+
+   #. If identity:admin, target user must be self or a lower level user
+   #. If identity:service-admin, target user must be self or a lower level user
+
+#. Update release notes as necessary
+#. Update internal documentation to include API documentation for new service
 
 Test Acceptance Criteria
 ------------------------
