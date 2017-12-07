@@ -1,14 +1,19 @@
-==============================
 Cloud Identity 3.XX.0 Release
 ==============================
+.. Put links to stories here to allow for easier reference in multiple locations
+.. _CID-1233:  https://jira.rax.io/browse/CID-1233
+.. _CID-1234:  https://jira.rax.io/browse/CID-1234
+.. _CID-1235:  https://jira.rax.io/browse/CID-1235
+
+.. contents::
 
 Release Notes 
---------------
+-------------
 
 Info
-------
+----
 
-Release Ticket  - Add JIRA link here.
+Release Ticket  - `CID-1233`_
 
 .. csv-table:: Release Progress
    :header: Milestone, Date, Status
@@ -22,50 +27,81 @@ Release Ticket  - Add JIRA link here.
 
 
 Significant Changes
---------------------
+-------------------
 
 
 Issues Resolved
-----------------
+---------------
 
 Stories
---------
+-------
 
-#. Summary1 - [Story link in JIRA - https://jira.rax.io/]
-#. Summary2 - [Story link in JIRA - https://jira.rax.io/]
-#. Summary3 - [Story link in JIRA - https://jira.rax.io/]
+#. `CID-1234`_ - Story Summary
+#. `CID-1235`_ - Story Summary
 
 Defects
---------
+-------
 
-#. Summary1 - [Defect in JIRA](https://jira.rax.io/)
-#. Summary2 - [Defect in JIRA](https://jira.rax.io/)
-#. Summary3 - [Defect in JIRA](https://jira.rax.io/)
+#. `CID-1234`_ - Story Summary
+#. `CID-1235`_ - Story Summary
  
 
 Technical Debts
-----------------
+---------------
 
-#. Summary1 - [Tech Debt in JIRA](https://jira.rax.io/)
-#. Summary2 - [Tech Debt in JIRA](https://jira.rax.io/)
-#. Summary3 - [Tech Debt in JIRA](https://jira.rax.io/)
+#. `CID-1234`_ - Story Summary
+#. `CID-1235`_ - Story Summary
 
 
 Configuration Updates
-----------------------
+---------------------
 
-----
+---
 New
-----
+---
+
+These properties were added as part of this release.
+
+.. list-table:: Configuration Changes
+   :header-rows: 1
+   :widths: 8 60 7 7 7
+
+   * - Name
+     - Description
+     - DefaultValue
+     - Story
+     - File
+   * - feature.enable.an.awesome.feature
+     - Whether or not to enable the awesome feature
+     - true
+     - `CID-1234`_
+     - reloadable
+   * - feature.enable.another.awesome.feature
+     - Whether or not to enable the second awesome feature
+     - true
+     - `CID-1235`_
+     - static
 
 -------
 Updates
 -------
 
-.. csv-table:: Configuration Changes
-   :header: "Name", "Description", "DefaultValue", "Story", "File"
+These properties are changes to the default settings for existing properties
 
-   Config Name, Config Description, True, CID-1234, reloadable
+.. list-table:: Configuration Changes
+   :header-rows: 1
+   :widths: 8 60 7 7 7
+
+   * - Name
+     - Description
+     - DefaultValue
+     - Story
+     - File
+   * - feature.update.existing.property
+     - Does something
+     - false
+     - `CID-1234`_
+     - reloadable
 
 -------
 Deleted
@@ -73,30 +109,35 @@ Deleted
 
 These properties should be removed from the respective properties files as they are no longer used.
 
-.. csv-table:: Deleted Configurations
-   :header: "Name", "Story", "File"
+.. list-table:: Configuration Changes
+   :header-rows: 1
+   :widths: 8 7 7
 
-   Config Name, CID-1234, reloadable
-
+   * - Name
+     - Story
+     - File
+   * - feature.delete.existing.property
+     - `CID-1234`_
+     - reloadable
 
 Directory Changes
 ------------------
 
-----
+---
 New
-----
+---
 <New Schema goes here>
 
---------
+-------
 Updates
---------
+-------
 <Updates to Schema goes here>
 
 Repose Upgrade
----------------
+--------------
 
 Deployment Notes
------------------
+----------------
 
 ---------------
 Pre-Deployment

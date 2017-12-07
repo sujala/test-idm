@@ -1,12 +1,11 @@
-==============================
 Cloud Identity 3.18.0 Release
 ==============================
-
-Release Notes
---------------
+.. _CID-1281:  https://jira.rax.io/browse/CID-1281
+.. _CID-1283:  https://jira.rax.io/browse/CID-1283
+.. contents::
 
 Info
-------
+----
 
 Release Ticket  - Add JIRA link here.
 
@@ -21,47 +20,59 @@ Release Ticket  - Add JIRA link here.
 
 
 Significant Changes
---------------------
+-------------------
 
 
 Issues Resolved
-----------------
+---------------
 
 Stories
---------
+-------
 
-#. Upgrade Repose to version 8.7.3.0 - https://jira.rax.io/browse/CID-1281
+#. `CID-1281`_ - Upgrade Repose to version 8.7.3.0
+#. `CID-1283`_ -  Reclassifying some resources as unprotected to new relic
 
 Defects
---------
+-------
 
-#. Summary1 - [Defect in JIRA](https://jira.rax.io/)
-#. Summary2 - [Defect in JIRA](https://jira.rax.io/)
-#. Summary3 - [Defect in JIRA](https://jira.rax.io/)
 
 Technical Debts
-----------------
-
-#. Summary1 - [Tech Debt in JIRA](https://jira.rax.io/)
-#. Summary2 - [Tech Debt in JIRA](https://jira.rax.io/)
-#. Summary3 - [Tech Debt in JIRA](https://jira.rax.io/)
+---------------
 
 
 Configuration Updates
-----------------------
+---------------------
 
-----
+---
 New
-----
+---
+These are new properties added as part of the Release
+
+.. list-table:: Configuration Changes
+   :header-rows: 1
+   :widths: 8 60 7 7 7
+
+   * - Name
+     - Description
+     - DefaultValue
+     - Story
+     - File
 
 -------
 Updates
 -------
+These properties are changes to the default settings for existing properties 
 
-.. csv-table:: Configuration Changes
-   :header: "Name", "Description", "DefaultValue", "Story", "File"
+.. list-table:: Configuration Changes
+   :header-rows: 1
+   :widths: 8 60 7 7 7
 
-   Config Name, Config Description, True, CID-1234, reloadable
+   * - Name
+     - Description
+     - DefaultValue
+     - Story
+     - File
+
 
 -------
 Deleted
@@ -69,36 +80,38 @@ Deleted
 
 These properties should be removed from the respective properties files as they are no longer used.
 
-.. csv-table:: Deleted Configurations
-   :header: "Name", "Story", "File"
+.. list-table:: Configuration Changes
+   :header-rows: 1
+   :widths: 8 60 7 7 7
 
-   Config Name, CID-1234, reloadable
-
+   * - Name
+     - Story
+     - File
 
 Directory Changes
 ------------------
 
-----
+---
 New
-----
+---
 <New Schema goes here>
 
---------
+-------
 Updates
---------
+-------
 <Updates to Schema goes here>
 
 Repose Upgrade
----------------
+--------------
 
 Upgrade Repose to version 8.7.3.0.
 
 Deployment Notes
------------------
+----------------
 
----------------
+--------------
 Pre-Deployment
----------------
+--------------
 
 <Any pre-deployment steps go here>
 
