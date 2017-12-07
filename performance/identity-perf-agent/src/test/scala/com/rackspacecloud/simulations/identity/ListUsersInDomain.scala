@@ -1,6 +1,7 @@
 package com.rackspacecloud.simulations.identity
 
 import com.rackspacecloud.scenarios.Identity
+import com.rackspacecloud.scenarios.IdentityListUsersInDomain
 import com.typesafe.config.ConfigFactory
 import io.gatling.core.Predef._
 import io.gatling.core.protocol.Protocol
@@ -15,7 +16,7 @@ class ListUsersInDomain extends Simulation {
   // V20 List users for domain
   val V20_LIST_USERS_FOR_DOMAIN_PER_SEC : Double =  conf.getDouble("soa.v20_list_users_for_domain.calls_per_sec")
 
-  val list_users_in_domain_scn = Identity.v20_list_users_in_a_domain
+  val list_users_in_domain_scn = IdentityListUsersInDomain.v20_list_users_in_a_domain
 
   // Not method or version specific.
   val MAX_DURATION_SECS: Int = conf.getInt("simulation.max_duration_secs_for_list_users_for_domain")

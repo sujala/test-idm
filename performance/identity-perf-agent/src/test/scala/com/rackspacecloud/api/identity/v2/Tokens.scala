@@ -54,7 +54,10 @@ object Tokens {
   val userIDFeeder = csv(DATA_LOCATION + "data/identity/user_id.dat").circular
   val fedDomainFeeder = csv(DATA_LOCATION + "data/identity/dom_users_for_fed.dat").circular
   val defaultUsersFeeder = csv(DATA_LOCATION + "data/identity/default_users_tokens.dat").circular
-  val usersInDomainFeeder = csv(DATA_LOCATION + "data/identity/users_in_domain.dat").circular
+
+  // Can uncomment once we are ready to add this memory-leak test to regular perf suite
+  // val usersInDomainFeeder = csv(DATA_LOCATION + "data/identity/users_in_domain.dat").circular
+
   // Gives 500,000 numbers  between 1,000,000 and 2,000,000, which is well
   // within Java int range (which we want to force a create one user call)
   // for the domain.
@@ -286,15 +289,16 @@ def v20_list_global_roles_for_user_id: ChainBuilder = {
       .check(jsonPath("$.user.id").saveAs("user_id")))
       .exitHereIfFailed
   }
-  def v20_list_users_in_a_domain: ChainBuilder = {
-    feed(usersFeeder_v20_admin)
-      .feed(usersInDomainFeeder)
-      .exec(http("GET /v2.0/RAX-AUTH/domains/${domainId}/users")
-        .get("/v2.0/RAX-AUTH/domains/${domainId}/users")
-        .header("x-auth-token", "${admin_token}")
-        .header("X-Forwarded-For", "${ipaddress}")
-        .check(status.is(200)))
-      .exitHereIfFailed
-  }
+  // Can uncomment once we are ready to add this memory-leak test to regular perf suite
+  //  def v20_list_users_in_a_domain: ChainBuilder = {
+  //    feed(usersFeeder_v20_admin)
+  //      .feed(usersInDomainFeeder)
+  //      .exec(http("GET /v2.0/RAX-AUTH/domains/${domainId}/users")
+  //        .get("/v2.0/RAX-AUTH/domains/${domainId}/users")
+  //        .header("x-auth-token", "${admin_token}")
+  //        .header("X-Forwarded-For", "${ipaddress}")
+  //        .check(status.is(200)))
+  //      .exitHereIfFailed
+  //  }
 }
 

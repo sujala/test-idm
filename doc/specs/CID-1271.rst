@@ -1,0 +1,422 @@
+.. _CID-1271:
+
+================================================
+EPS: Add service "List Effective Roles for User"
+================================================
+
+Description
+-----------
+
+EPS currently supports APIs to indicate why a user receives a particular role
+(e.g. explicitly assigned to a user or received via group membership). In order
+to maintain this functionality after the migration of EPS roles to Identity,
+Identity must provide a means to identify how a user receives roles.
+
+Additionally, a significant existing limitation with Identity's role support is
+the degree to which they are silo'd based on how they are assigned. You can
+either ask for all global roles on user via Service A or all tenant roles for a
+user on a tenant via Service B. However, there isn't a service to retrieve *all*
+the roles for an arbitrary user across *all* tenants. Instead you either had to
+“authenticate” as that user, or discover all the user’s tenants and then loops
+through them to list the roles the user has on each individual tenant.
+
+With this story we'd like to solve both issues:
+
+1. Provide a holistic view of all the roles a user is assigned across all tenants
+   regardless of how the user is assigned the role
+2. Provide all the ways the user received each role
+
+-----------------
+Endpoint Location
+-----------------
+As part of implementing user groups we implemented various calls for managing
+user group role assignments. Rather than conflate roles w/ assignments of those
+roles we introduced distinct objects to represent role assignments. For example,
+see https://pages.github.rackspace.com/ServiceAPIContracts/global-auth-keystone-extensions/api-reference/user-group-operations.html#get-roles-for-a-user-group.
+
+At the time we had said we wanted to add similar services for assigning roles
+explicitly to users. The constructs created as part of user group role assignments 
+can be expanded to support the source. A few existing endpoints dealing with roles
+include:
+
+**Legacy Role Service APIs**
+
+- GET /v2.0/users/userId/roles - Lists all roles assigned as global roles on user
+- GET /v2.0/OS-KSADM/roles - Lists all roles the caller can assign
+- GET /v2.0/tenants/{tenantId}/Users/{userId}/roles - Lists all roles assigned
+  to user on specified tenant (super user only)
+- DELETE /v2.0/users/{userId}/roles/OS-KSADM/{roleid} - Delete global role
+  assigned to user
+
+**Newer Role Services on User Group**
+
+- GET /v2.0/RAX-AUTH/domains/{domainId}/groups/{groupId}/roles - Get all role
+  assignments on user group
+- GET /v2.0/RAX-AUTH/domains/{domainId}/groups/{groupId}/roles/{roleId} - Get
+  role assignment for particular role
+
+Based on existing endpoints, the proposal is to create the new service at 
+endpoint
+
+*GET /v2.0/users/{userId}/RAX-AUTH/roles*
+
+.. list-table:: Pros/Cons
+   :header-rows: 1
+   :widths: 40 40
+
+   * - Pros
+     - Cons
+   * - Provides a single service to get a holistic view of all a user's roles
+     - Since is a new service the initial test load will be higher due to having
+       to test common functionality already existing in current service
+   * - A new service eliminates risk of screwing up backward compatibility
+     - 
+   * - Initially only EPS will use so can tailor/limit initial functionality 
+       to only EPS needs
+     - 
+   * - Continues movement of role assigment logic to be consistent w/ preferred 
+       user group approach
+     - 
+   * - Provides an obvious extension point for future filtering capability
+        - Filter by tenant
+        - Filter by assignment type (global vs tenant)
+        - Filter by sourceType (user group vs user vs system)
+        - Filter by sourceId (e.g. specific user group)
+     -
+   * - Provides API path for future "assignment" based services on user
+     - 
+
+-----------------
+Assignment Source
+-----------------
+A user can receive a given role through multiple methods.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 60
+   
+   * - Source
+     - Description
+   * - USER
+     - Explicit role assignment to the user (globally on domain or on a set of 
+       tenants)
+   * - USER_GROUP
+     - Indirect assignment via user groups (globally on domain or on a set of
+       tenants)
+   * - SYSTEM
+     - Identity System level functionality that automatically assigns roles 
+        - identity:tenant-access
+   * - N/A
+     - "Identity Implicit Roles" - Authorization roles internal to identity only 
+       and are not exposed by Identity via any services
+        - identity:repose-standard implies other roles for identity
+          authorization logic
+
+A user can receive a role through multiple mechanisms for the same role. For 
+example, they could
+receive a role only on a specific tenant via one mechanism (e.g.
+explicitly assigned to the user), while receiving it globally through another
+mechanism (e.g. assigned to user group to which user belongs). 
+
+The service's response must:
+
+1. Show all mechanisms by which a user receives a role regardless of whether one
+is effectively "masked" by another. 
+ 1) For example, a global assignment effectively masks a tenant assignment.
+
+---------------------------
+Global Vs Tenant Assignment
+---------------------------
+
+When a role is created it can specify how the role can be assigned
+
+1. Globally
+2. Tenant
+3. Both Globally and for tenants
+
+A globally assigned role is shorthand for assigning a role on all tenants within
+the user/user groups's domain.
+
+A user could receive a role only on a specific tenant via one mechanism (e.g.
+explicitly assigned to the user), while receiving it globally through another
+mechanism (e.g. assigned to user group to which user belongs). The service must 
+be able to show all mechanisms by which a user receives a role
+
+Many legacy services within Identity which return roles or use roles as a
+filtering mechanism either deal with globally assigned roles or tenant assigned
+roles, but not both. For example, the `list users for tenant` currently only
+considers roles explicitly assigned on the tenant. If one tried to find all
+users with access to the tenant with a specific role (an optional query param),
+the service would **not** return any users assigned the role globally. The
+feature *apply_rcn_roles* was implemented within a number of these services to
+allow the services to dynamically denormalize globally assigned roles to be
+assigned on every tenant within the domain. The long term goal is  for all
+consumers of these services to specify the *apply_rcn_roles* parameter and have
+Identity automatically denormalize all assignments to individual tenants.
+
+As this is a new service, the service's response:
+
+1. Must show the tenants on which each assignment source applies. 
+
+--------------------
+RCN Role Assignments 
+--------------------
+RCN roles allow a
+user to implicitly receive roles on tenants in a different domain from the
+user's own domain. RCN Roles can currently only be assigned explicitly to users;
+they can not not be assigned to groups. Furthermore, they can only be assigned
+"globally" (never directly on a tenant) and identity:admins+ are the only users
+which can assign these role types. Eventually we want to provide end users the
+ability to manage the assignment of RCN roles and allow them to be assigned to
+groups.
+
+Unlike regular role assignment, RCN roles are unambiguous. If the role is an RCN
+role, the logic will automatically set it on the appropriate tenants for the user.
+
+The service's response:
+
+1. Is **not** required to distinguish whether or not a given role assignment is 
+based on "RCN logic" as that is inherent for all "RCN" roles.
+
+
+List Effective Roles for User Service
+-------------------------------------
+
+Must support generic role assignment methods to groups, users, and by system.
+The response is based on the existing tenantAssignments object, but adds an
+additional *sources* array attribute.
+
+The response doesn't specify to which  domains the tenants belong (??should we
+add a forDomain attribute??). While all global assignmentTypes specify all
+tenants to which that global role applies as part of the 'forTenants', trying to
+consolidate tenants across domains makes the response somewhat confusing when a
+role is assigned to a user across multiple domains.
+
+To provide some grouping, the assignments will be grouped by roleName & domain
+such that a single assignment will contain only  tenants within the same domain.
+This may result in the same role being repeated (once for each domain on which
+the user has the role). Examples below clarify the grouping.
+
+The key parts for each sources entry are:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 20 30
+   
+   * - Name
+     - Type
+     - Description
+   * - **RAX-AUTH:roleAssignments**
+     - Object *(Required)*
+     - A role assignments entity.
+   * - RAX-AUTH:roleAssignments.\ **tenantAssignments** 
+     - Object *(Required)*
+     - An array of tenant assignments.
+   * - RAX-AUTH:roleAssignments.tenantAssignments.\ **onRole**
+     - String *(Required)*
+     - Role ID for tenant assignment.
+   * - RAX-AUTH:roleAssignments.tenantAssignments.\ **onRoleName**
+     - String *(Required)*
+     - Role name for tenant assignment.    
+   * - RAX-AUTH:roleAssignments.tenantAssignments.\ **forTenants**
+     - String *(Required)*
+     - An array of tenant IDs to which the role is assigned
+   * - RAX-AUTH:roleAssignments.tenantAssignments.\ **sources**
+     - An array of sources *(Required)*
+     - An array of tenant IDs to which the role is assigned
+   * - RAX-AUTH:roleAssignments.tenantAssignments.\ **sourceType**
+     - String *(Required)*
+     - The source of the role assignment. This can be
+        - USER
+        - USER_GROUP
+        - SYSTEM
+   * - RAX-AUTH:roleAssignments.tenantAssignments.\ **sourceId**
+     - String *(Required)*
+     - A unique identifier for the source. For users and groups this is the
+       respective id. For SYSTEM, this is the source system (e.g. IDENTITY)
+   * - RAX-AUTH:roleAssignments.tenantAssignments.\ **assignmentType**
+     - String *(Required)*
+     - How the role was assigned to the source. This can be
+        - GLOBAL
+        - TENANT
+   * - RAX-AUTH:roleAssignments.tenantAssignments.\ **forTenants**
+     - Array of Strings *(Required)*
+     - The list of tenants to which the role is assigned.
+        
+**Generic Example**
+
+This is contrived to just so the different sourceTypes in a single example, 
+and is not meant to represent a grouping of sources likely to be seen.
+
+JSON::
+
+ {
+    "RAX-AUTH:roleAssignments": {
+        "tenantAssignments": [
+            {
+                "onRole": "1234",
+                "onRoleName": "roleName",
+                 "forTenants": [
+                     "t1, t2"
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "userId",
+                       "assignmentType": "GLOBAL"
+	                   "forTenants": [
+	                      "t1, t2"
+	                   ]
+                  },
+                  {
+                       "sourceType": "USER_GROUP",
+                       "sourceId": "UserGroupAId",
+                       "assignmentType": "GLOBAL",
+	                   "forTenants": [
+	                      "t1, t2"
+	                   ]
+                  },
+                  {
+                       "sourceType": "USER_GROUP",
+                       "sourceId": "UserGroupBId",
+                       "assignmentType": "TENANT",
+		               "forTenants": [
+		                "t1, t2"
+		               ]
+                  },
+                  {
+                       "sourceType": "USER_GROUP",
+                       "sourceId": "UserGroupCId",
+                       "assignmentType": "TENANT",
+		               "forTenants": [
+		                "t1"
+		               ]
+                  },
+                  {
+                       "sourceType": "SYSTEM",
+                       "sourceId": "IDENTITY",
+                       "assignmentType": "TENANT",
+		               "forTenants": [
+		                "t2"
+		               ]
+                  }
+                ]
+            }
+        ]
+    }
+ }
+
+**Across Domains Assignment Example**
+
+Assume 
+- d1t1 and d1t2 are tenants within the same domain (Domain 1)
+- d2t1 is a tenant in a different domain.
+- User has the 'observer' role assigned globally on Domain 1
+- User has the 'observer' role assigned on tenant d2t1 on Domain 2
+
+JSON::
+
+ {
+    "RAX-AUTH:roleAssignments": {
+        "tenantAssignments": [
+            {
+                "onRole": "8899",
+                "onRoleName": "observerr",
+                 "forTenants": [
+                     "d1t1, d1t2"
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "userId",
+                       "assignmentType": "GLOBAL"
+	                   "forTenants": [
+	                      "d1t1, d1t2"
+	                   ]
+                  }
+                ]
+            },
+            {
+                "onRole": "8899",
+                "onRoleName": "observerr",
+                 "forTenants": [
+                     "d2t1"
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "userId",
+                       "assignmentType": "TENANT"
+	                   "forTenants": [
+	                      "d2t1"
+	                   ]
+                  }
+                ]
+            }
+        ]
+    }
+ } 
+
+**RCN Role Example**
+
+The grouping of assignments by domain will likely cause users with RCN roles to
+have the role repeated if the RCN role applies to tenants across multiple domains
+within the RCN. 
+
+Assume:
+
+- The user's RCN contains the domain Domain 1 with the d1t1 and d1t2 tenants
+- The user's RCN contains the domain Domain 2 with the d2t1 tenants
+
+JSON::
+
+ {
+    "RAX-AUTH:roleAssignments": {
+        "tenantAssignments": [
+            {
+                "onRole": "8899",
+                "onRoleName": "rcn:admin",
+                 "forTenants": [
+                     "d1t1, d1t2"
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "userId",
+                       "assignmentType": "GLOBAL"
+	                   "forTenants": [
+	                      "d1t1, d1t2"
+	                   ]
+                  }
+                ]
+            },
+            {
+                "onRole": "8899",
+                "onRoleName": "rcn:admin",
+                 "forTenants": [
+                     "d2t1"
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "userId",
+                       "assignmentType": "GLOBAL"
+	                   "forTenants": [
+	                      "d1t3"
+	                   ]
+                  }
+                ]
+            }
+        ]
+    }
+ }
+
+Business Acceptance Criteria
+----------------------------
+TBD
+
+
+Test Acceptance Criteria
+------------------------
+TBD
+
