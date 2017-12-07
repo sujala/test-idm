@@ -295,6 +295,16 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         users.user.find{it.id == user.id} != null
         users.user.find{it.id == subUser.id} != null
 
+        when: "Disable subUser and list users in tenant"
+        utils.disableUser(subUser)
+        response = cloud20.listUsersWithTenantId(adminToken, tenantId, new ListUsersForTenantParams(null, contactId, null), acceptMediaType)
+        users = getUsersFromResponse(response)
+
+        then: "Only return enabled users"
+        response.status == HttpStatus.SC_OK
+        users.user.size == 1
+        users.user.find{it.id == user.id} != null
+
         cleanup:
         utils.deleteUserQuietly(subUser)
         utils.deleteUserQuietly(user)
@@ -304,6 +314,50 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
 
         where:
         acceptMediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "List users for tenant with contactId ignores page params: marker = #marker, limit = #limit"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        // Update userAdmin's contactId
+        def contactId = testUtils.getRandomUUID("contactId")
+        def updateUser = new User().with {
+            it.id = userAdmin.id
+            it.contactId = contactId
+            it
+        }
+        utils.updateUser(updateUser)
+
+        // Create a non-domain tenant and added to user
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["cloud"]))
+        utils.addRoleToUserOnTenant(userAdmin, tenant)
+
+        when:
+        def response = cloud20.listUsersWithTenantId(utils.getIdentityAdminToken(), tenantId, new ListUsersForTenantParams(null, contactId, new PaginationParams(marker, limit)))
+        def userList = getUsersFromResponse(response)
+
+        then:
+        userList.user.size() == 1
+        userList.user.get(0).id == userAdmin.id
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+        utils.deleteTenantQuietly(tenant)
+
+        where:
+        marker | limit
+        0      | 0
+        2      | 1
+        100    | 100
+        null   | 0
+        null   | 1
+        0      | null
+        1      | null
     }
 
     @Unroll

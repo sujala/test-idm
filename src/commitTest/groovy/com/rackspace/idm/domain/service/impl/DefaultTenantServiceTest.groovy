@@ -983,6 +983,44 @@ class DefaultTenantServiceTest extends RootServiceTest {
         userList.get(0) == user
     }
 
+    def "getEnabledUsersWithContactIdForTenant: verify contactId is case insensitive"() {
+        given:
+        def tenantId = "tenantId"
+        def contactId = "contactId"
+        def user = entityFactory.createUser().with {
+            it.id = "id"
+            it.contactId = contactId
+            it
+        }
+        def user2 = entityFactory.createUser().with {
+            it.id = "id2"
+            it.contactId = contactId.toUpperCase()
+            it
+        }
+        def tenantRole = entityFactory.createTenantRole("tenantRole").with {
+            it.userId = user.id
+            it
+        }
+        def tenantRole2 = entityFactory.createTenantRole("tenantRole").with {
+            it.userId = user2.id
+            it
+        }
+
+        when:
+        List<User> userList = service.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
+
+        then:
+        1 * tenantRoleDao.getAllTenantRolesForTenant(tenantId) >> [tenantRole, tenantRole2].asList()
+        1 * tenantRoleDao.getUserIdForParent(tenantRole) >> tenantRole.userId
+        1 * tenantRoleDao.getUserIdForParent(tenantRole2) >> tenantRole2.userId
+        1 * userService.getUserById(tenantRole.getUserId()) >> user
+        1 * userService.getUserById(tenantRole2.getUserId()) >> user
+
+        userList.size() == 2
+        userList.find {it.id = user.id} != null
+        userList.find {it.id = user2.id} != null
+    }
+
     @Unroll
     def "getEnabledUsersWithContactIdForTenant: users in tenant do not match the contactId: contactId = #id"() {
         given:
