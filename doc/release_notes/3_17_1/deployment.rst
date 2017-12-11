@@ -17,10 +17,10 @@ Release Ticket - `CID-1254`_
    :header: Milestone, Date, Status
 
    RC Due, "Tues, Nov 14 2017", Delivered - RC1 Build number: 3.17.1-1510607797053
-   QE Signoff for Staging, "Thurs, Nov 16 2017",
-   Staging Release, "Mon, Nov 27 - Tues, Nov 28 2017",
-   Signoff for Production, "Fri, Dec 1 2017",
-   Production Release Week, "Mon, Dec 4 - Tues, Dec 5 2017"
+   QE Signoff for Staging, "Thurs, Nov 16 2017", Delivered
+   Staging Release, "Mon, Nov 27 - Tues, Nov 28 2017", Delivered
+   Signoff for Production, "Fri, Dec 1 2017", Delivered
+   Production Release Week, "Mon, Dec 4 - Tues, Dec 5 2017", Delivered
 
 Significant Changes
 --------------------
