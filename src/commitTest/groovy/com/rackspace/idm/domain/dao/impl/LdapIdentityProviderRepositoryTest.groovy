@@ -1,8 +1,5 @@
-package com.rackspace.idm.modules.usergroups.dao
+package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
-import com.rackspace.idm.domain.dao.impl.LdapIdentityProviderRepository
-import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.unboundid.ldap.sdk.Filter
 import com.unboundid.ldap.sdk.LDAPInterface
 import com.unboundid.ldap.sdk.SearchScope

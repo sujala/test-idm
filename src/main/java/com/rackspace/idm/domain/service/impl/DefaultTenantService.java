@@ -1534,8 +1534,9 @@ public class DefaultTenantService implements TenantService {
         Assert.notNull(contactId);
 
         List<User> users = new ArrayList<>() ;
-        for (User user : getEffectiveEnabledUsersForTenant(tenantId)) {
-            if (StringUtils.isNotBlank(user.getContactId()) && contactId.equalsIgnoreCase(user.getContactId())) {
+        for (User user : userService.getEnabledUsersByContactId(contactId)) {
+            List<TenantRole> tenantRoles = getEffectiveTenantRolesForUser(user);
+            if (isTenantIdContainedInTenantRoles(tenantId, tenantRoles)) {
                 users.add(user);
             }
         }

@@ -360,6 +360,39 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         1      | null
     }
 
+    def "Verify list users for tenant with contactId is case insensitive"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        // Update userAdmin's contactId
+        def contactId = testUtils.getRandomUUID("contactId")
+        def updateUser = new User().with {
+            it.id = userAdmin.id
+            it.contactId = contactId
+            it
+        }
+        utils.updateUser(updateUser)
+
+        // Create a non-domain tenant and added to user
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["cloud"]))
+        utils.addRoleToUserOnTenant(userAdmin, tenant)
+
+        when:
+        def response = cloud20.listUsersWithTenantId(utils.getIdentityAdminToken(), tenantId, new ListUsersForTenantParams(null, contactId.toUpperCase(), new PaginationParams(null, null)))
+        def userList = getUsersFromResponse(response)
+
+        then:
+        userList.user.size() == 1
+        userList.user.get(0).id == userAdmin.id
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+        utils.deleteTenantQuietly(tenant)
+    }
+
     @Unroll
     def "Error check - list users for tenant: mediaType = #mediaType"() {
         given:

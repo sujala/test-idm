@@ -969,65 +969,28 @@ class DefaultTenantServiceTest extends RootServiceTest {
             it.contactId = contactId
             it
         }
-        def tenantRole = entityFactory.createTenantRole("tenantRole")
+        def tenantRole = entityFactory.createTenantRole("tenantRole").with {
+            it.tenantIds.add(tenantId)
+            it
+        }
 
         when:
         List<User> userList = service.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
 
         then:
-        1 * tenantRoleDao.getAllTenantRolesForTenant(tenantId) >> [tenantRole].asList()
-        1 * tenantRoleDao.getUserIdForParent(tenantRole) >> tenantRole.userId
-        1 * userService.getUserById(tenantRole.getUserId()) >> user
+        1 * userService.getEnabledUsersByContactId(contactId) >> [user].asList()
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> [tenantRole].asList()
 
         userList.size() == 1
         userList.get(0) == user
     }
 
-    def "getEnabledUsersWithContactIdForTenant: verify contactId is case insensitive"() {
+    def "getEnabledUsersWithContactIdForTenant: no tenant role on matching users"() {
         given:
         def tenantId = "tenantId"
         def contactId = "contactId"
         def user = entityFactory.createUser().with {
-            it.id = "id"
             it.contactId = contactId
-            it
-        }
-        def user2 = entityFactory.createUser().with {
-            it.id = "id2"
-            it.contactId = contactId.toUpperCase()
-            it
-        }
-        def tenantRole = entityFactory.createTenantRole("tenantRole").with {
-            it.userId = user.id
-            it
-        }
-        def tenantRole2 = entityFactory.createTenantRole("tenantRole").with {
-            it.userId = user2.id
-            it
-        }
-
-        when:
-        List<User> userList = service.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
-
-        then:
-        1 * tenantRoleDao.getAllTenantRolesForTenant(tenantId) >> [tenantRole, tenantRole2].asList()
-        1 * tenantRoleDao.getUserIdForParent(tenantRole) >> tenantRole.userId
-        1 * tenantRoleDao.getUserIdForParent(tenantRole2) >> tenantRole2.userId
-        1 * userService.getUserById(tenantRole.getUserId()) >> user
-        1 * userService.getUserById(tenantRole2.getUserId()) >> user
-
-        userList.size() == 2
-        userList.find {it.id = user.id} != null
-        userList.find {it.id = user2.id} != null
-    }
-
-    @Unroll
-    def "getEnabledUsersWithContactIdForTenant: users in tenant do not match the contactId: contactId = #id"() {
-        given:
-        def tenantId = "tenantId"
-        def contactId = "contactId"
-        def user = entityFactory.createUser().with {
-            it.contactId = id
             it
         }
         def tenantRole = entityFactory.createTenantRole("tenantRole")
@@ -1036,14 +999,23 @@ class DefaultTenantServiceTest extends RootServiceTest {
         List<User> userList = service.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
 
         then:
-        1 * tenantRoleDao.getAllTenantRolesForTenant(tenantId) >> [tenantRole].asList()
-        1 * tenantRoleDao.getUserIdForParent(tenantRole) >> tenantRole.userId
-        1 * userService.getUserById(tenantRole.getUserId()) >> user
+        1 * userService.getEnabledUsersByContactId(contactId) >> [user].asList()
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> [tenantRole].asList()
 
         userList.size() == 0
+    }
 
-        where:
-        id  << ["other", null]
+    def "getEnabledUsersWithContactIdForTenant: no users found with provided contactId"() {
+        given:
+        def tenantId = "tenantId"
+        def contactId = "contactId"
+
+        when:
+        List<User> userList = service.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
+
+        then:
+        1 * userService.getEnabledUsersByContactId(contactId) >> [].asList()
+        userList.size() == 0
     }
 
     def createImmutableClientRole(String name, int weight = 1000) {
