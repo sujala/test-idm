@@ -2,6 +2,7 @@ Cloud Identity 3.18.0 Release
 ==============================
 .. _CID-1281:  https://jira.rax.io/browse/CID-1281
 .. _CID-1283:  https://jira.rax.io/browse/CID-1283
+.. _CID-1287:  https://jira.rax.io/browse/CID-1287
 .. contents::
 
 Info
@@ -31,6 +32,7 @@ Stories
 
 #. `CID-1281`_ - Upgrade Repose to version 8.7.3.0
 #. `CID-1283`_ -  Reclassifying some resources as unprotected to new relic
+#. `CID-1287`_ -  Enable password history by default
 
 Defects
 -------
@@ -48,30 +50,21 @@ New
 ---
 These are new properties added as part of the Release
 
-.. list-table:: Configuration Changes
-   :header-rows: 1
-   :widths: 8 60 7 7 7
+.. csv-table:: Configuration Changes
+   :header: "Name", "Description", "DefaultValue", "Story", "File"
 
-   * - Name
-     - Description
-     - DefaultValue
-     - Story
-     - File
+   None,
 
 -------
 Updates
 -------
 These properties are changes to the default settings for existing properties 
 
-.. list-table:: Configuration Changes
-   :header-rows: 1
-   :widths: 8 60 7 7 7
+.. csv-table:: Configuration Changes
+   :header: "Name", "Description", "DefaultValue", "Story", "File"
 
-   * - Name
-     - Description
-     - DefaultValue
-     - Story
-     - File
+   feature.enforce.password.policy.history, 'Whether or not to enforce password policy history', true, CID-1287, reloadable
+   feature.maintain.password.history, 'Whether or not to maintain password history. If history enforcement is enabled, this is always true', true, CID-1287, reloadable
 
 
 -------
@@ -80,13 +73,10 @@ Deleted
 
 These properties should be removed from the respective properties files as they are no longer used.
 
-.. list-table:: Configuration Changes
-   :header-rows: 1
-   :widths: 8 60 7 7 7
+.. csv-table:: Configuration Changes
+   :header: "Name", "Story", "File"
 
-   * - Name
-     - Story
-     - File
+   None,
 
 Directory Changes
 ------------------
