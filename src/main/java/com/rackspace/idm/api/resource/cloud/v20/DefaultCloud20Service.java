@@ -131,6 +131,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String USER_NOT_FOUND_ERROR_MESSAGE = "User with ID %s not found.";
 
+    public static final String LIST_USERS_FOR_TENANT_PARAM_ERROR_MESSAGE = "'roleId' and 'contactId' query parameters are mutually exclusive. Please supply one or the other.";
+
     public static final String UPDATE_USER_CANNOT_UPDATE_HIGHER_LEVEL_USER_ERROR_MESSAGE = "Cannot update user with same or higher access level";
     public static final String USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE = "A user's username cannot be updated.";
     public static final String ERROR_CANNOT_UPDATE_USER_WITH_HIGHER_ACCESS = "Cannot update user with same or higher access level";
@@ -4341,6 +4343,17 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // TODO: Could optimize this more. The previous call already retrieves the tenant for user-admins.
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
+
+            if(StringUtils.isNotBlank(params.roleId) && StringUtils.isNotBlank(params.contactId)) {
+                throw new BadRequestException(LIST_USERS_FOR_TENANT_PARAM_ERROR_MESSAGE);
+            }
+
+            // ContactId search ignores any values supplied for marker and limit
+            if (StringUtils.isNotBlank(params.contactId)) {
+                List<User> users = tenantService.getEnabledUsersWithContactIdForTenant(tenantId, params.contactId);
+                return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory()
+                        .createUsers(userConverterCloudV20.toUserList(users)).getValue());
+            }
 
             PaginatorContext<User> pageContext;
             if (StringUtils.isNotBlank(params.getRoleId())) {

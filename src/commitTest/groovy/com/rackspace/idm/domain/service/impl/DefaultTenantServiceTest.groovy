@@ -4,7 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
-import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.Tenant
@@ -13,11 +12,8 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
-import com.rackspace.idm.modules.usergroups.Constants
-import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import com.rackspace.idm.util.RoleUtil
 import com.unboundid.ldap.sdk.DN
-import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -937,7 +933,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
       
     def "getPaginatedEffectiveEnabledUsersForTenant ignores tenantRole in userGroup "() {
         given:
-
         def tenantRole = entityFactory.createTenantRole("somerole")
         tenantRole.tenantIds = ["12345"]
 
@@ -964,6 +959,63 @@ class DefaultTenantServiceTest extends RootServiceTest {
         paginatedUser.totalRecords == 1
         paginatedUser.getValueList().size() == 1
         paginatedUser.getValueList().get(0) == user
+    }
+
+    def "getEnabledUsersWithContactIdForTenant: Retrieves users with provided contactId for tenant"() {
+        given:
+        def tenantId = "tenantId"
+        def contactId = "contactId"
+        def user = entityFactory.createUser().with {
+            it.contactId = contactId
+            it
+        }
+        def tenantRole = entityFactory.createTenantRole("tenantRole").with {
+            it.tenantIds.add(tenantId)
+            it
+        }
+
+        when:
+        List<User> userList = service.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
+
+        then:
+        1 * userService.getEnabledUsersByContactId(contactId) >> [user].asList()
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> [tenantRole].asList()
+
+        userList.size() == 1
+        userList.get(0) == user
+    }
+
+    def "getEnabledUsersWithContactIdForTenant: no tenant role on matching users"() {
+        given:
+        def tenantId = "tenantId"
+        def contactId = "contactId"
+        def user = entityFactory.createUser().with {
+            it.contactId = contactId
+            it
+        }
+        def tenantRole = entityFactory.createTenantRole("tenantRole")
+
+        when:
+        List<User> userList = service.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
+
+        then:
+        1 * userService.getEnabledUsersByContactId(contactId) >> [user].asList()
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> [tenantRole].asList()
+
+        userList.size() == 0
+    }
+
+    def "getEnabledUsersWithContactIdForTenant: no users found with provided contactId"() {
+        given:
+        def tenantId = "tenantId"
+        def contactId = "contactId"
+
+        when:
+        List<User> userList = service.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
+
+        then:
+        1 * userService.getEnabledUsersByContactId(contactId) >> [].asList()
+        userList.size() == 0
     }
 
     def createImmutableClientRole(String name, int weight = 1000) {

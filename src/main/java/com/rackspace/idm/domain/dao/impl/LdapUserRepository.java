@@ -366,6 +366,11 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
+    public Iterable<User> getEnabledUsersByContactId(String contactId) {
+        return getObjects(searchFilterGetEnabledUsersByContactId(contactId));
+    }
+
+    @Override
     public void addGroupToUser(String userId, String groupId) {
         getLogger().debug("Adding group {} to user {}", groupId, userId);
 
@@ -467,6 +472,14 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     private Filter searchFilterGetEnabledUsersByGroupId(String groupId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_GROUP_ID, groupId)
+                .addEqualAttribute(ATTR_ENABLED, Boolean.toString(true).toUpperCase())
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+    }
+
+    private Filter searchFilterGetEnabledUsersByContactId(String contactId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_CONTACT_ID, contactId)
                 .addEqualAttribute(ATTR_ENABLED, Boolean.toString(true).toUpperCase())
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .build();

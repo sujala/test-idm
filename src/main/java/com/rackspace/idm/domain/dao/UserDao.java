@@ -73,6 +73,14 @@ public interface UserDao {
      */
     Iterable<User> getDisabledUsersByGroupId(String groupId);
 
+    /**
+     * Retrieve enabled users associated with the specified contactId.
+     *
+     * @param contactId
+     * @return
+     */
+    Iterable<User> getEnabledUsersByContactId(String contactId);
+
     void addGroupToUser(String userId, String groupId);
 
     void deleteGroupFromUser(String groupId, String userId);

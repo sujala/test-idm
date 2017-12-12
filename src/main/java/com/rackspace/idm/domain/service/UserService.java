@@ -138,6 +138,14 @@ public interface UserService {
 
     PaginatorContext<User> getEnabledUsersByGroupId(String groupId, int offset, int limit);
 
+    /**
+     * Return the list of enabled users with supplied contactId.
+     * @param contactId
+     * @throws IllegalArgumentException If supplied contactId is null or empty string
+     * @return
+     */
+    Iterable<User> getEnabledUsersByContactId(String contactId);
+
     void setValidator(Validator validator);
 
     User getUserByUsernameForAuthentication(String username);

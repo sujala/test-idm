@@ -24,6 +24,7 @@ import com.rackspace.idm.validation.Validator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -778,6 +779,17 @@ public class DefaultUserService implements UserService {
         logger.debug("Got All Users paged");
 
         return context;
+    }
+
+    @Override
+    public Iterable<User> getEnabledUsersByContactId(String contactId) {
+        logger.debug("Getting users by contactId {}", contactId);
+        Validate.notNull(contactId);
+
+        Iterable<User> users = userDao.getEnabledUsersByContactId(contactId);
+
+        logger.debug("Got users by contactId {}", contactId);
+        return users;
     }
 
     @Override

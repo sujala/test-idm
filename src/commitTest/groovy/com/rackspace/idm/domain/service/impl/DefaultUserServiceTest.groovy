@@ -14,11 +14,8 @@ import com.rackspace.idm.exception.UserDisabledException
 import com.rackspace.idm.validation.Validator
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
-import org.apache.commons.lang.StringUtils
 import spock.lang.Shared
 import testHelpers.RootServiceTest
-
-import static com.rackspace.idm.Constants.*
 
 class DefaultUserServiceTest extends RootServiceTest {
     @Shared DefaultUserService service
@@ -1097,6 +1094,25 @@ class DefaultUserServiceTest extends RootServiceTest {
             assert userIds.find {it == u1.userId} != null
             assert userIds.find {it == f1UpdatedId} != null
         }
+    }
+
+    def "getEnabledUsersByContactId: calls correct dao method"() {
+        given:
+        def contactId = "contactId"
+
+        when:
+        service.getEnabledUsersByContactId(contactId)
+
+        then:
+        1 * userDao.getEnabledUsersByContactId(contactId)
+    }
+
+    def "getEnabledUsersByContactId: null cases"() {
+        when:
+        service.getEnabledUsersByContactId(null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def createStringPaginatorContext() {

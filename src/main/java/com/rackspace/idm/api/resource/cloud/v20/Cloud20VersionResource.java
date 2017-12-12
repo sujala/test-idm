@@ -980,9 +980,10 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
             @QueryParam("roleId") String roleId,
+            @QueryParam("contactId") String contactId,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        ListUsersForTenantParams params = new ListUsersForTenantParams(roleId, new PaginationParams(validateMarker(marker), validateLimit(limit)));
+        ListUsersForTenantParams params = new ListUsersForTenantParams(roleId, contactId, new PaginationParams(validateMarker(marker), validateLimit(limit)));
         return cloud20Service.listUsersForTenant(httpHeaders, uriInfo, authToken, tenantId, params).build();
     }
 
