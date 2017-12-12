@@ -39,7 +39,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.rackspace.idm.GlobalConstants.MANAGED_HOSTING_TENANT_PREFIX;
 import static com.rackspace.idm.modules.usergroups.Constants.USER_GROUP_BASE_DN;
@@ -493,7 +492,12 @@ public class DefaultTenantService implements TenantService {
     private Set<String> getTenantTypes() {
         PaginatorContext<TenantType> tenantTypes = tenantTypeService.listTenantTypes(0, TENANT_TYPE_SEARCH_LIMIT);
         List<TenantType> typeEntities = tenantTypes.getValueList();
-        return typeEntities.stream().map(TenantType::getName).collect(Collectors.toSet());
+
+        Set<String> typeNames = new HashSet<>();
+        for (TenantType typeEntity : typeEntities) {
+            typeNames.add(typeEntity.getName());
+        }
+        return typeNames;
     }
 
     @Override
@@ -1109,14 +1113,14 @@ public class DefaultTenantService implements TenantService {
     public List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user, String applicationId) {
         logger.debug("Getting Global Roles (apply_rcn_roles=false)");
         List<TenantRole> allRoles = getEffectiveGlobalRolesForUser(user);
-        return CollectionUtils.select(allRoles, new RoleForClientPredicate(applicationId), new ArrayList<>());
+        return CollectionUtils.select(allRoles, new RoleForClientPredicate(applicationId), new ArrayList<TenantRole>());
     }
 
     @Override
     public List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId) {
         logger.debug("Getting Global Roles (apply_rcn_roles=true)");
         List<TenantRole> allRoles = getEffectiveGlobalRolesForUserApplyRcnRoles(user);
-        return CollectionUtils.select(allRoles, new RoleForClientPredicate(applicationId), new ArrayList<>());
+        return CollectionUtils.select(allRoles, new RoleForClientPredicate(applicationId), new ArrayList<TenantRole>());
     }
 
     @Override

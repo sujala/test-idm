@@ -230,7 +230,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
         PaginatorContext<TenantRole> context = new PaginatorContext<>();
         if (entry == null) {
-            context.update(Collections.emptyList(), paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
+            context.update(Collections.EMPTY_LIST, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
         } else {
             context = getObjectsPaged(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
         }
