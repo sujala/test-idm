@@ -1,0 +1,15 @@
+.. _CID-1288:
+
+Created a Docker image to run cloud-feeds on RSI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Description
+___________
+
+Create cloud-feeds rsi compatible image in order to allow running identity in rsi environment.
+
+Business Acceptance Criteria
+____________________________
+
+1. Update cloud-feeds docker image to work in RSI
+2. Automate building and adding the image to RSI when a commit is merged to cloud-identity-rsi master
