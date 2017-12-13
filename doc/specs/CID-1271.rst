@@ -100,7 +100,7 @@ A user can receive a given role through multiple methods.
    * - USER
      - Explicit role assignment to the user (globally on domain or on a set of 
        tenants)
-   * - USER_GROUP
+   * - USERGROUP
      - Indirect assignment via user groups (globally on domain or on a set of
        tenants)
    * - SYSTEM
@@ -170,13 +170,15 @@ which can assign these role types. Eventually we want to provide end users the
 ability to manage the assignment of RCN roles and allow them to be assigned to
 groups.
 
-Unlike regular role assignment, RCN roles are unambiguous. If the role is an RCN
-role, the logic will automatically set it on the appropriate tenants for the user.
+Unlike regular role assignment, RCN roles are unambiguous. If a user is assigned
+an RCN role, it was assigned globally to the user (on domain). While assigned
+globally, RCN logic (rather than "global" logic) is used to determine the
+appropriate tenants the user receives across all domains in the user's RCN.
 
-The service's response:
+It would be useful to understand from this service's response whether or not
+an assigned role is an RCN without having to look up each individual role.
 
-1. Is **not** required to distinguish whether or not a given role assignment is 
-based on "RCN logic" as that is inherent for all "RCN" roles.
+1. Must distinguish whether or not an assigned role is an RCN role.
 
 
 List Effective Roles for User Service
@@ -186,16 +188,11 @@ Must support generic role assignment methods to groups, users, and by system.
 The response is based on the existing tenantAssignments object, but adds an
 additional *sources* array attribute.
 
-The response doesn't specify to which  domains the tenants belong (??should we
-add a forDomain attribute??). While all global assignmentTypes specify all
-tenants to which that global role applies as part of the 'forTenants', trying to
-consolidate tenants across domains makes the response somewhat confusing when a
-role is assigned to a user across multiple domains.
-
-To provide some grouping, the assignments will be grouped by roleName & domain
-such that a single assignment will contain only  tenants within the same domain.
-This may result in the same role being repeated (once for each domain on which
-the user has the role). Examples below clarify the grouping.
+The response doesn't specify to which domains the tenants belong. Each role as
+user is assigned will be reprented as a single tenantAssignment. The
+tenantAssignment will contain a consolidated list of all tenant ids on which the
+user is assigned that role regardless of domain. Each reason the user received
+the role on each tenant will be listed.
 
 The key parts for each sources entry are:
 
@@ -228,7 +225,7 @@ The key parts for each sources entry are:
      - String *(Required)*
      - The source of the role assignment. This can be
         - USER
-        - USER_GROUP
+        - USERGROUP
         - SYSTEM
    * - RAX-AUTH:roleAssignments.tenantAssignments.\ **sourceId**
      - String *(Required)*
@@ -237,8 +234,9 @@ The key parts for each sources entry are:
    * - RAX-AUTH:roleAssignments.tenantAssignments.\ **assignmentType**
      - String *(Required)*
      - How the role was assigned to the source. This can be
-        - GLOBAL
+        - DOMAIN
         - TENANT
+        - RCN
    * - RAX-AUTH:roleAssignments.tenantAssignments.\ **forTenants**
      - Array of Strings *(Required)*
      - The list of tenants to which the role is assigned.
@@ -257,48 +255,52 @@ JSON::
                 "onRole": "1234",
                 "onRoleName": "roleName",
                  "forTenants": [
-                     "t1, t2"
+                     "t1",
+                     "t2"
                  ],
                 "sources": [
                   {
                        "sourceType": "USER",
                        "sourceId": "userId",
-                       "assignmentType": "GLOBAL"
-	                   "forTenants": [
-	                      "t1, t2"
-	                   ]
+                       "assignmentType": "DOMAIN"
+                       "forTenants": [
+                          "t1",
+                          "t2"
+                       ]
                   },
                   {
-                       "sourceType": "USER_GROUP",
+                       "sourceType": "USERGROUP",
                        "sourceId": "UserGroupAId",
-                       "assignmentType": "GLOBAL",
-	                   "forTenants": [
-	                      "t1, t2"
-	                   ]
+                       "assignmentType": "DOMAIN",
+                       "forTenants": [
+                          "t1",
+                          "t2"
+                       ]
                   },
                   {
-                       "sourceType": "USER_GROUP",
+                       "sourceType": "USERGROUP",
                        "sourceId": "UserGroupBId",
                        "assignmentType": "TENANT",
-		               "forTenants": [
-		                "t1, t2"
-		               ]
+                       "forTenants": [
+                          "t1",
+                          "t2"
+                       ]
                   },
                   {
-                       "sourceType": "USER_GROUP",
+                       "sourceType": "USERGROUP",
                        "sourceId": "UserGroupCId",
                        "assignmentType": "TENANT",
-		               "forTenants": [
-		                "t1"
-		               ]
+                       "forTenants": [
+                          "t1"
+                       ]
                   },
                   {
                        "sourceType": "SYSTEM",
                        "sourceId": "IDENTITY",
                        "assignmentType": "TENANT",
-		               "forTenants": [
-		                "t2"
-		               ]
+                       "forTenants": [
+                          "t2"
+                       ]
                   }
                 ]
             }
@@ -311,8 +313,11 @@ JSON::
 Assume 
 - d1t1 and d1t2 are tenants within the same domain (Domain 1)
 - d2t1 is a tenant in a different domain.
-- User has the 'observer' role assigned globally on Domain 1
-- User has the 'observer' role assigned on tenant d2t1 on Domain 2
+- User has the 'observer' role assigned on tenant d1t1, d1t2 in Domain 1 and on tenant d2t1 on Domain 2
+
+Note - It's impossible for the user to be directly assigned a role globally on own domain and on an explicit
+tenant in another domain. A user can be assigned a role on a tenant in another domain and then receive that role
+globally though user group membership. 
 
 JSON::
 
@@ -322,34 +327,21 @@ JSON::
             {
                 "onRole": "8899",
                 "onRoleName": "observerr",
-                 "forTenants": [
-                     "d1t1, d1t2"
-                 ],
-                "sources": [
-                  {
-                       "sourceType": "USER",
-                       "sourceId": "userId",
-                       "assignmentType": "GLOBAL"
-	                   "forTenants": [
-	                      "d1t1, d1t2"
-	                   ]
-                  }
-                ]
-            },
-            {
-                "onRole": "8899",
-                "onRoleName": "observerr",
-                 "forTenants": [
+                "forTenants": [
+                     "d1t1", 
+                     "d1t2", 
                      "d2t1"
                  ],
                 "sources": [
                   {
                        "sourceType": "USER",
                        "sourceId": "userId",
-                       "assignmentType": "TENANT"
-	                   "forTenants": [
-	                      "d2t1"
-	                   ]
+                       "assignmentType": "DOMAIN",
+                       "forTenants": [
+                         "d1t1", 
+                         "d1t2",
+                         "d2t1" 
+                     ]
                   }
                 ]
             }
@@ -359,14 +351,11 @@ JSON::
 
 **RCN Role Example**
 
-The grouping of assignments by domain will likely cause users with RCN roles to
-have the role repeated if the RCN role applies to tenants across multiple domains
-within the RCN. 
-
 Assume:
 
 - The user's RCN contains the domain Domain 1 with the d1t1 and d1t2 tenants
 - The user's RCN contains the domain Domain 2 with the d2t1 tenants
+- The RCN role applies to all the mentioned tenants
 
 JSON::
 
@@ -376,34 +365,52 @@ JSON::
             {
                 "onRole": "8899",
                 "onRoleName": "rcn:admin",
-                 "forTenants": [
-                     "d1t1, d1t2"
-                 ],
+                "forTenants": [
+                   "d1t1", 
+                   "d1t2",
+                   "d2t1" 
+                ],
                 "sources": [
-                  {
-                       "sourceType": "USER",
-                       "sourceId": "userId",
-                       "assignmentType": "GLOBAL"
-	                   "forTenants": [
-	                      "d1t1, d1t2"
-	                   ]
-                  }
+                   {
+                      "sourceType": "USER",
+                      "sourceId": "userId",
+                      "assignmentType": "RCN"
+                      "forTenants": [
+                         "d1t1", 
+                         "d1t2",
+                         "d2t1" 
+                      ]
+                   }
                 ]
-            },
+            }
+        ]
+    }
+ }
+
+**User w/o Tenants Example**
+
+The purpose of the service is to show roles assigned at the tenant level. A user could be assigned a role that doesn't apply to *any* current tenants for the user. For example, the user may only have DOMAIN roles on a domain that has no tenants. The user could also be assigned an RCN level role which doesn't match any tenant within the entire RCN. We still need to display the user is assigned the role, but that assignment doesn't apply to any tenants.
+
+Assume:
+
+- The user's domain does not contain any tenants
+- The user's has the identity:user-admin role
+
+JSON::
+
+ {
+    "RAX-AUTH:roleAssignments": {
+        "tenantAssignments": [
             {
-                "onRole": "8899",
-                "onRoleName": "rcn:admin",
-                 "forTenants": [
-                     "d2t1"
-                 ],
+                "onRole": "3",
+                "onRoleName": "identity:user-admin",
+                "forTenants": [],
                 "sources": [
                   {
                        "sourceType": "USER",
                        "sourceId": "userId",
-                       "assignmentType": "GLOBAL"
-	                   "forTenants": [
-	                      "d1t3"
-	                   ]
+                       "assignmentType": "DOMAIN"
+                       "forTenants": []
                   }
                 ]
             }
@@ -426,9 +433,8 @@ Business Acceptance Criteria
 
    #. Display roleId, roleName, explicit tenant(s) to which the role applies, 
       and the source of the assignment(s) as described in the spec
-   #. Role entries must be grouped via role and domain such that multiple 
-      entries for the same role must exist for roles that are assigned to the
-      user on tenants across multiple domains.
+   #. Role entries must be grouped via role such that there is only a single entry
+      per role with a list of all tenantIds on which the user has the role.
 
 #. Caller must be identity:admin or identity:service-admin (else 403)
 
