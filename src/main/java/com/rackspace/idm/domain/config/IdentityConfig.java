@@ -208,10 +208,10 @@ public class IdentityConfig {
     public static final boolean FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_DEFAULT = true;
 
     public static final String FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP = "feature.enforce.password.policy.history";
-    public static final boolean FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_DEFAULT = false;
+    public static final boolean FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_DEFAULT = true;
 
     public static final String FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP = "feature.maintain.password.history";
-    public static final boolean FEATURE_MAINTAIN_PASSWORD_HISTORY_DEFAULT = false;
+    public static final boolean FEATURE_MAINTAIN_PASSWORD_HISTORY_DEFAULT = true;
 
     public static final String PASSWORD_HISTORY_MAX_PROP = "password.history.max";
     public static final int PASSWORD_HISTORY_MAX_DEFAULT = 10;
