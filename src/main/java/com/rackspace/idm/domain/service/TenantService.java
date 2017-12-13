@@ -712,4 +712,32 @@ public interface TenantService {
      *
      */
     String inferTenantTypeForTenantId(String tenantId);
+
+    /**
+     * Returns the set of Identity managed roles associated with the Racker.
+     *
+     * @param racker
+     * @return
+     */
+    SourcedRoleAssignments getSourcedRoleAssignmentsForRacker(Racker racker);
+
+    /**
+     * Return the set of effective role assignments on the user along with the tenants on which the user has the role.
+     * This includes:
+     *
+     * <ul>
+     *     <li>All roles explicitly assigned to user regardless of assignment via global or on tenant</li>
+     *     <li>The identity:tenant-access role as appropriate for tenants in user's domain</li>
+     *     <li>Roles received via group membership (if enabled for user's domain)</li>
+     * </ul>
+     *
+     * RCN role logic is applied, so the user will receive the role on any applicable tenant within the
+     * RCN.
+     *
+     * Each role the user is assigned includes the set of sources by which the user received the assignment.
+     *
+     * @param user
+     * @return
+     */
+    SourcedRoleAssignments getSourcedRoleAssignmentsForUser(EndUser user);
 }

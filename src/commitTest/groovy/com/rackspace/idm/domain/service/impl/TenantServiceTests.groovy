@@ -62,10 +62,8 @@ class TenantServiceTests extends RootServiceTest {
 
         then: "the correct backend services are called"
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
-        2 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * domainService.getDomain(domainId) >> domain
         1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
-        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         if (excludeTenantType) {
             1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
@@ -129,10 +127,8 @@ class TenantServiceTests extends RootServiceTest {
 
         then: "the correct backend services are called"
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
-        2 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * domainService.getDomain(domainId) >> domain
         1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
-        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
 
@@ -181,10 +177,8 @@ class TenantServiceTests extends RootServiceTest {
 
         then: "the correct backend services are called"
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
-        2 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * domainService.getDomain(domainId) >> domain
         1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
-        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
 
@@ -240,8 +234,6 @@ class TenantServiceTests extends RootServiceTest {
         PaginatorContext<User> paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant, tenantAccessRole, 0, 100)
 
         then: "correct backend services are called"
-        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
-        1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
@@ -296,8 +288,6 @@ class TenantServiceTests extends RootServiceTest {
         PaginatorContext<User> paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant1, tenantAccessRole, 0, 100)
 
         then: "correct backend services are called"
-        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
-        1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantPrefixes
         1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant1.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
@@ -310,8 +300,6 @@ class TenantServiceTests extends RootServiceTest {
         paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant2, tenantAccessRole, 0, 100)
 
         then: "correct backend services are called"
-        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
-        1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantPrefixes
         1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant2.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
@@ -349,8 +337,6 @@ class TenantServiceTests extends RootServiceTest {
         PaginatorContext<User> paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant, tenantAccessRole, 0, 100)
 
         then: "correct backend services are called"
-        1 * identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
-        1 * identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantPrefixes
         1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []

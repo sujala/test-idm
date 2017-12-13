@@ -30,6 +30,7 @@ public enum IdentityRole {
     , IDENTITY_DOMAIN_ADMIN_CHANGE("identity:domain-admin-change")
     , DOMAIN_RCN_SWITCH("identity:domain-rcn-switch")
     , IDENTITY_ANALYZE_TOKEN("identity:analyze-token")
+    , IDENTITY_TENANT_ACCESS("identity:tenant-access")
     ;
 
     @Getter

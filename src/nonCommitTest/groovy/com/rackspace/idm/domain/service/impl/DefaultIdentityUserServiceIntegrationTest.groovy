@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
@@ -370,7 +371,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
 
         // User has tenant-access role on both tenants
         def accessRoleAssignment = tenantRoles.find {
-            it.name == identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName()
+            it.name == IdentityRole.IDENTITY_TENANT_ACCESS.roleName
         }
         assert accessRoleAssignment != null
         assert accessRoleAssignment.getTenantIds().size() == 2

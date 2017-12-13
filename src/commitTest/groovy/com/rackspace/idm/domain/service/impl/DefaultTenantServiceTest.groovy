@@ -729,18 +729,11 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         def tenantRole1 = entityFactory.createTenantRole()
         def tenantRole2 = entityFactory.createTenantRole().with {it.roleRsId = 2; it}
-        List<TenantRole> tenantRoles = Arrays.asList(tenantRole1, tenantRole2)
-        Iterable<TenantRole> tenantRoleIterable = (Iterable<TenantRole>)tenantRoles
+        List<TenantRole> tenantRoles = [tenantRole1, tenantRole2]
 
-        tenantRoleDao.getTenantRolesForUser(user) >> tenantRoleIterable
+        tenantRoleDao.getTenantRolesForUser(user) >> (Iterable<TenantRole>)tenantRoles
 
-        reloadableConfig.isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
         reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
-        reloadableConfig.getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> roleId
-
-        applicationService.getCachedClientRoleByName(roleId) >>  createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-        authorizationService.getCachedIdentityRoleByName(roleId) >>  createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-        applicationService.getCachedClientRoleById(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
 
         when:
         def tenantRoleList = service.getTenantRolesForUserPerformant(user)
@@ -750,12 +743,12 @@ class DefaultTenantServiceTest extends RootServiceTest {
         tenantRoleList.size() == 3
 
         if (flag) {
-            1 * applicationService.getCachedClientRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-            1 * applicationService.getCachedClientRoleByName(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            (1.._) * applicationService.getCachedClientRoleById(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            (1.._) * applicationService.getCachedClientRoleByName(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
             0 * authorizationService.getCachedIdentityRoleByName(_)
         } else {
-            1 * applicationService.getCachedClientRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-            1 * authorizationService.getCachedIdentityRoleByName(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            (1.._) * applicationService.getCachedClientRoleById(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            (1.._) * authorizationService.getCachedIdentityRoleByName(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
             0 * applicationService.getCachedClientRoleByName(_)
         }
 

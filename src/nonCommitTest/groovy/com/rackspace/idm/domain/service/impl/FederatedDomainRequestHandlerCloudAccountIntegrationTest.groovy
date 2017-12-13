@@ -5,6 +5,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.security.AuthenticationContext
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -166,7 +167,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         userRoles.find {it.name == IdentityUserTypeEnum.DEFAULT_USER.getRoleName()} != null
         userRoles.find {it.name == GlobalConstants.COMPUTE_DEFAULT_ROLE} != null
         userRoles.find {it.name == GlobalConstants.FILES_DEFAULT_ROLE} != null
-        userRoles.find {it.name == identityConfig.getReloadableConfig().automaticallyAssignUserRoleOnDomainTenantsRoleName} != null
+        userRoles.find {it.name == IdentityRole.IDENTITY_TENANT_ACCESS.roleName} != null
 
         and: "Catalogs are in sync"
         /*
@@ -235,7 +236,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         userRoles.find {it.name == IdentityUserTypeEnum.DEFAULT_USER.getRoleName()} != null
         userRoles.find {it.name == GlobalConstants.COMPUTE_DEFAULT_ROLE} != null
         userRoles.find {it.name == GlobalConstants.FILES_DEFAULT_ROLE} != null
-        userRoles.find {it.name == identityConfig.getReloadableConfig().automaticallyAssignUserRoleOnDomainTenantsRoleName} != null
+        userRoles.find {it.name == IdentityRole.IDENTITY_TENANT_ACCESS.roleName} != null
         userRoles.find {it.name == ROLE_RBAC1_NAME} != null
         userRoles.find {it.name == ROLE_RBAC2_NAME} != null
     }

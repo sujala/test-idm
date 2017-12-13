@@ -798,7 +798,6 @@ class TenantIntegrationTest extends RootIntegrationTest {
      */
     def "List Tenants: Automatically returns all tenants within user's domain" () {
         given: "A new user and 2 tenants"
-        reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
         def adminToken = utils.getIdentityAdminToken()
         def username = testUtils.getRandomUUID("name")
         def domainId = testUtils.getRandomUUID("domainId")
@@ -840,7 +839,6 @@ class TenantIntegrationTest extends RootIntegrationTest {
      */
     def "List Tenants: Automatic assignment of tenant access ignores tenants associated with default domain" () {
         given: "A new user and 2 tenants"
-        reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
         def adminToken = utils.getIdentityAdminToken()
         def username = testUtils.getRandomUUID("name")
         def domainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()

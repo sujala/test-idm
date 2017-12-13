@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantEndpointMeta
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
@@ -155,7 +155,7 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             it
         }
         def userRoles = [entityFactory.createTenantRole().with {
-            it.name = IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT
+            it.name = IdentityRole.IDENTITY_TENANT_ACCESS.roleName
             it.tenantIds = [tenant.name]
             it
         }]
@@ -186,7 +186,7 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             // Extract the tenant metadata passed to endpoint service verify it was generated correctly
             TenantEndpointMeta endpointMeta = args[0]
             assert endpointMeta.user == user
-            assert endpointMeta.rolesOnTenant.name.contains(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT)
+            assert endpointMeta.rolesOnTenant.name.contains(IdentityRole.IDENTITY_TENANT_ACCESS.roleName)
             assert endpointMeta.rulesForTenant.contains(mappingRules[0])
 
             // Return null as if found no endpoints. Not testing endpoint calculation
@@ -204,7 +204,7 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             it
         }
         def userRoles = [entityFactory.createTenantRole().with {
-            it.name = IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT
+            it.name = IdentityRole.IDENTITY_TENANT_ACCESS.roleName
             it.tenantIds = [tenant.name]
             it
         }]
@@ -237,7 +237,7 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             // Extract the tenant metadata passed to endpoint service verify it was generated correctly
             TenantEndpointMeta endpointMeta = args[0]
             assert endpointMeta.user == user
-            assert endpointMeta.rolesOnTenant.name.contains(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT)
+            assert endpointMeta.rolesOnTenant.name.contains(IdentityRole.IDENTITY_TENANT_ACCESS.roleName)
             assert endpointMeta.rulesForTenant.contains(mappingRules[0])
 
             // Return null as if found no endpoints. Not testing endpoint calculation
@@ -255,7 +255,7 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             it
         }
         def userRoles = [entityFactory.createTenantRole().with {
-            it.name = IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT
+            it.name = IdentityRole.IDENTITY_TENANT_ACCESS.roleName
             it.tenantIds = [tenant.name]
             it
         }]
@@ -294,7 +294,7 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             // Extract the tenant metadata passed to endpoint service verify it was generated correctly
             TenantEndpointMeta endpointMeta = args[0]
             assert endpointMeta.user == user
-            assert endpointMeta.rolesOnTenant.name.contains(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT)
+            assert endpointMeta.rolesOnTenant.name.contains(IdentityRole.IDENTITY_TENANT_ACCESS.roleName)
             // The rule is only mapped to the tenant if the tenant type is inferred
             if (featureEnabled) {
                 assert endpointMeta.rulesForTenant.size() == 1

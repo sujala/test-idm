@@ -278,9 +278,6 @@ public class IdentityConfig {
     public static final String FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP = "feature.include.endpoints.based.on.rules";
     public static final boolean FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT = false;
 
-    public static final String AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP = "auto.assign.role.on.domain.tenants.role.name";
-    public static final String AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT = "identity:tenant-access";
-
     public static final String FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP = "feature.list.support.additional.role.properties";
     public static final boolean FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_DEFAULT = true;
 
@@ -640,8 +637,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_POST_IDP_FEED_EVENTS_PROP, FEATURE_POST_IDP_FEED_EVENTS_DEFAULT);
         defaults.put(FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_PROP, FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_DEFAULT);
         defaults.put(FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_PROP, FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_DEFAULT);
-
-        defaults.put(AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT);
 
         defaults.put(IDP_POLICY_MAX_KILOBYTE_SIZE_PROP, IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT);
         defaults.put(FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_DEFAULT);
@@ -1816,27 +1811,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, versionAdded = "3.8.0", description = "When true, endpoints based on rules are included in 'authentication' and 'list endpoints for token'")
         public boolean includeEndpointsBasedOnRules() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP);
-        }
-
-        public boolean isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() {
-            boolean featureEnabled = true;
-            if (StringUtils.isBlank(getAutomaticallyAssignUserRoleOnDomainTenantsRoleName())) {
-                // If feature is enabled, but the role name is blank, then the feature can't actually be enabled
-                logger.error(String.format("Can not implicitly assign role on all tenants in domain. The required property '%s' is not set."
-                        , AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
-                featureEnabled = false;
-            } else if (!getAutomaticallyAssignUserRoleOnDomainTenantsRoleName().startsWith(GlobalConstants.IDENTITY_ROLE_PREFIX)) {
-                // If feature is enabled, the role name must be an identity product role
-                logger.error(String.format("Can not implicitly assign role on all tenants in domain. The required property '%s' is not set " +
-                        "to a valid identity product role.",  AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
-                featureEnabled = false;
-            }
-            return featureEnabled;
-        }
-
-        @IdmProp(key = AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, versionAdded = "3.8.0", description = "The identity product role to automatically assign to the user on all tenants within the user's domain.")
-        public String getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() {
-            return getStringSafely(reloadableConfiguration, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP);
         }
 
         @IdmProp(key = FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP, versionAdded = "3.9.0", description = "When true, additional role attributes are returned.")

@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
@@ -14,6 +15,7 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.rolecalculator.UserRoleLookupService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -22,6 +24,7 @@ import com.rackspace.idm.modules.usergroups.api.resource.UserGroupAuthorizationS
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.util.RoleUtil;
 import com.rackspace.idm.validation.PrecedenceValidator;
+import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -38,6 +41,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
 
 import static com.rackspace.idm.GlobalConstants.MANAGED_HOSTING_TENANT_PREFIX;
@@ -566,7 +570,6 @@ public class DefaultTenantService implements TenantService {
 
         // If enabled, auto-assign access role to all tenants within user's domain
         if (StringUtils.isNotBlank(user.getDomainId())
-                && identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()
                 && !user.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
                 /*
                  There's a 2 way linkage between Domains and Tenants. The link from domains to tenants needs to be retired,
@@ -621,28 +624,22 @@ public class DefaultTenantService implements TenantService {
     /**
      * Retrieve the auto-assigned 'identity:tenant-access' role based on configuration. The role name is configurable,
      * but is set to 'identity:tenant-access' in dev, staging, and production.
-     *
-     * TODO: Eliminate the configuration and hardcode to identity:tenant-access role name.
-     *
+     **
      * @return
      */
     private ImmutableClientRole getAutoAssignedRole() {
         ImmutableClientRole autoAssignedRole = null;
 
-        if (identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()) {
-            if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
-                autoAssignedRole = this.applicationService.getCachedClientRoleByName(identityConfig.getReloadableConfig()
-                        .getAutomaticallyAssignUserRoleOnDomainTenantsRoleName());
-            } else {
-                autoAssignedRole = authorizationService.getCachedIdentityRoleByName(identityConfig.getReloadableConfig()
-                        .getAutomaticallyAssignUserRoleOnDomainTenantsRoleName());
-            }
-            if (autoAssignedRole == null) {
-                logger.warn(String.format("The auto-assign role '%s' is invalid. Not found in identity role cache.", autoAssignedRole.getName()));
-            } else if (BooleanUtils.isTrue(autoAssignedRole.getPropagate())) {
-                logger.warn(String.format("The auto-assign role '%s' is invalid. Propagating roles are not allowed.", autoAssignedRole.getName()));
-                autoAssignedRole = null; // Null out role as role is not valid
-            }
+        if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
+            autoAssignedRole = this.applicationService.getCachedClientRoleByName(IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName());
+        } else {
+            autoAssignedRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName());
+        }
+        if (autoAssignedRole == null) {
+            logger.warn(String.format("The auto-assign role '%s' is invalid. Not found in identity role cache.", IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName()));
+        } else if (BooleanUtils.isTrue(autoAssignedRole.getPropagate())) {
+            logger.warn(String.format("The auto-assign role '%s' is invalid. Propagating roles are not allowed.", IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName()));
+            autoAssignedRole = null; // Null out role as role is not valid
         }
         return autoAssignedRole;
     }
@@ -1431,7 +1428,6 @@ public class DefaultTenantService implements TenantService {
      */
     private boolean isAutoAssignmentOfRoleEnabledForTenantDomain(Tenant tenant) {
         return tenant != null && StringUtils.isNotBlank(tenant.getDomainId())
-                && identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()
                 && !tenant.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId());
     }
 
@@ -1496,8 +1492,7 @@ public class DefaultTenantService implements TenantService {
          If automatic assignment of role is enabled AND the specified role to search is the implicit assignment role
          then include all the domain users.
         */
-        String autoRoleName = identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName();
-        if (StringUtils.equalsIgnoreCase(autoRoleName, cRole.getName())) {
+        if (StringUtils.equalsIgnoreCase(IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName(), cRole.getName())) {
             users.addAll(getUsersForAutoRoleAssignmentOnTenant(tenant));
         }
 
@@ -1702,6 +1697,170 @@ public class DefaultTenantService implements TenantService {
         @Override
         public boolean evaluate(TenantRole tenantRole) {
             return clientId.equalsIgnoreCase(tenantRole.getClientId());
+        }
+    }
+
+
+    public SourcedRoleAssignments getSourcedRoleAssignmentsForRacker(Racker racker) {
+        Validate.notNull(racker);
+        Validate.notNull(racker.getRackerId());
+
+        RackerSourcedRoleAssignmentsBuilder rackerSourcedRoleAssignmentsBuilder = RackerSourcedRoleAssignmentsBuilder.rackerBuilder(racker);
+
+        /*
+         Rackers only have one "tenant role" which is the racker role. All other roles are from eDir which are not
+         returned by this service as callers expect all roles returned to exist within Identity LDAP
+         */
+        TenantRole rackerRole = getEphemeralRackerTenantRole();
+        if (rackerRole != null) {
+            ImmutableClientRole rackerCr = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
+            rackerSourcedRoleAssignmentsBuilder.addIdentitySystemSourcedAssignment(rackerCr);
+        }
+        return rackerSourcedRoleAssignmentsBuilder.build();
+    }
+
+
+    /**
+     * Returns a list of effective roles the user has assigned. This includes all roles the user explicitly has
+     * assigned on tenants, if enabled, the automatically assigned "access" role to all tenants within the user's
+     * domain, and those due to group membership.
+     *
+     * @param user
+     * @throws NotFoundException is user's domain is not found
+     * @return
+     */
+    public SourcedRoleAssignments getSourcedRoleAssignmentsForUser(EndUser user) {
+        logger.debug("Getting effective tenant roles for user");
+        Validate.notNull(user);
+        Validate.notNull(user.getId());
+        Validate.notNull(user.getDomainId());
+
+        EndUserDenormalizedSourcedRoleAssignmentsBuilder sourcedRoleAssignmentsBuilder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(new CachedUserRoleLookupService(user));
+        List<String> hiddenTenantPrefixes = identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom();
+        if (CollectionUtils.isNotEmpty(hiddenTenantPrefixes)) {
+            sourcedRoleAssignmentsBuilder.setHiddenTenantPrefixes(new HashSet<>(hiddenTenantPrefixes));
+        }
+
+        return sourcedRoleAssignmentsBuilder.build();
+    }
+
+    /**
+     * A wrapping of external functionality required for user role calculations. Caches the lookups locally to guarantee
+     * common results for each lookup.
+     *
+     * Part of the purpose of this class is to reuse existing, but not public, methods already
+     * provided by the DefaultTenantService. Eventually would like to migrate retrieval of a Users roles to this
+     * single service - at which point we could move the appropriate logic into it and externalize it as a RoleAssignment
+     * builder. Until then, we reuse the existing methods.
+     */
+    @NotThreadSafe
+    private class CachedUserRoleLookupService implements UserRoleLookupService {
+        private List<Tenant> domainRcnTenants = null;
+        private Map<String, ImmutableClientRole> immutableClientRoleMap = new HashMap<>();
+
+        private List<TenantRole> userSourcedRoles = null;
+        private Map<String, List<TenantRole>> groupSourcedRoles = null;
+        private Map<String, List<TenantRole>> systemSourcedRoles = null;
+
+        @Getter
+        private EndUser user;
+
+        @Getter
+        private Domain userDomain;
+
+        public CachedUserRoleLookupService(EndUser user) {
+            this.user = user;
+            if (StringUtils.isNotBlank(user.getDomainId())) {
+                this.userDomain = domainService.getDomain(user.getDomainId());
+            }
+        }
+
+        /**
+         * Returns the roles associated with the user
+         * @return
+         */
+        @Override
+        public List<TenantRole> getUserSourcedRoles() {
+            if (userSourcedRoles == null) {
+                Iterable<TenantRole> itUserSourceTenantRoles = tenantRoleDao.getTenantRolesForUser(user);
+                userSourcedRoles = IteratorUtils.toList(itUserSourceTenantRoles.iterator());
+            }
+            return userSourcedRoles;
+        }
+
+        @Override
+        public Map<String, List<TenantRole>> getGroupSourcedRoles() {
+            /*
+             If the user has user groups associated with it, only include group membership roles if user groups are enabled
+             for that domain. Checking whether a domain is
+             enabled could require a directory call depending on how the properties are configured. If the user doesn't
+             belong to any groups, there is no point in even checking whether the domain is enabled for groups as
+             regardless the user's list of roles won't be affected. This is why the collection check occurs first, to
+             shortcircuit the statement and prevent the userGroupAuthorizationService from even running.
+             */
+            if (groupSourcedRoles == null) {
+                Map<String, List<TenantRole>> groupRoleMap = new HashMap<>();
+
+                Set<String> groupIds = user.getUserGroupIds();
+                if (CollectionUtils.isNotEmpty(groupIds)
+                        && userGroupAuthorizationService.areUserGroupsEnabledForDomain(user.getDomainId())) {
+                    for (String groupId : groupIds) {
+                        List<TenantRole> groupRoles = Collections.emptyList();
+                        try {
+                            groupRoles = userGroupService.getRoleAssignmentsOnGroup(groupId);
+                        } catch (NotFoundException ex) {
+                        /*
+                         Log the data referential integrity issue, but eat the exception as we don't want to fail if
+                         the linked user group does not exist.
+                         */
+                            logger.warn(String.format("User '%s' is assigned group '%s', but the group does not exist.", user.getId(), groupId));
+                        }
+                        groupRoleMap.put(groupId, groupRoles);
+                    }
+                }
+                groupSourcedRoles = groupRoleMap;
+            }
+            return groupSourcedRoles;
+        }
+
+        @Override
+        public Map<String, List<TenantRole>> getSystemSourcedRoles() {
+            if (systemSourcedRoles == null) {
+                Map<String, List<TenantRole>> systemRoleMap = new HashMap<>();
+
+                // Assign the identity:tenant-access role if required
+                TenantRole systemAssignedRole = createTenantRoleForAutoAssignment(user);
+                if (systemAssignedRole != null) {
+                    systemRoleMap.put("IDENTITY", Arrays.asList(systemAssignedRole));
+                }
+                systemSourcedRoles = systemRoleMap;
+            }
+            return systemSourcedRoles;
+        }
+
+        @Override
+        public List<Tenant> calculateRcnTenants() {
+            if (domainRcnTenants == null) {
+                domainRcnTenants = calculateRcnTenantsForRoleMatching(userDomain);
+            }
+            return domainRcnTenants;
+        }
+
+        /**
+         * Locally caches the roles. While uses a cached version of the role lookup service, we want to guarantee the
+         * exact same role for each instance of this service - which is meant to be short lived. This prevents any
+         * potential changes from affecting calculations that look up the same role at various times.
+         * @param id
+         * @return
+         */
+        @Override
+        public ImmutableClientRole getImmutableClientRole(String id) {
+            ImmutableClientRole immutableClientRole = immutableClientRoleMap.get(id);
+            if (immutableClientRole == null) {
+                immutableClientRole = applicationService.getCachedClientRoleById(id);
+                immutableClientRoleMap.put(id, immutableClientRole);
+            }
+            return immutableClientRole;
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -97,8 +98,8 @@ class AutoAssignRoleIntegrationTest extends RootIntegrationTest {
 
     void assertAutoAssignRoleOnTenantInAuthResponse(AuthenticateResponse authenticateResponse, Tenant tenant, boolean tenantExcluded) {
         // first assert that the auto-assign role is not displayed as a global role
-        assert authenticateResponse.user.roles.role.find { role -> role.name == identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() && role.tenantId == null } == null
-        def autoRoleOnTenant = authenticateResponse.user.roles.role.find { role -> role.name == identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() && role.tenantId == tenant.id }
+        assert authenticateResponse.user.roles.role.find { role -> role.name == IdentityRole.IDENTITY_TENANT_ACCESS.roleName && role.tenantId == null } == null
+        def autoRoleOnTenant = authenticateResponse.user.roles.role.find { role -> role.name == IdentityRole.IDENTITY_TENANT_ACCESS.roleName && role.tenantId == tenant.id }
         assert tenantExcluded ? autoRoleOnTenant == null : autoRoleOnTenant != null
     }
 

@@ -48,9 +48,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             cls.skipTest('Skipping Service Admin Tests per config value')
 
         # get auto assign role name set
-        cls.auto_assign_role_name, cls.auto_assign_role_name_default = (
-            cls.get_feature_flag_value_and_default_value(flag_name=(
-                const.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME)))
+        cls.auto_assign_role_name = const.TENANT_ACCESS_ROLE_NAME
 
         # get tenant default domain
         cls.tenant_default_domain_value, _ = (

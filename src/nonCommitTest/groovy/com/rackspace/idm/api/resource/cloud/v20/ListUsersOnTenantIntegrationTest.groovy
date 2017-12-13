@@ -95,7 +95,6 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
      */
     def "List Users for Tenants: Automatically returns all users within a tenant's domain" () {
         given: "A new user and 2 tenants"
-        reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
         def adminToken = utils.getIdentityAdminToken()
         def username = testUtils.getRandomUUID("name")
         def domainId = testUtils.getRandomUUID("domainId")
@@ -141,7 +140,6 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
      */
     def "List Users for Tenants: Automatic assignment of tenant access ignores tenants associated with default domain" () {
         given: "A new user and 2 tenants"
-        reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
         def adminToken = utils.getIdentityAdminToken()
         def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()
         def domainId = utils.createDomain()
@@ -173,7 +171,6 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "listUsersOnTenantForRole: Allows searching on auto assignment role"() {
         given: "A new user and 2 tenants"
-        reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
         def adminToken = utils.getIdentityAdminToken()
         def username = testUtils.getRandomUUID("name")
         def domainId = testUtils.getRandomUUID("domainId")
