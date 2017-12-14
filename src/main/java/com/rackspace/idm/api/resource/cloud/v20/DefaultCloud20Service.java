@@ -4355,7 +4355,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, ListUsersForTenantParams params) {
-
         try {
             ScopeAccess scopeAccess = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
@@ -4377,27 +4376,32 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             // ContactId search ignores any values supplied for marker and limit
-            if (StringUtils.isNotBlank(params.contactId)) {
-                List<User> users = tenantService.getEnabledUsersWithContactIdForTenant(tenantId, params.contactId);
-                return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory()
-                        .createUsers(userConverterCloudV20.toUserList(users)).getValue());
-            }
-
             PaginatorContext<User> pageContext;
-            if (StringUtils.isNotBlank(params.getRoleId())) {
-                ClientRole role = checkAndGetClientRole(params.getRoleId());
-                pageContext = this.tenantService.getEnabledUsersWithEffectiveTenantRole(tenant, role, params.getPaginationRequest().getEffectiveMarker(), params.getPaginationRequest().getEffectiveLimit());
+            if (StringUtils.isNotBlank(params.contactId)) {
+                // Blank out pagination params to default 0-1000
+                List<User> userResultSet = tenantService.getEnabledUsersWithContactIdForTenant(tenantId, params.contactId);
+                PaginationParams overriddenPagination = new PaginationParams();
+                pageContext = new PaginatorContext<>();
+                pageContext.update(userResultSet, overriddenPagination.getEffectiveMarker(), overriddenPagination.getEffectiveLimit());
             } else {
-                pageContext = this.tenantService.getPaginatedEffectiveEnabledUsersForTenant(tenant.getTenantId(), params.getPaginationRequest().getEffectiveMarker(), params.getPaginationRequest().getEffectiveLimit());
+                // Verify specified role exists
+                ImmutableClientRole limitByRole = null;
+                if (StringUtils.isNotBlank(params.getRoleId())) {
+                    limitByRole = applicationService.getCachedClientRoleById(params.getRoleId());
+                    if (limitByRole == null) {
+                        String errMsg = String.format(ROLE_ID_NOT_FOUND_ERROR_MESSAGE, params.getRoleId());
+                        logger.warn(errMsg);
+                        throw new NotFoundException(errMsg);
+                    }
+                }
+                pageContext = tenantService.getEnabledUsersForTenantWithRole(tenant, params.getRoleId(), params.getPaginationRequest());
             }
 
             String linkHeader = userPaginator.createLinkHeader(uriInfo, pageContext);
-
             return Response.status(200)
                     .header("Link", linkHeader)
                     .entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
                             .createUsers(userConverterCloudV20.toUserList(pageContext.getValueList())).getValue());
-
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
@@ -46,6 +48,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockFederatedUserDao(service)
         mockUserGroupService(service)
         mockUserGroupAuthorizationService(service)
+        mockIdentityUserService(service)
     }
 
     def "get mossoId from roles returns compute:default tenantId"() {
@@ -924,8 +927,9 @@ class DefaultTenantServiceTest extends RootServiceTest {
         }
     }
       
-    def "getPaginatedEffectiveEnabledUsersForTenant ignores tenantRole in userGroup "() {
+    def "getPaginatedEffectiveEnabledUsersForTenant recognizes tenantRole in users and userGroup "() {
         given:
+        def paginationParams = new PaginationParams(0, 25)
         def tenantRole = entityFactory.createTenantRole("somerole")
         tenantRole.tenantIds = ["12345"]
 
@@ -934,24 +938,26 @@ class DefaultTenantServiceTest extends RootServiceTest {
             return it
         }
 
-        def user = entityFactory.createUser()
+        def user = entityFactory.createRandomUser()
+        def groupUser = entityFactory.createRandomUser()
         def tenant = entityFactory.createTenant()
 
         when:
-        def paginatedUser = service.getPaginatedEffectiveEnabledUsersForTenant(tenant.tenantId, 0, 25)
+        def paginatedUser = service.getEnabledUsersForTenantWithRole(tenant, null, paginationParams)
 
-        then:
-
+        then: "Retrieves all tenant roles associated with tenant"
         1 * tenantRoleDao.getAllTenantRolesForTenant(tenant.tenantId) >> [tenantRole, tenantRoleInUserGroup].asList()
-        1 * tenantRoleDao.getUserIdForParent(tenantRole) >> tenantRole.userId
-        1 * userService.getUserById(tenantRole.getUserId()) >> user
 
-        0 * tenantRoleDao.getUserIdForParent(tenantRoleInUserGroup)
+        and: "Looks up user and group appropriately for type of tenant roles assigned"
+        1 * userService.getUserById(tenantRole.getUserId()) >> user
+        1 * identityUserService.getEnabledEndUsersByGroupId("f2b6f73730324548a729d6a878640558") >> [groupUser]
         0 * userService.getUserById("f2b6f73730324548a729d6a878640558")
 
-        paginatedUser.totalRecords == 1
-        paginatedUser.getValueList().size() == 1
-        paginatedUser.getValueList().get(0) == user
+        paginatedUser.totalRecords == 2
+        paginatedUser.getValueList().size() == 2
+        paginatedUser.getValueList().find {it.id == user.id} != null
+        paginatedUser.getValueList().find {it.id == groupUser.id} != null
+
     }
 
     def "getEnabledUsersWithContactIdForTenant: Retrieves users with provided contactId for tenant"() {

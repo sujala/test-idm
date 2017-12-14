@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams;
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
+import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
@@ -541,19 +544,22 @@ public interface TenantService {
      */
     boolean allTenantsDisabledForUser(EndUser user);
 
-    PaginatorContext<User> getPaginatedEffectiveEnabledUsersForTenant(String tenantId, int offset, int limit);
-
     /**
-     * Return the list of enabled users that have a tenant role explicitly on the tenant. This includes identity:tenant-access
-     * assignment (if enabled), but does *not* include roles received due to group membership or global roles.
+     * Return a list of enabled provisioned users that are assigned a role on the specified tenant. Callers may optionally
+     * limit the results to those users with the specified role on the tenant and use pagination. Services takes into account
+     * <ul>
+     *     <li>Direct Assignments to Users</li>
+     *     <li>Group Membership</li>
+     *     <li>System assigned roles</li>
+     * </ul>
+     *
+     * Does not take into consideration RCN roles or roles assigned to users on the domain (global).
      *
      * @param tenant
-     * @param role
-     * @param offset
-     * @param limit
+     * @param paginationParams
      * @return
      */
-    PaginatorContext<User> getEnabledUsersWithEffectiveTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
+    PaginatorContext<User> getEnabledUsersForTenantWithRole(Tenant tenant, String limitingRoleId, PaginationParams paginationParams);
 
     /**
      * Return the list of enabled users with contactId for tenant.

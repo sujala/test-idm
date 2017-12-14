@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -204,8 +206,9 @@ class TenantServiceTests extends RootServiceTest {
     }
 
     @Unroll
-    def "getEnabledUsersWithEffectiveTenantRole: assigns the auto-assign tenant access role based on the exclude tenant prefix config, excludeTenantType = #excludeTenantType"() {
+    def "getEnabledUsersForTenantWithRole: assigns the auto-assign tenant access role based on the exclude tenant prefix config, excludeTenantType = #excludeTenantType"() {
         given:
+        def paginationParams = new PaginationParams(0, 100)
         def domainId = RandomStringUtils.randomAlphanumeric(8)
         def user = new User().with {
             it.username = RandomStringUtils.randomAlphanumeric(8)
@@ -220,18 +223,18 @@ class TenantServiceTests extends RootServiceTest {
             it.domainId = domainId
             it
         }
-        def tenantAccessRole = new ClientRole().with {
+        def tenantAccessRole = new ImmutableClientRole(new ClientRole().with {
             it.id = Constants.IDENTITY_TENANT_ACCESS_ROLE_ID
             it.name = Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
             it
-        }
+        })
         def excludedTenantTypes = []
         if (excludeTenantType) {
             excludedTenantTypes << tenantType
         }
 
         when:
-        PaginatorContext<User> paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant, tenantAccessRole, 0, 100)
+        PaginatorContext<User> paginatorContext = service.getEnabledUsersForTenantWithRole(tenant, tenantAccessRole.id, paginationParams)
 
         then: "correct backend services are called"
         1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
@@ -242,6 +245,7 @@ class TenantServiceTests extends RootServiceTest {
         } else {
             0 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
         }
+        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
 
         and: "the user is excluded based on the tenant type exclusion property"
         if (excludeTenantType) {
@@ -254,8 +258,9 @@ class TenantServiceTests extends RootServiceTest {
         excludeTenantType << [true, false]
     }
 
-    def "getEnabledUsersWithEffectiveTenantRole: excludes the auto-assign tenant access role for all tenant prefixes listed in the exclusion config"() {
+    def "getEnabledUsersForTenantWithRole: excludes the auto-assign tenant access role for all tenant prefixes listed in the exclusion config"() {
         given:
+        def paginationParams = new PaginationParams(0, 100)
         def domainId = RandomStringUtils.randomAlphanumeric(8)
         def user = new User().with {
             it.username = RandomStringUtils.randomAlphanumeric(8)
@@ -277,41 +282,44 @@ class TenantServiceTests extends RootServiceTest {
             it.domainId = domainId
             it
         }
-        def tenantAccessRole = new ClientRole().with {
+        def tenantAccessRole = new ImmutableClientRole(new ClientRole().with {
             it.id = Constants.IDENTITY_TENANT_ACCESS_ROLE_ID
             it.name = Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
             it
-        }
+        })
         def excludedTenantPrefixes = [tenantType1, tenantType2]
 
         when: "get users for the first tenant prefix in the list"
-        PaginatorContext<User> paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant1, tenantAccessRole, 0, 100)
+        PaginatorContext<User> paginatorContext = service.getEnabledUsersForTenantWithRole(tenant1, tenantAccessRole.id, paginationParams)
 
         then: "correct backend services are called"
         1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantPrefixes
         1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant1.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
+        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
 
         and: "the user is excluded based on the tenant type exclusion property"
         assert !paginatorContext.getValueList().contains(user)
 
         when: "get users for the second tenant prefix in the list"
-        paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant2, tenantAccessRole, 0, 100)
+        paginatorContext = service.getEnabledUsersForTenantWithRole(tenant2, tenantAccessRole.id, paginationParams)
 
         then: "correct backend services are called"
         1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantPrefixes
         1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant2.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
+        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
 
         and: "the user is excluded based on the tenant type exclusion property"
         assert !paginatorContext.getValueList().contains(user)
     }
 
     @Unroll
-    def "getEnabledUsersWithEffectiveTenantRole: excludes the auto-assign tenant access role for all users except user admins and user managers: userType = #userType"() {
+    def "getEnabledUsersForTenantWithRole: excludes the auto-assign tenant access role for all users except user admins and user managers: userType = #userType"() {
         given:
+        def paginationParams = new PaginationParams(0, 100)
         def domainId = RandomStringUtils.randomAlphanumeric(8)
         def user = new User().with {
             it.username = RandomStringUtils.randomAlphanumeric(8)
@@ -326,21 +334,22 @@ class TenantServiceTests extends RootServiceTest {
             it.domainId = domainId
             it
         }
-        def tenantAccessRole = new ClientRole().with {
+        def tenantAccessRole = new ImmutableClientRole(new ClientRole().with {
             it.id = Constants.IDENTITY_TENANT_ACCESS_ROLE_ID
             it.name = Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME
             it
-        }
+        })
         def excludedTenantPrefixes = [tenantType]
 
         when: "get users for the first tenant prefix in the list"
-        PaginatorContext<User> paginatorContext = service.getEnabledUsersWithEffectiveTenantRole(tenant, tenantAccessRole, 0, 100)
+        PaginatorContext<User> paginatorContext = service.getEnabledUsersForTenantWithRole(tenant, tenantAccessRole.id, paginationParams)
 
         then: "correct backend services are called"
         1 * userService.getUsersWithDomainAndEnabledFlag(domainId, true) >> [user]
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantPrefixes
         1 * tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.tenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID) >> []
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
+        1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
 
         and: "the user is excluded based on the tenant type exclusion property"
         if (IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType) {
@@ -352,5 +361,4 @@ class TenantServiceTests extends RootServiceTest {
         where:
         userType << IdentityUserTypeEnum.values()
     }
-
 }

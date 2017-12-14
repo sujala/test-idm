@@ -4,10 +4,14 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.modules.usergroups.Constants;
+import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.RDN;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.utils.CloneUtils;
 import org.dozer.Mapping;
 
@@ -70,4 +74,33 @@ public class TenantRole implements Auditable, UniqueId {
             entry.removeAttribute(LdapRepository.ATTR_TENANT_RS_ID);
         }
     }
+
+    public boolean isUserGroupAssignedRole() {
+        return StringUtils.endsWithIgnoreCase(getUniqueId(), Constants.USER_GROUP_BASE_DN);
+    }
+
+    public boolean isUserAssignedRole() {
+        return !isUserGroupAssignedRole();
+    }
+
+    /**
+     * Retrieve the userId or groupId assigned the role
+     *
+     * @return
+     */
+    public String getIdOfEntityAssignedRole() {
+        try{
+            DN dn = new DN(getUniqueId());
+            RDN rdn = dn.getParent().getParent().getRDN();
+            if(rdn.hasAttribute("rsId")){
+                String id = rdn.getAttributeValues()[0];
+                if(!StringUtils.isBlank(id)){
+                    return id;
+                }
+            }
+        }catch (Exception ignored){
+        }
+        return null;
+    }
+
 }
