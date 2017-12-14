@@ -1,5 +1,6 @@
 Cloud Identity 3.18.0 Release
 ==============================
+.. _CID-1271:  https://jira.rax.io/browse/CID-1271
 .. _CID-1272:  https://jira.rax.io/browse/CID-1272
 .. _CID-1281:  https://jira.rax.io/browse/CID-1281
 .. _CID-1283:  https://jira.rax.io/browse/CID-1283
@@ -31,6 +32,7 @@ Issues Resolved
 Stories
 -------
 
+#. `CID-1271`_ - EPS: List "effective" roles for user service
 #. `CID-1272`_ - EPS: Find user by Contact ID
 #. `CID-1281`_ - Upgrade Repose to version 8.7.3.0
 #. `CID-1283`_ -  Reclassifying some resources as unprotected to new relic
@@ -78,7 +80,7 @@ These properties should be removed from the respective properties files as they 
 .. csv-table:: Configuration Changes
    :header: "Name", "Story", "File"
 
-   None,
+   auto.assign.role.on.domain.tenants.role.name,`CID-1271`_,reloadable
 
 Directory Changes
 ------------------
