@@ -32,6 +32,7 @@ import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.exception.IdmExceptionHandler
 import com.rackspace.idm.modules.endpointassignment.service.RuleService
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupAuthorizationService
+import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter
 import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import com.rackspace.idm.multifactor.service.MultiFactorService
 import com.rackspace.idm.util.AuthHeaderHelper
@@ -99,6 +100,7 @@ class RootServiceTest extends Specification {
     @Shared ObjectConverter objectConverter
     @Shared MobilePhoneConverterCloudV20 mobilePhoneConverterCloudV20
     @Shared OTPDeviceConverterCloudV20 otpDeviceConverterCloudV20
+    @Shared RoleAssignmentConverter roleAssignmentConverter
     @Shared SamlUnmarshaller samlUnmarshaller
 
     //services
@@ -651,6 +653,11 @@ class RootServiceTest extends Specification {
         securityContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
         authenticationContext = Mock(AuthenticationContext)
         requestContextHolder.getAuthenticationContext() >> authenticationContext
+    }
+
+    def mockRoleAssignmentConverter(service) {
+        roleAssignmentConverter = Mock()
+        service.roleAssignmentConverter = roleAssignmentConverter
     }
 
     def mockTokenRevocationService(service) {

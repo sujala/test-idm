@@ -1,12 +1,20 @@
 package com.rackspace.idm.modules.usergroups.api.resource.converter
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentSource
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.SourceTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.EndUser
+import com.rackspace.idm.domain.entity.SourcedRoleAssignments
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.modules.usergroups.Constants
 import org.apache.commons.collections4.CollectionUtils
@@ -179,5 +187,86 @@ class RoleAssignmentConverterComponentTest extends Specification {
             tenantAssignment.onRoleName == tenantRole.name
             CollectionUtils.isEqualCollection(tenantAssignment.forTenants, tenantRole.tenantIds)
         }
+    }
+
+    def "fromSourcedRoleAssignmentsToRoleAssignmentsWeb: converts SourcedRoleAssignments entity to web representation"() {
+        EndUser user = new User().with {
+            it.id = "aUserId"
+            it
+        }
+        def tenants = ["tenantId"] as Set
+
+        SourcedRoleAssignments sourcedRoleAssignments = new SourcedRoleAssignments(user)
+        ImmutableClientRole role = createRandomImmutableRole()
+        sourcedRoleAssignments.addUserSourcedAssignment(role, SourcedRoleAssignments.AssignmentType.DOMAIN, tenants)
+
+        when:
+        RoleAssignments roleAssignments = converter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(sourcedRoleAssignments)
+
+        then:
+        roleAssignments.tenantAssignments != null
+        TenantAssignments tenantAssignments = roleAssignments.tenantAssignments
+        tenantAssignments.tenantAssignment.size() == 1
+        TenantAssignment tenantAssignment = tenantAssignments.tenantAssignment[0]
+        tenantAssignment.sources.source.size() == 1
+        AssignmentSource source = tenantAssignment.sources.source[0]
+        source.assignmentType == AssignmentTypeEnum.DOMAIN
+        source.sourceType == SourceTypeEnum.USER
+        source.sourceId == user.id
+        CollectionUtils.isEqualCollection(source.forTenants, tenants)
+    }
+
+    def "fromSourcedRoleAssignmentsToRoleAssignmentsWeb: converts SourcedRoleAssignments entity to web representation w/ multiple sources"() {
+        EndUser user = new User().with {
+            it.id = "aUserId"
+            it
+        }
+        def tenants = ["tenantId"] as Set
+
+        SourcedRoleAssignments sourcedRoleAssignments = new SourcedRoleAssignments(user)
+        ImmutableClientRole role = createRandomImmutableRole()
+        sourcedRoleAssignments.addUserSourcedAssignment(role, SourcedRoleAssignments.AssignmentType.DOMAIN, tenants)
+        sourcedRoleAssignments.addUserGroupSourcedAssignment(role, "groupId", SourcedRoleAssignments.AssignmentType.TENANT, tenants)
+
+        when:
+        RoleAssignments roleAssignments = converter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(sourcedRoleAssignments)
+
+        then:
+        roleAssignments.tenantAssignments != null
+        TenantAssignments tenantAssignments = roleAssignments.tenantAssignments
+        tenantAssignments.tenantAssignment.size() == 1
+        TenantAssignment tenantAssignment = tenantAssignments.tenantAssignment[0]
+        tenantAssignment.sources.source.size() == 2
+        AssignmentSource userSource = tenantAssignment.sources.source.find {it.sourceType == SourceTypeEnum.USER}
+        userSource != null
+        userSource.assignmentType == AssignmentTypeEnum.DOMAIN
+        userSource.sourceType == SourceTypeEnum.USER
+        userSource.sourceId == user.id
+        CollectionUtils.isEqualCollection(userSource.forTenants, tenants)
+        AssignmentSource groupSource = tenantAssignment.sources.source.find {it.sourceType == SourceTypeEnum.USERGROUP}
+        groupSource != null
+        groupSource.assignmentType == AssignmentTypeEnum.TENANT
+        groupSource.sourceType == SourceTypeEnum.USERGROUP
+        groupSource.sourceId == "groupId"
+        CollectionUtils.isEqualCollection(groupSource.forTenants, tenants)
+    }
+
+    def "fromSourcedRoleAssignmentsToRoleAssignmentsWeb: Returns empty assignments when passed null"() {
+        when:
+        RoleAssignments roleAssignments = converter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(null)
+
+        then:
+        roleAssignments.tenantAssignments != null
+        TenantAssignments tenantAssignments = roleAssignments.tenantAssignments
+        tenantAssignments.tenantAssignment.size() == 0
+    }
+
+    ImmutableClientRole createRandomImmutableRole() {
+        new ImmutableClientRole(new ClientRole().with { cr ->
+            cr.id = UUID.randomUUID().toString()
+            cr.name = RandomStringUtils.randomAlphabetic(15)
+            cr.roleType = RoleTypeEnum.STANDARD
+            cr
+        })
     }
 }

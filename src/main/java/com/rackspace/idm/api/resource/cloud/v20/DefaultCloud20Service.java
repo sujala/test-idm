@@ -2985,7 +2985,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             SourcedRoleAssignments assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
-            return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(assignments));
+            return Response.ok(roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(assignments));
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

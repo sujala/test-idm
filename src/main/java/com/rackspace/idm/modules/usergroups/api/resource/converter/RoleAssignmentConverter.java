@@ -66,10 +66,9 @@ public class RoleAssignmentConverter {
         assignment.setOnRoleName(cr.getName());
 
         assignment.getForTenants().addAll(sourcedRoleAssignment.getTenantIds());
+        assignment.setSources(new AssignmentSources());
 
         for (SourcedRoleAssignments.Source source : sourcedRoleAssignment.getSources()) {
-            assignment.setSources(new AssignmentSources());
-
             AssignmentSource assignmentSource = new AssignmentSource();
 
             if (source.getAssignmentType() != null) {
@@ -92,7 +91,6 @@ public class RoleAssignmentConverter {
 
             assignment.getSources().getSource().add(assignmentSource);
         }
-
         return assignment;
     }
 
@@ -121,10 +119,11 @@ public class RoleAssignmentConverter {
     public TenantAssignments toTenantAssignmentsWeb(SourcedRoleAssignments sourcedRoleAssignments) {
         TenantAssignments tenantAssignments = new TenantAssignments();
 
-        for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : sourcedRoleAssignments.getSourcedRoleAssignments()) {
-            tenantAssignments.getTenantAssignment().add(toRoleAssignmentWeb(sourcedRoleAssignment));
+        if (sourcedRoleAssignments != null) {
+            for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : sourcedRoleAssignments.getSourcedRoleAssignments()) {
+                tenantAssignments.getTenantAssignment().add(toRoleAssignmentWeb(sourcedRoleAssignment));
+            }
         }
-
         return tenantAssignments;
     }
 
@@ -145,7 +144,7 @@ public class RoleAssignmentConverter {
      *
      * @return
      */
-    public RoleAssignments toRoleAssignmentsWeb(SourcedRoleAssignments sourcedRoleAssignments) {
+    public RoleAssignments fromSourcedRoleAssignmentsToRoleAssignmentsWeb(SourcedRoleAssignments sourcedRoleAssignments) {
         RoleAssignments roleAssignments = new RoleAssignments();
         roleAssignments.setTenantAssignments(toTenantAssignmentsWeb(sourcedRoleAssignments));
         return roleAssignments;
