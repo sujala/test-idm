@@ -85,4 +85,14 @@ Business Acceptance Criteria
 
 Test Acceptance Criteria
 ~~~~~~~~~~~~~~~~~~~~~~~~
-TBD
+1. Happy Path - List Users for Tenant with ?contactId query param with users of level *user-admin* and above.
+2. List Users for Tenant with combinations of query params
+
+	1) contactId & roleId with non blank values (will return error).
+	2) contactId & marker.
+	3) contactId & limit.
+	4) contactId with non blank & roleId with blank values.
+
+3. Tests to verify contactId is case insensitive.
+4. List Users for Tenant with ?contactId query param, with a disabled user. Disabled user should not be returned in the response.
+5. List Users for Tenant with ?contactId query param that could potentially return a user that tenant does not have access to.
