@@ -2,21 +2,21 @@ package com.rackspace.idm.modules.usergroups.api.resource.json
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentSource
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentSources
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments
 import com.rackspace.idm.modules.usergroups.Constants
-import org.hibernate.annotations.SourceType
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 import spock.lang.Specification
 
-class JSONWriterForRaxAuthTenantAssignmentTest extends Specification {
+class JSONWriterForRaxAuthRoleAssignmentsTest extends Specification {
 
-    JSONWriterForRaxAuthTenantAssignment writer = new JSONWriterForRaxAuthTenantAssignment()
+    JSONWriterForRaxAuthRoleAssignments writer = new JSONWriterForRaxAuthRoleAssignments()
 
     def "write tenantAssignment to json"() {
-
         TenantAssignment assignment = new TenantAssignment().with {
             it.onRoleName = "roleName"
             it.onRole = "roleA"
@@ -25,20 +25,14 @@ class JSONWriterForRaxAuthTenantAssignmentTest extends Specification {
             it
         }
 
+        RoleAssignments roleAssignments = createRoleAssignmentsWrapper(assignment)
+
         when:
         def out = new ByteArrayOutputStream()
-        writer.writeTo(assignment, null, null, null, null, null, out)
-
-        def json = out.toString()
-        JSONObject outer = (JSONObject) new JSONParser().parse(json)
+        writer.writeTo(roleAssignments, null, null, null, null, null, out)
 
         then:
-        json != null
-
-        JSONObject ta = outer.get(Constants.RAX_AUTH_TENANT_ASSIGNMENT)
-
-        ta != null
-
+        JSONObject ta = getTenantAssignmentFromJson(out.toString())
         ta.get("onRoleName") == "roleName"
         ta.get("onRole") == "roleA"
         ta.get("forTenants") == ["tenantA", "tenantB"]
@@ -52,18 +46,14 @@ class JSONWriterForRaxAuthTenantAssignmentTest extends Specification {
             it.forTenants.add("*")
             it
         }
+        RoleAssignments roleAssignments = createRoleAssignmentsWrapper(assignment)
 
         when:
         def out = new ByteArrayOutputStream()
-        writer.writeTo(assignment, null, null, null, null, null, out)
-
-        def json = out.toString()
-        JSONObject outer = (JSONObject) new JSONParser().parse(json)
+        writer.writeTo(roleAssignments, null, null, null, null, null, out)
 
         then:
-        json != null
-
-        JSONObject ta = outer.get(Constants.RAX_AUTH_TENANT_ASSIGNMENT)
+        JSONObject ta = getTenantAssignmentFromJson(out.toString())
 
         ta != null
         ta.get("onRoleName") == "roleName1"
@@ -89,18 +79,14 @@ class JSONWriterForRaxAuthTenantAssignmentTest extends Specification {
 
             it
         }
+        RoleAssignments roleAssignments = createRoleAssignmentsWrapper(assignment)
 
         when:
         def out = new ByteArrayOutputStream()
-        writer.writeTo(assignment, null, null, null, null, null, out)
-
-        def json = out.toString()
-        JSONObject outer = (JSONObject) new JSONParser().parse(json)
+        writer.writeTo(roleAssignments, null, null, null, null, null, out)
 
         then:
-        json != null
-
-        JSONObject ta = outer.get(Constants.RAX_AUTH_TENANT_ASSIGNMENT)
+        JSONObject ta = getTenantAssignmentFromJson(out.toString())
 
         ta != null
         ta.get("onRoleName") == "roleName"
@@ -113,5 +99,28 @@ class JSONWriterForRaxAuthTenantAssignmentTest extends Specification {
         source.get("assignmentType") == SourcedRoleAssignments.AssignmentType.DOMAIN.name()
         source.get("sourceType") == SourcedRoleAssignments.SourceType.USER.name()
         source.get("forTenants") == ["tenantA", "tenantB"]
+    }
+
+    RoleAssignments createRoleAssignmentsWrapper(TenantAssignment ta) {
+        RoleAssignments roleAssignments = new RoleAssignments()
+        roleAssignments.tenantAssignments = new TenantAssignments()
+
+        roleAssignments.tenantAssignments.tenantAssignment.add(ta)
+        return roleAssignments
+    }
+
+    JSONObject getTenantAssignmentFromJson(String json) {
+        JSONObject outer = (JSONObject) new JSONParser().parse(json)
+
+        JSONObject ras = outer.get(Constants.RAX_AUTH_ROLE_ASSIGNMENTS)
+        assert ras != null
+
+        JSONArray tas = (JSONArray) ras.get(Constants.TENANT_ASSIGNMENTS)
+        assert tas != null
+
+        JSONObject ta = tas[0]
+        assert ta != null
+
+        return ta
     }
 }

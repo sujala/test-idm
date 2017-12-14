@@ -138,6 +138,21 @@ public class Cloud20VersionResource {
         return cloud20Service.passwordReset(httpHeaders, authToken, passwordReset).build();
     }
 
+    /**
+     * The Racksace extension for retrieving the roles for a user. Retrieves all roles the user *effectively* has based
+     * on applying all logic rules for determining a user's roles (e.g. user group membership, roles assigned to user,
+     * implicit roles, rcn logic, etc)
+     *
+     * @return
+     */
+    @GET
+    @Path("/users/{userId}/RAX-AUTH/roles")
+    public Response listEffectiveRolesForUser(@Context HttpHeaders httpHeaders,
+                                              @HeaderParam(X_AUTH_TOKEN) String authToken,
+                                              @PathParam("userId") String userId) throws IOException, JAXBException {
+        return cloud20Service.listEffectiveRolesForUser(httpHeaders, authToken, userId, new ListEffectiveRolesForUserParams()).build();
+    }
+
     @DELETE
     @Path("tokens")
     public Response revokeToken(@Context HttpHeaders httpHeaders, @HeaderParam(X_AUTH_TOKEN) String authToken) throws IOException, JAXBException {

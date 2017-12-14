@@ -69,6 +69,8 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         }
         if (CollectionUtils.isNotEmpty(hiddenTenantPrefixes)) {
             this.hiddenTenantPrefixes = new HashSet<>(hiddenTenantPrefixes);
+        } else {
+            this.hiddenTenantPrefixes = Collections.emptySet();
         }
     }
 

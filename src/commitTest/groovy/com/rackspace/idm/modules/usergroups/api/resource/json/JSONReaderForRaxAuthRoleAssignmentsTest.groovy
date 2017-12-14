@@ -1,7 +1,13 @@
 package com.rackspace.idm.modules.usergroups.api.resource.json
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentSource
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentSources
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.SourceTypeEnum
 import com.rackspace.idm.exception.BadRequestException
+import org.apache.commons.collections4.CollectionUtils
 import spock.lang.Specification
 
 class JSONReaderForRaxAuthRoleAssignmentsTest extends Specification{
@@ -169,6 +175,70 @@ class JSONReaderForRaxAuthRoleAssignmentsTest extends Specification{
         then:
         BadRequestException ex = thrown()
         ex.message == "Invalid json request body"
+    }
+
+    def "unmarshall sources appropriately"() {
+        String json = "{\n" +
+                "  \"RAX-AUTH:roleAssignments\": {\n" +
+                "    \"tenantAssignments\": [\n" +
+                "       {\n" +
+                "        \"forTenants\": [\n" +
+                "            \"tenantA\",\n" +
+                "            \"tenantB\"\n" +
+                "        ],\n" +
+                "        \"onRole\": \"roleA\",\n" +
+                "        \"onRoleName\": \"roleName\",\n" +
+                "        \"sources\": [\n" +
+                "            {\n" +
+                "                \"assignmentType\": \"DOMAIN\",\n" +
+                "                \"forTenants\": [\n" +
+                "                    \"tenantA\",\n" +
+                "                    \"tenantB\"\n" +
+                "                ],\n" +
+                "                \"sourceId\": \"userId\",\n" +
+                "                \"sourceType\": \"USER\"\n" +
+                "            },\n" +
+                "            {\n" +
+                "                \"assignmentType\": \"TENANT\",\n" +
+                "                \"forTenants\": [\n" +
+                "                    \"tenantB\"\n" +
+                "                ],\n" +
+                "                \"sourceId\": \"groupId\",\n" +
+                "                \"sourceType\": \"USERGROUP\"\n" +
+                "            }\n" +
+                "        ]\n" +
+                "      }\n" +
+                "    ]\n" +
+                "   }\n" +
+                "}"
+
+        when:
+        RoleAssignments roleAssignments = reader.readFrom(RoleAssignments, null, null, null, null, new ByteArrayInputStream(json.bytes))
+
+        then:
+        roleAssignments != null
+        roleAssignments.tenantAssignments != null
+        roleAssignments.tenantAssignments.tenantAssignment != null
+        roleAssignments.tenantAssignments.tenantAssignment.size() == 1
+        roleAssignments.tenantAssignments.tenantAssignment[0].onRole == "roleA"
+        roleAssignments.tenantAssignments.tenantAssignment[0].onRoleName == "roleName"
+        CollectionUtils.isEqualCollection(roleAssignments.tenantAssignments.tenantAssignment[0].forTenants, ["tenantA", "tenantB"])
+
+        AssignmentSources sources = roleAssignments.tenantAssignments.tenantAssignment[0].sources
+        sources != null
+        sources.source.size() == 2
+
+        AssignmentSource userSource = sources.source[0]
+        userSource.sourceType == SourceTypeEnum.USER
+        userSource.sourceId == "userId"
+        userSource.assignmentType == AssignmentTypeEnum.DOMAIN
+        CollectionUtils.isEqualCollection(userSource.forTenants, ["tenantA", "tenantB"])
+
+        AssignmentSource groupSource = sources.source[1]
+        groupSource.sourceType == SourceTypeEnum.USERGROUP
+        groupSource.sourceId == "groupId"
+        groupSource.assignmentType == AssignmentTypeEnum.TENANT
+        CollectionUtils.isEqualCollection(groupSource.forTenants, ["tenantB"])
     }
 
 }

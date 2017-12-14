@@ -59,18 +59,27 @@ public class JsonArrayTransformer {
                 value = transformIncludeWrapper((JSONObject) value, handler);
             }
 
-            if (value instanceof JSONArray && handler.pluralizeJSONArrayWithName(key.toString())) {
-                //create new wrapper element. following convention
-                //{wrapperName}.{elementName}
-                //what we get from json object is actually the wrapper name.
-                //the wrapper name is just a plural form (s) of the element name
+            if (value instanceof JSONArray) {
                 JSONArray array = (JSONArray) value;
-                String elementName = key.toString().substring(0, key.toString().length()-1);
 
-                JSONObject wrapper = new JSONObject();
-                wrapper.put(elementName, array);
+                for(Object arrayValue : array) {
+                    if (arrayValue instanceof JSONObject) {
+                        transformIncludeWrapper((JSONObject)arrayValue, handler);
+                    }
+                }
 
-                object.put(key, wrapper);
+                if (handler.pluralizeJSONArrayWithName(key.toString())) {
+                    //create new wrapper element. following convention
+                    //{wrapperName}.{elementName}
+                    //what we get from json object is actually the wrapper name.
+                    //the wrapper name is just a plural form (s) of the element name
+                    String elementName = key.toString().substring(0, key.toString().length() - 1);
+
+                    JSONObject wrapper = new JSONObject();
+                    wrapper.put(elementName, array);
+
+                    object.put(key, wrapper);
+                }
             }
         }
 
@@ -82,7 +91,6 @@ public class JsonArrayTransformer {
     }
 
     public JSONObject transformRemoveWrapper(JSONObject object, JSONObject parent, JsonArrayTransformerHandler handler) {
-
         List<Object> keys = new ArrayList<Object>(object.keySet());
         for (Object key : keys) {
             Object value = object.get(key);
@@ -90,16 +98,21 @@ public class JsonArrayTransformer {
                 value = transformRemoveWrapper((JSONObject) value, object, handler);
             }
 
-            if (value instanceof JSONArray && handler.pluralizeJSONArrayWithName(key.toString())) {
-
-                //remove the wrapper element. following convention
-                //e.g roles.role
+            if (value instanceof JSONArray) {
                 JSONArray array = (JSONArray) value;
-                String elementName = handler.getPluralizedNamed(key.toString());
-                parent.put(elementName, array);
+                if (handler.pluralizeJSONArrayWithName(key.toString())) {
+                    //remove the wrapper element. following convention
+                    //e.g roles.role
+                    String elementName = handler.getPluralizedNamed(key.toString());
+                    parent.put(elementName, array);
+                }
+                for(Object arrayValue : array) {
+                    if (arrayValue instanceof JSONObject) {
+                        transformRemoveWrapper((JSONObject)arrayValue, null, handler);
+                    }
+                }
             }
         }
-
         return object;
     }
 }

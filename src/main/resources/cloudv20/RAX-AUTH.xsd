@@ -643,7 +643,21 @@
             <enumeration value="OTP"/>
         </restriction>
     </simpleType>
+    <simpleType name="AssignmentTypeEnum">
+        <restriction base="xsd:string">
+            <enumeration value="DOMAIN"/>
+            <enumeration value="TENANT"/>
+            <enumeration value="RCN"/>
+        </restriction>
+    </simpleType>
 
+    <simpleType name="SourceTypeEnum">
+        <restriction base="xsd:string">
+            <enumeration value="USER"/>
+            <enumeration value="USERGROUP"/>
+            <enumeration value="SYSTEM"/>
+        </restriction>
+    </simpleType>
     <complexType name="BypassCodes">
         <attribute name="codes" type="RAX-AUTH:StringList" use="optional">
             <annotation>
@@ -1241,6 +1255,9 @@
     <complexType name="TenantAssignment">
         <complexContent>
             <extension base="RAX-AUTH:RoleAssignment">
+                <sequence>
+                    <element name="sources" type="RAX-AUTH:AssignmentSources" minOccurs="0" maxOccurs="1"/>
+                </sequence>
                 <attribute name="forTenants" type="RAX-AUTH:StringList" use="optional">
                     <annotation>
                         <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
@@ -1253,6 +1270,53 @@
                 </attribute>
             </extension>
         </complexContent>
+    </complexType>
+
+    <complexType name="AssignmentSources">
+        <sequence>
+            <element name="source" type="RAX-AUTH:AssignmentSource" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
+    <complexType name="AssignmentSource">
+        <attribute name="sourceType" type="RAX-AUTH:SourceTypeEnum" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A classification of how the user received the role.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="sourceId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Identifies the specific source of the assignment within the sourceType.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="assignmentType" type="RAX-AUTH:AssignmentTypeEnum" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Specifies how the role was assigned to the source
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="forTenants" type="RAX-AUTH:StringList" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A list of tenant Ids on which the role is assigned due to the
+                        assignment represented by this source.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
     <complexType name="TenantAssignments">

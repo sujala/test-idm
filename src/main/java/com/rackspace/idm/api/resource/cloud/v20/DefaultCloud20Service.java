@@ -37,6 +37,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
@@ -335,6 +336,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private Paginator<com.rackspace.idm.domain.entity.TenantType> tenantTypePaginator;
+
+    @Autowired
+    private RoleAssignmentConverter roleAssignmentConverter;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -2961,6 +2965,30 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.exceptionResponse(ex);
         }
 
+    }
+
+    @Override
+    public ResponseBuilder listEffectiveRolesForUser(HttpHeaders httpHeaders, String authToken, String userId, ListEffectiveRolesForUserParams params) {
+        try {
+            // Authorization Restrictions
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
+            User targetUser = userService.checkAndGetUserById(userId);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+
+            boolean self = caller.getId().equalsIgnoreCase(targetUser.getId());
+
+            if (!self) {
+                precedenceValidator.verifyCallerPrecedenceOverUser(caller, targetUser);
+            }
+
+            SourcedRoleAssignments assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
+            return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(assignments));
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     // KSADM Extension Role Methods

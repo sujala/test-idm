@@ -415,7 +415,7 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         and: "group source contains expected info"
         def groupSource = assignment.sources.find {it.sourceId == "aGroupId"}
         groupSource != null
-        groupSource.sourceType == SourcedRoleAssignments.SourceType.USER_GROUP
+        groupSource.sourceType == SourcedRoleAssignments.SourceType.USERGROUP
         CollectionUtils.isEqualCollection(groupSource.tenantIds, ["p2:t1"] as Set)
         userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
     }
@@ -480,7 +480,7 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         and: "group source associated with all tenants"
         def groupSource = assignment.sources.find {it.sourceId == "aGroupId"}
         groupSource != null
-        groupSource.sourceType == SourcedRoleAssignments.SourceType.USER_GROUP
+        groupSource.sourceType == SourcedRoleAssignments.SourceType.USERGROUP
         CollectionUtils.isEqualCollection(groupSource.tenantIds, Arrays.asList(domain.tenantIds))
         userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
     }

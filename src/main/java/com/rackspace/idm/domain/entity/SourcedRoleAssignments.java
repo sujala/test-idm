@@ -71,7 +71,7 @@ public class SourcedRoleAssignments {
         Validate.notNull(role);
         Validate.notNull(role.getId());
 
-        Source source = new Source(SourceType.USER_GROUP, groupId, assignmentType, tenantIds);
+        Source source = new Source(SourceType.USERGROUP, groupId, assignmentType, tenantIds);
         addSourceForRole(role, source);
         return source;
     }
@@ -148,7 +148,7 @@ public class SourcedRoleAssignments {
     }
 
     public enum SourceType {
-        USER, USER_GROUP, SYSTEM
+        USER, USERGROUP, SYSTEM
     }
 
     public enum AssignmentType {

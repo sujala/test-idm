@@ -1,14 +1,16 @@
 package com.rackspace.idm.modules.usergroups.api.resource.converter;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.SourcedRoleAssignments;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.modules.usergroups.Constants;
+import com.rackspace.idm.modules.usergroups.api.resource.DefaultUserGroupCloudService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class RoleAssignmentConverter {
+    private static final Logger logger = LoggerFactory.getLogger(RoleAssignmentConverter.class);
 
     @Autowired
     private ApplicationService applicationService;
@@ -49,6 +52,51 @@ public class RoleAssignmentConverter {
     }
 
     /**
+     * Converts from the LDAP representation of a userGroup to the request/response web service based representation.
+     *
+     * @param sourcedRoleAssignment
+     * @return
+     */
+    public TenantAssignment toRoleAssignmentWeb(SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment) {
+        TenantAssignment assignment = new TenantAssignment();
+
+        ImmutableClientRole cr = sourcedRoleAssignment.getRole();
+
+        assignment.setOnRole(cr.getId());
+        assignment.setOnRoleName(cr.getName());
+
+        assignment.getForTenants().addAll(sourcedRoleAssignment.getTenantIds());
+
+        for (SourcedRoleAssignments.Source source : sourcedRoleAssignment.getSources()) {
+            assignment.setSources(new AssignmentSources());
+
+            AssignmentSource assignmentSource = new AssignmentSource();
+
+            if (source.getAssignmentType() != null) {
+                try {
+                    assignmentSource.setAssignmentType(AssignmentTypeEnum.valueOf(source.getAssignmentType().name()));
+                } catch (IllegalArgumentException e) {
+                    logger.warn(String.format("Error converting assignment type '%s' to web format", source.getAssignmentType().toString()));
+                }
+            }
+            if (source.getSourceType() != null) {
+                try {
+                    assignmentSource.setSourceType(SourceTypeEnum.valueOf(source.getSourceType().name()));
+                } catch (IllegalArgumentException e) {
+                    logger.warn(String.format("Error converting source type '%s' to web format", source.getSourceType().toString()));
+                }
+            }
+
+            assignmentSource.setSourceId(source.getSourceId());
+            assignmentSource.getForTenants().addAll(source.getTenantIds());
+
+            assignment.getSources().getSource().add(assignmentSource);
+        }
+
+        return assignment;
+    }
+
+    /**
      * Converts from the LDAP representation of a userGroup list to the request/response web service based representation.
      *
      * @param tenantRoles
@@ -59,6 +107,22 @@ public class RoleAssignmentConverter {
 
         for (com.rackspace.idm.domain.entity.TenantRole tenantRole : tenantRoles) {
             tenantAssignments.getTenantAssignment().add(toRoleAssignmentWeb(tenantRole));
+        }
+
+        return tenantAssignments;
+    }
+
+    /**
+     * Converts from the LDAP representation of a userGroup list to the request/response web service based representation.
+     *
+     * @param sourcedRoleAssignments
+     * @return
+     */
+    public TenantAssignments toTenantAssignmentsWeb(SourcedRoleAssignments sourcedRoleAssignments) {
+        TenantAssignments tenantAssignments = new TenantAssignments();
+
+        for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : sourcedRoleAssignments.getSourcedRoleAssignments()) {
+            tenantAssignments.getTenantAssignment().add(toRoleAssignmentWeb(sourcedRoleAssignment));
         }
 
         return tenantAssignments;
@@ -76,4 +140,14 @@ public class RoleAssignmentConverter {
         return roleAssignments;
     }
 
+    /**
+     * Converts from the LDAP representation of a userGroup list to the request/response web service based representation.
+     *
+     * @return
+     */
+    public RoleAssignments toRoleAssignmentsWeb(SourcedRoleAssignments sourcedRoleAssignments) {
+        RoleAssignments roleAssignments = new RoleAssignments();
+        roleAssignments.setTenantAssignments(toTenantAssignmentsWeb(sourcedRoleAssignments));
+        return roleAssignments;
+    }
 }

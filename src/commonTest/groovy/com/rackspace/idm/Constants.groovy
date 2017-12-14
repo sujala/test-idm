@@ -53,8 +53,6 @@ class Constants {
     static def IDENTITY_RCN_ALL_TENANT_ROLE_NAME = "identity:rcn-all"
     static def RCN_ADMIN_ROLE_NAME = "rcn:admin"
     static def RCN_ADMIN_ROLE_ID = "c5f683e2b554ee8b28b9a8b612954c4"
-    static def RCN_CLOUD_ROLE_NAME = "identity:rcn-cloud"
-    static def RCN_CLOUD_ROLE_ID = "ee3ee1fb9be046ed969b93a1c45bbaca"
     static def IDENTITY_CHANGE_DOMAIN_ADMIN_ROLE_ID="bfa826160e644c4fa48fd2da3f039153"
     static def IDENTITY_CHANGE_DOMAIN_ADMIN_ROLE_NAME="identity:domain-admin-change"
     static def IDENTITY_SWITCH_DOMAIN_RCN_ROLE_ID="1f83e03681cc11e7a7e037b1affb8d28"
@@ -101,6 +99,7 @@ class Constants {
 
     static def IDENTITY_USER_ADMIN_ROLE = "identity:user-admin"
     static def DEFAULT_OBJECT_STORE_ROLE = "object-store:default"
+    static def DEFAULT_OBJECT_STORE_ROLE_ID = "5"
     static def DEFAULT_COMPUTE_ROLE = "compute:default"
     static def DEFAULT_COMPUTE_ROLE_ID = "6"
 

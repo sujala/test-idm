@@ -22,7 +22,7 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
         def destinationRcn = testUtils.getRandomRCN()
         utils.addRoleToUser(userAdmin, Constants.RCN_ADMIN_ROLE_ID)
         def defaultUserWithRcnRole = utils.createUser(utils.getToken(userAdmin.username))
-        utils.addRoleToUser(defaultUserWithRcnRole, Constants.RCN_CLOUD_ROLE_ID)
+        utils.addRoleToUser(defaultUserWithRcnRole, Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID)
         def defaultUserWithoutRcnRole = utils.createUser(utils.getToken(userAdmin.username))
 
         when: "switch the domain RCN"
@@ -46,7 +46,7 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
         )
 
         and: "default user had the rcn cloud role removed"
-        utils.listUserGlobalRoles(utils.getServiceAdminToken(), defaultUserWithRcnRole.id).role.find { role -> role.name == Constants.RCN_CLOUD_ROLE_NAME} == null
+        utils.listUserGlobalRoles(utils.getServiceAdminToken(), defaultUserWithRcnRole.id).role.find { role -> role.name == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_NAME} == null
 
         and: "user update feed event was posted"
         cloudFeedsMock.verify(

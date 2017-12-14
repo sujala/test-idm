@@ -1,6 +1,7 @@
 package com.rackspace.idm.modules.usergroups.api.resource.json;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformerHandler;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForEntity;
 
 import javax.ws.rs.Consumes;
@@ -21,11 +22,12 @@ import static com.rackspace.idm.modules.usergroups.Constants.TENANT_ASSIGNMENT;
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForRaxAuthTenantAssignment extends JSONReaderForEntity<TenantAssignment> {
+    private JsonArrayTransformerHandler arrayHandler = new TenantAssignmentArrayTranformerHandler();
 
     @Override
     public TenantAssignment readFrom(Class<TenantAssignment> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(RAX_AUTH_TENANT_ASSIGNMENT, TENANT_ASSIGNMENT);
-        return read(entityStream, RAX_AUTH_TENANT_ASSIGNMENT, prefixValues, false);
+        return read(entityStream, RAX_AUTH_TENANT_ASSIGNMENT, prefixValues, arrayHandler);
     }
 }

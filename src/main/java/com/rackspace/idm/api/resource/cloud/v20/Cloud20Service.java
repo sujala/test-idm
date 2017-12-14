@@ -299,4 +299,6 @@ public interface Cloud20Service {
     ResponseBuilder modifyDomainAdministrator(String authToken, String domainId, DomainAdministratorChange accountAdministratorChange);
 
     ResponseBuilder switchDomainRcn(String authToken, String domainId, String destinationRcn);
+
+    ResponseBuilder listEffectiveRolesForUser(HttpHeaders httpHeaders, String authToken, String userId, ListEffectiveRolesForUserParams params);
 }

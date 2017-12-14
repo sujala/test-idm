@@ -209,6 +209,11 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_CHANGE_PASSWORD).accept(accept).type(request).entity(cp).post(ClientResponse)
     }
 
+    def listUserEffectiveRolesWithSources(String token, String userId,  MediaType media = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(SERVICE_PATH_ROLES).accept(media).type(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
     def addApiKeyToUser(String token, String userId, credential) {
         initOnUse()
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(RAX_KSKEY_API_KEY_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credential).post(ClientResponse)

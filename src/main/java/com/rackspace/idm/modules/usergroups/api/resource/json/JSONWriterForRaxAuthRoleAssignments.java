@@ -1,8 +1,8 @@
 package com.rackspace.idm.modules.usergroups.api.resource.json;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
-import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.JsonArrayEntryTransformer;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformerHandler;
 import com.rackspace.idm.api.resource.cloud.v20.json.writers.JSONWriterForEntity;
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
@@ -23,13 +23,14 @@ import static com.rackspace.idm.modules.usergroups.Constants.*;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForRaxAuthRoleAssignments extends JSONWriterForEntity<RoleAssignments> {
-    private static final String TENANT_IDS = "forTenants";
+    private JsonArrayTransformerHandler arrayHandler = new TenantAssignmentArrayTranformerHandler();
+    private TenantAssignmentArrayEntryTransformer tenantAssignmentArrayEntryTransformer = new TenantAssignmentArrayEntryTransformer();
 
     @Override
     public void writeTo(RoleAssignments roleAssignments, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(ROLE_ASSIGNMENTS, RAX_AUTH_ROLE_ASSIGNMENTS);
-        write(roleAssignments, entityStream, prefixValues, ALWAYS_PLURALIZE_HANDLER, new EntryTransformer());
+        write(roleAssignments, entityStream, prefixValues, arrayHandler, new EntryTransformer());
     }
 
     private class EntryTransformer implements JsonArrayEntryTransformer {
@@ -37,7 +38,7 @@ public class JSONWriterForRaxAuthRoleAssignments extends JSONWriterForEntity<Rol
          * This will get called with the top level object due to the prefix value getting mapped, but before the
          * inner array of tenantOnRoleAssignments is flattened
          *
-         * For example, {"roleAssignments":{"tenantAssignments":{"tenantAssignment":[{"forTenants":["tenant1 tenant2"],"onRole":"12345"}]}}}
+         * For example, {"RAX-AUTH:roleAssignments":{"tenantAssignments":{"tenantAssignment":[{"forTenants":["tenant1 tenant2"],"onRole":"12345"}]}}}
          */
         @Override
         public void transform(JSONObject entry) {
@@ -49,18 +50,7 @@ public class JSONWriterForRaxAuthRoleAssignments extends JSONWriterForEntity<Rol
                     JSONArray innerTAssignments = (JSONArray) outerTAssignments.get(TENANT_ASSIGNMENT);
                     for (Object tAssignmentObj : innerTAssignments) {
                         JSONObject tAssignment = (JSONObject) tAssignmentObj;
-                        final JSONArray tenantArray = (JSONArray) tAssignment.get(TENANT_IDS);
-                        if (tenantArray != null) {
-                            // Workaround to fix the "tenantIds" XML attribute JSON representation
-                            final String codes = (String) tenantArray.get(0);
-                            final JSONArray newCodes = new JSONArray();
-                            tAssignment.put(TENANT_IDS, newCodes);
-                            for (String code : codes.split(" ")) {
-                                if (StringUtils.isNotBlank(code)) {
-                                    newCodes.add(code);
-                                }
-                            }
-                        }
+                        tenantAssignmentArrayEntryTransformer.transform(tAssignment);
                     }
                 } else {
                     // Add the outer/inner objects to put in an empty array
@@ -68,7 +58,6 @@ public class JSONWriterForRaxAuthRoleAssignments extends JSONWriterForEntity<Rol
                     JSONArray innerTAssignments =  new JSONArray();
                     outerTAssignments.put(TENANT_ASSIGNMENT, innerTAssignments);
                     roleAssignments.replace(TENANT_ASSIGNMENTS, null, outerTAssignments);
-                    System.out.print(roleAssignments.toJSONString());
                 }
             }
         }
