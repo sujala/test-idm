@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.test.SingleTestConfiguration;
 import com.unboundid.ldap.sdk.*;
@@ -14,7 +16,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -52,6 +56,9 @@ public class LdapRepositoryTest {
     @Autowired
     Configuration config;
 
+    @Autowired
+    IdentityConfig identityConfig;
+
     LDAPInterface ldapInterface = mock(LDAPInterface.class);
 
     @Before
@@ -74,7 +81,7 @@ public class LdapRepositoryTest {
         String errorMessage = "Search called";
         String testDn = "asdf";
 
-        config.setProperty(LdapRepository.FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, false);
+        config.setProperty(IdentityConfig.FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, false);
 
         // the test is just ensuring the right algorithm is chosen based on the flag. The recursion algorithm will call this
         // method (while the subtreecontrol won't). So if this method is called, we know the right algorithm was chosen.
@@ -99,7 +106,7 @@ public class LdapRepositoryTest {
      */
     @Test
     public void deleteEntryAndSubtree_chooseSubtreeDeleteControlAlgorithmWhenFlagFalse () throws Exception {
-        config.setProperty(LdapRepository.FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, true);
+        config.setProperty(IdentityConfig.FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, true);
 
         ldapRepository.deleteEntryAndSubtree("asdf", mock(Audit.class));
 
@@ -229,16 +236,33 @@ public class LdapRepositoryTest {
             return connPools;
         }
 
-        @Bean
+        @Bean(name = "staticConfiguration")
         org.apache.commons.configuration.Configuration configuration() {
             BaseConfiguration config = new BaseConfiguration();
             return config;
         }
 
+        @Primary
+        @Bean(name = "reloadableConfiguration")
+        Configuration reloadableConfiguration() {
+            BaseConfiguration config = new BaseConfiguration();
+            return config;
+        }
+
+        @Bean
+        IdentityConfig identityConfig() {
+            IdentityConfig identityConfig = new IdentityConfig(configuration(), reloadableConfiguration());
+            return identityConfig;
+        }
+
+        @Bean
+        IdentityPropertyValueConverter identityPropertyValueConverter() {
+            return new IdentityPropertyValueConverter();
+        }
+
         @Bean
         LdapRepository testingLdapRepository() {
             return new LdapRepository() {
-
             };
         }
     }

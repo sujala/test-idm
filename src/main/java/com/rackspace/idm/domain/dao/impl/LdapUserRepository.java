@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -32,13 +31,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     private EncryptionService encryptionService;
 
     @Autowired
-    private Configuration config;
-
-    @Autowired
     private GroupDao groupDao;
-
-    @Autowired
-    private IdentityConfig identityConfig;
 
     @Override
     public String getBaseDn(){

@@ -21,15 +21,8 @@ class LdapUserRepositoryTest extends RootServiceTest {
         mockIdentityConfig(dao)
         mockConfiguration(dao)
 
-        // HACK: Set the identityConfig mock manually on LdapGenericRepository using reflection
-        Field identityConfigLdapGenericRepo = dao.class.getSuperclass().getDeclaredField("identityConfig")
-        identityConfigLdapGenericRepo.setAccessible(true)
-        identityConfigLdapGenericRepo.set(dao, identityConfig)
-
-        // HACK: Set the config mock manually on LdapRepository using reflection
-        Field configLdapGenericRepo = dao.class.getSuperclass().getSuperclass().getDeclaredField("config")
-        configLdapGenericRepo.setAccessible(true)
-        configLdapGenericRepo.set(dao, config)
+        dao.identityConfig = identityConfig
+        dao.config = config
 
         ldapConnectionPools = Mock()
         dao.connPools = ldapConnectionPools

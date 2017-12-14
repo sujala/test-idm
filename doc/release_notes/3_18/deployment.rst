@@ -4,6 +4,7 @@ Cloud Identity 3.18.0 Release
 .. _CID-1272:  https://jira.rax.io/browse/CID-1272
 .. _CID-1281:  https://jira.rax.io/browse/CID-1281
 .. _CID-1283:  https://jira.rax.io/browse/CID-1283
+.. _CID-736:  https://jira.rax.io/browse/CID-736
 .. _CID-1287:  https://jira.rax.io/browse/CID-1287
 .. contents::
 
@@ -36,6 +37,7 @@ Stories
 #. `CID-1272`_ - EPS: Find user by Contact ID
 #. `CID-1281`_ - Upgrade Repose to version 8.7.3.0
 #. `CID-1283`_ -  Reclassifying some resources as unprotected to new relic
+#. `CID-736`_ - Use subtree delete control when deleting entities
 #. `CID-1287`_ -  Enable password history by default
 
 Defects
@@ -57,19 +59,18 @@ These are new properties added as part of the Release
 .. csv-table:: Configuration Changes
    :header: "Name", "Description", "DefaultValue", "Story", "File"
 
-   None,
+   feature.use.subtree.delete.control.for.subtree.deletion.enabled, 'Whether to use subtree delete control for subtree deletion.', true, `CID-736`_, reloadable
 
 -------
 Updates
 -------
-These properties are changes to the default settings for existing properties 
+These properties are changes to the default settings for existing properties
 
 .. csv-table:: Configuration Changes
    :header: "Name", "Description", "DefaultValue", "Story", "File"
 
    feature.enforce.password.policy.history, 'Whether or not to enforce password policy history', true, CID-1287, reloadable
    feature.maintain.password.history, 'Whether or not to maintain password history. If history enforcement is enabled, this is always true', true, CID-1287, reloadable
-
 
 -------
 Deleted
@@ -80,6 +81,7 @@ These properties should be removed from the respective properties files as they 
 .. csv-table:: Configuration Changes
    :header: "Name", "Story", "File"
 
+   feature.use.subtree.delete.control.for.subtree.deletion.enabled, `CID-736`_, static
    auto.assign.role.on.domain.tenants.role.name,`CID-1271`_,reloadable
 
 Directory Changes

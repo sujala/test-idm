@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.google.common.collect.ObjectArrays;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
@@ -300,10 +301,6 @@ public abstract class LdapRepository {
     public static final String ATTR_HOST_NAME = "rsHostName";
     public static final String CHANGE_EVENT_BASE_DN = "ou=changeevent,dc=rackspace,dc=com";
 
-
-    public static final String FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME = "feature.use.subtree.delete.control.for.subtree.deletion.enabled";
-    public static final boolean FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE = false;
-
     @Autowired
     protected LdapConnectionPools connPools;
 
@@ -312,6 +309,9 @@ public abstract class LdapRepository {
 
     @Autowired
     protected ApplicationEventPublisher applicationEventPublisher;
+
+    @Autowired
+    protected IdentityConfig identityConfig;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -337,18 +337,13 @@ public abstract class LdapRepository {
     }
 
     protected void deleteEntryAndSubtree(String dn, Audit audit) {
-        if (useSubtreeDeleteControlForSubtreeDeletion()) {
+        if (identityConfig.getReloadableConfig().useSubtreeDeleteControlForSubtreeDeletion()) {
             deleteEntryAndSubtreeUsingSubtreeDeleteControl(dn, audit);
         }
         else {
             deleteEntryAndSubtreeUsingRecursion(dn, audit);
         }
     }
-
-    protected boolean useSubtreeDeleteControlForSubtreeDeletion() {
-        return config.getBoolean(FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE);
-    }
-
 
     protected void deleteEntryAndSubtreeUsingSubtreeDeleteControl(String dn, Audit audit) {
         try {

@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
-
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.exception.DuplicateException
 import com.unboundid.ldap.sdk.Attribute
@@ -13,6 +13,7 @@ import org.apache.commons.lang.NotImplementedException
 import org.apache.commons.lang.StringUtils
 import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -55,8 +56,16 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
     @Autowired
     LdapConnectionPools ldapConnectionPools
 
+    @Qualifier("staticConfiguration")
     @Autowired
-    Configuration config
+    private Configuration config;
+
+    @Qualifier("reloadableConfiguration")
+    @Autowired
+    private Configuration reloadableConfiguration;
+
+    @Autowired
+    IdentityConfig identityConfig
 
     LDAPInterface con
     LDAPPersister<Application> applicationPersister
@@ -69,6 +78,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         FEATURE_RANDOM = UUID.randomUUID().toString().replaceAll('-', "")
         con = ldapConnectionPools.getAppConnPoolInterface()
         applicationPersister = LDAPPersister.getInstance(Application.class)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, false)
     }
 
     /* ###############################################################################
@@ -191,7 +201,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
 
     def "deleteObject(Obj) - verify can delete single object with no subentries using recursion subtree delete"() {
         setup:
-        assert !genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
+        assert !identityConfig.getReloadableConfig().useSubtreeDeleteControlForSubtreeDeletion()
         Application app = persistClientDirect()
         assert con.getEntry(app.getUniqueId()) != null
 
@@ -207,7 +217,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
 
     def "deleteObject(Obj) - verify throws exception if delete object that no longer exists using recursion subtree delete"() {
         setup:
-        assert !genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
+        assert !identityConfig.getReloadableConfig().useSubtreeDeleteControlForSubtreeDeletion()
         Application app = persistClientDirect()
         genericApplicationRepository.deleteObject(app) //delete the object from ldap
         con.getEntry(app.getUniqueId()) == null
@@ -225,7 +235,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
 
     def "deleteObject(Obj) - verify throws exception if delete object that never existed using recursion subtree delete"() {
         setup:
-        assert !genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
+        assert !identityConfig.getReloadableConfig().useSubtreeDeleteControlForSubtreeDeletion()
         Application app = mock(Application.class)
         when(app.getUniqueId()).thenReturn("ou=nonexistant,o=rackspace,dc=rackspace,dc=com")
 
@@ -239,7 +249,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
 
     def "deleteObject(Obj) - verify deleting entry that has children will delete entire tree using recursion subtree delete"() {
         setup:
-        assert !genericApplicationRepository.useSubtreeDeleteControlForSubtreeDeletion()
+        assert !identityConfig.getReloadableConfig().useSubtreeDeleteControlForSubtreeDeletion()
         Application app = persistClientDirect()
         addTokenContainerDirect(app)
         assert con.getEntry(app.getUniqueId()) != null

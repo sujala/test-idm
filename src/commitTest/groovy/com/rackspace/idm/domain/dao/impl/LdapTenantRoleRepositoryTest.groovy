@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.modules.usergroups.Constants
@@ -120,7 +121,7 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
 
         then:
         // Determines whether to use subtree delete control or not. For this test, no...
-        1 * config.getBoolean(LdapRepository.FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, _) >> false
+        1 * reloadableConfig.useSubtreeDeleteControlForSubtreeDeletion() >> false
 
         // Delete always searches for entry before deleting to find all subentries below the specified DN
         1 * ldapInterface.search(tenantRole.uniqueId, SearchScope.ONE, _, _) >> new SearchResult(1, null, null, null, new String[0], Collections.emptyList(), Collections.emptyList(), 0, 0)

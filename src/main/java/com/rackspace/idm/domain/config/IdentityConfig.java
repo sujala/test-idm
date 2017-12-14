@@ -503,6 +503,9 @@ public class IdentityConfig {
     public static final String ENABLED_DOMAINS_FOR_USER_GROUPS_PROP = "enable.user.groups.for.domains";
     public static final String ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT = "";
 
+    public static final String FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME = "feature.use.subtree.delete.control.for.subtree.deletion.enabled";
+    public static final boolean FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE = true;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -700,6 +703,7 @@ public class IdentityConfig {
         defaults.put(NEW_RELIC_SECURED_API_USE_SHA256_PROP, NEW_RELIC_SECURED_API_USE_SHA256_DEFAULT);
 
         defaults.put(FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP, FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_DEFAULT);
+        defaults.put(FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME , FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE);
 
         return defaults;
     }
@@ -1967,6 +1971,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP, versionAdded = "3.17.0", description = "Whether or not to filter the service catalog for impersonation tokens of suspended users (users that belong to a domain with all domain tenants disabled)")
         public boolean shouldDisplayServiceCatalogForSuspendedUserImpersonationTokens() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, versionAdded = "3.18.0", description = "Whether to use subtree delete control for subtree deletion.")
+        public boolean useSubtreeDeleteControlForSubtreeDeletion() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME);
         }
 
     }

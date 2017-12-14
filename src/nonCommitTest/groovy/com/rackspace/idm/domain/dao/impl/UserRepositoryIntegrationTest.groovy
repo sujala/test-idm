@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
-
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.GroupDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.Group
@@ -12,6 +12,7 @@ import org.apache.commons.collections4.IteratorUtils
 import org.apache.commons.configuration.Configuration
 import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
@@ -28,6 +29,10 @@ class UserRepositoryIntegrationTest extends Specification {
     @Autowired
     EncryptionService encryptionService;
 
+    @Qualifier("reloadableConfiguration")
+    @Autowired
+    private Configuration reloadableConfiguration;
+
     @Autowired Configuration config
 
     @Autowired
@@ -40,6 +45,7 @@ class UserRepositoryIntegrationTest extends Specification {
         def randomness = UUID.randomUUID()
         random = ("$randomness").replace('-', "")
         username = "someName"+random
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, false)
     }
 
     def "user crud"() {
