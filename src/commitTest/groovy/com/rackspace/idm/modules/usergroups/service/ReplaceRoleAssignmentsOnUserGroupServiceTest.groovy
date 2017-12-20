@@ -346,4 +346,69 @@ class ReplaceRoleAssignmentsOnUserGroupServiceTest extends RootServiceTest{
         result.find {it.roleRsId == roleAId} != null
         result.find {it.roleRsId == roleBId} != null
     }
+
+    def "replaceRoleAssignmentsOnGroup: Can switch tenant sasignment to domain assignment"() {
+        def groupId = "groupId"
+        def domainId = "domainId"
+        def roleAId = "roleA"
+        def roleBId = "roleB"
+        def tenantAId = "tenantA"
+
+        def group = new UserGroup().with {
+            it.id = groupId
+            it.domainId = domainId
+            it.uniqueId = "alocation"
+            it
+        }
+
+        def roleACr = new ClientRole().with {
+            it.id = roleAId
+            it.name = "roleAName"
+            it.rsWeight = Constants.USER_GROUP_ALLOWED_ROLE_WEIGHT
+            it.clientId = "clientId"
+            it
+        }
+
+        RoleAssignments roleAssignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = roleAId
+                            ta.onRoleName = "roleAName"
+                            ta.forTenants.add("*")
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        when:
+        List<TenantRole> result = service.replaceRoleAssignmentsOnGroup(group, roleAssignments)
+
+        then:
+        // Verify roles are retrieved for verification
+        1 * applicationService.getClientRoleById(roleAId) >> roleACr
+
+        // Verify queries to see if add or update. Simulate "update" of role assigned explicit tenants
+        1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleAId) >> new TenantRole().with {
+            it.roleRsId = roleACr.id
+            it.clientId = roleACr.clientId
+            it.tenantIds = ["aTenant"] as Set
+            it
+        }
+
+        // Verify roles are sent to dao correctly
+        1 * tenantRoleDao.updateRoleAssignmentOnGroup(group, {it.roleRsId == roleAId}) >> {args ->
+            TenantRole role = args[1]
+            assert role.roleRsId == roleAId
+            assert CollectionUtils.isEmpty(role.tenantIds)
+            assert role.clientId == roleACr.clientId
+        }
+
+        and:
+        result.size() == 1
+        result.find {it.roleRsId == roleAId} != null
+    }
 }

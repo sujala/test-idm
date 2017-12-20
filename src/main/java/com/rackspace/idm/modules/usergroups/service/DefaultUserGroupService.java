@@ -440,7 +440,11 @@ public class DefaultUserGroupService implements UserGroupService {
                     tenantRoleDao.addRoleAssignmentOnGroup(userGroup, tenantRole);
                     changedRole = tenantRole;
                 } else {
-                    existingAssignment.setTenantIds(new HashSet<>(tenantAssignment.getForTenants()));
+                    if (isDomainAssignment(tenantAssignment)) {
+                        existingAssignment.setTenantIds(new HashSet<String>());
+                    } else {
+                        existingAssignment.setTenantIds(new HashSet<>(tenantAssignment.getForTenants()));
+                    }
                     tenantRoleDao.updateRoleAssignmentOnGroup(userGroup, existingAssignment);
                     changedRole = existingAssignment;
                 }
