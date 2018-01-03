@@ -120,4 +120,27 @@ Business Acceptance Criteria
 
 Test Acceptance Criteria
 ~~~~~~~~~~~~~~~~~~~~~~~~
-TBD
+
+#. Non commit stories include:
+  #. Normal test path:
+     #. Create cloud account.  Create user (user-admin).
+     #. Create tenant.
+     #. Create sub user.  Add a role to user on tenant (role-1),  and disable.  
+     #. Validate that when roleId is not specified, only user-admin is returned
+     #. Validate that when roleId = user-admin, only user-admin is returned
+     #. Validate that when roleId = role-1, no users are returned
+     #. Validate that when roleId = tenant-access role id, only user-admin is returned
+     #. Disable user-admin.  Attempt previous steps again and validate no users are returned
+  #. User group test path:
+     #. Enable all users (user-admin and sub user).
+     #. Create user group.
+     #. Add role to user group globally (ug-role-1)
+     #. Add both users to newly created user group
+     #. Validate that when roleId = ug-role-1, all users are returned
+     #. Validate that when roleId is not specified, all users are returned
+     #. Disable sub user.  Validate previous call only returns user-admin
+     #. Disable user-admin.  Validate previous call does not return any users
+
+#. Commit tests add checks for all methods around exception handling
+
+#. Performance tests updated to include this new service (1 rps)
