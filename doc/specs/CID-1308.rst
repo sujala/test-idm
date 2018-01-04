@@ -1,0 +1,35 @@
+.. _CID-1308:
+
+==============================================
+Implement healthCheck on ldap connection pools
+==============================================
+
+Description
+-----------
+
+Currently there is no healthCheck implemented for unboundId
+LdapConnectionPools. In order to process defunct connection a valid
+health check must be done to determine the status of each LDAP node.
+Work with Robert R. to implement a healthCheck which uses
+the least expensive LDAP call to determine if a new connection is
+valid or an existing connection is valid for continued use.
+
+Methods to implement for LDAPConnectionPoolHealthCheck.
+
+1. ensureNewConnectionValid
+2. ensureConnectionValidForContinuedUse
+
+With this story we'd like to solve the following issues:
+
+1. Run a valid health check on LDAP connections.
+2. Alleviate ops pains when flushing out LDAP nodes.
+
+Business Acceptance Criteria
+----------------------------
+#. Implement LDAPConnectionPoolHealthCheck
+#. Add feature flag to enable/disable health check functionality
+
+Test Acceptance Criteria
+------------------------
+TBD
+
