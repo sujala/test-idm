@@ -2,24 +2,19 @@ package com.rackspace.idm.modules.endpointassignment.api.resource
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypeEndpointRule
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.modules.endpointassignment.dao.GlobalRuleDao
 import com.rackspace.idm.modules.endpointassignment.dao.LdapTenantTypeRuleRepository
-import com.rackspace.idm.modules.endpointassignment.entity.Rule
-import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
-import org.apache.commons.lang.RandomStringUtils
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
-import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Unroll
 import testHelpers.IdmAssert
 
-import javax.ws.rs.core.MediaType
 import java.util.regex.Pattern
 
 class DeleteTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest {
@@ -76,4 +71,39 @@ class DeleteTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
         and: "rule no longer exists in backend"
         ldapTenantTypeRuleRepository.getById(resultRule.id) == null
     }
+
+    def "Endpoint templates cannot be deleted while still associated with an assignment rule"() {
+        given:
+        def endpointTemplate = utils.createEndpointTemplate()
+        def rule = new TenantTypeEndpointRule().with {
+            it.tenantType = Constants.TENANT_TYPE_CLOUD
+            it.description = RandomStringUtils.randomAlphanumeric(16)
+            it.endpointTemplates = new EndpointTemplateList()
+            it.endpointTemplates.endpointTemplate = []
+            it.endpointTemplates.endpointTemplate << new EndpointTemplate().with {
+                it.id = endpointTemplate.id
+                it
+            }
+            it
+        }
+        def assignmentRule = utils.addEndpointTemplateAssignmentRule(specificationIdentityAdminToken, rule)
+        endpointTemplate.enabled = false
+        utils.updateEndpointTemplate(endpointTemplate, endpointTemplate.id.toString())
+
+        when:
+        def response = cloud20.deleteEndpointTemplate(utils.getServiceAdminToken(), endpointTemplate.id.toString())
+
+        then:
+        response.status == 403
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, 403, DefaultCloud20Service.ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_IN_ASSIGNMENT_RULE_MESSAGE)
+
+        when:
+        def deleteRuleResponse = cloud20.deleteEndpointAssignmentRule(specificationIdentityAdminToken, assignmentRule.id)
+        def deleteEndpointTemplateResponse = cloud20.deleteEndpointTemplate(utils.getServiceAdminToken(), endpointTemplate.id.toString())
+
+        then:
+        deleteRuleResponse.status == 204
+        deleteEndpointTemplateResponse.status == 204
+    }
+
 }

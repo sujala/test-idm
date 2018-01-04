@@ -37,6 +37,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
@@ -123,6 +124,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE = "Cannot delete identity user-type roles from a user.";
 
     public static final String ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_MESSAGE = "Deleting enabled templates or templates associated with one or more tenants is not allowed";
+    public static final String ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_IN_ASSIGNMENT_RULE_MESSAGE = "Deleting endpoint templates associated with one or more endpoint assignment rules is not allowed.";
 
     public static final String ERROR_CANNOT_ASSIGN_GLOBAL_ONLY_ROLES_VIA_TENANT_ASSIGNMENT = "The assignment of 'global only' roles via tenant assignment is not allowed";
 
@@ -339,6 +341,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private RoleAssignmentConverter roleAssignmentConverter;
+
+    @Autowired
+    private RuleService ruleService;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -1989,6 +1994,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (baseUrl.getEnabled() || !tenantService.getTenantsForEndpoint(endpointTemplateId).isEmpty()) {
                 logger.warn(ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_MESSAGE);
                 throw new ForbiddenException(ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_MESSAGE);
+            }
+            if (CollectionUtils.isNotEmpty(ruleService.findEndpointAssignmentRulesForEndpointTemplateId(endpointTemplateId))) {
+                logger.info("Endpoint template with id {} deletion prevented due to being part of an assignment rule.", endpointTemplateId);
+                throw new ForbiddenException(ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_IN_ASSIGNMENT_RULE_MESSAGE);
             }
             this.endpointService.deleteBaseUrl(baseUrl.getBaseUrlId());
             return Response.noContent();
