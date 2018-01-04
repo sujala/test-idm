@@ -446,5 +446,157 @@ Business Acceptance Criteria
 
 Test Acceptance Criteria
 ------------------------
-TBD
 
+#. Johny tests include a happy path for GET /v2.0/users/{userId}/RAX-AUTH/roles
+
+  #. Create a cloud user (one-call-user-create)
+  #. Create a sub user [user-default]
+  #. Create and add role to user-default (global assignment) [global-role-1]
+  #. Create another tenant on "d1"; create and assign a role on tenant for user-default [tenant-role-1].
+  #. Create user group; add to user-default; add role to user group [user-group-role-1]
+  #. Validate response as identity:admin for sub user returns the following 3 roles (may be more with tenant-access and identity:default):
+    #. global-role-1 (assigned globally to user-default)
+    #. tenant-role-1 (assigned on a tenant to user-default)
+    #. user-group-role-1 (assigned to user group belonging to user-default)
+  #. validate that the response is the following:
+
+  JSON::
+
+ {
+    "RAX-AUTH:roleAssignments": {
+        "tenantAssignments": [
+            {
+                "onRole": "1234",
+                "onRoleName": "global-role-1",
+                 "forTenants": [
+                    "mosso123",
+                    "nast123",
+                    "t1""
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "user1234",
+                       "assignmentType": "DOMAIN"
+  	                   "forTenants": [
+                               "mosso123",
+                               "nast123",
+                               "t1"
+  	                   ]
+                  }
+            },
+            {
+                "onRole": "1235",
+                "onRoleName": "tenant-role-1",
+                 "forTenants": [
+                   "t1"
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "user1234",
+                       "assignmentType": "TENANT",
+    		               "forTenants": [
+                                  "t1"
+    		               ]
+                  }
+                ]
+            },
+            {
+                "onRole": "1231",
+                "onRoleName": "compute:default",
+                 "forTenants": [
+                   "mosso123"
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "user1234",
+                       "assignmentType": "TENANT",
+    		               "forTenants": [
+                                  "mosso123"
+    		               ]
+                  }
+                ]
+            },
+            {
+                "onRole": "1232",
+                "onRoleName": "object-store:default",
+                 "forTenants": [
+                   "nast123"
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "user1234",
+                       "assignmentType": "TENANT",
+    		               "forTenants": [
+                                  "nast123"
+    		               ]
+                  }
+                ]
+            },
+            {
+                "onRole": "1236",
+                "onRoleName": "user-group-role-1",
+                "forTenants": [
+                    "mosso123",
+                    "nast123",
+                    "t1" 
+                ],
+                "sources": [
+                  {
+                       "sourceType": "USERGROUP",
+                       "sourceId": "usergroup1234",
+                       "assignmentType": "DOMAIN",
+  	               "forTenants": [
+                           "mosso123",
+                           "nast123",
+                           "t1"
+  	               ]
+                  }
+            }
+        ]
+    }
+ }
+
+  #. Validate response as user-admin, user-manage, user-default returns 403
+
+#. NonCommitTests includes above as well as:
+
+  #. validate the above flows with service:admin and expect same responses as with identity:admin
+  #. Create RCN role and assign to user.  Add domain A and B to RCN.  Add tenants A and B to domain A and tenant C to domain B.  Validate role applies to all tenants:
+
+  JSON::
+
+ {
+    "RAX-AUTH:roleAssignments": {
+        "tenantAssignments": [
+            {
+                "onRole": "1235",
+                "onRoleName": "rcn:admin",
+                 "forTenants": [
+                   "dAtA",
+                   "dAtB",
+                   "dBtC",
+                 ],
+                "sources": [
+                  {
+                       "sourceType": "USER",
+                       "sourceId": "user1234",
+                       "assignmentType": "RCN",
+    		       "forTenants": [
+                          "dAtA",
+                          "dAtB",
+                          "dBtC"
+    		       ]
+                  }
+                ]
+            }
+        ]
+    }
+ }
+
+#. Unit tests include validations for every exception scenario in the added code.
+
+#. Performance tests include this call with 1 request per second throughput
