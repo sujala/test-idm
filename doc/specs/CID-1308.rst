@@ -24,6 +24,16 @@ With this story we'd like to solve the following issues:
 1. Run a valid health check on LDAP connections.
 2. Alleviate ops pains when flushing out LDAP nodes.
 
+Links:
+
+POC story - https://jira.rax.io/browse/CID-1025
+
+Docs - https://one.rackspace.com/pages/viewpage.action?title=Analyze+means+to+better+manage+data+connections+from+app+layer&spaceKey=auth
+
+Code branch - https://github.rackspace.com/cloud-identity-dev/cloud-identity/tree/cid-1025-poc
+
+Health check class - https://github.rackspace.com/cloud-identity-dev/cloud-identity/blob/cid-1025-poc/src/main/java/com/rackspace/idm/domain/config/LdapConnectHealthCheck.java
+
 Business Acceptance Criteria
 ----------------------------
 #. Implement LDAPConnectionPoolHealthCheck
@@ -32,4 +42,3 @@ Business Acceptance Criteria
 Test Acceptance Criteria
 ------------------------
 TBD
-
