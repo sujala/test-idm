@@ -71,6 +71,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     static final String BAD_REQUEST_MSG_INVALID_DEVICE = "The specified device is invalid";
     static final String BAD_REQUEST_MSG_ALREADY_VERIFIED = "The specified device has already been verified";
     static final String BAD_REQUEST_MSG_INVALID_PIN_OR_EXPIRED = "The provided pin is either invalid or expired.";
+    static final String BAD_REQUEST_MSG_INVALID_OTP_DEVICE_NAME = "Must provide a name for an OTP device";
     static final String BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE = "Must provide a verification code";
     static final String BAD_REQUEST_MSG_MISSING_MULTIFACTOR_SETTINGS = "Must provide a multifactor settings";
     static final String FORBIDDEN_MSG_MULTIFACTOR_DISABLED = "You must have Multi-Factor Authentication set as optional or enabled for your profile to enforce Multi-Factor Authentication for the domain";
@@ -660,6 +661,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
             final User user = requestContextHolder.checkAndGetTargetUser(userId);
             verifyAccessToOtherUser(token, requester, user);
+
+            if (StringUtils.isBlank(otpDevice.getName())) {
+                throw new BadRequestException(BAD_REQUEST_MSG_INVALID_OTP_DEVICE_NAME);
+            }
 
             final com.rackspace.idm.domain.entity.OTPDevice entity = multiFactorService.addOTPDeviceToUser(userId, otpDevice.getName());
 

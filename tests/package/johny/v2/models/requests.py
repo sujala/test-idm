@@ -184,7 +184,7 @@ class UserAdd(base.AutoMarshallingModel):
         if self.default_region:
             add_user_request[const.USER][const.DEFAULT_REGION] = (
                 self.default_region)
-        if self.contact_id:
+        if self.token_format:
             add_user_request[const.USER][const.TOKEN_FORMAT] = (
                 self.token_format)
         if self.password:
@@ -304,7 +304,7 @@ class UserUpdate(base.AutoMarshallingModel):
         if self.default_region:
             update_user_request[const.USER][const.DEFAULT_REGION] = (
                 self.default_region)
-        if self.contact_id:
+        if self.token_format:
             update_user_request[const.USER][const.TOKEN_FORMAT] = (
                 self.token_format)
         if self.password:

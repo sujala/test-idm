@@ -23,7 +23,7 @@ Release Ticket  - Add JIRA link here.
 .. csv-table:: Release Progress
   :header: Milestone, Date, Status
 
-  RC Due, "Thurs, Dec 14 2017", In Progress.
+  RC Due, "Thurs, Dec 21 2017", "Delivered - RC2 Build number: 3.18.0-1513809211095"
   QE Signoff for Staging, "Thurs, Jan 4 2017",
   Staging Release Week, "Mon, Jan 8 - Tues, Jan 9 2018",
   Signoff for Production, "Fri, Jan 12 2018",
@@ -72,7 +72,7 @@ These are new properties added as part of the Release
    :header: "Name", "Description", "DefaultValue", "Story", "File"
 
    feature.use.subtree.delete.control.for.subtree.deletion.enabled,Whether to use subtree delete control for subtree deletion., true, `CID-736`_, reloadable
-   feature.enable.new.relic.sha256.hmac,Whether or not to use SHA-256 for HMAC of New Relic attributes . If not\, uses SHA-1, true, `CID-1280`_, reloadable
+   feature.enable.new.relic.sha256.hmac,"Whether or not to use SHA-256 for HMAC of New Relic attributes . If not, uses SHA-1", true, `CID-1280`_, reloadable
 
 -------
 Updates
@@ -83,7 +83,7 @@ These properties are changes to the default settings for existing properties
    :header: "Name", "Description", "DefaultValue", "Story", "File"
 
    feature.enforce.password.policy.history, Whether or not to enforce password policy history, true, `CID-1287`_, reloadable
-   feature.maintain.password.history, Whether or not to maintain password history. If history enforcement is enabled, this is always true, true, `CID-1287`_, reloadable
+   feature.maintain.password.history, "Whether or not to maintain password history. If history enforcement is enabled, this is always true", true, `CID-1287`_, reloadable
    enable.user.groups.globally, Whether or not user groups are supported for all domains for management and considered during effective role calculation, true, `CID-1297`_, reloadable
 
 -------
