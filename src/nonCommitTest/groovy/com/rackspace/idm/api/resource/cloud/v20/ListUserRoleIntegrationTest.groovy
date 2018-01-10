@@ -310,25 +310,38 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
     def "propagating attribute is correctly displayed for list user global roles, accept = #accept, applyRunRoles = #applyRcnRoles"() {
         given:
         def propRole = utils.createPropagatingRole()
+        def nonPropRole = utils.createRole()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin()
         utils.addRoleToUser(userAdmin, propRole.id)
+        utils.addRoleToUser(userAdmin, nonPropRole.id)
 
-        when:
+        when: "list user global roles"
         def response = cloud20.listUserGlobalRoles(utils.getServiceAdminToken(), userAdmin.id, null, applyRcnRoles, accept)
 
-        then:
-        response.status == 200
+        then: "the propagating attribute is displayed correctly for propagating roles"
+        assert response.status == 200
+        def parsedResponse
         if (accept == MediaType.APPLICATION_XML_TYPE) {
-            RoleList parsedResponse = response.getEntity(RoleList).value
-            assert parsedResponse.role.find { role -> role.id == propRole.id }.propagate == true
+            parsedResponse = response.getEntity(RoleList).value
         } else {
-            def parsedRoles = new JsonSlurper().parseText(response.getEntity(String))
-            assert parsedRoles['roles'].find { role -> role.id == propRole.id }['RAX-AUTH:propagate'] == true
+            parsedResponse = new JsonSlurper().parseText(response.getEntity(String))
         }
+        assertPropagatingAttirbuteIsSetCorrectly(parsedResponse, accept, propRole.id, true)
+
+        then: "the propagating attribute is displayed correctly for non-propagating roles"
+        assertPropagatingAttirbuteIsSetCorrectly(parsedResponse, accept, nonPropRole.id, false)
 
         where:
         [accept, applyRcnRoles] << [[MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE], [true, false]].combinations()
+    }
+
+    private void assertPropagatingAttirbuteIsSetCorrectly(parsedResponse, accept, roleId, isPropagating) {
+        if (accept == MediaType.APPLICATION_XML_TYPE) {
+            assert parsedResponse.role.find { role -> role.id == roleId }.propagate == isPropagating
+        } else {
+            assert parsedResponse['roles'].find { role -> role.id == roleId }['RAX-AUTH:propagate'] == isPropagating
+        }
     }
 
     private ClientRole getUserManageRole() {

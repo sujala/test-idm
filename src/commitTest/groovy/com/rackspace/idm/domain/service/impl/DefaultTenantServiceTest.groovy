@@ -1052,8 +1052,18 @@ class DefaultTenantServiceTest extends RootServiceTest {
             it
         }
         userTenantRoles << propagatingRole
+        def nonPropagatingRole = new TenantRole(). with {
+            it.roleRsId = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        userTenantRoles << nonPropagatingRole
         def propagatingClientRole = new ClientRole().with {
             it.roleType = RoleTypeEnum.PROPAGATE
+            it.id = propagatingRole.roleRsId
+            it
+        }
+        def nonPropagatingClientRole = new ClientRole().with {
+            it.roleType = RoleTypeEnum.STANDARD
             it.id = propagatingRole.roleRsId
             it
         }
@@ -1064,7 +1074,9 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         1 * tenantRoleDao.getTenantRolesForUser(user) >> userTenantRoles
         1 * applicationService.getClientRoleById(propagatingRole.roleRsId) >> propagatingClientRole
+        1 * applicationService.getClientRoleById(nonPropagatingRole.roleRsId) >> nonPropagatingClientRole
         roles.find { role -> role.roleRsId == propagatingRole.roleRsId }.propagate == true
+        roles.find { role -> role.roleRsId == nonPropagatingRole.roleRsId }.propagate == false
     }
 
     def createImmutableClientRole(String name, int weight = 1000) {
