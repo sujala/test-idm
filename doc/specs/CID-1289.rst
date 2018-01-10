@@ -1,0 +1,207 @@
+.. _CID-1289:
+
+==================================
+Do not bind a user that's disabled
+==================================
+
+~~~~~~~~~~~
+Description
+~~~~~~~~~~~
+Currently, when a user attempts to authenticate w/ password Identity performs
+the following:
+
+1. We look up the user by supplied username
+2. If no user found, return 401 w/ message "Unable to authenticate user with
+   credentials provided."
+3. We attempt to bind w/ supplied pwd.
+4. If pwd invalid, we return 401 w/ message "Unable to authenticate user with
+   credentials provided."
+5. If correct pwd, and either the user is disabled or domain is disabled, we
+   return a 403 w/ message "User '" + user.getUsername() +"' is disabled.
+
+This logic reduces our ability to respond to bad actors. For example, in the
+case of a user attempting to perform excessive auth attempts (e.g. bad actor or
+misconfigured program) a standard response would be to simply disable the user.
+However, given the above logic, this would still result in a search and a bind
+before even checking whether the user is disabled. Binds have additional cost
+beyond simply checking passwords. The directory must replicate successful (and
+unsuccessful) binds across all nodes to support locking for failed password
+attempts. Ultimately, this means we use resources when the request will
+ultimately be rejected anyway.
+
+As a real life use case, the top Identity API consumer in identity for a while
+has been a user attempting to authenticate against a single user account. This
+is either a brute force attack against a user's password or a runaway service
+with an old pwd. We disabled the user long ago after noticing the degree of
+calls. However, as described above, we still do a directory search and bind for
+each call.
+
+We perform similar logic when authenticating via API key - with the exception
+that no bind is required; instead the identity application performs the
+verification against the stored API key. We must maintain consistent responses
+across our auth methods (API and password) for disabled users.
+
+The goal of this story is to further limit the resource consumption of
+authenticating against disabled users.Similarly, there are opportunities for
+caching disabled user information and eliminating the initial search for the
+user completely.
+
+While there is also an additional case where the entire domain is disabled,
+which also results in the authentication failing, addressing that scenario would
+require an additional refactor to prevent loading the domain multiple times (and
+increasing the cost of the far more common "successful" auth case). This can be
+addressed in a separate story if desired in order to limit the scope of this
+story.
+
+Affected API Services
+---------------------
+`(POST /v2.0/tokens) <https://pages.github.rackspace.com/ServiceAPIContracts/global-auth-keystone-extensions/api-reference/token-operations.html#authenticate-as-user-with-password-or-api-key>`_
+GET /v1.0 (v1.0 Auth)
+POST /v1.1/auth
+POST /v1.1/auth-admin
+All /v1.1 services that accept Basic Auth
+
+All API/Password authentications check whether the user is disabled _after_
+performing the authentication. v1.0 auths by API; v1.1 and v2.0 provide both
+methods of authentication. While v2.0 also provides an `Auth with Token`
+authentication, this authentication does not appear to check the user status.
+
+We must balance resource utilization, information leakage, contract stability,
+and usability when a disabled user attempts to login. The current implementation
+favors usability (returning 403 for disabled users) and security (authenticating
+credential prior to checking disabled status), but does not sufficiently reduce
+resource utilization. The following options juggle these a few different ways.
+
+-------
+Options
+-------
+The following represent a few options with the pros/cons of each.
+
+Option 1: Return 401 Immediately
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1. We look up the user by supplied username
+2. If no user found, return 401 w/ message "Unable to authenticate user with
+   credentials provided."
+3. If user is disabled, we return 401 w/ message "Unable to authenticate user
+   with credentials provided."
+4. We attempt to bind w/ supplied pwd.
+5. If pwd invalid, we return 401 w/ message "Unable to authenticate user with
+   credentials provided."
+6. If correct pwd but domain is disabled, we return a 403 w/ message "User '" +
+   user.getUsername() +"' is disabled.
+
+Pros:
+
+- No bind for disabled users
+- Straightforward code change 
+- Attackers can't determine whether a given username is valid (though disabled
+  via response message
+   - Could determine this through response time analysis which is an existing
+     vulnerability. The fastest 401 responses likely mean username doesn't
+     exist, next fastest 401 that exists but disabled, and longest that account
+     exists w/ invalid password
+  
+Cons:
+
+- Contract Change for disabled users - All auths (v1.0/v1.1/v2.0) for disabled
+  users will result in a 401 instead of a 403
+- Usability Hit - Legitimate users will not know whether call fails due to
+  invalid pwd or user being disabled
+- Still queries user for each call
+
+Option 2: Return 403 Immediately
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1. We look up the user by supplied username
+2. If no user found, return 401 w/ message "Unable to authenticate user with
+   credentials provided."
+3. If user is disabled, we return 403 w/ message "User '" + user.getUsername()
+   +"' is disabled.
+4. We attempt to bind w/ supplied pwd.
+5. If pwd invalid, we return 401 w/ message "Unable to authenticate user with
+   credentials provided."
+6. If correct pwd but domain is disabled, we return a 403 w/ message "User '"
+   + user.getUsername() +"' is disabled.
+
+Pros:
+
+- No bind for disabled users
+- Straightforward code change
+- Legitmate users know whether their account is disabled or they provided
+  invalid credentials
+- Minor contract change. The common use case where caller provides the correct
+  password for a disabled user would be unchanged. The use case where the caller
+  provides an invalid credential for a disabled user would be modified. Instead
+  of receiving a 401 (as credential is validated first), this use case would
+  result in a 403 (as user status is now checked first). 
+
+Cons:
+
+- Attackers can trivially determine whether a given username is for a valid, but
+  disabled, user by simply looking at response message
+- Still queries user for each call
+
+Option 3: Disabled User Cache
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is an augmentation to Option 1 or 2 where we temporily cache disabled users
+per server for a configurable amount of time (say 5 minutes). When a caller
+attempts to authenticate for the same disabled user on the same server within
+the cached timeframe, we can eliminate all queries to CA as we know to return a
+403. Obviously once a user becomes enabled, the caller would need to wait until
+the cache expires prior to authenticating. Similarly, if a disabled user is
+deleted and a new user is created with that disabled user's username, the new
+user would not be able to authenticate until cache expires.
+
+While we could also cache enabled users, given the number of unique user auths
+per minute, this would require a significantly larger cache than solely storing
+disabled users. Additionally, this would increase the frequency of returning
+stale data since succssful responses return information stored on user. It would
+also delay returning a 403 for newly disabled users until the previously enabled
+user is expired from the cache. Due to these additional impacts, this option is
+limited to disabled users only.
+
+Pros:
+- Eliminates user lookup for disabled users within the cache period. When
+  combined with bind change, reduces CA usage for multiple auth attempts against
+  disabled users to near zero.
+  
+Cons:
+- Adds more complexity and moving parts
+- Eventual consistency in API node response as each server maintains own cache
+
+--------------
+Recommendation 
+--------------
+
+Apply "Keep It Simple Stupid" (KISS) principle. While Option 3 would further
+limit the cost for authenticating against disabled users, it adds additional
+complexity, implementation cost, and the standard state data issue inherent with
+caches. While it might be worthwhile to add, I think it's the cherry on top
+rather than a critical need at this time.
+
+For now, I recommend Option 2. Given the broad impact across multiple APIs
+(v1.0/v1.1/v2.0) and the sheer number of consumers and critical systems that
+consume those APIs, I think we need to limit contract changes to limit the risk
+of unintended impact. This also maintains usability for the perceived more
+frequent use case of a legitimate user attempting to log in under a disabled
+user account. The added security risk that allows attackers to mine usernames of
+disabled users, is perceived to be small given the small proportion of disabled
+users in our user base and that there are ways to mine usernames regardless of
+whether the user is enabled/disabled.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Business Acceptance Criteria
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Implement Option 2 to immediately return a 403 for disabled users without 
+   performing a bind.
+2. Implement a reloadable feature flag 
+   "feature.immediately.reject.disabled.user.auths.enabled" to control whether 
+   the 403 is returned. When false, the current workflow must be used.
+ 1. Default for flag is true when property no provided in configuration file
+ 2. Default for docker configuration is true
+
+~~~~~~~~~~~~~~~~~~~~~~~~
+Test Acceptance Criteria
+~~~~~~~~~~~~~~~~~~~~~~~~
+<TBD>
