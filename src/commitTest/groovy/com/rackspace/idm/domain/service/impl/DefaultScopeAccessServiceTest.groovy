@@ -54,8 +54,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
         config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
-        config.getInt("token.expirationSeconds", _) >> defaultExpirationSeconds
-        config.getInt("token.rackerExpirationSeconds", _) >> defaultRackerExpirationSeconds
         config.getInt("token.refreshWindowHours") >> defaultRefreshHours
     }
 

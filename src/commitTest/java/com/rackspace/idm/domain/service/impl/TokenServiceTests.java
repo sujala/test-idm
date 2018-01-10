@@ -61,7 +61,6 @@ public class TokenServiceTests {
         mockTenantService = EasyMock.createMock(TenantService.class);
 
         final Configuration appConfig = new PropertiesConfiguration();
-        appConfig.addProperty("token.expirationSeconds", expireInSeconds);
         appConfig.addProperty("rackspace.customerId", "RACKSPACE");
 
         tokenService = new DefaultTokenService();
