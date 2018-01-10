@@ -775,13 +775,13 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
     }
 
-    def createEndpointTemplate(EndpointTemplate endpointTemplate) {
+    EndpointTemplate createEndpointTemplate(EndpointTemplate endpointTemplate) {
         def response = methods.addEndpointTemplate(getServiceAdminToken(), endpointTemplate)
         assert (response.status == SC_CREATED)
         response.getEntity(EndpointTemplate).value
     }
 
-    def updateEndpointTemplate(EndpointTemplate endpointTemplate, String endpointId) {
+    EndpointTemplate updateEndpointTemplate(EndpointTemplate endpointTemplate, String endpointId) {
         def response = methods.updateEndpointTemplate(getServiceAdminToken(), endpointId, endpointTemplate)
         assert (response.status == SC_OK)
         response.getEntity(EndpointTemplate).value
@@ -792,7 +792,7 @@ class Cloud20Utils {
         updateEndpointTemplate(endpointTemplate, endpointId)
     }
 
-    def createEndpointTemplate(global=false, tenantAlias=null, enabled=true, type="compute", region="ORD", id=testUtils.getRandomIntegerString(), publicUrl=testUtils.getRandomUUID("http://"), name="cloudServers") {
+    EndpointTemplate createEndpointTemplate(global=false, tenantAlias=null, enabled=true, type="compute", region="ORD", id=testUtils.getRandomIntegerString(), publicUrl=testUtils.getRandomUUID("http://"), name="cloudServers") {
         def endpointTemplate =v1Factory.createEndpointTemplate(id, type, publicUrl, name).with {
             it.global = global
             it.region = region

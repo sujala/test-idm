@@ -82,7 +82,7 @@ public class TenantTypeRule implements Auditable, UniqueId, Rule {
         if (endpointTemplateMembers == null) {
             endpointTemplateMembers = new HashSet<String>(1);
         }
-        endpointTemplateMembers.add(convertEndpointTemplateIdToUniqueId(endpointTemplateIdentifier));
+        endpointTemplateMembers.add(TenantTypeRule.convertEndpointTemplateIdToUniqueId(endpointTemplateIdentifier));
     }
 
     /**
@@ -94,7 +94,7 @@ public class TenantTypeRule implements Auditable, UniqueId, Rule {
      */
     public boolean removeEndpointTemplate(int endpointTemplateIdentifier) {
         if (CollectionUtils.isNotEmpty(endpointTemplateMembers)) {
-            return endpointTemplateMembers.remove(convertEndpointTemplateIdToUniqueId(endpointTemplateIdentifier));
+            return endpointTemplateMembers.remove(TenantTypeRule.convertEndpointTemplateIdToUniqueId(endpointTemplateIdentifier));
         }
         return false;
     }
@@ -117,7 +117,7 @@ public class TenantTypeRule implements Auditable, UniqueId, Rule {
         return ids;
     }
 
-    private String convertEndpointTemplateIdToUniqueId(int id) {
+    public static String convertEndpointTemplateIdToUniqueId(int id) {
         try {
             DN dn = new DN("rsId=" + id + "," + Constants.ENDPOINT_TEMPLATE_BASE_DN);
             return dn.toString();
