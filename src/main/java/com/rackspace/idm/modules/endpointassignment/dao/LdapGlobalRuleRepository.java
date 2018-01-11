@@ -4,11 +4,13 @@ import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DaoGetEntityType;
 import com.rackspace.idm.domain.dao.impl.LdapGenericRepository;
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.exception.SizeLimitExceededException;
 import com.rackspace.idm.modules.endpointassignment.Constants;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule;
 import com.unboundid.ldap.sdk.*;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,9 @@ import java.util.Set;
 
 @LDAPComponent
 public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implements GlobalRuleDao, DaoGetEntityType {
+
+    public static final String SIZE_EXCEEDED_ERROR_MESSAGE = "Aborting loading all assignment rules. Result size exceeded max directory limit";
+    public static final String SIZE_EXCEEDED_EXCEPTION_MESSAGE = "Result size exceeded.";
 
     private static Filter TENANT_TYPE_RULE_CLASS_FILTER = Filter.createEqualityFilter(ATTR_OBJECT_CLASS, TenantTypeRule.OBJECT_CLASS);
 
@@ -45,8 +50,8 @@ public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implem
             return rules;
         } catch (LDAPSearchException ldapEx) {
             if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
-                logger.debug(String.format("Aborting loading all assignment rules. Result size exceeded max directory limit"), ldapEx);
-                throw new SizeLimitExceededException(String.format("Result size exceeded."), ldapEx);
+                logger.debug(SIZE_EXCEEDED_ERROR_MESSAGE, ldapEx);
+                throw new SizeLimitExceededException(SIZE_EXCEEDED_EXCEPTION_MESSAGE, ldapEx);
             } else {
                 throw new IllegalStateException(ldapEx);
             }
@@ -65,8 +70,8 @@ public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implem
             return rules;
         } catch (LDAPSearchException ldapEx) {
             if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
-                logger.debug(String.format("Aborting loading all assignment rules. Result size exceeded max directory limit"), ldapEx);
-                throw new SizeLimitExceededException(String.format("Result size exceeded."), ldapEx);
+                logger.debug(SIZE_EXCEEDED_ERROR_MESSAGE, ldapEx);
+                throw new SizeLimitExceededException(SIZE_EXCEEDED_EXCEPTION_MESSAGE, ldapEx);
             } else {
                 throw new IllegalStateException(ldapEx);
             }
@@ -90,6 +95,26 @@ public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implem
         }
     }
 
+    @Override
+    public List<Rule> findEndpointAssignmentRulesForEndpointTemplateId(String endpointTemplateId) {
+        if (!StringUtils.isNumeric(endpointTemplateId)) {
+            return new ArrayList<>();
+        }
+
+        try {
+            List<Rule> rules = getUnpagedUnsortedObjects(searchFilterGetRulesByEndpointTemplateId(endpointTemplateId, ALL_ENDPOINT_ASSIGNMENT_CLASS_FILTERS), getBaseDn(), SearchScope.SUB);
+            return rules;
+        } catch (LDAPSearchException ldapEx) {
+            if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
+                logger.debug(SIZE_EXCEEDED_ERROR_MESSAGE, ldapEx);
+                throw new SizeLimitExceededException(SIZE_EXCEEDED_EXCEPTION_MESSAGE, ldapEx);
+            } else {
+                throw new IllegalStateException(ldapEx);
+            }
+        }
+
+    }
+
     private Filter searchFilterGetRuleById(String id, List<Filter> classFilterList) {
         Filter classFilter = Filter.createORFilter(classFilterList);
         return Filter.createANDFilter(classFilter, Filter.createEqualityFilter(Rule.LDAP_ATTRIBUTE_CN, id));
@@ -111,4 +136,10 @@ public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implem
 
         return Filter.createANDFilter(classFilter, Filter.createORFilter(typeFilterList));
     }
+
+    private Filter searchFilterGetRulesByEndpointTemplateId(String endpointTemplateId, List<Filter> classFilterList) {
+        Filter classFilter = Filter.createORFilter(classFilterList);
+        return Filter.createANDFilter(classFilter, Filter.createEqualityFilter(LdapRepository.ATTR_MEMBER, TenantTypeRule.convertEndpointTemplateIdToUniqueId(Integer.parseInt(endpointTemplateId))));
+    }
+
 }

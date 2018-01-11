@@ -44,4 +44,14 @@ public interface GlobalRuleDao {
      * @return
      */
     List<Rule> findByTenantTypes(Set<String> types);
+
+    /**
+     * Retrieves a list of endpoint assignment rules that map the endpointTemplate, specified by ID, to a tenant type.
+     *
+     * @param endpointTemplateId
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException if returns too many results.
+     * @return
+     */
+    List<Rule> findEndpointAssignmentRulesForEndpointTemplateId(String endpointTemplateId);
+
 }

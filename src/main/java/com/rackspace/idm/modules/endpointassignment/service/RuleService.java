@@ -52,4 +52,15 @@ public interface RuleService {
      * @throws com.rackspace.idm.exception.SizeLimitExceededException If more than allowed number of results are returned
      */
     List<Rule> findEndpointAssignmentRulesForTenantType(Set<String> types);
+
+    /**
+     * Retrieves a list of endpoint assignment rules that map the endpointTemplate, specified by ID, to a tenant type.
+     *
+     * @param endpointTemplateId
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException If more than allowed number of results are returned
+     * @throws java.lang.IllegalArgumentException if the specified endpoint template ID is null, empty, or blank
+     * @return
+     */
+    List<Rule> findEndpointAssignmentRulesForEndpointTemplateId(String endpointTemplateId);
+
 }
