@@ -84,8 +84,8 @@ Option 1: Return 401 Immediately
    credentials provided."
 3. If user is disabled, we return 401 w/ message "Unable to authenticate user
    with credentials provided."
-4. We attempt to bind w/ supplied pwd.
-5. If pwd invalid, we return 401 w/ message "Unable to authenticate user with
+4. We attempt to bind w/ supplied pwd (or app validates API key)
+5. If pwd/api invalid, we return 401 w/ message "Unable to authenticate user with
    credentials provided."
 6. If correct pwd but domain is disabled, we return a 403 w/ message "User '" +
    user.getUsername() +"' is disabled.
@@ -116,8 +116,8 @@ Option 2: Return 403 Immediately
    credentials provided."
 3. If user is disabled, we return 403 w/ message "User '" + user.getUsername()
    +"' is disabled.
-4. We attempt to bind w/ supplied pwd.
-5. If pwd invalid, we return 401 w/ message "Unable to authenticate user with
+4. We attempt to bind w/ supplied pwd (or app validates API key).
+5. If pwd/api invalid, we return 401 w/ message "Unable to authenticate user with
    credentials provided."
 6. If correct pwd but domain is disabled, we return a 403 w/ message "User '"
    + user.getUsername() +"' is disabled.
@@ -143,7 +143,7 @@ Cons:
 Option 3: Disabled User Cache
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This is an augmentation to Option 1 or 2 where we temporily cache disabled users
+This is an augmentation to Option 1, 2, or 4 where we temporarily cache disabled users
 per server for a configurable amount of time (say 5 minutes). When a caller
 attempts to authenticate for the same disabled user on the same server within
 the cached timeframe, we can eliminate all queries to CA as we know to return a
@@ -168,6 +168,58 @@ Pros:
 Cons:
 - Adds more complexity and moving parts
 - Eventual consistency in API node response as each server maintains own cache
+
+Option 4: Return 401 and 403 Immediately
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Adding as Option 4 to avoid changing up the numbers.
+To support password history we already support the ability
+to compare a user provided password to the CA hashed version from within the Identity application code itself (no bind).
+We can take advantage of this functionality for disabled users.
+
+1. We look up the user by supplied username
+2. If no user found, return 401 w/ message "Unable to authenticate user with
+   credentials provided."
+3. If user is disabled, we check the password/api key in the API Node (no bind).
+ 1. If supplied credential is correct, return 403 w/ message "User '" + user.getUsername()
+   +"' is disabled.
+ 2. If supplied credential is incorrect, return 401 w/ message "Unable to authenticate user with
+   credentials provided.
+4. If user is not disabled we continue as normal. Check via app for API key, bind for pwd auth
+ 1. If pwd invalid, we return 401 w/ message "Unable to authenticate user with
+    credentials provided."
+ 2. If correct pwd but domain is disabled, we return a 403 w/ message "User '"
+   + user.getUsername() +"' is disabled.
+
+Pros:
+
+- No bind for disabled users
+- Straightforward code change
+- No contract change
+- Legitmate users know whether their account is disabled or they provided invalid credentials
+- Attackers can't tell, via auth response message, whether supplied username exists, is valid, or is disabled
+
+Cons:
+
+- Allows brute force attacks against a disabled user's password since the app response distinguishes between a correctly supplied
+  pwd and an incorrect one and the app does not include lock-out functionality for pwd (relies on directory to provide as part
+  of bind operation.
+- Slightly more complex logic with additional use cases
+- Still queries user for each call
+
+As the directory provides lock-out functionality to mitigate brute force attacks we must continue to let the directory
+perform binds for non-disabled users. The brute forcing is somewhat mitigated by the fact an attacker wouldn't know whether
+the user they are attacking is disabled or not. As such they wouldn't actually know whether they're successfully brute
+forcing the password for the user or we're just returning a 401 without comparing passwords (which we'd do when brute
+forcing an enabled user via directory logic).
+
+A modification to this option to mitigate the brute forcing would be to have a per user cache for disabled
+user pwd auth failures. We would store the disabled user and the number of invalid auth attempts made against that user within a
+rolling window (say 5 minutes). Once the locking threshold has been met (e.g. 6
+invalid attempts within 5 minutes), all auth attempts for that disabled user will result in a 401 without even checking
+the password for a "lock out time period." After the time period has elapsed, the cache entry would be removed. Cache
+entries would also be removed after 5 minutes of no login attempts or if the user logs in successfully outside a lockout
+period. The above logic describes how to use the cache _solely_ as a means to mitigate brute force password attacks. It
+would be relatively straightforward to combine this with Option 3 to eliminate all queries to backend for disabled users.
 
 --------------
 Recommendation 
