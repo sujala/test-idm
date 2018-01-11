@@ -1,3 +1,0 @@
-[submodule "GlobalAuthQE"]
-	path = GlobalAuthQE
-	url = git://github.rackspace.com/GlobalServices/GlobalAuthQE.git
