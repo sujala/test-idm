@@ -64,7 +64,6 @@ public class AuthenticationServiceTests {
         tenantRoles.add(new TenantRole());
 
         final Configuration appConfig = new PropertiesConfiguration();
-        appConfig.addProperty("token.expirationSeconds", expireInSeconds);
         appConfig.addProperty("rackspace.customerId", "RACKSPACE");
         appConfig.addProperty("ldap.server.trusted", "true");
         appConfig.addProperty("idm.clientId", "TESTING");

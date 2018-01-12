@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.EndpointAssignmentRule
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.*
@@ -15,6 +16,7 @@ import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.exception.*
+import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
@@ -3924,6 +3926,36 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == HttpStatus.SC_BAD_REQUEST
     }
 
+    @Unroll
+    def "delete endpoint template requires the endpoint template to not be a member of an assignment rule - memberOfRule == #memberOfRule, expectedStatus == #expectedStatus"() {
+        given:
+        allowUserAccess()
+        def endpointTemplateId = RandomStringUtils.randomAlphanumeric(8)
+        def cloudBaseUrl = new CloudBaseUrl().with {
+            it.baseUrlId = endpointTemplateId
+            it.enabled = false
+            it
+        }
+        endpointService.checkAndGetEndpointTemplate(endpointTemplateId) >> cloudBaseUrl
+        tenantService.getTenantsForEndpoint(endpointTemplateId) >> []
+        def rulesForEndpoint = []
+        ruleService.findEndpointAssignmentRulesForEndpointTemplateId(endpointTemplateId) >> rulesForEndpoint
+        if (memberOfRule) {
+            rulesForEndpoint << new TenantTypeRule()
+        }
+
+        when:
+        def response = service.deleteEndpointTemplate(headers, authToken, endpointTemplateId)
+
+        then:
+        response.build().status == expectedStatus
+
+        where:
+        memberOfRule    | expectedStatus
+        true            | HttpStatus.SC_FORBIDDEN
+        false           | HttpStatus.SC_NO_CONTENT
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)
@@ -3948,6 +3980,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockRequestContextHolder(service)
         mockRoleConverter(service)
         mockUserGroupService(service)
+        mockRuleService(service)
     }
 
     def mockMisc() {

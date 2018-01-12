@@ -79,6 +79,14 @@ public class DefaultRuleService implements RuleService {
         throw new IllegalArgumentException(String.format("The supplied rule of type '%s' is not supported", endpointAssignmentRule.getClass().getSimpleName()));
     }
 
+    @Override
+    public List<Rule> findEndpointAssignmentRulesForEndpointTemplateId(String endpointTemplateId) {
+        if (StringUtils.isBlank(endpointTemplateId)) {
+            throw new IllegalArgumentException("Invalid endpoint template ID to list assignment rules for.");
+        }
+        return globalRuleDao.findEndpointAssignmentRulesForEndpointTemplateId(endpointTemplateId);
+    }
+
     private TenantTypeRule addTenantTypeRule(TenantTypeRule tenantTypeRule) {
         //perform validation of the rule
         validateTenantTypeRule(tenantTypeRule);
