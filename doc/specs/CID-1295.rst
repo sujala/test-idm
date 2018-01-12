@@ -20,6 +20,18 @@ Business Acceptance Criteria
 
 3. Update the dev docker-compose file to use the RSI docker images.
 
+    1. The images currently used and need to be ported over to the RSI equivalents are used are:
+
+        1. docker.ciidentity.com/postfix
+
+        2. docker.ciidentity.com/cloud-feeds
+
+        3. docker.ciidentity.com/e-directory
+
+        4. docker.ciidentity.com/ca-directory
+
+        5. docker.ciidentity.com/repose
+
 4. Document and demo the work done and any changes in use between the original docker images and the new RSI images.
 
 Test Acceptance Criteria
