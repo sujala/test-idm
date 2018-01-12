@@ -77,6 +77,7 @@ LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
 LIST_GROUPS_URL = '/users/{user_id}/RAX-KSGRP'
+LIST_EFFECTIVE_ROLES_FOR_USER_URL = '/users/{user_id}/RAX-AUTH/roles'
 LIST_ROLES_FOR_USER_ON_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles')
 LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
@@ -494,6 +495,14 @@ VALUE_TYPE = "valueType"
 IDM_VERSION = "idmVersion"
 RELOADABLE = "reloadable"
 SEARCHABLE = "searchable"
+
+'''Source Types'''
+USER_SOURCE_TYPE = "USER"
+USERGROUP_SOURCE_TYPE = "USERGROUP"
+SYSTEM_SOURCE_TYPE = "SYSTEM"
+TENANT_ASSIGNMENT_TYPE = "TENANT"
+DOMAIN_ASSIGNMENT_TYPE = "DOMAIN"
+
 
 '''ROLES'''
 COMPUTE_ROLE_NAME = "compute:default"
