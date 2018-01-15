@@ -1331,6 +1331,7 @@ public class DefaultTenantService implements TenantService {
 
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
+                role.setRoleType(cRole.getRoleType());
 
                 globalRoles.add(role);
             }

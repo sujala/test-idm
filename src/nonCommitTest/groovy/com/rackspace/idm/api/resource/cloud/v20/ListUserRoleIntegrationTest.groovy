@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
+import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
@@ -17,6 +18,7 @@ import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import com.sun.jersey.api.client.ClientResponse
@@ -302,6 +304,44 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         then: "Assert NotFound"
         String expectedErrMsg = String.format("User %s not found", userId)
         IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.NOT_FOUND.value(), expectedErrMsg)
+    }
+
+    @Unroll
+    def "propagating attribute is correctly displayed for list user global roles, accept = #accept, applyRunRoles = #applyRcnRoles"() {
+        given:
+        def propRole = utils.createPropagatingRole()
+        def nonPropRole = utils.createRole()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin()
+        utils.addRoleToUser(userAdmin, propRole.id)
+        utils.addRoleToUser(userAdmin, nonPropRole.id)
+
+        when: "list user global roles"
+        def response = cloud20.listUserGlobalRoles(utils.getServiceAdminToken(), userAdmin.id, null, applyRcnRoles, accept)
+
+        then: "the propagating attribute is displayed correctly for propagating roles"
+        assert response.status == 200
+        def parsedResponse
+        if (accept == MediaType.APPLICATION_XML_TYPE) {
+            parsedResponse = response.getEntity(RoleList).value
+        } else {
+            parsedResponse = new JsonSlurper().parseText(response.getEntity(String))
+        }
+        assertPropagatingAttirbuteIsSetCorrectly(parsedResponse, accept, propRole.id, true)
+
+        then: "the propagating attribute is displayed correctly for non-propagating roles"
+        assertPropagatingAttirbuteIsSetCorrectly(parsedResponse, accept, nonPropRole.id, false)
+
+        where:
+        [accept, applyRcnRoles] << [[MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE], [true, false]].combinations()
+    }
+
+    private void assertPropagatingAttirbuteIsSetCorrectly(parsedResponse, accept, roleId, isPropagating) {
+        if (accept == MediaType.APPLICATION_XML_TYPE) {
+            assert parsedResponse.role.find { role -> role.id == roleId }.propagate == isPropagating
+        } else {
+            assert parsedResponse['roles'].find { role -> role.id == roleId }['RAX-AUTH:propagate'] == isPropagating
+        }
     }
 
     private ClientRole getUserManageRole() {

@@ -16,6 +16,7 @@ import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.util.RoleUtil
 import com.unboundid.ldap.sdk.DN
+import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -1015,6 +1016,67 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         1 * userService.getEnabledUsersByContactId(contactId) >> [].asList()
         userList.size() == 0
+    }
+
+    def "getEffectiveGlobalRolesForUserApplyRcnRoles populates the propagating attribute (by populating the role type) correctly"() {
+        given:
+        def user = new User()
+        def userTenantRoles = []
+        def propagatingRole = new TenantRole(). with {
+            it.roleRsId = RandomStringUtils.randomAlphanumeric(8)
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
+        }
+        userTenantRoles << propagatingRole
+        def propagatingClientRole = new ClientRole().with {
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it.id = propagatingRole.roleRsId
+            it
+        }
+
+        when:
+        List<TenantRole> roles = service.getEffectiveGlobalRolesForUserApplyRcnRoles(user)
+
+        then:
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> userTenantRoles
+        1 * applicationService.getClientRoleById(propagatingRole.roleRsId) >> propagatingClientRole
+        roles.find { role -> role.roleRsId == propagatingRole.roleRsId }.propagate == true
+    }
+
+    def "getEffectiveGlobalRolesForUser populates the propagating attribute (by populating the role type) correctly"() {
+        given:
+        def user = new User()
+        def userTenantRoles = []
+        def propagatingRole = new TenantRole(). with {
+            it.roleRsId = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        userTenantRoles << propagatingRole
+        def nonPropagatingRole = new TenantRole(). with {
+            it.roleRsId = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        userTenantRoles << nonPropagatingRole
+        def propagatingClientRole = new ClientRole().with {
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it.id = propagatingRole.roleRsId
+            it
+        }
+        def nonPropagatingClientRole = new ClientRole().with {
+            it.roleType = RoleTypeEnum.STANDARD
+            it.id = propagatingRole.roleRsId
+            it
+        }
+
+        when:
+        List<TenantRole> roles = service.getEffectiveGlobalRolesForUser(user)
+
+        then:
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> userTenantRoles
+        1 * applicationService.getClientRoleById(propagatingRole.roleRsId) >> propagatingClientRole
+        1 * applicationService.getClientRoleById(nonPropagatingRole.roleRsId) >> nonPropagatingClientRole
+        roles.find { role -> role.roleRsId == propagatingRole.roleRsId }.propagate == true
+        roles.find { role -> role.roleRsId == nonPropagatingRole.roleRsId }.propagate == false
     }
 
     def createImmutableClientRole(String name, int weight = 1000) {

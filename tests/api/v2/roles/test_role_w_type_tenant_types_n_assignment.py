@@ -148,7 +148,6 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
         self.assertSchema(response=resp, json_schema=roles_json.list_roles)
         for role in resp.json()[const.ROLES]:
             self.assertNotIn(const.NS_TYPES, role)
-            self.assertNotIn(const.RAX_AUTH_ROLE_TYPE, role)
             self.assertNotIn(const.RAX_AUTH_ASSIGNMENT, role)
 
     @ddt.data(True, False)
