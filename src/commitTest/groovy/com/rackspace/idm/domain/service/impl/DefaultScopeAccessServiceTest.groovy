@@ -90,7 +90,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     def "update expired user scope access delete failure ignored when ignore delete failure enabled"() {
         given:
         def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
 
         when:
         service.updateExpiredUserScopeAccess(expired_sa)
@@ -98,20 +97,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         1 * scopeAccessDao.addScopeAccess(_, _)
         1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException()}
-    }
-
-    def "update expired user scope access delete failure causes exception when ignore delete failure disabled"() {
-        given:
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
-
-        when:
-        service.updateExpiredUserScopeAccess(expired_sa)
-
-        then:
-        1 * scopeAccessDao.addScopeAccess(_, _)
-        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException()}
-        thrown(RuntimeException)
     }
 
     def "update (different parameters) deletes expired"() {
@@ -145,74 +130,12 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
         scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
-        config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> false
 
         when:
         service.updateExpiredUserScopeAccess(user, "clientId", null)
 
         then:
         1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException()}
-    }
-
-    def "update expired user scope access single token cleanup - failure when ignore failures enabled, stop cleanup enabled does not result in error"() {
-        given:
-        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
-        def user =  entityFactory.createUser()
-        user.setUniqueId(dn)
-
-        scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
-        config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> true
-
-        when:
-        service.updateExpiredUserScopeAccess(user, "clientId", null)
-
-        then:
-        //only called one time because after first exception, cleanup routine exits
-        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException()}
-    }
-
-    def "update expired user scope access single token cleanup - failure when ignore failures disabled, stop cleanup disabled results in error"() {
-        given:
-        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
-        def user =  entityFactory.createUser()
-        user.setUniqueId(dn)
-
-        scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
-        config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> false
-
-        when:
-        service.updateExpiredUserScopeAccess(user, "clientId", null)
-
-        then:
-        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException("error")}
-        thrown(RuntimeException)
-    }
-
-    def "update expired user scope access single token cleanup - failure when ignore failures disabled, stop cleanup enabled does result in error"() {
-        given:
-        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
-        def user =  entityFactory.createUser()
-        user.setUniqueId(dn)
-
-        scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
-        config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> true
-
-        when:
-        service.updateExpiredUserScopeAccess(user, "clientId", null)
-
-        then:
-        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException("error")}
-        thrown(RuntimeException)
     }
 
     def "update expired user scope access multiple token cleanup - failure on first delete when ignore failures enabled, stop cleanup disabled results in 2 deletes"() {
@@ -225,74 +148,12 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         scopeAccessDao.getScopeAccesses(_) >> [ expired_sa, expired_sa2 ].asList()
         scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
-        config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> false
 
         when:
         service.updateExpiredUserScopeAccess(user, "clientId", null)
 
         then:
         2 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException()}
-    }
-
-    def "update expired user scope access multiple token cleanup - failure on first delete when ignore failures enabled, stop cleanup enabled results in 1 delete"() {
-        given:
-        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
-        def expired_sa2 = createUserScopeAccess("expiredTokenString2", "userRsId2", "clientId2", expiredDate)
-        def user =  entityFactory.createUser()
-        user.setUniqueId(dn)
-
-        scopeAccessDao.getScopeAccesses(_) >> [ expired_sa, expired_sa2 ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
-        config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> true
-
-        when:
-        service.updateExpiredUserScopeAccess(user, "clientId", null)
-
-        then:
-        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException()}
-    }
-
-    def "update expired user scope access multiple token cleanup - failure on first delete when ignore failures disabled, stop cleanup disabled results in error"() {
-        given:
-        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
-        def user =  entityFactory.createUser()
-        user.setUniqueId(dn)
-
-        scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
-        config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> false
-
-        when:
-        service.updateExpiredUserScopeAccess(user, "clientId", null)
-
-        then:
-        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException("error")}
-        thrown(RuntimeException)
-    }
-
-    def "update expired user scope access multiple token cleanup - failure on first delete when ignore failures disabled, stop cleanup enabled results in 1 deletes"() {
-        given:
-        def sa = createUserScopeAccess("goodTokenString", "userRsId", "clientId", futureDate)
-        def expired_sa = createUserScopeAccess("expiredTokenString", "userRsId", "clientId", expiredDate)
-        def user =  entityFactory.createUser()
-        user.setUniqueId(dn)
-
-        scopeAccessDao.getScopeAccesses(_) >> [ expired_sa ].asList()
-        scopeAccessDao.getMostRecentScopeAccessByClientIdAndAuthenticatedBy(_,_,_) >> sa
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> false
-        config.getBoolean(DefaultScopeAccessService.FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, _) >> true
-
-        when:
-        service.updateExpiredUserScopeAccess(user, "clientId", null)
-
-        then:
-        1 * scopeAccessDao.deleteScopeAccess(_) >> {throw new RuntimeException("error")}
-        thrown(RuntimeException)
     }
 
     def "updateExpiredUserScopeAccess gets token entropy and adjusts expiration"() {
@@ -670,7 +531,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     def "updateExpiredRackerScopeAccess adds new scopeAccess, ignore deletes existing expired scopeAccess failure, and returns new scopeAccess when ignore delete enabled"() {
         given:
         def oldScopeAccess = createRackerScopeAccess("tokenString", "rackerId", expiredDate)
-        config.getBoolean(DefaultScopeAccessService.FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, _) >> true
 
         when:
         def newScopeAccess = service.updateExpiredRackerScopeAccess(oldScopeAccess, ["PASSWORD"].asList())

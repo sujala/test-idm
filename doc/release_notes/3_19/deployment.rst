@@ -1,6 +1,7 @@
 Cloud Identity 3.19.0 Release
 ==============================
 
+.. _CID-356:  https://jira.rax.io/browse/CID-356
 .. _CID-357:  https://jira.rax.io/browse/CID-357
 
 .. contents::
@@ -30,13 +31,14 @@ Issues Resolved
 Stories
 -------
 
-#. `CID-357`_ - Remove old Foundation API static properties
-
 Defects
 -------
 
 Technical Debts
 ---------------
+
+#. `CID-356`_ - Remove static properties 'feature.ignore.authentication.token.delete.failure.enabled' and 'feature.authentication.token.delete.failure.stops.cleanup.enabled'
+#. `CID-357`_ - Remove old Foundation API static properties
 
 
 Configuration Updates
@@ -67,6 +69,8 @@ These properties should be removed from the respective properties files as they 
 .. csv-table:: Configuration Changes
    :header: "Name", "Story", "File"
 
+   feature.ignore.authentication.token.delete.failure.enabled, `CID-356`_, static
+   feature.authentication.token.delete.failure.stops.cleanup.enabled, `CID-356`_, static
    token.expirationSeconds, `CID-357`_, static
    token.rackerExpirationSeconds, `CID-357`_, static
    token.maxExpirationSeconds, `CID-357`_, static
