@@ -28,6 +28,9 @@ public class LdapConfiguration {
     @Autowired
     private IdentityConfig identityConfig;
 
+    @Autowired
+    private LdapConnectionPoolHealthCheck ldapConnectionPoolHealthCheck;
+
     private Logger logger=LoggerFactory.getLogger(LdapConfiguration.class);
 
     public LdapConfiguration() {
@@ -88,6 +91,7 @@ public class LdapConfiguration {
             BindRequest bind = new SimpleBindRequest(bindDn, password);
             connPool = new LDAPConnectionPool(serverSet, bind, initPoolSize, maxPoolSize);
             connPool.setRetryFailedOperationsDueToInvalidConnections(true);
+            connPool.setHealthCheck(ldapConnectionPoolHealthCheck);
             connPool.setMaxConnectionAgeMillis(identityConfig.getStaticConfig().getLDAPServerPoolAgeMax());
             connPool.setCreateIfNecessary(identityConfig.getStaticConfig().getLDAPServerPoolCreateIfNecessary());
             connPool.setMaxWaitTimeMillis(identityConfig.getStaticConfig().getLDAPServerPoolMaxWaitTime());

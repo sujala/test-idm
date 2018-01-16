@@ -495,6 +495,12 @@ public class IdentityConfig {
     public static final String FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP = "feature.should.display.service.catalog.for.suspended.user.impersonate.tokens";
     public static final boolean FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP = "feature.enable.ldap.health.check.new.connection";
+    public static final boolean FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_DEFAULT = false;
+
+    public static final String FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP = "feature.enable.ldap.health.check.connection.for.continued.use";
+    public static final boolean FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_DEFAULT = false;
+
     /**
      * Identity Repository Properties
      */
@@ -704,6 +710,9 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_PROP, FEATURE_SHOULD_DISPLAY_SERVICE_CATALOG_FOR_SUSPENDED_USER_IMPERSONATE_TOKENS_DEFAULT);
         defaults.put(FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME , FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE);
+
+        defaults.put(FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP, FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_DEFAULT);
+        defaults.put(FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_DEFAULT);
 
         return defaults;
     }
@@ -1976,6 +1985,16 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, versionAdded = "3.18.0", description = "Whether to use subtree delete control for subtree deletion.")
         public boolean useSubtreeDeleteControlForSubtreeDeletion() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP, versionAdded = "3.19.0", description = "Whether to enable health check on new LDAP connection.")
+        public boolean getEnableLdapHealthCheckNewConnection() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, versionAdded = "3.19.0", description = "Whether to enable health check on valid connection for continued use.")
+        public boolean getEnableLdapHealthCheckConnectionForContinuedUse() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP);
         }
 
     }

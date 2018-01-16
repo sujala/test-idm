@@ -54,6 +54,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_EXTERNALPROVIDER = "rsExternalProvider";
     public static final String OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE = "rsMultiFactorMobilePhone";
     public static final String OBJECTCLASS_TOKEN_REVOCATION_RECORD = "rsTokenRevocationRecord";
+    public static final String OBJECTCLASS_INET_ORG_PERSON = "inetOrgPerson";
 
     public static final String ATTR_MULTIFACTOR_DOMAIN_ENFORCEMENT_LEVEL = "rsDomainMultiFactorEnforcementLevel";
     public static final String ATTR_MULTIFACTOR_USER_ENFORCEMENT_LEVEL = "rsUserMultiFactorEnforcementLevel";
