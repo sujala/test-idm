@@ -53,14 +53,14 @@ public class LdapConnectionPoolHealthCheck extends LDAPConnectionPoolHealthCheck
 
     private void ensureValidConnection(LDAPConnection connection) throws LDAPException {
         String bindDN = identityConfig.getStaticConfig().getLDAPServerBindDN();
-        SearchResult searchResult = connection.search(bindDN, SearchScope.BASE, searchFilterGeLdapINetOrgPerson());
+        SearchResult searchResult = connection.search(bindDN, SearchScope.BASE, searchFilterGetLdapINetOrgPerson());
         if (searchResult == null || searchResult.getEntryCount() < 1) {
             logger.error(Thread.currentThread().getStackTrace()[2].getMethodName() + ": " + String.format(LDAP_SEARCH_ERROR_MESSAGE, bindDN));
             throw new LDAPException(ResultCode.OTHER, String.format(LDAP_SEARCH_ERROR_MESSAGE, bindDN));
         }
     }
 
-     public Filter searchFilterGeLdapINetOrgPerson() {
+     public Filter searchFilterGetLdapINetOrgPerson() {
         return new LdapRepository.LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_INET_ORG_PERSON)
                 .build();
