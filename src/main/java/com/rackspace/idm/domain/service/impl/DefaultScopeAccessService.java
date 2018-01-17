@@ -54,9 +54,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public static final String FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME = "feature.ignore.token.delete.failure.enabled";
     public static final boolean FEATURE_IGNORE_TOKEN_DELETE_FAILURE_DEFAULT_VALUE = false;
 
-    public static final String FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME = "feature.ignore.authentication.token.delete.failure.enabled";
     public static final boolean FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_DEFAULT_VALUE = true;
-    public static final String FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME = "feature.authentication.token.delete.failure.stops.cleanup.enabled";
     public static final boolean FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_DEFAULT_VALUE = false;
 
     public static final String TOKEN_IMPERSONATED_BY_SERVICE_DEFAULT_SECONDS_PROP_NAME = "token.impersonatedByServiceDefaultSeconds";
@@ -223,14 +221,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private boolean ignoreTokenDeleteFailures() {
         return config.getBoolean(FEATURE_IGNORE_TOKEN_DELETE_FAILURE_PROP_NAME, FEATURE_IGNORE_TOKEN_DELETE_FAILURE_DEFAULT_VALUE);
-    }
-
-    private boolean ignoreAuthenticationTokenDeleteFailures() {
-        return config.getBoolean(FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_PROP_NAME, FEATURE_IGNORE_AUTHENTICATION_TOKEN_DELETE_FAILURE_DEFAULT_VALUE);
-    }
-
-    private boolean authenticationTokenDeleteFailuresStopsCleanup() {
-        return config.getBoolean(FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_DEFAULT_VALUE);
     }
 
     private OpenstackType getOpenStackType(TenantRole role) {
@@ -892,20 +882,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     private void deleteExpiredScopeAccessesExceptForMostRecent(Iterable<ScopeAccess> scopeAccessList, ScopeAccess mostRecent) {
-        boolean exitDeletionRoutineOnError = authenticationTokenDeleteFailuresStopsCleanup();
-        boolean ignoreDeletionFailures = ignoreAuthenticationTokenDeleteFailures();
         for (ScopeAccess scopeAccess : scopeAccessList) {
             if (!scopeAccess.getAccessTokenString().equals(mostRecent.getAccessTokenString())) {
                 if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    if (ignoreDeletionFailures) {
-                        boolean success = deleteScopeAccessQuietly(scopeAccess);
-                        if (!success && exitDeletionRoutineOnError) {
-                            break;
-                        }
-                    }
-                    else {
-                        scopeAccessDao.deleteScopeAccess(scopeAccess);
-                    }
+                    boolean success = deleteScopeAccessQuietly(scopeAccess);
                 }
             }
         }
@@ -983,13 +963,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
 
             scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
-
-            if (ignoreAuthenticationTokenDeleteFailures()) {
-                deleteScopeAccessQuietly(scopeAccess);
-            }
-            else {
-                scopeAccessDao.deleteScopeAccess(scopeAccess);
-            }
+            deleteScopeAccessQuietly(scopeAccess);
 
             return scopeAccessToAdd;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
@@ -1088,12 +1062,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
             scopeAccessDao.addScopeAccess(racker, scopeAccessToAdd);
-            if (ignoreAuthenticationTokenDeleteFailures()) {
-                deleteScopeAccessQuietly(scopeAccess);
-            }
-            else {
-                scopeAccessDao.deleteScopeAccess(scopeAccess);
-            }
+            deleteScopeAccessQuietly(scopeAccess);
             return scopeAccessToAdd;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());

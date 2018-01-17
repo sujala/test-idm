@@ -1,3 +1,4 @@
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 
 from tests.api.v2.models import factory, responses
@@ -13,7 +14,8 @@ class TestUserGroups(base.TestBaseV2):
         if self.test_config.use_domain_for_user_groups:
             self.domain_id = self.test_config.domain_id
         else:
-            self.domain_id = self.generate_random_string(pattern='[\d]{7}')
+            self.domain_id = func_helper.generate_randomized_domain_id(
+                client=self.identity_admin_client)
         self.password = self.generate_random_string(
             pattern=const.PASSWORD_PATTERN)
         self.user_name = self.generate_random_string(

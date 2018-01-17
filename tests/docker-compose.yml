@@ -41,7 +41,7 @@ services:
             - ../src/test/resources/keys:/etc/idm/config/keys
 
     repose:
-        image: docker.ciidentity.com/repose:8.7.1.0
+        image: docker.ciidentity.com/repose:8.7.3.0
         ports:
             - "8080:8080"
         links:
