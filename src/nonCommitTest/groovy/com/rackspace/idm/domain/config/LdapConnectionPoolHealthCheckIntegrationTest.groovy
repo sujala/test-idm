@@ -14,27 +14,26 @@ class LdapConnectionPoolHealthCheckIntegrationTest extends RootIntegrationTest {
     @Autowired
     LdapConnectionPoolHealthCheck healthCheck
 
-
-    def setupSpec() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP, true)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, true)
-    }
-
     def cleanupSpec() {
         reloadableConfiguration.reset()
     }
 
     def "Ensure valid connections"() {
         given:
+
         LDAPConnection connection = connectionPools.getAppConnPool().getConnection()
 
         when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, false)
         healthCheck.ensureNewConnectionValid(connection)
 
         then:
         notThrown(LDAPException)
 
         when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, true)
         healthCheck.ensureConnectionValidForContinuedUse(connection)
 
         then:
@@ -50,12 +49,16 @@ class LdapConnectionPoolHealthCheckIntegrationTest extends RootIntegrationTest {
         connection.close()
 
         when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, false)
         healthCheck.ensureNewConnectionValid(connection)
 
         then:
         thrown(LDAPException)
 
         when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, true)
         healthCheck.ensureConnectionValidForContinuedUse(connection)
 
         then:

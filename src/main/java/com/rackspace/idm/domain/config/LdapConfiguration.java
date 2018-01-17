@@ -40,8 +40,9 @@ public class LdapConfiguration {
      * Use for unit testing.
      *
      */
-    public LdapConfiguration(IdentityConfig identityConfig) {
+    public LdapConfiguration(IdentityConfig identityConfig, LdapConnectionPoolHealthCheck ldapConnectionPoolHealthCheck) {
         this.identityConfig = identityConfig;
+        this.ldapConnectionPoolHealthCheck = ldapConnectionPoolHealthCheck;
     }
 
     /**
