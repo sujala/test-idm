@@ -93,6 +93,7 @@ public class LdapConfiguration {
             connPool.setRetryFailedOperationsDueToInvalidConnections(true);
             connPool.setHealthCheck(ldapConnectionPoolHealthCheck);
             connPool.setMaxConnectionAgeMillis(identityConfig.getStaticConfig().getLDAPServerPoolAgeMax());
+            connPool.setMinDisconnectIntervalMillis(identityConfig.getStaticConfig().getLDAPServerPoolMinDisconnectIntervalTime());
             connPool.setCreateIfNecessary(identityConfig.getStaticConfig().getLDAPServerPoolCreateIfNecessary());
             connPool.setMaxWaitTimeMillis(identityConfig.getStaticConfig().getLDAPServerPoolMaxWaitTime());
             connPool.setHealthCheckIntervalMillis(identityConfig.getStaticConfig().getLDAPServerPoolHeathCheckInterval());

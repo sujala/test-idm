@@ -459,6 +459,9 @@ public class IdentityConfig {
     private static final String LDAP_SERVER_POOL_MAX_WAIT_TIME_PROP = "ldap.server.pool.max.wait.time";
     private static final long LDAP_SERVER_POOL_MAX_WAIT_TIME_DEFAULT = 0L;
 
+    private static final String LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_PROP = "ldap.server.pool.min.disconnect.interval.time";
+    private static final long LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_DEFAULT = 0L;
+
     private static final String LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP = "ldap.server.pool.health.check.interval";
     private static final long LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT = 60000L;
 
@@ -636,6 +639,7 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_AGE_MAX_PROP, LDAP_SERVER_POOL_AGE_MAX_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_CREATE_IF_NECESSARY_PROP, LDAP_SERVER_POOL_CREATE_IF_NECESSARY_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_MAX_WAIT_TIME_PROP, LDAP_SERVER_POOL_MAX_WAIT_TIME_DEFAULT);
+        defaults.put(LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_PROP, LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP, LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP, LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
@@ -1422,6 +1426,11 @@ public class IdentityConfig {
         public int getUsersByRoleLimit() {
             return getIntSafely(staticConfiguration, LIST_USERS_BY_ROLE_LIMIT_NAME);
         }
+
+        @IdmProp(key = LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_PROP, versionAdded = "3.19.0", description = "Specifies the minimum length of time in milliseconds that should pass between connections closed because they have been established for longer than the maximum connection age.")
+        public long getLDAPServerPoolMinDisconnectIntervalTime() {
+            return getLongSafely(staticConfiguration, LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_PROP);
+        }
     }
 
     /**
@@ -1988,12 +1997,12 @@ public class IdentityConfig {
         }
 
         @IdmProp(key = FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP, versionAdded = "3.19.0", description = "Whether to enable health check on new LDAP connection.")
-        public boolean getEnableLdapHealthCheckNewConnection() {
+        public boolean getEnableLDAPHealthCheckNewConnection() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP);
         }
 
         @IdmProp(key = FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, versionAdded = "3.19.0", description = "Whether to enable health check on valid connection for continued use.")
-        public boolean getEnableLdapHealthCheckConnectionForContinuedUse() {
+        public boolean getEnableLDAPHealthCheckConnectionForContinuedUse() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP);
         }
 

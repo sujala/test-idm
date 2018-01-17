@@ -26,11 +26,11 @@ public class LdapConnectionPoolHealthCheck extends LDAPConnectionPoolHealthCheck
      * operations.
      *
      * This check will be triggered when new LDAP connections are created due to
-     * old connections being close when reaching max age.
+     * old connections being closed when reaching max age.
      **/
     @Override
     public void ensureNewConnectionValid(LDAPConnection connection) throws LDAPException {
-        if(identityConfig.getReloadableConfig().getEnableLdapHealthCheckNewConnection()) {
+        if(identityConfig.getReloadableConfig().getEnableLDAPHealthCheckNewConnection()) {
             ensureValidConnection(connection);
         }
     }
@@ -40,13 +40,13 @@ public class LdapConnectionPoolHealthCheck extends LDAPConnectionPoolHealthCheck
     * connection is valid and should continue to be made available for
     * processing operations.
     *
-    * This check will be triggered by the LDAP health check which is schedule to run on intervals
+    * This check will be triggered by the LDAP health check which is scheduled to run on intervals
     * set by ldap.server.pool.health.check.interval static property (Default: 60000ms).
     * When the health check runs, all available connections will be checked.
     **/
     @Override
     public void ensureConnectionValidForContinuedUse(LDAPConnection connection) throws LDAPException {
-        if(identityConfig.getReloadableConfig().getEnableLdapHealthCheckConnectionForContinuedUse()) {
+        if(identityConfig.getReloadableConfig().getEnableLDAPHealthCheckConnectionForContinuedUse()) {
             ensureValidConnection(connection);
         }
     }

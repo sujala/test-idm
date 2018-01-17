@@ -2,6 +2,7 @@ Cloud Identity 3.19.0 Release
 ==============================
 
 .. _CID-357:  https://jira.rax.io/browse/CID-357
+.. _CID-1308:  https://jira.rax.io/browse/CID-1308
 
 .. contents::
 
@@ -31,6 +32,7 @@ Stories
 -------
 
 #. `CID-357`_ - Remove old Foundation API static properties
+#. `CID-1308`_ - Implement healthCheck on ldap connection pools
 
 Defects
 -------
@@ -49,6 +51,10 @@ These are new properties added as part of the Release
 
 .. csv-table:: Configuration Changes
    :header: "Name", "Description", "DefaultValue", "Story", "File"
+
+   feature.enable.ldap.health.check.new.connection, "Whether to enable health check on new LDAP connection.", false,`CID-1308`_, reloadable
+   feature.enable.ldap.health.check.connection.for.continued.use, "Whether to enable health check on valid connection for continued use.", false, `CID-1308`_, reloadable
+   ldap.server.pool.min.disconnect.interval.time, "Specifies the minimum length of time in milliseconds that should pass between connections closed because they have been established for longer than the maximum connection age.", 0, `CID-1308`_, static
 
 -------
 Updates
