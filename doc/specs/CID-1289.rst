@@ -285,7 +285,7 @@ Business Acceptance Criteria
 
 1. Implement Option 4
 2. Implement a reloadable feature flag 
-   "feature.optimize.disabled.user.auth.enabled" to control whether 
+   "feature.enable.disabled.user.auth.optimization" to control whether
    Option 4 is used. When false, the current workflow of simply hitting the
    directory must be used.
  1. Default for flag is true when property is not provided in configuration file
