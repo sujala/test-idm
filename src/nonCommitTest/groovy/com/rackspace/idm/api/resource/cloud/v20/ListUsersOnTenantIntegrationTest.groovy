@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import groovy.json.JsonSlurper
@@ -388,6 +390,68 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         utils.deleteUsersQuietly(users)
         utils.deleteTestDomainQuietly(userAdmin.domainId)
         utils.deleteTenantQuietly(tenant)
+    }
+
+    /**
+     * Test that user groups are searched appropriately. Verify the following scenarios:
+     * 1. Returns user that doesn't belong to any group, but gets role on tenant (user-admin receives identity:tenant-access)
+     * 2. Returns user (default) that solely gets access to tenant via group membership
+     * 3. Returns user (user-manage) that gets tenant access both through group membership and identity:tenant-access
+     *
+     * @return
+     */
+    def "Verify list users for tenant returns group users"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        // Create a tenant in domain that is hidden by default
+        def tenantId = "faws:" + testUtils.getRandomUUID()
+        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["faws"]).with {it.domainId = userAdmin.domainId; it})
+
+        // Create a user group, add userManage, default user to it, add role on tenant
+        def userGroup = utils.createUserGroup(userAdmin.domainId)
+        utils.addUserToUserGroup(userManage.id, userGroup)
+        utils.addUserToUserGroup(defaultUser.id, userGroup)
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, v2Factory.createSingleRoleAssignment(Constants.ROLE_RBAC1_ID, [tenantId]))
+
+        when: "Return all users with any role on the tenant"
+        def response = cloud20.listUsersWithTenantId(utils.getIdentityAdminToken(), tenantId, new ListUsersForTenantParams(null, null, new PaginationParams()))
+        def userList = getUsersFromResponse(response)
+
+        then: "returns all users granted a role on group"
+        userList.user.size() == 3
+        userList.user.find {it.id == userAdmin.id} != null
+        userList.user.find {it.id == userManage.id} != null
+        userList.user.find {it.id == defaultUser.id} != null
+
+        when: "Return all users with specific role"
+        def roleResponse = cloud20.listUsersWithTenantId(utils.getIdentityAdminToken(), tenantId, new ListUsersForTenantParams(Constants.ROLE_RBAC1_ID, null, new PaginationParams()))
+        def roleUserList = getUsersFromResponse(roleResponse)
+
+        then: "user-manage and default user returned, but not user-admin"
+        roleUserList.user.size() == 2
+        roleUserList.user.find {it.id == userAdmin.id} == null
+        roleUserList.user.find {it.id == userManage.id} != null
+        roleUserList.user.find {it.id == defaultUser.id} != null
+
+        when: "Explicitly assign different role to default user and search on that role"
+        utils.addRoleToUserOnTenantId(defaultUser, tenantId, Constants.ROLE_RBAC2_ID)
+        def roleResponse2 = cloud20.listUsersWithTenantId(utils.getIdentityAdminToken(), tenantId, new ListUsersForTenantParams(Constants.ROLE_RBAC2_ID, null, new PaginationParams()))
+        def roleUserList2 = getUsersFromResponse(roleResponse2)
+
+        then: "default user returned"
+        roleUserList2.user.size() == 1
+        roleUserList2.user.find {it.id == userAdmin.id} == null
+        roleUserList2.user.find {it.id == userManage.id} == null
+        roleUserList2.user.find {it.id == defaultUser.id} != null
+
+        cleanup:
+        utils.deleteUsersQuietly([defaultUser, userManage, userAdmin, identityAdmin])
+        utils.deleteUserGroup(userGroup)
+        utils.deleteTenantQuietly(tenant)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
     }
 
     @Unroll

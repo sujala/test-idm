@@ -302,16 +302,37 @@ class EntityFactory extends Specification {
         createTenantRole(name, RoleTypeEnum.STANDARD)
     }
 
-    def createTenantRole(String name, RoleTypeEnum roleType) {
+
+    def createTenantRoleForGroup(String groupId = Cloud20Utils.createRandomString(), String roleId = Cloud20Utils.createRandomString()) {
         new TenantRole().with {
+            it.name = Cloud20Utils.createRandomString()
+            it.roleType = RoleTypeEnum.STANDARD
+            it.tenantIds = []
+            it.roleRsId = roleId
+            it.clientId = CLIENT
+            it.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=userGroups,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com", roleId, groupId)
+            return it
+        }
+    }
+
+    def createTenantRoleForUser(String userId = Cloud20Utils.createRandomString(), String roleId = Cloud20Utils.createRandomString()) {
+        new TenantRole().with {
+            it.name = Cloud20Utils.createRandomString()
+            it.roleType = RoleTypeEnum.STANDARD
+            it.tenantIds = []
+            it.userId = userId
+            it.roleRsId = roleId
+            it.clientId = CLIENT
+            it.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", roleId, userId)
+            return it
+        }
+    }
+
+    def createTenantRole(String name, RoleTypeEnum roleType) {
+        createTenantRoleForUser("1", "1").with {
             it.name = name
             it.roleType = roleType
-            it.tenantIds = []
-            it.userId = "1"
-            it.roleRsId = "1"
-            it.clientId = CLIENT
-            it.uniqueId = "roleRsId=1,cn=ROLES,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com"
-            return it
+            it
         }
     }
 

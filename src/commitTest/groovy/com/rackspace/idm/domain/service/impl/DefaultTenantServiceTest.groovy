@@ -14,8 +14,10 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.util.RoleUtil
 import com.unboundid.ldap.sdk.DN
+import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -927,7 +929,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         }
     }
       
-    def "getPaginatedEffectiveEnabledUsersForTenant recognizes tenantRole in users and userGroup "() {
+    def "getEnabledUsersForTenantWithRole: recognizes tenantRole in users and userGroup "() {
         given:
         def paginationParams = new PaginationParams(0, 25)
         def tenantRole = entityFactory.createTenantRole("somerole")
@@ -936,6 +938,10 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def tenantRoleInUserGroup = entityFactory.createTenantRole("tenantRoleInUserGroup").with {
             it.uniqueId = "roleRsId=1234,cn=ROLES,rsId=f2b6f73730324548a729d6a878640558,ou=userGroups,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com"
             return it
+        }
+        def userGroup = new UserGroup().with {
+            it.id = "f2b6f73730324548a729d6a878640558"
+            it
         }
 
         def user = entityFactory.createRandomUser()
@@ -949,15 +955,106 @@ class DefaultTenantServiceTest extends RootServiceTest {
         1 * tenantRoleDao.getAllTenantRolesForTenant(tenant.tenantId) >> [tenantRole, tenantRoleInUserGroup].asList()
 
         and: "Looks up user and group appropriately for type of tenant roles assigned"
+        1 * userGroupService.getGroupById(userGroup.id) >> userGroup
         1 * userService.getUserById(tenantRole.getUserId()) >> user
-        1 * identityUserService.getEnabledEndUsersByGroupId("f2b6f73730324548a729d6a878640558") >> [groupUser]
+        1 * identityUserService.getEndUsersInUserGroup(userGroup) >> [groupUser]
         0 * userService.getUserById("f2b6f73730324548a729d6a878640558")
 
         paginatedUser.totalRecords == 2
         paginatedUser.getValueList().size() == 2
         paginatedUser.getValueList().find {it.id == user.id} != null
         paginatedUser.getValueList().find {it.id == groupUser.id} != null
+    }
 
+    def "getEnabledUsersForTenantWithRole: ignores non-provisioned and disabled users in userGroups"() {
+        given:
+        def paginationParams = new PaginationParams(0, 25)
+        def tenantRole = entityFactory.createTenantRole("somerole")
+        tenantRole.tenantIds = ["12345"]
+
+        def userGroup = new UserGroup().with {
+            it.id = "f2b6f73730324548a729d6a878640558"
+            it
+        }
+
+        def tenantRoleInUserGroup = entityFactory.createTenantRole("tenantRoleInUserGroup").with {
+            it.uniqueId = "roleRsId=1234,cn=ROLES,rsId=${userGroup.id},ou=userGroups,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com"
+            return it
+        }
+
+        def user = entityFactory.createRandomUser()
+        def groupUser = entityFactory.createRandomUser()
+        def groupFedUser = entityFactory.createFederatedUser()
+        def groupDisabledUser = entityFactory.createRandomUser().with {
+            it.enabled = false
+            it
+        }
+
+        def tenant = entityFactory.createTenant()
+
+        when:
+        def paginatedUser = service.getEnabledUsersForTenantWithRole(tenant, null, paginationParams)
+
+        then: "Retrieves all tenant roles associated with tenant"
+        1 * tenantRoleDao.getAllTenantRolesForTenant(tenant.tenantId) >> [tenantRole, tenantRoleInUserGroup].asList()
+
+        and: "Looks up user and group appropriately for type of tenant roles assigned"
+        1 * userGroupService.getGroupById(userGroup.id) >> userGroup
+        1 * userService.getUserById(tenantRole.getUserId()) >> user
+        1 * identityUserService.getEndUsersInUserGroup(userGroup) >> [groupUser, groupFedUser, groupDisabledUser]
+        0 * userService.getUserById(userGroup.id) // Verify didn't errantly look up group as a user
+        0 * userGroupService.getGroupById(tenantRole.getUserId()) // Verify didn't errantly look up user as a group
+
+        paginatedUser.totalRecords == 2
+        paginatedUser.getValueList().size() == 2
+        paginatedUser.getValueList().find {it.id == user.id} != null
+        paginatedUser.getValueList().find {it.id == groupUser.id} != null
+    }
+
+    def "getEnabledUsersForTenantWithRole: Users in groups are not looked up individually even if assigned explicit role on tenant"() {
+        given:
+        def paginationParams = new PaginationParams(0, 25)
+        def explicitUser1 = entityFactory.createRandomUser()
+        def groupUser = entityFactory.createRandomUser()
+
+        def tenantRole1 = entityFactory.createTenantRoleForUser(explicitUser1.id).with {
+            it.tenantIds = ["12345"]
+            it
+        }
+
+        // Assign the group user an explicit role as well
+        def tenantRole2 = entityFactory.createTenantRoleForUser(groupUser.id).with {
+            it.tenantIds = ["12345"]
+            it
+        }
+
+        def tenantRoleInUserGroup = entityFactory.createTenantRoleForGroup("tenantRoleInUserGroup")
+        def userGroup = new UserGroup().with {
+            it.id = tenantRoleInUserGroup.getIdOfEntityAssignedRole()
+            it
+        }
+
+        def tenant = entityFactory.createTenant()
+
+        when:
+        def paginatedUser = service.getEnabledUsersForTenantWithRole(tenant, null, paginationParams)
+
+        then: "Retrieves all tenant roles associated with tenant"
+        1 * tenantRoleDao.getAllTenantRolesForTenant(tenant.tenantId) >> [tenantRole1, tenantRole2, tenantRoleInUserGroup].asList()
+
+        and: "Looks up group users for group tenant roles"
+        1 * userGroupService.getGroupById(userGroup.id) >> userGroup
+        1 * identityUserService.getEndUsersInUserGroup(userGroup) >> [groupUser]
+
+        and: "looks up individual users not included in group"
+        1 * userService.getUserById(explicitUser1.id) >> explicitUser1
+        0 * userService.getUserById(groupUser.id)
+
+        and: "result returns both users"
+        paginatedUser.totalRecords == 2
+        paginatedUser.getValueList().size() == 2
+        paginatedUser.getValueList().find {it.id == explicitUser1.id} != null
+        paginatedUser.getValueList().find {it.id == groupUser.id} != null
     }
 
     def "getEnabledUsersWithContactIdForTenant: Retrieves users with provided contactId for tenant"() {
@@ -1015,6 +1112,67 @@ class DefaultTenantServiceTest extends RootServiceTest {
         then:
         1 * userService.getEnabledUsersByContactId(contactId) >> [].asList()
         userList.size() == 0
+    }
+
+    def "getEffectiveGlobalRolesForUserApplyRcnRoles populates the propagating attribute (by populating the role type) correctly"() {
+        given:
+        def user = new User()
+        def userTenantRoles = []
+        def propagatingRole = new TenantRole(). with {
+            it.roleRsId = RandomStringUtils.randomAlphanumeric(8)
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
+        }
+        userTenantRoles << propagatingRole
+        def propagatingClientRole = new ClientRole().with {
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it.id = propagatingRole.roleRsId
+            it
+        }
+
+        when:
+        List<TenantRole> roles = service.getEffectiveGlobalRolesForUserApplyRcnRoles(user)
+
+        then:
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> userTenantRoles
+        1 * applicationService.getClientRoleById(propagatingRole.roleRsId) >> propagatingClientRole
+        roles.find { role -> role.roleRsId == propagatingRole.roleRsId }.propagate == true
+    }
+
+    def "getEffectiveGlobalRolesForUser populates the propagating attribute (by populating the role type) correctly"() {
+        given:
+        def user = new User()
+        def userTenantRoles = []
+        def propagatingRole = new TenantRole(). with {
+            it.roleRsId = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        userTenantRoles << propagatingRole
+        def nonPropagatingRole = new TenantRole(). with {
+            it.roleRsId = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        userTenantRoles << nonPropagatingRole
+        def propagatingClientRole = new ClientRole().with {
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it.id = propagatingRole.roleRsId
+            it
+        }
+        def nonPropagatingClientRole = new ClientRole().with {
+            it.roleType = RoleTypeEnum.STANDARD
+            it.id = propagatingRole.roleRsId
+            it
+        }
+
+        when:
+        List<TenantRole> roles = service.getEffectiveGlobalRolesForUser(user)
+
+        then:
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> userTenantRoles
+        1 * applicationService.getClientRoleById(propagatingRole.roleRsId) >> propagatingClientRole
+        1 * applicationService.getClientRoleById(nonPropagatingRole.roleRsId) >> nonPropagatingClientRole
+        roles.find { role -> role.roleRsId == propagatingRole.roleRsId }.propagate == true
+        roles.find { role -> role.roleRsId == nonPropagatingRole.roleRsId }.propagate == false
     }
 
     def createImmutableClientRole(String name, int weight = 1000) {

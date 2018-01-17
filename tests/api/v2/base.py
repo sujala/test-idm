@@ -73,7 +73,8 @@ class TestBaseV2(base.TestBase):
 
     @classmethod
     def generate_client(cls, parent_client=None, request_object=None,
-                        additional_input_data=None, token=None):
+                        additional_input_data=None, token=None,
+                        one_call=False):
         """Return a client object
         the object will be added few default headers for later use such as
         x-auth-token, x-user-id, x-domain-id, x-tenant-id
@@ -118,8 +119,16 @@ class TestBaseV2(base.TestBase):
                         'contact_id', None),
                     'password': password
                 }
-                request_object = factory.get_add_user_request_object(
-                    username=user_name, input_data=input_data)
+
+                if one_call:
+                    # must be provided with domain_id
+                    request_object = \
+                        factory.get_add_user_one_call_request_object(
+                            username=user_name,
+                            domainid=input_data['domain_id'])
+                else:
+                    request_object = factory.get_add_user_request_object(
+                        username=user_name, input_data=input_data)
 
             user_resp = parent_client.add_user(request_object=request_object)
             assert user_resp.status_code == 201, (

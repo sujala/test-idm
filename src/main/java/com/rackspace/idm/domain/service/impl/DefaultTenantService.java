@@ -23,6 +23,7 @@ import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupAuthorizationService;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.util.RoleUtil;
 import com.rackspace.idm.validation.PrecedenceValidator;
@@ -1331,6 +1332,7 @@ public class DefaultTenantService implements TenantService {
 
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
+                role.setRoleType(cRole.getRoleType());
 
                 globalRoles.add(role);
             }
@@ -1485,7 +1487,6 @@ public class DefaultTenantService implements TenantService {
             if (role.isUserAssignedRole()) {
                 String userId = role.getIdOfEntityAssignedRole();
                 if (StringUtils.isNotBlank(userId) && !processedUserIds.contains(userId)) {
-                    processedUserIds.add(userId);
                     userIdsToProcess.add(userId);
                 }
             } else if (role.isUserGroupAssignedRole()) {
@@ -1496,16 +1497,27 @@ public class DefaultTenantService implements TenantService {
             }
         }
 
-        // Retrieve all provisioned users that are members of the group assigned the role.
+        // Retrieve all enabled provisioned users that are members of the group assigned the role.
         for (String groupId : groupIdsToLookup) {
-            Iterable<EndUser> endUsers = identityUserService.getEnabledEndUsersByGroupId(groupId);
-            for (EndUser endUser : endUsers) {
-                if (endUser instanceof User && !processedUserIds.contains(endUser.getId())) {
-                    finalUsers.add((User)endUser);
+            UserGroup group = userGroupService.getGroupById(groupId);
+            /*
+             A group should always exist, given the groupIds are determined by looking at a TenantRoles uniqueId unless
+             there's exceptional circumstances (e.g. group deleted between time tenant role read and group looked up).
+             The check is trivial though so might as well make it.
+              */
+            if (group != null) {
+                Iterable<EndUser> endUsers = identityUserService.getEndUsersInUserGroup(group);
+                for (EndUser endUser : endUsers) {
+                    if (endUser instanceof User && !endUser.isDisabled() && !processedUserIds.contains(endUser.getId())) {
+                        finalUsers.add((User)endUser);
+                    }
+                    /* Since we retrieved the user we are effectively processing the user regardless of whether we actually
+                     add the user. Remove the id from the to process list (if there) as well as add it to the processed list (if
+                     needed).
+                     */
+                    userIdsToProcess.remove(endUser.getId());
+                    processedUserIds.add(endUser.getId());
                 }
-                // Remove user as would be in list to process if have direct assignment of role
-                userIdsToProcess.remove(endUser.getId());
-                processedUserIds.add(endUser.getId());
             }
         }
 

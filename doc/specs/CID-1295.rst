@@ -1,0 +1,39 @@
+.. _CID-1295:
+
+=======================================================
+Story: Switch dev environments to use RSI docker images
+=======================================================
+
+Description
+-----------
+
+The RSI docker images are now ready to use. The first step to start switching the team over
+to using these images is to switch the local dev environments over to use the images and
+create the artifactory repository for these images.
+
+Business Acceptance Criteria
+----------------------------
+
+1. Create the artifactory repository for artifacts built from the cloud-identity project.
+
+2. Update the Jenkins jobs that build the RSI images to use the newly created artifactory repo.
+
+3. Update the dev docker-compose file to use the RSI docker images.
+
+    1. The images currently used and need to be ported over to the RSI equivalents are used are:
+
+        1. docker.ciidentity.com/postfix
+
+        2. docker.ciidentity.com/cloud-feeds
+
+        3. docker.ciidentity.com/e-directory
+
+        4. docker.ciidentity.com/ca-directory
+
+        5. docker.ciidentity.com/repose
+
+4. Document and demo the work done and any changes in use between the original docker images and the new RSI images.
+
+Test Acceptance Criteria
+------------------------
+TBD

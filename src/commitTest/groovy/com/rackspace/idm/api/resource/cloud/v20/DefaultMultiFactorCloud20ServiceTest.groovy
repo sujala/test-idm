@@ -5,6 +5,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.*
+import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -354,6 +355,40 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
         then:
         responseBuilder.build().status == HttpServletResponse.SC_NOT_FOUND
+    }
+
+    @Unroll
+    def "test cannot create OTP devices with a null or blank name, deviceName = '#deviceName'"() {
+        given:
+        allowUserAccess()
+        def userId = RandomStringUtils.randomAlphanumeric(8)
+        def user = new User().with {
+            it.id = userId
+            it
+        }
+        def caller = new User().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        userService.getUserByScopeAccess(_) >> caller
+        requestContextHolder.checkAndGetTargetUser(userId) >> user
+        def otpDevice = new com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice().with {
+            it.name = deviceName
+            it
+        }
+
+        when:
+        service.addOTPDeviceToUser(null, authToken, userId, otpDevice)
+
+        then:
+        exceptionHandler.exceptionResponse(_ as BadRequestException) >> { args ->
+            BadRequestException ex = args[0]
+            assert ex.message == DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_OTP_DEVICE_NAME
+            return Response.status(HttpServletResponse.SC_BAD_REQUEST)
+        }
+
+        where:
+        deviceName << [null, '', ' ']
     }
 
     def "listOTPDevices: verify authorization logic called appropriately for non-self calls for identity admin"() {
