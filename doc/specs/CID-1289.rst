@@ -96,7 +96,8 @@ Pros:
 - Straightforward code change 
 - Attackers can't determine whether a given username is valid (though disabled
   via response message
-   - Could determine this through response time analysis which is an existing
+  
+  -  Could determine this through response time analysis which is an existing
      vulnerability. The fastest 401 responses likely mean username doesn't
      exist, next fastest 401 that exists but disabled, and longest that account
      exists w/ invalid password
@@ -126,19 +127,19 @@ Pros:
 
 - No bind for disabled users
 - Straightforward code change
-- Legitmate users know whether their account is disabled or they provided
+- Legitimate users know whether their account is disabled or they provided
   invalid credentials
-- Minor contract change. The common use case where caller provides the correct
-  password for a disabled user would be unchanged. The use case where the caller
-  provides an invalid credential for a disabled user would be modified. Instead
-  of receiving a 401 (as credential is validated first), this use case would
-  result in a 403 (as user status is now checked first). 
 
 Cons:
 
 - Attackers can trivially determine whether a given username is for a valid, but
   disabled, user by simply looking at response message
 - Still queries user for each call
+- Minor contract change. The common use case where caller provides the correct
+  password for a disabled user would be unchanged. The use case where the caller
+  provides an invalid credential for a disabled user would be modified. Instead
+  of receiving a 401, this use case would
+  result in a 403 (as user status is now checked first). 
 
 Option 3: Disabled User Cache
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -161,97 +162,134 @@ user is expired from the cache. Due to these additional impacts, this option is
 limited to disabled users only.
 
 Pros:
+
 - Eliminates user lookup for disabled users within the cache period. When
   combined with bind change, reduces CA usage for multiple auth attempts against
   disabled users to near zero.
   
 Cons:
+
 - Adds more complexity and moving parts
 - Eventual consistency in API node response as each server maintains own cache
 
-Option 4: Return 401 and 403 Immediately
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Adding as Option 4 to avoid changing up the numbers.
-To support password history we already support the ability
-to compare a user provided password to the CA hashed version from within the Identity application code itself (no bind).
-We can take advantage of this functionality for disabled users.
+Option 4: Return 401 and 403 Immediately w/ Cache
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1. We look up the user by supplied username
-2. If no user found, return 401 w/ message "Unable to authenticate user with
-   credentials provided."
-3. If user is disabled, we check the password/api key in the API Node (no bind).
- 1. If supplied credential is correct, return 403 w/ message "User '" + user.getUsername()
-   +"' is disabled.
- 2. If supplied credential is incorrect, return 401 w/ message "Unable to authenticate user with
-   credentials provided.
-4. If user is not disabled we continue as normal. Check via app for API key, bind for pwd auth
- 1. If pwd invalid, we return 401 w/ message "Unable to authenticate user with
-    credentials provided."
- 2. If correct pwd but domain is disabled, we return a 403 w/ message "User '"
-   + user.getUsername() +"' is disabled.
+To support password history we already support the ability to compare a user
+provided password to the CA hashed version from within the Identity application
+code itself (no bind). We can take advantage of this functionality for disabled
+users. To further mitigate potential brute force attacks this option will use a per server cache for disabled
+user pwd auth failures. The cache will store disabled users and the number of invalid auth attempts made against that user within a
+rolling window in order to enforce a lockout period. 
+
+
+Definitions:
+
+- Failed Auth Threshold: Number of consecutive times pwd auth must fail
+- Auth Window: The number of minutes in the past from the current time in which
+  failed auth attempts are
+  counted
+- Lockout Period: A period of time during which all auth attempts will be
+  rejected regarless of the password supplied. A lockout period starts when a
+  user reaches the failed auth threshold within the Auth Window and ends when
+  the Lockout Period Length has been reached
+- Lockout Period Length: The length of time for which a lockout period lasts
+- User Refresh Period: How frequently the user must be refreshed from backend
+  to ensure is still disabled and pwd is up-to-date
+
+This option would include reloadable configurable settings for each of the
+above.
+
+When a caller attempts to authenticate against a disabled user the cache will
+be used
+
+Pwd User Flow:
+
+1. Check cache for user
+
+   1) If found, but User Refresh Period has elapsed, refresh from backend. Invalid
+      auth attempts must not be reset for cache entry. If user is found to be
+      enabled on refresh, remove entry from cache and follow Enabled User Flow.   
+   2) If not found, load from backend.
+   
+      1) If found and user is enabled, follow Enabled User Flow
+      2) If found and user is disabled, populate cache
+      3) If not found, return 401
+2. Determine if user is within a lockout period
+
+   1) If so, return 401 w/ message "Unable to authenticate user with
+      credentials provided
+3. Compare user supplied password to cache entry
+   1) If passwords match
+
+      1) Clear all invalid attempts from cache
+      2) return 403 w/ message "User '<username>' is disabled"
+   3) If passwords do not match
+
+      1) Clear any invalid attempts outside of Auth Window
+      2) Add current invalid auth attempt
+      3) Return 401 w/ message "Unable to authenticate user with
+      credentials provided
+
+Enabled Password Flow:
+
+1. Attempt to bind to directory
+2. <Internal CA logic for password checking/locking>
+3. If bind fails, programmatically calculate reason for audit log message
+
+   a) If user has a password failure date set, see if current time is within CA
+      lockout window. If so, user is "locked" by CA
+   b) else if user is disabled, record as "disabled"
+   c) Else bad credentials supplied
+4. If bind succeeds, verify user + domain is not disabled
+5. ... 
 
 Pros:
 
 - No bind for disabled users
-- Straightforward code change
+- Relatively straightforward code change - though cache can be tricky since requires
+  updates
 - No contract change
 - Legitmate users know whether their account is disabled or they provided invalid credentials
 - Attackers can't tell, via auth response message, whether supplied username exists, is valid, or is disabled
 
 Cons:
 
-- Allows brute force attacks against a disabled user's password since the app response distinguishes between a correctly supplied
-  pwd and an incorrect one and the app does not include lock-out functionality for pwd (relies on directory to provide as part
-  of bind operation.
-- Slightly more complex logic with additional use cases
+- More complex logic with additional use cases
 - Still queries user for each call
-
-As the directory provides lock-out functionality to mitigate brute force attacks we must continue to let the directory
-perform binds for non-disabled users. The brute forcing is somewhat mitigated by the fact an attacker wouldn't know whether
-the user they are attacking is disabled or not. As such they wouldn't actually know whether they're successfully brute
-forcing the password for the user or we're just returning a 401 without comparing passwords (which we'd do when brute
-forcing an enabled user via directory logic).
-
-A modification to this option to mitigate the brute forcing would be to have a per user cache for disabled
-user pwd auth failures. We would store the disabled user and the number of invalid auth attempts made against that user within a
-rolling window (say 5 minutes). Once the locking threshold has been met (e.g. 6
-invalid attempts within 5 minutes), all auth attempts for that disabled user will result in a 401 without even checking
-the password for a "lock out time period." After the time period has elapsed, the cache entry would be removed. Cache
-entries would also be removed after 5 minutes of no login attempts or if the user logs in successfully outside a lockout
-period. The above logic describes how to use the cache _solely_ as a means to mitigate brute force password attacks. It
-would be relatively straightforward to combine this with Option 3 to eliminate all queries to backend for disabled users.
 
 --------------
 Recommendation 
 --------------
 
-Apply "Keep It Simple Stupid" (KISS) principle. While Option 3 would further
-limit the cost for authenticating against disabled users, it adds additional
-complexity, implementation cost, and the standard state data issue inherent with
-caches. While it might be worthwhile to add, I think it's the cherry on top
-rather than a critical need at this time.
+Due to the critical and widespread usage of Identity, contract changes need to
+be avoided as much as possible. While Option 1 & 2 would limit the contract
+changes to certain use cases, they incur other downsides that make them less
+desirable.
 
-For now, I recommend Option 2. Given the broad impact across multiple APIs
+Option 3, while further limits the cost for authenticating against disabled
+users, it adds additional complexity, implementation cost, and the standard
+state data issue inherent with caches for all users. While it might be
+worthwhile to add at some point, I think it's the cherry on top rather than a
+critical need at this time.
+
+For now, I recommend Option 4. While it adds additional cost overhead in order
+to implement the cache, given the broad impact across multiple APIs
 (v1.0/v1.1/v2.0) and the sheer number of consumers and critical systems that
-consume those APIs, I think we need to limit contract changes to limit the risk
-of unintended impact. This also maintains usability for the perceived more
-frequent use case of a legitimate user attempting to log in under a disabled
-user account. The added security risk that allows attackers to mine usernames of
-disabled users, is perceived to be small given the small proportion of disabled
-users in our user base and that there are ways to mine usernames regardless of
-whether the user is enabled/disabled.
+consume those APIs, I think the additional cost is justified by eliminating
+contract changes.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Business Acceptance Criteria
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Implement Option 2 to immediately return a 403 for disabled users without 
-   performing a bind.
+1. Implement Option 4
 2. Implement a reloadable feature flag 
-   "feature.immediately.reject.disabled.user.auths.enabled" to control whether 
-   the 403 is returned. When false, the current workflow must be used.
- 1. Default for flag is true when property no provided in configuration file
- 2. Default for docker configuration is true
+   "feature.optimize.disabled.user.auth.enabled" to control whether 
+   Option 4 is used. When false, the current workflow of simply hitting the
+   directory must be used.
+ 1. Default for flag is true when property is not provided in configuration file
+ 2. Default for docker configuration is true 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Test Acceptance Criteria
