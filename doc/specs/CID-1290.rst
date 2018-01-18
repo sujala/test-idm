@@ -1,0 +1,374 @@
+.. _CID-1290: https://jira.rax.io/browse/CID-1290
+
+===========================================
+Revise New Relic reporting with annotations
+===========================================
+
+.. contents:: Table of Contents
+    :depth: 3
+
+Description
+~~~~~~~~~~~
+The current version of custom New Relic reporting was a
+quick implementation to collect API usage data to allow us to analyze how our
+users consume our API. To that end it has helped significantly, but in using it
+over the course of a month some deficiencies have been identified - some more
+glaring than others.
+
+1. It used regex, if/else, and other logic to programmatically classify API
+   resources and whether they contained sensitive data
+2. It only provided an all or nothing for reporting query params (included in
+   requestUri attribute)
+3. The only way to exclude a metric from getting reported is to exhaustively
+   list all the metrics to include
+
+These limitations, in particular the first 2, proved severely limiting. The
+query params used and dynamic path data (like userids/tenantIds) are required to
+fully analyze the API usage and impact of various users. Unfortunately, due to a
+defect in the regex used for (1), we needed to turn off sending request URIs
+completely - which eliminated paths and query params. We also realized some
+services send PII data as query params (e.g. search for a user based on
+username) which means we need to be able to secure them as well.
+
+This story iterates on the original solution by correcting many of the
+identified deficiencies and providing additional flexibility that will allow for
+greater analysis of our API usage.
+
+Functionality
+~~~~~~~~~~~~~
+
+The feature will use annotations on each API resource to be reported, to
+indicate a resource must be reported to New Relic and to specify various options
+are reported.
+
+IdentityApi Annotation
+----------------------
+
+The annotation `IdentityApi` is set on each method that must be reported to New
+Relic. Resource methods annotated with this service will be reported to New
+Relic.
+
+Contract::
+
+  @Target({ElementType.METHOD})
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface IdentityApi {
+
+    /**
+     * The overall classification of the resource. The classification of a 
+     * resource determines the set of reportable attributes that will be sent 
+     * for that resource. This must be explicitly  specified. The initial set of
+     * classifications are:
+     * - Auth: Any resource for which authentication is the primary purpose
+     * - Private: A resource, other than Auth, which requires the caller to 
+     *            prove identity in order to perform.
+     * - Public: A resource which can be consumed without providing
+     *           Authentication credentials
+    */
+    ApiResourceType apiResourceType();
+
+    /**
+     * A set of static keywords to send to New Relic when reporting this
+     * resource. Currently:
+     *  - Costly
+     *  - Deprecated
+     *
+     * Note - the Deprecated keyword will automatically be applied if the
+     * service is annotated with the {@link Deprecated} annotation.
+     */
+    ApResourceKeyword[] keywords() default {};
+  }
+
+The below tables include all the custom attributes that can be reported to New
+Relic by simply annotating a resource method with the `IdentityApi` annotation.
+The exact set of attributes sent for a given resource depends upon the resource
+type and the configuration of the application (see Configuration section).  Some
+attributes may not be available for services which use legacy functionality. We
+only send data that is readily available and does not require additional
+querying of then backend. When the data is not available the system will send
+the static value '<NotAvailable>' to indicate that the information is missing
+for that service.
+
+A core set of attributes are available for all resource types. Some resource
+types allow for additional attributes.
+
+.. list-table:: Core Custom Attributes
+  :header-rows: 1
+  :widths: 20 50
+
+      * - Name
+        - Description
+      * - requestId
+        - The request id either supplied by the caller or generated if not
+          supplied. All Identity logs will include this id.
+      * - resourcePath
+        - The absolute path of the API resource as specified by the caller
+      * - resourceType
+        - The type of resource - as specified in the IdentityApi annotation for
+          the resource
+      * - keyWords
+        - A set of static values configured per API resource. Multiple values
+          are concatenated with ','
+      * - nodeName
+        - The name of the node on which the call was processed
+      * - remoteIp
+        - The IP that made the request
+      * - forwardedForIp
+        - The IP contained in the X-Forwarded-For header, or the same as the
+          remoteIp if missing or blank.
+
+.. list-table:: Additional Auth Custom Attributes
+  :header-rows: 1
+  :widths: 20 50
+
+      * - Name
+        - Description
+      * - callerUsername
+        - The username associated with the authentication request.
+
+.. list-table:: Additional Private Custom Attributes
+  :header-rows: 1
+  :widths: 20 50
+
+      * - Name
+        - Description
+      * - callerToken
+        - The X-Auth-Token
+      * - callerId
+        - The user id of the caller.
+      * - callerUsername
+        - The username of the caller
+      * - callerUserType
+        - The identity user type of the caller
+      * - effectiveCallerToken
+        - The token under which the service call will be performed
+      * - effectiveCallerId
+        - The id of the user under which the service call will be performed
+      * - effectiveCallerUsername
+        - The username of the user under which the service call will be performed
+      * - effectiveCallerUserType
+        - The identity user type of the user under which the service call will be
+          performed
+
+The caller\* and analagous effectiveCaller\* attributes will be the same
+except     when an impersonation is used (e.g. X-Auth-Token == impersonation
+token). When     an impersonation token is used the system will internally swap
+out the provided     X-Auth-Token with a dynamically generated one that appears
+as if it was issued     to the user directly. To reflect this, information about
+both "callers" is sent     to new relic. The caller\* attributes would represent
+the     actual caller (user **doing** the impersonation) and the
+effectiveCaller\* attributes represent the user **being** impersonated.
+
+Reportable Query Params Annotation
+----------------------------------
+This annotation can be added to any resource method also annotated with the
+`IdentityApi` annotation to send additional attributes to New Relic.
+
+Contract::
+
+  @Target({ElementType.METHOD})
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface ReportableQueryParams {
+
+      /**
+       * Single name of a query param, or a comma separated list of param names,
+       * to log the usage and value
+       * used. The value must be secured (HMAC). Failure to appropriately secure
+       * the value will result in the value being
+       * reported as "<PRIVATE>"
+       *
+       * @return
+       */
+      String[] securedQueryParams() default {};
+
+      /**
+       * Single name of a query param, or a comma separated list of param names,
+       * to log the usage of but NOT the value used. This is useful when you
+       * want to indicate that a particular query param was used, but the value itself
+       * must not be reported. Values will be reported as "<HIDDEN>".
+       *
+       * Any params also included in {@link #securedQueryParams()} are ignored.
+       *
+       * @return
+       */
+      String[] includedQueryParams() default {};
+
+      /**
+       * Single name of a query param, or a comma separated list of param names,
+       * to log the usage of and the value used
+       * without any security around the value (e.g. hashing)
+       *
+       * Any params also included in {@link #securedQueryParams()} or 
+       * {@link #includedQueryParams()} are ignored.
+       *
+       * @return
+       */
+      String[] unsecuredQueryParams() default {};
+  }
+
+.. list-table:: Additional Core Custom Attributes
+  :header-rows: 1
+  :widths: 20 50
+
+      * - Name
+        - Description
+      * - queryParams
+        - The set of query params the caller provided that are marked to be sent to
+          New Relic via the ReportableQueryParams annotation. Multiple params are
+          separated by `&`
+
+Secure Resource Path Annotation
+-------------------------------
+This annotation can be added to any method also annoted with the `IdentityApi`
+annotation to modify the `resourcePath` attribute prior to sending to New Relic.
+This allows sensitive data included in the path to be secured via an SHA-256
+HMAC.
+
+Contract::
+
+    /**
+     * Each group matched by the {@link #regExPattern()} is secured by 
+     * an HMAC using SHA-256, encoding the resultant hash with web safe base64,
+     * and replacing the value in the request path with the base64 hash result.
+     *
+     * All groups included in the regex must match something. Otherwise the
+     * request path is not considered secure and will
+     * not be reported.
+     *
+     */
+    @Target({ElementType.METHOD})
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface SecureResourcePath {
+        /**
+         * A regex pattern to apply against the request path of a REST resource 
+         * (e.g. http://localhost:8083/idm/cloud/v2.0/tenants/-10/users/342341/roles)
+         * to identify groups of strings to mask.
+         *
+         * @return
+         */
+        String regExPattern();
+    }
+
+Securing Sensitive Data
+~~~~~~~~~~~~~~~~~~~~~~~
+Various pieces of data sent to New Relic can not be sent in plaintext as they
+contain personally identifiable information (PII) or other senstive data.
+However, we need a consistent representation of this data in order to perform
+analysis on API usage. For example, we'd like to know how frequently users use
+different tokens within the same time period. A high volume of distinct tokens
+within a 24 hour period would indicate the user is not following an Identity
+best practice - caching tokens.
+
+Examples of data that must be secured include:
+
+- Usernames
+- Tokens
+- Email Addresses
+  
+This data could be included in various parts of the data sent to relic. The
+application allows securing each manner in which the sensitive data is sent.
+
+.. list-table:: Securing Sensitive Data
+  :header-rows: 1
+  :widths: 20 40 20
+
+  * - Type
+    - Description
+    - Manner to secure
+  * - requestPath Custom Attribute
+    - Sensitive data may be included in the requestPath (URI) of the
+      request. Examples include v2.0 validate token which includes the token
+    - This can be secured via the SecureResourcePath annotation
+  * - queryParams Custom Attribute
+    - Sensitive data may be sent via queryParams of the
+      request. Examples include v2.0 list users which allows one to specify
+      the username to search for via the ``name`` query param.
+    - This can be secured via the ReportableQueryParams annotation
+  * - Generic Custom Attributes
+    - In some cases the entire custom attribute value is sensitive
+      and must be secured (as opposed to just portions of it such as
+      requestPath and queryParams)
+    - A reloadable property allows one to specify, at deploy time, the set
+      of custom attributes whose entire values must be secured prior to
+      sending to New Relic.
+
+The mechanism to secure sensitive data is the same regardless of the manner in
+which data is specified as needing to be secured. In all cases the following is
+performed:
+
+1. An HMAC is taken of the plaintext
+2. The HMAC is encoded via web safe base64
+3. The encoded value wrapped as: ``SV(<encoded>)`` (e.g. ``SV(abd34cd)``)
+
+The encoded value is wrapped, as opposed to being included as-is in order to
+distinguish between values that are secured (and hence are only representative
+of the actual value) and those that are the actual values.
+
+Configuration
+~~~~~~~~~~~~~
+The functionality will be configurable to allow control over the data sent to
+New Relic.
+
+Custom Attributes to Send
+-------------------------
+The custom attributes sent to New Relic for each resourceType can be controlled
+through a set of commonly named reloadable configuration properties.
+
+- **new.relic.include.XXX.resource.attributes**: Specifies which attributes to send
+  for the resource type. The wildcard '*'' is shorthand for all available
+  attributes for the resource type. The default is '*'
+- **new.relic.exclude.XXX.resource.attributes**: Specifies which attributes to not
+  send for the resource type (regardless of whether it's included in the
+  'new.relic.include.XXX.resource.attributes' property. The wildcard '*' is
+  shorthand for all available attributes for the resource type. The default
+  is no value.
+
+The actual named properties for the resource types (Auth, Private, Public)
+are therefore:
+
+- new.relic.include.auth.resource.attributes
+- new.relic.include.private.resource.attributes
+- new.relic.include.public.resource.attributes
+- new.relic.exclude.auth.resource.attributes
+- new.relic.exclude.private.resource.attributes
+- new.relic.exclude.public.resource.attributes
+
+Security
+--------
+- **new.relic.secured.api.resource.attributes**: A comma delimited list of
+  custom attribute names to secure. An HMAC using will be made for each
+  listed attribute prior to sending to New Relic. The default (hardcoded) set
+  will be:
+
+   - callerToken
+   - callerUserName
+   - callerUserType
+   - effectiveCallerToken
+   - effectiveCallerUsername
+   - effectiveCallerType
+
+To secure sensitive data the following reloadable properties are used:
+
+- **new.relic.secured.api.resource.key**: The key to use when generating the HMAC
+- **feature.enable.new.relic.sha256.hmac**: When true (default), uses SHA-256;
+  else SHA-1
+
+Modifications from Previous Properties
+--------------------------------------
+Renamed:
+
+- new.relic.auth.api.resource.attributes -> new.relic.include.auth.resource.attributes
+- new.relic.protected.api.resource.attributes -> new.relic.include.private.resource.attributes
+- new.relic.unprotected.api.resource.attributes -> new.relic.include.public.resource.attributes
+
+Deleted:
+
+- feature.enable.secure.new.relic.api.resource.attributes - Deleted. Always enabled
+
+Business Acceptance Criteria
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Implement above changes
+
+Test Acceptance Criteria
+~~~~~~~~~~~~~~~~~~~~~~~~
+TBD
