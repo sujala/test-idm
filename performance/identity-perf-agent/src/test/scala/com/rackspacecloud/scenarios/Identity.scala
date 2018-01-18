@@ -24,6 +24,7 @@ object Identity {
  
    // For Create User
    var created_users_writer = new PrintWriter(new File(DATA_LOCATION + "data/identity/created_users.dat"))
+  created_users_writer.append("admin_token,user_id,username\n")
 
    // V11 Authenticate
    val v11_apikey_auth                 = scenario("V1.1_Authenticate_External").exec(Tokens.v11_authenticate).exitHereIfFailed
@@ -108,12 +109,11 @@ object Identity {
   // val v20_list_users_in_a_domain = scenario("V2.0_List_Users_In_Domain_Id").exec(Tokens.v20_list_users_in_a_domain).exitHereIfFailed
 
 def write_created_user(session:Session):Session = {
-   println(s"Create user, writing " + session("admin_token").as[String] + "," + session("user_id").as[String] + "")
    created_users_writer.write(
-       session("admin_token").as[String] + "," +
-       session("user_id").as[String] + "," +
-       session("per_stg_1_${next_int}").as[String] + 
-       "\n"); session
+     session("admin_token").as[String] + "," +
+       session("user_id").as[String] +
+       "\n"
+   ); session
 }
   // V20 
  val v20_create_user               = scenario("V2.0_Create_User").exec(Tokens.v20_create_user).exec { session=> write_created_user(session)}.exitHereIfFailed
@@ -121,5 +121,7 @@ def write_created_user(session:Session):Session = {
   val v20_create_user_internal      = scenario("V2.0_Create_User_Internal").exec(Tokens.v20_create_user).exec { session=> write_created_user(session)}.exitHereIfFailed
   val v20_create_user_internal_repl = scenario("V2.0_Create_User_Internal_Replication").exec(Tokens.v20_create_user).exec { session=> write_created_user(session)}.exitHereIfFailed
 
+  // CRUD users
+  val v20_crud_user = scenario("V2.0 CRUD User").exec(Tokens.v20_crud_users).exec { session=> write_created_user(session)}.exitHereIfFailed
 
 }

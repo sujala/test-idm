@@ -25,7 +25,7 @@ In order for us to validate any performance characteristics of the target identi
 
    4.0. Set `docker_ip` variable to IP that your docker is running under.  Usually localhost on OSs that run native docker and 192.168.x.x on those that run in docker-machine.
    4.1. There are python scripts.  You should run under latest Python 3.x version (use pyenv to set the version and virtualenv to not install packages in your system)
-   4.2. Run `pip install -r data-generation/requirements.txt`
+   4.2. Run `pip install -r data_generation/requirements.txt`
    4.3. Run `mkdir -p identity-perf-agent/localhost/data/identity`. Please wipe out any any old csv files in admins, users or default_users directories.
    4.4. Generate users in temporary directories (positional values are: ip, loops, normal users per loop, and admin users per loop): `pushd data_generation && ./create_users.sh http://${docker_ip}:8082/idm/cloud 1 10 5 && popd`.  This will create loops * (normal users per loop) users and loops * (admin users per loop) admins.
    4.5. Generate admin user data: `pushd data_generation && ./generate_files.py -u admins -c admin_file_config.json -o ../identity-perf-agent/localhost/data/identity  && popd`

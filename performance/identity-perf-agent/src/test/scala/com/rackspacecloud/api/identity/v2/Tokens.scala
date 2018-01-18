@@ -6,6 +6,9 @@ import io.gatling.core.structure.ChainBuilder
 import com.typesafe.config.ConfigFactory
 import io.gatling.http.Predef._
 import java.io._
+
+import com.rackspacecloud.scenarios.Identity.{created_users_writer, write_created_user}
+
 import scala.{Console => ScalaConsole}
 //import com.rackspace.idm.federation.samlgenerator.FederatedAuthV2
 import sys.process._
@@ -289,16 +292,102 @@ def v20_list_global_roles_for_user_id: ChainBuilder = {
       .check(jsonPath("$.user.id").saveAs("user_id")))
       .exitHereIfFailed
   }
-  // Can uncomment once we are ready to add this memory-leak test to regular perf suite
-  //  def v20_list_users_in_a_domain: ChainBuilder = {
-  //    feed(usersFeeder_v20_admin)
-  //      .feed(usersInDomainFeeder)
-  //      .exec(http("GET /v2.0/RAX-AUTH/domains/${domainId}/users")
-  //        .get("/v2.0/RAX-AUTH/domains/${domainId}/users")
-  //        .header("x-auth-token", "${admin_token}")
-  //        .header("X-Forwarded-For", "${ipaddress}")
-  //        .check(status.is(200)))
-  //      .exitHereIfFailed
-  //  }
+
+  /**
+    * This flow will test the cloud feed events
+    * It will:
+    *
+    * * Create a user with default password as Password1 (issue event)
+    * * Retrieve user's token (issue event)
+    * * Explicitly revoke user's token (issue event)
+    * * Update user's password (issue a slew of events)
+    * * Disable user (issue 2 events)
+    * * Enable user (issue 2 events)
+    * * Delete user (issue an event)
+    *
+    * @return
+    */
+  def v20_crud_users: ChainBuilder = {
+    feed(usersFeeder_v20_admin)
+      .feed(integer_feeder)
+      .exec { session =>
+        session.set("username_prefix", "perf_cf")}
+      .exec(
+        http("POST /v2.0/users")
+          .post("/v2.0/users")
+          .header("X-Forwarded-For", "${ipaddress}")
+          .body(ElFileBody("request-bodies/identity/v2/create_user_body_v2.json")).asJSON
+          .header("x-auth-token", "${admin_token}")
+          .check(jsonPath("$.user.id").saveAs("user_id"))
+          .check(status.is(201)))
+      .exec { session =>
+        created_users_writer.write {
+            session("admin_token").as[String] + "," +
+            session("user_id").as[String] +
+            "\n"
+        }; session}
+      .exitHereIfFailed
+      .exec(
+        http("GET TOKEN FOR [user_id]")
+          .post("/v2.0/tokens")
+          .header("X-Forwarded-For", "${ipaddress}")
+          .body(ElFileBody("request-bodies/identity/v2/tokens_body_password_v2.json")).asJSON
+          .check(jsonPath("$.access.token.id").saveAs("user_token"))
+          .check(status.is(200))
+      )
+      .exec(
+        http("REVOKE TOKEN FOR [user_id]")
+          .delete("/v2.0/tokens/${user_token}")
+          .header("X-Forwarded-For", "${ipaddress}")
+          .header("x-auth-token", "${admin_token}")
+      )
+      .exec(
+        http("UPDATE /v2.0/users/[user_id]")
+          .post("/v2.0/users/${user_id}")
+          .header("X-Forwarded-For", "${ipaddress}")
+          .header("x-auth-token", "${admin_token}")
+          .body(ElFileBody("request-bodies/identity/v2/update_user_password_v2.json")).asJSON
+        )
+      .exitHereIfFailed
+      .exec(
+        http("DISABLE /v2.0/users/[user_id]")
+          .post("/v2.0/users/${user_id}")
+          .header("X-Forwarded-For", "${ipaddress}")
+          .header("x-auth-token", "${admin_token}")
+          .body(ElFileBody("request-bodies/identity/v2/disable_user_body_v2.json")).asJSON
+      )
+      .exitHereIfFailed
+      .exec(
+        http("ENABLE /v2.0/users/[user_id]")
+          .post("/v2.0/users/${user_id}")
+          .header("X-Forwarded-For", "${ipaddress}")
+          .header("x-auth-token", "${admin_token}")
+          .body(ElFileBody("request-bodies/identity/v2/enable_user_body_v2.json")).asJSON
+      )
+      .exitHereIfFailed
+      .exec(
+        http("DELETE /v2.0/users/[user_id]")
+          .delete("/v2.0/users/${user_id}")
+          .header("X-Forwarded-For", "${ipaddress}")
+          .header("x-auth-token", "${admin_token}")
+      )
+      .exitHereIfFailed
+      .exec(
+        http("DISABLE /v2.0/RAX-AUTH/domains")
+          .put("/v2.0/RAX-AUTH/domains/${next_int}")
+          .body(ElFileBody("request-bodies/identity/v2/disable_domain_body.json")).asJSON
+          .header("X-Forwarded-For", "${ipaddress}")
+          .header("x-auth-token", "${admin_token}")
+      )
+      .exitHereIfFailed
+      .exec(
+        http("DELETE /v2.0/RAX-AUTH/domains")
+          .delete("/v2.0/RAX-AUTH/domains/${next_int}")
+          .header("X-Forwarded-For", "${ipaddress}")
+          .header("x-auth-token", "${admin_token}")
+      )
+      .exitHereIfFailed
+
+  }
 }
 

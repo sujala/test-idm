@@ -39,7 +39,7 @@ def get_token(user_name, password="Password1", alt_url=None):
     if alt_url:
         baseurl = alt_url
     # auth to check
-    print "Authing as user"
+    print("Authing as user")
     authdata = {"auth":
                 {"passwordCredentials":
                  {"username": user_name,
@@ -49,12 +49,12 @@ def get_token(user_name, password="Password1", alt_url=None):
     headers_auth = {'Accept': 'application/json',
                     'Content-Type': 'application/json'}
     t_url = "{0}/v2.0/tokens".format(baseurl)
-    print "authdata: {0}".format(authdata)
+    print("authdata: {0}".format(authdata))
     r = requests.post(url=t_url, json=authdata,
                       headers=headers_auth, verify=False)
-    print t_url
-    print r
-    print r.json()
+    print(t_url)
+    print(r)
+    print(r.json())
     return r.json()["access"]["token"]["id"]
 
 
@@ -63,9 +63,9 @@ def get_api_key(baseurl, headers, user_id):
     a_url = "{0}/v2.0/users/{1}/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials".format(baseurl, user_id)
     r = requests.get(url=a_url,
                      headers=headers, verify=False)
-    print a_url
-    print r
-    print r.text
+    print(a_url)
+    print(r)
+    print(r.text)
     apikey = r.json()["RAX-KSKEY:apiKeyCredentials"]["apiKey"]
     return apikey
 
@@ -120,9 +120,9 @@ def add_user(number):
         g_url = "{0}/v2.0/RAX-GRPADM/groups".format(baseurl)
         r = requests.post(url=g_url,
                           json=group_data, headers=headers, verify=False)
-        print g_url
-        print r
-        print r.text
+        print(g_url)
+        print(r)
+        print(r.text)
 
         user_name = name_generator()
         region = "ORD"
@@ -141,9 +141,9 @@ def add_user(number):
         u_url = "{0}/v2.0/users".format(baseurl)
         r = requests.post(url=u_url,
                           json=create_user_data, headers=headers, verify=False)
-        print u_url
-        print r
-        print r.text
+        print(u_url)
+        print(r)
+        print(r.text)
         result_data = r.json()
         user_id = result_data["user"]["id"]
 
@@ -163,7 +163,7 @@ def add_user(number):
         # get api key
         apikey = get_api_key(baseurl, headers, user_id)
         user_data["apikey"] = apikey
-        print user_data
+        print(user_data)
         time.sleep(0.1)
         return user_data
     except Exception as excp:
@@ -175,7 +175,7 @@ def add_user(number):
 
 
 def add_admin_user(number, alt_url=None):
-    print "alt:{0}".format(alt_url)
+    print("alt:{0}".format(alt_url))
     if alt_url:
         baseurl = alt_url
     try:
@@ -190,7 +190,7 @@ def add_admin_user(number, alt_url=None):
                             "RAX-AUTH:defaultRegion": region}}
         admin_token = get_token(user_name="keystone_service_admin",
                                 password="Auth1234", alt_url=baseurl)
-        print admin_token
+        print(admin_token)
 
         sa_headers = {'Accept': 'application/json', 'Content-Type': 'application/json',
                       'X-Auth-Token': admin_token}
@@ -261,13 +261,13 @@ if __name__ == '__main__':
     # localhost - needs to be an identity admin, not a service admin
     admin_token = get_token(user_name="keystone_identity_admin",
                             password="Auth1234", alt_url=baseurl)
-    print admin_token
+    print(admin_token)
 
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json',
                'X-Auth-Token': admin_token}
 
-    print "Running {0} processes".format(proc_count)
-    print headers
+    print("Running {0} processes".format(proc_count))
+    print(headers)
     with open(output_file_name, 'w') as user_data_file:
         with terminating(Pool(processes=proc_count)) as p:
             result_rows = p.map(add_user, range(num_users))

@@ -157,6 +157,10 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val V20_CREATE_USER_INTERNAL_USERS_PER_SEC : Double = conf.getDouble("soa.v20_create_user_internal.users_per_sec")
   val V20_CREATE_USER_INTERNAL_REPL_USERS_PER_SEC : Double = conf.getDouble("soa.v20_create_user_internal_repl.users_per_sec")
 
+  // V20 crud user
+
+  val V20_CRUD_USER_USERS_PER_SEC : Double = conf.getDouble("soa.v20_crud_user.users_per_sec")
+
   val v20_create_user_scn = Identity.v20_create_user
   // val v20_create_user_repl_scn = Identity.v20_create_user_repl
   // val v20_create_user_internal_scn = Identity.v20_create_user_internal
@@ -164,6 +168,8 @@ class IdentityConstantTputUsersRampUp extends Simulation {
 
   val v20_apikey_auth_default_user_scn = Identity.v20_apikey_auth_default_user
   val v20_validate_default_user_token_scn = Identity.v20_token_validate_default_user
+
+  val v20_crud_user_scn = Identity.v20_crud_user
 
 
 
@@ -292,10 +298,13 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     scn_wrapper(v20_list_global_roles_for_user_id_internal_scn, V20_LIST_GLOBAL_ROLES_FOR_USER_ID_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
     scn_wrapper(v20_list_global_roles_for_user_id_internal_repl_scn, V20_LIST_GLOBAL_ROLES_FOR_USER_ID_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
 
+    scn_wrapper(v20_crud_user_scn, V20_CRUD_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+
     scn_wrapper(v20_create_user_scn, V20_CREATE_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf)
 //    scn_wrapper(v20_create_user_repl_scn, V20_CREATE_USER_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 //    scn_wrapper(v20_create_user_internal_scn, V20_CREATE_USER_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
 //    scn_wrapper(v20_create_user_internal_repl_scn, V20_CREATE_USER_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf)
+
 
 )
 
