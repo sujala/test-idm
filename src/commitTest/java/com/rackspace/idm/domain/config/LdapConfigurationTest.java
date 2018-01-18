@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.config;
 import com.unboundid.util.LDAPSDKUsageException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -14,12 +13,14 @@ public class LdapConfigurationTest {
     Configuration configuration;
     LdapConfiguration ldapConfiguration;
     IdentityConfig identityConfig;
+    LdapConnectionPoolHealthCheck ldapConnectionPoolHealthCheck;
 
     @Before
     public void setUp() throws Exception {
         configuration = mock(Configuration.class);
         identityConfig = new IdentityConfig(configuration, configuration);
-        ldapConfiguration = new LdapConfiguration(identityConfig);
+        ldapConnectionPoolHealthCheck = mock(LdapConnectionPoolHealthCheck.class);
+        ldapConfiguration = new LdapConfiguration(identityConfig, ldapConnectionPoolHealthCheck);
     }
 
     @Test

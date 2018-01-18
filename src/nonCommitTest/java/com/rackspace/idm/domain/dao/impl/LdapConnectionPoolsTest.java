@@ -3,13 +3,13 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.config.LdapConnectionPoolHealthCheck;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -36,6 +36,9 @@ public class LdapConnectionPoolsTest {
     @Autowired
     IdentityConfig identityConfig;
 
+    @Autowired
+    LdapConnectionPoolHealthCheck ldapConnectionPoolHealthCheck;
+
     LdapConnectionPools ldapConnectionPools;
 
     LDAPConnectionPool appConnectionPool;
@@ -43,7 +46,7 @@ public class LdapConnectionPoolsTest {
 
     @Before
     public void setUp() throws Exception {
-        LdapConfiguration ldapConfiguration = new LdapConfiguration(identityConfig);
+        LdapConfiguration ldapConfiguration = new LdapConfiguration(identityConfig, ldapConnectionPoolHealthCheck);
         LdapConnectionPools connectionPools  = ldapConfiguration.connectionPools();
         appConnectionPool = connectionPools.getAppConnPool();
         bindConnectionPool = connectionPools.getBindConnPool();

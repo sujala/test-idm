@@ -21,15 +21,17 @@ class LdapConfigurationIntegrationTest  extends Specification {
     @Shared IdentityConfig identityConfig;
     @Shared IdentityConfig.StaticConfig staticConfig;
     @Shared IdentityConfig.ReloadableConfig reloadableConfig;
+    @Shared LdapConnectionPoolHealthCheck ldapConnectionPoolHealthCheck
 
 
     def setup() {
         identityConfig = Mock()
         staticConfig = Mock()
         reloadableConfig = Mock()
+        ldapConnectionPoolHealthCheck = Mock()
         identityConfig.getStaticConfig() >> staticConfig
         identityConfig.getReloadableConfig() >> reloadableConfig
-        ldapConfiguration = new LdapConfiguration(identityConfig)
+        ldapConfiguration = new LdapConfiguration(identityConfig, ldapConnectionPoolHealthCheck)
     }
 
     def "init can create ldap configuration"() {
@@ -51,6 +53,7 @@ class LdapConfigurationIntegrationTest  extends Specification {
         1 * staticConfig.getLDAPServerBindDN() >> bindDN
         1 * staticConfig.getLDAPServerBindPassword() >> password
         1 * staticConfig.getLDAPServerPoolAgeMax() >> 0
+        1 * staticConfig.getLDAPServerPoolMinDisconnectIntervalTime() >> 0
         1 * staticConfig.getLDAPServerPoolCreateIfNecessary() >> true
         1 * staticConfig.getLDAPServerPoolMaxWaitTime() >> 0
         1 * staticConfig.getLDAPServerPoolHeathCheckInterval() >> 100
@@ -66,8 +69,10 @@ class LdapConfigurationIntegrationTest  extends Specification {
         ((SimpleBindRequest)connection.bindRequest).getBindDN() == bindDN
         ((SimpleBindRequest)connection.bindRequest).password.stringValue() == password
         connection.getMaxConnectionAgeMillis() == 0
+        connection.getMinDisconnectIntervalMillis() == 0
         connection.getCreateIfNecessary() == true
         connection.getMaxWaitTimeMillis() == 0
+        connection.healthCheck != null
         connection.getHealthCheckIntervalMillis() == 100
         connection.checkConnectionAgeOnRelease == false
         ((RoundRobinServerSet)connection.serverSet).connectionOptions.allowConcurrentSocketFactoryUse == false
