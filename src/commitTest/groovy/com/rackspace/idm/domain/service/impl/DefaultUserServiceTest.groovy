@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -1114,6 +1115,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         thrown(IllegalArgumentException)
     }
+
+
 
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {

@@ -3,6 +3,7 @@ Cloud Identity 3.19.0 Release
 
 .. _CID-356:  https://jira.rax.io/browse/CID-356
 .. _CID-357:  https://jira.rax.io/browse/CID-357
+.. _CID-1115:  https://jira.rax.io/browse/CID-1115
 .. _CID-1308:  https://jira.rax.io/browse/CID-1308
 
 .. contents::
@@ -32,6 +33,7 @@ Issues Resolved
 Stories
 -------
 
+#. `CID-1115`_ - Analyze token returns 404("Token not found.") if the user for the subject token is deleted
 #. `CID-1308`_ - Implement healthCheck on ldap connection pools
 
 Defects

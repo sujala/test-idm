@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyConverter;
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
@@ -388,12 +389,25 @@ public class DefaultDevOpsService implements DevOpsService {
                     trrs = aeTokenRevocationService.findTokenRevocationRecordsMatchingToken(saSubjectToken);
 
                     // Get user associated with token
-                    user = userService.getUserByScopeAccess(saSubjectToken, false);
-                    userDomain = domainService.getDomain(user.getDomainId());
+                    try {
+                        user = userService.getUserByScopeAccess(saSubjectToken, false);
+                    } catch (NotFoundException e) {
+                        user = getDeletedUserByScopeAccess(saSubjectToken);
+                    }
+
+                    if (StringUtils.isNotBlank(user.getDomainId())) {
+                        userDomain = domainService.getDomain(user.getDomainId());
+                    }
 
                     if (saSubjectToken instanceof ImpersonatedScopeAccess){
-                        impersonatedUser = identityUserService.getEndUserById(((ImpersonatedScopeAccess) saSubjectToken).getRsImpersonatingRsId());
-                        impersonatedUserDomain = domainService.getDomain(impersonatedUser.getDomainId());
+                        ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) saSubjectToken;
+                        impersonatedUser = identityUserService.getEndUserById(impersonatedScopeAccess.getRsImpersonatingRsId());
+                        if (impersonatedUser != null) {
+                            impersonatedUserDomain = domainService.getDomain(impersonatedUser.getDomainId());
+                        } else {
+                            impersonatedUser = new User();
+                            ((User)impersonatedUser).setId(impersonatedScopeAccess.getRsImpersonatingRsId());
+                        }
                     }
                 }
                 tokenAnalysis = TokenAnalysis.fromEntities(saSubjectToken, user, impersonatedUser, userDomain, impersonatedUserDomain, trrs).toJson();
@@ -406,6 +420,34 @@ public class DefaultDevOpsService implements DevOpsService {
             logger.error("Error analyzing token", ex);
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    private BaseUser getDeletedUserByScopeAccess(ScopeAccess scopeAccess) {
+        BaseUser user = null;
+
+        if (scopeAccess instanceof ImpersonatedScopeAccess) {
+            ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
+
+            if (impersonatedScopeAccess.getRackerId() != null) {
+                user = new Racker();
+                ((Racker)user).setId(impersonatedScopeAccess.getRackerId());
+            } else {
+                user = new User();
+                ((User)user).setId(impersonatedScopeAccess.getUserRsId());
+            }
+        } else {
+            if (scopeAccess instanceof UserScopeAccess) {
+                UserScopeAccess userScopeAccess = (UserScopeAccess)scopeAccess;
+                if (CollectionUtils.isNotEmpty(scopeAccess.getAuthenticatedBy()) && scopeAccess.getAuthenticatedBy().contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)) {
+                    user = new FederatedUser();
+                    ((FederatedUser)user).setId(userScopeAccess.getUserRsId());
+                } else {
+                    user = new User();
+                    ((User)user).setId(userScopeAccess.getUserRsId());
+                }
+            }
+        }
+        return user;
     }
 
     private File getLogParentDir() {
