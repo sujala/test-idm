@@ -2,6 +2,7 @@
 import ddt
 from nose.plugins.attrib import attr
 
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 from tests.api.v2.schema import user_groups
 from tests.package.johny import constants as const
@@ -19,7 +20,8 @@ class AddUserGroupForDomain(base.TestBaseV2):
         if cls.test_config.use_domain_for_user_groups:
             cls.domain_id = cls.test_config.domain_id
         else:
-            cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
+            cls.domain_id = func_helper.generate_randomized_domain_id(
+                client=cls.identity_admin_client, pattern=const.DOMAIN_PATTERN)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})

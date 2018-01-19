@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 from random import randrange
 
 from tests.api.v2 import base
@@ -45,10 +46,10 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         cls.role_ids = []
         cls.tenant_ids = []
 
+    @attr(type='smoke_alpha')
     def test_effective_roles_for_default_user(self):
         # create global role
         global_role_id, global_role_name = self.create_role()
-        self.role_ids.append(global_role_id)
         # add global role to sub-user
         resp = self.identity_admin_client.add_role_to_user(
             role_id=global_role_id,
@@ -57,10 +58,8 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
 
         # create tenant
         tenant = self.create_tenant()
-        self.tenant_ids.append(tenant.id)
         # create tenant role
         tenant_role_id, tenant_role_name = self.create_role()
-        self.role_ids.append(tenant_role_id)
         # add tenant role to sub user for tenant
         resp = self.identity_admin_client.add_role_to_user_for_tenant(
             tenant_id=tenant.id,
@@ -71,7 +70,6 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         # create user group role
         user_group_role_id, user_group_role_name = self.create_role(
             admin_role=const.USER_MANAGE_ROLE_NAME)
-        self.role_ids.append(user_group_role_id)
         # Create user group; add to user-default
         user_group = self.add_sub_user_to_user_group()
         # add role to user group
@@ -212,15 +210,24 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         return group
 
     @classmethod
+    @base.base.log_tearDown_error
     def tearDownClass(cls):
-        # Delete all users created in the setUpClass
-        cls.delete_client(client=cls.user_client,
-                          parent_client=cls.user_admin_client)
+        # Delete sub users created in the setUpClass
+        resp = cls.identity_admin_client.delete_user(
+            cls.user_client.default_headers[const.X_USER_ID])
+        assert resp.status_code == 204, (
+            'User with ID {0} failed to delete'.format(
+                cls.user_client.default_headers[const.X_USER_ID]))
+        resp = cls.identity_admin_client.delete_user(
+            cls.user_manager_client.default_headers[const.X_USER_ID])
+        assert resp.status_code == 204, (
+            'User with ID {0} failed to delete'.format(
+                cls.user_manager_client.default_headers[const.X_USER_ID]))
+        # Delete client will delete user-admin, tenant & the domain
         cls.delete_client(client=cls.user_admin_client,
                           parent_client=cls.identity_admin_client)
         for role_id in cls.role_ids:
-            cls.identity_admin_client.delete_role(role_id=role_id)
-        for tenant_id in cls.tenant_ids:
-            cls.identity_admin_client.delete_tenant(
-                tenant_id=tenant_id)
+            resp = cls.identity_admin_client.delete_role(role_id=role_id)
+            assert resp.status_code == 204, (
+                'Role with ID {0} failed to delete'.format(role_id))
         super(TestListEffectiveRolesForUser, cls).tearDownClass()
