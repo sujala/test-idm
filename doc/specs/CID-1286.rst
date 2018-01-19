@@ -1,0 +1,79 @@
+.. _CID-1286:
+.. _apply_rcn_wiki: https://one.rackspace.com/pages/viewpage.action?title=New+Identity+Role+Features&spaceKey=seamless
+.. _CID-491: https://jira.rax.io/browse/CID-491
+.. _CID-492: https://jira.rax.io/browse/CID-492
+.. _CID-485: https://jira.rax.io/browse/CID-485
+.. _CID-489: https://jira.rax.io/browse/CID-489
+.. _CID-486: https://jira.rax.io/browse/CID-486
+.. _CID-851: https://jira.rax.io/browse/CID-851
+.. _CID-1194: https://jira.rax.io/browse/CID-1194
+
+==========================================================================
+apply_rcn_roles should only auto assign global roles to non-hidden tenants
+==========================================================================
+
+.. contents:: Table of Contents
+  :depth: 3
+
+Description
+~~~~~~~~~~~
+
+If the ``apply_rcn_roles`` param is supplied and set to ``true`` to Identity
+services that support it, Identity will automatically assign all domain roles
+the user is assigned to every tenant within the user’s domain. Since all users
+are guaranteed to have at least one global role (``identity:user-admin
+``/``identity-default``/ etc) this  means all users will receive each global
+role on every tenant in the user's domain.
+
+Identity previously used similar logic when assigning the
+``identity:tenant-access`` role. It was dynamically granted to a user on every
+tenant within the user's domain. Identity implemented a feature in 3.17.0
+(`CID-1194`_) to exclude tenants of a specified set of
+tenant types from receiving this role in this manner (with the exception of
+user-admins/user-manage users which still receive the role on every tenant in
+domain). The reloadable property ``tenant.prefixes.to.exclude.auto.assign.role.from``
+contains a delimited set of these "hidden" tenant types. We need to apply
+similar, but distinct, logic when denormalizing global roles to all tenants
+within a domain. 
+
+The distinction between what this existing implementation does and the change this
+story requires is that an ``identity:default`` user (that
+does not also have the ``identity:user-manage role``) never receives the
+``identity:tenant-access role``, while, when ``apply_rcn_roles=true`` such
+users must receive the domain role if, and only if, the user has another role
+already assigned to that tenant. The existing logic does not change when
+``apply_rcn_roles=false`` or the parameter is not supplied.
+
+Affected API Services
+~~~~~~~~~~~~~~~~~~~~~
+
+The change will impact all APIs that implement the apply_rcn_roles logic. The
+full list of APIs that need to support ``apply_rcn_roles`` is listed at
+`apply_rcn_wiki`_. Those services that have been updated as of the time of
+this spec are listed in the table below:
+
+.. csv-table:: Apply RCN Roles param support
+  :header: Service, Original Implementation Story
+
+  Auth Calls,`CID-491`_
+  Validate Calls,`CID-492`_
+  List (Global) Roles for User,`CID-485`_
+  List Roles for User on a Tenant,`CID-489`_
+  List Tenants,`CID-486`_
+  List Endpoints for Token,`CID-851`_
+
+Ideally the services would make use of the underlying logic used by the 
+``get effective roles for user`` service. However, that is a "nice to have"
+rather than a requirement.
+
+As ``apply_rcn_roles`` is not currently in use and the existing functionality
+includes a potential priviledge escalation, a feature flag is not required to
+disable this change.
+
+Business Acceptance Criteria
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Implement above changes for specified services
+
+Test Acceptance Criteria
+~~~~~~~~~~~~~~~~~~~~~~~~
+TBD
