@@ -6,41 +6,40 @@ Allow a contactId to be set on a federated user
 
 Description
 -----------
-To support dedicated federation a contactId must be able to be set on a
-federated user. The contactId can not be set as part of the SAML federation,
+To support dedicated federation a **contactId** must be able to be set on a
+federated user. The **contactId** can not be set as part of the SAML federation,
 but must be done after the federated user is already created - an update of a
 federated user. The only attribute that can be updated on a fed user is the
-contactId and, similar to other attributes, the contactId can not be blanked
+**contactId** and, similar to other attributes, the **contactId** can not be blanked
 out once it is set to a value. If the update request for a federated user
-includes a blank contactId, then the update is a no-op.
+includes a blank **contactId**, then the update is a no-op.
 
 The update service should then return the federated user details similar to the
-get user by ID for a federated user - including the contactId.
+get user by ID for a federated user - including the **contactId**.
 
 Implementation
 --------------
 
 Revamp identity's v2.0 update user call (v2.0/users/{userId}) to allow updating
-federated users's contactId. The service must determine whether a user is
+federated users's **contactId**. The service must determine whether a user is
 provisioned or federated. If the user is federated, the service must provide
 following logic.
 
-#. Maintain same permissions as for updating a contactId on a provisioned user.
-##. Users with role identity:service-admin, identity:admin, or identity:user-admin are allowed to make this update.
-##. User-admins must belong to the same domain as the federated user.
-#. Allow updating contactId on federated users
-##. Validate contactId length is less than 64 characters.
-##. Attribute must be required, return 400 Bad Request "'RAX-AUTH:contactId' is a required attribute".
-##. Once the attribute is set, it cannot be blank out.
-#. Any other attributes passed in the request are ignored.
-#. Response must include same details as get user by ID.
-#. Return 404 Not Found if the federated user is not found.
-
+1. Maintain same permissions as for updating a **contactId** on a provisioned user.
+ a) Users with role ``identity:service-admin``, or ``identity:admin`` are allowed to make this update.
+2. Allow updating **RAX-AUTH:contactId** on federated users
+ a) Validate **contactId** length is less than 64 characters.
+   - Update the v2.0 create and update user calls to perform this validation
+ b) If **contactId** is not provided, the service is just a no-op. Return 200 OK.
+ c) Once the attribute is set, it cannot be blank out.
+3. Any other attributes passed in the request are ignored.
+4. Response must include same details as get user by ID.
+5. Return 404 Not Found if the federated user is not found.
 
 Business Acceptance Criteria
 ----------------------------
 #. Implement above changes for specified service
-#. Update internal and external documentation to reflect these changes.
+#. Update internal documentation to reflect these changes.
 #. Update 3.19 release notes.
 
 Test Acceptance Criteria
