@@ -1,5 +1,5 @@
 .. _CID-1326:
-.. _CID-1324: https://jira.rax.io/browse/CID-1290
+.. _CID-1324: https://jira.rax.io/browse/CID-1324
 
 =============================================================
 Return contactId for federated users from get user/list users
