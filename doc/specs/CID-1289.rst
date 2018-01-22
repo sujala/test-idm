@@ -10,14 +10,14 @@ Description
 Currently, when a user attempts to authenticate w/ password Identity performs
 the following:
 
-1. We look up the user by supplied username
+1. Looks up the user by supplied username
 2. If no user found, return 401 w/ message "Unable to authenticate user with
    credentials provided."
-3. We attempt to bind w/ supplied pwd.
-4. If pwd invalid, we return 401 w/ message "Unable to authenticate user with
+3. Attempt to bind w/ supplied pwd.
+4. If pwd invalid, returns 401 w/ message "Unable to authenticate user with
    credentials provided."
-5. If correct pwd, and either the user is disabled or domain is disabled, we
-   return a 403 w/ message "User '" + user.getUsername() +"' is disabled.
+5. If correct pwd, and either the user is disabled or domain is disabled,
+   returns a 403 w/ message "User '" + user.getUsername() +"' is disabled.
 
 This logic reduces our ability to respond to bad actors. For example, in the
 case of a user attempting to perform excessive auth attempts (e.g. bad actor or
@@ -42,7 +42,7 @@ verification against the stored API key. We must maintain consistent responses
 across our auth methods (API and password) for disabled users.
 
 The goal of this story is to further limit the resource consumption of
-authenticating against disabled users.Similarly, there are opportunities for
+authenticating against disabled users. Similarly, there are opportunities for
 caching disabled user information and eliminating the initial search for the
 user completely.
 
@@ -72,224 +72,81 @@ favors usability (returning 403 for disabled users) and security (authenticating
 credential prior to checking disabled status), but does not sufficiently reduce
 resource utilization. The following options juggle these a few different ways.
 
--------
-Options
--------
-The following represent a few options with the pros/cons of each.
+After considerable discussion of various ways to balance the priorities,
+we have decided the best way to implement this is to have API nodes cache the
+lockout period that CA enforces. While this will not eliminate all binds on
+disabled users, it will significantly reduce the number of binds for the targetted
+use case of a brute force password attack against a disabled user.
 
-Option 1: Return 401 Immediately
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-1. We look up the user by supplied username
-2. If no user found, return 401 w/ message "Unable to authenticate user with
-   credentials provided."
-3. If user is disabled, we return 401 w/ message "Unable to authenticate user
-   with credentials provided."
-4. We attempt to bind w/ supplied pwd (or app validates API key)
-5. If pwd/api invalid, we return 401 w/ message "Unable to authenticate user with
-   credentials provided."
-6. If correct pwd but domain is disabled, we return a 403 w/ message "User '" +
-   user.getUsername() +"' is disabled.
+The relevant CA configuration settings are:
 
-Pros:
+.. csv-table:: CA Password Locking Settings
+   :header: "Name", "Description", "Staging/Prod Value"
 
-- No bind for disabled users
-- Straightforward code change 
-- Attackers can't determine whether a given username is valid (though disabled
-  via response message
-  
-  -  Could determine this through response time analysis which is an existing
-     vulnerability. The fastest 401 responses likely mean username doesn't
-     exist, next fastest 401 that exists but disabled, and longest that account
-     exists w/ invalid password
-  
-Cons:
+   setpassword-policy,"Whether to enforce password lockout (and policies in
+   general).", true
+   setpassword-retries,"Number of invalid concurrent invalid auth attempts after
+   which account will be suspended.", 50
+   setpassword-max-suspension,"Number of seconds an account will be suspended",600
 
-- Contract Change for disabled users - All auths (v1.0/v1.1/v2.0) for disabled
-  users will result in a 401 instead of a 403
-- Usability Hit - Legitimate users will not know whether call fails due to
-  invalid pwd or user being disabled
-- Still queries user for each call
+When CA locks out a user it sets the value of the ``dxPwdFailedTime`` attribute
+on a user to the date the last bind attempt was made that caused the lockout.
+Identity API nodes have a static configuration property
+``ldap.password.failure.lockout.min`` that is supposed to mirror the value of
+the analogous CA setting, but translated to minutes. This configuration property
+is used to determine whether a bind failure against CA occurred because the
+account is locked out. Identity determines this by comparing the current time to
+``dxPwdFailedTime`` + ``ldap.password.failure.lockout.min``. If the current time
+is earlier than this value, then Identity assumes the authentication was denied
+because the account is considered "locked out".
 
-Option 2: Return 403 Immediately
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-1. We look up the user by supplied username
-2. If no user found, return 401 w/ message "Unable to authenticate user with
-   credentials provided."
-3. If user is disabled, we return 403 w/ message "User '" + user.getUsername()
-   +"' is disabled.
-4. We attempt to bind w/ supplied pwd (or app validates API key).
-5. If pwd/api invalid, we return 401 w/ message "Unable to authenticate user with
-   credentials provided."
-6. If correct pwd but domain is disabled, we return a 403 w/ message "User '"
-   + user.getUsername() +"' is disabled.
+The change for this story is to cache the lockout such that subsequent user
+retrievals and binds for disabled users that are locked out will not be sent to
+CA. The process will be similar to:
 
-Pros:
+1. Check lockout cache for user
 
-- No bind for disabled users
-- Straightforward code change
-- Legitimate users know whether their account is disabled or they provided
-  invalid credentials
+   1) If found, determine if lockout time is still in effect
 
-Cons:
+      1) If so, return 401 w/ message "Unable to authenticate user with
+         credentials provided
+      2) else, remove entry from cache
+2. Call CA to bind (check password)
+3. If fails and user is disabled, determine if failed due to lockout
 
-- Attackers can trivially determine whether a given username is for a valid, but
-  disabled, user by simply looking at response message
-- Still queries user for each call
-- Minor contract change. The common use case where caller provides the correct
-  password for a disabled user would be unchanged. The use case where the caller
-  provides an invalid credential for a disabled user would be modified. Instead
-  of receiving a 401, this use case would
-  result in a 403 (as user status is now checked first). 
+   1) If so:
 
-Option 3: Disabled User Cache
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This is an augmentation to Option 1, 2, or 4 where we temporarily cache disabled users
-per server for a configurable amount of time (say 5 minutes). When a caller
-attempts to authenticate for the same disabled user on the same server within
-the cached timeframe, we can eliminate all queries to CA as we know to return a
-403. Obviously once a user becomes enabled, the caller would need to wait until
-the cache expires prior to authenticating. Similarly, if a disabled user is
-deleted and a new user is created with that disabled user's username, the new
-user would not be able to authenticate until cache expires.
-
-While we could also cache enabled users, given the number of unique user auths
-per minute, this would require a significantly larger cache than solely storing
-disabled users. Additionally, this would increase the frequency of returning
-stale data since succssful responses return information stored on user. It would
-also delay returning a 403 for newly disabled users until the previously enabled
-user is expired from the cache. Due to these additional impacts, this option is
-limited to disabled users only.
-
-Pros:
-
-- Eliminates user lookup for disabled users within the cache period. When
-  combined with bind change, reduces CA usage for multiple auth attempts against
-  disabled users to near zero.
-  
-Cons:
-
-- Adds more complexity and moving parts
-- Eventual consistency in API node response as each server maintains own cache
-
-Option 4: Return 401 and 403 Immediately w/ Cache
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To support password history we already support the ability to compare a user
-provided password to the CA hashed version from within the Identity application
-code itself (no bind). We can take advantage of this functionality for disabled
-users. To further mitigate potential brute force attacks this option will use a per server cache for disabled
-user pwd auth failures. The cache will store disabled users and the number of invalid auth attempts made against that user within a
-rolling window in order to enforce a lockout period. 
-
-
-Definitions:
-
-- Failed Auth Threshold: Number of consecutive times pwd auth must fail
-- Auth Window: The number of minutes in the past from the current time in which
-  failed auth attempts are
-  counted
-- Lockout Period: A period of time during which all auth attempts will be
-  rejected regarless of the password supplied. A lockout period starts when a
-  user reaches the failed auth threshold within the Auth Window and ends when
-  the Lockout Period Length has been reached
-- Lockout Period Length: The length of time for which a lockout period lasts
-- User Refresh Period: How frequently the user must be refreshed from backend
-  to ensure is still disabled and pwd is up-to-date
-
-This option would include reloadable configurable settings for each of the
-above.
-
-When a caller attempts to authenticate against a disabled user the cache will
-be used
-
-Pwd User Flow:
-
-1. Check cache for user
-
-   1) If found, but User Refresh Period has elapsed, refresh from backend. Invalid
-      auth attempts must not be reset for cache entry. If user is found to be
-      enabled on refresh, remove entry from cache and follow Enabled User Flow.   
-   2) If not found, load from backend.
-   
-      1) If found and user is enabled, follow Enabled User Flow
-      2) If found and user is disabled, populate cache
-      3) If not found, return 401
-2. Determine if user is within a lockout period
-
-   1) If so, return 401 w/ message "Unable to authenticate user with
-      credentials provided
-3. Compare user supplied password to cache entry
-   1) If passwords match
-
-      1) Clear all invalid attempts from cache
-      2) return 403 w/ message "User '<username>' is disabled"
-   3) If passwords do not match
-
-      1) Clear any invalid attempts outside of Auth Window
-      2) Add current invalid auth attempt
-      3) Return 401 w/ message "Unable to authenticate user with
-      credentials provided
-
-Enabled Password Flow:
-
-1. Attempt to bind to directory
-2. <Internal CA logic for password checking/locking>
-3. If bind fails, programmatically calculate reason for audit log message
-
-   a) If user has a password failure date set, see if current time is within CA
-      lockout window. If so, user is "locked" by CA
-   b) else if user is disabled, record as "disabled"
-   c) Else bad credentials supplied
-4. If bind succeeds, verify user + domain is not disabled
-5. ... 
-
-Pros:
-
-- No bind for disabled users
-- Relatively straightforward code change - though cache can be tricky since requires
-  updates
-- No contract change
-- Legitmate users know whether their account is disabled or they provided invalid credentials
-- Attackers can't tell, via auth response message, whether supplied username exists, is valid, or is disabled
-
-Cons:
-
-- More complex logic with additional use cases
-- Still queries user for each call
-
---------------
-Recommendation 
---------------
-
-Due to the critical and widespread usage of Identity, contract changes need to
-be avoided as much as possible. While Option 1 & 2 would limit the contract
-changes to certain use cases, they incur other downsides that make them less
-desirable.
-
-Option 3, while further limits the cost for authenticating against disabled
-users, it adds additional complexity, implementation cost, and the standard
-state data issue inherent with caches for all users. While it might be
-worthwhile to add at some point, I think it's the cherry on top rather than a
-critical need at this time.
-
-For now, I recommend Option 4. While it adds additional cost overhead in order
-to implement the cache, given the broad impact across multiple APIs
-(v1.0/v1.1/v2.0) and the sheer number of consumers and critical systems that
-consume those APIs, I think the additional cost is justified by eliminating
-contract changes.
+      1) Create cache entry storing when the lockout started
+      2) Create audit log for lockout 
+      3) Return 401 w/ message "Unable to authenticate user with credentials 
+         provided"
+6. Normal processing
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Business Acceptance Criteria
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Implement Option 4
-2. Implement a reloadable feature flag 
-   "feature.enable.disabled.user.auth.optimization" to control whether
-   Option 4 is used. When false, the current workflow of simply hitting the
-   directory must be used.
- 1. Default for flag is true when property is not provided in configuration file
- 2. Default for docker configuration is true 
+1. Implement cache as specified
+2. Switch the identity static config property ``ldap.password.failure.lockout.min``
+   to be a reloadable configuration property ``ldap.password.auth.lockout.duration``
+   that stores the value in seconds (as opposed to minutes)
+
+   1) Default for flag is ``1`` when property is not provided in configuration file
+   2) Default for docker configuration is ``1`` 
+4. Implement a reloadable feature flag 
+   "feature.enable.ldap.password.auth.lockout.cache" to control whether the 
+   lockout cache is used. When false, the directory will be hit for each auth
+   request as is currently done.
+
+   1) Default for flag is true when property is not provided in configuration file
+   2) Default for docker configuration is true 
+3) Update default CA docker configuration to represent similar enforcement in
+   staging:
+   
+   1) setpassword-policy=true
+   2) setpassword-retries=6
+   3) setpassword-max-suspension=1
+   4) setpassword-history=0
 
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Test Acceptance Criteria
