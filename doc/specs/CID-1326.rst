@@ -1,0 +1,41 @@
+.. _CID-1326:
+.. _CID-1324: https://jira.rax.io/browse/CID-1290
+
+=============================================================
+Return contactId for federated users from get user/list users
+=============================================================
+
+Description
+-----------
+When set, the **contactId** attribute is returned for provisioned users from
+various services such as get user by id. As of `CID-1324`_, **contactId** can also
+be set on federated users. This story is to validate/modify the various get/list
+user services that support returning a federated user to also return, if
+applicable, the **contactId** set on federated users.
+
+Implementation
+--------------
+Currently all the affected services already return a federated user.
+This implementation is to return **RAX-AUTH:contactId** attribute on a
+federated user.
+
+1. Maintain same permissions for all affected services.
+2. **contactId** attribute must be returned if set.
+ a) Do not return attribute if not set.
+
+Affected services
+~~~~~~~~~~~~~~~~~
+1. Get user by name (v2.0/users?name={username})
+2. Get user by ID (v2.0/users/{userId})
+3. List users (v2.0/users)
+4. List users by domainId (v2.0/users?domainId={domainId}
+
+Business Acceptance Criteria
+----------------------------
+#. Implement above changes for specified services
+#. Update internal and public documentation to reflect these changes.
+#. Update 3.19 release notes.
+
+Test Acceptance Criteria
+------------------------
+TBD
