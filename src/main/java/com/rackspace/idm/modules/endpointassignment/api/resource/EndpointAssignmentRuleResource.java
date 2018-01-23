@@ -10,6 +10,8 @@ import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.event.ApiResourceType;
+import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ExceptionHandler;
 import com.rackspace.idm.exception.NotFoundException;
@@ -18,7 +20,6 @@ import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpStatus;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 import org.slf4j.Logger;
@@ -75,6 +76,7 @@ public class EndpointAssignmentRuleResource {
      * @param endpointAssignmentRule
      * @return
      */
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @POST
     public Response addRule(
             @Context UriInfo uriInfo,
@@ -107,6 +109,7 @@ public class EndpointAssignmentRuleResource {
         }
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     public Response getRules(
             @Context UriInfo uriInfo,
@@ -139,6 +142,7 @@ public class EndpointAssignmentRuleResource {
         }
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("{ruleId}")
     public Response getRule(
@@ -168,6 +172,7 @@ public class EndpointAssignmentRuleResource {
         }
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @DELETE
     @Path("{ruleId}")
     public Response deleteEndpointAssignmentRule(

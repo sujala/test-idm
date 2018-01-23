@@ -2,11 +2,11 @@ package com.rackspace.idm.api.resource;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
 import com.rackspace.idm.api.resource.cloud.devops.DevOpsService;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.event.ApiResourceType;
+import com.rackspace.idm.event.IdentityApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +31,7 @@ public class DevOpsResource {
     public static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
     public static final String X_SUBJECT_TOKEN = "X-SUBJECT-TOKEN";
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
     @Path("cloud/users/encrypt")
     public Response encryptUsers(@HeaderParam(X_AUTH_TOKEN) String authToken) {
@@ -49,6 +50,7 @@ public class DevOpsResource {
      * @param logName
      * @return
      */
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("/ldap/log/{logName}")
     @Produces({MediaType.APPLICATION_XML})
@@ -61,6 +63,7 @@ public class DevOpsResource {
      *
      * @return The metadata format is JSON only since it is just for internal use.
      */
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("/keystore/meta")
     public Response getKeyMetadata(@HeaderParam(X_AUTH_TOKEN) String authToken) {
@@ -72,6 +75,7 @@ public class DevOpsResource {
      *
      * @return The metadata format is JSON only since it is just for internal use.
      */
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
     @Path("/keystore/meta")
     public Response resetKeyMetadata(@HeaderParam(X_AUTH_TOKEN) String authToken) {
@@ -83,6 +87,7 @@ public class DevOpsResource {
      *
      * @return IDM properties as JSON; JSON only since it is just for internal use.
      */
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("/props")
     public Response getIdmProps(@HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -91,12 +96,14 @@ public class DevOpsResource {
         return devOpsService.getIdmPropsByQuery(authToken, versions, name).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @POST
     @Path("/props")
     public Response createIdmProp(@HeaderParam(X_AUTH_TOKEN) String authToken, IdentityProperty identityProperty) {
         return devOpsService.createIdmProperty(authToken, identityProperty).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
     @Path("/props/{propertyId}")
     public Response updateIdmProp(@HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -105,6 +112,7 @@ public class DevOpsResource {
         return devOpsService.updateIdmProperty(authToken, propertyId, identityProperty).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @DELETE
     @Path("/props/{propertyId}")
     public Response deleteIdmProp(@HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -112,18 +120,21 @@ public class DevOpsResource {
         return devOpsService.deleteIdmProperty(authToken, propertyId).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @POST
     @Path("/federation/deletion")
     public Response expiredFederatedUsersDeletion(@HeaderParam(X_AUTH_TOKEN) String authToken, FederatedUsersDeletionRequest request) {
         return devOpsService.expiredFederatedUsersDeletion(authToken, request).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @POST
     @Path("/token-revocation-record/deletion")
     public Response purgeObsoleteTrrs(@HeaderParam(X_AUTH_TOKEN) String authToken, TokenRevocationRecordDeletionRequest request) {
         return devOpsService.purgeObsoleteTrrs(authToken, request).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("/tokens/analyze")
     @Produces({MediaType.APPLICATION_JSON})

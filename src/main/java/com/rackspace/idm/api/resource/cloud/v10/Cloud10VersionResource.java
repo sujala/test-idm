@@ -13,6 +13,8 @@ import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.ServiceCatalogInfo;
+import com.rackspace.idm.event.ApiResourceType;
+import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
@@ -90,6 +92,7 @@ public class Cloud10VersionResource {
         this.authorizationService = authorizationService;
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
     @GET
     public Response getCloud10VersionInfo(@Context HttpHeaders httpHeaders,
         @HeaderParam(HEADER_AUTH_USER) String username,
@@ -108,21 +111,7 @@ public class Cloud10VersionResource {
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
         }
 
-
-        //commenting out because the call to getUserScopeAccessForClientIdByUsernameAndApiCredentials will throw a
-        //notauthenticatedexception if the user is null - which is caught in the try/catch block and will result in
-        //the same response to be returned as this block would.
-        /*
-        User user = this.userService.getUser(username);
-        if (user == null) {
-            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
-        }
-         */
-
         try {
-            //switching to use authWithApiKeyCredentials service in order to eliminate having to retrieve the user multiple times
-//            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
-
             requestContextHolder.getAuthenticationContext().setUsername(username);
 
             UserAuthenticationResult result = authWithApiKeyCredentials.authenticate(username, key);

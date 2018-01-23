@@ -5,6 +5,8 @@ import com.rackspace.idm.api.resource.cloud.v11.Cloud11VersionResource;
 import com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.event.ApiResourceType;
+import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.IdmException;
 import org.openstack.docs.common.api.v1.VersionChoiceList;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +62,7 @@ public class CloudVersionsResource {
         this.identityConfig = identityConfig;
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
     @Produces({MediaType.APPLICATION_XML})
     @GET
     public Response getInternalCloudVersionsInfo() throws JAXBException {
@@ -75,6 +78,7 @@ public class CloudVersionsResource {
         return Response.ok(versionChoice.getValue()).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
     @Produces({MediaType.APPLICATION_JSON})
     @GET
     public Response getInternalCloudVersionsInfoJson() throws JAXBException {

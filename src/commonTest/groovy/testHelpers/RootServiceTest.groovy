@@ -43,7 +43,6 @@ import com.rackspace.idm.validation.*
 import com.rackspace.idm.validation.entity.Constants
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
-import org.junit.Rule
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.springframework.context.ApplicationEventPublisher
 import spock.lang.Shared
@@ -648,6 +647,7 @@ class RootServiceTest extends Specification {
         requestContext = Mock(RequestContext)
         securityContext = Mock(SecurityContext)
         authorizationContext = Mock(AuthorizationContext)
+
         requestContextHolder.getRequestContext() >> requestContext
         requestContext.getSecurityContext() >> securityContext
         securityContext.getEffectiveCallerAuthorizationContext() >> authorizationContext

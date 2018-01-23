@@ -138,7 +138,6 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
                         .initParam("com.sun.jersey.config.property.packages",
                         "com.rackspace.idm;org.codehaus.jackson.jaxrs")
                         .initParam("com.sun.jersey.spi.container.ContainerResponseFilters",
-                                "com.rackspace.idm.api.filter.ApiEventPostingFilter;" +
                                 "com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;" +
                                 "com.rackspace.idm.api.filter.AuthenticationHeadersFilter")
                         .contextPath("")

@@ -57,8 +57,6 @@ class AuthenticationFilterTest extends RootServiceTest {
 
         mockIdentityUserService(filter)
         mockScopeAccessService(filter)
-        mockMultiFactorCloud20Service(filter)
-        mockAuthorizationService(filter)
         mockRequestContextHolder(filter)
         mockIdentityConfig(filter)
     }
