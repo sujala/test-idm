@@ -78,75 +78,187 @@ lockout period that CA enforces. While this will not eliminate all binds on
 disabled users, it will significantly reduce the number of binds for the targetted
 use case of a brute force password attack against a disabled user.
 
-The relevant CA configuration settings are:
+Due to simplicity of the solution, it will be used for both enabled and
+disabled users. By including enabled users, the system will automatically reduce
+the impact of locked out users - a common situation for runaway service accounts.
+
+--------
+CA Logic
+--------
+Identity uses CA functionality to implement a "lockout" strategy for password
+authentication. The relevant CA configuration settings are:
 
 .. csv-table:: CA Password Locking Settings
    :header: "Name", "Description", "Staging/Prod Value"
 
-   setpassword-policy,"Whether to enforce password lockout (and policies in
+   password-policy,"Whether to enforce password lockout (and policies in
    general).", true
-   setpassword-retries,"Number of invalid concurrent invalid auth attempts after
+   password-retries,"Number of invalid concurrent invalid auth attempts after
    which account will be suspended.", 50
-   setpassword-max-suspension,"Number of seconds an account will be suspended",600
+   password-max-suspension,"Number of seconds an account will be suspended",600
 
-When CA locks out a user it sets the value of the ``dxPwdFailedTime`` attribute
-on a user to the date the last bind attempt was made that caused the lockout.
-Identity API nodes have a static configuration property
-``ldap.password.failure.lockout.min`` that is supposed to mirror the value of
+The following assume password policy is enabled in CA Directory.
+
+The ``dxPwdFailedTime`` and ``dxPwdFailedAttempts`` user attributes
+are updated as appropriate for each successive authentication attempt. For a failed
+authentication, CA will update the ``dxPwdFailedTime`` user attribute with the 
+authentication timestamp in Zulu time and increment the ``dxPwdFailedAttempts``
+user attribute. For a successful authentication, these attributes
+are removed, if they exist on the user. This process continues until
+``password-retries`` successive failed authentication attempts
+have occurred. At that point,  ``dxPwdFailedAttempts`` == ``password-retries``
+and ``dxPwdFailedTime`` == "time of the last failed authentication." 
+
+At this point the account is considered "locked out", and will remain locked out
+until ``password-max-suspension`` seconds have elapsed since that last authentication
+attempt. During this period all authentication attempts, regardless of whether
+or not the provided password is correct, will fail and neither
+of these attributes will be modified. Once
+the lockout period has expired the attributes will remain at the last
+set values until the user authenticates again. At this time, if successful, CA
+removes the attributes; if failure, ``dxPwdFailedAttempts`` is set to 1 and
+``dxPwdFailedTime`` is set to the authentication time.
+
+-----------------------
+Identity Existing Logic
+-----------------------
+
+This is the current
+implementation to understand where things stand today. This logic is incorrect
+based on how CA works; the required updates to correct this will be described
+under Modifications.
+
+Identity API nodes currently have a static configuration property
+``ldap.password.failure.lockout.min`` that must mirror the value of
 the analogous CA setting, but translated to minutes. This configuration property
 is used to determine whether a bind failure against CA occurred because the
 account is locked out. Identity determines this by comparing the current time to
 ``dxPwdFailedTime`` + ``ldap.password.failure.lockout.min``. If the current time
 is earlier than this value, then Identity assumes the authentication was denied
-because the account is considered "locked out".
+because the account is considered "locked out" and will record as such in 
+the Identity audit log. 
+
+This will incorrectly record failed auth attempts as
+being due to "locked out" for every failed auth attempt after the first for
+subsequent ``ldap.password.failure.lockout.min`` minutes.
+
+-------------
+Modifications
+-------------
+The changes for this story include correctly determining whether a user authentication
+to CA failed due to lockout and to susequently cache these lockout periods.
+
+Determining User Lockout
+^^^^^^^^^^^^^^^^^^^^^^^^
+Identity must use the ``dxPwdFailedAttempts`` and ``dxPwdFailedTime`` to
+determine whether a user is activelly "locked out." The configuration used by CA for
+``password-retries`` and ``password-max-suspension`` must be replicated in
+reloadable Identity configuration properties.
+
+The pseudo code would then be:
+
+.. code-block:: java
+
+ boolean isUserLockedOut(User user) {
+   boolean lockedOut = false;
+   if (user.dxPwdFailedAttempts >= password-retries) {
+     DateTime lastFailedDate = user.dxPwdFailedTime
+     DateTime lockoutExpiration = lastFailedDate.plusSeconds(password-max-suspension);
+     if (lockoutExpiration.isAfterNow()) {
+       lockedOut = true;
+     }
+   }
+   return lockedOut;
+ }
+
+The audit log must then accurately report, based on the above, whether the
+failure was due to lockout.
+
+User Lockout Cache
+^^^^^^^^^^^^^^^^^^
 
 The change for this story is to cache the lockout such that subsequent user
-retrievals and binds for disabled users that are locked out will not be sent to
-CA. The process will be similar to:
+retrievals and binds for locked out users will not be sent to
+CA. The process will be:
 
 1. Check lockout cache for user
 
-   1) If found, determine if lockout time is still in effect
+   1) If found, determine if lock out time is still in effect
 
-      1) If so, return 401 w/ message "Unable to authenticate user with
-         credentials provided
+      1) If so
+
+         1) Create audit log for auth attempt
+         2) Return 401 w/ message "Unable to authenticate user with
+            credentials provided
+
       2) else, remove entry from cache
-2. Call CA to bind (check password)
-3. If fails and user is disabled, determine if failed due to lockout
+2. Retrieve user from CA based on username and determine if in
+   lockout period
 
-   1) If so:
+   1) If so
 
-      1) Create cache entry storing when the lockout started
+      1) Create cache entry for locked out user
       2) Create audit log for lockout 
       3) Return 401 w/ message "Unable to authenticate user with credentials 
          provided"
-6. Normal processing
+3. Call CA to bind (check password)
+4. If fails, determine if failed due to lockout
+
+   1) If so
+
+      1) Create cache entry for locked out user
+      2) Create audit log for auth attempt 
+      3) Return 401 w/ message "Unable to authenticate user with credentials 
+         provided"
+5. Normal processing
+
+The cache must have a maximum size and automatically expire entries after a 
+configured amount of time (a TTL). For efficiency, the TTL should always be
+set to greater than the lockout period.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Business Acceptance Criteria
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Implement cache as specified
+1. Implement a reloadable configuration property ``ldap.auth.password.lockout.retries``
+   to be analogous to the CA setting ``password-retries``
+
+   1) Default for property is ``6`` when property is not provided in configuration file
+   2) Default for docker configuration is ``6`` 
 2. Switch the identity static config property ``ldap.password.failure.lockout.min``
-   to be a reloadable configuration property ``ldap.password.auth.lockout.duration``
+   to the reloadable configuration property ``ldap.auth.password.lockout.duration``
    that stores the value in seconds (as opposed to minutes)
 
-   1) Default for flag is ``1`` when property is not provided in configuration file
+   1) Default for property is ``1`` when property is not provided in configuration file
    2) Default for docker configuration is ``1`` 
-4. Implement a reloadable feature flag 
-   "feature.enable.ldap.password.auth.lockout.cache" to control whether the 
-   lockout cache is used. When false, the directory will be hit for each auth
-   request as is currently done.
 
-   1) Default for flag is true when property is not provided in configuration file
-   2) Default for docker configuration is true 
-3) Update default CA docker configuration to represent similar enforcement in
-   staging:
+3. Implement cache as specified
    
-   1) setpassword-policy=true
-   2) setpassword-retries=6
-   3) setpassword-max-suspension=1
-   4) setpassword-history=0
+   1. Implement a reloadable feature flag 
+      ``feature.enable.ldap.auth.password.lockout.cache`` to control whether the 
+      lockout cache is used. When false, the directory will be hit for each auth
+      request as is currently done.
+
+      1) Default for flag is true when property is not provided in configuration file
+      2) Default for docker configuration is true 
+   2) Implement a reloadable configuration property ``ldap.auth.password.lockout.cache.ttl``
+      to specify how long a cache entry will exist until it is automatically removed
+
+      1) Default for property is ``2`` when property is not provided in configuration file
+      2) Default for docker configuration is ``2``
+   3) Implement a reloadable configuration property ``ldap.auth.password.lockout.cache.size``
+      to specify the size of the cache
+
+      1) Default for property is ``5`` when property is not provided in configuration file
+      2) Default for docker configuration is ``5``
+
+4. Fix logging to audit log to accurately reflect when auth fails due to lockout
+5. Update default CA docker configuration to include password locking behavior
+   
+   1) password-policy=true
+   2) password-retries=6
+   3) password-max-suspension=1
+   4) password-history=0
 
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Test Acceptance Criteria
