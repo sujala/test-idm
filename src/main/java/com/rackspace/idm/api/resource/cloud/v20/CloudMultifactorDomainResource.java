@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
+import com.rackspace.idm.event.ApiResourceType;
+import com.rackspace.idm.event.IdentityApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +22,7 @@ public class CloudMultifactorDomainResource {
     @Autowired
     private MultiFactorCloud20Service multiFactorCloud20Service;
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
     public Response updateMultiFactorDomainSettings(
             @Context UriInfo uriInfo,
