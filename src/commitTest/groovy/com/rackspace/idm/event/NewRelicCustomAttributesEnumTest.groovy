@@ -24,7 +24,7 @@ class NewRelicCustomAttributesEnumTest extends Specification {
         enumVal.amIInListWithWildcardSupport(enabledList)
 
         where:
-        enumVal << [NewRelicCustomAttributesEnum.CALLER_ID, NewRelicCustomAttributesEnum.EVENT_ID,NewRelicCustomAttributesEnum.EFFECTIVE_CALLER_ID]
+        enumVal << [NewRelicCustomAttributesEnum.CALLER_ID, NewRelicCustomAttributesEnum.REQUEST_ID, NewRelicCustomAttributesEnum.EFFECTIVE_CALLER_ID]
         enabledList << [[enumVal.newRelicAttributeName] as Set, ["hello", enumVal.newRelicAttributeName.toLowerCase()] as Set, [enumVal.newRelicAttributeName, enumVal.newRelicAttributeName] as Set]
     }
 

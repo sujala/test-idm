@@ -356,17 +356,23 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP = "feature.enable.send.new.relic.custom.data";
     public static final boolean FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT = true;
 
-    public static final String FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP = "new.relic.auth.api.resource.attributes";
-    public static final List<String> FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
+    public static final String FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP = "new.relic.include.auth.resource.attributes";
+    public static final List<String> FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
 
-    public static final String FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP = "new.relic.protected.api.resource.attributes";
-    public static final List<String> FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
+    public static final String FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP = "new.relic.exclude.auth.resource.attributes";
+    public static final List<String> FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList();
 
-    public static final String FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP = "new.relic.unprotected.api.resource.attributes";
-    public static final List<String> FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
+    public static final String FEATURE_INCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP = "new.relic.include.private.resource.attributes";
+    public static final List<String> FEATURE_INCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
 
-    public static final String FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_PROP = "feature.enable.secure.new.relic.api.resource.attributes";
-    public static final boolean FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_DEFAULT = true;
+    public static final String FEATURE_EXCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP = "new.relic.exclude.private.resource.attributes";
+    public static final List<String> FEATURE_EXCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList();
+
+    public static final String FEATURE_INCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP = "new.relic.include.public.resource.attributes";
+    public static final List<String> FEATURE_INCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
+
+    public static final String FEATURE_EXCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP = "new.relic.exclude.public.resource.attributes";
+    public static final List<String> FEATURE_EXCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList();
 
     public static final String NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_PROP = "new.relic.secured.api.resource.attributes";
     public static final List<String> NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList(NewRelicCustomAttributesEnum.CALLER_USERNAME.getNewRelicAttributeName()
@@ -704,10 +710,16 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
-        defaults.put(FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_DEFAULT);
-        defaults.put(FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT);
-        defaults.put(FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_DEFAULT);
-        defaults.put(FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_PROP, FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_DEFAULT);
+
+        defaults.put(FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_DEFAULT);
+        defaults.put(FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_DEFAULT);
+
+        defaults.put(FEATURE_INCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP, FEATURE_INCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_DEFAULT);
+        defaults.put(FEATURE_EXCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP, FEATURE_EXCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_DEFAULT);
+
+        defaults.put(FEATURE_INCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP, FEATURE_INCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_DEFAULT);
+        defaults.put(FEATURE_EXCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP, FEATURE_EXCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_DEFAULT);
+
         defaults.put(NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_PROP, NEW_RELIC_SECURED_API_RESOURCE_ATTRIBUTES_DEFAULT);
         defaults.put(NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP, NEW_RELIC_SECURE_API_RESOURCE_KEY_DEFAULT);
         defaults.put(NEW_RELIC_SECURED_API_USE_SHA256_PROP, NEW_RELIC_SECURED_API_USE_SHA256_DEFAULT);
@@ -1551,24 +1563,34 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP);
         }
 
-        @IdmProp(key = FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "The custom attributes to push for auth api resources. '*' means all available")
-        public Set<String> getNewRelicCustomDataAttributesForAuthApiResources() {
-            return getSetSafely(reloadableConfiguration, FEATURE_PUSH_AUTH_API_RESOURCE_ATTRIBUTES_PROP);
+        @IdmProp(key = FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to push for auth api resources. '*' means all available")
+        public Set<String> getIncludedNewRelicCustomDataAttributesForAuthResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP);
         }
 
-        @IdmProp(key = FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "The custom attributes to push for protected api resources. '*' means all available")
-        public Set<String> getNewRelicCustomDataAttributesForProtectedApiResources() {
-            return getSetSafely(reloadableConfiguration, FEATURE_PUSH_PROTECTED_API_RESOURCE_ATTRIBUTES_PROP);
+        @IdmProp(key = FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to exclude from auth api resources (overrides inclusion). '*' means all available")
+        public Set<String> getExcludedNewRelicCustomDataAttributesForAuthResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP);
         }
 
-        @IdmProp(key = FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "The custom attributes to push for unprotected api resources. '*' means all available")
-        public Set<String> getNewRelicCustomDataAttributesForUnprotectedApiResources() {
-            return getSetSafely(reloadableConfiguration, FEATURE_PUSH_UNPROTECTED_API_RESOURCE_ATTRIBUTES_PROP);
+        @IdmProp(key = FEATURE_INCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to push for private api resources. '*' means all available")
+        public Set<String> getIncludedNewRelicCustomDataAttributesForPrivateResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_INCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.17.1", description = "Only relevant if sending new relic data is enabled. This controls whether or not to secure a specified set of attributes sent to new relic.")
-        public boolean isFeatureSecureNewRelicApiResourceAttributesEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SECURE_NEW_RELIC_API_RESOURCE_ATTRIBUTES_PROP);
+        @IdmProp(key = FEATURE_EXCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to exclude from private api resources (overrides inclusion). '*' means all available")
+        public Set<String> getExcludedNewRelicCustomDataAttributesForPrivateResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_EXCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_INCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to push for public api resources. '*' means all available")
+        public Set<String> getIncludedNewRelicCustomDataAttributesForPublicResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_INCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_EXCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to exclude from public api resources (overrides inclusion). '*' means all available")
+        public Set<String> getExcludedNewRelicCustomDataAttributesForPublicResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_EXCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP);
         }
 
         @IdmProp(key = NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP, versionAdded = "3.17.1", description = "When secure attributes are enabled, the key to use for securing the props")

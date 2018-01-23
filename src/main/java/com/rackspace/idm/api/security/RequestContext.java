@@ -4,7 +4,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotFoundException;
-import lombok.Data;
+import com.sun.jersey.spi.container.ContainerRequest;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.IteratorUtils;
@@ -53,6 +53,11 @@ public class RequestContext {
      * Stores information about the user making the request
      */
     private SecurityContext securityContext;
+
+    /**
+     * The request (should make immutable)
+     */
+    private ContainerRequest containerRequest;
 
     /**
      * Used for requests targeting a specific user (../users/{userId}/multi-factor/...).

@@ -881,8 +881,11 @@ class OTPDeviceAdd(base.AutoMarshallingModel):
         self.device_name = device_name
 
     def _obj_to_json(self):
-        add_otp_request = {const.NS_OTP_DEVICE: {
-            const.NAME: self.device_name}}
+        add_otp_request = {
+            const.NS_OTP_DEVICE: {}
+        }
+        if self.device_name is not None:
+            add_otp_request[const.NS_OTP_DEVICE][const.NAME] = self.device_name
         return json.dumps(add_otp_request)
 
 

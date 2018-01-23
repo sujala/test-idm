@@ -4,7 +4,8 @@ package com.rackspace.idm.api.resource;
 import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
 import com.rackspace.idm.api.serviceprofile.ServiceProfileDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdmVersion;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.event.ApiResourceType;
+import com.rackspace.idm.event.IdentityApi;
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -59,6 +60,7 @@ public class RootResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
     @GET
     public Response getInternalServiceProfile() {
     	final String responseXml = serviceProfileDescriptionBuilder.buildInternalServiceProfile(uriInfo);
@@ -76,6 +78,7 @@ public class RootResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
     @GET
     @Path("public")
     public Response getPublicServiceProfile() {
@@ -93,6 +96,7 @@ public class RootResource {
         return devOpsResource;
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
     @Path("buildInfo")
     @GET
     @Produces(MediaType.APPLICATION_JSON)

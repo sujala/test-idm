@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.security.SecurityContext;
 import com.rackspace.idm.audit.Audit;
@@ -64,22 +63,13 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     private IdentityConfig identityConfig;
 
     @Autowired
-    private MultiFactorCloud20Service multiFactorCloud20Service;
-
-    @Autowired
     private ScopeAccessService scopeAccessService;
 
     @Autowired
     private IdentityUserService identityUserService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private Configuration config;
-
-    @Autowired
-    private AuthorizationService authorizationService;
 
     @Autowired
     private RequestContextHolder requestContextHolder;
@@ -98,6 +88,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         //immediately replace the security context. Will be populated as appropriate later on
         final SecurityContext securityContext = new SecurityContext();
         requestContextHolder.getRequestContext().setSecurityContext(securityContext);
+        requestContextHolder.getRequestContext().setContainerRequest(request);
 
         String path = request.getPath();
         final String method = request.getMethod();

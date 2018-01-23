@@ -6,6 +6,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.event.ApiResourceType;
+import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,7 @@ public class CloudUserGroupResource {
     @Autowired
     private UserGroupCloudService userGroupCloudService;
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @POST
     public Response addGroup(
             @Context HttpHeaders httpHeaders,
@@ -44,6 +47,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.addGroup(uriInfo, authToken, group);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     public Response getGroups(
             @Context HttpHeaders httpHeaders,
@@ -54,6 +58,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.listGroupsForDomain(authToken, domainId, new UserGroupSearchParams(name, userId));
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("/{groupId}")
     public Response getGroupById(
@@ -64,6 +69,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.getGroupByIdForDomain(authToken, groupId, domainId);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
     @Path("/{groupId}")
     public Response updateGroup(
@@ -77,6 +83,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.updateGroup(authToken, group);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @DELETE
     @Path("/{groupId}")
     public Response deleteGroupById(
@@ -87,6 +94,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.deleteGroup(authToken, domainId, groupId);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("/{groupId}/users")
     public Response getUsersInGroup(
@@ -100,6 +108,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.getUsersInGroup(uriInfo, authToken, domainId, groupId, new UserSearchCriteria(new PaginationParams(validateMarker(marker), validateLimit(limit))));
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
     @Path("/{groupId}/users/{userId}")
     public Response addUserToGroup(
@@ -111,6 +120,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.addUserToGroup(authToken, domainId, groupId, userId);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @DELETE
     @Path("/{groupId}/users/{userId}")
     public Response removeUserFromGroup(
@@ -122,6 +132,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.removeUserFromGroup(authToken, domainId, groupId, userId);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
     @Path("/{groupId}/roles/{roleId}")
     public Response grantRoleToGroup(
@@ -139,6 +150,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.grantRoleToGroup(authToken, domainId, groupId, roleAssignment);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
     @Path("/{groupId}/roles")
     public Response grantRolesToGroup(
@@ -150,6 +162,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.grantRolesToGroup(authToken, domainId, groupId, roleAssignments);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
     @Path("/{groupId}/roles/{roleId}/tenants/{tenantId}")
     public Response grantRoleOnTenantOnGroup(
@@ -162,6 +175,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.grantRoleOnTenantToGroup(authToken, domainId, groupId, roleId, tenantId);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @DELETE
     @Path("/{groupId}/roles/{roleId}/tenants/{tenantId}")
     public Response revokeRoleFromTenantOnGroup(
@@ -174,6 +188,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.revokeRoleOnTenantToGroup(authToken, domainId, groupId, roleId, tenantId);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @DELETE
     @Path("/{groupId}/roles/{roleId}")
     public Response revokeRoleFromGroup(
@@ -185,6 +200,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.revokeRoleFromGroup(authToken, domainId, groupId, roleId);
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("/{groupId}/roles")
     public Response getRolesOnGroup(
@@ -198,6 +214,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.listRoleAssignmentsOnGroup(uriInfo, authToken, domainId, groupId, new UserGroupRoleSearchParams(new PaginationParams(validateMarker(marker), validateLimit(limit))));
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("/{groupId}/roles/{roleId}")
     public Response getRoleOnGroup(

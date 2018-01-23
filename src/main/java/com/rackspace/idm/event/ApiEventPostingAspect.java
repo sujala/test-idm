@@ -1,7 +1,7 @@
-package com.rackspace.idm.api.filter;
+package com.rackspace.idm.event;
 
-import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.security.AuthorizationContext;
+import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -10,11 +10,15 @@ import com.rackspace.idm.domain.entity.BaseUserToken;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
-import com.rackspace.idm.event.*;
 import com.sun.jersey.spi.container.ContainerRequest;
-import com.sun.jersey.spi.container.ContainerResponse;
-import com.sun.jersey.spi.container.ContainerResponseFilter;
 import org.apache.commons.lang.StringUtils;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.Signature;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -22,21 +26,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
-import java.net.URI;
-import java.util.regex.Matcher;
+import java.lang.reflect.Method;
 
-/**
- * A response filter that publishes an event to the Spring publishing framework. The events published must be threadsafe.
- */
+@Aspect
 @Component
-public class ApiEventPostingFilter implements ContainerResponseFilter {
-    private final Logger logger = LoggerFactory.getLogger(ApiEventPostingFilter.class);
+public class ApiEventPostingAspect {
+    private final Logger logger = LoggerFactory.getLogger(ApiEventPostingAspect.class);
+
+    public static final String DATA_UNAVAILABLE = "<NotAvailable>";
 
     @Autowired
-    private IdmPathUtils idmPathUtils;
-
-    @Autowired
-    private RequestContextHolder requestContextHolder;
+    RequestContextHolder requestContextHolder;
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -44,60 +44,132 @@ public class ApiEventPostingFilter implements ContainerResponseFilter {
     @Autowired
     protected ApplicationEventPublisher applicationEventPublisher;
 
-    public static final String DATA_UNAVAILABLE = "<NotAvailable>";
-
-    @Override
-    public ContainerResponse filter(ContainerRequest request, ContainerResponse response) {
-        try {
-            if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled() || request == null) {
-                return response;
-            }
-
-            ApiEvent event = null;
-            if (idmPathUtils.isAuthenticationResource(request)) {
-                event = createAuthApiEvent(request);
-            } else if (idmPathUtils.isProtectedResource(request)) {
-                event = createProtectedApiEvent(request);
-            } else if (idmPathUtils.isUnprotectedResource(request)) {
-                event = createUnprotectedApiEvent(request);
-            }
-
-            if (event != null) {
-                applicationEventPublisher.publishEvent(new ApiEventSpringWrapper(this, event));
-            } else {
-                String apiPath = scrubRequestUri(request);
-                logger.warn(String.format("Unrecognized event type for request '%s'", apiPath));
-            }
-        } catch (Exception e) {
-            logger.warn("Error posting api event", e);
-        }
-        return response;
+    @Pointcut("execution(public * *(..))")
+    private void anyPublicOperation() {
     }
 
-    private ApiEvent createAuthApiEvent(ContainerRequest request) {
-        String requestUri = scrubRequestUri(request);
-        String eventId = MDC.get(Audit.GUUID);
+    /**
+     * Pointcut on all method calls on a Spring bean name ending in "Resource" - the IDM standard for classes that define
+     * API endpoints.
+     */
+    @Pointcut("anyPublicOperation() && bean(*Resource)")
+    private void webResourceMethod() {
+    }
+
+    /**
+     * Limits to Identity API calls identified by annotation
+     */
+    @Pointcut("webResourceMethod() && @annotation(com.rackspace.idm.event.IdentityApi)")
+    private void identityApiResourceMethod() {
+    }
+
+    @After("identityApiResourceMethod()")
+    public void postEvent(JoinPoint joinPoint) {
+        // Short circuit via flag
+        if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled()) {
+            return;
+        }
+
+        Signature sig = joinPoint.getSignature();
+        if (sig instanceof MethodSignature) {
+            MethodSignature methodSignature = (MethodSignature) sig;
+            postApiEvent(methodSignature.getMethod());
+        }
+    }
+
+    /**
+     * Resource methods should _never_ allow exceptions to be bubbled, but sometimes they are.
+     *
+     * @param joinPoint
+     * @param ex
+     */
+    @AfterThrowing(pointcut = "identityApiResourceMethod()", throwing = "ex")
+    public void postEventWithException(JoinPoint joinPoint, Throwable ex) {
+        // Short circuit via flag
+        if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled()) {
+            return;
+        }
+
+        Signature sig = joinPoint.getSignature();
+        if (sig instanceof MethodSignature) {
+            MethodSignature methodSignature = (MethodSignature) sig;
+            postApiEvent(methodSignature.getMethod());
+        }
+    }
+
+    /**
+     * When posting an event should assume that the event will be processed in a different thread asynchronously to be
+     * on the safe side. Therefore, all information included in the event must be thread safe.
+     * <p>
+     * Events must not include full tokens, though may contain PII information that would need to be scrubbed before
+     * exposing. The exact requirements for PII handling lies in how that information is used from the event.
+     */
+    private void postApiEvent(Method method) {
+        if (method == null) {
+            throw new IllegalArgumentException(String.format("Must provide method to send API event"));
+        }
+
+        IdentityApi identityApi = method.getAnnotation(IdentityApi.class);
+        if (identityApi == null) {
+            throw new IllegalArgumentException(String.format("Method must provide API annotation to send API event. Error method '%s'", method.toString()));
+        }
+
+        RequestContext requestContext = requestContextHolder.getRequestContext();
+        if (requestContext == null) {
+            throw new IllegalArgumentException(String.format("Request context must be set to post API events. Invalid method %s", method.toString()));
+        }
+
+        // Must have ContainerRequest
+        ContainerRequest request = requestContextHolder.getRequestContext().getContainerRequest();
+        if (request == null) {
+            throw new IllegalArgumentException(String.format("Resource context must be set on request context to post API events. Invalid method %s", method.toString()));
+        }
+
+        IdentityApiResourceRequest resourceContext = new IdentityApiResourceRequest(method, request);
+
+        ApiResourceType eventType = identityApi.apiResourceType();
+        ApiEvent event = null;
+        switch (eventType) {
+            case AUTH:
+                event = createAuthEvent(resourceContext);
+                break;
+            case PRIVATE:
+                event = createPrivateEvent(resourceContext);
+                break;
+            case PUBLIC:
+                event = createPublicEvent(resourceContext);
+                break;
+            default:
+                logger.warn(String.format("Error posting API event. Unsupported event type '%s'", eventType.getReportValue()));
+        }
+
+        if (event != null) {
+            applicationEventPublisher.publishEvent(new ApiEventSpringWrapper(this, event));
+        }
+    }
+
+    private ApiEvent createAuthEvent(IdentityApiResourceRequest resourceContext) {
+        String requestId = MDC.get(Audit.GUUID);
 
         return BasicAuthApiEvent.BasicAuthApiEventBuilder.aBasicAuthApiEvent()
-                .eventId(StringUtils.defaultString(eventId, DATA_UNAVAILABLE))
-                .requestUri(StringUtils.defaultString(requestUri, DATA_UNAVAILABLE))
+                .requestId(StringUtils.defaultString(requestId, DATA_UNAVAILABLE))
                 .remoteIp(StringUtils.defaultString(MDC.get(Audit.REMOTE_IP), DATA_UNAVAILABLE))
                 .forwardedForIp(StringUtils.defaultString(MDC.get(Audit.X_FORWARDED_FOR), DATA_UNAVAILABLE))
                 .nodeName(StringUtils.defaultString(identityConfig.getReloadableConfig().getAENodeNameForSignoff(), DATA_UNAVAILABLE))
                 .userName(StringUtils.defaultString(requestContextHolder.getAuthenticationContext().getUsername(), DATA_UNAVAILABLE))
+                .resourceContext(resourceContext)
                 .build();
     }
 
-    private ApiEvent createUnprotectedApiEvent(ContainerRequest request) {
-        String requestUri = scrubRequestUri(request);
-        String eventId = MDC.get(Audit.GUUID);
+    private ApiEvent createPublicEvent(IdentityApiResourceRequest resourceContext) {
+        String requestId = MDC.get(Audit.GUUID);
 
-        return BasicUnprotectedApiEvent.BasicUnprotectedApiEventBuilder.aBasicUnprotectedApiEvent()
-                .eventId(StringUtils.defaultString(eventId, DATA_UNAVAILABLE))
-                .requestUri(StringUtils.defaultString(requestUri, DATA_UNAVAILABLE))
+        return BasicPublicApiEvent.BasicPublicApiEventBuilder.aBasicPublicApiEvent()
+                .requestId(StringUtils.defaultString(requestId, DATA_UNAVAILABLE))
                 .remoteIp(StringUtils.defaultString(MDC.get(Audit.REMOTE_IP), DATA_UNAVAILABLE))
                 .forwardedForIp(StringUtils.defaultString(MDC.get(Audit.X_FORWARDED_FOR), DATA_UNAVAILABLE))
                 .nodeName(StringUtils.defaultString(identityConfig.getReloadableConfig().getAENodeNameForSignoff(), DATA_UNAVAILABLE))
+                .resourceContext(resourceContext)
                 .build();
     }
 
@@ -105,44 +177,40 @@ public class ApiEventPostingFilter implements ContainerResponseFilter {
      * Currently only support providing details for protected resources that have the request context populated w/
      * the appropriate security context. This is limited to v2.0 resources AFAIK at the moment.
      *
-     * @param request
      * @return
      */
-    private ApiEvent createProtectedApiEvent(ContainerRequest request) {
-        String requestUri = scrubRequestUri(request);
-        String eventId = MDC.get(Audit.GUUID);
+    private ApiEvent createPrivateEvent(IdentityApiResourceRequest resourceContext) {
+        ContainerRequest request = resourceContext.getContainerRequest();
+
+        String requestId = MDC.get(Audit.GUUID);
 
         Caller effectiveCaller = generateEffectiveCaller();
         Caller caller = generateCaller(effectiveCaller);
-        String maskedCallerToken = generateMaskedCallerToken(request);
-        String maskedEffectiveCallerToken = generateMaskedEffectiveCallerToken();
+        String callerToken = getCallerToken(request);
+        String effectiveCallerToken = getEffectiveCallerToken();
 
-        return BasicProtectedApiEvent.BasicProtectedApiEventBuilder.aBasicProtectedApiEvent()
-                .eventId(StringUtils.defaultString(eventId, DATA_UNAVAILABLE))
-                .requestUri(StringUtils.defaultString(requestUri, DATA_UNAVAILABLE))
+        return BasicPrivateApiEvent.BasicPrivateApiEventBuilder.aBasicPrivateApiEvent()
+                .requestId(StringUtils.defaultString(requestId, DATA_UNAVAILABLE))
                 .remoteIp(StringUtils.defaultString(MDC.get(Audit.REMOTE_IP), DATA_UNAVAILABLE))
                 .forwardedForIp(StringUtils.defaultString(MDC.get(Audit.X_FORWARDED_FOR), DATA_UNAVAILABLE))
                 .nodeName(StringUtils.defaultString(identityConfig.getReloadableConfig().getAENodeNameForSignoff(), DATA_UNAVAILABLE))
-                .maskedCallerToken(StringUtils.defaultString(maskedCallerToken, DATA_UNAVAILABLE))
+                .callerToken(StringUtils.defaultString(callerToken, DATA_UNAVAILABLE))
                 .caller(caller)
-                .maskedEffectiveCallerToken(StringUtils.defaultString(maskedEffectiveCallerToken, DATA_UNAVAILABLE))
+                .effectiveCallerToken(StringUtils.defaultString(effectiveCallerToken, DATA_UNAVAILABLE))
                 .effectiveCaller(effectiveCaller)
+                .resourceContext(resourceContext)
                 .build();
     }
 
-    /**
-     * Must never log the full token, but want to provide some of it just to allow for easier reconciliation of user
-     * requests. So here we'll use the common ScopeAccess means to mask the token. Some services may not populate the
-     * security context with the effective caller token. We only provide if readily available.
-     */
-    private String generateMaskedEffectiveCallerToken() {
+    private String getEffectiveCallerToken() {
         ScopeAccess effectiveCallerToken = requestContextHolder.getRequestContext().getSecurityContext().getEffectiveCallerToken();
+        String tokenStr = effectiveCallerToken != null ? effectiveCallerToken.getAccessTokenString() : DATA_UNAVAILABLE;
 
-        String maskedEffectiveCallerToken = DATA_UNAVAILABLE;
-        if (effectiveCallerToken != null) {
-            maskedEffectiveCallerToken = effectiveCallerToken.getMaskedAccessTokenString();
+        if (StringUtils.isBlank(tokenStr)) {
+            tokenStr = DATA_UNAVAILABLE;
         }
-        return maskedEffectiveCallerToken;
+
+        return tokenStr;
     }
 
     private IdentityUserTypeEnum determineEffectiveCallerUserType() {
@@ -162,23 +230,28 @@ public class ApiEventPostingFilter implements ContainerResponseFilter {
      * security context with the caller token. We only provide if readily available w/ a fallback to any header value
      * provided.
      */
-    private String generateMaskedCallerToken(ContainerRequest request) {
+    private String getCallerToken(ContainerRequest request) {
         ScopeAccess callerToken = requestContextHolder.getRequestContext().getSecurityContext().getCallerToken();
 
-        String maskedCallerToken = DATA_UNAVAILABLE;
+        String tokenStr = null;
         if (callerToken == null) {
-            // Retrieve v2.0 auth header (which is how security context gets populated). This will allow us to provide token
+            // Retrieve v2.0 auth header (which is how security context gets populated in v2.0 requests. This will allow us to provide token
             // even if can't be decrypted (e.g. invalid token)
             String headerToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
             if (headerToken != null) {
                 ScopeAccess sa = new ScopeAccess();
                 sa.setAccessTokenString(headerToken);
-                maskedCallerToken = sa.getMaskedAccessTokenString();
+                tokenStr = sa.getAccessTokenString();
             }
         } else {
-            maskedCallerToken = callerToken.getMaskedAccessTokenString();
+            tokenStr = callerToken.getAccessTokenString();
         }
-        return maskedCallerToken;
+
+        if (StringUtils.isBlank(tokenStr)) {
+            tokenStr = DATA_UNAVAILABLE;
+        }
+
+        return tokenStr;
     }
 
     /**
@@ -231,39 +304,4 @@ public class ApiEventPostingFilter implements ContainerResponseFilter {
         }
         return new Caller(effectiveCallerUserId, effectiveCallerUserName, effectiveCallerUserType);
     }
-
-    /**
-     * Want to provide the request uri, but a couple v2 services include the token as part of the URI which we definitely
-     * do not want to log. In these cases we want to perform the same scrubbing logic used to mask caller tokens.
-     *
-     * @param request
-     * @return
-     */
-    private String scrubRequestUri(ContainerRequest request) {
-        URI requestUri = request.getRequestUri();
-
-        String maskedRequestUri = "";
-        if (requestUri != null) {
-            String requestUriStr = requestUri.toString();
-            maskedRequestUri = requestUriStr;
-
-            //v1.1/v2 validate/revoke includes token in URL, don't want that in log so scrub out
-            Matcher matcher = null;
-            if (idmPathUtils.isV2ValidateTokenResource(request) || idmPathUtils.isV2RevokeOtherTokenResource(request)) {
-                matcher = IdmPathUtils.v2TokenValidationPathPattern.matcher(request.getPath());
-            } else if (idmPathUtils.isV11ValidateTokenResource(request) || idmPathUtils.isV11RevokeTokenResource(request)) {
-                matcher = IdmPathUtils.v11TokenValidationPathPattern.matcher(request.getPath());
-            }
-
-            if (matcher != null && matcher.matches() && matcher.groupCount() == 1) {
-                String rawToken = matcher.group(1);
-                ScopeAccess sa = new ScopeAccess();
-                sa.setAccessTokenString(rawToken);
-                String maskedToken = sa.getMaskedAccessTokenString();
-                maskedRequestUri = StringUtils.replace(requestUriStr, rawToken, maskedToken);
-            }
-        }
-        return maskedRequestUri;
-    }
-
 }

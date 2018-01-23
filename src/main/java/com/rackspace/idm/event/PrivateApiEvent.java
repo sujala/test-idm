@@ -9,9 +9,9 @@ import javax.annotation.Nullable;
  * Ideally this event would have used higher level entity objects (e.g. BaseUser), but not all API methods use the
  * requestContext to populate the the effective caller. Until they do we just pass in fine grained data. Can't create
  */
-public interface ProtectedApiEvent extends ApiEvent {
+public interface PrivateApiEvent extends ApiEvent {
     @Nullable
-    String getMaskedCallerToken();
+    String getCallerToken();
 
     /**
      * Returns the token used for determining authorization for service. If an impersonation token was used, this would
@@ -19,7 +19,7 @@ public interface ProtectedApiEvent extends ApiEvent {
      * @return
      */
     @Nullable
-    String getMaskedEffectiveCallerToken();
+    String getEffectiveCallerToken();
 
     /**
      * The original "caller" on the protected API (e.g the owner of the x-auth-token provided in call). If the caller
