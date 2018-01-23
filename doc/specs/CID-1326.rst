@@ -1,16 +1,16 @@
 .. _CID-1324: https://jira.rax.io/browse/CID-1324
 
-=============================================================
-Return contactId for federated users from get user/list users
-=============================================================
+===========================================================================
+Return contactId for federated users from get/list users and validate token
+===========================================================================
 
 Description
 -----------
 When set, the **contactId** attribute is returned for provisioned users from
 various services such as get user by id. As of `CID-1324`_, **contactId** can also
 be set on federated users. This story is to validate/modify the various get/list
-user services that support returning a federated user to also return, if
-applicable, the **contactId** set on federated users.
+user and validate token services that support returning a federated user to also
+return, if applicable, the **contactId** set on federated users.
 
 Implementation
 --------------
@@ -27,7 +27,8 @@ Affected services
 1. Get user by name (v2.0/users?name={username})
 2. Get user by ID (v2.0/users/{userId})
 3. List users (v2.0/users)
-4. List users by domainId (v2.0/domains/{domainId}/users)
+4. List users by domainId (v2.0/RAX-AUTH/domains/{domainId}/users)
+5. Validate token (v2.0/tokens/{tokenId})
 
 Business Acceptance Criteria
 ----------------------------
