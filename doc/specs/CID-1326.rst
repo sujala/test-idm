@@ -1,4 +1,3 @@
-.. _CID-1326:
 .. _CID-1324: https://jira.rax.io/browse/CID-1324
 
 =============================================================
@@ -28,7 +27,7 @@ Affected services
 1. Get user by name (v2.0/users?name={username})
 2. Get user by ID (v2.0/users/{userId})
 3. List users (v2.0/users)
-4. List users by domainId (v2.0/users?domainId={domainId}
+4. List users by domainId (v2.0/domains/{domainId}/users)
 
 Business Acceptance Criteria
 ----------------------------
