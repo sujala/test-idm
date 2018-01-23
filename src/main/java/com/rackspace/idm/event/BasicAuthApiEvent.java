@@ -6,18 +6,16 @@ import lombok.Getter;
 public class BasicAuthApiEvent extends AbstractApiEvent implements AuthApiEvent {
     private String userName;
 
-    @Override
-    public String getEventType() {
-        return "AuthApi";
+    public BasicAuthApiEvent(IdentityApiResourceRequest resourceContext) {
+        super(resourceContext);
     }
-
 
     public static final class BasicAuthApiEventBuilder {
         protected String nodeName;
-        protected String requestUri;
         protected String remoteIp;
         protected String forwardedForIp;
-        protected String eventId;
+        protected String requestId;
+        protected IdentityApiResourceRequest resourceContext;
         private String userName;
 
         private BasicAuthApiEventBuilder() {
@@ -27,18 +25,13 @@ public class BasicAuthApiEvent extends AbstractApiEvent implements AuthApiEvent 
             return new BasicAuthApiEventBuilder();
         }
 
-        public BasicAuthApiEventBuilder nodeName(String nodeName) {
-            this.nodeName = nodeName;
-            return this;
-        }
-
         public BasicAuthApiEventBuilder userName(String userName) {
             this.userName = userName;
             return this;
         }
 
-        public BasicAuthApiEventBuilder requestUri(String requestUri) {
-            this.requestUri = requestUri;
+        public BasicAuthApiEventBuilder nodeName(String nodeName) {
+            this.nodeName = nodeName;
             return this;
         }
 
@@ -52,19 +45,23 @@ public class BasicAuthApiEvent extends AbstractApiEvent implements AuthApiEvent 
             return this;
         }
 
-        public BasicAuthApiEventBuilder eventId(String eventId) {
-            this.eventId = eventId;
+        public BasicAuthApiEventBuilder requestId(String requestId) {
+            this.requestId = requestId;
+            return this;
+        }
+
+        public BasicAuthApiEventBuilder resourceContext(IdentityApiResourceRequest resourceContext) {
+            this.resourceContext = resourceContext;
             return this;
         }
 
         public BasicAuthApiEvent build() {
-            BasicAuthApiEvent basicAuthApiEvent = new BasicAuthApiEvent();
-            basicAuthApiEvent.nodeName = this.nodeName;
-            basicAuthApiEvent.eventId = this.eventId;
-            basicAuthApiEvent.forwardedForIp = this.forwardedForIp;
+            BasicAuthApiEvent basicAuthApiEvent = new BasicAuthApiEvent(resourceContext);
             basicAuthApiEvent.userName = this.userName;
-            basicAuthApiEvent.requestUri = this.requestUri;
+            basicAuthApiEvent.nodeName = this.nodeName;
+            basicAuthApiEvent.forwardedForIp = this.forwardedForIp;
             basicAuthApiEvent.remoteIp = this.remoteIp;
+            basicAuthApiEvent.requestId = this.requestId;
             return basicAuthApiEvent;
         }
     }

@@ -1,6 +1,6 @@
 package com.rackspace.idm.event
 
-import com.rackspace.idm.api.filter.ApiEventPostingFilter
+import com.rackspace.idm.event.SecuredAttributeSupport.HashAlgorithmEnum
 import org.apache.commons.codec.binary.Base64
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -10,6 +10,8 @@ import javax.crypto.spec.SecretKeySpec
 import java.security.InvalidKeyException
 import java.security.NoSuchAlgorithmException
 import java.security.SignatureException
+
+import static com.rackspace.idm.event.ApiEventPostingAspect.DATA_UNAVAILABLE
 
 class SecuredAttributeSupportTest extends Specification {
     private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1"
@@ -27,22 +29,22 @@ class SecuredAttributeSupportTest extends Specification {
 
     @Unroll
     def "Does not secure case sensitive <NotAvailable> values for secured attributes: value: '#value'"() {
-        SecuredAttributeSupport sas = new SecuredAttributeSupport("anykey", [NewRelicCustomAttributesEnum.CALLER_TOKEN.newRelicAttributeName] as Set)
+        SecuredAttributeSupport sas = new SecuredAttributeSupport("anykey", [NewRelicCustomAttributesEnum.CALLER_USERNAME.newRelicAttributeName] as Set)
 
         when:
-        String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
+        String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_USERNAME, value)
 
         then:
-        finalValue == ApiEventPostingFilter.DATA_UNAVAILABLE
+        finalValue == DATA_UNAVAILABLE
 
         where:
-        value << [ApiEventPostingFilter.DATA_UNAVAILABLE]
+        value << [DATA_UNAVAILABLE]
     }
 
     @Unroll
     def "Does not secure if attribute not in list of secured attributes"() {
         def unsecuredValue = "value"
-        SecuredAttributeSupport sas = new SecuredAttributeSupport("anykey", [NewRelicCustomAttributesEnum.CALLER_TOKEN.newRelicAttributeName] as Set)
+        SecuredAttributeSupport sas = new SecuredAttributeSupport("anykey", [NewRelicCustomAttributesEnum.EFFECTIVE_CALLER_USERNAME.newRelicAttributeName] as Set)
 
         when:
         String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_USERNAME, unsecuredValue)
@@ -74,10 +76,10 @@ class SecuredAttributeSupportTest extends Specification {
         String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
 
         then:
-        Base64.decodeBase64(finalValue) == calculateHashForSASAndValue(sas, value)
+        assertSecuredValue(finalValue, value, HashAlgorithmEnum.SHA1, key)
 
         where:
-        value << [null, "", "abc", "NotAvailable", ApiEventPostingFilter.DATA_UNAVAILABLE.toLowerCase(), ApiEventPostingFilter.DATA_UNAVAILABLE.toUpperCase()]
+        value << [null, "", "abc", "NotAvailable", DATA_UNAVAILABLE.toLowerCase(), DATA_UNAVAILABLE.toUpperCase()]
     }
 
     @Unroll
@@ -90,10 +92,10 @@ class SecuredAttributeSupportTest extends Specification {
         String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
 
         then:
-        Base64.decodeBase64(finalValue) == calculateHashForSASAndValue(sas, value)
+        assertSecuredValue(finalValue, value, HashAlgorithmEnum.SHA1, key)
 
         where:
-        setVal << [["*"],[NewRelicCustomAttributesEnum.CALLER_TOKEN],[NewRelicCustomAttributesEnum.EVENT_ID, NewRelicCustomAttributesEnum.CALLER_TOKEN]]
+        setVal << [["*"],[NewRelicCustomAttributesEnum.CALLER_TOKEN],[NewRelicCustomAttributesEnum.REQUEST_ID, NewRelicCustomAttributesEnum.CALLER_TOKEN]]
     }
 
     def "Hashes with SHA1 when specified"() {
@@ -102,10 +104,22 @@ class SecuredAttributeSupportTest extends Specification {
         SecuredAttributeSupport sas = new SecuredAttributeSupport(SecuredAttributeSupport.HashAlgorithmEnum.SHA1, key, [NewRelicCustomAttributesEnum.CALLER_TOKEN.newRelicAttributeName] as Set)
 
         when:
-        String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
+        String finalValue =sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
 
         then:
-        Base64.decodeBase64(finalValue) == calculateHashForSASAndValue(sas, value)
+        assertSecuredValue(finalValue, value, HashAlgorithmEnum.SHA1, key)
+   }
+
+    void assertSecuredValue(String actualValue, String plaintext, HashAlgorithmEnum hashAlgorithmEnum, String hashKey) {
+        byte[] hash = null;
+        if (hashAlgorithmEnum == HashAlgorithmEnum.SHA256) {
+            hash = new String(calculateSha256HMAC(plaintext, hashKey),  )
+        } else if (hashAlgorithmEnum == HashAlgorithmEnum.SHA1) {
+            hash = calculateSha1HMAC(plaintext, hashKey)
+        }
+        String encoded = Base64.encodeBase64(hash)
+
+        actualValue == String.format("SV(%s)", encoded)
     }
 
     @Unroll
@@ -118,7 +132,7 @@ class SecuredAttributeSupportTest extends Specification {
         String finalValue = sas.secureAttributeValueIfRequired(NewRelicCustomAttributesEnum.CALLER_TOKEN, value)
 
         then:
-        Base64.decodeBase64(finalValue) == calculateHashForSASAndValue(sas, value)
+        assertSecuredValue(finalValue, value, HashAlgorithmEnum.SHA256, key)
 
         where:
         hashAlg << [null, SecuredAttributeSupport.HashAlgorithmEnum.SHA256]
@@ -147,6 +161,9 @@ class SecuredAttributeSupportTest extends Specification {
         return mac.doFinal(dataBytes)
     }
 
+    /*
+    Real code uses a library. Hand code here to validate the results via a different method
+     */
     byte[] calculateSha256HMAC(String data, String key)
             throws SignatureException, NoSuchAlgorithmException, InvalidKeyException {
 

@@ -8,6 +8,7 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.XMLReader;
+import com.rackspace.idm.event.*;
 import com.rackspace.idm.modules.usergroups.api.resource.CloudUserGroupResource;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
@@ -98,6 +99,7 @@ public class Cloud20VersionResource {
         }
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
     @GET
     public Response getCloud20VersionInfo() throws JAXBException {
         JAXBContext context = JAXBCONTEXT_VERSION_CHOICE;
@@ -112,6 +114,8 @@ public class Cloud20VersionResource {
         return Response.ok(versionChoice.getValue()).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @ReportableQueryParams(unsecuredQueryParams = {"apply_rcn_roles"})
     @POST
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders, @QueryParam("apply_rcn_roles") boolean applyRcnRoles, AuthenticationRequest authenticationRequest) {
@@ -421,6 +425,9 @@ public class Cloud20VersionResource {
         return cloud20Service.getIdentityProviderPolicy(httpHeaders, authToken, identityProviderId).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @ReportableQueryParams(unsecuredQueryParams = {"belongsTo","apply_rcn_roles"})
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v2TokenValidationAbsolutePathPatternRegex)
     @GET
     @Path("tokens/{tokenId}")
     public Response validateToken(

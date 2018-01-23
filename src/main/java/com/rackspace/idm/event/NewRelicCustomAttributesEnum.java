@@ -7,15 +7,22 @@ import java.util.List;
 import java.util.Set;
 
 public enum NewRelicCustomAttributesEnum {
-    EVENT_ID("eventId")
-    , EVENT_TYPE("idmEventType")
-    , REQUEST_URI("requestUri")
+    //COMMON
+    REQUEST_ID("requestId")
+    , RESOURCE_TYPE("resourceType")
+    , RESOURCE_PATH("resourcePath")
+    , KEYWORDS("keyWords")
     , NODE_NAME("nodeName")
     , REMOTE_IP("remoteIp")
     , FORWARDED_IP("forwardedForIp")
+    , QUERY_PARAMS("queryParams")
+
+    // AUTH and PRIVATE RESOURCES
+    , CALLER_USERNAME("callerUsername")
+
+    // PRIVATE RESOURCES ONLY
     , CALLER_TOKEN("callerToken")
     , CALLER_ID("callerId")
-    , CALLER_USERNAME("callerUsername")
     , CALLER_USER_TYPE("callerUserType")
     , EFFECTIVE_CALLER_TOKEN("effectiveCallerToken")
     , EFFECTIVE_CALLER_ID("effectiveCallerId")
