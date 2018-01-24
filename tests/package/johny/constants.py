@@ -444,6 +444,7 @@ NS_SERVICES = OS_KSADM_NAMESPACE + ':services'
 NS_IMPERSONATION = 'RAX-AUTH:impersonation'
 
 '''Query parameters'''
+PARAM_ROLE_ID = 'roleId'
 PARAM_ROLE_NAME = 'roleName'
 RESPONSE_DETAIL = 'responseDetail'
 NS_PASSCODE_CREDENTIALS = RAX_AUTH + ':passcodeCredentials'
