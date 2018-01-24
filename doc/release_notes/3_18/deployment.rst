@@ -24,7 +24,7 @@ Release Ticket  - Add JIRA link here.
   :header: Milestone, Date, Status
 
   RC Due, "Thurs, Dec 21 2017", "Delivered - RC2 Build number: 3.18.0-1513809211095"
-  QE Signoff for Staging, "Thurs, Jan 4 2017",
+  QE Signoff for Staging, "Thurs, Jan 4 2018",
   Staging Release Week, "Mon, Jan 8 - Tues, Jan 9 2018",
   Signoff for Production, "Fri, Jan 12 2018",
   Production Release Week, "Mon, Jan 15 - Tues, Jan 16 2018",
