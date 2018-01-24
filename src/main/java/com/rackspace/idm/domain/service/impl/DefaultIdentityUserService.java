@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
@@ -302,19 +303,10 @@ public class DefaultIdentityUserService implements IdentityUserService {
         List<TenantRole> tenantRoles;
         IdentityUserTypeEnum userTypeEnum;
         if (applyRcnRoles) {
-            tenantRoles = tenantService.getTenantRolesForUserApplyRcnRoles(baseUser);
-
-            // Determine the user type
-            userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
-            if (userTypeEnum == null) {
-                /*
-                 Chance of this happening if user exists in a domain without any tenants. Calling logic depends on user
-                 type being included so fall back to looking up from scratch. This should only occur in rare circumstances
-                 so additional impact should be minimal.
-                  */
-                logger.warn(String.format("Authenticating userId '%s' resulted in no user type role when applying RCN roles. User likely has no tenants", baseUser.getId()));
-                userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(baseUser);
-            }
+            // Retrieve all roles effectively assigned to user denormalized to tenants
+            SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);
+            tenantRoles = sourcedRoleAssignments.asTenantRolesExcludeNoTenants();
+            userTypeEnum = sourcedRoleAssignments.getUserTypeFromAssignedRoles();
         } else {
             tenantRoles = tenantService.getTenantRolesForUserPerformant(baseUser);
             userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);

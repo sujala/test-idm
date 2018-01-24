@@ -254,14 +254,17 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<Tenant> getTenantsForUserByTenantRolesApplyRcnRoles(BaseUser user) {
+    public List<Tenant> getTenantsForUserByTenantRolesApplyRcnRoles(EndUser user) {
         if (user == null) {
             throw new IllegalStateException();
         }
 
         logger.info("Getting Tenants (apply_rcn_roles=true");
 
-        Iterable<TenantRole> tenantRoles = getEffectiveTenantRolesForUserApplyRcnRoles(user);
+        SourcedRoleAssignments sourcedRoleAssignments = getSourcedRoleAssignmentsForUser(user);
+        List<TenantRole> tenantRoles = sourcedRoleAssignments.asTenantRolesExcludeNoTenants();
+
+
         List<Tenant> tenants = getTenants(tenantRoles, new TenantEnabledPredicate());
 
         logger.info("Got {} tenants", tenants.size());
@@ -331,107 +334,6 @@ public class DefaultTenantService implements TenantService {
             userTenantRoles.addAll(roleUtil.mergeTenantRoleSets(itTenantRoles, rolesToMerge));
         }
         return userTenantRoles;
-    }
-
-    /**
-     * Get the effective tenant roles for a user and apply RCN logic rules. The application of RCN rules does the following:
-     * <ol>
-     *     <li>All non-RCN global roles are assigned to all tenants within the user's domain</li>
-     *     <li><All RCN assigned roles are matched against all tenants in all domains within the user's RCN to determine on
-     * which tenants the user will gain that role./li>
-     * </ol>
-     *
-     * Note - this is NOT efficient when a user has an RCN role as it will cause multiple lookups of the same domain as
-     * well as a subset of the tenants within the RCN. This may need to be
-     * optimized prior to RCN roles being in widespread use.
-     *
-     * @param user
-     * @return
-     */
-    private List<TenantRole> getEffectiveTenantRolesForUserApplyRcnRoles(BaseUser user) {
-        List<TenantRole> initialRoles = getTenantRolesForUserPerformant(user); //returns full populated roles
-
-        // We'll always need the user's domain to apply the RCN logic so retrieve it from the getgo
-        String domainId = user.getDomainId();
-        Domain domain = domainService.getDomain(domainId);
-        if (domain == null) {
-            /*
-             Only possible w/ data referential integrity issues. Just return initial roles since without a domain can't
-             apply any RCN logic
-             */
-            return initialRoles;
-        }
-
-        // Determine all RCN Roles the user has assigned
-        Map<ImmutableClientRole, TenantRole> rcnRolesAssigned = new LinkedHashMap<>();
-        List<TenantRole> nonRcnRolesAssigned = new ArrayList<TenantRole>();
-        for (TenantRole initialRole : initialRoles) {
-            ImmutableClientRole clientRole = applicationService.getCachedClientRoleById(initialRole.getRoleRsId());
-            if (clientRole != null) {
-                if (clientRole.getRoleType() == RoleTypeEnum.RCN) {
-                    rcnRolesAssigned.put(clientRole, initialRole);
-                } else {
-                    nonRcnRolesAssigned.add(initialRole);
-                }
-            }
-        }
-
-        // If the user has an RCN role assigned we'll need to perform tenant type matching so look up all tenants within RCN
-        List<Tenant> rcnTenants = new ArrayList<>();
-        if (MapUtils.isNotEmpty(rcnRolesAssigned)) {
-            rcnTenants = calculateRcnTenantsForRoleMatching(domain);
-        }
-
-        // Loop over each RCN role assigned to user and apply across all tenants
-        for (Map.Entry<ImmutableClientRole, TenantRole> rcnEntry : rcnRolesAssigned.entrySet()) {
-            ImmutableClientRole clientRole = rcnEntry.getKey();
-            TenantRole tenantRole = rcnEntry.getValue();
-
-            Set<String> roleTenantTypes = clientRole.getTenantTypes();
-
-            for (Tenant rcnTenant : rcnTenants) {
-                Set<String> tenantTenantTypes = rcnTenant.getTypes();
-                // If role matches tenant, add tenant to tenantRole tenant list
-                if (roleTenantTypes.contains("*") 
-                        || CollectionUtils.isNotEmpty(CollectionUtils.intersection(roleTenantTypes, tenantTenantTypes))) {
-                    tenantRole.getTenantIds().add(rcnTenant.getTenantId());
-                }
-            }
-        }
-
-        // Loop over non-RCN global roles assigned to user and apply to all domain tenants
-        String[] domainTenants = domain.getTenantIds();
-        if (!ArrayUtils.isEmpty(domainTenants)) {
-            for (TenantRole tenantRole : nonRcnRolesAssigned) {
-                // Only apply to globally assigned roles
-                if (CollectionUtils.isEmpty(tenantRole.getTenantIds())) {
-                    for (String tenantId : domainTenants) {
-                        tenantRole.getTenantIds().add(tenantId);
-                    }
-                }
-            }
-        }
-
-        /*
-         Only "keep" roles which were assigned a tenant. This adds a potential edge case for users that belong to a
-         domain that does not have any tenant. In this case, the user will not have an identity user classification role
-         as those are always globally assigned and are never RCN roles. This is as designed and systems affected by this
-          should submit a new query with apply_rcn_roles=false to retried the "un-tenantized" list of rcn roles.
-         */
-
-        List<TenantRole> finalRoles = new ArrayList<TenantRole>();
-        for (TenantRole tenantRole : rcnRolesAssigned.values()) {
-            if (CollectionUtils.isNotEmpty(tenantRole.getTenantIds())) {
-                finalRoles.add(tenantRole);
-            }
-        }
-        for (TenantRole tenantRole : nonRcnRolesAssigned) {
-            if (CollectionUtils.isNotEmpty(tenantRole.getTenantIds())) {
-                finalRoles.add(tenantRole);
-            }
-        }
-
-        return finalRoles;
     }
 
     /**
@@ -967,17 +869,6 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getGlobalRolesForUserApplyRcnRoles(BaseUser user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null.");
-        }
-        logger.debug("Getting Global Roles (apply_rcn_roles=true) for user {}", user.getUniqueId());
-
-        Iterable<TenantRole> tenantRoles = getTenantRolesForUserNoDetail(user);
-        return getGlobalRoles(tenantRoles, true);
-    }
-
-    @Override
     public List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(BaseUser user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null.");
@@ -1095,20 +986,6 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId) {
-        logger.debug("Getting Global Roles");
-        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId);
-        return getGlobalRoles(roles, false);
-    }
-
-    @Override
-    public List<TenantRole> getGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId) {
-        logger.debug("Getting Global Roles (apply_rcn_roles=true)");
-        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId);
-        return getGlobalRoles(roles, true);
-    }
-
-    @Override
     public List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user, String applicationId) {
         logger.debug("Getting Global Roles (apply_rcn_roles=false)");
         List<TenantRole> allRoles = getEffectiveGlobalRolesForUser(user);
@@ -1158,9 +1035,10 @@ public class DefaultTenantService implements TenantService {
 
         logger.debug(GETTING_TENANT_ROLES);
 
-        // Original code didn't return fully populated roles (e.g. role names) so continue just returning minimal info
-        List<TenantRole> allRoles = getEffectiveTenantRolesForUserApplyRcnRoles(user);
+        SourcedRoleAssignments sourcedRoleAssignments = getSourcedRoleAssignmentsForUser(user);
+        List<TenantRole> allRoles = sourcedRoleAssignments.asTenantRolesExcludeNoTenants();
 
+        // Original code didn't return fully populated roles (e.g. role names), so don't move over.
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : allRoles) {
             if (role.getTenantIds().contains(tenant.getTenantId())) {
@@ -1194,11 +1072,6 @@ public class DefaultTenantService implements TenantService {
         }
 
         return tenantDao.countTenantsWithTypeInDomain(tenantType, domainId);
-    }
-
-    @Override
-    public List<TenantRole> getTenantRolesForUserApplyRcnRoles(BaseUser user) {
-        return getEffectiveTenantRolesForUserApplyRcnRoles(user);
     }
 
     @Override

@@ -1,8 +1,6 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
-import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
@@ -231,21 +229,6 @@ public interface TenantService {
     List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user);
 
     /**
-     * Retrieves the roles explicitly assigned to the user as a "global" (domain) assignment - excluding RCN roles.
-     *
-     * The roles returned have various properties from the client role populated:
-     * <ul>
-     *     <li>name</li>
-     *     <li>description</li>
-     * </ul>
-     *
-     * @param user
-     * @return
-     * @throws IllegalArgumentException If supplied user is null
-     */
-    List<TenantRole> getGlobalRolesForUserApplyRcnRoles(BaseUser user);
-
-    /**
      * Retrieves the roles "effectively" assigned to the user as "global" (domain) assignment. This will exclude RCN roles
      *
      * The global roles returned include
@@ -305,18 +288,6 @@ public interface TenantService {
     List<TenantRole> getExplicitlyAssignedTenantRolesForUserPerformant(EndUser user);
 
     /**
-     * Returns all roles for the specified application that are explicitly globally assigned to the user (e.g. not via group membership). This will
-     * include any RCN roles assigned to the user.
-     *
-     * For those roles returned, the name and description attribute are populated (and types for RCN roles).
-     *
-     * @param user
-     * @param applicationId
-     * @return
-     */
-    List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId);
-
-    /**
      * Retrieves the specified application's roles that are "effectively" assigned to the user as "global" (domain)
      * assignment. This will include RCN roles
      *
@@ -339,19 +310,6 @@ public interface TenantService {
      * @throws IllegalArgumentException If supplied user is null
      */
     List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user, String applicationId);
-
-    /**
-     * Returns all roles that are explicitly globally assigned to the user (e.g. not via group membership). This will
-     * exclude any RCN roles assigned to the user.
-     *
-     * For those roles returned, the name and description attribute are populated.
-     *
-     * @param user
-     * @param applicationId
-     * @return
-     */
-    List<TenantRole> getGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId);
-
 
     /**
      * Retrieves the specified application's roles that are "effectively" assigned to the user as "global" (domain)
@@ -460,26 +418,6 @@ public interface TenantService {
     List<TenantRole> getTenantRolesForUserPerformant(BaseUser user);
 
     /**
-     * Returns the effective tenant roles for a user through explicit assignment, identity:tenant-access (if enabled), and
-     * group membership. RCN logic rules are also applied to RCN roles. The application of RCN rules does the following:
-     * <ol>
-     *     <li>All non-RCN global roles are assigned to all tenants within the user's domain</li>
-     *     <li><All RCN assigned roles are matched against all tenants in all domains within the user's RCN to determine on
-     * which tenants the user will gain that role.</li>
-     * </ol>
-     *
-     * Populates the tenant role w/ client role information from the client cache.
-     *
-     * Note - the current implementation is NOT efficient when a user has an RCN role as it will cause multiple lookups of the same domain as
-     * well as a subset of the tenants within the RCN. This may need to be
-     * optimized prior to RCN roles being in widespread use.
-     *
-     * @param user
-     * @return
-     */
-    List<TenantRole> getTenantRolesForUserApplyRcnRoles(BaseUser user);
-
-    /**
      * Retrieves a list of tenant roles explicitly assigned (global or on a tenant) to a user without the details such as name, propagate, etc populated.
      *
      * This does not include roles received due to group membership or the identity:tenant-access implicity assigned role.
@@ -527,7 +465,7 @@ public interface TenantService {
      * @param user
      * @return
      */
-    List<Tenant> getTenantsForUserByTenantRolesApplyRcnRoles(BaseUser user);
+    List<Tenant> getTenantsForUserByTenantRolesApplyRcnRoles(EndUser user);
 
     /**
      * Returns TRUE if the user matches the following criteria:
@@ -728,19 +666,23 @@ public interface TenantService {
     SourcedRoleAssignments getSourcedRoleAssignmentsForRacker(Racker racker);
 
     /**
-     * Return the set of effective role assignments on the user along with the tenants on which the user has the role.
-     * This includes:
+     * Return the set of effective role assignments on tenants for the specified user. The result includes the exact
+     * tenants the user is considered to have those roles on.
      *
+     * The service considers:
      * <ul>
      *     <li>All roles explicitly assigned to user regardless of assignment via global or on tenant</li>
      *     <li>The identity:tenant-access role as appropriate for tenants in user's domain</li>
      *     <li>Roles received via group membership (if enabled for user's domain)</li>
+     *     <li>RCN Role logic to apply RCN roles across all applicable tenants with the user's RCN</li>
+     *     <li>Hidden tenants that a user only receives domain roles if explicitly assigned a role on the tenant</li>
      * </ul>
      *
-     * RCN role logic is applied, so the user will receive the role on any applicable tenant within the
-     * RCN.
+     * There is a possibility that an empty set of tenant ids is listed for the role. This means that while the user is
+     * assigned the role, the user does not have that role on any tenants. For example, a user could be assigned an
+     * RCN role, but that RCN role is not applicable for any tenants within the user's RCN.
      *
-     * Each role the user is assigned includes the set of sources by which the user received the assignment.
+     * The set of sources by which the user is assigned a role is returned for each role.
      *
      * @param user
      * @return

@@ -853,39 +853,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         flag << [true, false]
     }
 
-    /**
-     * Verify the service retrieves the roles the user is granted based on association with groups
-     */
-    def "getTenantRolesForUserApplyRcnRoles: Retrieves roles based on groups assigned per feature flag: flag: #flag"() {
-        given:
-        def domainId = "testDomainId"
-        def groupId = "1234"
-        def groupId2 = "abcd"
-        def user = entityFactory.createUser("test1","userId", domainId, "region").with {
-            it.userGroupDNs = [new DN("rsId=$groupId,ou=groups")
-                               , new DN("rsId=$groupId2,ou=groups")] as Set // Add group to user
-            it
-        }
-
-        when:
-        def tenantRoleList = service.getTenantRolesForUserApplyRcnRoles(user)
-
-        then:
-        1 * userGroupAuthorizationService.areUserGroupsEnabledForDomain(domainId) >> flag
-        1 * tenantRoleDao.getTenantRolesForUser(user) >> [] // Assume zilch roles returned
-        if (flag) {
-            // Roles should be retrieved for both groups assigned
-            1 * userGroupService.getRoleAssignmentsOnGroup(groupId) >> []
-            1 * userGroupService.getRoleAssignmentsOnGroup(groupId2) >> []
-        } else {
-            // Roles should not be retrieved for groups
-            0 * userGroupService.getRoleAssignmentsOnGroup(_)
-        }
-
-        where:
-        flag << [true, false]
-    }
-
     def "deleteTenant: Updates tenant roles and domain appropriately"() {
         given:
         identityConfig.getReloadableConfig().getIdentityRoleDefaultTenant() >> "defaultTenant"

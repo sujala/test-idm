@@ -21,8 +21,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+
+import static com.rackspace.idm.Constants.getUSER_MANAGE_ROLE_ID
 
 class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(this.getClass())
@@ -112,7 +113,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         }
 
         and: "standard cloud roles appropriately applied"
-        assertApplyRcnStandardCloudAccount(scInfo.userTenantRoles, cloudTenant, filesTenant)
+        assertApplyRcnVanillaCloudAccount(scInfo.userTenantRoles, cloudTenant, filesTenant)
     }
 
     /**
@@ -142,7 +143,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         }
 
         and: "standard cloud roles appropriately applied"
-        assertApplyRcnStandardCloudAccount(scInfo.userTenantRoles, cloudTenant, filesTenant)
+        assertApplyRcnVanillaCloudAccount(scInfo.userTenantRoles, cloudTenant, filesTenant)
 
         and: "user gets role on cloud tenant only"
         def cloudRcnAssignment = scInfo.userTenantRoles.find {
@@ -151,6 +152,87 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         assert cloudRcnAssignment != null
         assert cloudRcnAssignment.getTenantIds().size() == 1
         assert cloudRcnAssignment.getTenantIds().find() {it == cloudTenant.id} != null
+    }
+
+    /**
+     * This test verifies that domain roles are correctly applied to hidden tenants. In particular, user-admins/user-managers
+     * should receive their respective roles on those tenants, but regular subusers do not.
+     *
+     */
+    def "getServiceCatalogInfoApplyRcnRoles - Correctly applies domain roles to hidden tenants"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, Constants.TENANT_TYPE_FAWS)
+        org.openstack.docs.identity.api.v2.User userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
+        def tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), userAdmin.domainId).getEntity(Tenants).value
+        def cloudTenant = tenants.tenant.find {
+            it.id == userAdmin.domainId
+        }
+        def filesTenant = tenants.tenant.find() {
+            it.id != userAdmin.domainId
+        }
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def userManage = utils.createUser(userAdminToken, testUtils.getRandomUUID("userManage"), userAdmin.domainId)
+        utils.addRoleToUser(userManage, USER_MANAGE_ROLE_ID)
+        def defaultUser = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), userAdmin.domainId)
+
+        def tenantId = "faws:" + testUtils.getRandomUUID()
+        def fawsTenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, [Constants.TENANT_TYPE_FAWS]).with {it.domainId = userAdmin.domainId; it})
+
+        when: "retrieve roles for user-admin"
+        def userEntity = userService.getUserById(userAdmin.id)
+        ServiceCatalogInfo scInfo = identityUserService.getServiceCatalogInfoApplyRcnRoles(userEntity)
+
+        then: "All roles are tenant based roles"
+        scInfo.userTenantRoles.each {assert it.getTenantIds().size() > 0}
+
+        and: "standard cloud roles appropriately applied"
+        assertApplyRcnCloudAccount(IdentityUserTypeEnum.USER_ADMIN, scInfo.userTenantRoles, cloudTenant, filesTenant)
+
+        and: "receives user-admin role on hidden tenant"
+        def userAdminRoleAssignment = scInfo.userTenantRoles.find {it.roleRsId == Constants.USER_ADMIN_ROLE_ID}
+        assert userAdminRoleAssignment != null
+        assert userAdminRoleAssignment.getTenantIds().size() == 3
+        assert userAdminRoleAssignment.getTenantIds().find() {it == fawsTenant.id} != null
+
+        when: "retrieve roles for user manager"
+        userEntity = userService.getUserById(userManage.id)
+        scInfo = identityUserService.getServiceCatalogInfoApplyRcnRoles(userEntity)
+
+        then: "All roles are tenant based roles"
+        scInfo.userTenantRoles.each {assert it.getTenantIds().size() > 0}
+
+        and: "standard cloud roles appropriately applied"
+        assertApplyRcnCloudAccount(IdentityUserTypeEnum.USER_MANAGER, scInfo.userTenantRoles, cloudTenant, filesTenant)
+
+        and: "receives identity:user-manage AND identity:default role on hidden tenant"
+        def userManageAssignment = scInfo.userTenantRoles.find {it.roleRsId == USER_MANAGE_ROLE_ID}
+        assert userManageAssignment != null
+        assert userManageAssignment.getTenantIds().size() == 3
+        assert userManageAssignment.getTenantIds().find() {it == fawsTenant.id} != null
+
+        def userMgDefaultAssignment = scInfo.userTenantRoles.find {it.roleRsId == Constants.DEFAULT_USER_ROLE_ID}
+        assert userMgDefaultAssignment != null
+        assert userMgDefaultAssignment.getTenantIds().size() == 3
+        assert userMgDefaultAssignment.getTenantIds().find() {it == fawsTenant.id} != null
+
+        when: "retrieve roles for regular subuser"
+        userEntity = userService.getUserById(defaultUser.id)
+        scInfo = identityUserService.getServiceCatalogInfoApplyRcnRoles(userEntity)
+
+        then: "All roles are tenant based roles"
+        scInfo.userTenantRoles.each {assert it.getTenantIds().size() > 0}
+
+        and: "standard cloud roles appropriately applied"
+        assertApplyRcnCloudAccount(IdentityUserTypeEnum.DEFAULT_USER, scInfo.userTenantRoles, cloudTenant, filesTenant)
+
+        and: "does not receive identity:default role on hidden tenant"
+        def userDefaultAssignment = scInfo.userTenantRoles.find {it.roleRsId == Constants.DEFAULT_USER_ROLE_ID}
+        assert userDefaultAssignment != null
+        assert userDefaultAssignment.getTenantIds().size() == 2
+        assert userDefaultAssignment.getTenantIds().find() {it == fawsTenant.id} == null
+
+        cleanup:
+        reloadableConfiguration.reset()
     }
 
     /**
@@ -181,7 +263,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         }
 
         and: "standard cloud roles appropriately applied"
-        assertApplyRcnStandardCloudAccount(scInfo.userTenantRoles, cloudTenant, filesTenant)
+        assertApplyRcnVanillaCloudAccount(scInfo.userTenantRoles, cloudTenant, filesTenant)
 
         and: "user gets 'cloud' rcn role on cloud tenant only"
         def cloudRcnAssignment = scInfo.userTenantRoles.find {
@@ -260,7 +342,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         }
 
         and: "standard cloud roles appropriately applied"
-        assertApplyRcnStandardCloudAccount(scInfo.userTenantRoles, cloudTenant1, filesTenant1)
+        assertApplyRcnVanillaCloudAccount(scInfo.userTenantRoles, cloudTenant1, filesTenant1)
 
         and: "rcn role granted on cloud tenant in both domain"
         def cloudRcnAssignment = scInfo.userTenantRoles.find {
@@ -290,10 +372,10 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         }
 
         and: "standard cloud roles appropriately applied"
-        assertApplyRcnStandardCloudAccount(scInfo2.userTenantRoles, cloudTenant1, filesTenant1)
+        assertApplyRcnVanillaCloudAccount(scInfo2.userTenantRoles, cloudTenant1, filesTenant1)
 
         and: "standard cloud roles appropriately applied"
-        assertApplyRcnStandardCloudAccount(scInfo.userTenantRoles, cloudTenant1, filesTenant1)
+        assertApplyRcnVanillaCloudAccount(scInfo.userTenantRoles, cloudTenant1, filesTenant1)
 
         and: "rcn role granted on cloud tenant in both domain"
         def cloudRcnAssignment2 = scInfo.userTenantRoles.find {
@@ -343,22 +425,30 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         scInfo.userTypeEnum == IdentityUserTypeEnum.USER_ADMIN
     }
 
-    def void assertApplyRcnStandardCloudAccount(List<TenantRole> tenantRoles, cloudTenant, filesTenant) {
+    void assertApplyRcnVanillaCloudAccount(List<TenantRole> tenantRoles, cloudTenant, filesTenant) {
+        assertApplyRcnCloudAccount(IdentityUserTypeEnum.USER_ADMIN, tenantRoles, cloudTenant, filesTenant)
+
+        tenantRoles.find { it.name == IdentityUserTypeEnum.USER_ADMIN.roleName }.getTenantIds().size() == 2
+        tenantRoles.find { it.name == IdentityRole.IDENTITY_TENANT_ACCESS.roleName }.getTenantIds().size() == 2
+        tenantRoles.find { it.name == GlobalConstants.COMPUTE_DEFAULT_ROLE }.getTenantIds().size() == 1
+        tenantRoles.find { it.name == GlobalConstants.FILES_DEFAULT_ROLE }.getTenantIds().size() == 1
+    }
+
+    void assertApplyRcnCloudAccount(IdentityUserTypeEnum userType, List<TenantRole> tenantRoles, cloudTenant, filesTenant) {
         // User has user-admin role on both tenants
-        def userAdminAssignment = tenantRoles.find {
-            it.name == IdentityUserTypeEnum.USER_ADMIN.roleName
+
+        def userTypeAssignment = tenantRoles.find {
+            it.name == userType.roleName
         }
-        assert userAdminAssignment != null
-        assert userAdminAssignment.getTenantIds().size() == 2
-        assert userAdminAssignment.getTenantIds().find() {it == cloudTenant.id} != null
-        assert userAdminAssignment.getTenantIds().find() {it == filesTenant.id} != null
+        assert userTypeAssignment != null
+        assert userTypeAssignment.getTenantIds().find() {it == cloudTenant.id} != null
+        assert userTypeAssignment.getTenantIds().find() {it == filesTenant.id} != null
 
         // "User has compute:default role on only cloud tenant"
         def computeAssignment = tenantRoles.find {
             it.name == GlobalConstants.COMPUTE_DEFAULT_ROLE
         }
         assert computeAssignment != null
-        assert computeAssignment.getTenantIds().size() == 1
         assert computeAssignment.getTenantIds().find() {it == cloudTenant.id} != null
 
         // "User has object-store:default role only on files tenant"
@@ -366,7 +456,6 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
             it.name == GlobalConstants.FILES_DEFAULT_ROLE
         }
         assert filesAssignment != null
-        assert filesAssignment.getTenantIds().size() == 1
         assert filesAssignment.getTenantIds().find() {it == filesTenant.id} != null
 
         // User has tenant-access role on both tenants
@@ -374,7 +463,6 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
             it.name == IdentityRole.IDENTITY_TENANT_ACCESS.roleName
         }
         assert accessRoleAssignment != null
-        assert accessRoleAssignment.getTenantIds().size() == 2
         assert accessRoleAssignment.getTenantIds().find() {it == cloudTenant.id} != null
         assert accessRoleAssignment.getTenantIds().find() {it == filesTenant.id} != null
     }

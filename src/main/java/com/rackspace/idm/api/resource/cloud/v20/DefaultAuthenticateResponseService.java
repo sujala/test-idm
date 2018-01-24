@@ -230,7 +230,8 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         EndUser user = (EndUser) userService.getUserByScopeAccess(sa);
         List<TenantRole> roles;
         if (applyRcnRoles) {
-            roles = tenantService.getTenantRolesForUserApplyRcnRoles(user);
+            SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);
+            roles = sourcedRoleAssignments.asTenantRolesExcludeNoTenants();
             authenticateResponse.setToken(tokenConverterCloudV20.toValidateResponseToken(sa, user, roles));
         }
         else {
@@ -274,7 +275,8 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         EndUser user = identityUserService.getEndUserById(usaImpersonatedToken.getUserRsId());
 
         if (applyRcnRoles) {
-            roles = tenantService.getTenantRolesForUserApplyRcnRoles(user);
+            SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);
+            roles = sourcedRoleAssignments.asTenantRolesExcludeNoTenants();
             authenticateResponse.setToken(tokenConverterCloudV20.toValidateResponseToken(isa, user, roles));
         }
         else {

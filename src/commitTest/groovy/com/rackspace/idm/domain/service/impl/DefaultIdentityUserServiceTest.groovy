@@ -1,7 +1,9 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.api.security.IdentityRole
+import com.rackspace.idm.domain.entity.SourcedRoleAssignments
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.domain.service.TenantEndpointMeta
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
 import org.apache.commons.lang3.RandomStringUtils
@@ -128,22 +130,26 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
     }
 
     /**
-     * Ensure retrieving the service catalog alls the appropriate service to retrieve the effective roles for the user
+     * Ensure retrieving the service catalog calls the appropriate service to retrieve the effective roles for the user
      *
      * @return
      */
     def "getServiceCatalogInfoApplyRcnRoles: Calls getTenantRolesForUserApplyRcnRoles to retrieve effective user roles"() {
         given:
         def user = entityFactory.createUser()
+        def sourcedRoleAssignments = Mock(SourcedRoleAssignments)
 
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.DEFAULT_USER
         domainService.getDomain(_) >> entityFactory.createDomain(user.domainId)
 
         when:
-        service.getServiceCatalogInfoApplyRcnRoles(user)
+        ServiceCatalogInfo scInfo = service.getServiceCatalogInfoApplyRcnRoles(user)
 
         then:
-        1 * tenantService.getTenantRolesForUserApplyRcnRoles(user) >> []
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> sourcedRoleAssignments
+        1 * sourcedRoleAssignments.asTenantRolesExcludeNoTenants() >> []
+        1 * sourcedRoleAssignments.userTypeFromAssignedRoles >> IdentityUserTypeEnum.USER_ADMIN
+        scInfo != null
     }
 
     def "getServiceCatalogInfo: getting service catalog for user uses inferred tenant types when calculating tenantMetaData"() {
