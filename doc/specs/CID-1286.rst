@@ -76,4 +76,42 @@ Business Acceptance Criteria
 
 Test Acceptance Criteria
 ~~~~~~~~~~~~~~~~~~~~~~~~
-TBD
+
+Create user-admin & a default user. Create a tenant X linked to their domain. Create tenant Y linked to their domain. Add a role to default user on tenant Y(Test with both adding the role explicitly & adding it to a user group default user belongs to).
+
+**When apply_rcn_roles=true** :
+
+1. Hidden tenants : X, Y
+
+   Verify the affected api services show "identity:default" role on tenant Y but not on tenant X
+
+2. Hidden tenants : X
+
+   Verify the affected api services show "identity:default" role on tenant Y but not on tenant X(as no other role on tenant X)
+
+3. Hidden tenants : Y
+
+   Verify the affected api services show "identity:default" role on both the tenants X, Y
+
+4. Hidden tenants :
+
+   Verify the affected api services show "identity:default" role on both the tenants X, Y
+
+
+**When apply_rcn_roles=false or when apply_rcn_roles is not provided** :
+
+1. Hidden tenants : X, Y
+
+   Verify the affected api services show "identity:default" role on both the tenants X, Y
+
+2. Hidden tenants : X
+
+   Verify the affected api services show "identity:default" role on both the tenants X, Y
+
+3. Hidden tenants : Y
+
+   Verify the affected api services show "identity:default" role on both the tenants X, Y
+
+4. Hidden tenants :
+
+   Verify the affected api services show "identity:default" role on both the tenants X, Y
