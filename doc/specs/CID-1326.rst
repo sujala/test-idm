@@ -38,4 +38,7 @@ Business Acceptance Criteria
 
 Test Acceptance Criteria
 ------------------------
-TBD
+1. Set a non-empty contactId attribute on a federated user. Verify all the affected services return the attribute(with namespace, as appropriate) on the federated user(both JSON & XML), with the set value
+2. Create a federated user without setting contactId. . Verify all the affected services do NOT return the attribute on the federated user(both JSON & XML)
+3. Create a federated user. Set an empty-string contactId attribute. Verify all the affected services do NOT return the attribute on the federated user(both JSON & XML)
+4. Set a non-empty contactId attribute on a federated user. Update the fed user with a new contactId. Verify all the affected services return the attribute(with namespace, as appropriate) on the federated user(both JSON & XML), with the new-ly set value
