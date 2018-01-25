@@ -330,39 +330,48 @@ public class DefaultUserService implements UserService {
         logger.debug("Authenticating User: {} by Username", username);
         UserAuthenticationResult authenticated = userDao.authenticate(username, password);
 
-        // Set the domain within the authentication context if auth succeeded
-        User user = (User) authenticated.getUser();
-        Domain domain = null;
-        if (authenticated.isAuthenticated() && StringUtils.isNotEmpty(user.getDomainId())) {
-            domain = domainService.getDomain(user.getDomainId());
-            authenticationContext.setDomain(domain);
-            if (domain == null) {
-                logger.error("User with ID {} references domain with ID {} but the domain does not exist.",
-                        user.getId(), user.getDomainId());
+        if (authenticated.isAuthenticated()) {
+            Domain domain = null;
+            User user = (User) authenticated.getUser();
+
+            // TODO: Would throw an NPE if user is not set in auth result.
+            if (StringUtils.isNotEmpty(user.getDomainId())) {
+                domain = domainService.getDomain(user.getDomainId());
+
+                // Set the domain within the authentication context if auth succeeded
+                authenticationContext.setDomain(domain);
+                if (domain == null) {
+                    logger.error("User with ID {} references domain with ID {} but the domain does not exist.",
+                            user.getId(), user.getDomainId());
+                }
+            }
+
+            // Apply password rotation policy if applicable
+            if (domain != null && identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordExpiration()) {
+                Date pwdChangeDate = user.getPasswordLastUpdated();
+                Duration duration = domain.getPasswordPolicy() != null ? domain.getPasswordPolicy().getPasswordDurationAsDuration() : null;
+                if (duration != null && !duration.isZero()) {
+                    boolean expired = false;
+                    if (pwdChangeDate == null) {
+                        expired = true; // Expire users if no password change date
+                    } else {
+                        DateTime now = new DateTime();
+                        long durationMs = duration.toMillis();
+                        DateTime pwdExpireDate = new DateTime(pwdChangeDate).plus(durationMs);
+                        authenticationContext.setPasswordExpiration(pwdExpireDate);
+                        expired = now.isAfter(pwdExpireDate);
+                    }
+                    if (expired) {
+                        throw new UserPasswordExpiredException(user, "The password for this user has expired and must be changed");
+                    }
+                }
             }
         }
 
-        // Apply password rotation policy if applicable
-        if (authenticated.isAuthenticated() && domain != null && identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordExpiration()) {
-            Date pwdChangeDate = user.getPasswordLastUpdated();
-            Duration duration = domain.getPasswordPolicy() != null ? domain.getPasswordPolicy().getPasswordDurationAsDuration() : null;
-            if (duration != null && !duration.isZero()) {
-                boolean expired = false;
-                if (pwdChangeDate == null) {
-                    expired = true; // Expire users if no password change date
-                } else {
-                    DateTime now = new DateTime();
-                    long durationMs = duration.toMillis();
-                    DateTime pwdExpireDate = new DateTime(pwdChangeDate).plus(durationMs);
-                    authenticationContext.setPasswordExpiration(pwdExpireDate);
-                    expired = now.isAfter(pwdExpireDate);
-                }
-                if (expired) {
-                    throw new UserPasswordExpiredException(user, "The password for this user has expired and must be changed");
-                }
-            }
-        }
-
+        /*
+        If the user within authresult is not null and authentication succeeded, verifies it and associated domain are enabled.
+        If either disabled, throws UserDisabledException("User '" + user.getUsername() +"' is disabled.");
+         */
         validateUserStatus(authenticated);
         logger.debug("Authenticated User: {} by Username - {}", username,
                 authenticated);

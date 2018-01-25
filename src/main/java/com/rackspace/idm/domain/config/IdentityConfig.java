@@ -314,6 +314,12 @@ public class IdentityConfig {
     public static final String CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP = "cache.client.role.by.id.size";
     public static final int CACHE_CLIENT_ROLES_BY_ID_SIZE_DEFAULT = 200;
 
+    public static final String CACHE_USER_LOCKOUT_TTL_PROP = "ldap.auth.password.lockout.cache.ttl";
+    public static final Duration CACHE_USER_LOCKOUT_TTL_DEFAULT = Duration.parse("PT2S");
+
+    public static final String CACHE_USER_LOCKOUT_SIZE_PROP = "ldap.auth.password.lockout.cache.size";
+    public static final int CACHE_USER_LOCKOUT_SIZE_DEFAULT = 200;
+
     public static final String FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP = "feature.force.standard.v2.exceptions.end.user.services";
     public static final boolean FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT = true;
 
@@ -476,6 +482,15 @@ public class IdentityConfig {
 
     private static final String LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP = "ldap.server.pool.allow.concurrent.socketfactory.use";
     private static final boolean LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT = false;
+
+    public static final String FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP = "feature.enable.ldap.auth.password.lockout.cache";
+    public static final boolean FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_DEFAULT = true;
+
+    public static final String LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_PROP = "ldap.auth.password.lockout.retries";
+    public static final int LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_DEFAULT = 6;
+
+    public static final String LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP = "ldap.auth.password.lockout.duration";
+    public static final Duration LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_DEFAULT = Duration.parse("PT1S"); // In seconds
 
     private static final String FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP = "feature.edir.use.authenticated.connections";
     private static final boolean FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_DEFAULT = false;
@@ -649,6 +664,11 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP, LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP, LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
+        defaults.put(LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP, LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_DEFAULT);
+        defaults.put(LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_PROP, LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP, FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_DEFAULT);
+
         defaults.put(FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP, FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_DEFAULT);
 
         defaults.put(FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT);
@@ -674,6 +694,9 @@ public class IdentityConfig {
 
         defaults.put(CACHE_CLIENT_ROLES_BY_ID_TTL_PROP, CACHE_CLIENT_ROLES_BY_ID_TTL_DEFAULT);
         defaults.put(CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP, CACHE_CLIENT_ROLES_BY_ID_SIZE_DEFAULT);
+        defaults.put(CACHE_USER_LOCKOUT_TTL_PROP, CACHE_USER_LOCKOUT_TTL_DEFAULT);
+        defaults.put(CACHE_USER_LOCKOUT_SIZE_PROP, CACHE_USER_LOCKOUT_SIZE_DEFAULT);
+
         defaults.put(FEATURE_INFER_DEFAULT_TENANT_TYPE_PROP, FEATURE_INFER_DEFAULT_TENANT_TYPE_DEFAULT);
 
         defaults.put(FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT);
@@ -1428,6 +1451,16 @@ public class IdentityConfig {
             return getIntSafely(staticConfiguration, CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP);
         }
 
+        @IdmProp(key = CACHE_USER_LOCKOUT_TTL_PROP, versionAdded = "3.19.0" , description = "The ttl of entries in the user lockout cache. A ttl of 0 means no cache.")
+        public Duration getUserLockoutCacheTtl() {
+            return getDurationSafely(staticConfiguration, CACHE_USER_LOCKOUT_TTL_PROP);
+        }
+
+        @IdmProp(key = CACHE_USER_LOCKOUT_SIZE_PROP, versionAdded = "3.19.0" , description = "The max size of the user lockout cache.")
+        public int getUserLockoutCacheSize() {
+            return getIntSafely(staticConfiguration, CACHE_USER_LOCKOUT_SIZE_PROP);
+        }
+
         @IdmProp(key = NAST_TENANT_PREFIX_PROP, versionAdded = "1.0.14.8"
                 , description = "The prefix to append to nast tenant ids")
         public String getNastTenantPrefix() {
@@ -1890,6 +1923,31 @@ public class IdentityConfig {
         @IdmProp(key = FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP, versionAdded = "3.11.0" , description = "When the feeds pool is using DAEMON eviction strategy, connections will be removed from the pool if they have been idle for this this many ms. A value <= 0 indicates idle connections will not be removed")
         public int getFeedsDaemonEvictionCloseIdleConnectionsAfter() {
             return getIntSafely(reloadableConfiguration, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP, versionAdded = "3.19.0" , description = "Whether or not to cache user pwd lockouts and not attempt to bind to LDAP again until the specified amount of time has elapsed. Initially only lockouts for disabled users are cached.")
+        public boolean isLdapAuthPasswordLockoutCacheEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP);
+        }
+
+        @IdmProp(key = LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_PROP, versionAdded = "3.19.0" , description = "LDAP will lock" +
+                " out a user after a threshold of invalid pwd auth attempts for a configured amount of time. This" +
+                " setting is analogous to the LDAP setting 'password-retries' to specify how many attempts a user has until the" +
+                " account is locked. This value must match the LDAP setting for a consistency with LDAP. If higher than" +
+                " LDAP, the app will not log appropriate error messages and the lockout cache will not be used. If lower," +
+                " the app will consider users locked out while CA doesn't.")
+        public int getLdapAuthPasswordLockoutRetries() {
+            return getIntSafely(reloadableConfiguration, LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_PROP);
+        }
+
+        @IdmProp(key = LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP, versionAdded = "3.19.0" , description = "LDAP will lock" +
+                " out a user after a threshold of invalid pwd auth attempts for a configured amount of time. This" +
+                " setting mirrors the LDAP setting in order to provide valid auth messages and to cache that the user" +
+                " is locked out until the specified amount of time has elapsed without hitting LDAP again. This value" +
+                " must match the LDAP configuration setting. If higher than LDAP, then the app will incorrectly think a user is" +
+                " still locked out and not send the bind request to LDAP. ")
+        public Duration getLdapAuthPasswordLockoutDuration() {
+            return getDurationSafely(reloadableConfiguration, LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP);
         }
 
         @IdmProp(key = FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, versionAdded = "3.11.0" , description = "When true, v2 federation calls will validate the issueInstant of the origin saml assertions.")
