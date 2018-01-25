@@ -153,4 +153,13 @@ class CloudTestUtils {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForTokenTRR(token)))
     }
 
+    def getEntity(response, type) {
+        def entity = response.getEntity(type)
+
+        if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            entity = entity.value
+        }
+        return entity
+    }
+
 }

@@ -737,99 +737,128 @@ public class DefaultCloud20Service implements Cloud20Service {
             //update user call can not be used to update the domainId. Use addUserToDomain calls
             user.setDomainId(null);
 
+            BaseUser retrievedUser = identityUserService.getEndUserById(userId);
+
             if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
                 user.setContactId(null);
+
+                // Only service and identity admins can update a federated user.
+                if (retrievedUser != null && retrievedUser instanceof FederatedUser) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
             }
 
-            if (user.getPassword() != null) {
-                validator.validatePasswordForCreateOrUpdate(user.getPassword());
+            if (retrievedUser == null) {
+                String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
             }
-
-            User retrievedUser = userService.checkAndGetUserById(userId);
-            BaseUser caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
-
-            boolean isDisabled = retrievedUser.isDisabled();
 
             if (!userId.equals(user.getId()) && user.getId() != null) {
                 throw new BadRequestException(ID_MISMATCH);
             }
 
-            if (user.getUsername() != null) {
-                if(!StringUtils.equalsIgnoreCase(retrievedUser.getUsername(), user.getUsername()) && !userService.isUsernameUnique(user.getUsername())){
-                    throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
+            EndUser endUser;
+
+            if (retrievedUser instanceof FederatedUser) {
+                FederatedUser federatedUserDO = new FederatedUser();
+                federatedUserDO.setUniqueId(retrievedUser.getUniqueId());
+
+                // Allowed attributes for update
+                if (StringUtils.isNotBlank(user.getContactId())) {
+                    federatedUserDO.setContactId(user.getContactId());
                 }
-            }
 
-            boolean isUpdatingSelf = caller.getId().equals(userId);
-            IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+                identityUserService.updateFederatedUser(federatedUserDO);
 
-            // Just identity admins and service admins can update 'tokenFormat', but only when ae tokens are enabled
-            if (!(IdentityUserTypeEnum.SERVICE_ADMIN == callerType || IdentityUserTypeEnum.IDENTITY_ADMIN == callerType) ||
-                    !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
-                user.setTokenFormat(null);
-            }
+                endUser = identityUserService.getEndUserById(userId);
+            } else {
+                // Update provisioned user
+                BaseUser caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
-            String domainId = user.getDomainId();
-            if(StringUtils.isNotBlank(domainId)) {
-                Domain domain = domainService.getDomain(domainId);
-                if(domain == null) {
-                    String errMsg = String.format("Domain %s does not exist.", domainId);
-                    throw new BadRequestException(errMsg);
+                if (user.getPassword() != null) {
+                    validator.validatePasswordForCreateOrUpdate(user.getPassword());
                 }
-            }
 
-            if (!isUpdatingSelf) {
-                precedenceValidator.verifyCallerPrecedenceOverUser(caller, retrievedUser);
-            }
+                boolean isDisabled = retrievedUser.isDisabled();
 
-            if (callerType.isDomainBasedAccessLevel() && !StringUtils.equals(caller.getDomainId(), retrievedUser.getDomainId())) {
-                throw new ForbiddenException(NOT_AUTHORIZED);
-            }
-
-            if (StringUtils.isNotBlank(user.getUsername()) &&
-                    !retrievedUser.getUsername().equals(user.getUsername()) &&
-                    !identityConfig.getReloadableConfig().isUsernameUpdateAllowed()) {
-                throw new ForbiddenException(USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE);
-            }
-
-            if (!StringUtils.isBlank(user.getUsername())) {
-                validator.isUsernameValid(user.getUsername());
-            }
-
-            if (user.isEnabled() != null && !user.isEnabled() && isUpdatingSelf) {
-                throw new BadRequestException("User cannot enable/disable his/her own account.");
-            }
-
-            User userDO = this.userConverterCloudV20.fromUser(user);
-            if (user.isEnabled() == null) {
-                userDO.setEnabled(retrievedUser.getEnabled());
-            }
-            if (userDO.isDisabled() && !isDisabled) {
-                atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DISABLED);
-            } else if (!userDO.isDisabled() && isDisabled) {
-                atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.ENABLED);
-            }
-
-            Boolean updateRegion = true;
-            if (userDO.getRegion() != null && retrievedUser != null) {
-                if (userDO.getRegion().equals(retrievedUser.getRegion())) {
-                    updateRegion = false;
+                if (user.getUsername() != null) {
+                    if (!StringUtils.equalsIgnoreCase(retrievedUser.getUsername(), user.getUsername()) && !userService.isUsernameUnique(user.getUsername())) {
+                        throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
+                    }
                 }
-            }
-            userDO.setId(retrievedUser.getId());
-            if (StringUtils.isBlank(user.getUsername())) {
-                userDO.setUsername(retrievedUser.getUsername());
-            }
-            if (userDO.getRegion() != null && updateRegion) {
-                defaultRegionService.validateDefaultRegion(userDO.getRegion(), retrievedUser);
+
+                boolean isUpdatingSelf = caller.getId().equals(userId);
+                IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+
+                // Just identity admins and service admins can update 'tokenFormat', but only when ae tokens are enabled
+                if (!(IdentityUserTypeEnum.SERVICE_ADMIN == callerType || IdentityUserTypeEnum.IDENTITY_ADMIN == callerType) ||
+                        !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
+                    user.setTokenFormat(null);
+                }
+
+                String domainId = user.getDomainId();
+                if (StringUtils.isNotBlank(domainId)) {
+                    Domain domain = domainService.getDomain(domainId);
+                    if (domain == null) {
+                        String errMsg = String.format("Domain %s does not exist.", domainId);
+                        throw new BadRequestException(errMsg);
+                    }
+                }
+
+                if (!isUpdatingSelf) {
+                    precedenceValidator.verifyCallerPrecedenceOverUser(caller, retrievedUser);
+                }
+
+                if (callerType.isDomainBasedAccessLevel() && !StringUtils.equals(caller.getDomainId(), retrievedUser.getDomainId())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+
+                if (StringUtils.isNotBlank(user.getUsername()) &&
+                        !retrievedUser.getUsername().equals(user.getUsername()) &&
+                        !identityConfig.getReloadableConfig().isUsernameUpdateAllowed()) {
+                    throw new ForbiddenException(USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE);
+                }
+
+                if (!StringUtils.isBlank(user.getUsername())) {
+                    validator.isUsernameValid(user.getUsername());
+                }
+
+                if (user.isEnabled() != null && !user.isEnabled() && isUpdatingSelf) {
+                    throw new BadRequestException("User cannot enable/disable his/her own account.");
+                }
+
+                User userDO = this.userConverterCloudV20.fromUser(user);
+                if (user.isEnabled() == null) {
+                    userDO.setEnabled(((User) retrievedUser).getEnabled());
+                }
+                if (userDO.isDisabled() && !isDisabled) {
+                    atomHopperClient.asyncPost((User) retrievedUser, AtomHopperConstants.DISABLED);
+                } else if (!userDO.isDisabled() && isDisabled) {
+                    atomHopperClient.asyncPost((User) retrievedUser, AtomHopperConstants.ENABLED);
+                }
+
+                Boolean updateRegion = true;
+                if (userDO.getRegion() != null) {
+                    if (userDO.getRegion().equals(((User) retrievedUser).getRegion())) {
+                        updateRegion = false;
+                    }
+                }
+                userDO.setId(retrievedUser.getId());
+                if (StringUtils.isBlank(user.getUsername())) {
+                    userDO.setUsername(retrievedUser.getUsername());
+                }
+                if (userDO.getRegion() != null && updateRegion) {
+                    defaultRegionService.validateDefaultRegion(userDO.getRegion(), (User) retrievedUser);
+                }
+                userService.updateUser(userDO);
+
+                atomHopperClient.asyncPost(userDO, AtomHopperConstants.UPDATE);
+
+                endUser = userService.getUserById(userDO.getId());
             }
 
-            userService.updateUser(userDO);
-
-            atomHopperClient.asyncPost(userDO, AtomHopperConstants.UPDATE);
-
-            userDO = userService.getUserById(userDO.getId());
-            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)).getValue());
+            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(endUser)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -2446,7 +2475,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
             EndUser user = this.identityUserService.getEndUserById(userId);
             if (user == null) {
-                String errMsg = String.format("User with id: '%s' was not found", userId);
+                String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }

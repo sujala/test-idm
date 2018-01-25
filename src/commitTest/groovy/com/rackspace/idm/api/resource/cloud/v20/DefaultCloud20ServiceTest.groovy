@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.EndpointAssignmentRule
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.*
@@ -28,11 +27,7 @@ import org.joda.time.DateTime
 import org.opensaml.core.config.InitializationService
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.AuthenticationRequest
-import org.openstack.docs.identity.api.v2.EndpointList
-import org.openstack.docs.identity.api.v2.Role
-import org.openstack.docs.identity.api.v2.UserList
+import org.openstack.docs.identity.api.v2.*
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -2311,7 +2306,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User updateUser = entityFactory.createUser()
         updateUser.enabled = true
         updateUser.id = 2
-        userService.checkAndGetUserById(_) >> updateUser
+        identityUserService.getEndUserById(_) >> updateUser
         userService.getUserByScopeAccess(_) >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
@@ -2389,8 +2384,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User caller = Mock(User)
         caller.getId() >> "123"
 
-        userService.checkAndGetUserById("2") >> user;
-        userService.getUserByScopeAccess(_) >> caller;
+        identityUserService.getEndUserById("2") >> user
+        userService.getUserByScopeAccess(_) >> caller
 
         when:
         service.updateUser(headers, authToken, "2", userInput)
@@ -2565,7 +2560,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.enabled = false
         updateUser.id = 2
 
-        userService.checkAndGetUserById(_) >> updateUser
+        identityUserService.getEndUserById(_) >> updateUser
         userService.getUserByScopeAccess(_) >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         service.userConverterCloudV20.fromUser(_) >> updatedUser
@@ -2597,7 +2592,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.enabled = false
         updateUser.id = 2
 
-        userService.checkAndGetUserById(_) >> updateUser
+        identityUserService.getEndUserById(_) >> updateUser
         userService.getUserByScopeAccess(_) >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         service.userConverterCloudV20.fromUser(_) >> updatedUser
@@ -2649,7 +2644,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User updateUser = entityFactory.createUser()
         updateUser.enabled = false
         updateUser.id = 2
-        userService.checkAndGetUserById(_) >> updateUser
+        identityUserService.getEndUserById(_) >> updateUser
         def caller = entityFactory.createUser()
         caller.id = "2"
         userService.getUserByScopeAccess(_) >> caller
@@ -2672,7 +2667,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.email = "someEmail@rackspace.com"
             it
         }
-        userService.checkAndGetUserById(_) >> entityFactory.createUser()
+        identityUserService.getEndUserById(_) >> entityFactory.createUser()
 
         when:
         def response = service.updateUser(headers, authToken, "2", user).build()
@@ -2701,7 +2696,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.username = username
         updateUser.enabled = true
         updateUser.id = userId
-        userService.checkAndGetUserById(_) >> updateUser
+        identityUserService.getEndUserById(_) >> updateUser
         def caller = entityFactory.createUser()
         caller.id = userId
         userService.getUserByScopeAccess(_) >> caller
@@ -3316,7 +3311,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         userService.getUserByScopeAccess(_) >> caller
-        userService.checkAndGetUserById(_) >> retrievedUser
+        identityUserService.getEndUserById(_) >> retrievedUser
         def expectedStatus = IdentityUserTypeEnum.DEFAULT_USER == userType ? 200 : 403
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
         if (IdentityUserTypeEnum.DEFAULT_USER != userType) {
@@ -3761,7 +3756,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             null
         }
     }
-  
+
     @Unroll
     def "listEndpointsForToken: service catalog is not filtered for impersonation tokens of suspended users, featureEnabled = #featureEnabled"() {
         given:
@@ -3954,6 +3949,65 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         memberOfRule    | expectedStatus
         true            | HttpStatus.SC_FORBIDDEN
         false           | HttpStatus.SC_NO_CONTENT
+    }
+
+    def "updateUser: Admin user updates federated user's contactId"() {
+        given:
+        allowUserAccess()
+        def userId = "id"
+        def contactId = "contactId"
+        UserForCreate userForCreate = new UserForCreate()
+        userForCreate.setContactId(contactId)
+        FederatedUser federatedUser = entityFactory.createFederatedUser().with {
+            it.id = userId
+            it
+        }
+
+        when:
+        def response = service.updateUser(headers, authToken, userId, userForCreate)
+
+        then:
+        1 * identityUserService.getEndUserById(userId) >> federatedUser
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        1 * identityUserService.updateFederatedUser(_)
+        1 * identityUserService.getEndUserById(userId)
+
+        response.status == HttpStatus.SC_OK
+    }
+
+    def "updateUser: federated user error check"() {
+        given:
+        allowUserAccess()
+        def userId = "id"
+        def contactId = "contactId"
+        UserForCreate userForCreate = new UserForCreate()
+        userForCreate.setContactId(contactId)
+        FederatedUser federatedUser = entityFactory.createFederatedUser().with {
+            it.id = userId
+            it
+        }
+
+        when: "access level role is not identity-admin or above"
+        def response = service.updateUser(headers, authToken, userId, userForCreate)
+
+        then: "return 401 Forbidden"
+        1 * identityUserService.getEndUserById(userId) >> federatedUser
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> false
+        0 * identityUserService.updateFederatedUser(_)
+        0 * identityUserService.getEndUserById(userId)
+
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "federated user not found"
+        response = service.updateUser(headers, authToken, userId, userForCreate)
+
+        then: "return 404 Forbidden"
+        1 * identityUserService.getEndUserById(userId) >> null
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        0 * identityUserService.updateFederatedUser(_)
+        0 * identityUserService.getEndUserById(userId)
+
+        response.status == HttpStatus.SC_NOT_FOUND
     }
 
     def mockServices() {

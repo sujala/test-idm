@@ -11,7 +11,6 @@ import com.unboundid.ldap.sdk.persist.LDAPDNField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
-import org.apache.commons.lang.NotImplementedException;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
@@ -66,6 +65,11 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String domainId;
+
+    @LDAPField(attribute = LdapRepository.ATTR_CONTACT_ID,
+            objectClass = LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
+            filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
+    private String contactId;
 
     @DeleteNullValues
     @LDAPField(attribute=LdapRepository.ATTR_GROUP_ID,
