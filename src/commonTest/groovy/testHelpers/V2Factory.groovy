@@ -508,7 +508,7 @@ class V2Factory {
         }
     }
 
-    def createUserForCreate(String username, String displayName, String email, Boolean enabled, String defaultRegion, String domainId, String password) {
+    def createUserForCreate(String username, String displayName, String email, Boolean enabled, String defaultRegion, String domainId, String password, String contactId = null) {
         new User().with {
             it.username = (username != null) ? username : null
             it.displayName = (displayName != null) ? displayName : null
@@ -517,6 +517,7 @@ class V2Factory {
             it.defaultRegion = defaultRegion
             it.domainId = domainId
             it.password = password;
+            it.contactId = contactId
 
             return it
         }
