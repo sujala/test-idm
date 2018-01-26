@@ -3967,10 +3967,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.updateUser(headers, authToken, userId, userForCreate)
 
         then:
-        1 * identityUserService.getEndUserById(userId) >> federatedUser
+        2 * identityUserService.getEndUserById(userId) >> federatedUser
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
         1 * identityUserService.updateFederatedUser(_)
-        1 * identityUserService.getEndUserById(userId)
 
         response.status == HttpStatus.SC_OK
     }
@@ -3994,7 +3993,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * identityUserService.getEndUserById(userId) >> federatedUser
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> false
         0 * identityUserService.updateFederatedUser(_)
-        0 * identityUserService.getEndUserById(userId)
 
         response.status == HttpStatus.SC_FORBIDDEN
 
@@ -4005,7 +4003,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * identityUserService.getEndUserById(userId) >> null
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
         0 * identityUserService.updateFederatedUser(_)
-        0 * identityUserService.getEndUserById(userId)
 
         response.status == HttpStatus.SC_NOT_FOUND
     }

@@ -758,8 +758,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(ID_MISMATCH);
             }
 
-            EndUser endUser;
-
             if (retrievedUser instanceof FederatedUser) {
                 FederatedUser federatedUserDO = new FederatedUser();
                 federatedUserDO.setUniqueId(retrievedUser.getUniqueId());
@@ -770,8 +768,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
 
                 identityUserService.updateFederatedUser(federatedUserDO);
-
-                endUser = identityUserService.getEndUserById(userId);
             } else {
                 // Update provisioned user
                 BaseUser caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
@@ -795,15 +791,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (!(IdentityUserTypeEnum.SERVICE_ADMIN == callerType || IdentityUserTypeEnum.IDENTITY_ADMIN == callerType) ||
                         !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
                     user.setTokenFormat(null);
-                }
-
-                String domainId = user.getDomainId();
-                if (StringUtils.isNotBlank(domainId)) {
-                    Domain domain = domainService.getDomain(domainId);
-                    if (domain == null) {
-                        String errMsg = String.format("Domain %s does not exist.", domainId);
-                        throw new BadRequestException(errMsg);
-                    }
                 }
 
                 if (!isUpdatingSelf) {
@@ -854,10 +841,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userService.updateUser(userDO);
 
                 atomHopperClient.asyncPost(userDO, AtomHopperConstants.UPDATE);
-
-                endUser = userService.getUserById(userDO.getId());
             }
 
+            EndUser endUser = identityUserService.getEndUserById(userId);
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(endUser)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
