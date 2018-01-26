@@ -77,8 +77,7 @@ public class UserLockoutServiceImpl implements UserLockoutService {
     }
 
     /**
-     * Returns the time, in the future, that an existing lockout will expire. If the user is not currently locked out,
-     * returns null.
+     * Returns whether or not the user is considered locked out.
      *
      * @param user
      * @return

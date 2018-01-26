@@ -41,7 +41,7 @@ class UserLockoutServiceImplComponentTest extends Specification{
 
     def "test user does not exist"() {
         def username = "doesNotExist"
-        Mockito.when(userDao.getUserByUsername(username))thenReturn(null)
+        Mockito.when(userDao.getUserByUsername(username)).thenReturn(null)
 
         when:
         LockoutCheckResult lockoutCheckResult = userLockoutService.performLockoutCheck(username)
@@ -60,7 +60,7 @@ class UserLockoutServiceImplComponentTest extends Specification{
             it.username = UUID.randomUUID().toString()
             it
         }
-        Mockito.when(userDao.getUserByUsername(user.username))thenReturn(user)
+        Mockito.when(userDao.getUserByUsername(user.username)).thenReturn(user)
 
         when:
         LockoutCheckResult lockoutCheckResult = userLockoutService.performLockoutCheck(user.username)
@@ -81,7 +81,7 @@ class UserLockoutServiceImplComponentTest extends Specification{
             it.username = UUID.randomUUID().toString()
             it
         }
-        Mockito.when(userDao.getUserByUsername(user.username))thenReturn(user)
+        Mockito.when(userDao.getUserByUsername(user.username)).thenReturn(user)
 
         when:
         LockoutCheckResult lockoutCheckResult = userLockoutService.performLockoutCheck(user.username)
@@ -107,7 +107,7 @@ class UserLockoutServiceImplComponentTest extends Specification{
             }
             it
         }
-        Mockito.when(userDao.getUserByUsername(user.username))thenReturn(user)
+        Mockito.when(userDao.getUserByUsername(user.username)).thenReturn(user)
 
         when: "cache disabled"
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP, false)
@@ -162,7 +162,7 @@ class UserLockoutServiceImplComponentTest extends Specification{
             it.passwordFailureDate = lastFailureDate.toDate()
             it
         }
-        Mockito.when(userDao.getUserByUsername(user.username))thenReturn(user)
+        Mockito.when(userDao.getUserByUsername(user.username)).thenReturn(user)
 
         when: "cache disabled"
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP, false)
@@ -203,7 +203,7 @@ class UserLockoutServiceImplComponentTest extends Specification{
             it
         }
 
-        Mockito.when(userDao.getUserByUsername(lockedOutUser.username))thenReturn(lockedOutUser)
+        Mockito.when(userDao.getUserByUsername(lockedOutUser.username)).thenReturn(lockedOutUser)
         assert userLockoutService.getUserLockoutCache().get(lockedOutUser.username) == null
 
         when: "Locked user auths"
@@ -243,7 +243,7 @@ class UserLockoutServiceImplComponentTest extends Specification{
             it
         }
 
-        Mockito.when(userDao.getUserByUsername(lockedOutUser.username))thenReturn(lockedOutUser)
+        Mockito.when(userDao.getUserByUsername(lockedOutUser.username)).thenReturn(lockedOutUser)
         assert userLockoutService.getUserLockoutCache().get(lockedOutUser.username) == null
 
         LockoutCheckResult initialLockoutCheckResult = userLockoutService.performLockoutCheck(lockedOutUser.username)
@@ -285,7 +285,7 @@ class UserLockoutServiceImplComponentTest extends Specification{
             it
         }
 
-        Mockito.when(userDao.getUserByUsername(lockedOutUser.username))thenReturn(lockedOutUser)
+        Mockito.when(userDao.getUserByUsername(lockedOutUser.username)).thenReturn(lockedOutUser)
 
         when: "Perform initial check"
         LockoutCheckResult lockoutCheck = userLockoutService.performLockoutCheck(lockedOutUser.username)
@@ -340,7 +340,7 @@ class UserLockoutServiceImplComponentTest extends Specification{
             it
         }
 
-        Mockito.when(userDao.getUserByUsername(nonLockedUser.username))thenReturn(nonLockedUser)
+        Mockito.when(userDao.getUserByUsername(nonLockedUser.username)).thenReturn(nonLockedUser)
         assert userLockoutService.getUserLockoutCache().get(nonLockedUser.username) == null
 
         when: "Locked user auths"
