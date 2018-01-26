@@ -19,6 +19,7 @@ public class CacheConfiguration {
 
     public final static String CLIENT_ROLE_CACHE_BY_ID = "clientRoleCacheById";
     public final static String CLIENT_ROLE_CACHE_BY_NAME = "clientRoleCacheByName";
+    public final static String USER_LOCKOUT_CACHE_BY_NAME = "userLockout";
 
     @Autowired
     IdentityConfig identityConfig;
@@ -26,7 +27,10 @@ public class CacheConfiguration {
     @Bean
     public CacheManager cacheManager() {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
-        cacheManager.setCaches(Arrays.asList(getClientRoleCache(CLIENT_ROLE_CACHE_BY_ID), getClientRoleCache(CLIENT_ROLE_CACHE_BY_NAME)));
+        cacheManager.setCaches(Arrays.asList(getClientRoleCache(CLIENT_ROLE_CACHE_BY_ID)
+                , getClientRoleCache(CLIENT_ROLE_CACHE_BY_NAME)
+                , new GuavaCache(USER_LOCKOUT_CACHE_BY_NAME, createUserLockOutCacheBuilder().build()))
+        );
         return cacheManager;
     }
 
@@ -50,4 +54,12 @@ public class CacheConfiguration {
                 .expireAfterWrite(ttl.toMillis(), TimeUnit.MILLISECONDS);
     }
 
+    private CacheBuilder createUserLockOutCacheBuilder() {
+        Duration ttl = identityConfig.getStaticConfig().getUserLockoutCacheTtl();
+        int size = identityConfig.getStaticConfig().getUserLockoutCacheSize();
+
+        return CacheBuilder.newBuilder()
+                .maximumSize(size)
+                .expireAfterWrite(ttl.toMillis(), TimeUnit.MILLISECONDS);
+    }
 }
