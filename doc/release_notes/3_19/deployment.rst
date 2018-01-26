@@ -10,6 +10,7 @@ Cloud Identity 3.19.0 Release
 .. _CID-1086:  https://jira.rax.io/browse/CID-1086
 .. _CID-1312:  https://jira.rax.io/browse/CID-1312
 .. _CID-1022:  https://jira.rax.io/browse/CID-1022
+.. _CID-1324:  https://jira.rax.io/browse/CID-1324
 
 .. contents::
 
@@ -40,6 +41,7 @@ Stories
 
 #. `CID-1115`_ - Analyze token returns 404("Token not found.") if the user for the subject token is deleted
 #. `CID-1308`_ - Implement healthCheck on ldap connection pools
+#. `CID-1324`_ - Allow a contactId to be set on a federated user
 
 Defects
 -------
@@ -108,7 +110,29 @@ New
 -------
 Updates
 -------
-<Updates to Schema goes here>
+
+1. Add ``rsContactId`` to ``rsFederatedPerson`` under ``may-contain``.
+
+.. code::
+
+    schema set object-class (1.3.6.1.4.1.20988.2.2.37) = {
+        name = rsFederatedPerson
+        ldap-names = rsFederatedPerson
+        subclass-of top
+        kind = structural
+        must-contain
+            rsId,
+            uid,
+            rsRegion,
+            rsDomainId,
+            mail,
+            labeledUri
+        may-contain
+            rsGroupId,
+            rsContactId,
+            rsUserGroupDNs,
+            rsFederatedUserExpiredTimestamp
+    };
 
 Repose Upgrade
 --------------

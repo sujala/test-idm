@@ -37,9 +37,12 @@ import org.opensaml.saml.saml2.core.LogoutResponse
 import org.opensaml.saml.saml2.core.Response
 import org.opensaml.saml.saml2.core.StatusCode
 import org.opensaml.xmlsec.signature.Signature
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.IdentityFault
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -1828,6 +1831,233 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         mediaType             | _
         APPLICATION_XML_TYPE  | _
         APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "service/identity admins can update federated user's contactId - media = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        def federatedUserId = getFederatedUser(domainId, mediaType)
+        def federatedUser = utils.getUserById(federatedUserId)
+        def contactId = testUtils.getRandomUUID("contactId")
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = federatedUserId
+            it.contactId = contactId
+            it
+        }
+
+        when: "get federated user by ID"
+        def response = cloud20.getUserById(utils.getIdentityAdminToken(), federatedUserId)
+        def entityUser = testUtils.getEntity(response, org.openstack.docs.identity.api.v2.User)
+
+        then:
+        response.status == SC_OK
+        entityUser.id == federatedUserId
+        entityUser.contactId == null
+
+        when: "update federated user using service admin"
+        response = cloud20.updateUser(utils.getServiceAdminToken(), federatedUserId, userForCreate, mediaType)
+        entityUser = testUtils.getEntity(response, org.openstack.docs.identity.api.v2.User)
+
+        then:
+        response.status == SC_OK
+        entityUser.id == federatedUserId
+        entityUser.contactId == contactId
+
+        when: "update federated user using identity admin"
+        contactId = testUtils.getRandomUUID("contactId")
+        userForCreate.contactId = contactId
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate, mediaType)
+        entityUser = testUtils.getEntity(response, org.openstack.docs.identity.api.v2.User)
+
+        then:
+        response.status == SC_OK
+        entityUser.id == federatedUserId
+        entityUser.contactId == contactId
+
+        cleanup:
+        utils.logoutFederatedUser(federatedUser.username)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Ensure contactId cannot be unset on a federated user - media = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        def federatedUserId = getFederatedUser(domainId, mediaType)
+        def federatedUser = utils.getUserById(federatedUserId)
+        def contactId = testUtils.getRandomUUID("contactId")
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = federatedUserId
+            it.contactId = contactId
+            it
+        }
+
+        when: "get federated user by ID"
+        def response = cloud20.getUserById(utils.getIdentityAdminToken(), federatedUserId)
+        def entityUser = testUtils.getEntity(response, org.openstack.docs.identity.api.v2.User)
+
+        then:
+        response.status == SC_OK
+        entityUser.id == federatedUserId
+        entityUser.contactId == null
+
+        when: "update federated user"
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate, mediaType)
+        entityUser = testUtils.getEntity(response, org.openstack.docs.identity.api.v2.User)
+
+        then:
+        response.status == SC_OK
+        entityUser.id == federatedUserId
+        entityUser.contactId == contactId
+
+        when: "attempt to unset contactId with null"
+        userForCreate.contactId = null
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate, mediaType)
+        entityUser = testUtils.getEntity(response, org.openstack.docs.identity.api.v2.User)
+
+        then:
+        response.status == SC_OK
+        entityUser.id == federatedUserId
+        entityUser.contactId == contactId
+
+        when: "attempt to unset contactId with empty string"
+        userForCreate.contactId = ""
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate, mediaType)
+        entityUser = testUtils.getEntity(response, org.openstack.docs.identity.api.v2.User)
+
+        then:
+        response.status == SC_OK
+        entityUser.id == federatedUserId
+        entityUser.contactId == contactId
+
+        cleanup:
+        utils.logoutFederatedUser(federatedUser.username)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Updating federated user ignores all attributes other than contactId - username = #username, domainId = #domainId, enabled = #enabled, federatedIdp = #federatedIdp, defaultRegion = #defaultRegion"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        def federatedUserId = getFederatedUser(domainId, APPLICATION_XML_TYPE)
+        def federatedUser = utils.getUserById(federatedUserId)
+        def contactId = testUtils.getRandomUUID("contactId")
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = federatedUserId
+            it.contactId = contactId
+            it
+        }
+        cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate)
+        def retrievedUser = cloud20.getUserById(utils.getIdentityAdminToken(), federatedUserId).getEntity(org.openstack.docs.identity.api.v2.User).value
+
+        when: "update federated user"
+        userForCreate = new UserForCreate().with {
+            it.username = username
+            it.domainId = domainId
+            it.enabled = enabled
+            it.federatedIdp = federatedIdp
+            it.defaultRegion = defaultRegion
+            it
+        }
+        def response = cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate)
+        def entityUser = testUtils.getEntity(response, org.openstack.docs.identity.api.v2.User)
+
+        then:
+        response.status == SC_OK
+        entityUser.id == retrievedUser.id
+        entityUser.contactId == retrievedUser.contactId
+        entityUser.username == retrievedUser.username
+        entityUser.domainId == retrievedUser.domainId
+        entityUser.enabled == retrievedUser.enabled
+        entityUser.federatedIdp == retrievedUser.federatedIdp
+        entityUser.defaultRegion == retrievedUser.defaultRegion
+
+        cleanup:
+        utils.logoutFederatedUser(federatedUser.username)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        username | domain  | enabled | federatedIdp | defaultRegion
+        "other"  | null    | null    | null         | null
+        null     | "other" | null    | null         | null
+        null     | null    | false   | null         | null
+        null     | null    | null    | "otherIdp"   | null
+        null     | null    | null    | null         | "other"
+    }
+
+    @Unroll
+    def "Update federated user error check - media = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        def federatedUserId = getFederatedUser(domainId, mediaType)
+        def federatedUser = utils.getUserById(federatedUserId)
+        def contactId = testUtils.getRandomUUID("contactId")
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = federatedUserId
+            it.contactId = contactId
+            it
+        }
+
+        when: "attempt to update federated user with user-admin"
+        def response = cloud20.updateUser(utils.getToken(userAdmin.username), federatedUserId, userForCreate, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        when: "attempt to update federated user with user-manage"
+        response = cloud20.updateUser(utils.getToken(userManage.username), federatedUserId, userForCreate, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        when: "attempt to update federated user with default user"
+        response = cloud20.updateUser(utils.getToken(defaultUser.username), federatedUserId, userForCreate, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        when: "update user with invalid id"
+        response = cloud20.updateUser(utils.getToken(defaultUser.username), "invalid", userForCreate, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, SC_NOT_FOUND, String.format(DefaultCloud20Service.USER_NOT_FOUND_ERROR_MESSAGE, "invalid"))
+
+        when: "update federated user with invalid id set on the entity"
+        userForCreate.id = "invalid"
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, DefaultCloud20Service.ID_MISMATCH)
+
+        cleanup:
+        utils.logoutFederatedUser(federatedUser.username)
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+
+        where:
+        mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
     }
 
     def getFederatedUser(String domainId, mediaType) {

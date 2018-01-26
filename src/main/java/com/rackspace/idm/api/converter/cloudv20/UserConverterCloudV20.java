@@ -250,6 +250,10 @@ public class UserConverterCloudV20 {
                 jaxbUser.setUpdated(DatatypeFactory.newInstance()
                         .newXMLGregorianCalendar(new DateTime(user.getUpdated()).toGregorianCalendar()));
             }
+
+            if(user.getContactId() != null) {
+                jaxbUser.setContactId(user.getContactId());
+            }
             /*
                 The initial mapper.map call to create the initial jaxbUser will call user.getRoles(). This
                 call has the side effect of creating an empty ArrayList, which is then set on the jaxbUser object
