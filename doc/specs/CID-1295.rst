@@ -36,4 +36,7 @@ Business Acceptance Criteria
 
 Test Acceptance Criteria
 ------------------------
-TBD
+
+1. All images, docker compose files for dev environment are updated to pull from artifactory
+2. We are able to push to artifactory and those changes are not propagated outside of Rackspace's artifactory instance
+3. We are able to pull from Artifactory both our and public docker images
