@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
@@ -285,6 +284,11 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Override
     public ServiceCatalogInfo getServiceCatalogInfoApplyRcnRoles(BaseUser baseUser) {
         return getServiceCatalogInfoInternal(baseUser, true);
+    }
+
+    @Override
+    public void updateFederatedUser(FederatedUser user) {
+        identityUserRepository.updateIdentityUser(user);
     }
 
 

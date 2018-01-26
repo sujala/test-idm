@@ -24,11 +24,10 @@ federated user.
 
 Affected services
 ~~~~~~~~~~~~~~~~~
-1. Get user by name (v2.0/users?name={username})
-2. Get user by ID (v2.0/users/{userId})
-3. List users (v2.0/users)
-4. List users by domainId (v2.0/RAX-AUTH/domains/{domainId}/users)
-5. Validate token (v2.0/tokens/{tokenId})
+1. Get user by ID (v2.0/users/{userId})
+2. List users (v2.0/users)
+3. List users by domainId (v2.0/RAX-AUTH/domains/{domainId}/users)
+4. Validate token (v2.0/tokens/{tokenId})
 
 Business Acceptance Criteria
 ----------------------------

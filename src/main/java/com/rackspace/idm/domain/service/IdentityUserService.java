@@ -276,6 +276,13 @@ public interface IdentityUserService {
      * @return
      */
     ServiceCatalogInfo getServiceCatalogInfoApplyRcnRoles(BaseUser baseUser);
+
+    /**
+     * Update a federated user. Currently only contactId is allowed to be updated on a federated user.
+     *
+     * @param user
+     */
+    void updateFederatedUser(FederatedUser user);
 }
 
 

@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.api.security.IdentityRole
+import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
@@ -338,5 +339,16 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
 
         then:
         1 * identityUserRepository.getEndUsersInUserGroup(group)
+    }
+
+    def "updateFederatedUser: calls correct DAO"() {
+        given:
+        def user = new FederatedUser()
+
+        when:
+        service.updateFederatedUser(user)
+
+        then:
+        1 * identityUserRepository.updateIdentityUser(user)
     }
 }

@@ -29,6 +29,7 @@ public class JSONReaderForUser extends JSONReaderForEntity<User> {
         prefixValues.put(USER_OS_KSADM_PASSWORD_PATH, PASSWORD);
         prefixValues.put(USER_RAX_AUTH_DEFAULT_REGION_PATH, DEFAULT_REGION);
         prefixValues.put(USER_RAX_AUTH_DOMAIN_ID_PATH, DOMAIN_ID);
+        prefixValues.put(USER_RAX_AUTH_CONTACT_ID_PATH, CONTACT_ID);
         prefixValues.put(USER_RAX_AUTH_MULTI_FACTOR_ENABLED_PATH, MULTI_FACTOR_ENABLED);
         prefixValues.put(USER_RAX_AUTH_MULTI_FACTOR_STATE_PATH, MULTI_FACTOR_STATE);
         prefixValues.put(USER_RAX_AUTH_TOKEN_FORMAT_PATH, TOKEN_FORMAT);
