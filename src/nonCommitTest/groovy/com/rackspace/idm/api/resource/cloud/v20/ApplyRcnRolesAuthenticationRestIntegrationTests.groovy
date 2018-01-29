@@ -110,9 +110,13 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         utils.deleteUserQuietly(user)
     }
 
-    def "auth/validate: apply_rcn_roles logic returns global roles as tenant assigned roles on all tenants in domain"() {
+    def "auth/validate: apply_rcn_roles logic returns global roles as tenant assigned roles on all tenants in domain for user-admin"() {
         given:
         def user = utils.createCloudAccount(utils.getIdentityAdminToken())
+
+        def tenantId = "faws:" + testUtils.getRandomUUID()
+        def fawsTenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, [Constants.TENANT_TYPE_FAWS]).with {it.domainId = user.domainId; it})
+
         Tenants tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), user.domainId).getEntity(Tenants).value
 
         Role role = new Role().with {

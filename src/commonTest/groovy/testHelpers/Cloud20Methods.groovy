@@ -184,6 +184,31 @@ class Cloud20Methods {
         return entity
     }
 
+    /**
+     * Creates a generic user admin account without any tenants. Uses standard identity admin account.
+     * @param domainId
+     * @return
+     */
+    def createGenericAccount(String token, String username=RandomStringUtils.randomAlphabetic(30), String domainId = RandomStringUtils.randomAlphanumeric(9)) {
+        def user = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, String.valueOf(domainId), DEFAULT_PASSWORD)
+        def response = createUser(token, user)
+
+        assert (response.status == SC_CREATED)
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
+    }
+
+    def createSubUser(String token, String username=RandomStringUtils.randomAlphabetic(30)) {
+        def user = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, null, DEFAULT_PASSWORD)
+        def response = createUser(token, user)
+
+        assert (response.status == SC_CREATED)
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
+    }
+
     def updateDomainPasswordPolicy(String token, String domainId, PasswordPolicy policy) {
         updateDomainPasswordPolicy(token, domainId, policy.toJson())
     }
