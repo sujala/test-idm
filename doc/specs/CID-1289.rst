@@ -227,10 +227,12 @@ Business Acceptance Criteria
    2) Default for docker configuration is ``6`` 
 2. Switch the identity static config property ``ldap.password.failure.lockout.min``
    to the reloadable configuration property ``ldap.auth.password.lockout.duration``
-   that stores the value in seconds (as opposed to minutes)
+   that stores the value as a Duration (as opposed to minutes). This value should
+   mirror the CA setting ``password-max-suspension`` w/ respect to how long the
+   lockout period lasts.
 
-   1) Default for property is ``1`` when property is not provided in configuration file
-   2) Default for docker configuration is ``1`` 
+   1) Default for property is ``PT1S`` when property is not provided in configuration file
+   2) Default for docker configuration is ``PT1S``
 
 3. Implement cache as specified
    
@@ -241,16 +243,17 @@ Business Acceptance Criteria
 
       1) Default for flag is true when property is not provided in configuration file
       2) Default for docker configuration is true 
-   2) Implement a reloadable configuration property ``ldap.auth.password.lockout.cache.ttl``
-      to specify how long a cache entry will exist until it is automatically removed
+   2) Implement a static configuration property ``ldap.auth.password.lockout.cache.ttl``
+      to specify a duration for how long a cache entry will exist until it is automatically
+      removed
 
-      1) Default for property is ``2`` when property is not provided in configuration file
-      2) Default for docker configuration is ``2``
-   3) Implement a reloadable configuration property ``ldap.auth.password.lockout.cache.size``
+      1) Default for property is ``PT1M`` when property is not provided in configuration file
+      2) Default for docker configuration is ``PT1M``
+   3) Implement a static configuration property ``ldap.auth.password.lockout.cache.size``
       to specify the size of the cache
 
-      1) Default for property is ``5`` when property is not provided in configuration file
-      2) Default for docker configuration is ``5``
+      1) Default for property is ``200`` when property is not provided in configuration file
+      2) Default for docker configuration is ``200``
 
 4. Fix logging to audit log to accurately reflect when auth fails due to lockout
 5. Update default CA docker configuration to include password locking behavior

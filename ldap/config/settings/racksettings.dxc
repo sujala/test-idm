@@ -13,10 +13,12 @@ set allow-binds = true;
 set ssl-auth-bypass-entry-check = false;
 
 # password policy
-set password-policy = false;
+set password-policy = true;
+# Must match that set for reloadable property ldap.auth.password.lockout.retries
 set password-retries = 6;
-set password-max-suspension = 1800;
-set password-history = 10;
+# Must match the duration set for reloadable property ldap.auth.password.lockout.duration
+set password-max-suspension = 1;
+set password-history = 0;
 set password-enforce-quality-on-reset = true;
 set password-storage = ssha-512;
 

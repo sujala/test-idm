@@ -4,15 +4,15 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GroupDao;
+import com.rackspace.idm.domain.dao.LockoutCheckResult;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.UserLockoutService;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.EncryptionService;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
@@ -24,6 +24,8 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     private static final List<String> AUTH_BY_PASSWORD_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
     private static final List<String> AUTH_BY_API_KEY_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY);
 
+    private static final String AUTH_FAILURE_FORMAT_STR = "User Authentication Failed: %s";
+
     @Autowired
     private CryptHelper cryptHelper;
 
@@ -32,6 +34,9 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
 
     @Autowired
     private GroupDao groupDao;
+
+    @Autowired
+    private UserLockoutService userLockoutService;
 
     @Override
     public String getBaseDn(){
@@ -123,6 +128,16 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         addObject(user);
     }
 
+    /**
+     * Authenticate against a provisioned user with the specified username. If the user is locked out and caching is
+     * enabled, the resultant UserAuthenticationResult will not return the user in the UserAuthenticationResult. A user
+     * will also not be included if a user does not exist with the given username. Otherwise, the result will always
+     * include the user against which the authentication was attempted.
+     *
+     * @param username
+     * @param password
+     * @return
+     */
     @Override
     public UserAuthenticationResult authenticate(String username, String password) {
         getLogger().debug("Authenticating User {}", username);
@@ -131,10 +146,37 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
             getLogger().error(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
+        UserAuthenticationResult authResult = null;
 
-        User user = getUserByUsername(username);
-        getLogger().debug("Found user {}, authenticating...", user);
-        return authenticateByPassword(user, password);
+        boolean useLockoutCache = identityConfig.getReloadableConfig().isLdapAuthPasswordLockoutCacheEnabled();
+
+        LockoutCheckResult lockoutCheckResult = userLockoutService.performLockoutCheck(username);
+
+        /*
+         * If lockout caching is enabled and user is deemed locked out, can return immediately.
+         */
+        if (useLockoutCache && lockoutCheckResult.isUserLockedOut()) {
+            getLogger().debug(String.format("Found active lockout for user '%s' in user lockout cache", username));
+            addAuditLogForLockedUserAuthentication(username);
+            authResult = new UserAuthenticationResult(null, false);
+        } else {
+            User user = lockoutCheckResult.getUser();
+            if (!lockoutCheckResult.isUserLoaded()) {
+                // If user wasn't attempted to be loaded by lockout check, retrieve from backend to determine if user exists
+                user = getUserByUsername(username);
+                lockoutCheckResult = new LockoutCheckResult(true, lockoutCheckResult.getLockoutExpiration(), user);
+            }
+
+            if (user != null) {
+                authResult = authenticateByPassword(lockoutCheckResult, password);
+            } else {
+                // User was pulled from backend, but doesn't exist
+                getLogger().debug("User {} not found...", user);
+                authResult = new UserAuthenticationResult(null, false);
+            }
+        }
+
+        return authResult;
     }
 
     @Override
@@ -251,45 +293,46 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     void addAuditLogForAuthentication(User user, boolean authenticated) {
-
-        Audit audit = Audit.authUser(user);
         if (authenticated) {
+            Audit audit = Audit.authUser(user);
             audit.succeed();
         } else {
-            String failureMessage = "User Authentication Failed: %s";
-
-            if (getMaxLoginFailuresExceeded(user)) {
-                failureMessage = String.format(failureMessage, "User locked due to max login failures limit exceded");
-            } else if (user.isDisabled()) {
-                failureMessage = String.format(failureMessage, "User is Disabled");
+            Audit audit = Audit.authUser(user);
+            String failureMessage = null;
+            if (user.isDisabled()) {
+                failureMessage = createAuthFailureMessage("User is Disabled");
             } else {
-                failureMessage = String.format(failureMessage, "Incorrect Credentials");
+                failureMessage = createAuthFailureMessage("Incorrect Credentials");
             }
-
             audit.fail(failureMessage);
         }
     }
 
-    private boolean getMaxLoginFailuresExceeded(User user) {
-        boolean passwordFailureLocked = false;
-        if (user.getPasswordFailureDate() != null) {
-            DateTime passwordFailureDateTime = new DateTime(user.getPasswordFailureDate())
-                    .plusMinutes(this.getLdapPasswordFailureLockoutMin());
-            passwordFailureLocked = passwordFailureDateTime.isAfterNow();
-        }
-        return passwordFailureLocked;
+    void addAuditLogForLockedUserAuthentication(String username) {
+        Audit audit = Audit.authUser(username);
+        String failureMessage = createAuthFailureMessage("User locked due to max login failures limit exceeded");
+        audit.fail(failureMessage);
     }
 
-    UserAuthenticationResult authenticateByPassword(User user, String password) {
-        if (user == null) {
+    private String createAuthFailureMessage(String failureReason) {
+        return String.format(AUTH_FAILURE_FORMAT_STR, failureReason);
+    }
+
+    private UserAuthenticationResult authenticateByPassword(LockoutCheckResult lockoutCheckResult, String password) {
+        if (lockoutCheckResult.getUser() == null) {
+            // No audit log for auth since no user exists.
             return new UserAuthenticationResult(null, false);
         }
-
+        User user = lockoutCheckResult.getUser();
         boolean isAuthenticated = bindUser(user, password);
         UserAuthenticationResult authResult = new UserAuthenticationResult(user, isAuthenticated, AUTH_BY_PASSWORD_LIST);
         getLogger().debug("Authenticated User by password");
 
-        addAuditLogForAuthentication(user, isAuthenticated);
+        if (lockoutCheckResult.isUserLockedOut()) {
+            addAuditLogForLockedUserAuthentication(user.getUsername());
+        } else {
+            addAuditLogForAuthentication(user, isAuthenticated);
+        }
 
         return authResult;
     }

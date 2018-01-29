@@ -141,6 +141,7 @@ public abstract class LdapRepository {
     public static final String ATTR_PASSWORD_SECRET_Q_ID = "secretQuestionId";
     public static final String ATTR_PUBLIC_URL = "publicUrl";
     public static final String ATTR_PWD_ACCOUNT_LOCKOUT_TIME = "dxPwdFailedTime";
+    public static final String ATTR_PWD_FAILED_ATTEMPTS = "dxPwdFailedAttempts";
     public static final String ATTR_RACKER_ID = "rackerId";
     public static final String ATTR_RACKSPACE_API_KEY = "rsApiKey";
     public static final String ATTR_IDENTITY_PROVIDER_ID = "rsIdentityProviderId";
@@ -272,14 +273,14 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES_NO_PWD_HIS = {
             ATTR_OBJECT_CLASS, ATTR_ID, ATTR_UID, ATTR_MAIL, ATTR_PASSWORD_UPDATED_TIMESTAMP, ATTR_PASSWORD_SELF_UPDATED, ATTR_PASSWORD_SECRET_Q,
             ATTR_PASSWORD_SECRET_A, ATTR_PASSWORD_SECRET_Q_ID, ATTR_PASSWORD, ATTR_DISPLAY_NAME, ATTR_RACKSPACE_API_KEY,
-            ATTR_REGION, ATTR_NAST_ID, ATTR_MOSSO_ID, ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME,
+            ATTR_REGION, ATTR_NAST_ID, ATTR_MOSSO_ID, ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME, ATTR_PWD_FAILED_ATTEMPTS,
             ATTR_ENABLED, ATTR_DOMAIN_ID, ATTR_ENCRYPTION_VERSION_ID, ATTR_ENCRYPTION_SALT, ATTR_GROUP_ID,
             ATTR_MULTIFACTOR_MOBILE_PHONE_RSID, ATTR_MULTIFACTOR_DEVICE_PIN, ATTR_MULTIFACTOR_DEVICE_PIN_EXPIRATION,
             ATTR_MULTIFACTOR_DEVICE_VERIFIED, ATTR_MULTI_FACTOR_ENABLED, ATTR_EXTERNAL_MULTIFACTOR_USER_ID,
             ATTR_MULTIFACTOR_USER_ENFORCEMENT_LEVEL, ATTR_TOKEN_FORMAT, ATTR_MULTIFACTOR_TYPE, ATTR_CONTACT_ID,
             ATTR_MULTI_FACTOR_LAST_FAILED_TIMESTAMP, ATTR_MULTI_FACTOR_FAILED_ATTEMPT_COUNT, ATTR_USER_GROUP_DNS };
     protected static final String[] ATTR_PROV_FED_USER_SEARCH_ATTRIBUTES_NO_PWD_HIS = ObjectArrays.concat(ATTR_USER_SEARCH_ATTRIBUTES_NO_PWD_HIS, new String[] { ATTR_URI, ATTR_FEDERATED_USER_EXPIRED_TIMESTAMP}, String.class);
-    protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
+    protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME, ATTR_PWD_FAILED_ATTEMPTS};
 
     protected static final String[] ATTR_DEFAULT_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_KEY_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE};
@@ -466,10 +467,6 @@ public abstract class LdapRepository {
 
     protected int getLdapPagingLimitDefault() {
         return config.getInt("ldap.paging.limit.default");
-    }
-
-    protected int getLdapPasswordFailureLockoutMin() {
-        return config.getInt("ldap.password.failure.lockout.min");
     }
 
     protected String getRackspaceInumPrefix() {

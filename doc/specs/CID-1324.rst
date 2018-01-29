@@ -44,4 +44,14 @@ Business Acceptance Criteria
 
 Test Acceptance Criteria
 ------------------------
-TBD
+
+1. Happy Path - Create a federated user with a SAML login. POST v2.0/users/{userId} on 
+   the user to update contactId. Verify that contactId is included in the reponse for POST as well as GET v2.0/users/{userId}.
+2. Verify access control - Only identity:service-admin & identity:admin should be able
+   to update contactId on federated users. user admin, user manage in the same domain & different domains should get back HTTP 403.
+3. Include tests for contactId validations - more than maximum length, invalid contact Id
+4. Test to verify that empty contactId in the POST results in a NOOP
+5. Set ContactId with a POST v2.0/users/{userId}. Update the contactId agin with another POST request.
+   Create a federated user with a SAML login. POST v2.0/users/{userId} on the user to update contactId. Verify that contactId in the reponse for POST as well as GET v2.0/users/{userId} is the updated one.
+6. Set ContactId with a POST v2.0/users/{userId}. Update the contactId to be empty with another POST request.
+   The second request will fail. GET v2.0/users/{userId} will reflect the original ContactId

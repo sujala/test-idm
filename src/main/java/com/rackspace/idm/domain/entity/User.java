@@ -135,7 +135,11 @@ public class User implements EndUser {
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private Date passwordFailureDate;
-    private Boolean maxLoginFailuresExceeded;
+
+    @LDAPField(attribute=LdapRepository.ATTR_PWD_FAILED_ATTEMPTS,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED, inAdd = false, inModify = false)
+    private int passwordFailureAttempts;
 
     @Mapping("enabled")
     @LDAPField(attribute=LdapRepository.ATTR_ENABLED,
