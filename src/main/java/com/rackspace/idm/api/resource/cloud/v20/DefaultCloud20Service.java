@@ -1196,6 +1196,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 exceptionHandler.badRequestExceptionResponse(String.format("Unsupported %s version", GlobalConstants.HEADER_IDENTITY_API_VERSION));
             }
             AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(samlAuthResponse);
+
+            // Do not expose the core contact ID through federated auth
+            response.getUser().setContactId(null);
+
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
         } catch (BadRequestException ex) {
             logger.debug("Received invalid Federation auth request", ex);

@@ -35,6 +35,7 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                     Object userName = userJson.get(JSONConstants.NAME);
                     Object userRegion = userJson.get(JSONConstants.RAX_AUTH_DEFAULT_REGION);
                     Object fedIdp = userJson.get(JSONConstants.RAX_AUTH_FEDERATED_IDP);
+                    Object contactId = userJson.get(JSONConstants.RAX_AUTH_CONTACT_ID);
 
                     JSONArray userRolesArray = (JSONArray) userJson.get(JSONConstants.ROLES);
 
@@ -54,6 +55,9 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                         user.setFederatedIdp(fedIdp.toString());
                     }
 
+                    if (contactId != null) {
+                        user.setContactId(contactId.toString());
+                    }
 
                     if (userRolesArray != null) {
                         RoleList roles = new RoleList();

@@ -4048,6 +4048,31 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == SC_OK
     }
 
+    def "federated auth does not expose the core contactId"() {
+        given:
+        mockAuthConverterCloudV20(service)
+        UserForAuthenticateResponse user = new UserForAuthenticateResponse().with {
+            it.contactId = "contactId"
+            it.domainId = "domainId"
+            it.id = "id"
+            it.federatedIdp = "idp"
+            it
+        }
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse().with {
+            it.user = user
+            it.token = v2Factory.createToken()
+            it
+        }
+        when:
+        def response = service.authenticateFederated(headers, new byte[0], false)
+
+        then:
+        1 * authConverterCloudV20.toAuthenticationResponse(_) >> authenticateResponse
+
+        response.status == SC_OK
+        response.entity.user.contactId == null
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)
@@ -4089,7 +4114,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockAuthWithPasswordCredentials(service)
         mockUserConverter(service)
         mockSamlUnmarshaller(service)
-
     }
 
     def createFilter(FilterParam.FilterParamName name, String value) {

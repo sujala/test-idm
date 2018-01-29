@@ -119,6 +119,7 @@ public class UserConverterCloudV20 {
     private void toUserForAuthenticateResponseFederated(UserForAuthenticateResponse jaxbUser, FederatedUser user) {
         if(StringUtils.isNotBlank(user.getFederatedIdpUri())){
             jaxbUser.setFederatedIdp(user.getFederatedIdpUri());
+            jaxbUser.setContactId(user.getContactId());
         }
     }
 

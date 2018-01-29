@@ -306,6 +306,9 @@ public final class JSONConstants {
     public static final String USER_RAX_AUTH_CONTACT_ID_PATH = "user.RAX-AUTH:contactId";
     public static final String RAX_AUTH_CONTACT_ID = "RAX-AUTH:contactId";
 
+    public static final String FEDERATED_IDP = "federatedIdp";
+    public static final String USER_RAX_AUTH_FEDERATED_IDP_PATH = "user.RAX-AUTH:federatedIdp";
+
     public static final String USER_RAX_AUTH_TOKEN_FORMAT_PATH = "user.RAX-AUTH:tokenFormat";
     public static final String TOKEN_FORMAT = "tokenFormat";
     public static final String USER_TOKEN_FORMAT_PATH = "user.tokenFormat";
