@@ -41,7 +41,14 @@ public class Cloud20CreateUserValidator {
     @Autowired
     private PrecedenceValidator precedenceValidator;
 
+    @Autowired
+    private Validator20 validator20;
+
     public User validateCreateUserAndGetUserForDefaults(org.openstack.docs.identity.api.v2.User user, User caller) {
+
+        if (StringUtils.isNotBlank(user.getContactId())) {
+            validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
+        }
 
         if (CreateUserUtil.isCreateUserOneCall(user)) {
             // Only identity:admin should be able to create a user including roles, groups and secret QA.

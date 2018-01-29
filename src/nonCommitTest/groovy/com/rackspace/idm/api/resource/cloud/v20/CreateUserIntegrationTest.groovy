@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -802,6 +803,18 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         IdentityUserTypeEnum.USER_MANAGER   | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         IdentityUserTypeEnum.USER_MANAGER   | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
         //not testing default users, default users are not allowed to make this call
+    }
+
+    def "error check: adding user validates contactId's length"() {
+        given:
+        def domainId = utils.createDomain()
+
+        when: "adding user with contactId's length exceeding max length"
+        def userAdminForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("username"), null, "email@email.com", true, "ORD", domainId, Constants.DEFAULT_PASSWORD, testUtils.getRandomUUIDOfLength("contactId", 100))
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminForCreate)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
     }
 
     @Unroll

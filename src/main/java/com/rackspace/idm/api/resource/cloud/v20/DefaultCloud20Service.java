@@ -758,6 +758,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(ID_MISMATCH);
             }
 
+            if (StringUtils.isNotBlank(user.getContactId())) {
+                validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
+            }
+
             if (retrievedUser instanceof FederatedUser) {
                 FederatedUser federatedUserDO = new FederatedUser();
                 federatedUserDO.setUniqueId(retrievedUser.getUniqueId());

@@ -2051,6 +2051,14 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, DefaultCloud20Service.ID_MISMATCH)
 
+        when: "update federated user's contactId exceeding max length"
+        userForCreate.id = null
+        userForCreate.contactId = testUtils.getRandomUUIDOfLength("contactId", 100)
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+
         cleanup:
         utils.logoutFederatedUser(federatedUser.username)
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)

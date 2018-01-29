@@ -21,7 +21,6 @@ import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang3.RandomStringUtils
-import org.apache.http.HttpStatus
 import org.dozer.DozerBeanMapper
 import org.joda.time.DateTime
 import org.opensaml.core.config.InitializationService
@@ -36,6 +35,8 @@ import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.xml.bind.JAXBElement
+
+import static org.apache.http.HttpStatus.*
 
 class DefaultCloud20ServiceTest extends RootServiceTest {
 
@@ -124,7 +125,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.addEndpointTemplate(null, null, authToken, endpointTemplate)
 
         then:
-        response.build().getStatus() == HttpStatus.SC_BAD_REQUEST
+        response.build().getStatus() == SC_BAD_REQUEST
 
         cleanup:
         service.validator20 = validator20
@@ -2799,11 +2800,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         userRole                 | precedenceThrowsForbidden | expectedResult
-        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:admin"         | false                     | HttpStatus.SC_NO_CONTENT
-        "identity:user-admin"    | false                     | HttpStatus.SC_NO_CONTENT
-        "identity:user-manage"   | false                     | HttpStatus.SC_NO_CONTENT
-        "identity:default"       | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:service-admin" | true                      | SC_FORBIDDEN
+        "identity:admin"         | false                     | SC_NO_CONTENT
+        "identity:user-admin"    | false                     | SC_NO_CONTENT
+        "identity:user-manage"   | false                     | SC_NO_CONTENT
+        "identity:default"       | false                     | SC_NO_CONTENT
     }
 
     @Unroll("identity admin deleting product roles on #userRole returns #expectedResult")
@@ -2829,11 +2830,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         userRole                 | precedenceThrowsForbidden | expectedResult
-        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:admin"         | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:user-admin"    | false                     | HttpStatus.SC_NO_CONTENT
-        "identity:user-manage"   | false                     | HttpStatus.SC_NO_CONTENT
-        "identity:default"       | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:service-admin" | true                      | SC_FORBIDDEN
+        "identity:admin"         | true                      | SC_FORBIDDEN
+        "identity:user-admin"    | false                     | SC_NO_CONTENT
+        "identity:user-manage"   | false                     | SC_NO_CONTENT
+        "identity:default"       | false                     | SC_NO_CONTENT
     }
 
     @Unroll("user admin deleting product roles on #userRole returns #expectedResult")
@@ -2862,11 +2863,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         userRole                 | precedenceThrowsForbidden | expectedResult
-        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:admin"         | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:user-admin"    | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:user-manage"   | false                     | HttpStatus.SC_NO_CONTENT
-        "identity:default"       | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:service-admin" | true                      | SC_FORBIDDEN
+        "identity:admin"         | true                      | SC_FORBIDDEN
+        "identity:user-admin"    | true                      | SC_FORBIDDEN
+        "identity:user-manage"   | false                     | SC_NO_CONTENT
+        "identity:default"       | false                     | SC_NO_CONTENT
     }
 
     def "user admin CANNOT delete a different domain users product roles"() {
@@ -2885,7 +2886,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUserAdmin(_) >> true
         authorizationService.authorizeUserManageRole(_) >> false
 
-        deleteRolesResult.status == HttpStatus.SC_FORBIDDEN
+        deleteRolesResult.status == SC_FORBIDDEN
     }
 
     @Unroll("user manage deleting product roles on #userRole returns #expectedResult")
@@ -2914,11 +2915,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         userRole                 | precedenceThrowsForbidden | expectedResult
-        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:admin"         | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:user-admin"    | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:user-manage"   | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:default"       | false                     | HttpStatus.SC_NO_CONTENT
+        "identity:service-admin" | true                      | SC_FORBIDDEN
+        "identity:admin"         | true                      | SC_FORBIDDEN
+        "identity:user-admin"    | true                      | SC_FORBIDDEN
+        "identity:user-manage"   | true                      | SC_FORBIDDEN
+        "identity:default"       | false                     | SC_NO_CONTENT
     }
 
     def "user manage CANNOT delete a different domain users product roles"() {
@@ -2937,7 +2938,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeUserManageRole(_) >> true
 
-        deleteRolesResult.status == HttpStatus.SC_FORBIDDEN
+        deleteRolesResult.status == SC_FORBIDDEN
     }
 
     @Unroll("default user deleting product roles on #userRole returns #expectedResult")
@@ -2963,11 +2964,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         userRole                 | precedenceThrowsForbidden | expectedResult
-        "identity:service-admin" | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:admin"         | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:user-admin"    | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:user-manage"   | true                      | HttpStatus.SC_FORBIDDEN
-        "identity:default"       | true                      | HttpStatus.SC_FORBIDDEN
+        "identity:service-admin" | true                      | SC_FORBIDDEN
+        "identity:admin"         | true                      | SC_FORBIDDEN
+        "identity:user-admin"    | true                      | SC_FORBIDDEN
+        "identity:user-manage"   | true                      | SC_FORBIDDEN
+        "identity:default"       | true                      | SC_FORBIDDEN
     }
 
     @Unroll
@@ -3639,7 +3640,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * mockFederatedIdentityService.updateIdentityProvider(_)
         1 * reloadableConfig.getGroupDefaultDomainId() >> "domainId"
         1 * userService.getGroupsForUser(_) >> []
-        response.build().status == HttpStatus.SC_NO_CONTENT
+        response.build().status == SC_NO_CONTENT
     }
 
     @Unroll
@@ -3663,7 +3664,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.getIdentityProviderPolicy(headers, authToken, "id")
 
         then:
-        response.build().status == HttpStatus.SC_OK
+        response.build().status == SC_OK
 
         where:
         policy                         | type
@@ -3686,7 +3687,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * applicationService.getClientRoleById(roleId) >> role
         1 * userGroupService.countGroupsWithRoleAssignment(roleId) >> 1
-        response.status == HttpStatus.SC_FORBIDDEN
+        response.status == SC_FORBIDDEN
         response.getEntity().message == DefaultCloud20Service.ERROR_DELETE_ROLE_WITH_GROUPS_ASSIGNED
     }
 
@@ -3918,7 +3919,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.listUsersForTenant(headers, uriInfo(), authToken, tenantId, new ListUsersForTenantParams(roleId, contactId, new PaginationParams()))
 
         then: "BadRequest"
-        response.build().status == HttpStatus.SC_BAD_REQUEST
+        response.build().status == SC_BAD_REQUEST
     }
 
     @Unroll
@@ -3947,8 +3948,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         memberOfRule    | expectedStatus
-        true            | HttpStatus.SC_FORBIDDEN
-        false           | HttpStatus.SC_NO_CONTENT
+        true            | SC_FORBIDDEN
+        false           | SC_NO_CONTENT
     }
 
     def "updateUser: Admin user updates federated user's contactId"() {
@@ -3971,7 +3972,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
         1 * identityUserService.updateFederatedUser(_)
 
-        response.status == HttpStatus.SC_OK
+        response.status == SC_OK
     }
 
     def "updateUser: federated user error check"() {
@@ -3994,7 +3995,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> false
         0 * identityUserService.updateFederatedUser(_)
 
-        response.status == HttpStatus.SC_FORBIDDEN
+        response.status == SC_FORBIDDEN
 
         when: "federated user not found"
         response = service.updateUser(headers, authToken, userId, userForCreate)
@@ -4004,7 +4005,47 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
         0 * identityUserService.updateFederatedUser(_)
 
-        response.status == HttpStatus.SC_NOT_FOUND
+        response.status == SC_NOT_FOUND
+    }
+
+    def "updateUser: validate provisioned and federated user's contactId length on update"() {
+        given:
+        allowUserAccess()
+        def userId = "userId"
+        def contactId = "contactId"
+        UserForCreate userForCreate = new UserForCreate()
+        userForCreate.setContactId(contactId)
+        FederatedUser federatedUser = entityFactory.createFederatedUser().with {
+            it.id = userId
+            it
+        }
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it
+        }
+
+        when: "update federated user"
+        def response = service.updateUser(headers, authToken, userId, userForCreate)
+
+        then:
+        2 * identityUserService.getEndUserById(userId) >> federatedUser
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        1 * validator20.validateStringMaxLength("contactId", contactId, Validator20.MAX_LENGTH_64)
+
+        response.status == SC_OK
+
+        when: "update provisioned user"
+        response = service.updateUser(headers, authToken, userId, userForCreate)
+
+        then:
+        2 * identityUserService.getEndUserById(userId) >> user
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        1 * validator20.validateStringMaxLength("contactId", contactId, Validator20.MAX_LENGTH_64)
+        1 * userService.getUserByScopeAccess(_) >> entityFactory.createUser()
+        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * userService.updateUser(_)
+
+        response.status == SC_OK
     }
 
     def mockServices() {
