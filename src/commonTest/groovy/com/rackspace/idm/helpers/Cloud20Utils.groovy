@@ -649,7 +649,7 @@ class Cloud20Utils {
         response.getEntity(RoleList).value
     }
 
-    RoleList listRolesForUserOnTenant(User user, Tenant tenant, String token=getServiceAdminToken()) {
+    RoleList listRolesForUserOnTenant(User user, Tenant tenant, String token=getServiceAdminToken(), boolean applyRcnRoles = false) {
         def response = methods.listRolesForUserOnTenant(token, tenant.id, user.id)
         assert response.status == SC_OK
         response.getEntity(RoleList).value
@@ -1145,8 +1145,8 @@ class Cloud20Utils {
         response.getEntity(Tenant).value
     }
 
-    def listTenantsForToken(token) {
-        def response = methods.listTenants(token)
+    def listTenantsForToken(token, boolean applyRcnRoles = false) {
+        def response = methods.listTenants(token, applyRcnRoles)
         assert (response.status == SC_OK)
         response.getEntity(Tenants).value
     }
