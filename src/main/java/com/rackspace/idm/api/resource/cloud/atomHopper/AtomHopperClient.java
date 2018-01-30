@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
@@ -262,10 +263,10 @@ public class AtomHopperClient {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                logger.warn(String.format("Failed to post user TRR feed event for userId: %s. Returned status code: %s with body %s", user.getId(), statusCode, errorMsg));
+                logger.error(String.format("Failed to post user TRR feed event trrId '%s' issued against userId: %s. Returned status code: %s with body %s", trr.getId(), user.getId(), statusCode, errorMsg));
             }
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception posting User TRR: ", e);
+            logger.error(String.format("Failed to post user TRR feed event for trrId '%s' issued against userId: '%s'", trr.getId(), user.getId()), e);
         } finally {
             if (response != null) {
                 //always close the stream to release connection back to pool
@@ -306,13 +307,13 @@ public class AtomHopperClient {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode != HttpServletResponse.SC_CREATED) {
                     final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                    logger.warn(String.format("Failed to post User Feed event for user: %s with Id: %s. StatusCode: %s; ResponseBody: %s", user.getUsername(), user.getId(), statusCode, errorMsg));
+                    logger.error(String.format("Failed to post User Feed event for user: %s with Id: %s. StatusCode: %s; ResponseBody: %s", user.getUsername(), user.getId(), statusCode, errorMsg));
                 }
             } else {
                 logger.warn("AtomHopperClient: Response was null");
             }
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception posting user change", e);
+            logger.error(String.format("Failed to post User Feed event for user: '%s' with Id: '%s' for status '%s'", user.getUsername(), user.getId(), userStatus), e);
         } finally {
             if (response != null) {
                 //always close the stream to release connection back to pool
@@ -332,10 +333,10 @@ public class AtomHopperClient {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                logger.warn(String.format("Failed to post Token TRR event for revoked token: %s. Returned status code: %s; responseBody: %s", revokedToken, statusCode, errorMsg));
+                logger.error(String.format("Failed to post Token TRR event for revoked token: '%s' on user id '%s'. Returned status code: %s; responseBody: %s", maskToken(revokedToken), user.getId(), statusCode, errorMsg));
             }
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception posting Token TRR", e);
+            logger.error(String.format("Failed to post Token TRR event for revoked token: '%s' on user with id '%s'", maskToken(revokedToken), user.getId()), e);
         } finally {
             if (response != null) {
                 //always close the stream to release connection back to pool
@@ -343,6 +344,10 @@ public class AtomHopperClient {
                 atomHopperHelper.entityConsume(response.getEntity());
             }
         }
+    }
+
+    private String maskToken(String rawToken) {
+        return String.format("*****%s", StringUtils.right(rawToken, 4));
     }
 
     private void postIdpEvent(IdentityProvider idp, EventType eventType) throws IOException {
@@ -355,10 +360,10 @@ public class AtomHopperClient {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                logger.warn(String.format("Failed to post IDP event for IDP: %s. Returned status code: %s; responseBody: %s", idp.getUri(), statusCode, errorMsg));
+                logger.error(String.format("Failed to post IDP event for IDP: %s for event type '%s'. Returned status code: %s; responseBody: %s", idp.getUri(), eventType.value(), statusCode, errorMsg));
             }
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception posting IDP event", e);
+            logger.error(String.format("Failed to post IDP event for IDP: '%s' for event type '%s'", idp.getUri(), eventType.value()), e);
         } finally {
             if (response != null) {
                 //always close the stream to release connection back to pool

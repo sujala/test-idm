@@ -3,18 +3,19 @@ Cloud Identity 3.19.0 Release
 
 .. _CID-356:  https://jira.rax.io/browse/CID-356
 .. _CID-357:  https://jira.rax.io/browse/CID-357
-.. _CID-1115:  https://jira.rax.io/browse/CID-1115
-.. _CID-1308:  https://jira.rax.io/browse/CID-1308
 .. _CID-503:  https://jira.rax.io/browse/CID-503
 .. _CID-678:  https://jira.rax.io/browse/CID-678
-.. _CID-1086:  https://jira.rax.io/browse/CID-1086
-.. _CID-1312:  https://jira.rax.io/browse/CID-1312
 .. _CID-1022:  https://jira.rax.io/browse/CID-1022
+.. _CID-1086:  https://jira.rax.io/browse/CID-1086
+.. _CID-1115:  https://jira.rax.io/browse/CID-1115
 .. _CID-1286:  https://jira.rax.io/browse/CID-1286
 .. _CID-1289:  https://jira.rax.io/browse/CID-1289
 .. _CID-1290:  https://jira.rax.io/browse/CID-1290
+.. _CID-1308:  https://jira.rax.io/browse/CID-1308
+.. _CID-1312:  https://jira.rax.io/browse/CID-1312
 .. _CID-1324:  https://jira.rax.io/browse/CID-1324
 .. _CID-1326:  https://jira.rax.io/browse/CID-1326
+.. _CID-1343:  https://jira.rax.io/browse/CID-1343
 
 .. contents::
 
@@ -44,12 +45,13 @@ Stories
 -------
 
 #. `CID-1115`_ - Analyze token returns 404("Token not found.") if the user for the subject token is deleted
-#. `CID-1308`_ - Implement healthCheck on ldap connection pools
 #. `CID-1286`_ - apply_rcn_roles functionality should only auto assign global roles to non-excluded tenants
 #. `CID-1289`_ - Reduce performance impact of locked users
 #. `CID-1290`_ - Revise New Relic reporting with annotations
+#. `CID-1308`_ - Implement healthCheck on ldap connection pools
 #. `CID-1324`_ - Allow a contactId to be set on a federated user
 #. `CID-1326`_ - Return contactId for federated users from get/list users and validate token
+#. `CID-1343`_ - Log details of events not successfully posted to feeds
 
 Defects
 -------
