@@ -15,13 +15,13 @@ Team
 Documentation
 --------------
 
-[API Developer Guide, v2.0](http://docs-internal.rackspace.com/auth/api/v2.0/auth-client-devguide/content/Overview-d1e65.html)
+[API Developer Guide, v2.0](https://developer.rackspace.com/docs/cloud-identity/v2)
 
-[API Admin Developer Guide, v2.0 ](http://docs-internal.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/Overview-d1e65.html)
+[API Admin Developer Guide, v2.0 ](https://pages.github.rackspace.com/ServiceAPIContracts/global-auth-keystone-extensions)
 
-[API Developer Guide, v1.1](http://docs-internal.rackspace.com/auth/api/v1.1/auth-client-devguide/content/Overview-d1e65.html)
+[API Developer Guide, v1.1 (Deprecated, in PDF format)](https://6266fae112c61ca2a24b-0b7d389aeec8162360b1800f389138d1.ssl.cf1.rackcdn.com/auth-client-devguide-internal-deprecated.pdf)
 
-[API Admin Developer Guide, v1.1 (i)](http://docs-internal.rackspace.com/auth/api/v1.1/auth-admin-devguide/content/Overview-d1e65.html)
+[API Admin Developer Guide, v1.1 (i)(Deprecated, in PDF format)](https://6266fae112c61ca2a24b-0b7d389aeec8162360b1800f389138d1.ssl.cf1.rackcdn.com/auth-1.1-admin-devguide-internal-deprecated.pdf)
 
 [Getting Started](https://one.rackspace.com/display/auth/Getting+Started)
 
