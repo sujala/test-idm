@@ -120,6 +120,10 @@ public class UserConverterCloudV20 {
         if(StringUtils.isNotBlank(user.getFederatedIdpUri())){
             jaxbUser.setFederatedIdp(user.getFederatedIdpUri());
         }
+
+        if(StringUtils.isNotBlank(user.getContactId())) {
+            jaxbUser.setContactId(user.getContactId());
+        }
     }
 
     public UserForAuthenticateResponse toRackerForAuthenticateResponse(Racker racker, List<TenantRole> roles) {

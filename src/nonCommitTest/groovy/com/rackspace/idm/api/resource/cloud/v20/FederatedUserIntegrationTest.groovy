@@ -2068,6 +2068,124 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
     }
 
+    @Unroll
+    def "get/list services for federated users return correct attributes - media = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        def federatedUserId = getFederatedUser(domainId, mediaType)
+        def federatedUser = utils.getUserById(federatedUserId)
+        def contactId = testUtils.getRandomUUID("contactId")
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = federatedUserId
+            it.contactId = contactId
+            it
+        }
+        cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate, mediaType)
+
+        when: "get user by id"
+        userForCreate.contactId = null
+        def response = cloud20.getUserById(utils.getIdentityAdminToken(), federatedUserId, mediaType)
+        def entityUser = testUtils.getEntity(response, org.openstack.docs.identity.api.v2.User)
+
+        then:
+        response.status == SC_OK
+        entityUser.id == federatedUserId
+        entityUser.contactId == contactId
+        entityUser.federatedIdp == Constants.DEFAULT_IDP_URI
+        entityUser.domainId == domainId
+
+        when: "list users by domain"
+        response = cloud20.getUsersByDomainId(utils.getIdentityAdminToken(), domainId, mediaType)
+        def entityUserList = testUtils.getEntity(response, UserList)
+
+        then:
+        response.status == SC_OK
+        entityUserList.user.find({it.id == federatedUserId}).id == federatedUserId
+        entityUserList.user.find({it.id == federatedUserId}).contactId == contactId
+        entityUserList.user.find({it.id == federatedUserId}).federatedIdp == Constants.DEFAULT_IDP_URI
+        entityUserList.user.find({it.id == federatedUserId}).domainId == domainId
+        entityUserList.user.find({it.id == federatedUserId}).multiFactorEnabled == false
+
+        when: "list users"
+        response = cloud20.listUsers(utils.getIdentityAdminToken(), "0", "1000", mediaType)
+        entityUserList = testUtils.getEntity(response, UserList)
+
+        then:
+        response.status == SC_OK
+        entityUserList.user.find({it.id == federatedUserId}).id == federatedUserId
+        entityUserList.user.find({it.id == federatedUserId}).contactId == contactId
+        entityUserList.user.find({it.id == federatedUserId}).federatedIdp == Constants.DEFAULT_IDP_URI
+        entityUserList.user.find({it.id == federatedUserId}).domainId == domainId
+        entityUserList.user.find({it.id == federatedUserId}).multiFactorEnabled == false
+
+        cleanup:
+        utils.logoutFederatedUser(federatedUser.username)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Validate contactId on authentication response for auth/validate - media = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        // Create federated user
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def federatedUserId = samlAuthResponse.value.user.id
+        def federatedUser = utils.getUserById(federatedUserId)
+
+        // Update fed user's contactId
+        def contactId = testUtils.getRandomUUID("contactId")
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = federatedUserId
+            it.contactId = contactId
+            it
+        }
+        cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate, mediaType)
+
+        when: "saml auth does not expose contactId"
+        samlResponse = cloud20.samlAuthenticate(samlAssertion, mediaType)
+        samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def federatedUserEntity = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user : samlAuthResponse.user
+
+        then:
+        samlResponse.status == SC_OK
+
+        federatedUserEntity != null
+        federatedUserEntity.contactId == null
+
+        when: "validate token returns contactId"
+        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token.id : samlAuthResponse.token.id
+        def response = cloud20.validateToken(utils.getIdentityAdminToken(), samlAuthToken, mediaType)
+        def responseEntity = testUtils.getEntity(response, AuthenticateResponse)
+
+        then:
+        response.status == SC_OK
+
+        federatedUserEntity != null
+        responseEntity.user.contactId == contactId
+
+        cleanup:
+        utils.logoutFederatedUser(federatedUser.username)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
+    }
+
     def getFederatedUser(String domainId, mediaType) {
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def username = testUtils.getRandomUUID("samlUser")
