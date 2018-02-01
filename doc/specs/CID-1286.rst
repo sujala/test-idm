@@ -102,16 +102,16 @@ Create user-admin & a default user. Create a tenant X linked to their domain. Cr
 
 1. Hidden tenants : X, Y
 
-   Verify the affected api services show "identity:default" role on both the tenants X, Y
+   Verify the affected api services do not show "identity:default" role on both the tenants X, Y
 
 2. Hidden tenants : X
 
-   Verify the affected api services show "identity:default" role on both the tenants X, Y
+   Verify the affected api services do not show "identity:default" role on both the tenants X, Y
 
 3. Hidden tenants : Y
 
-   Verify the affected api services show "identity:default" role on both the tenants X, Y
+   Verify the affected api services do not show "identity:default" role on both the tenants X, Y
 
 4. Hidden tenants :
 
-   Verify the affected api services show "identity:default" role on both the tenants X, Y
+   Verify the affected api services do not show "identity:default" role on both the tenants X, Y

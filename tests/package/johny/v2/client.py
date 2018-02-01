@@ -27,12 +27,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         self.deserialize_format = deserialize_format
 
     def get_auth_token(self, request_object, headers=None,
-                       requestslib_kwargs=None):
+                       option=None, requestslib_kwargs=None):
         """Returns response object from auth"""
         url = self.url + const.TOKEN_URL
         resp = self.request(method='POST', url=url,
                             request_entity=request_object,
-                            headers=headers,
+                            headers=headers, params=option,
                             requestslib_kwargs=requestslib_kwargs)
 
         if self.deserialize_format == const.XML:
@@ -550,7 +550,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return resp
 
     def list_roles_for_user_on_tenant(self, tenant_id, user_id,
-                                      requestslib_kwargs=None):
+                                      option=None, requestslib_kwargs=None):
         """ Return response object from list roles for specific user on
         specific tenant
 
@@ -558,7 +558,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + const.LIST_ROLES_FOR_USER_ON_TENANT_URL.format(
             tenant_id=tenant_id, user_id=user_id)
-        resp = self.request(method='GET', url=url,
+        resp = self.request(method='GET', url=url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
