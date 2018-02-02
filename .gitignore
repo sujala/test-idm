@@ -6,6 +6,7 @@
 *.iws
 *.pyc
 .classpath
+.env
 .gradle/
 .hypothesis
 .idea/*

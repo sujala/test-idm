@@ -1,38 +1,57 @@
 version: '3'
 
 services:
-  postfix:
-      image: docker.ciidentity.com/postfix
-      ports:
-          - 10025:10025
+  network:
+    image: centos:7
+    ports:
+      - 127.0.0.1:20389:1389
+      - 127.0.0.1:20636:1636
+      - 127.0.0.1:8080:8080
+      - 127.0.0.1:8180:8180
+      - 127.0.0.1:10636:10636
+      - 127.0.0.1:10025:10025
+    command: ["sleep", "infinity"]
+    stop_signal: SIGKILL
+    networks:
+      - identity
 
-  cloudfeeds:
-      image: docker.ciidentity.com/cloud-feeds
-      ports:
-          - 8888:8080
-      environment:
-          HOST: localhost:8888
+  postfix:
+    image: docker.artifacts.rackspace.net/postfix
+    environment:
+      POSTFIX_PORT: 10025
+    network_mode: "service:network"
 
   edir:
-      image: docker.ciidentity.com/e-directory
-      ports:
-          - 20636:636
-          - 10389:389
-      volumes:
-          - ./edir/config:/config
-          - ./edir/ldif:/data
+    image: docker.artifacts.rackspace.net/edirectory
+    volumes:
+      - ./edir/config:/config
+      - ./edir/ldif:/data
+    network_mode: "service:network"
 
-  directory:
-      image: docker.ciidentity.com/ca-directory
-      ports:
-          - 10636:10636
-      volumes:
-          - ./ldap/config:/config
-          - ./ldap/ldif:/data
+  cadir:
+    image: docker.artifacts.rackspace.net/ca-directory
+    volumes:
+      - ./ldap/config:/config
+      - ./ldap/ldif:/data
+    network_mode: "service:network"
+
+  cloudfeeds:
+    image: docker.artifacts.rackspace.net/cloud-feeds
+    environment:
+      TOMCAT_HTTP_PORT: 8180
+      TOMCAT_AJP_PORT: 8109
+      TOMCAT_SHUTDOWN_PORT: 8105
+    network_mode: "service:network"
 
   repose:
-      image: docker.ciidentity.com/repose
-      ports:
-          - 8080:8080
-      volumes:
-          - ./repose/config:/etc/repose
+    image: docker.artifacts.rackspace.net/repose
+    environment:
+      IDENTITY_HOST: ${HOSTIP}
+      IDENTITY_PORT: 8083
+    volumes:
+      - ./repose/config:/etc/repose-build/config
+    network_mode: "service:network"
+
+networks:
+  identity:
+    driver: bridge
