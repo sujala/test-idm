@@ -5,14 +5,13 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.http.HttpStatus
-import org.openstack.docs.identity.api.v2.ForbiddenFault
-import org.openstack.docs.identity.api.v2.IdentityFault
-import org.openstack.docs.identity.api.v2.Role
-import org.openstack.docs.identity.api.v2.RoleList
+import org.openstack.docs.identity.api.v2.*
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
+
+import javax.ws.rs.core.MediaType
 
 class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
 
@@ -335,5 +334,71 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
 
         then:
         response1.status == 204
+    }
+
+    @Unroll
+    def "attempt to add global role to user with an existing tenant role - mediaType = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        Role role = utils.createRole()
+        Tenant tenant = utils.createTenant()
+        utils.addRoleToUserOnTenant(userAdmin, tenant, role.id)
+
+        when: "add global role"
+        def response = cloud20.addUserRole(utils.getIdentityAdminToken(), userAdmin.id, role.id, mediaType, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, DefaultCloud20Service.ERROR_CANNOT_ADD_GLOBAL_ROLE_TO_USER_ERROR_MESSAGE)
+
+        when: "delete tenant role and add global role"
+        utils.deleteRoleFromUserOnTenant(userAdmin, tenant, role.id)
+        response = cloud20.addUserRole(utils.getIdentityAdminToken(), userAdmin.id, role.id)
+
+        then:
+        response.getStatus() == HttpStatus.SC_OK
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteTestDomainQuietly(domainId)
+        utils.deleteTenantQuietly(tenant.id)
+        utils.deleteRoleQuietly(role)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "attempt to add tenant role to user with an existing global role - mediaType = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        Role role = utils.createRole()
+        utils.addRoleToUser(userAdmin, role.id)
+        Tenant tenant = utils.createTenant()
+
+        when: "add tenant role"
+        def response = cloud20.addRoleToUserOnTenant(utils.getIdentityAdminToken(), tenant.id, userAdmin.id, role.id, mediaType, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, DefaultCloud20Service.ERROR_CANNOT_ADD_ROLE_TO_USER_ON_TENANT_ERROR_MESSAGE)
+
+        when: "delete global role and add tenant role"
+        utils.deleteRoleOnUser(userAdmin, role.id)
+        response = cloud20.addRoleToUserOnTenant(utils.getIdentityAdminToken(), tenant.id, userAdmin.id, role.id, mediaType, mediaType)
+
+        then:
+        response.getStatus() == HttpStatus.SC_OK
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteTestDomainQuietly(domainId)
+        utils.deleteTenantQuietly(tenant.id)
+        utils.deleteRoleQuietly(role)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 }

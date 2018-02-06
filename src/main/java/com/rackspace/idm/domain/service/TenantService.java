@@ -207,7 +207,7 @@ public interface TenantService {
     List<TenantRole> getGlobalRolesForUser(BaseUser user);
 
     /**
-     * Retrieves the roles "effectively" assigned to the user as "global" (domain) assignment. This will include RCN roles
+     * Retrieves the roles "effectively" assigned to the user as "global" (domain) assignment. This will exclude RCN roles
      *
      * The global roles returned include
      * <ul>
@@ -229,7 +229,7 @@ public interface TenantService {
     List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user);
 
     /**
-     * Retrieves the roles "effectively" assigned to the user as "global" (domain) assignment. This will exclude RCN roles
+     * Retrieves the roles "effectively" assigned to the user as "global" (domain) assignment. This will include RCN roles
      *
      * The global roles returned include
      * <ul>
