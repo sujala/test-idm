@@ -27,7 +27,7 @@ buildscript {
     }
 }
 
-def featureVersion = '3.19.0'
+def featureVersion = '3.20.0'
 def buildVersion = System.currentTimeMillis()
 def gitRevision = "git rev-parse HEAD".execute().text.trim()
 
