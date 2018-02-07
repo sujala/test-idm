@@ -4073,7 +4073,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.entity.user.contactId == null
     }
 
-    def "adding global role to user with exiting tenant role throw 400 BadRequest"() {
+    def "adding global role to user with existing tenant role throw 400 BadRequest"() {
         given:
         allowUserAccess()
 
@@ -4100,7 +4100,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == SC_BAD_REQUEST
     }
 
-    def "adding role to user on tenant with exiting global role throw 400 BadRequest"() {
+    def "adding role to user on tenant with existing global role throw 400 BadRequest"() {
         given:
         allowUserAccess()
 

@@ -568,7 +568,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             tenantService.addTenantRoleToUser(user, tenantRole);
 
-            // TODO: Should be a HTTP 204 No Content
+            // NOTE: At this point we can't do a contact change, but this should've been a HTTP 204 No Content.
             return Response.ok();
 
         } catch (Exception ex) {
@@ -968,7 +968,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             assignRoleToUser(user, cRole);
-            // TODO: Should be a HTTP 204 No Content
+            // NOTE: At this point we can't do a contact change, but this should've been a HTTP 204 No Content.
             return Response.ok();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
