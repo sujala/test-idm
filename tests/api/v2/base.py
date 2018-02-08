@@ -52,6 +52,14 @@ class TestBaseV2(base.TestBase):
                 deserialize_format=cls.test_config.deserialize_format)
             cls.devops_client.default_headers[const.X_AUTH_TOKEN] = (
                 cls.identity_config.service_admin_auth_token)
+        else:
+            # use identity:admin instead
+            cls.devops_client = devops_client.IdentityDevopsClient(
+                cls.devops_url,
+                serialize_format=cls.test_config.serialize_format,
+                deserialize_format=cls.test_config.deserialize_format)
+            cls.devops_client.default_headers[const.X_AUTH_TOKEN] = (
+                identity_admin_auth_token)
 
         cls.unexpected_headers_HTTP_201 = [
             header_validation.validate_transfer_encoding_header_not_present]

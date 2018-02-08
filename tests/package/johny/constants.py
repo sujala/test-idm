@@ -538,3 +538,6 @@ FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
 TENANT_DEFAULT_DOMAIN = 'tenant.domainId.default'
 FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES = (
     'feature.list.support.additional.role.properties')
+
+'''FLAGS'''
+PASSWORD_LOCKOUT_RETRIES = 'ldap.auth.password.lockout.retries'
