@@ -4073,6 +4073,58 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.entity.user.contactId == null
     }
 
+    def "adding global role to user with existing tenant role throw 400 BadRequest"() {
+        given:
+        allowUserAccess()
+
+        def roleId = "roleId"
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.tenantIds.add("tenantId")
+            it
+        }
+
+        when:
+        def response = service.addUserRole(headers, authToken, user.id, roleId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole()
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * userService.getUserByAuthToken(authToken) >> caller
+        1 * tenantService.getTenantRoleForUserById(user, roleId) >> tenantRole
+
+        response.status == SC_BAD_REQUEST
+    }
+
+    def "adding role to user on tenant with existing global role throw 400 BadRequest"() {
+        given:
+        allowUserAccess()
+
+        def roleId = "roleId"
+        def tenantId = "tenantId"
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
+        def tenantRole = entityFactory.createTenantRole()
+
+        when:
+        def response = service.addRolesToUserOnTenant(headers, authToken, tenantId, user.id, roleId)
+
+        then:
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * userService.getUserByAuthToken(authToken) >> caller
+        1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole()
+        1 * tenantService.getTenantRoleForUserById(user, roleId) >> tenantRole
+
+        response.status == SC_BAD_REQUEST
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)

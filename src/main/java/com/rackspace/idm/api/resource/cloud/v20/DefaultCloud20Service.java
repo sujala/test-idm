@@ -130,6 +130,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String ERROR_CANNOT_ASSIGN_TENANT_ONLY_ROLES_VIA_GLOBAL_ASSIGNMENT = "The assignment of 'tenant only' roles via global assignment is not allowed";
 
+    public static final String ERROR_CANNOT_ADD_GLOBAL_ROLE_TO_USER_ERROR_MESSAGE = "Cannot add global role to user. Role already assigned as a tenant role.";
+    public static final String ERROR_CANNOT_ADD_ROLE_TO_USER_ON_TENANT_ERROR_MESSAGE = "Cannot add role to user on tenant. Role already assigned globally.";
+
     public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
 
     public static final String USER_NOT_FOUND_ERROR_MESSAGE = "User with ID %s not found.";
@@ -548,6 +551,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException("Cannot add specified role to tenants on users.");
             }
 
+            TenantRole existingTenantRole = tenantService.getTenantRoleForUserById(user, roleId);
+            if (existingTenantRole != null && existingTenantRole.getTenantIds().isEmpty()) {
+                throw new BadRequestException(ERROR_CANNOT_ADD_ROLE_TO_USER_ON_TENANT_ERROR_MESSAGE);
+            }
+
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role);
 
@@ -560,6 +568,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             tenantService.addTenantRoleToUser(user, tenantRole);
 
+            // NOTE: At this point we can't do a contract change, but this should've been a HTTP 204 No Content.
             return Response.ok();
 
         } catch (Exception ex) {
@@ -940,6 +949,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
+            TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
+            if (tenantRole != null && !tenantRole.getTenantIds().isEmpty()) {
+                throw new BadRequestException(ERROR_CANNOT_ADD_GLOBAL_ROLE_TO_USER_ERROR_MESSAGE);
+            }
+
             checkForMultipleIdentityAccessRoles(user, cRole);
 
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) ||
@@ -954,6 +968,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             assignRoleToUser(user, cRole);
+            // NOTE: At this point we can't do a contract change, but this should've been a HTTP 204 No Content.
             return Response.ok();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
