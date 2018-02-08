@@ -109,6 +109,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         assertFederatedUserHasGlobalRole(fedUser, propagatingRole)
 
         when: "adding tenant based propagating role to user-admin"
+        utils.deleteRoleOnUser(userAdmin, propagatingRole.id)
         utils.addRoleToUserOnTenantId(userAdmin, domainId, propagatingRole.id)
 
         then: "federated sub-user get propagating role on tenant"
