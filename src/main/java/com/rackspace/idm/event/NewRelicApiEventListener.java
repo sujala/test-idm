@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.newrelic.api.agent.NewRelic;
 import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.config.IdmVersion;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang.StringUtils;
@@ -38,6 +39,9 @@ public class NewRelicApiEventListener implements ApplicationListener<ApiEventSpr
 
     @Autowired
     protected IdentityConfig identityConfig;
+
+    @Autowired
+    private IdmVersion idmVersion;
 
     public static final String v2TokenValidationAbsolutePathPatternRegex = "^.*/cloud/v2.0/tokens/([^/]+)/?$";
     public static final String v2TokenEndpointAbsolutePathPatternRegex = "^.*/cloud/v2.0/tokens/([^/]+)/endpoints/?$";
@@ -153,6 +157,14 @@ public class NewRelicApiEventListener implements ApplicationListener<ApiEventSpr
                 keywords.add(ApiKeyword.DEPRECATED.getReportValue());
             }
             addAttributeIfEnabled(KEYWORDS, StringUtils.join(keywords, ","), reportableAttributeSupport, securedAttributeSupport);
+        }
+
+        if (reportableAttributeSupport.shouldReportAttribute(IDM_VERSION)) {
+            String reportedVersion = ApiEventPostingAspect.DATA_UNAVAILABLE;
+            if (idmVersion != null && idmVersion.getVersion() != null) {
+                reportedVersion = idmVersion.getVersion().getValue();
+            }
+            addAttributeIfEnabled(IDM_VERSION, reportedVersion, reportableAttributeSupport, securedAttributeSupport);
         }
     }
 

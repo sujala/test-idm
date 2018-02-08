@@ -16,6 +16,7 @@ public enum NewRelicCustomAttributesEnum {
     , REMOTE_IP("remoteIp")
     , FORWARDED_IP("forwardedForIp")
     , QUERY_PARAMS("queryParams")
+    , IDM_VERSION("idmVersion")
 
     // AUTH and PRIVATE RESOURCES
     , CALLER_USERNAME("callerUsername")
