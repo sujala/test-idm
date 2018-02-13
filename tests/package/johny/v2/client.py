@@ -217,24 +217,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = url.format(user_id=user_id)
         return self.request('DELETE', url)
 
-    def list_unboundid_config(self):
-        """
-        Get current config of unboundid
-        """
-        parsed_url = urlparse(self.url)
-        url = "{0}://{1}{2}{3}".format(parsed_url.scheme,
-                                       parsed_url.netloc,
-                                       const.DEVOPS_URL,
-                                       const.DEVOPS_PROPS_URL)
-        return self.request('GET', url)
-
     def analyze_token(self):
         """Analyze Tokens."""
         parsed_url = urlparse(self.url)
-        url = "{0}://{1}{2}{3}".format(parsed_url.scheme,
-                                       parsed_url.netloc,
-                                       const.DEVOPS_URL,
-                                       const.ANALYZE_TOKEN_URL)
+        url = "{0}://{1}{2}{3}{4}".format(parsed_url.scheme,
+                                          parsed_url.netloc,
+                                          const.IDM_URL,
+                                          const.DEVOPS_URL,
+                                          const.ANALYZE_TOKEN_URL)
         return self.request('GET', url)
 
     def create_otp_device(self, user_id, request_object,

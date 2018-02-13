@@ -42,8 +42,9 @@ class TestBase(fixtures.BaseTestFixture):
         cls.internal_url = urlparse.urljoin(cls.internal_url,
                                             cls.identity_config.api_version)
 
-        cls.devops_url = urlparse.urljoin(cls.identity_config.base_url,
-                                          const.DEVOPS_URL)
+        cls.devops_url = "{0}{1}{2}".format(
+            cls.identity_config.base_url, cls.identity_config.idm_url,
+            const.DEVOPS_URL)
         cls.default_header_validations = [
             header_validation.validate_header_vary,
             header_validation.validate_header_content_type,

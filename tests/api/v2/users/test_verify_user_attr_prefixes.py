@@ -40,7 +40,7 @@ class TestUserPrefixes(base.TestBaseV2):
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
 
-        resp = self.service_admin_client.list_unboundid_config()
+        resp = self.devops_client.get_devops_properties()
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp,
                           json_schema=unboundid_json.config_list)
