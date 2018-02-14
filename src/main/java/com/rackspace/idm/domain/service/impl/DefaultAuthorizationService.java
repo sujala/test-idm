@@ -797,6 +797,42 @@ public class DefaultAuthorizationService implements AuthorizationService {
                 !serviceCatalogInfo.getUserTypeEnum().hasAtLeastIdentityAdminAccessLevel();
     }
 
+    @Override
+    public void verifyEffectiveCallerHasManagementAccessToUser(User user) {
+        BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+
+        // Verify user has one of necessary roles
+        verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, IdentityRole.RCN_ADMIN.getRoleName());
+
+        // If domain based identity role, must verify user has access to domain
+        IdentityUserTypeEnum userType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+
+        if (userType == null) {
+            // If we don't know the type of user, we can't authorize the user for anything
+            throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+        } else if (userType.isDomainBasedAccessLevel()) {
+            // Only need test when the user's domain is different than the target domain.
+            if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                boolean isRcnAdmin = authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.RCN_ADMIN.getRoleName());
+                if (isRcnAdmin) {
+                    // Compare the RCNs of the two domains. If same, rcn admin can manage
+                    Domain userDomain = domainService.getDomain(user.getDomainId());
+                    Domain callerDomain = domainService.getDomain(caller.getDomainId());
+                    if (userDomain == null
+                            || callerDomain == null
+                            || callerDomain.getRackspaceCustomerNumber() == null
+                            || userDomain.getRackspaceCustomerNumber() == null
+                            || !callerDomain.getRackspaceCustomerNumber().equalsIgnoreCase(userDomain.getRackspaceCustomerNumber())) {
+                        throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+                    }
+                } else {
+                    // Only RCN admins can manage across domains
+                    throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+                }
+            }
+        }
+    }
+
     private String getRoleString(List<ClientRole> clientRoles) {
         List<String> roles = new ArrayList<String>();
         for (ClientRole clientRole : clientRoles) {

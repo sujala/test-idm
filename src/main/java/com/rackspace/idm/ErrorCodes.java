@@ -120,6 +120,22 @@ public final class ErrorCodes {
     // Delegation Agreements
     public static final String ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN = "DA-000";
 
+    // User role assignments
+    public static final String ALL_TENANT_IN_DOMAIN_WILDCARD = "*";
+
+    public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT = "ROLE-000";
+    public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT_MSG = "A given role can only be specified once";
+
+    public static final String ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG = "All role assignments must include 'forTenants' field";
+    public static final String ERROR_CODE_ROLE_ASSIGNMENT_INVALID_FOR_TENANTS_MSG = "Role assignments can only be for all tenants or specific tenants in group's domain.";
+    public static final String ERROR_CODE_ROLE_ASSIGNMENT_NONEXISTANT_ROLE_MSG_PATTERN = "Invalid assignment for role '%s'. Role does not exist.";
+    public static final String ERROR_CODE_ROLE_ASSIGNMENT_GLOBAL_ROLE_ASSIGNMENT_ONLY_MSG_PATTERN = "Invalid assignment for role '%s'. This role must be assigned globally.";
+    public static final String ERROR_CODE_ROLE_ASSIGNMENT_TENANT_ASSIGNMENT_ONLY_MSG_PATTERN = "Invalid assignment for role '%s'. This role must be assigned to explicit tenants.";
+    public static final String ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN = "Invalid assignment for role '%s'. Not authorized to assign this role.";
+
+    public static final String ERROR_CODE_ROLE_ASSIGNMENT_NONEXISTANT_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant does not exist.";
+    public static final String ERROR_CODE_ROLE_ASSIGNMENT_WRONG_DOMAIN_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant must belong to domain '%s'.";
+
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {
             return String.format("Error code: '%s'; %s", errorCode, message);

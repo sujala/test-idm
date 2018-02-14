@@ -150,6 +150,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ERROR_DELETE_ROLE_WITH_USERS_ASSIGNED = "Deleting the role associated with one or more users is not allowed";
     public static final String ERROR_DELETE_ROLE_WITH_GROUPS_ASSIGNED = "Deleting the role associated with one or more groups is not allowed";
 
+    public static final String GRANTING_ROLES_TO_USER_ERROR_MESSAGE = "Error granting roles to user with ID %s.";
+
     public static final String METADATA_NOT_FOUND_ERROR_MESSAGE = "No metadata found for identity provider '%s'.";
 
     public static final String PREFIXED_IDENTITY_ROLE_ERROR_MESSAGE = "Role prefixed with 'identity:' cannot be deleted";
@@ -925,6 +927,39 @@ public class DefaultCloud20Service implements Cloud20Service {
             URI build = requestUriBuilder.build();
             return Response.created(build).entity(credentials.getValue());
         } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder grantRolesToUser(HttpHeaders httpHeaders, String authToken, String userId, RoleAssignments roleAssignments) {
+        try {
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify target user exists
+            User user = userService.checkAndGetUserById(userId);
+            // Verify caller has access to modify target user
+            authorizationService.verifyEffectiveCallerHasManagementAccessToUser(user);
+
+            if (roleAssignments == null) {
+                throw new BadRequestException("Must supply a set of assignments");
+            }
+
+            // Get caller type to validate role access
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+            IdentityUserTypeEnum callerUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+
+            userService.replaceRoleAssignmentsOnUser(user, roleAssignments, callerUserType.getLevelAsInt());
+
+            // Retrieve the first 1000 assigned roles on the user
+            PaginatorContext<TenantRole> tenantRolePage = userService.getRoleAssignmentsOnUser(user, new PaginationParams(0, 1000));
+
+            return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList()));
+        } catch (Exception ex) {
+            String errMsg = String.format(GRANTING_ROLES_TO_USER_ERROR_MESSAGE, userId);
+            logger.error(errMsg);
             return exceptionHandler.exceptionResponse(ex);
         }
     }

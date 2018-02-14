@@ -1,7 +1,6 @@
-package com.rackspace.idm.modules.usergroups.exception;
+package com.rackspace.idm.exception;
 
 import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.exception.IdmException;
 import lombok.Getter;
 
 import java.util.Collections;

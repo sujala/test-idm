@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.ApplicationService
@@ -21,7 +22,6 @@ import testHelpers.RootIntegrationTest
 import javax.ws.rs.core.MediaType
 
 import static Constants.ROLE_RBAC1_ID
-import static Constants.ROLE_RBAC2_ID
 
 class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
 
@@ -218,7 +218,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN
                 , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_USER_GROUPS_INVALID_ATTRIBUTE
-                , String.format(com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, Constants.USER_MANAGE_ROLE_ID));
+                , String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, Constants.USER_MANAGE_ROLE_ID));
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -248,7 +248,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST
                 , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_USER_GROUPS_MISSING_REQUIRED_ATTRIBUTE
-                , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG)
+                , ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]

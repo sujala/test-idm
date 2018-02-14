@@ -2,6 +2,9 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.*
@@ -4204,6 +4207,68 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.getUserByAuthToken(authToken) >> caller
         1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole()
         1 * tenantService.getTenantRoleForUserById(user, roleId) >> tenantRole
+
+        response.status == SC_BAD_REQUEST
+    }
+
+    def "grantRolesToUser: grant roles to user"() {
+        given:
+        allowUserAccess()
+        mockRoleAssignmentConverter(service)
+        def userId = "userId"
+        def user = new com.rackspace.idm.domain.entity.User().with {
+            it.id = userId
+            it
+        }
+
+        def caller = new com.rackspace.idm.domain.entity.User().with {
+            it.id = "callerId"
+            it
+        }
+
+        def assignment = new TenantAssignment().with {
+            ta ->
+                ta.onRole = roleId
+                ta.forTenants.add("tenantId")
+                ta
+        }
+        RoleAssignments roleAssignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(assignment)
+                    tas
+            }
+            it
+        }
+
+        when:
+        def response = service.grantRolesToUser(headers, authToken, userId, roleAssignments)
+
+        then:
+        1 * userService.checkAndGetUserById(userId) >> user
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * userService.replaceRoleAssignmentsOnUser(user, roleAssignments, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        1 * userService.getRoleAssignmentsOnUser(user, _) >> new PaginatorContext<>()
+        1 * roleAssignmentConverter.toRoleAssignmentsWeb(_)
+
+        response.status == SC_OK
+    }
+
+    def "grantRolesToUser: error check"() {
+        given:
+        allowUserAccess()
+        def userId = "userId"
+        def user = new com.rackspace.idm.domain.entity.User().with {
+            it.id = userId
+            it
+        }
+
+        when:
+        def response = service.grantRolesToUser(headers, authToken, userId, null)
+
+        then:
+        1 * userService.checkAndGetUserById(userId) >> user
 
         response.status == SC_BAD_REQUEST
     }

@@ -96,27 +96,61 @@ public interface Cloud20Service {
 
     ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, boolean applyRcnRoles) ;
 
-	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user);
+    ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user);
 
-	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user);
+    ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user);
 
-	ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId);
+    ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId);
 
-	ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user);
+    ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user);
 
-	ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
+    /**
+     * Grant or update the role assignments to the specified user. If any role is currently assigned to the
+     * it is replaced with the provided one. A given role can only appear once in the list of roles to assign. The same
+     * constraints apply for each individual role assignment specified as if they were being assigned individually. The
+     * entire request will be validated prior to assigning any roles.
+     *
+     * If the request is deemed valid, the assignments are iterated over to apply. If an error is encountered, processing will stop
+     * on the current assignment, but no efforts will be made to rollback previously successful assignments. Upon receiving
+     * an error the caller should verify the state of the user roles and take corrective action as necessary.
+     *
+     * On success returns:
+     * <ol>
+     *     <li>A 200 response</li>
+     *     <li>The response body is the final role assignments associated with the user after applying the updates. It will
+     *     include all the roles assigned to the user regardless of when or how it was assigned.</li>
+     * </ol>
+     *
+     * On failure will return appropriate v2 error responses:
+     * <ol>
+     *     <li>401 - If the supplied token is not a valid token or expired</li>
+     *     <li>403 - If the caller is not an Identity Admin</li>
+     *     <li>404 - If the user does not exist</li>
+     *     <li>400 - If the request does not meet validation requirements.</li>
+     *     <li>403 - If the user exists in a different domain or a role can not be assigned to the user</li>
+     *     <li>500 - Catch all for any other exception thrown by implementation</li>
+     * </ol>
+     *
+     * @param authToken
+     * @param userId
+     * @param roleAssignments
+     * @return
+     */
+    ResponseBuilder grantRolesToUser(HttpHeaders httpHeaders, String authToken, String userId, RoleAssignments roleAssignments) ;
 
-	ResponseBuilder getUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
+    ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
 
-	ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
+    ResponseBuilder getUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
 
-	ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Tenant tenant);
+    ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
 
-	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Tenant tenant);
+    ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Tenant tenant);
 
-	ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) ;
+    ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Tenant tenant);
 
-	ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) ;
+    ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) ;
+
+    ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Integer marker, Integer limit) ;
 
     /**
      * Returns a list of users which have access to the specified tenant. Optionally filtered by a set of parameters.
@@ -131,25 +165,25 @@ public interface Cloud20Service {
      */
     ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, ListUsersForTenantParams params);
 
-	ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
+    ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
 
-	ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
+    ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
 
-	ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String roleName, Integer marker, Integer limit) ;
+    ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String roleName, Integer marker, Integer limit) ;
 
-	ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role);
+    ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role);
 
-	ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) ;
+    ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) ;
 
-	ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) ;
+    ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) ;
 
-	ResponseBuilder listServices(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String name, Integer marker, Integer limit) ;
+    ResponseBuilder listServices(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String name, Integer marker, Integer limit) ;
 
-	ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service);
+    ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service);
 
-	ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
+    ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
 
-	ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
+    ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
 
     ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Integer marker, Integer limit) ;
 

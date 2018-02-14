@@ -1285,6 +1285,11 @@ class Cloud20Methods {
         resource.header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
+    def grantRoleAssignmentsOnUser(String token, User user, RoleAssignments roleAssignments, MediaType media=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(user.id).path(RAX_AUTH).path(SERVICE_PATH_ROLES).type(media).accept(media).header(X_AUTH_TOKEN, token).entity(roleAssignments).put(ClientResponse)
+    }
+
     def createIdentityProviderWithCred(String token, IdentityProviderFederationTypeEnum type, Credential cred) {
         def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cred.entityCertificate)
         def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)

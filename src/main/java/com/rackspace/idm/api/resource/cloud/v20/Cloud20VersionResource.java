@@ -923,6 +923,17 @@ public class Cloud20VersionResource {
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @PUT
+    @Path("users/{userId}/RAX-AUTH/roles")
+    public Response grantRolesToUser(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            RoleAssignments roleAssignments) {
+        return cloud20Service.grantRolesToUser(httpHeaders, authToken, userId, roleAssignments).build();
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @PUT
     @Path("users/{userId}/roles/OS-KSADM/{roleId}")
     public Response addUserRole(
             @Context HttpHeaders httpHeaders,

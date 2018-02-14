@@ -2,9 +2,12 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
@@ -270,4 +273,28 @@ public interface UserService {
      */
     boolean isPasswordExpired(User user);
 
+    /*
+     * Assign the specified roles to the user. The 'allowedRoleAccess` determines the administrator access on roles provided
+     * in the list of role assignments.
+     *
+     * @param user
+     * @param roleAssignments
+     * @param allowedRoleAccess
+     *
+     * @throws IllegalArgumentException if user, user.getUniqueId(), roleAssignments or allowedRoleAccess is null
+     *
+     * @throws FailedGrantRoleAssignmentsException If error encountered
+     * persisting the assignments post-validation
+     * @return the tenant roles saved
+     */
+    List<TenantRole> replaceRoleAssignmentsOnUser(User user, RoleAssignments roleAssignments, Integer allowedRoleAccess);
+
+    /**
+     * Retrieve the set of roles assignments on the user.
+     *
+     * @param user
+     * @param paginationParams
+     * @return
+     */
+    PaginatorContext<TenantRole> getRoleAssignmentsOnUser(User user, PaginationParams paginationParams);
 }

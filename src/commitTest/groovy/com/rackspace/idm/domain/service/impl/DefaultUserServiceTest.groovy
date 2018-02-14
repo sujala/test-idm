@@ -1,12 +1,13 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.idm.Constants
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
@@ -1235,6 +1236,38 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         thrown IllegalArgumentException
+    }
+
+    def "replaceRoleAssignmentsOnUser: Throws IllegalArgumentException if supplied user is invalid"() {
+        def roleAssignments = new RoleAssignments()
+
+        when: "user arg is null"
+        service.replaceRoleAssignmentsOnUser(null, roleAssignments, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "user arg has no unique id"
+        service.replaceRoleAssignmentsOnUser(new User(), roleAssignments, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "replaceRoleAssignmentsOnUser: Throws IllegalArgumentException if roleAssignments arg is null"() {
+        when:
+        service.replaceRoleAssignmentsOnUser(new User().with {it.uniqueId = "uniqueId";it}, null, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "replaceRoleAssignmentsOnUser: Throws IllegalArgumentException if allowedRoleAccess arg is null"() {
+        when:
+        service.replaceRoleAssignmentsOnUser(new User().with {it.uniqueId = "uniqueId";it}, new RoleAssignments(), null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def createStringPaginatorContext() {
