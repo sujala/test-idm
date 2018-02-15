@@ -3550,6 +3550,89 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 404
     }
 
+    @Unroll
+    def "getUserById returns the password expiration for a user - featureEnabled = #featureEnabled"() {
+        given:
+        identityConfig.getReloadableConfig().isIncludePasswordExpirationDateForGetUserResponsesEnabled() >> featureEnabled
+        allowUserAccess()
+        def user = new org.openstack.docs.identity.api.v2.User()
+        def fedUser = new org.openstack.docs.identity.api.v2.User()
+        def userEntity = entityFactory.createUser()
+        def fedUserEntity = entityFactory.createFederatedUser()
+        User caller = entityFactory.createUser()
+        def pwdExpiration = new DateTime()
+        userService.getUserByScopeAccess(_, false) >> caller
+
+        when: "get a provisioned user by ID"
+        Response response = service.getUserById(headers, authToken, user.id).build()
+
+        then:
+        1 * identityUserService.getEndUserById(user.id) >> userEntity
+        1 * userConverter.toUser(userEntity) >> user
+        if (featureEnabled) {
+            1 * userService.getPasswordExpiration(userEntity) >> pwdExpiration
+        } else {
+            0 * userService.getPasswordExpiration(userEntity) >> pwdExpiration
+        }
+        response.status == 200
+        def responseEntity = response.getEntity()
+        if (featureEnabled) {
+            responseEntity.passwordExpiration.toGregorianCalendar().getTime() == pwdExpiration
+        } else {
+            responseEntity.passwordExpiration == null
+        }
+
+        when: "get a federated user by ID"
+        response = service.getUserById(headers, authToken, fedUserEntity.id).build()
+        responseEntity = response.getEntity()
+
+        then:
+        1 * identityUserService.getEndUserById(fedUserEntity.id) >> fedUserEntity
+        1 * userConverter.toUser(fedUserEntity) >> fedUser
+        0 * userService.getPasswordExpiration(_)
+        response.status == 200
+        responseEntity.passwordExpiration == null
+
+        where:
+        featureEnabled << [true, false]
+    }
+
+    @Unroll
+    def "getUserByName returns the password expiration for a user - featureEnabled = #featureEnabled"() {
+        given:
+        identityConfig.getReloadableConfig().isIncludePasswordExpirationDateForGetUserResponsesEnabled() >> featureEnabled
+        allowUserAccess()
+        def user = new org.openstack.docs.identity.api.v2.User()
+        def userEntity = entityFactory.createUser()
+        EndUser caller = entityFactory.createUser()
+        def pwdExpiration = new DateTime()
+        userService.getUserByScopeAccess(_, false) >> caller
+        authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        userService.getUserByScopeAccess(_) >> caller
+
+        when: "get a provisioned user by ID"
+        Response response = service.getUserByName(headers, authToken, userEntity.username).build()
+
+        then:
+        1 * userService.getUser(userEntity.username) >> userEntity
+        1 * userConverter.toUser(userEntity) >> user
+        if (featureEnabled) {
+            1 * userService.getPasswordExpiration(userEntity) >> pwdExpiration
+        } else {
+            0 * userService.getPasswordExpiration(userEntity) >> pwdExpiration
+        }
+        response.status == 200
+        def responseEntity = response.getEntity()
+        if (featureEnabled) {
+            new DateTime(responseEntity.passwordExpiration.toGregorianCalendar().getTime()) == pwdExpiration
+        } else {
+            responseEntity.passwordExpiration == null
+        }
+
+        where:
+        featureEnabled << [true, false]
+    }
+
     def "Fed Auth : Verify routing based on API version"() {
         mockAuthConverterCloudV20(service)
         def headers = Mock(HttpHeaders)

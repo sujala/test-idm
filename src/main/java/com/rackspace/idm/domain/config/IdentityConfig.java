@@ -525,6 +525,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP = "feature.enable.ldap.health.check.connection.for.continued.use";
     public static final boolean FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP = "feature.enable.include.password.expiration.date";
+    public static final boolean FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT = false;
+
     /**
      * Identity Repository Properties
      */
@@ -752,6 +755,8 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_PROP, FEATURE_ENABLE_LDAP_HEALTH_CHECK_NEW_CONNECTION_DEFAULT);
         defaults.put(FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP, FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT);
 
         return defaults;
     }
@@ -2084,6 +2089,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, versionAdded = "3.19.0", description = "Whether to enable health check on valid connection for continued use.")
         public boolean getEnableLDAPHealthCheckConnectionForContinuedUse() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP, versionAdded = "3.20.0", description = "Specifies whether to return the user's password expiration on get user by ID and get user by name responses.")
+        public boolean isIncludePasswordExpirationDateForGetUserResponsesEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP);
         }
 
     }

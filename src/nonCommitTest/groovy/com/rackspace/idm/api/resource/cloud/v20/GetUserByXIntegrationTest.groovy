@@ -1,8 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
+import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import groovy.json.JsonSlurper
@@ -11,6 +14,7 @@ import org.apache.commons.lang.BooleanUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.codehaus.groovy.runtime.typehandling.GroovyCastException
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse
@@ -21,6 +25,8 @@ import spock.lang.Unroll
 import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
+import javax.xml.datatype.XMLGregorianCalendar
+
 /**
  * Testing the v2.0/users endpoint
  */
@@ -29,11 +35,11 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Shared def identityAdminToken
 
-    @Autowired def ScopeAccessService scopeAccessService
-    @Autowired def TenantService tenantService
-    @Autowired def UserService userService
-    @Autowired def Configuration config
-    @Autowired def EndpointService endpointService
+    @Autowired ScopeAccessService scopeAccessService
+    @Autowired TenantService tenantService
+    @Autowired UserService userService
+    @Autowired Configuration config
+    @Autowired EndpointService endpointService
 
     @Autowired(required = false)
     LdapFederatedUserRepository ldapFederatedUserRepository
@@ -286,6 +292,60 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         IdentityUserTypeEnum.USER_MANAGER   | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
         IdentityUserTypeEnum.USER_MANAGER   | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         IdentityUserTypeEnum.USER_MANAGER   | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "get user by name/id returns password expiration if password policy exists for domain - accept == #accept, featureEnabled == #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP, featureEnabled)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminWithoutPwdPolicy = utils.createCloudAccount()
+        utils.updateDomainPasswordPolicy(userAdmin.domainId)
+        def userEntity = userService.getUserById(userAdmin.id)
+        def expectedExpTime = userService.getPasswordExpiration(userEntity)
+
+        when: "get user w/ pwd policy by ID"
+        def getUserByIdResponse = utils.getUserByIdReturnUser(userAdmin.id, utils.getServiceAdminToken(), accept)
+        def returnedExpTime = getUserByIdResponse.passwordExpiration != null ? new DateTime(((XMLGregorianCalendar) getUserByIdResponse.passwordExpiration).toGregorianCalendar().getTime()) : null
+
+        then: "the returned expiration time matches the expiration time we expect from the pw policy"
+        if (featureEnabled) {
+            assert returnedExpTime != null
+            assert returnedExpTime == expectedExpTime
+        } else {
+            assert returnedExpTime == null
+        }
+
+        when: "get user w/o pwd policy by ID"
+        getUserByIdResponse = utils.getUserByIdReturnUser(userAdminWithoutPwdPolicy.id, utils.getServiceAdminToken(), accept)
+
+        then:
+        getUserByIdResponse.passwordExpiration == null
+
+        when: "get user w/ pwd policy by name"
+        def getUserByNameResponse = utils.getUserByName(userAdmin.username, utils.getServiceAdminToken(), accept)
+       returnedExpTime = getUserByNameResponse.passwordExpiration != null ? new DateTime(((XMLGregorianCalendar) getUserByNameResponse.passwordExpiration).toGregorianCalendar().getTime()) : null
+
+        then:
+        if (featureEnabled) {
+            assert returnedExpTime != null
+            assert returnedExpTime == expectedExpTime
+        } else {
+            assert returnedExpTime == null
+        }
+
+        when: "get user w/o pwd policy by name"
+        getUserByNameResponse = utils.getUserByName(userAdminWithoutPwdPolicy.username, utils.getServiceAdminToken(), accept)
+
+        then:
+        getUserByNameResponse.passwordExpiration == null
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+        utils.deleteUser(userAdminWithoutPwdPolicy)
+
+        where:
+        [accept, featureEnabled] << [[MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE], [true, false]].combinations()
     }
 
     def getContactIdFromResponse(userResponse, accept) {

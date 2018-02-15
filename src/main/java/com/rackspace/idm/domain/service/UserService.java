@@ -9,6 +9,7 @@ import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import org.apache.commons.configuration.Configuration;
+import org.joda.time.DateTime;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
@@ -239,4 +240,34 @@ public interface UserService {
      * @param baseUser
      */
     void removeUserGroupFromUser(UserGroup group, User baseUser);
+
+    /**
+     * Returns the calculated password expiration for a user.
+     * Returns null for the following scenarios:
+     *  - the user does not have a password change date
+     *  - the user's domain does not have a password policy
+     *
+     * NOTE: Due to the above scenarios, a user's password can still be expired if
+     * the user does not have a password change date and the domain has a password
+     * policy set (policy password duration > 0). In order to determine if a password
+     * is expired, use <code>UserService.getPasswordExpiration(User)</code> instead
+     *
+     * @param user
+     * @throws IllegalArgumentException if the user is null
+     * @return
+     */
+    DateTime getPasswordExpiration(User user);
+
+    /**
+     * Returns a boolean indicating if the user's password is expired or not.
+     * A password is considered expired if:
+     *  - the user has a password change date set that is older than the allowed domain password policy for the user's domain
+     *  - the user does not have a password change date set and the domain has a non-zero password policy duration
+     *
+     * @param user
+     * @throws IllegalArgumentException if the user is null
+     * @return
+     */
+    boolean isPasswordExpired(User user);
+
 }

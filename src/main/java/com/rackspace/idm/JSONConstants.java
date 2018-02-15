@@ -319,6 +319,11 @@ public final class JSONConstants {
     public static final String USER_SECRET_QA_PATH = "user.secretQA";
     public static final String USER_RAX_KSQA_SECRET_QA_PATH = "user.RAX-KSQA:secretQA";
 
+    public static final String PASSWORD_EXPIRATION = "passwordExpiration";
+    public static final String USER_PASSWORD_EXPIRATION_PATH = "user.passwordExpiration";
+    public static final String USER_RAX_AUTH_PASSWORD_EXPIRATION_PATH = "user.RAX-AUTH:passwordExpiration";
+    public static final String RAX_AUTH_PASSWORD_EXPIRATION = "RAX-AUTH:passwordExpiration";
+
     public static final String USER_GROUPS_PATH = "user.groups";
     public static final String USER_RAX_KSGRP_GROUPS_PATH = "user.RAX-KSGRP:groups";
 

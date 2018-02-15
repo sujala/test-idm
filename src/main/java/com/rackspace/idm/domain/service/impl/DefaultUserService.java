@@ -348,22 +348,13 @@ public class DefaultUserService implements UserService {
 
             // Apply password rotation policy if applicable
             if (domain != null && identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordExpiration()) {
-                Date pwdChangeDate = user.getPasswordLastUpdated();
-                Duration duration = domain.getPasswordPolicy() != null ? domain.getPasswordPolicy().getPasswordDurationAsDuration() : null;
-                if (duration != null && !duration.isZero()) {
-                    boolean expired = false;
-                    if (pwdChangeDate == null) {
-                        expired = true; // Expire users if no password change date
-                    } else {
-                        DateTime now = new DateTime();
-                        long durationMs = duration.toMillis();
-                        DateTime pwdExpireDate = new DateTime(pwdChangeDate).plus(durationMs);
-                        authenticationContext.setPasswordExpiration(pwdExpireDate);
-                        expired = now.isAfter(pwdExpireDate);
-                    }
-                    if (expired) {
-                        throw new UserPasswordExpiredException(user, "The password for this user has expired and must be changed");
-                    }
+                DateTime pwdExpireDate = getPasswordExpiration(user, domain);
+                boolean expired = isPasswordExpired(user, domain);
+                if (pwdExpireDate != null) {
+                    authenticationContext.setPasswordExpiration(pwdExpireDate);
+                }
+                if (expired) {
+                    throw new UserPasswordExpiredException(user, "The password for this user has expired and must be changed");
                 }
             }
         }
@@ -376,6 +367,74 @@ public class DefaultUserService implements UserService {
         logger.debug("Authenticated User: {} by Username - {}", username,
                 authenticated);
         return authenticated;
+    }
+
+    @Override
+    public DateTime getPasswordExpiration(User user) {
+        Validate.notNull(user);
+        Domain domain = domainService.getDomain(user.getDomainId());
+        return getPasswordExpiration(user, domain);
+    }
+
+    /**
+     * Calculates the user's password expiration based on the password policy of the domain provided.
+     * Returns null if:
+     *  - the user has a null password change date
+     *  - the domain does not have a password policy duration set
+     *
+     * @param user
+     * @param domain
+     * @throws IllegalArgumentException if the domain or user is null
+     * @return
+     */
+    private DateTime getPasswordExpiration(User user, Domain domain) {
+        Validate.notNull(user);
+        Validate.notNull(domain);
+        Date pwdChangeDate = user.getPasswordLastUpdated();
+        Duration duration = domain.getPasswordPolicy() != null ? domain.getPasswordPolicy().getPasswordDurationAsDuration() : null;
+
+        if (pwdChangeDate != null && duration != null && !duration.isZero()) {
+            long durationMs = duration.toMillis();
+            return new DateTime(pwdChangeDate).plus(durationMs);
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean isPasswordExpired(User user) {
+        Validate.notNull(user);
+        Domain domain = domainService.getDomain(user.getDomainId());
+
+        return isPasswordExpired(user, domain);
+    }
+
+    /**
+     * Determines if the user's password is expired based on the password policy of the provided domain.
+     *
+     * @param user
+     * @throws IllegalArgumentException if the domain or user is null
+     * @return
+     */
+    public boolean isPasswordExpired(User user, Domain domain) {
+        Validate.notNull(user);
+        Validate.notNull(domain);
+        PasswordPolicy passwordPolicy = domain.getPasswordPolicy();
+        Duration domainPwdDuration = passwordPolicy != null ? passwordPolicy.getPasswordDurationAsDuration() : null;
+
+        if (domainPwdDuration != null && !domainPwdDuration.isZero()) {
+            Date userPwdChangeDate = user.getPasswordLastUpdated();
+            if (userPwdChangeDate == null) {
+                // All users w/o a pwd change date and a non-zero domain pwd duration have expired passwords
+                return true;
+            } else {
+                // Otherwise, the user's password is considered expired if it is older than the allowed domain pwd policy duration
+                DateTime pwdExpiration = new DateTime(userPwdChangeDate).plus(domainPwdDuration.toMillis());
+                return new DateTime().isAfter(pwdExpiration);
+            }
+        }
+
+        return false;
     }
 
     @Override

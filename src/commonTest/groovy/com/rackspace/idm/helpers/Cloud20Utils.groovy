@@ -307,19 +307,19 @@ class Cloud20Utils {
         response.getEntity(Tenants).value
     }
 
-    def updateDomainPasswordPolicy(String domainId, PasswordPolicy passwordPolicy, token=getServiceAdminToken()) {
-        updateDomainPasswordPolicy(domainId, passwordPolicy.toJson(), token)
-    }
-
-    def updateDomainPasswordPolicy(String domainId, String passwordPolicy, token=getServiceAdminToken()) {
+    def updateDomainPasswordPolicy(String domainId, PasswordPolicy passwordPolicy, String token=getServiceAdminToken()) {
         def response = methods.updateDomainPasswordPolicy(token, domainId, passwordPolicy)
         assert (response.status == SC_OK)
 
         def policyAsString = response.getEntity(String)
-        if (org.apache.commons.lang.StringUtils.isNotEmpty()) {
+        if (org.apache.commons.lang.StringUtils.isNotEmpty(policyAsString)) {
             return PasswordPolicy.fromJson(policyAsString)
         }
         return null
+    }
+
+    def updateDomainPasswordPolicy(String domainId, String passwordPolicyDuration="P90DT6H30M5S", Integer passwordHistoryRestriction = null, String token=getServiceAdminToken()) {
+        updateDomainPasswordPolicy(domainId, new PasswordPolicy(passwordPolicyDuration, passwordHistoryRestriction), token)
     }
 
     PasswordPolicy getDomainPasswordPolicy(String domainId, token=getServiceAdminToken()) {
@@ -913,7 +913,7 @@ class Cloud20Utils {
         }
     }
 
-    def User getUserByName(String username, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
+    User getUserByName(String username, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
         def response = methods.getUserByName(token, username, mediaType)
         assert (response.status == SC_OK)
         def entity = response.getEntity(User)

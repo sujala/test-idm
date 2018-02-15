@@ -85,6 +85,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
@@ -2493,7 +2494,16 @@ public class DefaultCloud20Service implements Cloud20Service {
                     authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 authorizationService.verifyDomain(caller, user);
             }
-            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)).getValue());
+
+            org.openstack.docs.identity.api.v2.User userResponse = this.userConverterCloudV20.toUser(user);
+            if (user instanceof User && identityConfig.getReloadableConfig().isIncludePasswordExpirationDateForGetUserResponsesEnabled()) {
+                DateTime pwdExpiration = userService.getPasswordExpiration((User) user);
+                if (pwdExpiration != null) {
+                    userResponse.setPasswordExpiration(DatatypeFactory.newInstance().newXMLGregorianCalendar(pwdExpiration.toGregorianCalendar()));
+                }
+            }
+
+            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userResponse).getValue());
         } catch (Exception ex) {
             Exception e = ex;
             if (ex instanceof ForbiddenException || ex instanceof NotFoundException) {
@@ -2589,7 +2599,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
             }
 
-            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)).getValue());
+            org.openstack.docs.identity.api.v2.User userResponse = userConverterCloudV20.toUser(user);
+
+            if (identityConfig.getReloadableConfig().isIncludePasswordExpirationDateForGetUserResponsesEnabled()) {
+                // Manually set the pwd expiration on the user.
+                // Calculating the pwd expiration of a user requires the domain (for the pwd policy) and thus
+                // an extra query for each unique domain. Thus, the pwd expiration should not be returned for user lists!
+                DateTime pwdExpiration = userService.getPasswordExpiration(user);
+                if (pwdExpiration != null) {
+                    userResponse.setPasswordExpiration(DatatypeFactory.newInstance().newXMLGregorianCalendar(pwdExpiration.toGregorianCalendar()));
+                }
+            }
+
+            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userResponse).getValue());
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

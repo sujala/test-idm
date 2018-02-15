@@ -15,6 +15,7 @@ import com.rackspace.idm.exception.UserDisabledException
 import com.rackspace.idm.validation.Validator
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
+import org.joda.time.DateTime
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -1116,7 +1117,125 @@ class DefaultUserServiceTest extends RootServiceTest {
         thrown(IllegalArgumentException)
     }
 
+    def "getPasswordExpiration correctly calculates the expiration time"() {
+        given:
+        def passwordLastUpdated = new DateTime().minusWeeks(4) // last changed pwd 4 weeks ago
+        def passwordPolicyLengthInWeeks = 6
+        def user = entityFactory.createUser().with {
+            it.passwordLastUpdated = passwordLastUpdated.toDate()
+            it
+        }
+        def domain = entityFactory.createDomain().with {
+            // Need to convert to days as that is the highest level of granularity supported by pw policies
+            it.passwordPolicy = new PasswordPolicy("P${passwordPolicyLengthInWeeks * 7}D", null)
+            it
+        }
 
+        when: "get pwd expiration for user w/ a pwd change date and domain w/ a password duration"
+        def passwordExpiration = service.getPasswordExpiration(user)
+
+        then: "the correct pwd expiration is returned"
+        1 * domainService.getDomain(user.domainId) >> domain
+        passwordExpiration == passwordLastUpdated.plusWeeks(passwordPolicyLengthInWeeks)
+
+        when: "get pwd expiration for user w/o a pwd change date and domain w/ a password duration"
+        user.passwordLastUpdated = null
+        passwordExpiration = service.getPasswordExpiration(user)
+
+        then: "a null pwd expiration is returned"
+        1 * domainService.getDomain(user.domainId) >> domain
+        passwordExpiration == null
+
+        when: "get pwd expiration for user w/ a pwd change date and w/ a domain w/o a pwd policy duration"
+        user.passwordLastUpdated = passwordLastUpdated.toDate()
+        domain.passwordPolicy = new PasswordPolicy(null, 6)
+        passwordExpiration = service.getPasswordExpiration(user)
+
+        then: "a null pwd expiration is returned"
+        1 * domainService.getDomain(user.domainId) >> domain
+        passwordExpiration == null
+
+        when: "call with null user"
+        0 * domainService.getDomain(user.domainId)
+        service.getPasswordExpiration(null)
+
+        then:
+        thrown IllegalArgumentException
+
+        when: "call with user and null domain"
+        1 * domainService.getDomain(user.domainId) >> null
+        service.getPasswordExpiration(user)
+
+        then:
+        thrown IllegalArgumentException
+    }
+
+    def "isPasswordExpired correctly determines if a user's password is expired"() {
+        given:
+        def passwordPolicyLengthInWeeks = 6
+        def user = entityFactory.createUser()
+        def domain = entityFactory.createDomain().with {
+            // Need to convert to days as that is the highest level of granularity supported by pw policies
+            it.passwordPolicy = new PasswordPolicy("P${passwordPolicyLengthInWeeks * 7}D", null)
+            it
+        }
+
+        when: "user w/ password changed date and domain w/ pwd policy duration - pwd not expired"
+        user.passwordLastUpdated = new DateTime().minusWeeks(4).toDate() // last changed pwd 4 weeks ago
+        1 * domainService.getDomain(user.domainId) >> domain
+        boolean isPasswordExpired = service.isPasswordExpired(user)
+
+        then:
+        !isPasswordExpired
+
+        when: "user w/ password changed date and domain w/ pwd policy duration - pwd expired"
+        user.passwordLastUpdated = new DateTime().minusWeeks(passwordPolicyLengthInWeeks + 1).toDate()
+        1 * domainService.getDomain(user.domainId) >> domain
+        isPasswordExpired = service.isPasswordExpired(user)
+
+        then:
+        isPasswordExpired
+
+        when: "user w/ null password changed date and domain w/ pwd policy duration"
+        user.passwordLastUpdated = null
+        1 * domainService.getDomain(user.domainId) >> domain
+        isPasswordExpired = service.isPasswordExpired(user)
+
+        then:
+        isPasswordExpired
+
+        when: "user w/ password changed date and domain w/o pwd policy duration"
+        user.passwordLastUpdated = new DateTime().minusWeeks(1000).toDate()
+        domain.passwordPolicy = new PasswordPolicy(null, 6)
+        1 * domainService.getDomain(user.domainId) >> domain
+        isPasswordExpired = service.isPasswordExpired(user)
+
+        then:
+        !isPasswordExpired
+
+        when: "user w/ password changed date and domain w/o pwd policy"
+        user.passwordLastUpdated = new DateTime().minusWeeks(1000).toDate()
+        domain.passwordPolicy = null
+        1 * domainService.getDomain(user.domainId) >> domain
+        isPasswordExpired = service.isPasswordExpired(user)
+
+        then:
+        !isPasswordExpired
+
+        when: "user is null"
+        0 * domainService.getDomain(user.domainId)
+        service.isPasswordExpired(null)
+
+        then:
+        thrown IllegalArgumentException
+
+        when: "domain is null"
+        1 * domainService.getDomain(user.domainId) >> null
+        service.isPasswordExpired(user)
+
+        then:
+        thrown IllegalArgumentException
+    }
 
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {

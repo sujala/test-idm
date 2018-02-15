@@ -89,7 +89,7 @@ public class PasswordPolicy {
         }
     }
 
-    public static PasswordPolicy fromJson(String json) throws IOException {
+    public static PasswordPolicy fromJson(String json) {
         if (StringUtils.isEmpty(json)) {
             return null;
         }
@@ -114,7 +114,7 @@ public class PasswordPolicy {
             String policyStr = new String(bytes, Charsets.UTF_8);
             try {
                 policy = PasswordPolicy.fromJson(policyStr);
-            } catch (IOException e) {
+            } catch (InvalidPasswordPolicyException e) {
                 logger.error(String.format("Error converting password policy '%s' to policy object. Returning null", policyStr), e);
             }
         }
