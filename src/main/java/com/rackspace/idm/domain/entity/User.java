@@ -56,6 +56,12 @@ public class User implements EndUser, DelegationPrincipal {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String email;
 
+    @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private byte[] encryptedPhonePin;
+    private String phonePin;
+
     private String password;
 
     private boolean passwordIsNew = true;

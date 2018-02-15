@@ -1270,6 +1270,46 @@ class DefaultUserServiceTest extends RootServiceTest {
         thrown(IllegalArgumentException)
     }
 
+
+    def "Add UserV20 with phone PIN"() {
+        given:
+        def user = this.createUser("DFW", true, domainId)
+        user.setRoles([entityFactory.createTenantRole("roleName")].asList())
+        user.username = "userWithPin"
+        def encryptionVersion = "1"
+        def salt = "a1 b2"
+
+        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
+        reloadableConfig.getUserPhonePinSize() >> 4
+
+        propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
+        userDao.getUsersByDomain(domainId) >> [].asList()
+        userDao.nextUserId >> "nextId"
+        mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
+        cryptHelper.generateSalt() >> salt
+
+        when:
+        service.addUserAdminV20(user, false)
+
+        then:
+        1 * mockValidator.validateUser(user)
+        1 * domainService.createNewDomain(domainId)
+        1 * userDao.addUser(user)
+        1 * tenantService.addTenantRoleToUser(user, _);
+
+        user.password != null
+        user.userPassword != null
+        user.apiKey != null
+        user.region != null
+        user.encryptionVersion == encryptionVersion
+        user.salt == salt;
+        user.enabled == true
+
+        user.phonePin != null
+        user.phonePin.isNumber()
+        user.phonePin.size() == 4
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25

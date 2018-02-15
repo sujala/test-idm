@@ -59,6 +59,7 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         def lastName = "lastName"
         def displayName = "displayName"
         def apiKey = "apiKey"
+        def phonePin = "1234"
 
         def user = entityFactory.createUser()
         user.password = password
@@ -67,6 +68,7 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         user.secretQuestionId = secretQuestionId
         user.displayName = displayName
         user.apiKey = apiKey
+        user.phonePin = phonePin
 
         when:
         encryptionService.encryptUser(user);
@@ -76,6 +78,7 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         user.secretQuestionId = ""
         user.displayName = ""
         user.apiKey = ""
+        user.phonePin = ""
         encryptionService.decryptUser(user);
 
         then:
@@ -85,5 +88,6 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         secretQuestionId == user.secretQuestionId
         displayName == user.displayName
         apiKey == user.apiKey
+        phonePin == user.phonePin
     }
 }

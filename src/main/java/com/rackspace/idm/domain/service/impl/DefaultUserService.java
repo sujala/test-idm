@@ -22,6 +22,7 @@ import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.Validator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
@@ -230,6 +231,9 @@ public class DefaultUserService implements UserService {
         user.setSalt(cryptHelper.generateSalt());
         user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
 
+        if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
+            user.setPhonePin(RandomStringUtils.randomNumeric(identityConfig.getReloadableConfig().getUserPhonePinSize()));
+        }
         userDao.addUser(user);
 
         assignUserRoles(user, isCreateUserInOneCall);
