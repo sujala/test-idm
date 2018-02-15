@@ -394,6 +394,12 @@ public class IdentityConfig {
 
     public static final String FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP = "tenant.prefixes.to.exclude.auto.assign.role.from";
 
+    public static final String FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP = "feature.enable.delegation.agreement.services";
+    public static final boolean FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_DEFAULT = true;
+
+    public static final String FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP = "enable.delegation.agreements.for.all.rcns";
+    public static final boolean FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -524,10 +530,13 @@ public class IdentityConfig {
 
     public static final String FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP = "feature.enable.ldap.health.check.connection.for.continued.use";
     public static final boolean FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_DEFAULT = false;
+  
+    public static final String FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME = "feature.use.subtree.delete.control.for.subtree.deletion.enabled";
+    public static final boolean FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE = true;
 
     public static final String FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP = "feature.enable.include.password.expiration.date";
     public static final boolean FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT = false;
-
+  
     /**
      * Identity Repository Properties
      */
@@ -536,8 +545,8 @@ public class IdentityConfig {
     public static final String ENABLED_DOMAINS_FOR_USER_GROUPS_PROP = "enable.user.groups.for.domains";
     public static final String ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT = "";
 
-    public static final String FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME = "feature.use.subtree.delete.control.for.subtree.deletion.enabled";
-    public static final boolean FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE = true;
+    public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP = "enable.delegation.agreements.for.rcns";
+    public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT = "";
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -732,7 +741,10 @@ public class IdentityConfig {
         defaults.put(LDAP_PAGING_LIMIT_MAX_PROP, LDAP_PAGING_LIMIT_MAX_DEFAULT);
         defaults.put(FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT);
 
+        defaults.put(FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_DEFAULT);
         defaults.put(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT);
+        defaults.put(ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP, ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT);
+        defaults.put(FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
@@ -1733,6 +1745,21 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, versionAdded = "3.20.0", description = "Whether or not delegation agreement services are enabled")
+        public boolean areDelegationAgreementServicesEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, versionAdded = "3.20.0", description = "Whether or not delegation agreements are supported for all rcns")
+        public boolean areDelegationAgreementsEnabledForAllRcns() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP);
+        }
+
+        public boolean areDelegationAgreementsEnabledForRcn(String rcn) {
+            return reloadableConfig.areDelegationAgreementsEnabledForAllRcns()
+                    || (!StringUtils.isBlank(rcn) && repositoryConfig.getRCNsExplicitlyEnabledForDelegationAgreements().contains(rcn.toLowerCase()));
+        }
+
         @IdmProp(key = FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, versionAdded = "3.17.0", description = "The list of tenant prefixes to exclude the auto-assigned (identity:tenant-access) role from.")
         public List<String> getTenantPrefixesToExcludeAutoAssignRoleFrom() {
             return getListSafely(reloadableConfiguration, FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP);
@@ -2131,6 +2158,38 @@ public class IdentityConfig {
                 domainIds = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(rawValue);
             }
             return domainIds;
+        }
+
+        /**
+         * This property represents a list of RCNs for which delegation agreements are explicitly enabled. The value for the prop
+         * in the backend is comma delimited list of RCNs. This method will trim all whitespace from all individual
+         * values in the list. Empty values are ignored. As an example:
+         *
+         * <ul>
+         *     <li>"a,b" = ["a","b"]</li>
+         *     <li>"  a  ,  b " = ["a","b"]</li>
+         *     <li>"a,,b" = ["a","b"]</li>
+         *     <li>",b" = ["b"]</li>
+         *     <li>"," = []</li>
+         * </ul>
+         *
+         * Note - Callers should consider this property in tandem with the reloadable property 'enable.user.groups.globally'
+         * returned via getReloadableConfig().areUserGroupsGloballyEnabled(). When this latter property is set to true,
+         * all groups are enabled.
+         *
+         * @return
+         */
+        @IdmProp(key = ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP, versionAdded = "3.20.0", description = "A comma delimited list of rcns for which delegation agreements will be allowed")
+        public List<String> getRCNsExplicitlyEnabledForDelegationAgreements() {
+            String rawValue = getRepositoryStringSafely(ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP);
+            if (StringUtils.isNotBlank(rawValue)) {
+                rawValue = rawValue.toLowerCase();
+            }
+            List<String> rcns = Collections.emptyList();
+            if (StringUtils.isNotBlank(rawValue)) {
+                rcns = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(rawValue);
+            }
+            return rcns;
         }
     }
 

@@ -101,6 +101,7 @@ class RootServiceTest extends Specification {
     @Shared OTPDeviceConverterCloudV20 otpDeviceConverterCloudV20
     @Shared RoleAssignmentConverter roleAssignmentConverter
     @Shared SamlUnmarshaller samlUnmarshaller
+    @Shared DelegationAgreementConverter delegationAgreementConverter
 
     //services
     @Shared ApplicationService applicationService
@@ -126,6 +127,7 @@ class RootServiceTest extends Specification {
     @Shared AuthenticationService authenticationService
     @Shared GroupService groupService
     @Shared UserGroupService userGroupService
+    @Shared DelegationService delegationService
     @Shared UserGroupAuthorizationService userGroupAuthorizationService
     @Shared CloudRegionService cloudRegionService
     @Shared DefaultAuthorizationService defaultAuthorizationService
@@ -506,6 +508,11 @@ class RootServiceTest extends Specification {
         service.userGroupAuthorizationService = userGroupAuthorizationService
     }
 
+    def mockDelegationService(service) {
+        delegationService = Mock(DelegationService)
+        service.delegationService = delegationService
+    }
+
     def mockCloudRegionService(service) {
         cloudRegionService = Mock()
         service.cloudRegionService = cloudRegionService
@@ -658,6 +665,11 @@ class RootServiceTest extends Specification {
     def mockRoleAssignmentConverter(service) {
         roleAssignmentConverter = Mock()
         service.roleAssignmentConverter = roleAssignmentConverter
+    }
+
+    def mockDelegationAgreementConverter(service) {
+        delegationAgreementConverter = Mock()
+        service.delegationAgreementConverter = delegationAgreementConverter
     }
 
     def mockTokenRevocationService(service) {

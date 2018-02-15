@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * Represents a non-racker end user
  */
-public interface EndUser extends BaseUser {
+public interface EndUser extends BaseUser, DelegationPrincipal {
     String getRegion();
     String getEmail();
     String getUsername();

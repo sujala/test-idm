@@ -55,6 +55,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE = "rsMultiFactorMobilePhone";
     public static final String OBJECTCLASS_TOKEN_REVOCATION_RECORD = "rsTokenRevocationRecord";
     public static final String OBJECTCLASS_INET_ORG_PERSON = "inetOrgPerson";
+    public static final String OBJECTCLASS_DELEGATION_AGREEMENT = "rsDelegationAgreement";
 
     public static final String ATTR_MULTIFACTOR_DOMAIN_ENFORCEMENT_LEVEL = "rsDomainMultiFactorEnforcementLevel";
     public static final String ATTR_MULTIFACTOR_USER_ENFORCEMENT_LEVEL = "rsUserMultiFactorEnforcementLevel";
@@ -117,6 +118,7 @@ public abstract class LdapRepository {
     public static final String ATTR_POLICYTYPE = "policyType";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";
     public static final String ATTR_DOMAIN_ID = "rsDomainId";
+    public static final String ATTR_DELEGATION_AGREEMENT_ID = "rsDelegationAgreementId";
     public static final String ATTR_ENABLED = "enabled";
     public static final String ATTR_GIVEN_NAME = "rsGivenName";
     public static final String ATTR_GROUP_NAME = "name";
@@ -235,6 +237,10 @@ public abstract class LdapRepository {
     public static final String ATTR_PUBLIC_URL_ID = "rsPublicUrlId";
     public static final String ATTR_ADMIN_URL_ID = "rsAdminUrlId";
 
+    // Delegation Agreement attributes
+    public static final String ATTR_RS_PRINCIPAL_DN = "rsPrincipalDN";
+    public static final String ATTR_RS_DELEGATE_DNS = "rsDelegateDNs";
+
     // Definitions for LDAP DNs
     public static final String EXTERNAL_PROVIDERS_BASE_DN = "o=externalProviders,dc=rackspace,dc=com";
     protected static final String EXTERNAL_PROVIDERS_USER_CONTAINER_NAME = "users";
@@ -246,7 +252,7 @@ public abstract class LdapRepository {
     protected static final String GROUP_BASE_DN = "ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String TENANT_BASE_DN = "ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String TENANT_TYPE_BASE_DN = "ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com";
-    protected static final String DOMAIN_BASE_DN = "ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    public static final String DOMAIN_BASE_DN = "ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String POLICY_BASE_DN = "ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String QUESTION_BASE_DN = "ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String REGION_BASE_DN = "ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
@@ -260,6 +266,7 @@ public abstract class LdapRepository {
     protected static final String MULTIFACTOR_MOBILE_PHONE_BASE_DN = "ou=mobilePhones,ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com";
     protected static final String TOKEN_REVOCATION_BASE_DN = "ou=TRRs,o=tokens,dc=rackspace,dc=com";
     protected static final String IDENTITY_PROPERTIES_BASE_DN = "ou=properties,ou=cloud,o=configuration,dc=rackspace,dc=com";
+    public static final String DELEGATION_AGREEMENT_BASE_DN = "ou=delegationAgreements,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
     protected static final String CONTAINER_ROLES = "ROLES";

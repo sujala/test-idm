@@ -4100,6 +4100,11 @@ objectClass: top
 objectClass: organizationalUnit
 ou: userGroups
 
+dn: ou=delegationAgreements,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: delegationAgreements
+
 dn: ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: organizationalUnit
 objectClass: top
@@ -5934,6 +5939,18 @@ description: A comma delimited list of domains for which user groups will be
 rsIdmVersion: 3.16.0
 rsPropertyValue:: VXNlckdyb3VwRG9tYWluNTEzYWM5MTdiMmJhNGYzNTgzNDE0OGZjYzEzNG
  VmM2EsVXNlckdyb3VwRG9tYWluVUdkZjVmODIzZjcxNjQ0ZDFjYTFjMGI3MWNmMWY1NzUzYg==
+rsPropertyValueType: String
+rsReloadable: TRUE
+rsSearchable: TRUE
+
+dn: rsId=7f4b028ac7a543ffbf8ac2da81029498,ou=properties,ou=cloud,o=configura
+ tion,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: enable.delegation.agreements.for.rcns
+description: A comma delimited list of rcns for which delegation agreements
+ can be created.
+rsIdmVersion: 3.20.0
+rsPropertyValue:
 rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
 import com.rackspace.idm.domain.entity.IdentityProperty
 import com.rackspace.idm.domain.security.TokenFormat
@@ -7,6 +8,8 @@ import com.rackspace.idm.domain.service.IdentityPropertyService
 import com.rackspace.test.SingleTestConfiguration
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy
+import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.junit.Rule
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,6 +21,15 @@ import spock.lang.Unroll
 import testHelpers.SingletonConfiguration
 import testHelpers.SingletonReloadableConfiguration
 import testHelpers.SingletonTestFileConfiguration
+
+import static org.apache.http.HttpStatus.SC_CREATED
+import static org.apache.http.HttpStatus.SC_CREATED
+import static org.apache.http.HttpStatus.SC_FORBIDDEN
+import static org.apache.http.HttpStatus.SC_FORBIDDEN
+import static org.apache.http.HttpStatus.SC_FORBIDDEN
+import static org.apache.http.HttpStatus.SC_FORBIDDEN
+import static org.apache.http.HttpStatus.SC_FORBIDDEN
+import static org.apache.http.HttpStatus.SC_FORBIDDEN
 
 @ContextConfiguration(classes=[SingletonTestFileConfiguration.class
         , IdentityConfig.class
@@ -200,6 +212,47 @@ class IdentityConfigComponentTest extends Specification {
         ",b"            | ["b"]
         ","             | []
         null            | []
+    }
+
+    @Unroll
+    def "areDelegationAgreementsEnabledForRcn: rcnAllowedProp: '#rcnsAllowed' ; domainRcn: '#domainRcn' ; expectedResponse: '#expected'"() {
+        def identityProp = rcnsAllowed != null ? new IdentityProperty().with {
+            it.value = rcnsAllowed.bytes
+            it.valueType = "String"
+            it
+        } : null
+
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, false)
+        Mockito.when(identityPropertyService.getIdentityPropertyByName(IdentityConfig.ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP)).thenReturn(identityProp)
+
+        when: "RCNs not globally allowed"
+        boolean allowed = config.getReloadableConfig().areDelegationAgreementsEnabledForRcn(domainRcn)
+
+        then: "RCN must match without regard to case"
+        allowed == expected
+
+        when: "RCNs globally allowed"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
+        allowed = config.getReloadableConfig().areDelegationAgreementsEnabledForRcn(domainRcn)
+
+        then: "All RCNs will match regardless of RCNs allowed"
+        allowed
+
+        where:
+        rcnsAllowed | domainRcn | expected
+        "123"       | "123"     | true
+        "456,123"   | "123"     | true
+        "  456 ,  123  "   | "123"  | true // RCNs in list are trimmed
+        "abc,def"   | "DEF"     | true // Show match is case insensitive
+        "abc,DEF"   | "def"     | true // Show match is case insensitive
+        "123"       | "234"     | false
+        "123,456"   | "234"     | false
+        "123"       | null      | false
+        ""          | null      | false
+        ""          | ""        | false // Empty rcnsAllowed means no rcn will match
+        ""          | "123"     | false // Empty rcnsAllowed means no rcn will match
+        null        | "123"     | false // Empty rcnsAllowed means no rcn will match
+        null        | null    | false // Empty rcnsAllowed means no rcn will match
     }
 
     @SingleTestConfiguration

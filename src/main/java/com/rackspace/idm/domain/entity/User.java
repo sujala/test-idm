@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 import com.google.common.collect.ImmutableSet;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;
@@ -10,12 +11,15 @@ import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -24,6 +28,7 @@ import java.util.*;
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
 public class User implements EndUser {
+    private static final Logger log = LoggerFactory.getLogger(User.class);
 
     // TODO: Remove those as soon as we remove the LDAP dependencies.
     @LDAPEntryField
@@ -327,5 +332,23 @@ public class User implements EndUser {
 
     public String getUserMultiFactorEnforcementLevelIfNullWillReturnDefault() {
         return StringUtils.isEmpty(userMultiFactorEnforcementLevel) ? GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT : userMultiFactorEnforcementLevel;
+    }
+
+    @Override
+    public PrincipalType getPrincipalType() {
+        return null;
+    }
+
+    @Override
+    public DN getDn() {
+        DN dn = null;
+        if (StringUtils.isNotBlank(uniqueId)) {
+            try {
+                dn = new DN(uniqueId);
+            } catch (LDAPException e) {
+                log.warn("Invalid uniqueId. Can't parse to DN", e);
+            }
+        }
+        return dn;
     }
 }

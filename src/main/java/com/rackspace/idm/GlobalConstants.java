@@ -85,6 +85,7 @@ public final class GlobalConstants {
     public static final String ERROR_MSG_DELETE_ENABLED_DOMAIN = "Can not delete enabled domains";
     public static final String ERROR_MSG_DELETE_DOMAIN_WITH_TENANTS = "Cannot delete domains which contain tenants";
     public static final String ERROR_MSG_DELETE_DOMAIN_WITH_USERS = "Cannot delete Domains which contain users";
+    public static final String ERROR_MSG_SERVICE_NOT_FOUND = "Service not found";
 
     public static final String DELETE_USER_LOG_NAME = "userDelete";
     public static final String FORBIDDEN_DUE_TO_RESTRICTED_TOKEN = "The scope of this token does not allow access to this resource";
@@ -94,6 +95,7 @@ public final class GlobalConstants {
     public static final String X_PASSWORD_EXPIRATION = "X-Password-Expiration";
     public static final String X_REQUEST_ID = "X-Request-Id";
     public static final String X_FORWARDED_FOR = "X-Forwarded-For";
+    public static final String X_AUTH_TOKEN = "X-Auth-Token";
 
     public static final String HEADER_IDENTITY_API_VERSION = "Identity-API-Version";
     public static final String FEDERATION_API_V1_0 = "1.0";

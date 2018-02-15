@@ -1,19 +1,24 @@
 package com.rackspace.idm.domain.entity;
 
 import com.google.common.collect.ImmutableSet;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPDNField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
 import java.util.*;
@@ -21,6 +26,7 @@ import java.util.*;
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON)
 public class FederatedUser implements EndUser, FederatedBaseUser {
+    private static final Logger log = LoggerFactory.getLogger(FederatedUser.class);
 
     @LDAPDNField
     private String uniqueId;
@@ -169,4 +175,21 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
         return userGroupDNs;
     }
 
+    @Override
+    public PrincipalType getPrincipalType() {
+        return null;
+    }
+
+    @Override
+    public DN getDn() {
+        DN dn = null;
+        if (StringUtils.isNotBlank(uniqueId)) {
+            try {
+                dn = new DN(uniqueId);
+            } catch (LDAPException e) {
+                log.warn("Invalid uniqueId. Can't parse to DN", e);
+            }
+        }
+        return dn;
+    }
 }

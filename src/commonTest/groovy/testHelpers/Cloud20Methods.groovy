@@ -82,6 +82,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_USER_GROUPS ="groups"
     static def SERVICE_PATH_ROLES ="roles"
     static def SERVICE_PATH_USERS ="users"
+    static def SERVICE_PATH_DA ="delegation-agreements"
 
     static def ENDPOINTS = "endpoints"
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
@@ -1312,6 +1313,22 @@ class Cloud20Methods {
         }
         createIdentityProvider(token, idp)
     }
+
+    def createDelegationAgreement(token, delegationAgreement, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).entity(delegationAgreement).post(ClientResponse)
+    }
+
+    def getDelegationAgreement(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).get(ClientResponse)
+    }
+
+    def deleteDelegationAgreement(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).delete(ClientResponse)
+    }
+
 
     /**
      * Creates a new IDP, verifying the IDP was created successfully, and return the IDP rather than the raw response

@@ -234,6 +234,9 @@ public final class JSONConstants {
     public static final String PUBLIC_CERTIFICATE = "publicCertificate";
     public static final String RAX_AUTH_PUBLIC_CERTIFICATE = "RAX-AUTH:" + PUBLIC_CERTIFICATE;
 
+    public static final String DELEGATION_AGREEMENT = "delegationAgreement";
+    public static final String RAX_AUTH_DELEGATION_AGREEMENT = "RAX-AUTH:" + DELEGATION_AGREEMENT;
+
     //faults
     public static final String OPENSTACK_BAD_REQUEST = "badRequest";
     public static final String OPENSTACK_FORBIDDEN_REQUEST = "forbidden";

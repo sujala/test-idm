@@ -978,6 +978,20 @@ public class Validator20 {
         }
     }
 
+    public void validateAttributeCollectionIsNullOrEmpty(String propertyName, Collection value) {
+        if (CollectionUtils.isNotEmpty(value)) {
+            String errMsg = String.format(INVALID_ATTR_MESSAGE, propertyName);
+            throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_INVALID_VALUE);
+        }
+    }
+
+    public void validateAttributeNotNull(String propertyName, Object value) {
+        if (value == null) {
+            String errMsg = String.format(BLANK_ERROR_MSG, propertyName);
+            throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_INVALID_VALUE);
+        }
+    }
+
     public void validateAttributeForUpdate(String propertyName, String value) {
         if (value != null && value.isEmpty()) {
             throwBadRequestForEmptyAttribute(propertyName);
@@ -997,7 +1011,7 @@ public class Validator20 {
         }
     }
 
-    private void validateStringNotBlank(String propertyName, String value) {
+    public void validateStringNotBlank(String propertyName, String value) {
         if (StringUtils.isBlank(value)) {
             String errMsg = String.format(BLANK_ERROR_MSG, propertyName);
             throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_INVALID_VALUE);

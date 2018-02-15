@@ -177,6 +177,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="changePasswordCredentials"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='DelegationAgreement']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="delegationAgreement"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='DefaultRegionServices']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="defaultRegionServices"/>

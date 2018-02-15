@@ -1,19 +1,19 @@
 package com.rackspace.idm.domain.entity;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.base.Charsets;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RolespaceType;
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 @Data

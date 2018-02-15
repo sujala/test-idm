@@ -73,6 +73,9 @@ public class Cloud20VersionResource {
     private CloudUserGroupResource userGroupResource;
 
     @Autowired
+    private DelegationAgreementResource delegationAgreementResource;
+
+    @Autowired
     private ExceptionHandler exceptionHandler;
 
     @Autowired
@@ -1585,6 +1588,11 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/domains/{" + DOMAIN_ID_PATH_PARAM_NAME + "}/groups")
     public CloudUserGroupResource getUserGroupResource() {
         return userGroupResource;
+    }
+
+    @Path("RAX-AUTH/delegation-agreements/")
+    public DelegationAgreementResource getDelegationAgreementResource() {
+        return delegationAgreementResource;
     }
 
     protected int validateMarker(Integer offset) {

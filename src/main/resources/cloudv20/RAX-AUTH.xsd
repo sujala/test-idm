@@ -190,7 +190,8 @@
     <element name="tenantAssignment" type="RAX-AUTH:TenantAssignment" />
     <element name="tenantAssignments" type="RAX-AUTH:TenantAssignments" />
     <element name="roleAssignments" type="RAX-AUTH:RoleAssignments" />
-
+    <element name="delegationAgreement" type="RAX-AUTH:DelegationAgreement" />
+    
     <!-- Complex Types -->
     <complexType name="Types">
         <sequence>
@@ -659,6 +660,21 @@
             <enumeration value="SYSTEM"/>
         </restriction>
     </simpleType>
+
+    <simpleType name="PrincipalType">
+        <restriction base="xsd:string">
+            <enumeration value="USER_GROUP"/>
+            <enumeration value="USER"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="RolespaceType">
+        <restriction base="xsd:string">
+            <enumeration value="DOMAIN"/>
+            <enumeration value="DELEGATION_AGREEMENT"/>
+        </restriction>
+    </simpleType>
+
     <complexType name="BypassCodes">
         <attribute name="codes" type="RAX-AUTH:StringList" use="optional">
             <annotation>
@@ -1184,6 +1200,74 @@
         <attribute name="demoteUserId" type="xsd:string" use="optional" />
     </complexType>
 
+    <complexType name="DelegationAgreement">
+        <attribute name="id" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        An ID uniquely identifying the agreement.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="name" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The name of the agreement.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="description" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A description of the agreement. Must be less than 255 characters.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="principalType" type="RAX-AUTH:PrincipalType" use="optional"/>
+        <attribute name="principalId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Id of the principal
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="domainId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The domain against which the delegation agreement grants access.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="parentDelegationAgreementId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The Id of the parent delegation agreement against which this delegation agreement
+                        is derived, if applicable.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="delegateId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The provisioned user assigned to this delegation agreement
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+
+    </complexType>
 
     <complexType name="UserGroup">
         <attribute name="id" type="xsd:string" use="optional">
