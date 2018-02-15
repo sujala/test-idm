@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.UserLockoutService
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.apache.http.HttpStatus
@@ -26,10 +27,13 @@ class AuthWithPasswordLockoutIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityUserService identityUserService
 
+    @Autowired
+    UserLockoutService userLockoutService
+
     @Unroll
-    def "CA updates lockout fields on failed auth up to threshold regardless of IDM lockout cache; cacheEnabled: #cacheUsed"() {
+    def "CA updates lockout fields on failed auth up to threshold regardless of IDM lockout cache; cacheEnabled: #useCache"() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP, useCache)
-        reloadableConfiguration.setProperty(IdentityConfig.LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP, "PT1S")
+        reloadableConfiguration.setProperty(IdentityConfig.LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP, "PT5S")
         reloadableConfiguration.setProperty(IdentityConfig.LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_PROP, 6)
 
         def user = utils.createGenericUserAdmin()
@@ -96,8 +100,16 @@ class AuthWithPasswordLockoutIntegrationTest extends RootIntegrationTest {
         assert userEntity.getPasswordFailureDate() != null
         assert userEntity.getPasswordFailureAttempts() == 6
 
-        // Ugly, but not sure better way to do it yet...
-        sleep(1250)
+        def timeout = 10000 // 10 sec
+        def step = 1000 // 1 sec
+        def waitedFor = 0
+        def lockoutEntry = userLockoutService.performLockoutCheck(userEntity.username)
+        while (lockoutEntry != null && waitedFor < timeout) {
+            lockoutEntry = userLockoutService.performLockoutCheck(userEntity.username)
+            waitedFor += step
+            sleep(step)
+            // do not explicitly fail the test on timeout here. The next assertions will do that for you
+        }
 
         when: "Login after lockout with wrong password"
         def response = cloud20.authenticate(user.username, "wrongpassword")
