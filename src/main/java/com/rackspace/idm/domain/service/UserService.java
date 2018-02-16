@@ -264,6 +264,8 @@ public interface UserService {
      *  - the user has a password change date set that is older than the allowed domain password policy for the user's domain
      *  - the user does not have a password change date set and the domain has a non-zero password policy duration
      *
+     * NOTE: If a user is pointing to a domain that does not exist, then the password is NOT considered expired.
+     *
      * @param user
      * @throws IllegalArgumentException if the user is null
      * @return
