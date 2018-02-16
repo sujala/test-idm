@@ -4,7 +4,6 @@ import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
-import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
@@ -265,8 +264,8 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public PaginatorContext<TenantRole> getRoleAssignmentsOnEntity(UniqueId entity, PaginationParams paginationParams) {
-        SearchResultEntry entry = getLdapContainer(entity.getUniqueId(), CONTAINER_ROLES);
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnUser(User user, PaginationParams paginationParams) {
+        SearchResultEntry entry = getLdapContainer(user.getUniqueId(), CONTAINER_ROLES);
 
         PaginatorContext<TenantRole> context = new PaginatorContext<>();
         if (entry == null) {
@@ -275,21 +274,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
             context = getObjectsPaged(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
         }
         return context;
-    }
-
-    @Override
-    public TenantRole getRoleAssignmentOnEntity(UniqueId entity, String roleId) {
-        SearchResultEntry entry = getLdapContainer(entity.getUniqueId(), CONTAINER_ROLES);
-        if (entry == null) {
-            return null;
-        } else {
-            return getTenantRole(entry.getDN(), roleId);
-        }
-    }
-
-    @Override
-    public void addRoleAssignmentOnEntity(UniqueId entity, TenantRole tenantRole) {
-        addObject(getTenantRoleDn(entity.getUniqueId()), tenantRole);
     }
 
     private TenantRole getTenantRole(String dn, String roleId) {

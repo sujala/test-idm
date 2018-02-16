@@ -121,8 +121,6 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN = "DA-000";
 
     // User role assignments
-    public static final String ALL_TENANT_IN_DOMAIN_WILDCARD = "*";
-
     public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT = "ROLE-000";
     public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT_MSG = "A given role can only be specified once";
 

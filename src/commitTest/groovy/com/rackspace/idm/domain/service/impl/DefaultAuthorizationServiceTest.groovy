@@ -1,9 +1,17 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.google.common.collect.Sets
+import com.rackspace.idm.api.security.AuthorizationContext
 import com.rackspace.idm.api.security.IdentityRole
+import com.rackspace.idm.api.security.ImmutableTenantRole
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.exception.ForbiddenException
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 class DefaultAuthorizationServiceTest extends RootServiceTest {
@@ -485,6 +493,136 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
     def "test role has implicit role"() {
         expect:
         service.getImplicitRolesForRole(TEST_ROLE.name).size() == 1
+    }
+
+    @Unroll
+    def "verifyEffectiveCallerHasManagementAccessToUser: verify service authorization requires user-manage+ or rcn:admin role - role = #role"() {
+        given:
+        mockRequestContextHolder(service)
+        def domainId = "domainId"
+        def user = new User().with {
+            it.domainId = domainId
+            it
+        }
+        def caller = new User().with {
+            it.enabled = true
+            it.domainId = domainId
+            it
+        }
+
+        requestContext.getEffectiveCaller() >> caller
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.name = role.name()
+            it
+        }
+        ImmutableTenantRole immutableTenantRole = new ImmutableTenantRole(tenantRole)
+        def authorizationContext = new AuthorizationContext([immutableTenantRole],[])
+
+
+        when:
+        service.verifyEffectiveCallerHasManagementAccessToUser(caller, user)
+
+        then:
+        1 * identityConfig.staticConfig.getIdentityUserManagerRoleName() >> role.name()
+        (1.._) * requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
+        1 * requestContext.getEffectiveCallersUserType() >>  IdentityUserTypeEnum.USER_MANAGER
+
+        where:
+        role << [IdentityUserTypeEnum.USER_MANAGER, IdentityRole.RCN_ADMIN]
+    }
+
+    @Unroll
+    def "verifyEffectiveCallerHasManagementAccessToUser: rcn:admins allowed to manage target user when domains are within the same RCN"() {
+        setup:
+        mockRequestContextHolder(service)
+        def domainId = "domainId"
+        def domain = new Domain().with {
+            it.domainId = domainId
+            it.rackspaceCustomerNumber = "RCN"
+            it
+        }
+        def user = new User().with {
+            it.domainId = domainId
+            it
+        }
+        def domainId2 = "domainId2"
+        def domain2 = new Domain().with {
+            it.domainId = domainId2
+            it.rackspaceCustomerNumber = "RCN"
+            it
+        }
+        def caller = new User().with {
+            it.enabled = true
+            it.domainId = domainId2
+            it
+        }
+
+        requestContext.getEffectiveCaller() >> caller
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.name = IdentityRole.RCN_ADMIN .roleName
+            it
+        }
+        ImmutableTenantRole immutableTenantRole = new ImmutableTenantRole(tenantRole)
+        def authorizationContext = new AuthorizationContext([immutableTenantRole],[])
+
+
+        when:
+        service.verifyEffectiveCallerHasManagementAccessToUser(caller, user)
+
+        then:
+        (1.._) * requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
+        1 * requestContext.getEffectiveCallersUserType() >>  IdentityUserTypeEnum.USER_ADMIN
+        1 * domainService.getDomain(domainId) >> domain
+        1 * domainService.getDomain(domainId2) >> domain2
+    }
+
+    def "verifyEffectiveCallerHasManagementAccessToUser: rcn:admins not allowed when domains and RCNs are different"() {
+        setup:
+        mockRequestContextHolder(service)
+        def domainId = "domainId"
+        def domain = new Domain().with {
+            it.domainId = domainId
+            it.rackspaceCustomerNumber = "RCN"
+            it
+        }
+        def user = new User().with {
+            it.domainId = domainId
+            it
+        }
+        def domainId2 = "domainId2"
+        def domain2 = new Domain().with {
+            it.domainId = domainId2
+            it.rackspaceCustomerNumber = "RCN2"
+            it
+        }
+        def caller = new User().with {
+            it.enabled = true
+            it.domainId = domainId2
+            it
+        }
+
+        requestContext.getEffectiveCaller() >> caller
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.name = IdentityRole.RCN_ADMIN .roleName
+            it
+        }
+        ImmutableTenantRole immutableTenantRole = new ImmutableTenantRole(tenantRole)
+        def authorizationContext = new AuthorizationContext([immutableTenantRole],[])
+
+
+        when:
+        service.verifyEffectiveCallerHasManagementAccessToUser(caller, user)
+
+        then:
+        (1.._) * requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
+        1 * requestContext.getEffectiveCallersUserType() >>  IdentityUserTypeEnum.USER_ADMIN
+        1 * domainService.getDomain(domainId) >> domain
+        1 * domainService.getDomain(domainId2) >> domain2
+
+        thrown(ForbiddenException)
     }
 
     def retrieveIdentityRoles() {

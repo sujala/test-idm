@@ -938,17 +938,22 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+
             // Verify target user exists
             User user = userService.checkAndGetUserById(userId);
+
+            // Verify the caller has precedence over the user being modified
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+
             // Verify caller has access to modify target user
-            authorizationService.verifyEffectiveCallerHasManagementAccessToUser(user);
+            authorizationService.verifyEffectiveCallerHasManagementAccessToUser(caller, user);
 
             if (roleAssignments == null) {
                 throw new BadRequestException("Must supply a set of assignments");
             }
 
             // Get caller type to validate role access
-            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
             IdentityUserTypeEnum callerUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
 
             userService.replaceRoleAssignmentsOnUser(user, roleAssignments, callerUserType.getLevelAsInt());

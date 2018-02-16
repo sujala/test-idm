@@ -1081,9 +1081,8 @@ public class DefaultUserService implements UserService {
             return Collections.emptyList();
         }
 
-        return tenantAssignmentService.replaceTenantAssignmentsOnEntityInDomain(
+        return tenantAssignmentService.replaceTenantAssignmentsOnUser(
                 user,
-                user.getDomainId(),
                 roleAssignments.getTenantAssignments().getTenantAssignment(),
                 allowedRoleAccess);
     }
@@ -1094,7 +1093,7 @@ public class DefaultUserService implements UserService {
         Validate.isTrue(StringUtils.isNotBlank(user.getUniqueId()));
         Validate.notNull(paginationParams);
 
-        return tenantRoleDao.getRoleAssignmentsOnEntity(user, paginationParams);
+        return tenantRoleDao.getRoleAssignmentsOnUser(user, paginationParams);
     }
 
     @Override

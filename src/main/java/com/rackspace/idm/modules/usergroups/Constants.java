@@ -7,7 +7,7 @@ public class Constants {
 
     public static final String USER_GROUP_BASE_DN = "ou=userGroups,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
-    public static final String ALL_TENANT_IN_DOMAIN_WILDCARD = "*";
+    public static final int USER_GROUP_ALLOWED_ROLE_WEIGHT = 1000;
 
     public static final String USER_GROUP = "userGroup";
     public static final String RAX_AUTH_USER_GROUP = "RAX-AUTH:" + USER_GROUP;

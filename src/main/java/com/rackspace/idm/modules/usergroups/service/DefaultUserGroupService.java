@@ -392,11 +392,8 @@ public class DefaultUserGroupService implements UserGroupService {
             return Collections.emptyList();
         }
 
-        return tenantAssignmentService.replaceTenantAssignmentsOnEntityInDomain(
-                userGroup,
-                userGroup.getDomainId(),
-                roleAssignments.getTenantAssignments().getTenantAssignment(),
-                IdentityUserTypeEnum.USER_ADMIN.getLevelAsInt());
+        return tenantAssignmentService.replaceTenantAssignmentsOnUserGroup(
+                userGroup, roleAssignments.getTenantAssignments().getTenantAssignment() );
     }
 
     @Override

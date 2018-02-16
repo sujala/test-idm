@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
@@ -40,7 +41,7 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
     }
 
     /**
-     * Test a typical modification to the set of roles assign to a user
+     * Test a typical modification to the set of roles assigned to a user
      *
      * 1. No roles -> 1 tenant assigned role : Verify result includes that role assignment
      * 2. Assign 1 global role : Verify both roles returned appropriately
@@ -51,11 +52,11 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
      * Test all this through both json and xml to verify can appropriately reflect the states
      */
     @Unroll
-    def "modify roles on user; mediaType = #mediaType"() {
+    def "Modify roles on user; mediaType = #mediaType"() {
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
-        // Create tenant that belong in target user's domain
+        // Create tenants that belong in target user's domain
         def tenant = utils.createTenant()
         utils.addTenantToDomain(domainId, tenant.id)
         def tenant2 = utils.createTenant()
@@ -181,8 +182,10 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Allowed to user-admin to grant roles to default user; mediaType = #mediaType"() {
+    def "Allow an authorized user to grant roles to target user; mediaType = #mediaType"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP, true)
+
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
@@ -202,7 +205,22 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
             it
         }
 
-        when:
+        // Create RCN user-admin
+        def domainId2  = utils.createDomain()
+        def rcnUserAdmin, users2
+        (rcnUserAdmin, users2) = utils.createUserAdmin(domainId2)
+
+        // Update domains to same RCN
+        def updateDomainEntity = new Domain().with {
+            it.rackspaceCustomerNumber = testUtils.getRandomRCN()
+            it
+        }
+        utils.updateDomain(domainId, updateDomainEntity)
+        utils.updateDomain(domainId2, updateDomainEntity)
+
+        utils.addRoleToUser(rcnUserAdmin, RCN_ADMIN_ROLE_ID)
+
+        when: "user-admin adding role to default user"
         def response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(userAdmin.username), defaultUser, assignments, mediaType)
         RoleAssignments retrievedEntity = response.getEntity(RoleAssignments)
 
@@ -211,16 +229,46 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
         retrievedEntity.tenantAssignments != null
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
 
+        when: "user-manage adding role to default user"
+        response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(userManage.username), defaultUser, assignments, mediaType)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+
+        when: "admin adding role to user-admin"
+        response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(identityAdmin.username), userAdmin, assignments, mediaType)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+
+        when: "rcn admin adding role to default user"
+        response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(rcnUserAdmin.username), defaultUser, assignments, mediaType)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+
         cleanup:
         utils.deleteUsersQuietly(users)
+        utils.deleteUsersQuietly(users2)
         utils.deleteTestDomainQuietly(domainId)
+        utils.deleteTestDomainQuietly(domainId2)
+        reloadableConfiguration.reset()
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
     @Unroll
-    def "Error: Do not allowed caller to grant roles they don't have access too; mediaType = #mediaType"() {
+    def "Error: Do not allow caller to grant roles they don't have access to; mediaType = #mediaType"() {
         given:
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
@@ -260,13 +308,14 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Error: Not allowed to grant identity user type roles to user; mediaType = #mediaType"() {
+    def "Do not allow granting identity user type roles to user except user-manager; mediaType = #mediaType"() {
         given:
         def domainId = utils.createDomain()
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def identityAdmin, userAdmin, manageUser, defaultUser
+        (identityAdmin, userAdmin, manageUser, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, manageUser, userAdmin, identityAdmin]
 
-        RoleAssignments assignments = new RoleAssignments().with {
+        RoleAssignments assignments0 = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments().with {
                 tas ->
                     tas.tenantAssignment.add(new TenantAssignment().with {
@@ -280,13 +329,36 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
             it
         }
 
-        when:
-        def response = cloud20.grantRoleAssignmentsOnUser(sharedIdentityAdminToken, userAdmin, assignments, mediaType)
+        RoleAssignments assignments1 = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = USER_ADMIN_ROLE_ID
+                            ta.forTenants.add("*")
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        when: "adding user-manage role to default user"
+        def response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(userAdmin.username), defaultUser, assignments0, mediaType)
+        RoleAssignments retrievedEntity = response.getEntity(RoleAssignments)
 
         then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, USER_MANAGE_ROLE_ID, ["*"])
+
+        when: "adding user-admin role to default user"
+        response = cloud20.grantRoleAssignmentsOnUser(sharedIdentityAdminToken, defaultUser, assignments1, mediaType)
+
+        then: "return 403 Forbidden"
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN
                 , ERROR_CODE_INVALID_ATTRIBUTE
-                , String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, USER_MANAGE_ROLE_ID));
+                , String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, USER_ADMIN_ROLE_ID));
 
         cleanup:
         utils.deleteUsersQuietly(users)
@@ -329,7 +401,7 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Error: common errors for granting role assignments to user; mediaType = #mediaType"() {
+    def "Error: Common errors for granting role assignments to user; mediaType = #mediaType"() {
         given:
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, manageUser, defaultUser

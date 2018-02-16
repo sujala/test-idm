@@ -1,8 +1,9 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.modules.usergroups.Constants
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
@@ -202,5 +203,50 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
             SearchRequest request = (SearchRequest) args[0]
             new SearchResult(1, null, null, null, new String[0], searchResultList, Collections.emptyList(), 2, 0)
         }
+    }
+
+    @Unroll
+    def "getRoleAssignmentsOnUser: Get role assignments on user using param limits: marker: #marker; limit: #limit"() {
+        def containerDN = "cn=ROLES,rsId=abc," + Constants.USER_GROUP_BASE_DN
+
+        User user = new User().with {
+            it.id = "userId"
+            it.uniqueId = "rsId=" + it.id + "," + LdapRepository.USERS_BASE_DN
+            it
+        }
+
+        PaginationParams params = new PaginationParams().with {
+            it.marker = marker
+            it.limit = limit
+            it
+        }
+
+        when:
+        dao.getRoleAssignmentsOnUser(user, params)
+
+        then:
+        // Will always first search for ROLES container under the group
+        1 * ldapInterface.searchForEntry(user.uniqueId, SearchScope.ONE, _ as Filter, _) >> { args ->
+            Filter filter = args[2]
+            assert filter.components.size() == 2
+            assert filter.components.find {it.attributeName == LdapRepository.ATTR_NAME && it.assertionValue == "ROLES"}
+            assert filter.components.find {it.attributeName == LdapRepository.ATTR_OBJECT_CLASS && it.assertionValue == LdapRepository.OBJECTCLASS_RACKSPACE_CONTAINER}
+            return new SearchResultEntry(containerDN, new Attribute[0], new Control[0])  // Just return mock result
+        }
+
+        // Generates the paginated search request using the Paginator
+        1 * paginator.createSearchRequest(dao.sortAttribute, _ as SearchRequest, params.effectiveMarker, params.effectiveLimit) >> new PaginatorContext<>()
+
+        // Delete always searches for entry before deleting to find all subentries below the specified DN
+        1 * ldapInterface.search(_ as SearchRequest) >> { args ->
+            SearchRequest request = (SearchRequest) args[0]
+            new SearchResult(1, null, null, null, new String[0], Collections.emptyList(), Collections.emptyList(), 0, 0)
+        }
+
+        where:
+        marker | limit
+        1      | 1
+        4       | 120
+        null    | null
     }
 }

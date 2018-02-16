@@ -1,22 +1,10 @@
 package com.rackspace.idm.modules.usergroups.api.resource.converter
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentSource
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.SourceTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.api.security.ImmutableClientRole
-import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.EndUser
-import com.rackspace.idm.domain.entity.SourcedRoleAssignments
-import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.ApplicationService
-import com.rackspace.idm.modules.usergroups.Constants
+import com.rackspace.idm.domain.service.impl.DefaultTenantAssignmentService
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
@@ -58,7 +46,7 @@ class RoleAssignmentConverterComponentTest extends Specification {
         then:
         roleAssignment.onRole == tenantRole.roleRsId
         roleAssignment.onRoleName == tenantRole.name
-        CollectionUtils.isEqualCollection(roleAssignment.forTenants, CollectionUtils.isEmpty(tenants) ? [Constants.ALL_TENANT_IN_DOMAIN_WILDCARD] as Set : tenants)
+        CollectionUtils.isEqualCollection(roleAssignment.forTenants, CollectionUtils.isEmpty(tenants) ? [DefaultTenantAssignmentService.ALL_TENANTS_IN_DOMAIN_WILDCARD] as Set : tenants)
 
         where:
         tenants << [[] as Set, ["a"] as Set, ["a", "b"] as Set]

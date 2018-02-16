@@ -798,9 +798,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyEffectiveCallerHasManagementAccessToUser(User user) {
-        BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
-
+    public void verifyEffectiveCallerHasManagementAccessToUser(BaseUser caller, User user) {
         // Verify user has one of necessary roles
         verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, IdentityRole.RCN_ADMIN.getRoleName());
 
@@ -811,7 +809,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             // If we don't know the type of user, we can't authorize the user for anything
             throw new ForbiddenException(NOT_AUTHORIZED_MSG);
         } else if (userType.isDomainBasedAccessLevel()) {
-            // Only need test when the user's domain is different than the target domain.
+            // Only need test when the caller's domain is different than the user's domain.
             if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                 boolean isRcnAdmin = authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.RCN_ADMIN.getRoleName());
                 if (isRcnAdmin) {

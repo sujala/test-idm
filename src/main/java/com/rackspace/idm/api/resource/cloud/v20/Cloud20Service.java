@@ -105,7 +105,7 @@ public interface Cloud20Service {
     ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user);
 
     /**
-     * Grant or update the role assignments to the specified user. If any role is currently assigned to the
+     * Grant or update the role assignments to the specified user. If any role is currently assigned to the user
      * it is replaced with the provided one. A given role can only appear once in the list of roles to assign. The same
      * constraints apply for each individual role assignment specified as if they were being assigned individually. The
      * entire request will be validated prior to assigning any roles.
@@ -124,10 +124,11 @@ public interface Cloud20Service {
      * On failure will return appropriate v2 error responses:
      * <ol>
      *     <li>401 - If the supplied token is not a valid token or expired</li>
-     *     <li>403 - If the caller is not an Identity Admin</li>
+     *     <li>403 - If the caller is not allow to modify target user</li>
      *     <li>404 - If the user does not exist</li>
      *     <li>400 - If the request does not meet validation requirements.</li>
-     *     <li>403 - If the user exists in a different domain or a role can not be assigned to the user</li>
+     *     <li>403 - If role can not be assigned to the user</li>
+     *     <li>403 - If adding an identity user type role other than user-manage</li>
      *     <li>500 - Catch all for any other exception thrown by implementation</li>
      * </ol>
      *

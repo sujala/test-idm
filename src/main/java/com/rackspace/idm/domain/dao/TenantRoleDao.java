@@ -87,32 +87,10 @@ public interface TenantRoleDao {
     int countGroupsWithRoleAssignment(String roleId);
 
     /**
-     * Retrieve the tenant roles associated with the specified entity in pagination form. Only use this method
-     * on entities that can have a ROLES container. (ex. user, userGroup)
+     * Retrieve the tenant roles associated with the specified user in pagination form.
      *
-     *
-     * @param entity
+     * @param user
      * @return
      */
-    PaginatorContext<TenantRole> getRoleAssignmentsOnEntity(UniqueId entity, PaginationParams paginationParams);
-
-
-    /**
-     * Retrieve the specified tenant role associated with the specified entity. Returns null if doesn't exist.
-     * Only use this method on entities that can have a ROLES container. (ex. user, userGroup)
-     *
-     * @param entity
-     * @param roleId
-     * @return
-     */
-    TenantRole getRoleAssignmentOnEntity(UniqueId entity, String roleId);
-
-    /**
-     * Assign the new tenant role to entity. This method will create ROLES container if it does exist. Only
-     * use this method on entities that can have a ROLES container. (ex. user, userGroup)
-     *
-     * @param entity
-     * @param tenantRole
-     */
-    void addRoleAssignmentOnEntity(UniqueId entity, TenantRole tenantRole);
+    PaginatorContext<TenantRole> getRoleAssignmentsOnUser(User user, PaginationParams paginationParams);
 }

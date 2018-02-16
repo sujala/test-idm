@@ -264,9 +264,10 @@ public interface AuthorizationService {
     /**
      * Verifies the caller has at least the user-manage role and has access to modify user.
      *
+     * @param caller
      * @param user
      * @throws com.rackspace.idm.exception.ForbiddenException
      */
-    void verifyEffectiveCallerHasManagementAccessToUser(User user);
+    void verifyEffectiveCallerHasManagementAccessToUser(BaseUser caller, User user);
 
 }
