@@ -943,9 +943,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Verify target user exists
             User user = userService.checkAndGetUserById(userId);
 
-            // Verify the caller has precedence over the user being modified
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-
             // Verify caller has access to modify target user
             authorizationService.verifyEffectiveCallerHasManagementAccessToUser(caller, user);
 

@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -48,6 +49,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Autowired
     private RequestContextHolder requestContextHolder;
+
+    @Autowired
+    private PrecedenceValidator precedenceValidator;
 
     //TODO: Remove these constants and lookup via map cache rather than these individual variables serving as a cache
     private ClientRole idmSuperAdminRole = null;
@@ -799,34 +803,22 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void verifyEffectiveCallerHasManagementAccessToUser(BaseUser caller, User user) {
-        // Verify user has one of necessary roles
-        verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, IdentityRole.RCN_ADMIN.getRoleName());
+        // Verify the caller has precedence over the user being modified
+        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+
+        // Verify caller is at least user-manage+
+        verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
 
         // If domain based identity role, must verify user has access to domain
-        IdentityUserTypeEnum userType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+        IdentityUserTypeEnum callersUserType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
 
-        if (userType == null) {
+        if (callersUserType == null) {
             // If we don't know the type of user, we can't authorize the user for anything
             throw new ForbiddenException(NOT_AUTHORIZED_MSG);
-        } else if (userType.isDomainBasedAccessLevel()) {
-            // Only need test when the caller's domain is different than the user's domain.
+        } else if (callersUserType.isDomainBasedAccessLevel()) {
+            // Verify that caller's domainId matches the target user's domainId
             if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
-                boolean isRcnAdmin = authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.RCN_ADMIN.getRoleName());
-                if (isRcnAdmin) {
-                    // Compare the RCNs of the two domains. If same, rcn admin can manage
-                    Domain userDomain = domainService.getDomain(user.getDomainId());
-                    Domain callerDomain = domainService.getDomain(caller.getDomainId());
-                    if (userDomain == null
-                            || callerDomain == null
-                            || callerDomain.getRackspaceCustomerNumber() == null
-                            || userDomain.getRackspaceCustomerNumber() == null
-                            || !callerDomain.getRackspaceCustomerNumber().equalsIgnoreCase(userDomain.getRackspaceCustomerNumber())) {
-                        throw new ForbiddenException(NOT_AUTHORIZED_MSG);
-                    }
-                } else {
-                    // Only RCN admins can manage across domains
-                    throw new ForbiddenException(NOT_AUTHORIZED_MSG);
-                }
+                throw new ForbiddenException(NOT_AUTHORIZED_MSG);
             }
         }
     }

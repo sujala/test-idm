@@ -4247,7 +4247,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * userService.checkAndGetUserById(userId) >> user
         1 * requestContext.getEffectiveCaller() >> caller
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         1 * authorizationService.verifyEffectiveCallerHasManagementAccessToUser(caller, user)
         1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.USER_ADMIN
         1 * userService.replaceRoleAssignmentsOnUser(user, roleAssignments, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)

@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
@@ -184,8 +183,6 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Allow an authorized user to grant roles to target user; mediaType = #mediaType"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP, true)
-
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
@@ -204,21 +201,6 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
             }
             it
         }
-
-        // Create RCN user-admin
-        def domainId2  = utils.createDomain()
-        def rcnUserAdmin, users2
-        (rcnUserAdmin, users2) = utils.createUserAdmin(domainId2)
-
-        // Update domains to same RCN
-        def updateDomainEntity = new Domain().with {
-            it.rackspaceCustomerNumber = testUtils.getRandomRCN()
-            it
-        }
-        utils.updateDomain(domainId, updateDomainEntity)
-        utils.updateDomain(domainId2, updateDomainEntity)
-
-        utils.addRoleToUser(rcnUserAdmin, RCN_ADMIN_ROLE_ID)
 
         when: "user-admin adding role to default user"
         def response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(userAdmin.username), defaultUser, assignments, mediaType)
@@ -247,20 +229,9 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
         retrievedEntity.tenantAssignments != null
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
 
-        when: "rcn admin adding role to default user"
-        response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(rcnUserAdmin.username), defaultUser, assignments, mediaType)
-        retrievedEntity = response.getEntity(RoleAssignments)
-
-        then:
-        response.status == HttpStatus.SC_OK
-        retrievedEntity.tenantAssignments != null
-        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
-
         cleanup:
         utils.deleteUsersQuietly(users)
-        utils.deleteUsersQuietly(users2)
         utils.deleteTestDomainQuietly(domainId)
-        utils.deleteTestDomainQuietly(domainId2)
         reloadableConfiguration.reset()
 
         where:
