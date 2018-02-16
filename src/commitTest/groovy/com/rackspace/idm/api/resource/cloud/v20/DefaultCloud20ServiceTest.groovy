@@ -4245,9 +4245,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.grantRolesToUser(headers, authToken, userId, roleAssignments)
 
         then:
-        1 * userService.checkAndGetUserById(userId) >> user
         1 * requestContext.getEffectiveCaller() >> caller
-        1 * authorizationService.verifyEffectiveCallerHasManagementAccessToUser(caller, user)
+        1 * requestContext.getTargetEndUser() >> user
+        1 * authorizationService.verifyEffectiveCallerHasManagementAccessToUser(userId)
         1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.USER_ADMIN
         1 * userService.replaceRoleAssignmentsOnUser(user, roleAssignments, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
         1 * userService.getRoleAssignmentsOnUser(user, _) >> new PaginatorContext<>()
@@ -4260,17 +4260,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         def userId = "userId"
-        def user = new com.rackspace.idm.domain.entity.User().with {
-            it.id = userId
-            it
-        }
 
-        when:
+        when: "roleAssignment is null"
         def response = service.grantRolesToUser(headers, authToken, userId, null)
 
         then:
-        1 * userService.checkAndGetUserById(userId) >> user
-
         response.status == SC_BAD_REQUEST
     }
 

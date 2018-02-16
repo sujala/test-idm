@@ -32,7 +32,7 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
     @Shared def sharedIdentityAdminToken
 
     void doSetupSpec() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, true)
 
         def authResponse = cloud20.authenticatePassword(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD)
         assert authResponse.status == HttpStatus.SC_OK
@@ -379,6 +379,10 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
         (identityAdmin, userAdmin, manageUser, defaultUser) = utils.createUsers(domainId)
         def users = [defaultUser, manageUser, userAdmin, identityAdmin]
 
+        def domainId2 = utils.createDomain()
+        def userAdmin2, users2
+        (userAdmin2, users2) = utils.createUserAdmin(domainId2)
+
         def tenant = utils.createTenant()
 
         RoleAssignments assignments = new RoleAssignments().with {
@@ -447,9 +451,46 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN,
                 ERROR_CODE_INVALID_ATTRIBUTE, String.format(ERROR_CODE_ROLE_ASSIGNMENT_WRONG_DOMAIN_TENANT_MSG_PATTERN, ROLE_RBAC1_ID, domainId))
 
+        when: "userAdmin attempts to modify default user on a different domain"
+        response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(userAdmin2.username), defaultUser, assignments, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
+
         cleanup:
         utils.deleteUsersQuietly(users)
+        utils.deleteUsersQuietly(users2)
         utils.deleteTestDomainQuietly(domainId)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "grantRolesToUser: test feature flag - mediaType = #mediaType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, false)
+
+        def user = new User().with {
+            it.id = "userId"
+            it
+        }
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, []))
+                    tas
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnUser(utils.getIdentityAdminToken(), user, assignments, mediaType)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        cleanup:
+        reloadableConfiguration.reset()
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]

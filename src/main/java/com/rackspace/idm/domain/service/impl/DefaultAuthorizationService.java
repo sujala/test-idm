@@ -802,12 +802,18 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyEffectiveCallerHasManagementAccessToUser(BaseUser caller, User user) {
-        // Verify the caller has precedence over the user being modified
-        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+    public void verifyEffectiveCallerHasManagementAccessToUser(String userId) {
+        BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
         // Verify caller is at least user-manage+
         verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
+
+        // Verify the target user exists
+        User user = userService.checkAndGetUserById(userId);
+        requestContextHolder.getRequestContext().setTargetEndUser(user);
+
+        // Verify the caller has precedence over the user being modified
+        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
 
         // If domain based identity role, must verify user has access to domain
         IdentityUserTypeEnum callersUserType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();

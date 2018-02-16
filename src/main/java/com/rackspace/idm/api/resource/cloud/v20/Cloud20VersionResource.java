@@ -929,6 +929,9 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
             RoleAssignments roleAssignments) {
+        if (!identityConfig.getReloadableConfig().isGrantRolesToUserServiceEnabled()) {
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
         return cloud20Service.grantRolesToUser(httpHeaders, authToken, userId, roleAssignments).build();
     }
 

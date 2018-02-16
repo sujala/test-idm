@@ -124,7 +124,7 @@ public interface Cloud20Service {
      * On failure will return appropriate v2 error responses:
      * <ol>
      *     <li>401 - If the supplied token is not a valid token or expired</li>
-     *     <li>403 - If the caller is not allow to modify target user</li>
+     *     <li>403 - If the caller is not allowed to modify target user</li>
      *     <li>404 - If the user does not exist</li>
      *     <li>400 - If the request does not meet validation requirements.</li>
      *     <li>403 - If role can not be assigned to the user</li>

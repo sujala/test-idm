@@ -498,7 +498,9 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         mockPrecedenceValidator(service)
 
         def domainId = "domainId"
+        def userId = "userId"
         def user = new User().with {
+            it.id = userId
             it.domainId = domainId
             it
         }
@@ -519,11 +521,12 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
 
         when:
-        service.verifyEffectiveCallerHasManagementAccessToUser(caller, user)
+        service.verifyEffectiveCallerHasManagementAccessToUser(userId)
 
         then:
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         1 * identityConfig.staticConfig.getIdentityUserManagerRoleName() >> IdentityUserTypeEnum.USER_MANAGER.roleName
+        1 * userService.checkAndGetUserById(userId) >> user
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         (1.._) * requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
         1 * requestContext.getEffectiveCallersUserType() >>  IdentityUserTypeEnum.USER_MANAGER
     }
