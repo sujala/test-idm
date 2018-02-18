@@ -672,7 +672,7 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
 
-    def listUserGlobalRoles(String token, String userId, serviceId = null, applyRcnRoles = false, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def listUserGlobalRoles(String token, String userId, serviceId = null, applyRcnRoles = true, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         def queryParams = new MultivaluedMapImpl()
         if (serviceId != null) {

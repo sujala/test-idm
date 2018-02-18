@@ -291,7 +291,7 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         addRoleToUserResponse.status == HttpStatus.SC_OK
 
         when: "List user's global roles"
-        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, null, false)
+        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, null, true)
         def globalRoles = userGlobalRolesResponse.getEntity(RoleList).value
 
         then: "Assert RCN role exist"

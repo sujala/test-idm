@@ -192,9 +192,9 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
         # Not adding schema validation as of now, because this check is
         # more than sufficient to validate the api response
         if apply_rcn:
-            self.assertNotIn(rcn_role.id, list_of_roles)
-        else:
             self.assertIn(rcn_role.id, list_of_roles)
+        else:
+            self.assertNotIn(rcn_role.id, list_of_roles)
 
     def test_list_role_for_user_on_tenant(self):
         # list role for user on tenant

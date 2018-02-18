@@ -91,7 +91,7 @@ class TestRCNDomain(base.TestBaseV2):
     def check_users_rcn_role(self, user_id, role_expected=True):
 
         list_resp = self.identity_admin_client.list_roles_for_user(
-            user_id=user_id)
+            user_id=user_id, apply_rcn_roles=True)
         role_names = [role[const.NAME] for role in list_resp.json()[
             const.ROLES]]
         if role_expected:

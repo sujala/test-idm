@@ -23,7 +23,7 @@ class DefaultTenantServiceIntegrationTest extends RootIntegrationTest {
         assert fedEntity != null
 
         when: "get roles for fed user"
-        List<TenantRole> fedGlobalRoles = tenantService.getEffectiveGlobalRolesForUser(fedEntity)
+        List<TenantRole> fedGlobalRoles = tenantService.getEffectiveGlobalRolesForUserIncludeRcnRoles(fedEntity)
 
         then: "has default role"
         fedGlobalRoles.size() == 1

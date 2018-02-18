@@ -226,7 +226,7 @@ public interface TenantService {
      * @return
      * @throws IllegalArgumentException If supplied user is null
      */
-    List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user);
+    List<TenantRole> getEffectiveGlobalRolesForUserIncludeRcnRoles(BaseUser user);
 
     /**
      * Retrieves the roles "effectively" assigned to the user as "global" (domain) assignment. This will exclude RCN roles
@@ -248,7 +248,7 @@ public interface TenantService {
      * @return
      * @throws IllegalArgumentException If supplied user is null
      */
-    List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(BaseUser user);
+    List<TenantRole> getEffectiveGlobalRolesForUserExcludeRcnRoles(BaseUser user);
 
     /**
      * Returns all roles assignments explicitly made on the user that are assigned globally and have an
@@ -309,7 +309,7 @@ public interface TenantService {
      * @return
      * @throws IllegalArgumentException If supplied user is null
      */
-    List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user, String applicationId);
+    List<TenantRole> getEffectiveGlobalRolesForUserIncludeRcnRoles(BaseUser user, String applicationId);
 
     /**
      * Retrieves the specified application's roles that are "effectively" assigned to the user as "global" (domain)
@@ -333,7 +333,7 @@ public interface TenantService {
      * @return
      * @throws IllegalArgumentException If supplied user is null
      */
-    List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId);
+    List<TenantRole> getEffectiveGlobalRolesForUserExcludeRcnRoles(EndUser user, String applicationId);
 
     /**
      * Return the set of roles the user "effectively" has on the specified tenant. This includes all explicitly assigned
