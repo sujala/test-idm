@@ -25,6 +25,7 @@ public final class AuthenticatedByMethodGroup {
     public static final AuthenticatedByMethodGroup PASSWORD_PASSCODE = getGroup(AuthenticatedByMethodEnum.PASSWORD, AuthenticatedByMethodEnum.PASSCODE);
     public static final AuthenticatedByMethodGroup PASSWORD_OTPPASSCODE = getGroup(AuthenticatedByMethodEnum.PASSWORD, AuthenticatedByMethodEnum.OTPPASSCODE);
     public static final AuthenticatedByMethodGroup EMAIL = getGroup(AuthenticatedByMethodEnum.EMAIL);
+    public static final AuthenticatedByMethodGroup DELEGATE = getGroup(AuthenticatedByMethodEnum.DELEGATE);
 
     private List<AuthenticatedByMethodEnum> authenticatedByMethods = new ArrayList<AuthenticatedByMethodEnum>();
     private boolean allAuthenticatedByMethods = true;
@@ -70,6 +71,10 @@ public final class AuthenticatedByMethodGroup {
 
     public List<AuthenticatedByMethodEnum> getAuthenticatedByMethods() {
         return Collections.unmodifiableList(authenticatedByMethods);
+    }
+
+    public boolean includesAuthMethod(AuthenticatedByMethodEnum methodEnum) {
+        return authenticatedByMethods.contains(methodEnum);
     }
 
     public List<String> getAuthenticatedByMethodsAsValues() {

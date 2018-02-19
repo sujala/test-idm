@@ -27,10 +27,9 @@ import java.util.*;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
-public class User implements EndUser {
+public class User implements EndUser, DelegationPrincipal {
     private static final Logger log = LoggerFactory.getLogger(User.class);
 
-    // TODO: Remove those as soon as we remove the LDAP dependencies.
     @LDAPEntryField
     private ReadOnlyEntry readOnlyEntry;
 
@@ -61,8 +60,18 @@ public class User implements EndUser {
 
     private boolean passwordIsNew = true;
 
+    /**
+     * This is legacy and shouldn't be used anywhere.
+     * TODO: Remove this and verify not used.
+     */
+    @Deprecated
     private boolean federated = false;
 
+    /**
+     * This is legacy and shouldn't be used anywhere.
+     * TODO: Remove this and verify not used.
+     */
+    @Deprecated
     private String federatedIdp;
 
     @LDAPField(attribute=LdapRepository.ATTR_PASSWORD_UPDATED_TIMESTAMP,

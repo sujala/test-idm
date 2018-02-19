@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -32,6 +33,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import static com.rackspace.idm.JSONConstants.*;
+import static com.rackspace.idm.JSONConstants.AUTH_RAX_AUTH_DELEGATION_CREDENTIALS_PATH;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -56,6 +58,7 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
         prefixValues.put(AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH, API_KEY_CREDENTIALS);
         prefixValues.put(AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH, RSA_CREDENTIALS);
         prefixValues.put(AUTH_RAX_AUTH_PASSCODE_CREDENTIALS_PATH, PASSCODE_CREDENTIALS);
+        prefixValues.put(AUTH_RAX_AUTH_DELEGATION_CREDENTIALS_PATH, DELEGATION_CREDENTIALS);
         prefixValues.put(AUTH_RAX_AUTH_DOMAIN_PATH, DOMAIN);
         prefixValues.put(AUTH_RAX_AUTH_SCOPE_PATH, SCOPE);
 
@@ -121,6 +124,12 @@ public class JSONReaderForAuthenticationRequest implements MessageBodyReader<Aut
                 String string = innerObject.toString();
                 credentialType = om.readValue(string.getBytes(), PasscodeCredentials.class);
                 ((JSONObject)jsonObject.get(AUTH)).remove(PASSCODE_CREDENTIALS);
+            } else if(auth.containsKey(DELEGATION_CREDENTIALS)){
+                innerObject.put(DELEGATION_CREDENTIALS, auth.get(DELEGATION_CREDENTIALS));
+                removeExtraCredentialAttributes((JSONObject)innerObject.get(DELEGATION_CREDENTIALS));
+                String string = innerObject.toString();
+                credentialType = om.readValue(string.getBytes(), DelegationCredentials.class);
+                ((JSONObject)jsonObject.get(AUTH)).remove(DELEGATION_CREDENTIALS);
             }
 
             String jsonString = jsonObject.toString();

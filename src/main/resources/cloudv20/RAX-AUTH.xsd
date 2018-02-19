@@ -111,6 +111,7 @@
     <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
     <element name="forgotPasswordCredentials" type="RAX-AUTH:ForgotPasswordCredentials" />
     <element name="changePasswordCredentials" type="RAX-AUTH:ChangePasswordCredentials" />
+    <element name="delegationCredentials" type="RAX-AUTH:DelegationCredentials" substitutionGroup="identity:credential" />
     <element name="bypassCodes" type="RAX-AUTH:BypassCodes"/>
     <element name="multiFactorDomain" type="RAX-AUTH:MultiFactorDomain"/>
     <element name="tenantType" type="RAX-AUTH:TenantType" />
@@ -586,6 +587,15 @@
             <extension base="identity:CredentialType">
                 <attribute name="username" type="xsd:string" use="optional" />
                 <attribute name="portal" type="xsd:string" use="optional" />
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="DelegationCredentials">
+        <complexContent>
+            <extension base="identity:CredentialType">
+                <attribute name="token" type="xsd:string" use="optional" />
+                <attribute name="delegationAgreementId" type="xsd:string" use="optional" />
             </extension>
         </complexContent>
     </complexType>

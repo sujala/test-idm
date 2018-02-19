@@ -293,6 +293,10 @@ public final class JsonWriterHelper {
             userInner.put(JSONConstants.RAX_AUTH_SESSION_INACTIVITY_TIMEOUT, user.getSessionInactivityTimeout().toString());
         }
 
+        if (user.getDomainId() != null) {
+            userInner.put(JSONConstants.RAX_AUTH_DOMAIN_ID, user.getDomainId().toString());
+        }
+
         return userInner;
     }
 

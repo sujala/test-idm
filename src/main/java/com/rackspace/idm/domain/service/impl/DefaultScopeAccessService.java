@@ -823,20 +823,32 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, int expirationSeconds, String scope) {
+        DateTime expiration = new DateTime().plusSeconds(expirationSeconds);
+        return addScopedScopeAccess(user, clientId, authenticatedBy, expiration.toDate(), scope);
+    }
 
+    // TODO: Refactor all the scope access creation methods. THis is getting unwieldy.
+    @Override
+    public ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, Date expirationDate, String scope) {
         ScopeAccess scopeAccessToAdd = null;
 
-        if (user instanceof User) {
-            User provisionedUser = (User)user;
+        boolean isProvisionedUser = user instanceof User;
+        boolean isProvisionedUserDelegate = user instanceof ProvisionedUserDelegate;
+
+        if (isProvisionedUser || isProvisionedUserDelegate) {
             UserScopeAccess userScopeAccess = new UserScopeAccess();
-            userScopeAccess.setUserRsId(provisionedUser.getId());
+            userScopeAccess.setUserRsId(user.getId());
             userScopeAccess.setClientId(clientId);
-            userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
+            userScopeAccess.setAccessTokenExp(expirationDate);
             userScopeAccess.setAccessTokenString(generateToken());
             userScopeAccess.getAuthenticatedBy().addAll(authenticatedBy);
             userScopeAccess.setScope(scope);
             scopeAccessToAdd = userScopeAccess;
-        } else {
+
+            if (isProvisionedUserDelegate) {
+                userScopeAccess.setDelegationAgreementId(((ProvisionedUserDelegate)user).getDelegationAgreement().getId());
+            }
+        }  else {
             // We can fully implement this method for Federated Users and Rackers, but
             // for now its just going to be an unsupported method.
             throw new UnsupportedOperationException();

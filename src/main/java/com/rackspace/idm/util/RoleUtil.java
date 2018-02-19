@@ -1,5 +1,7 @@
 package com.rackspace.idm.util;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
+import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.apache.commons.collections4.CollectionUtils;
@@ -120,6 +122,15 @@ public class RoleUtil {
         target.setUserId(source.getUserId());
         target.setTenantIds(new HashSet<String>(source.getTenantIds()));
 
+        Types finalTypes = null;
+        if (source.getTypes() != null) {
+            finalTypes = new Types();
+            if (org.apache.commons.collections.CollectionUtils.isNotEmpty(source.getTypes().getType())) {
+                finalTypes.getType().addAll(source.getTypes().getType());
+            }
+        }
+        target.setTypes(finalTypes);
+
         return target;
     }
 
@@ -134,6 +145,23 @@ public class RoleUtil {
         target.setAssignmentType(source.getAssignmentType());
         target.setRoleType(source.getRoleType());
         target.setTenantTypes(new HashSet<>(source.getTenantTypes()));
+
+        return target;
+    }
+
+    /**
+     * Preps a tenant role from a client role. Caller is expected to set user, tenants, etc
+     *
+     * @param source
+     * @return
+     */
+    public static TenantRole newTenantRoleFromClientRole(ImmutableClientRole source) {
+        TenantRole target = new TenantRole();
+        target.setName(source.getName());
+        target.setRoleType(source.getRoleType());
+        target.setDescription(source.getDescription());
+        target.setRoleRsId(source.getId());
+        target.setClientId(source.getClientId());
 
         return target;
     }

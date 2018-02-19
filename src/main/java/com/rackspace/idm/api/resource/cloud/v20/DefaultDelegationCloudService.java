@@ -78,8 +78,8 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             BaseUser callerBu = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             // Only EndUsers would pass above checks, but to be paranoid...
-            if (!(callerBu instanceof EndUser)) {
-                throw new BadRequestException("Only provisioned and federated users can create delegation agreements", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            if (!(callerBu instanceof User)) {
+                throw new BadRequestException("Only provisioned users can create delegation agreements", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
 
             // Don't support derived agreements yet
@@ -88,7 +88,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             // Set principal based on caller. User Group principals are not yet supported
-            EndUser caller = (EndUser) callerBu;
+            User caller = (User) callerBu;
             Domain callerDomain = requestContextHolder.getRequestContext().getEffectiveCallerDomain();
 
             // Verify RCN is supported for DAs. Blank RCNs only supported if feature is globally enabled for all RCNs
@@ -148,11 +148,10 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             // Caller must be the DA principal to view it for now TODO: Support delegate viewers
             BaseUser callerBu = requestContextHolder.getRequestContext().getEffectiveCaller();
 
-            // Only EndUsers would pass above checks, but to be paranoid...
-            if (!(callerBu instanceof EndUser)) {
-                throw new BadRequestException("Only provisioned and federated users can retrieve delegation agreements");
+            if (!(callerBu instanceof User)) {
+                throw new BadRequestException("Only provisioned users can retrieve delegation agreements");
             }
-            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+            User caller = (User) callerBu; // To get this far requires user to be EU
 
             // Currently only principals can retrieve DA
             if (delegationAgreement == null || !caller.getDn().equals(delegationAgreement.getPrincipalDN())) {
@@ -177,10 +176,10 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             BaseUser callerBu = requestContextHolder.getRequestContext().getEffectiveCaller();
 
-            if (!(callerBu instanceof EndUser)) {
-                throw new BadRequestException("Only provisioned and federated users can retrieve delegation agreements");
+            if (!(callerBu instanceof User)) {
+                throw new BadRequestException("Only provisioned users can retrieve delegation agreements");
             }
-            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+            User caller = (User) callerBu; // To get this far requires user to be EU
 
             // Caller must be the DA principal to delete it
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);

@@ -237,6 +237,9 @@ public final class JSONConstants {
     public static final String DELEGATION_AGREEMENT = "delegationAgreement";
     public static final String RAX_AUTH_DELEGATION_AGREEMENT = "RAX-AUTH:" + DELEGATION_AGREEMENT;
 
+    public static final String DELEGATION_CREDENTIALS = "delegationCredentials";
+    public static final String RAX_AUTH_DELEGATION_CREDENTIALS = "RAX-AUTH:" + DELEGATION_CREDENTIALS;
+
     //faults
     public static final String OPENSTACK_BAD_REQUEST = "badRequest";
     public static final String OPENSTACK_FORBIDDEN_REQUEST = "forbidden";
@@ -263,6 +266,8 @@ public final class JSONConstants {
     public static final String AUTH_RAX_AUTH_SCOPE_PATH = "auth.RAX-AUTH:scope";
     public static final String AUTH_PASSCODE_CREDENTIALS_PATH = "auth.passcodeCredentials";
     public static final String AUTH_RAX_AUTH_PASSCODE_CREDENTIALS_PATH = "auth.RAX-AUTH:passcodeCredentials";
+    public static final String AUTH_DELEGATION_CREDENTIALS_PATH = "auth." + DELEGATION_CREDENTIALS;
+    public static final String AUTH_RAX_AUTH_DELEGATION_CREDENTIALS_PATH = "auth.RAX-AUTH:" + DELEGATION_CREDENTIALS;
 
     public static final String ENDPOINT_LINKS_PATH = "endpoint.link";
     public static final String ENDPOINT_ENDPOINT_LINKS_PATH = "endpoint.endpoint_links";
