@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.util.JSONReaderForRoles
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.io.IOUtils
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -577,7 +578,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
     }
 
     @Unroll
-    def "Get global roles for user with RCN role using query param 'apply_rcn_roles' - apply_rcn_roles = #applyRcnRoles, size = #size, accept = #accept" () {
+    def "Get global roles for user with RCN role using query param 'apply_rcn_roles' - apply_rcn_roles = #rcnQueryParam, size = #size, accept = #accept" () {
         given: "A new user admin"
         def domainId = utils.createDomain()
         def userAdmin, users
@@ -605,17 +606,20 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         addRoleToUserResponse.status == HttpStatus.SC_OK
 
         when: "List user's global roles using 'apply_rcn_roles' query param"
-        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, null, applyRcnRoles, accept)
+        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, null, rcnQueryParam, accept)
         def globalRoles = getRoleListEntity(userGlobalRolesResponse)
 
         then:
         assert globalRoles.role.find({it.id == USER_ADMIN_ROLE_ID}) != null
 
-        if (!applyRcnRoles) {
+        if (applyRcnRoles) {
             Role rcnRole = globalRoles.role.find({it.id == roleEntity.id})
             assert rcnRole != null
             assert rcnRole.roleType == RoleTypeEnum.RCN
             assert rcnRole.types.type == ["*"]
+        } else {
+            Role rcnRole = globalRoles.role.find({it.id == roleEntity.id})
+            rcnRole == null
         }
         globalRoles.role.size == size
 
@@ -625,17 +629,17 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         utils.deleteRole(roleEntity)
 
         where:
-        applyRcnRoles       | size | accept
-        true                | 1    | MediaType.APPLICATION_XML_TYPE
-        true                | 1    | MediaType.APPLICATION_JSON_TYPE
-        "True"              | 1    | MediaType.APPLICATION_XML_TYPE
-        "TRUE"              | 1    | MediaType.APPLICATION_XML_TYPE
-        false               | 2    | MediaType.APPLICATION_XML_TYPE
-        false               | 2    | MediaType.APPLICATION_JSON_TYPE
-        "False"             | 2    | MediaType.APPLICATION_XML_TYPE
-        "FALSE"             | 2    | MediaType.APPLICATION_XML_TYPE
-        "invalid1"          | 2    | MediaType.APPLICATION_XML_TYPE
-        "invalid~-_.!*'()," | 2    | MediaType.APPLICATION_XML_TYPE
+        rcnQueryParam       | applyRcnRoles | size | accept
+        true                | true          | 2    | MediaType.APPLICATION_XML_TYPE
+        true                | true          | 2    | MediaType.APPLICATION_JSON_TYPE
+        "True"              | true          | 2    | MediaType.APPLICATION_XML_TYPE
+        "TRUE"              | true          | 2    | MediaType.APPLICATION_XML_TYPE
+        false               | false         | 1    | MediaType.APPLICATION_XML_TYPE
+        false               | false         | 1    | MediaType.APPLICATION_JSON_TYPE
+        "False"             | false         | 1    | MediaType.APPLICATION_XML_TYPE
+        "FALSE"             | false         | 1    | MediaType.APPLICATION_XML_TYPE
+        "invalid1"          | false         | 1    | MediaType.APPLICATION_XML_TYPE
+        "invalid~-_.!*'()," | false         | 1    | MediaType.APPLICATION_XML_TYPE
     }
 
     @Unroll
@@ -666,17 +670,14 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         then: "Assert role added to user"
         addRoleToUserResponse.status == HttpStatus.SC_OK
 
-        when: "List user's global roles"
+        when: "List user's global roles and do NOT apply RCN roles"
         def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, serviceId, null, accept)
         def globalRoles = getRoleListEntity(userGlobalRolesResponse)
 
-        then:
-        if (serviceId == null || serviceId == SERVERS_SERVICE_ID) {
-            Role rcnRole = globalRoles.role.find({it.id == roleEntity.id})
-            assert rcnRole != null
-            assert rcnRole.roleType == RoleTypeEnum.RCN
-            assert rcnRole.types.type == ["*"]
-        }
+        then: "the RCN role is not returned"
+        globalRoles.role.find({it.id == roleEntity.id}) == null
+
+        and: "the Identity user type (global) role is returned if we are filtering by the Identity service"
         if (serviceId == null || serviceId == IDENTITY_SERVICE_ID) {
             assert globalRoles.role.find({it.id == USER_ADMIN_ROLE_ID}) != null
         }
@@ -689,12 +690,12 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
 
         where:
         serviceId           | size | accept
-        SERVERS_SERVICE_ID  | 1    | MediaType.APPLICATION_XML_TYPE
-        SERVERS_SERVICE_ID  | 1    | MediaType.APPLICATION_JSON_TYPE
+        SERVERS_SERVICE_ID  | 0    | MediaType.APPLICATION_XML_TYPE
+        SERVERS_SERVICE_ID  | 0    | MediaType.APPLICATION_JSON_TYPE
         IDENTITY_SERVICE_ID | 1    | MediaType.APPLICATION_XML_TYPE
         IDENTITY_SERVICE_ID | 1    | MediaType.APPLICATION_JSON_TYPE
-        null                | 2    | MediaType.APPLICATION_XML_TYPE
-        null                | 2    | MediaType.APPLICATION_JSON_TYPE
+        null                | 1    | MediaType.APPLICATION_XML_TYPE
+        null                | 1    | MediaType.APPLICATION_JSON_TYPE
     }
 
     @Unroll
@@ -730,10 +731,11 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         def globalRoles = getRoleListEntity(userGlobalRolesResponse)
 
         then:
+        def rcnRole = globalRoles.role.find({it.id == roleEntity.id})
         if (serviceId == IDENTITY_SERVICE_ID) {
+            assert rcnRole == null
             assert globalRoles.role.find({it.id == USER_ADMIN_ROLE_ID}) != null
-        } else if (serviceId == SERVERS_SERVICE_ID && !applyRcnRoles) {
-            Role rcnRole = globalRoles.role.find({it.id == roleEntity.id})
+        } else if (serviceId == SERVERS_SERVICE_ID && applyRcnRoles) {
             assert rcnRole != null
             assert rcnRole.roleType == RoleTypeEnum.RCN
             assert rcnRole.types.type == ["*"]
@@ -748,9 +750,9 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
 
         where:
         serviceId           | applyRcnRoles       | size
-        SERVERS_SERVICE_ID  | true                | 0
+        SERVERS_SERVICE_ID  | true                | 1
         IDENTITY_SERVICE_ID | true                | 1
-        SERVERS_SERVICE_ID  | false               | 1
+        SERVERS_SERVICE_ID  | false               | 0
         IDENTITY_SERVICE_ID | false               | 1
     }
 

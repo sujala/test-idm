@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
-import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -1098,7 +1097,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         }
 
         when:
-        List<TenantRole> roles = service.getEffectiveGlobalRolesForUserApplyRcnRoles(user)
+        List<TenantRole> roles = service.getEffectiveGlobalRolesForUserExcludeRcnRoles(user)
 
         then:
         1 * tenantRoleDao.getTenantRolesForUser(user) >> userTenantRoles
@@ -1132,7 +1131,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         }
 
         when:
-        List<TenantRole> roles = service.getEffectiveGlobalRolesForUser(user)
+        List<TenantRole> roles = service.getEffectiveGlobalRolesForUserIncludeRcnRoles(user)
 
         then:
         1 * tenantRoleDao.getTenantRolesForUser(user) >> userTenantRoles

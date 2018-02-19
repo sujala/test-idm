@@ -3194,9 +3194,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             List<TenantRole> roles;
             if (applyRcnRoles) {
-                roles = tenantService.getEffectiveGlobalRolesForUserApplyRcnRoles(user);
+                roles = tenantService.getEffectiveGlobalRolesForUserIncludeRcnRoles(user);
             } else {
-                roles = tenantService.getEffectiveGlobalRolesForUser(user);
+                roles = tenantService.getEffectiveGlobalRolesForUserExcludeRcnRoles(user);
             }
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
         } catch (Exception ex) {
@@ -3248,9 +3248,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             List<TenantRole> roles;
             if (applyRcnRoles) {
-                roles= tenantService.getEffectiveGlobalRolesForUserApplyRcnRoles(user, serviceId);
+                roles = tenantService.getEffectiveGlobalRolesForUserIncludeRcnRoles(user, serviceId);
             } else {
-                roles= tenantService.getEffectiveGlobalRolesForUser(user, serviceId);
+                roles = tenantService.getEffectiveGlobalRolesForUserExcludeRcnRoles(user, serviceId);
             }
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());

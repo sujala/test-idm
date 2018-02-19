@@ -1164,11 +1164,11 @@ class DefaultUserServiceTest extends RootServiceTest {
         thrown IllegalArgumentException
 
         when: "call with user and null domain"
-        1 * domainService.getDomain(user.domainId) >> null
-        service.getPasswordExpiration(user)
+        passwordExpiration = service.getPasswordExpiration(user)
 
         then:
-        thrown IllegalArgumentException
+        1 * domainService.getDomain(user.domainId) >> null
+        passwordExpiration == null
     }
 
     def "isPasswordExpired correctly determines if a user's password is expired"() {
@@ -1235,7 +1235,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.isPasswordExpired(user)
 
         then:
-        thrown IllegalArgumentException
+        !isPasswordExpired
     }
 
     def "replaceRoleAssignmentsOnUser: Throws IllegalArgumentException if supplied user is invalid"() {

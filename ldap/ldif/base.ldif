@@ -4076,6 +4076,13 @@ rsId: f7c212c05efc44a9957bc8b48d0a071a
 cn: f7c212c05efc44a9957bc8b48d0a071a
 enabled: TRUE
 
+dn: rsId=135792468,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+cn: 135792468
+description: A domain for users in the base data set. Do not modify this dom
+ ain. Instead, create a new domain if you need one for testing or dev.
+enabled: TRUE
+
 dn: ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit

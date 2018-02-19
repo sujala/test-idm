@@ -7,7 +7,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.ImmutableClientRole;
@@ -30,7 +29,6 @@ import com.rackspace.idm.validation.PrecedenceValidator;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
@@ -859,7 +857,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user) {
+    public List<TenantRole> getEffectiveGlobalRolesForUserIncludeRcnRoles(BaseUser user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null.");
         }
@@ -869,7 +867,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(BaseUser user) {
+    public List<TenantRole> getEffectiveGlobalRolesForUserExcludeRcnRoles(BaseUser user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null.");
         }
@@ -986,16 +984,16 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user, String applicationId) {
+    public List<TenantRole> getEffectiveGlobalRolesForUserIncludeRcnRoles(BaseUser user, String applicationId) {
         logger.debug("Getting Global Roles (apply_rcn_roles=false)");
-        List<TenantRole> allRoles = getEffectiveGlobalRolesForUser(user);
+        List<TenantRole> allRoles = getEffectiveGlobalRolesForUserIncludeRcnRoles(user);
         return CollectionUtils.select(allRoles, new RoleForClientPredicate(applicationId), new ArrayList<TenantRole>());
     }
 
     @Override
-    public List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId) {
+    public List<TenantRole> getEffectiveGlobalRolesForUserExcludeRcnRoles(EndUser user, String applicationId) {
         logger.debug("Getting Global Roles (apply_rcn_roles=true)");
-        List<TenantRole> allRoles = getEffectiveGlobalRolesForUserApplyRcnRoles(user);
+        List<TenantRole> allRoles = getEffectiveGlobalRolesForUserExcludeRcnRoles(user);
         return CollectionUtils.select(allRoles, new RoleForClientPredicate(applicationId), new ArrayList<TenantRole>());
     }
 

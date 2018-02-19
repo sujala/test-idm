@@ -377,7 +377,12 @@ public class DefaultUserService implements UserService {
     public DateTime getPasswordExpiration(User user) {
         Validate.notNull(user);
         Domain domain = domainService.getDomain(user.getDomainId());
-        return getPasswordExpiration(user, domain);
+
+        if (domain != null) {
+            return getPasswordExpiration(user, domain);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -410,7 +415,11 @@ public class DefaultUserService implements UserService {
         Validate.notNull(user);
         Domain domain = domainService.getDomain(user.getDomainId());
 
-        return isPasswordExpired(user, domain);
+        if (domain != null) {
+            return isPasswordExpired(user, domain);
+        } else {
+            return false;
+        }
     }
 
     /**

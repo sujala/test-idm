@@ -1618,37 +1618,42 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP);
         }
 
-        @IdmProp(key = FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to push for auth api resources. '*' means all available")
+        @IdmProp(key = FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.19.0", description = "The custom attributes to push for auth api resources. '*' means all available")
         public Set<String> getIncludedNewRelicCustomDataAttributesForAuthResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP);
         }
 
-        @IdmProp(key = FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to exclude from auth api resources (overrides inclusion). '*' means all available")
+        @IdmProp(key = FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.19.0", description = "The custom attributes to exclude from auth api resources (overrides inclusion). '*' means all available")
         public Set<String> getExcludedNewRelicCustomDataAttributesForAuthResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP);
         }
 
-        @IdmProp(key = FEATURE_INCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to push for private api resources. '*' means all available")
+        @IdmProp(key = FEATURE_INCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.19.0", description = "The custom attributes to push for private api resources. '*' means all available")
         public Set<String> getIncludedNewRelicCustomDataAttributesForPrivateResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_INCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP);
         }
 
-        @IdmProp(key = FEATURE_EXCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to exclude from private api resources (overrides inclusion). '*' means all available")
+        @IdmProp(key = FEATURE_EXCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.19.0", description = "The custom attributes to exclude from private api resources (overrides inclusion). '*' means all available")
         public Set<String> getExcludedNewRelicCustomDataAttributesForPrivateResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_EXCLUDE_PRIVATE_RESOURCE_ATTRIBUTES_PROP);
         }
 
-        @IdmProp(key = FEATURE_INCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to push for public api resources. '*' means all available")
+        @IdmProp(key = FEATURE_INCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.19.0", description = "The custom attributes to push for public api resources. '*' means all available")
         public Set<String> getIncludedNewRelicCustomDataAttributesForPublicResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_INCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP);
         }
 
-        @IdmProp(key = FEATURE_EXCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.18.1", description = "The custom attributes to exclude from public api resources (overrides inclusion). '*' means all available")
+        @IdmProp(key = FEATURE_EXCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.19.0", description = "The custom attributes to exclude from public api resources (overrides inclusion). '*' means all available")
         public Set<String> getExcludedNewRelicCustomDataAttributesForPublicResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_EXCLUDE_PUBLIC_RESOURCE_ATTRIBUTES_PROP);
         }
 
-        @IdmProp(key = NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP, versionAdded = "3.17.1", description = "When secure attributes are enabled, the key to use for securing the props")
+        /*
+         * Commenting out the IdmProp as the value should not be returned via the devops query props service. Currently
+         * all props annotated with @IdmProp are queryable and the values returned. Ideally could specify that the
+         * values are "secured" and not to be returned (neither default nor effective).
+         */
+//        @IdmProp(key = NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP, versionAdded = "3.17.1", description = "When secure attributes are enabled, the key to use for securing the props")
         public String getNewRelicSecuredApiResourceAttributesKey() {
             return getStringSafely(reloadableConfiguration, NEW_RELIC_SECURE_API_RESOURCE_KEY_PROP);
         }
