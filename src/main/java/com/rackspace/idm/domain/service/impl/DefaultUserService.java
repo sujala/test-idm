@@ -1,18 +1,16 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.collect.Iterables;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.FederatedUserDao;
-import com.rackspace.idm.domain.dao.RackerDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Region;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.modules.usergroups.Constants;
@@ -127,6 +125,12 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private AuthenticationContext authenticationContext;
+
+    @Autowired
+    private TenantRoleDao tenantRoleDao;
+
+    @Autowired
+    private TenantAssignmentService tenantAssignmentService;
 
     @Override
     public void addUserv11(User user) {
@@ -1072,6 +1076,33 @@ public class DefaultUserService implements UserService {
         logger.info("Removing User: {} from Group: {}", baseUser, group);
         userDao.removeUserGroupFromUser(group, baseUser);
         logger.info("Removed User: {} from Group: {}", baseUser, group);
+    }
+
+
+    @Override
+    public List<TenantRole> replaceRoleAssignmentsOnUser(User user, RoleAssignments roleAssignments, Integer allowedRoleAccess) {
+        Validate.notNull(user);
+        Validate.notNull(user.getUniqueId());
+        Validate.notNull(roleAssignments);
+        Validate.notNull(allowedRoleAccess);
+
+        if (roleAssignments.getTenantAssignments() == null || CollectionUtils.isEmpty(roleAssignments.getTenantAssignments().getTenantAssignment())) {
+            return Collections.emptyList();
+        }
+
+        return tenantAssignmentService.replaceTenantAssignmentsOnUser(
+                user,
+                roleAssignments.getTenantAssignments().getTenantAssignment(),
+                allowedRoleAccess);
+    }
+
+    @Override
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnUser(User user, PaginationParams paginationParams) {
+        Validate.notNull(user);
+        Validate.isTrue(StringUtils.isNotBlank(user.getUniqueId()));
+        Validate.notNull(paginationParams);
+
+        return tenantRoleDao.getRoleAssignmentsOnUser(user, paginationParams);
     }
 
     @Override

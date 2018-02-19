@@ -400,6 +400,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP = "enable.delegation.agreements.for.all.rcns";
     public static final boolean FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP = "feature.enable.grant.roles.to.user.service";
+    public static final boolean FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -769,6 +772,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP, FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_DEFAULT);
 
         return defaults;
     }
@@ -2126,6 +2131,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP, versionAdded = "3.20.0", description = "Specifies whether to return the user's password expiration on get user by ID and get user by name responses.")
         public boolean isIncludePasswordExpirationDateForGetUserResponsesEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, versionAdded = "3.20.0", description = "Whether to enable the grant multiple roles to user service.")
+        public boolean isGrantRolesToUserServiceEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP);
         }
 
     }

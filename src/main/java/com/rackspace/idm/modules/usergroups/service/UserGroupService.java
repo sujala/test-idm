@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
@@ -190,7 +191,7 @@ public interface UserGroupService {
      * @throws com.rackspace.idm.exception.NotFoundException If role or tenant is not found
      * @throws com.rackspace.idm.exception.ForbiddenException If role can not be assigned to the group as specified
      *
-     * @throws com.rackspace.idm.modules.usergroups.exception.FailedGrantRoleAssignmentsException If error encountered
+     * @throws FailedGrantRoleAssignmentsException If error encountered
      * persisting the assignments post-validation
      * @return the tenant roles saved
      */

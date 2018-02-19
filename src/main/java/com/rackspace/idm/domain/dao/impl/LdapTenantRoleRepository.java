@@ -263,6 +263,19 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return getObjects(searchFilterGetTenantRoleByRoleIds(roleIds), user.getUniqueId());
     }
 
+    @Override
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnUser(User user, PaginationParams paginationParams) {
+        SearchResultEntry entry = getLdapContainer(user.getUniqueId(), CONTAINER_ROLES);
+
+        PaginatorContext<TenantRole> context = new PaginatorContext<>();
+        if (entry == null) {
+            context.update(Collections.EMPTY_LIST, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
+        } else {
+            context = getObjectsPaged(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
+        }
+        return context;
+    }
+
     private TenantRole getTenantRole(String dn, String roleId) {
         return getObject(searchFilterGetTenantRoleByRoleId(roleId), dn, SearchScope.SUB);
     }

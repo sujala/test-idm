@@ -2,11 +2,9 @@ package com.rackspace.idm.modules.usergroups.api.resource.converter;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.idm.api.security.ImmutableClientRole;
-import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments;
 import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.modules.usergroups.Constants;
-import com.rackspace.idm.modules.usergroups.api.resource.DefaultUserGroupCloudService;
+import com.rackspace.idm.domain.service.impl.DefaultTenantAssignmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -46,7 +44,7 @@ public class RoleAssignmentConverter {
         if (CollectionUtils.isNotEmpty(tenantRole.getTenantIds())) {
             assignment.getForTenants().addAll(tenantRole.getTenantIds());
         } else {
-            assignment.getForTenants().add(Constants.ALL_TENANT_IN_DOMAIN_WILDCARD);
+            assignment.getForTenants().add(DefaultTenantAssignmentService.ALL_TENANTS_IN_DOMAIN_WILDCARD);
         }
         return assignment;
     }

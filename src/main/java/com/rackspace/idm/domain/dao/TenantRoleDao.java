@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
@@ -85,4 +86,11 @@ public interface TenantRoleDao {
      */
     int countGroupsWithRoleAssignment(String roleId);
 
+    /**
+     * Retrieve the tenant roles associated with the specified user in pagination form.
+     *
+     * @param user
+     * @return
+     */
+    PaginatorContext<TenantRole> getRoleAssignmentsOnUser(User user, PaginationParams paginationParams);
 }

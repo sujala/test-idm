@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -48,6 +49,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Autowired
     private RequestContextHolder requestContextHolder;
+
+    @Autowired
+    private PrecedenceValidator precedenceValidator;
 
     //TODO: Remove these constants and lookup via map cache rather than these individual variables serving as a cache
     private ClientRole idmSuperAdminRole = null;
@@ -795,6 +799,34 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return serviceCatalogInfo.allTenantsDisabled() &&
                 serviceCatalogInfo.getUserTypeEnum() != null &&
                 !serviceCatalogInfo.getUserTypeEnum().hasAtLeastIdentityAdminAccessLevel();
+    }
+
+    @Override
+    public void verifyEffectiveCallerHasManagementAccessToUser(String userId) {
+        BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+
+        // Verify caller is at least user-manage+
+        verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
+
+        // Verify the target user exists
+        User user = userService.checkAndGetUserById(userId);
+        requestContextHolder.getRequestContext().setTargetEndUser(user);
+
+        // Verify the caller has precedence over the user being modified
+        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+
+        // If domain based identity role, must verify user has access to domain
+        IdentityUserTypeEnum callersUserType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+
+        if (callersUserType == null) {
+            // If we don't know the type of user, we can't authorize the user for anything
+            throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+        } else if (callersUserType.isDomainBasedAccessLevel()) {
+            // Verify that caller's domainId matches the target user's domainId
+            if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+            }
+        }
     }
 
     private String getRoleString(List<ClientRole> clientRoles) {

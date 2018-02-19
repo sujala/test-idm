@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.NotFoundException
 import org.apache.commons.lang3.StringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -8,7 +10,6 @@ import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.Response
-import javax.ws.rs.core.UriInfo
 
 class Cloud20VersionResourceTest extends RootServiceTest {
 
@@ -110,5 +111,38 @@ class Cloud20VersionResourceTest extends RootServiceTest {
 
         where:
         [serviceId, applyRcnRoles] << [["serviceId", "", null], [true, false]].combinations()
+    }
+
+    def "grantRolesToUser: Calls appropriate service"() {
+        given:
+        def mockHttpHeaders = Mock(HttpHeaders)
+        mockIdentityConfig(service)
+        mockCloud20Service(service)
+        def mockResponseBuilder = Mock(Response.ResponseBuilder)
+
+        def userId = "userId"
+        def roleAssignments = new RoleAssignments()
+
+        when:
+        service.grantRolesToUser(mockHttpHeaders, authToken, userId, roleAssignments)
+
+        then:
+        1 * reloadableConfig.isGrantRolesToUserServiceEnabled() >> true
+        1 * defaultCloud20Service.grantRolesToUser(mockHttpHeaders, authToken, userId, roleAssignments) >> mockResponseBuilder
+    }
+
+    def "grantRolesToUser: test feature flag when set to false"() {
+        given:
+        mockIdentityConfig(service)
+
+        def userId = "userId"
+        def roleAssignments = new RoleAssignments()
+
+        when:
+        service.grantRolesToUser(headers, authToken, userId, roleAssignments)
+
+        then:
+        1 * reloadableConfig.isGrantRolesToUserServiceEnabled() >> false
+        thrown(NotFoundException)
     }
 }

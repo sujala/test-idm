@@ -4,7 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
-import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.ApplicationService
@@ -20,8 +20,7 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-import static Constants.ROLE_RBAC1_ID
-import static Constants.ROLE_RBAC2_ID
+import static com.rackspace.idm.Constants.*
 
 class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
 
@@ -41,7 +40,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
     void doSetupSpec() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
 
-        def authResponse = cloud20.authenticatePassword(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD)
+        def authResponse = cloud20.authenticatePassword(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
         assert authResponse.status == HttpStatus.SC_OK
         sharedIdentityAdminToken = authResponse.getEntity(AuthenticateResponse).value.token.id
 
@@ -57,7 +56,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
     }
 
     /**
-     * Test a typical modification to the set of roles assign to a user group
+     * Test a typical modification to the set of roles assigned to a user group
      *
      * 1. No roles -> 1 tenant assigned role : Verify result includes that role assignment
      * 2. Assign 1 global role : Verify both roles returned appropriately
@@ -65,7 +64,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
      * 4. Update tenant assigned role to only have single tenant; verify result as expected
      * 5. Reset tenant to global : Verify result
      *
-     * Test all this through both json and xml to verify can appriately reflect the states
+     * Test all this through both json and xml to verify can appropriately reflect the states
      */
     @Unroll
     def "modify roles on user group; mediaType = #mediaType"() {
@@ -203,7 +202,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
                 tas ->
                     tas.tenantAssignment.add(new TenantAssignment().with {
                         ta ->
-                            ta.onRole = Constants.USER_MANAGE_ROLE_ID
+                            ta.onRole = USER_MANAGE_ROLE_ID
                             ta.forTenants.add("*")
                             ta
                     })
@@ -218,7 +217,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN
                 , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_USER_GROUPS_INVALID_ATTRIBUTE
-                , String.format(com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, Constants.USER_MANAGE_ROLE_ID));
+                , String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, USER_MANAGE_ROLE_ID));
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -248,7 +247,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST
                 , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_USER_GROUPS_MISSING_REQUIRED_ATTRIBUTE
-                , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG)
+                , ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -278,7 +277,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
 
         and: "Retrieves roles"
         retrievedEntity.tenantAssignments != null
-        def rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        def rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == ROLE_RBAC1_ID}
         rbac1Assignment != null
         rbac1Assignment.forTenants.size() == 1
         rbac1Assignment.forTenants[0] == sharedUserAdminCloudTenant.id
@@ -292,7 +291,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         when: "List role on user group"
         listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
         retrievedEntity = listResponse.getEntity(RoleAssignments)
-        rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == ROLE_RBAC1_ID}
 
         then:
         listResponse.status == HttpStatus.SC_OK
@@ -420,7 +419,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
 
         and: "Retrieves roles"
         retrievedEntity.tenantAssignments != null
-        def rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        def rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == ROLE_RBAC1_ID}
         rbac1Assignment != null
         rbac1Assignment.forTenants.size() == 1
         rbac1Assignment.forTenants[0] == sharedUserAdminCloudTenant.id
@@ -440,7 +439,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         when: "List role on user group"
         listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
         retrievedEntity = listResponse.getEntity(RoleAssignments)
-        rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == ROLE_RBAC1_ID}
 
         then:
         listResponse.status == HttpStatus.SC_OK
@@ -460,7 +459,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         when: "List role on user group"
         listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
         retrievedEntity = listResponse.getEntity(RoleAssignments)
-        rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == ROLE_RBAC1_ID}
 
         then:
         listResponse.status == HttpStatus.SC_OK

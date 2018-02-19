@@ -1,8 +1,13 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.google.common.collect.Sets
+import com.rackspace.idm.api.security.AuthorizationContext
 import com.rackspace.idm.api.security.IdentityRole
+import com.rackspace.idm.api.security.ImmutableTenantRole
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -485,6 +490,45 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
     def "test role has implicit role"() {
         expect:
         service.getImplicitRolesForRole(TEST_ROLE.name).size() == 1
+    }
+
+    def "verifyEffectiveCallerHasManagementAccessToUser: verify service authorization requires user-manage+"() {
+        given:
+        mockRequestContextHolder(service)
+        mockPrecedenceValidator(service)
+
+        def domainId = "domainId"
+        def userId = "userId"
+        def user = new User().with {
+            it.id = userId
+            it.domainId = domainId
+            it
+        }
+        def caller = new User().with {
+            it.enabled = true
+            it.domainId = domainId
+            it
+        }
+
+        requestContext.getEffectiveCaller() >> caller
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.name = IdentityUserTypeEnum.USER_MANAGER.roleName
+            it
+        }
+        ImmutableTenantRole immutableTenantRole = new ImmutableTenantRole(tenantRole)
+        def authorizationContext = new AuthorizationContext([immutableTenantRole],[])
+
+
+        when:
+        service.verifyEffectiveCallerHasManagementAccessToUser(userId)
+
+        then:
+        1 * identityConfig.staticConfig.getIdentityUserManagerRoleName() >> IdentityUserTypeEnum.USER_MANAGER.roleName
+        1 * userService.checkAndGetUserById(userId) >> user
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        (1.._) * requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
+        1 * requestContext.getEffectiveCallersUserType() >>  IdentityUserTypeEnum.USER_MANAGER
     }
 
     def retrieveIdentityRoles() {
