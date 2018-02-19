@@ -425,6 +425,12 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).queryParams(queryParams).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(request).post(ClientResponse)
     }
 
+    def authenticateTokenAndDelegationAgreement(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        def request = v2Factory.createTokenDelegationAuthenticationRequest(token, delegationAgreementId)
+        resource.path(path20).path(TOKENS).accept(mediaType.toString()).type(mediaType.toString()).entity(request).post(ClientResponse)
+    }
+
     def authenticateTokenAndTenantApplyRcn(token, tenantId, String applyRcnRoles = null) {
         initOnUse()
         authenticate(v2Factory.createTokenAuthenticationRequest(token, tenantId.toString(), null), applyRcnRoles)

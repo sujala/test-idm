@@ -11,4 +11,19 @@ public interface BaseUserToken extends Token {
      */
     String getIssuedToUserId();
 
+    /**
+     * Whether or not the token is a delegation token. A delegation token must have a delegationId associated
+     * with it ({@link #getDelegationAgreementId()}
+     *
+     * @return
+     */
+    boolean isDelegationToken();
+
+    /**
+     * The delegation agreement under which this token was issued. Returns null if the token was not issued under an
+     * agreement.
+     *
+     * @return
+     */
+    String getDelegationAgreementId();
 }

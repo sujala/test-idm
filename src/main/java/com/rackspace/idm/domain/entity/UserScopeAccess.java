@@ -4,8 +4,8 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.Date;
 
@@ -33,7 +33,7 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, Bas
         return super.getAccessTokenString();
     }
 
-    private DateTime userPasswordExpirationDate;
+    private String delegationAgreementId;
 
     @Override
     public void setRefreshTokenExpired() {
@@ -63,5 +63,10 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, Bas
     @Override
     public String getIssuedToUserId() {
         return getUserRsId();
+    }
+
+    @Override
+    public boolean isDelegationToken() {
+        return StringUtils.isNotBlank(delegationAgreementId);
     }
 }

@@ -78,6 +78,7 @@ import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.naming.ServiceUnavailableException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -292,6 +293,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private AuthWithPasswordCredentials authWithPasswordCredentials;
+
+    @Autowired
+    private AuthWithDelegationCredentials authWithDelegationCredentials;
 
     @Autowired
     private AuthWithApiKeyCredentials authWithApiKeyCredentials;
@@ -1170,8 +1174,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
                 }
                 authResponseTuple = authWithToken.authenticate(authenticationRequest);
-            }
-            else {
+            } else if (authenticationRequest.getCredential().getValue() instanceof DelegationCredentials) {
+                NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthWithTokenDelegation.getTransactionName());
+                if (!identityConfig.getReloadableConfig().areDelegationAgreementServicesEnabled()) {
+                    throw new ServiceUnavailableException(GlobalConstants.ERROR_MSG_SERVICE_NOT_FOUND);
+                }
+
+                // Scoped tokens not supported here
+                if (authenticationRequest.getScope() != null) {
+                    throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                }
+                authResponseTuple = authWithDelegationCredentials.authenticate(authenticationRequest);
+            } else {
                 boolean canUseMfaWithCredential = false;
                 UserAuthenticationFactor userAuthenticationFactor = null;
                 if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {

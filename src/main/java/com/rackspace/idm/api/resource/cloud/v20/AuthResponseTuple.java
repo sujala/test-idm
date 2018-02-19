@@ -1,10 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import lombok.Data;
 import lombok.Getter;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * This class represents the data around a successful authenticate response for an end user (non-racker user).
@@ -33,5 +32,9 @@ public class AuthResponseTuple {
 
     public boolean isImpersonation() {
         return impersonatedScopeAccess != null;
+    }
+
+    public boolean isDelegation() {
+        return user instanceof EndUserDelegate;
     }
 }

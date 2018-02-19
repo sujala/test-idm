@@ -133,6 +133,10 @@ public abstract class BaseAETokenProvider implements TokenProvider {
             return TokenDNCalculator.calculateFederatedUserTokenDN(user1.getUsername(), provider.getProviderId(), webSafeToken);
         } else if (user instanceof Racker) {
             return TokenDNCalculator.calculateRackerTokenDN(((Racker) user).getRackerId(), webSafeToken);
+        } else if (user instanceof ProvisionedUserDelegate) {
+            // TODO: Refactor this - instanceof is fragile and makes extension hard
+            ProvisionedUserDelegate provisionedUserDelegate = (ProvisionedUserDelegate) user;
+            return TokenDNCalculator.calculateProvisionedUserTokenDN(provisionedUserDelegate.getId(), webSafeToken);
         }
         throw new RuntimeException("Unsupported user type '" + user.getClass());
     }

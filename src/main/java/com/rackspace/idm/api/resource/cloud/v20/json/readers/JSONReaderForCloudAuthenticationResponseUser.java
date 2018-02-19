@@ -2,6 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v20.json.readers;
 
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.IdmException;
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.Duration;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -11,6 +13,8 @@ import org.openstack.docs.identity.api.v2.RoleList;
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.datatype.DatatypeFactory;
 
 
 public class JSONReaderForCloudAuthenticationResponseUser {
@@ -34,8 +38,10 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                     Object userId = userJson.get(JSONConstants.ID);
                     Object userName = userJson.get(JSONConstants.NAME);
                     Object userRegion = userJson.get(JSONConstants.RAX_AUTH_DEFAULT_REGION);
+                    Object userDomain = userJson.get(JSONConstants.RAX_AUTH_DOMAIN_ID);
                     Object fedIdp = userJson.get(JSONConstants.RAX_AUTH_FEDERATED_IDP);
                     Object contactId = userJson.get(JSONConstants.RAX_AUTH_CONTACT_ID);
+                    Object sessionInactivityTimeout = userJson.get(JSONConstants.RAX_AUTH_SESSION_INACTIVITY_TIMEOUT);
 
                     JSONArray userRolesArray = (JSONArray) userJson.get(JSONConstants.ROLES);
 
@@ -51,12 +57,24 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                         user.setDefaultRegion(userRegion.toString());
                     }
 
+                    if(userDomain != null){
+                        user.setDomainId(userDomain.toString());
+                    }
+
                     if(fedIdp != null){
                         user.setFederatedIdp(fedIdp.toString());
                     }
 
                     if (contactId != null) {
                         user.setContactId(contactId.toString());
+                    }
+
+                    if (sessionInactivityTimeout != null && StringUtils.isNotBlank(sessionInactivityTimeout.toString())) {
+                        try {
+                            user.setSessionInactivityTimeout(DatatypeFactory.newInstance().newDuration(sessionInactivityTimeout.toString()));
+                        } catch (Exception e) {
+                            LOGGER.error("Error converting session inactivity timeout to duration");
+                        }
                     }
 
                     if (userRolesArray != null) {
@@ -66,6 +84,7 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                             Object serviceId = ((JSONObject)role).get(JSONConstants.SERVICE_ID);
                             Object description = ((JSONObject)role).get(JSONConstants.DESCRIPTION);
                             Object name = ((JSONObject)role).get(JSONConstants.NAME);
+                            Object tenantId = ((JSONObject)role).get(JSONConstants.TENANT_ID);
 
                             Role newRole = new Role();
                             if (roleId != null) {
@@ -80,7 +99,9 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                             if (serviceId != null) {
                                 newRole.setServiceId(serviceId.toString());
                             }
-
+                            if (tenantId != null) {
+                                newRole.setTenantId(tenantId.toString());
+                            }
                             roles.getRole().add(newRole);
                         }
                         if (roles.getRole().size() > 0) {

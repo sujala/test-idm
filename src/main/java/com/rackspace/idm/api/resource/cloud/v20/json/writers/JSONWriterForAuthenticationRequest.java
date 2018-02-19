@@ -53,6 +53,7 @@ public class JSONWriterForAuthenticationRequest implements MessageBodyWriter<Aut
         prefixValues.put(AUTH_RSA_CREDENTIALS_PATH, RAX_AUTH_RSA_CREDENTIALS);
         prefixValues.put(AUTH_DOMAIN_PATH, RAX_AUTH_DOMAIN);
         prefixValues.put(AUTH_PASSCODE_CREDENTIALS_PATH, RAX_AUTH_PASSCODE_CREDENTIALS);
+        prefixValues.put(AUTH_DELEGATION_CREDENTIALS_PATH, RAX_AUTH_DELEGATION_CREDENTIALS);
 
         write(authenticationRequest, entityStream, prefixValues);
     }
@@ -84,6 +85,9 @@ public class JSONWriterForAuthenticationRequest implements MessageBodyWriter<Aut
                 } else if(cred.get(PASSCODE_CREDENTIALS) != null){
                     key = PASSCODE_CREDENTIALS;
                     value = cred.get(PASSCODE_CREDENTIALS);
+                } else if(cred.get(DELEGATION_CREDENTIALS) != null){
+                    key = DELEGATION_CREDENTIALS;
+                    value = cred.get(DELEGATION_CREDENTIALS);
                 }
                 JSONObject authVal = (JSONObject) auth.get(AUTH);
                 if (authVal == null) {

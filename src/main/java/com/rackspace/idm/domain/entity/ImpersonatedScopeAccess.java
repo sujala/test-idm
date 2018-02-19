@@ -95,4 +95,24 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToke
     public String getImpersonatingUsername() {
         return IMPERSONATING_USERNAME_HARDCODED_VALUE;
     }
+
+    /**
+     * Do not yet support impersonating a user under a delegation agreement.
+     *
+     * @return
+     */
+    @Override
+    public boolean isDelegationToken() {
+        return false;
+    }
+
+    /**
+     * Do not yet support impersonating a user under a delegation agreement.
+     *
+     * @return
+     */
+    @Override
+    public String getDelegationAgreementId() {
+        return null;
+    }
 }

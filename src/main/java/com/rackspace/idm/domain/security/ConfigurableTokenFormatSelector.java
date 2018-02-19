@@ -65,7 +65,7 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
             return identityConfig.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(federatedUser.getFederatedIdpUri());
         }
 
-        return TokenFormat.UUID;
+        return TokenFormat.AE;
     }
 
     @Override

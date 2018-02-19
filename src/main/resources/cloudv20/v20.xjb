@@ -172,6 +172,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="forgotPasswordCredentials"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='DelegationCredentials']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="delegationCredentials"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='ChangePasswordCredentials']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="changePasswordCredentials"/>

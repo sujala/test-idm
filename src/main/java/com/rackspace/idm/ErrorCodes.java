@@ -102,6 +102,8 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_FORBIDDEN_ACTION = "GEN-006";
     public static final String ERROR_CODE_INVALID_VALUE = "GEN-007";
 
+    public static final String ERROR_CODE_DOMAIN_DEFAULT_MISSING_USER_ADMIN = "DOM-008";
+    public static final String ERROR_CODE_DOMAIN_DEFAULT_NO_ENABLED_USER_ADMIN = "DOM-009";
 
     public static final String ERROR_MESSAGE_IDP_NOT_FOUND = "An Identity provider with the specified id was not found";
 

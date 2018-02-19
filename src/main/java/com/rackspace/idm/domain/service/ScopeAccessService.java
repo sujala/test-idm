@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.*;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 public interface ScopeAccessService {
@@ -22,6 +23,18 @@ public interface ScopeAccessService {
      * @return
      */
     ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, int expirationSeconds, String scope);
+
+    /**
+     * Adds a scoped access token for a BaseUser with a specific expiration date
+     *
+     * @param user
+     * @param clientId
+     * @param authenticatedBy
+     * @param expirationDate
+     * @param scope
+     * @return
+     */
+    ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, Date expirationDate, String scope);
 
     void addUserScopeAccess(BaseUser user, ScopeAccess scopeAccess);
 

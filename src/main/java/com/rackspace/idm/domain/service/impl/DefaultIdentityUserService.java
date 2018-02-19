@@ -54,6 +54,9 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Autowired
     private MultiFactorService multiFactorService;
 
+    @Autowired
+    private CreateSubUserService createSubUserService;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
     private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
@@ -306,7 +309,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
         // Get the tenantRoles for the user
         List<TenantRole> tenantRoles;
         IdentityUserTypeEnum userTypeEnum;
-        if (applyRcnRoles) {
+        if (applyRcnRoles || baseUser instanceof ProvisionedUserDelegate) {
             // Retrieve all roles effectively assigned to user denormalized to tenants
             SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);
             tenantRoles = sourcedRoleAssignments.asTenantRolesExcludeNoTenants();

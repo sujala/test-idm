@@ -69,4 +69,23 @@ public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken, B
     public String getFederatedIdpUri() {
         return Racker.getIdpUriFromFederatedId(rackerId);
     }
+
+    /**
+     * Racker tokens are not allowed to be delegated.
+     *
+     * @return
+     */
+    @Override
+    public boolean isDelegationToken() {
+        return false;
+    }
+
+    /**
+     * Racker tokens are not allowed to be delegated.
+     * @return
+     */
+    @Override
+    public String getDelegationAgreementId() {
+        return null;
+    }
 }

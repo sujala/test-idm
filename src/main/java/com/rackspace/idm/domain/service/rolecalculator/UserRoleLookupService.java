@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface UserRoleLookupService {
+    String SYSTEM_SOURCE_IDENTITY = "IDENTITY";
+
     /**
      * Retrieve the user for which roles will be queried.
      * @return

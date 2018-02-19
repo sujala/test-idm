@@ -79,6 +79,19 @@ class V2Factory {
         }
     }
 
+    def createTokenDelegationAuthenticationRequest(String tokenId, String delegationAgreementId) {
+        def credential = new DelegationCredentials().with {
+            it.token = tokenId
+            it.delegationAgreementId = delegationAgreementId
+            it
+        }
+
+        return new AuthenticationRequest().with {
+            it.credential = raxAuthObjFactory.createDelegationCredentials(credential)
+            it
+        }
+    }
+
     def createPasswordAuthenticationRequestWithTenantId(String username, String password, String tenantId) {
         def credentials = createPasswordCredentialsRequiredUsername(username, password)
 

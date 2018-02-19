@@ -1,7 +1,9 @@
 package com.rackspace.idm.api.security;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.util.RoleUtil;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.util.Collections;
 import java.util.Set;
@@ -47,6 +49,18 @@ public class ImmutableTenantRole {
 
     public String getRoleRsId() {
         return innerClone.getRoleRsId();
+    }
+
+    public Types getTypes() {
+        Types finalTypes = null;
+
+        if (innerClone.getTypes() != null) {
+            finalTypes = new Types();
+            if (CollectionUtils.isNotEmpty(innerClone.getTypes().getType())) {
+                finalTypes.getType().addAll(innerClone.getTypes().getType());
+            }
+        }
+        return finalTypes;
     }
 
     /**

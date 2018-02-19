@@ -7,6 +7,7 @@ public enum NewRelicTransactionNames {
     , V2AuthWithPwd("/v2.0/tokens (POST Authenticate Password)")
     , V2AuthWithPwdRcn("/v2.0/tokens (POST Authenticate Password RCN)")
     , V2AuthWithToken("/v2.0/tokens (POST Authenticate Token)")
+    , V2AuthWithTokenDelegation("/v2.0/tokens (POST Authenticate Token + Delegation)")
     , V2AuthWithApi("/v2.0/tokens (POST Authenticate API)")
     , V2AuthMfaFirst("/v2.0/tokens (POST Authenticate Mfa First Handshake)")
     , V2AuthMfaFirstSms("/v2.0/tokens (POST Authenticate Mfa First Handshake SMS)")

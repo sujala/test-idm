@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * Represents a non-racker end user
  */
-public interface EndUser extends BaseUser, DelegationPrincipal {
+public interface EndUser extends BaseUser {
     String getRegion();
     String getEmail();
     String getUsername();
@@ -30,4 +30,10 @@ public interface EndUser extends BaseUser, DelegationPrincipal {
      */
     Set<String> getUserGroupIds();
     Set<DN> getUserGroupDNs();
+
+    /**
+     * The "salesforce" contact Id maintained by core and linked for dedicated users.
+     * @return
+     */
+    String getContactId();
 }

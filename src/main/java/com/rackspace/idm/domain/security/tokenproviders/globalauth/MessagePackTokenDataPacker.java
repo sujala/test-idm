@@ -46,6 +46,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     private static final byte TOKEN_TYPE_FEDERATED_USER = 2;
     private static final byte TOKEN_TYPE_RACKER = 3;
     private static final byte TOKEN_TYPE_RACKER_IMPERSONATING_ENDUSER = 4;
+    private static final byte TOKEN_TYPE_PROVISIONED_USER_DELEGATE = 5;
 
     private static final Map<String, Integer> AUTH_BY_MARSHALL = new HashMap<String, Integer>();
     private static final Map<Integer, String> AUTH_BY_UNMARSHALL = new HashMap<Integer, String>();
@@ -85,6 +86,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.EMAIL.getValue(), 9);
         AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.TOKEN.getValue(), 10);
         AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.OTHER.getValue(), 11);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.DELEGATE.getValue(), 12);
 
         for (String key : AUTH_BY_MARSHALL.keySet()) {
             AUTH_BY_UNMARSHALL.put(AUTH_BY_MARSHALL.get(key), key);
@@ -99,22 +101,39 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     }
 
     @Override
-    public byte[] packTokenDataForUser(BaseUser user, ScopeAccess token) {
-        List<Object> packingItems = new ArrayList<Object>();
+    public byte[] packTokenDataForUser(BaseUser user, ScopeAccess saToken) {
+        if (!(saToken instanceof BaseUserToken)) {
+            throw new UnsupportedOperationException("Unsupported " + user.getClass().getSimpleName() + " token:" + saToken.getClass().getSimpleName());
+        }
+        BaseUserToken token = (BaseUserToken) saToken;
 
-        if (token instanceof UserScopeAccess && user instanceof User) {
+        final boolean isProvisionedUserDelegate = user instanceof ProvisionedUserDelegate;
+        final boolean isProvisionedUser = user instanceof User;
+        final boolean isFederatedUser = user instanceof FederatedUser;
+        final boolean isRackerUser = user instanceof Racker;
+        final boolean isImpersonationToken = token instanceof ImpersonatedScopeAccess;
+        final boolean isUserToken = token instanceof UserScopeAccess;
+        final boolean isRackerToken = token instanceof RackerScopeAccess;
+
+        List<Object> packingItems = new ArrayList<Object>();
+        if (token.isDelegationToken()) {
+            if (!isProvisionedUserDelegate || !isUserToken) {
+                throw new UnsupportedOperationException("Unsupported delegate token for " + user.getClass().getSimpleName() + " token:" + token.getClass().getSimpleName());
+            }
+            packingItems.addAll(packDelegateToken((ProvisionedUserDelegate) user, (UserScopeAccess) token));
+        } else if (isUserToken && isProvisionedUser) {
             packingItems.add(TOKEN_TYPE_PROVISIONED_USER);
             packingItems.addAll(packProvisionedUserToken((User) user, (UserScopeAccess) token));
-        } else if (token instanceof UserScopeAccess && user instanceof FederatedUser) {
+        } else if (isUserToken && isFederatedUser) {
             packingItems.add(TOKEN_TYPE_FEDERATED_USER);
             packingItems.addAll(packFederatedUserToken((FederatedUser) user, (UserScopeAccess) token));
-        } else if (token instanceof ImpersonatedScopeAccess && user instanceof User) {
+        } else if (isImpersonationToken && isProvisionedUser) {
             packingItems.add(TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER);
             packingItems.addAll(packProvisionedUserImpersonationToken((User) user, (ImpersonatedScopeAccess) token));
-        } else if (token instanceof RackerScopeAccess && user instanceof Racker) {
+        } else if (isRackerToken && isRackerUser) {
             packingItems.add(TOKEN_TYPE_RACKER);
             packingItems.addAll(packRackerToken(((Racker) user), (RackerScopeAccess) token));
-        } else if (token instanceof ImpersonatedScopeAccess && user instanceof Racker) {
+        } else if (isImpersonationToken && isRackerUser) {
             packingItems.add(TOKEN_TYPE_RACKER_IMPERSONATING_ENDUSER);
             packingItems.addAll(packRackerImpersonationToken((Racker) user, (ImpersonatedScopeAccess) token));
         } else {
@@ -161,6 +180,8 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
                 token = unpackRackerImpersonationToken(webSafeToken, unpacker);
             } else if (type == TOKEN_TYPE_RACKER) {
                 token = unpackRackerToken(webSafeToken, unpacker);
+            } else if (type == TOKEN_TYPE_PROVISIONED_USER_DELEGATE) {
+                token = unpackDelegationToken(webSafeToken, unpacker);
             } else {
                 throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_SCHEME, String.format("Unrecognized data packing scheme '%s'", type));
             }
@@ -180,6 +201,63 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         }
 
         return token;
+    }
+
+    private List<Object> packDelegateToken(ProvisionedUserDelegate user, UserScopeAccess scopeAccess) {
+        //validate additional user specific stuff for this packing strategy
+        Validate.notNull(user.getId(), "user id required");
+        Validate.isTrue(user.getId().equals(scopeAccess.getUserRsId()), "Token userId must match user userId");
+
+        List<Object> packingItems = new ArrayList<Object>();
+        packingItems.add(TOKEN_TYPE_PROVISIONED_USER_DELEGATE);
+
+        //packed version format (for future use...)
+        packingItems.add(VERSION_0);
+
+        // Timestamps
+        packingItems.add(scopeAccess.getAccessTokenExp().getTime());
+        packingItems.add(scopeAccess.getCreateTimestamp().getTime());
+
+        // ScopeAccess
+        packingItems.add(compressAuthenticatedBy(scopeAccess.getAuthenticatedBy()));
+        packingItems.add(compressScope(scopeAccess.getScope()));
+
+        // UserScopeAccess
+        packingItems.add(scopeAccess.getUserRsId());
+
+        // Delegation
+        packingItems.add(scopeAccess.getDelegationAgreementId());
+
+        return packingItems;
+    }
+
+    private ScopeAccess unpackDelegationToken(String webSafeToken, Unpacker unpacker) throws IOException {
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+
+        //packed version format (for future use...)
+        byte version = unpacker.readByte();
+        if (version == VERSION_0) {
+            // Timestamps
+            scopeAccess.setAccessTokenExp(new Date(unpacker.readLong()));
+            scopeAccess.setCreateTimestamp(new Date(unpacker.readLong()));
+
+            // ScopeAccess
+            scopeAccess.setAuthenticatedBy(decompressAuthenticatedBy(safeRead(unpacker, Integer[].class)));
+            scopeAccess.setScope(decompressScope(safeRead(unpacker, Integer.class)));
+
+            // UserScopeAccess
+            scopeAccess.setUserRsId(safeRead(unpacker, String.class));
+
+            // Delegation
+            scopeAccess.setDelegationAgreementId(safeRead(unpacker, String.class));
+
+            // DN
+            scopeAccess.setUniqueId(TokenDNCalculator.calculateProvisionedUserTokenDN(scopeAccess.getUserRsId(), webSafeToken));
+            scopeAccess.setClientId(getCloudAuthClientId());
+        } else {
+            throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
+        }
+        return scopeAccess;
     }
 
     private List<Object> packProvisionedUserToken(User user, UserScopeAccess scopeAccess) {

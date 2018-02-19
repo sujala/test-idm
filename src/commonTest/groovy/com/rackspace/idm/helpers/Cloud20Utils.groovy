@@ -150,6 +150,18 @@ class Cloud20Utils {
         return response.getEntity(AuthenticateResponse).value
     }
 
+    AuthenticateResponse authenticateTokenAndDelegationAgreement(token, delegationAgreementid, MediaType mediaType) {
+        def response = methods.authenticateTokenAndDelegationAgreement(token, delegationAgreementid, mediaType)
+        assert(response.status == 200)
+        AuthenticateResponse delegateSubUserAuthResponse
+        if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
+            delegateSubUserAuthResponse = response.getEntity(AuthenticateResponse)
+        } else {
+            delegateSubUserAuthResponse = response.getEntity(AuthenticateResponse).value
+        }
+        return delegateSubUserAuthResponse
+    }
+
     def getTokenFromApiKeyAuth(String username, String apikey = DEFAULT_API_KEY) {
         def response = methods.authenticateApiKey(username, apikey)
         assert (response.status == SC_OK)
@@ -1175,6 +1187,18 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
         response.getEntity(EndpointList).value
 
+    }
+
+    def createDelegationAgreement(String token, DelegationAgreement delegationAgreement) {
+        def response = methods.createDelegationAgreement(token, delegationAgreement)
+        assert (response.status == SC_CREATED)
+        response.getEntity(DelegationAgreement)
+    }
+
+    def getDelegationAgreement(String token, String delegationAgreementId) {
+        def response = methods.getDelegationAgreement(token, delegationAgreementId)
+        assert (response.status == SC_OK)
+        response.getEntity(DelegationAgreement).value
     }
 
     def extractSessionIdFromFirstWwwAuthenticateHeader(MultivaluedMap<String, String> headers) {

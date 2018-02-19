@@ -52,13 +52,19 @@ public class GlobalAuthTokenProvider extends BaseAETokenProvider {
      */
     @Override
     public boolean supportsCreatingTokenFor(UniqueId object, ScopeAccess scopeAccess) {
+        // Only supports base user tokens
+        if (!(scopeAccess instanceof BaseUserToken)) {
+            return false;
+        }
+
+        final boolean isProvisionedDelegate = object instanceof ProvisionedUserDelegate;
         final boolean isProvisionedUser = object instanceof User;
         final boolean isFederatedUser = object instanceof FederatedUser;
         final boolean isImpersonationToken = scopeAccess instanceof ImpersonatedScopeAccess;
         final boolean isUserToken = scopeAccess instanceof UserScopeAccess;
         final boolean isRackerUser = object instanceof Racker;
         final boolean isRackerToken = scopeAccess instanceof RackerScopeAccess;
-        
+
         // AE service supports
         // - federated and provisioned user "unrestricted" tokens
         // - provision user "restricted" and "un tokens
@@ -71,7 +77,8 @@ public class GlobalAuthTokenProvider extends BaseAETokenProvider {
 
         return (isProvisionedUser && (isImpersonationToken || isUserToken))
                 || (isFederatedUser && isUserToken)
-                || (isRackerUser && (isImpersonationToken || isRackerToken));
+                || (isRackerUser && (isImpersonationToken || isRackerToken))
+                || isProvisionedDelegate && isUserToken;
     }
 
     @Override
