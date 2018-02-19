@@ -131,7 +131,7 @@ class Cloud20VersionResourceTest extends RootServiceTest {
         1 * defaultCloud20Service.grantRolesToUser(mockHttpHeaders, authToken, userId, roleAssignments) >> mockResponseBuilder
     }
 
-    def "grantRolesToUser: test feature flag"() {
+    def "grantRolesToUser: test feature flag when set to false"() {
         given:
         mockIdentityConfig(service)
 

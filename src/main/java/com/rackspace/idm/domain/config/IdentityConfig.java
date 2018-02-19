@@ -2133,7 +2133,7 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, versionAdded = "3.20.0", description = "Whether to enable the grant role to user service")
+        @IdmProp(key = FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, versionAdded = "3.20.0", description = "Whether to enable the grant multiple roles to user service.")
         public boolean isGrantRolesToUserServiceEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP);
         }
