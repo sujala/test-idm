@@ -730,66 +730,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.reset()
     }
 
-    def "UUID Only - authenticating as a federated user deletes expired federated tokens"() {
-        given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
-        utils.resetServiceAdminToken()
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def samlToken = authResponse.token.id
-        def federatedUser = utils.getUserById(authResponse.getUser().getId())
-
-        when: "impersonate the federated user"
-        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
-
-        then: "the request was successful"
-        impersonationResponse.status == 200
-        def impersonationToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
-        def impersonationTokenEntity = scopeAccessService.getScopeAccessByAccessToken(impersonationToken)
-        def impersonatedToken = scopeAccessService.getScopeAccessByAccessToken(impersonationTokenEntity.impersonatingToken)
-
-        when: "expire the impersonated token and authenticate as the federated user again"
-        expireToken(impersonatedToken.accessTokenString)
-        def fedUserTokensBefore = scopeAccessService.getScopeAccessListByUserId(authResponse.user.id)
-        //we need to call 'hasNext' here in order to have the paginator query the directory, otherwise it will query after we authN
-        fedUserTokensBefore.iterator().hasNext()
-        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion)
-        def fedUserTokensAfter = scopeAccessService.getScopeAccessListByUserId(authResponse.user.id)
-
-        then: "the request was successful"
-        samlResponse2.status == 200
-
-        and: "the expired impersonated token was in the directory before the authentication request"
-        def hasImpersonationTokenBefore = false
-        for(def token : fedUserTokensBefore) {
-            if(token.accessTokenString == impersonatedToken.accessTokenString) {
-                hasImpersonationTokenBefore = true
-            }
-        }
-        hasImpersonationTokenBefore == true
-
-        and: "the expired impersonated token is deleted after the authentication request"
-        def hasImpersonationTokenAfter = false
-        for(def token : fedUserTokensAfter) {
-            if(token.accessTokenString == impersonatedToken.accessTokenString) {
-                hasImpersonationTokenAfter = true
-            }
-        }
-        hasImpersonationTokenAfter == false
-
-        cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-        staticIdmConfiguration.reset()
-    }
-
     def "UUID - federated user impersonation - a new impersonation token is only created if one does not exist that expires on or after requested time"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
