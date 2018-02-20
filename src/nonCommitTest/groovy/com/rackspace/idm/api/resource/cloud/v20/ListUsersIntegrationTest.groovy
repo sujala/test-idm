@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import groovy.json.JsonSlurper
 import org.apache.log4j.Logger
@@ -52,8 +53,10 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
-    def "user admin cannot see federated users that are not in their domain"() {
+    def "user admin cannot see federated users that are not in their domain: enabled: #enabled"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, enabled)
+
         def domainId1 = utils.createDomain()
         def domainId2 = utils.createDomain()
         def username1 = testUtils.getRandomUUID("userForSaml")
@@ -103,10 +106,16 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         deleteFederatedUserQuietly(username2)
         utils.deleteUsers(users1)
         utils.deleteUsers(users2)
+
+        where:
+        enabled << [false, true]
     }
 
-    def "user admin with federated user in domain see federated user in list users call"() {
+    @Unroll
+    def "user admin with federated user in domain see federated user in list users call - accept: #accept; enabled: #enabled"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, enabled)
+
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -119,26 +128,33 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
 
         when: "list users with user admin token"
-        def listUsersResponse = cloud20.listUsers(adminToken)
+        List<User> userList = utils.listUsers(adminToken, accept)
 
-        then: "request is successful"
-        listUsersResponse.status == 200
-        def userList = listUsersResponse.getEntity(UserList).value
-
-        and: "contains the federated user"
-        userList.user.id.contains(authResponse.user.id)
+        then: "contains the federated user"
+        User fedUser = userList.find() {it.id == authResponse.user.id}
+        fedUser != null
+        fedUser.federatedIdp == Constants.DEFAULT_IDP_URI
 
         and: "contains the user-admin"
-        userList.user.id.contains(userAdmin.id)
-        userList.user.size() == 2
+        userList.id.contains(userAdmin.id)
+        userList.size() == 2
 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+
+        where:
+        accept | enabled
+        MediaType.APPLICATION_XML_TYPE | true
+        MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_XML_TYPE | false
+        MediaType.APPLICATION_JSON_TYPE | false
     }
 
     def "identity and service admins are able to see federated users and provisioned users in the list user call"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, false)
+
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -208,55 +224,6 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         deleteFederatedUserQuietly(username)
         utils.deleteUser(disabledUser)
         utils.deleteUsers(users)
-    }
-
-    @Unroll
-    def "list users contains federated IDP attribute for federated users: accept=#accept"() {
-        given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def serviceAdminToken = utils.getServiceAdminToken()
-
-        when:
-        def listUsersResponse = cloud20.listUsers(serviceAdminToken, "0", "100000", accept)
-        def userList
-        if (accept == MediaType.APPLICATION_XML_TYPE) {
-            userList = listUsersResponse.getEntity(UserList).value.user
-        } else {
-            userList = new JsonSlurper().parseText(listUsersResponse.getEntity(String))['users']
-        }
-        def federatedUser
-        for (def curUser : userList) {
-            if (curUser.id == authResponse.user.id) {
-                federatedUser = curUser
-            }
-        }
-
-        then:
-        listUsersResponse.status == 200
-        federatedUser != null
-        if(accept == MediaType.APPLICATION_XML_TYPE) {
-            assert federatedUser.federatedIdp == Constants.DEFAULT_IDP_URI
-        } else {
-            assert federatedUser.'RAX-AUTH:federatedIdp' == Constants.DEFAULT_IDP_URI
-        }
-
-        cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-
-        where:
-        accept | _
-        MediaType.APPLICATION_XML_TYPE | _
-        MediaType.APPLICATION_JSON_TYPE | _
-
     }
 
     @Ignore("This test will currently fail due to federated users not being deleted when a domain is disabled. This test should pass once these updates are made")
@@ -689,6 +656,69 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsersQuietly(users)
+    }
+
+    /**
+     * This test assumes that users already exist in the backend.
+     */
+    def "list users restricts users to own domain when enabled"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        // Move the identity admin to the same domain as the other users
+        utils.addUserToDomain(identityAdmin.id, domainId)
+        identityAdmin = utils.getUserByName(identityAdmin.username)
+
+        def serviceAdminToken = utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def serviceAdmin = utils.getUserByName(Constants.SERVICE_ADMIN_USERNAME, serviceAdminToken)
+        assert serviceAdmin.domainId != null
+
+        when: "Own domain feature disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, false)
+        List<User> saListDisabled = utils.listUsers(serviceAdminToken)
+        List<User> iaListDisabled = utils.listUsers(identityAdminToken)
+        List<User> uaListDisabled = utils.listUsers(userAdminToken)
+
+        then: "saList contains more users than uaList and contains some in different domain"
+        // Number of users is unknown, but verifying that some exist within other domain is sufficient
+        saListDisabled.find {it.domainId != identityAdmin.domainId} != null
+
+        and: "iaList contains more users than uaList and contains some in different domain"
+        iaListDisabled.size() > 4 // More than just number of users in domain
+        iaListDisabled.find {it.domainId != identityAdmin.domainId} != null
+
+        and: "uaList contains all 4 users in own domain, including identity admin"
+        uaListDisabled.size() == 4
+        uaListDisabled.find {it.id == identityAdmin.id} != null
+        uaListDisabled.find {it.id == userManage.id} != null
+        uaListDisabled.find {it.id == defaultUser.id} != null
+        uaListDisabled.find {it.id == defaultUser.id} != null
+
+        when: "Own domain feature enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, true)
+        List<User> saListEnabled = utils.listUsers(serviceAdminToken)
+        List<User> iaListEnabled = utils.listUsers(identityAdminToken)
+        List<User> uaListEnabled = utils.listUsers(userAdminToken)
+
+        then: "saList contains only users within own domain"
+        // Number of users is unknown, but verifying that all exist within own domain is sufficient
+        saListEnabled.find {it.domainId != serviceAdmin.domainId} == null
+
+        and: "iaList contains only users within own domain"
+        iaListEnabled.size() == 4
+        iaListEnabled.find {it.domainId != identityAdmin.domainId} == null
+
+        and: "uaList still contains all 4 users in own domain, including identity admin"
+        uaListEnabled.size() == 4
+        uaListEnabled.find {it.id == identityAdmin.id} != null
+        uaListEnabled.find {it.id == userManage.id} != null
+        uaListEnabled.find {it.id == defaultUser.id} != null
+        uaListEnabled.find {it.id == defaultUser.id} != null
     }
 
     def "List users by name - filtered by caller type"() {

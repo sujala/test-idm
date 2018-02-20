@@ -15,6 +15,7 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
+import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.NewRelicTransactionNames;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
@@ -351,6 +352,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private RoleAssignmentConverter roleAssignmentConverter;
+
+    @Autowired
+    private IdmPathUtils idmPathUtils;
 
     @Autowired
     private RuleService ruleService;
@@ -4425,46 +4429,62 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            BaseUser caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum.DEFAULT_USER);
 
-            // If default user & NOT user-manage
-            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)
-                    && !authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
-                List<EndUser> users = new ArrayList<EndUser>();
-                // At this point, we know that the user is not a racker and can cast to an EndUser
-                users.add((EndUser) caller);
+            // Get user type
+            IdentityUserTypeEnum userTypeEnum = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+
+            // Short circuit. If regular default user, only user can return is self. No need to do any search.
+            if (userTypeEnum == IdentityUserTypeEnum.DEFAULT_USER) {
+                List<EndUser> users = ImmutableList.of((EndUser)caller);
                 return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
 
-            // This proves caller is an EndUser (e.g. not a Racker)
-            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
-
-            PaginatorContext<EndUser> paginatorContext;
-            if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
-                    authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                paginatorContext = this.identityUserService.getEnabledEndUsersPaged(marker, limit);
-            } else {
-                if (caller.getDomainId() != null) {
-                    String domainId = caller.getDomainId();
-                    paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(domainId, marker, limit);
+            Iterable<? extends EndUser> filteredUsers = Collections.emptyList();
+            String paginationLinkHeader = null;
+            PaginatorContext<EndUser> paginatorContext = null;
+            if (!identityConfig.getReloadableConfig().restrictListUsersToOwnDomain()) {
+                // LEGACY CODE
+                if (userTypeEnum == IdentityUserTypeEnum.SERVICE_ADMIN || userTypeEnum == IdentityUserTypeEnum.IDENTITY_ADMIN) {
+                    // Performance Killer.
+                    NewRelic.setTransactionName(null, NewRelicTransactionNames.V2ListAllUsers.getTransactionName());
+                    paginatorContext = this.identityUserService.getEnabledEndUsersPaged(marker, limit);
+                } else if (caller.getDomainId() != null) {
+                    paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(caller.getDomainId(), marker, limit);
                 } else {
-                    throw new BadRequestException("User-admin has no domain");
+                    throw new BadRequestException("Caller has no domain");
+                }
+            } else {
+                /*
+                This flow only returns users in the callers domain - regardless of whether they are enabled or not.
+                 */
+                if (identityConfig.getReloadableConfig().getTenantDefaultDomainId().equalsIgnoreCase(caller.getDomainId())) {
+                    // Users in default domain must only show the caller
+                    filteredUsers = ImmutableList.of((EndUser)caller);
+                } else if (caller.getDomainId() != null) {
+                    paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(caller.getDomainId(), marker, limit);
+                } else {
+                    throw new BadRequestException("Caller has no domain");
                 }
             }
 
-            Iterable<? extends EndUser> filteredUsers;
+            ResponseBuilder builder = Response.status(200);
+            if (paginatorContext != null) {
+                paginationLinkHeader = idmPathUtils.createLinkHeader(uriInfo, paginatorContext);
+                builder.header("Link", paginationLinkHeader);
 
-            // If role is identity:user-manage then we need to filter out the identity:user-admin and other user-managers
-            filteredUsers = filterOutUsersInaccessibleByCaller(paginatorContext.getValueList(), (EndUser) caller);
+                // Current implementation for this is expensive if caller is a user-manage since have to loop through
+                // every user
+                filteredUsers = filterOutUsersInaccessibleByCaller(paginatorContext.getValueList(), (EndUser) caller);
+            }
 
-            String linkHeader = endUserPaginator.createLinkHeader(uriInfo, paginatorContext);
+            builder.entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
+                   .createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
 
-            return Response.status(200)
-                    .header("Link", linkHeader)
-                    .entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
-                            .createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
+            return builder;
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

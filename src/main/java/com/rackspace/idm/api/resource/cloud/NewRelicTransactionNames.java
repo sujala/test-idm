@@ -24,6 +24,7 @@ public enum NewRelicTransactionNames {
     , V2ValidateDomainRcn("/v2.0/tokens (GET Validate Domain Rcn)")
     , V2ValidateFederatedDomain("/v2.0/tokens (GET Validate Federated Domain)")
     , V2ValidateImpersonation("/v2.0/tokens (GET Validate Impersonation)")
+    , V2ListAllUsers("/v2.0/users (All)")
     ;
 
     @Getter

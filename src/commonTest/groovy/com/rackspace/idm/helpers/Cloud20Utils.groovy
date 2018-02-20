@@ -46,6 +46,7 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
@@ -964,11 +965,14 @@ class Cloud20Utils {
         users.get(0)
     }
 
-    def listUsers(String token=getServiceAdminToken()){
-        def response = methods.listUsers(token)
+    def listUsers(String token=getServiceAdminToken(), MediaType mediaType = MediaType.APPLICATION_XML_TYPE){
+        def response = methods.listUsers(token, mediaType)
         assert (response.status == SC_OK)
-        List<User> users = response.getEntity(UserList).value.user
-        users
+        def userList = response.getEntity(UserList)
+        if (mediaType == APPLICATION_XML_TYPE) {
+            userList = userList.value
+        }
+        userList.user
     }
 
     UserList listUsersWithTenant(String tenantId, String token = getServiceAdminToken()) {

@@ -179,7 +179,7 @@ class RootServiceTest extends Specification {
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
     @Shared Paginator userPaginator
-    @Shared Paginator endUserPaginator
+    @Shared Paginator<EndUser> endUserPaginator
     @Shared Paginator domainPaginator
     @Shared Paginator applicationRolePaginator
     @Shared Paginator tenantRolePaginator
@@ -657,6 +657,7 @@ class RootServiceTest extends Specification {
 
         requestContextHolder.getRequestContext() >> requestContext
         requestContext.getSecurityContext() >> securityContext
+        requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
         securityContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
         authenticationContext = Mock(AuthenticationContext)
         requestContextHolder.getAuthenticationContext() >> authenticationContext

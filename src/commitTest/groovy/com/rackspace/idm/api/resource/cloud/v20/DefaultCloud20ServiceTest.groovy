@@ -70,14 +70,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         realValidator20 = new Validator20()
 
-        exceptionHandler = new ExceptionHandler()
         objFactories = new JAXBObjectFactories()
-
-        exceptionHandler.objFactories = objFactories
-
-        service.exceptionHandler = exceptionHandler
         service.jaxbObjectFactories = objFactories
 
+        exceptionHandler = new ExceptionHandler()
+        exceptionHandler.objFactories = objFactories
+        service.exceptionHandler = exceptionHandler
     }
 
     def setup() {
@@ -369,155 +367,214 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.addTenantRoleToUser(user, _)
     }
 
-    def "listUsers gets caller"() {
-        given:
-        mockUserConverter(service)
-        allowUserAccess()
+    @Unroll
+    def "listUsers (defaultUser caller) verifies token and caller regardless of feature flag: enabled - #enabled"() {
+        reloadableConfig.restrictListUsersToOwnDomain() >> enabled
 
         when:
-        service.listUsers(headers, uriInfo(), authToken, null, null)
+        def response = service.listUsers(headers, uriInfo(), authToken, 0, 1).build()
 
         then:
-        1 * userService.getUserByScopeAccess(_) >> entityFactory.createUser()
-    }
+        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> entityFactory.createUserToken()
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
+        1 * authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.DEFAULT_USER
 
-    def "listUsers (defaultUser caller) succeeds"() {
-        given:
-        mockUserService(service)
-        allowUserAccess()
-
-        authorizationService.authorizeCloudUser(_) >> true
-
-        when:
-        def response = service.listUsers(headers, uriInfo(), authToken, null, null).build()
-
-        then:
         response.status == 200
+
+        where:
+        enabled << [true, false]
     }
 
-    def "listUsers (caller is admin or service admin) gets enabled paged users and returns list"() {
+    @Unroll
+    def "listUsers (identity admin or service admin) gets enabled paged users and returns full list when disabled: #userType"() {
         given:
-        mockUserConverter(service)
-        mockEndUserPaginator(service)
-        allowUserAccess()
+        reloadableConfig.restrictListUsersToOwnDomain() >> false
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
 
-        authorizationService.authorizeCloudUser(_) >> false
-        authorizationService.authorizeCloudIdentityAdmin(_) >>> [ true ]
-        authorizationService.authorizeCloudServiceAdmin(_) >>> [ false ] >> true
-
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.IDENTITY_ADMIN
-
+        authorizationContext.getIdentityUserType() >> userType
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> userType
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
-
-        endUserPaginator.createLinkHeader(_, _) >> "link header"
-
         when:
-        def response1 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
-        def response2 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        2 * identityUserService.getEnabledEndUsersPaged(_, _) >> userContextMock
+        1 * identityUserService.getEnabledEndUsersPaged(_, _) >> userContextMock
+        1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
 
-        response1.status == 200
-        response2.status == 200
-        response1.getMetadata().get("Link") != null
-        response2.getMetadata().get("Link") != null
+        response.status == 200
+        response.getMetadata().get("Link") != null
+
+        where:
+        userType << [IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.SERVICE_ADMIN]
     }
 
-    def "listUsers (caller is userAdmin) gets paged users with domain filter and returns list"() {
+    @Unroll
+    def "listUsers (identity admin or service admin) gets own domain users when enabled: #userType"() {
         given:
-        mockUserConverter(service)
-        mockEndUserPaginator(service)
-        allowUserAccess()
+        reloadableConfig.getTenantDefaultDomainId() >> "default"
+        reloadableConfig.restrictListUsersToOwnDomain() >> true
+        User user = entityFactory.createUser()
 
-        authorizationService.authorizeCloudUser(_) >> false
-        authorizationService.authorizeCloudIdentityAdmin(_) >> false
-        authorizationService.authorizeCloudServiceAdmin(_) >> false
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
 
+        authorizationContext.getIdentityUserType() >> userType
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> userType
+        def userContextMock = Mock(PaginatorContext)
+        userContextMock.getValueList() >> [].asList()
+
+        when:
+        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+
+        then:
+        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), offset, limit) >> userContextMock
+        1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
+
+        response.status == 200
+        response.getMetadata().get("Link").get(0) == "link header"
+
+        where:
+        userType << [IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.SERVICE_ADMIN]
+    }
+
+    @Unroll
+    def "listUsers (user-admin) gets own domain users regardless of flag: enabled: #enabled"() {
+        given:
+        reloadableConfig.restrictListUsersToOwnDomain() >> enabled
+        reloadableConfig.getTenantDefaultDomainId() >> "default"
+
+        User user = entityFactory.createUser()
+
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
+
+        authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
-
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
-
-        endUserPaginator.createLinkHeader(_, _) >> "link header"
-
         when:
-        def response1 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        identityUserService.getEndUsersByDomainIdPaged(_, _, _) >> { arg1, arg2, arg3 ->
-            assert(arg1 == "domainId")
-            return userContextMock
-        }
+        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), offset, limit) >> userContextMock
+        1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
 
-        response1.status == 200
-        response1.getMetadata().get("Link") != null
+        and:
+        response.status == 200
+        response.getMetadata().get("Link").get(0) == "link header"
+
+        where:
+        enabled << [false, true]
     }
 
-    def "listUsers (caller is user manaage) gets paged users with domain filter and returns list"() {
+    @Unroll
+    def "listUsers: when caller in default domain, list limited to own user when enabled for caller: #callerType"() {
         given:
-        mockUserConverter(service)
-        mockEndUserPaginator(service)
-        allowUserAccess()
+        reloadableConfig.restrictListUsersToOwnDomain() >> true
+        reloadableConfig.getTenantDefaultDomainId() >> "default"
 
-        authorizationService.authorizeCloudUser(_) >> true
-        authorizationService.authorizeUserManageRole(_) >> true
-        authorizationService.authorizeCloudIdentityAdmin(_) >> false
-        authorizationService.authorizeCloudServiceAdmin(_) >> false
+        User user = entityFactory.createUser().with {
+            it.domainId = "default"
+            it
+        }
 
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
+        authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
+
+        when:
+        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+
+        then:
+        0 * identityUserService.getEndUsersByDomainIdPaged(_, _, _)
+        0 * idmPathUtils.createLinkHeader(_, _) >> "link header"
+        1 * userConverter.toUserList(_) >> { args ->
+            def userList = args[0]
+            assert userList.size() == 1
+            assert userList.get(0).id == user.id
+        }
+        response.status == 200
+
+        where:
+        callerType << [ IdentityUserTypeEnum.SERVICE_ADMIN,  IdentityUserTypeEnum.IDENTITY_ADMIN
+                        ,  IdentityUserTypeEnum.USER_ADMIN,  IdentityUserTypeEnum.USER_MANAGER,
+                        IdentityUserTypeEnum.DEFAULT_USER]
+    }
+
+    @Unroll
+    def "listUsers (user-manage) gets own domain users regardless of flag: enabled: #enabled"() {
+        given:
+        reloadableConfig.getTenantDefaultDomainId() >> "default"
+        reloadableConfig.restrictListUsersToOwnDomain() >> enabled
+        User user = entityFactory.createUser()
+
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
+
+        authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_MANAGER
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
-
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
-
-        endUserPaginator.createLinkHeader(_, _) >> "link header"
-
         when:
-        def response1 = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
 
         then:
-        identityUserService.getEndUsersByDomainIdPaged(_, _, _) >> { arg1, arg2, arg3 ->
-            assert(arg1 == "domainId")
-            return userContextMock
-        }
+        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), offset, limit) >> userContextMock
+        1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
 
-        response1.status == 200
-        response1.getMetadata().get("Link") != null
+        and:
+        response.status == 200
+        response.getMetadata().get("Link").get(0) == "link header"
+
+        where:
+        enabled << [false, true]
     }
 
-    def "listUsers handles exceptions"() {
+    def "listUsers handles exceptions when feature: #enabled"() {
         given:
-        mockUserConverter(service)
+        reloadableConfig.restrictListUsersToOwnDomain() >> enabled
+        reloadableConfig.getTenantDefaultDomainId() >> "default"
 
-        def mock = Mock(ScopeAccess)
-        mock.getUniqueId() >> "accessToken=token,cn=TOKENS,rsId=id,ou=users"
         scopeAccessMock = Mock()
         scopeAccessMock.getUniqueId() >> "accessToken=token,cn=TOKENS,rsId=id,ou=users"
+        mockUserConverter(service)
 
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock ] >> scopeAccessMock
-        authorizationService.verifyUserManagedLevelAccess(mock) >> { throw new ForbiddenException() }
-
-        userService.getUserByScopeAccess(_) >>> [
-                entityFactory.createUser(),
-                entityFactory.createUser("username", null, null, "region")
-        ]
-
-        when:
+        when: "Token not valid"
         def response1 = service.listUsers(headers, uriInfo(), authToken, null, null).build()
+
+        then:
+        securityContext.getAndVerifyEffectiveCallerToken(authToken) >> { throw new NotAuthorizedException()}
+        response1.status == 401
+
+        when: "Caller not found"
         def response2 = service.listUsers(headers, uriInfo(), authToken, null, null).build()
+
+        then:
+        securityContext.getAndVerifyEffectiveCallerToken(authToken) >> scopeAccessMock
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> { throw new NotFoundException()}
+        response2.status == 404
+
+        when: "Caller not authorized"
         def response3 = service.listUsers(headers, uriInfo(), authToken, null, null).build()
 
         then:
-        response1.status == 401
-        response2.status == 403
-        response3.status == 400
+        securityContext.getAndVerifyEffectiveCallerToken(authToken) >> scopeAccessMock
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> {entityFactory.createUser()}
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(_) >> {throw new ForbiddenException()}
+        response3.status == 403
+
+
+        when: "Caller can view all domain users but doesn't have a domain"
+        def response4 = service.listUsers(headers, uriInfo(), authToken, null, null).build()
+
+        then:
+        requestContext.getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> scopeAccessMock
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser("username", null, null, "region")
+        authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        response4.status == 400
+
+        where:
+        enabled << [false, true]
     }
 
     def "listUsersWithRole verifies admin level access"() {
@@ -4304,11 +4361,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockValidator20(service)
         mockPrecedenceValidator(service)
         mockUserPaginator(service)
+        mockEndUserPaginator(service)
         mockAuthWithToken(service)
         mockAuthWithApiKeyCredentials(service)
         mockAuthWithPasswordCredentials(service)
         mockUserConverter(service)
         mockSamlUnmarshaller(service)
+        mockIdmPathUtils(service)
     }
 
     def createFilter(FilterParam.FilterParamName name, String value) {
