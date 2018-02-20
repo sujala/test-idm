@@ -151,7 +151,7 @@ class Cloud20Utils {
         return response.getEntity(AuthenticateResponse).value
     }
 
-    AuthenticateResponse authenticateTokenAndDelegationAgreement(token, delegationAgreementid, MediaType mediaType) {
+    AuthenticateResponse authenticateTokenAndDelegationAgreement(token, delegationAgreementid, MediaType mediaType = MediaType.APPLICATION_JSON_TYPE) {
         def response = methods.authenticateTokenAndDelegationAgreement(token, delegationAgreementid, mediaType)
         assert(response.status == 200)
         AuthenticateResponse delegateSubUserAuthResponse
@@ -613,10 +613,11 @@ class Cloud20Utils {
         updateUser(user)
     }
 
-    AuthenticateResponse validateToken(token) {
-        def response = methods.validateToken(getServiceAdminToken(), token)
+    AuthenticateResponse validateToken(token, MediaType mediaType = APPLICATION_XML_TYPE) {
+        def response = methods.validateToken(getServiceAdminToken(), token, mediaType)
         assert (response.status == SC_OK)
-        response.getEntity(AuthenticateResponse).value
+        def entity = response.getEntity(AuthenticateResponse)
+        return mediaType == APPLICATION_XML_TYPE ? entity.value : entity
     }
 
     def validateTokenApplyRcnRoles(token, String applyRcnRolesParam = "true") {

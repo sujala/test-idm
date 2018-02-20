@@ -1257,16 +1257,6 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="parentDelegationAgreementId" type="xsd:string" use="optional">
-            <annotation>
-                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        The Id of the parent delegation agreement against which this delegation agreement
-                        is derived, if applicable.
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
         <attribute name="delegateId" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">

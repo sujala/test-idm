@@ -5957,7 +5957,7 @@ cn: enable.delegation.agreements.for.rcns
 description: A comma delimited list of rcns for which delegation agreements
  can be created.
 rsIdmVersion: 3.20.0
-rsPropertyValue:
+rsPropertyValue: RCN-TEST1,RCN-TEST2,RCN-TEST3
 rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE

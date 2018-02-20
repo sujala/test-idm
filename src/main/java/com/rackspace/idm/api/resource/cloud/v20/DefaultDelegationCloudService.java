@@ -82,11 +82,6 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new BadRequestException("Only provisioned users can create delegation agreements", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
 
-            // Don't support derived agreements yet
-            if (StringUtils.isNotBlank(agreementWeb.getParentDelegationAgreementId())) {
-                throw new BadRequestException("Nested delegation agreements are not yet supported", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
-            }
-
             // Set principal based on caller. User Group principals are not yet supported
             User caller = (User) callerBu;
             Domain callerDomain = requestContextHolder.getRequestContext().getEffectiveCallerDomain();
@@ -119,7 +114,6 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             delegationAgreement.setPrincipal(caller);
             delegationAgreement.setDomainId(callerDomain.getDomainId());
             delegationAgreement.getDelegates().add(delegate.getDn());
-            delegationAgreement.setParentDelegationAgreementId(null); // Not supported yet
 
             // Add the agreement
             delegationService.addDelegationAgreement(delegationAgreement);

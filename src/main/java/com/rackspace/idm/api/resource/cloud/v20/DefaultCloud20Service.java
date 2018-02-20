@@ -4780,7 +4780,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (sa instanceof RackerScopeAccess) {
                 authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((RackerScopeAccess) sa);
             } else if (sa instanceof UserScopeAccess) {
-                if (applyRcnRoles) {
+                UserScopeAccess usa = (UserScopeAccess) sa;
+                if (usa.isDelegationToken() && !identityConfig.getReloadableConfig().areDelegationAgreementServicesEnabled()) {
+                    throw new ServiceUnavailableException(GlobalConstants.ERROR_MSG_SERVICE_NOT_FOUND);
+                }
+
+                if (applyRcnRoles || usa.isDelegationToken()) {
                     authenticateResponse = authenticateResponseService.buildAuthResponseForValidateTokenApplyRcnRoles((UserScopeAccess) sa, tenantId);
                 } else {
                     authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((UserScopeAccess) sa, tenantId);
@@ -4812,6 +4817,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         } else if (token instanceof UserScopeAccess) {
             if (isFederatedToken) {
                 transactionName = NewRelicTransactionNames.V2ValidateFederatedDomain.getTransactionName();
+            } else if (((UserScopeAccess) token).isDelegationToken()) {
+                transactionName = NewRelicTransactionNames.V2ValidateDelegate.getTransactionName();
             } else if (applyRcnRoles) {
                 transactionName = NewRelicTransactionNames.V2ValidateDomainRcn.getTransactionName();
             } else {

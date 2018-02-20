@@ -248,9 +248,9 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
             assert delegateRole.name == matchingSubuserRole.name
         }
 
-        // User identifying information is different
-        delegateAuthResponse.user.id != realSubUserAuthResponse.user.id // Different user
-        delegateAuthResponse.user.name != realSubUserAuthResponse.user.name // Different user
+        // User identifying information reflects user authenticating
+        delegateAuthResponse.user.id == sharedSubUser2.id // User reflects the delegate
+        delegateAuthResponse.user.name == sharedSubUser2.username // User reflects the delegate
 
         // service catalogs are the same
         delegateAuthResponse.serviceCatalog.service.size() == realSubUserAuthResponse.serviceCatalog.service.size()

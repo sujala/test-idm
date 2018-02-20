@@ -133,7 +133,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.principalId == sharedUserAdmin.id
         createdDa.principalType == PrincipalType.USER
         createdDa.delegateId == sharedSubUser.id
-        createdDa.parentDelegationAgreementId == null
 
         when:
         def getResponse = cloud20.getDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)
@@ -151,7 +150,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.principalId == sharedUserAdmin.id
         getDa.principalType == PrincipalType.USER
         getDa.delegateId == sharedSubUser.id
-        getDa.parentDelegationAgreementId == null
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)

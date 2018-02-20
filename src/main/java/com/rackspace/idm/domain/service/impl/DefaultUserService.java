@@ -9,6 +9,7 @@ import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Region;
 import com.rackspace.idm.domain.service.*;
@@ -125,6 +126,12 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private AuthenticationContext authenticationContext;
+
+    @Autowired
+    private CreateSubUserService createSubUserService;
+
+    @Autowired
+    private DelegationService delegationService;
 
     @Autowired
     private TenantRoleDao tenantRoleDao;
@@ -1176,6 +1183,7 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
+    // TODO: Refactor this. Using instance of here makes this way too complex.
     @Override
     public BaseUser getUserByScopeAccess(ScopeAccess scopeAccess, boolean checkUserDisabled) {
         BaseUser user = null;
@@ -1199,8 +1207,14 @@ public class DefaultUserService implements UserService {
             if (CollectionUtils.isNotEmpty(userScopeAccess.getAuthenticatedBy()) && userScopeAccess.getAuthenticatedBy().contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)) {
                 //will be a federated user  (FederatedUser)
                 user = federatedUserDao.getUserByToken(userScopeAccess);
-            }
-            else {
+            } else if (userScopeAccess.isDelegationToken()) {
+                EndUser realUser = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
+                DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(userScopeAccess.getDelegationAgreementId());
+                if (realUser != null && delegationAgreement != null) {
+                    DomainSubUserDefaults domainSubUserDefaults = createSubUserService.calculateDomainSubUserDefaults(delegationAgreement.getDomainId());
+                    user = new ProvisionedUserDelegate(domainSubUserDefaults, delegationAgreement, realUser);
+                }
+            } else {
                 //will be a "provisioned" user (User)
                 user = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
             }

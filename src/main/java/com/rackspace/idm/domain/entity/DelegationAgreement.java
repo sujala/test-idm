@@ -24,7 +24,7 @@ import java.util.Set;
  */
 @Getter
 @Setter
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, superiorClass={"top" },
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, superiorClass={ "groupOfNames", "top" },
         postEncodeMethod="doPostEncode")
 public class DelegationAgreement implements Auditable, UniqueId {
     private static final Logger log = LoggerFactory.getLogger(DelegationAgreement.class);
@@ -49,13 +49,8 @@ public class DelegationAgreement implements Auditable, UniqueId {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String domainId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_DELEGATION_AGREEMENT_ID,
-            objectClass=LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private String parentDelegationAgreementId;
-
     @DeleteNullValues
-    @LDAPField(attribute = LdapRepository.ATTR_RS_DELEGATE_DNS, objectClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    @LDAPField(attribute = LdapRepository.ATTR_MEMBER, objectClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private Set<DN> delegates;
 
     @Override
@@ -132,9 +127,9 @@ public class DelegationAgreement implements Auditable, UniqueId {
      * @throws LDAPPersistException
      */
     private void doPostEncode(final Entry entry) throws LDAPPersistException {
-        String[] dns = entry.getAttributeValues(LdapRepository.ATTR_RS_DELEGATE_DNS);
+        String[] dns = entry.getAttributeValues(LdapRepository.ATTR_MEMBER);
         if (dns != null && dns.length == 0) {
-            entry.removeAttribute(LdapRepository.ATTR_RS_DELEGATE_DNS);
+            entry.removeAttribute(LdapRepository.ATTR_MEMBER);
         }
     }
 }
