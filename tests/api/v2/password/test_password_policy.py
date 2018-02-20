@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*
 
+from nose.plugins.attrib import attr
+
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 from tests.api.v2.models import responses
@@ -18,9 +21,11 @@ class TestPasswordPolicy(base.TestBaseV2):
 
         self.user_ids = []
 
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
         req_obj = requests.Domain(
             domain_name=self.generate_random_string(const.DOMAIN_PATTERN),
-            domain_id=self.generate_random_string(const.ID_PATTERN),
+            domain_id=domain_id,
             description=self.generate_random_string(const.DOMAIN_PATTERN),
             enabled=True)
         resp = self.identity_admin_client.add_domain(req_obj)
@@ -32,13 +37,24 @@ class TestPasswordPolicy(base.TestBaseV2):
         self.resp = self.identity_admin_client.add_update_password_policy(
             domain_id=self.domain_id, request_object=password_policy)
 
+    def verify_get_user_response(self, get_user_resp):
+
+        self.assertIn(const.RAX_AUTH_PASSWORD_EXPIRATION,
+                      get_user_resp.json()[const.USER])
+        self.assertIsNotNone(get_user_resp.json()[const.USER][
+                               const.RAX_AUTH_PASSWORD_EXPIRATION])
+
+    @attr(type='smoke_alpha')
     def test_create_password_policy(self):
         self.assertEqual(self.resp.status_code, 200)
         self.assertSchema(self.resp, password_json.password_policy)
 
         # Add User to domain. Verify Auth returns password expiration header.
-        add_user_object = factory.get_add_user_one_call_request_object(
-            domainid=self.domain_id)
+        input_data = {
+            'domain_id': self.domain_id
+        }
+        add_user_object = factory.get_add_user_request_object(
+            input_data=input_data)
         resp = self.identity_admin_client.add_user(
             request_object=add_user_object)
         user_resp = responses.User(resp_json=resp.json())
@@ -57,6 +73,19 @@ class TestPasswordPolicy(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         self.assertIn(const.X_PASSWORD_EXPIRATION, resp.headers)
 
+        # Verify get user returns password expiration
+        user_admin_client.default_headers[const.X_AUTH_TOKEN] = resp.json()[
+            const.ACCESS][const.TOKEN][const.ID]
+
+        get_user_resp = user_admin_client.get_user(user_resp.id)
+        self.verify_get_user_response(get_user_resp=get_user_resp)
+        option = {
+            const.NAME: user_resp.user_name
+        }
+        get_user_by_name_resp = user_admin_client.list_users(option=option)
+        self.verify_get_user_response(get_user_resp=get_user_by_name_resp)
+
+    @attr(type='smoke_alpha')
     def test_update_password_policy(self):
         self.assertEqual(self.resp.status_code, 200)
 
@@ -82,6 +111,7 @@ class TestPasswordPolicy(base.TestBaseV2):
             resp.json()[const.PASSWORD_POLICY][const.PASSWORD_DURATION],
             new_duration)
 
+    @attr(type='smoke_alpha')
     def test_delete_password_policy(self):
         resp = self.identity_admin_client.delete_password_policy(
             domain_id=self.domain_id)
@@ -91,12 +121,20 @@ class TestPasswordPolicy(base.TestBaseV2):
             domain_id=self.domain_id)
         self.assertEqual(resp.status_code, 404)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         super(TestPasswordPolicy, self).tearDown()
         for user_id in self.user_ids:
-            self.identity_admin_client.delete_user(user_id=user_id)
+            resp = self.identity_admin_client.delete_user(user_id=user_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(user_id))
 
         disable_domain_req = requests.Domain(enabled=False)
         self.identity_admin_client.update_domain(
             domain_id=self.domain_id, request_object=disable_domain_req)
-        self.identity_admin_client.delete_domain(domain_id=self.domain_id)
+        resp = self.identity_admin_client.delete_domain(
+            domain_id=self.domain_id)
+        self.assertEqual(resp.status_code, 204,
+                         msg='Domain with ID {0} failed to delete'.format(
+                           self.domain_id))
