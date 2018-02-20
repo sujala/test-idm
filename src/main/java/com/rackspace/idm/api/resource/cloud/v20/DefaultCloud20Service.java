@@ -3094,16 +3094,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Authorization Restrictions
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             User targetUser = userService.checkAndGetUserById(userId);
             BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
-            boolean self = caller.getId().equalsIgnoreCase(targetUser.getId());
-
-            if (!self) {
-                precedenceValidator.verifyCallerPrecedenceOverUser(caller, targetUser);
-            }
+            precedenceValidator.verifyCallerCanListRolesForUser(caller, targetUser);
 
             SourcedRoleAssignments assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
             return Response.ok(roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(assignments));
@@ -3190,25 +3186,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             // TODO: Modify this so a federated user can consume this service as the caller (just call retrieve effective caller from request context)
             BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
-            /*
-            1. Users with role 'identity:get-user-roles-global' can list roles for any user
-
-            2. Users can always list roles for themselves
-
-            3. Users can list roles based on usual order of precedence service-admin -> identity-admin -> user-admin -> user-manage -> default-user
-
-            4. If user-admin or below, the users must be in the same domain
-            */
-            if (!user.getId().equals(caller.getId()) &&
-                    !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())) {
-
-                precedenceValidator.verifyCallerPrecedenceOverUserForListGlobalRoles(caller, user);
-
-                IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(caller);
-                if (userType.isDomainBasedAccessLevel() && !caller.getDomainId().equals(user.getDomainId())) {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
-                }
-            }
+            precedenceValidator.verifyCallerCanListRolesForUser(caller, user);
 
             List<TenantRole> roles;
             if (applyRcnRoles) {

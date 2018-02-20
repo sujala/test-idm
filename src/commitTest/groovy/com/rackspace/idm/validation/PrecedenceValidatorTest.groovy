@@ -1,7 +1,12 @@
 package com.rackspace.idm.validation
 
+import com.rackspace.idm.api.security.IdentityRole
+import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.ForbiddenException
+import org.apache.commons.lang.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -21,6 +26,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
     
     def setup() {
         mockApplicationService(service)
+        mockAuthorizationService(service)
         mockConfiguration(service)
         mockRoleService(service)
     }
@@ -319,6 +325,121 @@ class PrecedenceValidatorTest extends RootServiceTest {
         first | second
         entityFactory.createClientRole("100", 100)   | entityFactory.createClientRole("50", 50)
         entityFactory.createClientRole("0", 0)   | entityFactory.createClientRole("-5", -5)
+    }
+
+    def "verifyCallerCanListRolesForUser does not require the user to meet any other security requirements if the caller is the same as the target user"() {
+        given:
+        User caller = entityFactory.createUser()
+
+        when:
+        service.verifyCallerCanListRolesForUser(caller, caller)
+
+        then:
+        0 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())
+        0 * authorizationService.getIdentityTypeRoleAsEnum(caller)
+        0 * applicationService.getUserIdentityRole(caller)
+        noExceptionThrown() // the user is allowed access
+    }
+
+    def "verifyCallerCanListRolesForUser allows access if the user has the identity:get-user-roles-global role"() {
+        given:
+        User caller = entityFactory.createUser().with { it.id = RandomStringUtils.randomAlphanumeric(8); it }
+        User user = entityFactory.createUser().with { it.id = RandomStringUtils.randomAlphanumeric(8); it }
+
+        when:
+        service.verifyCallerCanListRolesForUser(caller, user)
+
+        then:
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) >> true
+        0 * authorizationService.getIdentityTypeRoleAsEnum(caller)
+        0 * applicationService.getUserIdentityRole(caller)
+        0 * applicationService.getUserIdentityRole(user)
+        noExceptionThrown() // the user is allowed access
+    }
+
+    @Unroll
+    def "verifyCallerCanListRolesForUser validates access for #callerType to list roles for #userType - allowAccess = #allowAccess, sameDomain = #sameDomain"() {
+        given:
+        User caller = entityFactory.createUser().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        User user = entityFactory.createUser().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            if (sameDomain) {
+                it.domainId = caller.domainId
+            } else {
+                it.domainId = RandomStringUtils.randomAlphanumeric(8)
+            }
+            it
+        }
+        ClientRole callerClientRole = entityFactory.createClientRole().with {
+            it.rsWeight = callerType.level.levelAsInt
+            it.name = callerType.roleName
+            it
+        }
+        ClientRole userClientRole = entityFactory.createClientRole().with {
+            it.rsWeight = userType.level.levelAsInt
+            it.name = userType.roleName
+            it
+        }
+
+        when:
+        def exceptionThrown = null
+        try {
+            service.verifyCallerCanListRolesForUser(caller, user)
+        } catch (e) {
+            exceptionThrown = e
+        }
+
+        then:
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) >> false
+        authorizationService.getIdentityTypeRoleAsEnum(caller) >> callerType
+        1 * applicationService.getUserIdentityRole(caller) >> callerClientRole
+        1 * applicationService.getUserIdentityRole(user) >> userClientRole
+        if (allowAccess) {
+            assert exceptionThrown == null
+        } else {
+            assert exceptionThrown.class == ForbiddenException
+        }
+
+        where:
+        callerType                          | userType                            | sameDomain | allowAccess
+        IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.SERVICE_ADMIN  | false      | false
+        IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.IDENTITY_ADMIN | false      | true
+        IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.USER_ADMIN     | false      | true
+        IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.USER_MANAGER   | false      | true
+        IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.DEFAULT_USER   | false      | true
+        IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.SERVICE_ADMIN  | false      | false
+        IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.IDENTITY_ADMIN | false      | false
+        IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.USER_ADMIN     | false      | true
+        IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.USER_MANAGER   | false      | true
+        IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.DEFAULT_USER   | false      | true
+        IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.SERVICE_ADMIN  | false      | false
+        IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.IDENTITY_ADMIN | false      | false
+        IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.USER_ADMIN     | false      | false
+        IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.USER_MANAGER   | false      | false
+        IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.DEFAULT_USER   | false      | false
+        IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.USER_ADMIN     | true       | false
+        IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.USER_MANAGER   | true       | true
+        IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.DEFAULT_USER   | true       | true
+        IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.SERVICE_ADMIN  | false      | false
+        IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.IDENTITY_ADMIN | false      | false
+        IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.USER_ADMIN     | false      | false
+        IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.USER_MANAGER   | false      | false
+        IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.DEFAULT_USER   | false      | false
+        IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.USER_ADMIN     | true       | false
+        IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.USER_MANAGER   | true       | true
+        IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.DEFAULT_USER   | true       | true
+        IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.SERVICE_ADMIN  | false      | false
+        IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.IDENTITY_ADMIN | false      | false
+        IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_ADMIN     | false      | false
+        IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_MANAGER   | false      | false
+        IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.DEFAULT_USER   | false      | false
+        IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_ADMIN     | true       | false
+        IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_MANAGER   | true       | false
+        IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.DEFAULT_USER   | true       | false
     }
 
     def mockRoleService(service) {

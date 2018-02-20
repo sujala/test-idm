@@ -1,7 +1,9 @@
 package com.rackspace.idm.validation;
 
+import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -34,6 +36,9 @@ public class PrecedenceValidator {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    AuthorizationService authorizationService;
 
     private static final String NOT_AUTHORIZED = "Not Authorized";
 
@@ -69,7 +74,31 @@ public class PrecedenceValidator {
         }
     }
 
-    public void verifyCallerPrecedenceOverUserForListGlobalRoles(BaseUser caller, BaseUser user) {
+    /**
+     * Verifies that the provided caller can list roles for the given user given the following rules:
+    * 1. Users with role 'identity:get-user-roles-global' can list roles for any user
+    * 2. Users can always list roles for themselves
+    * 3. Users can list roles based on usual order of precedence service-admin -> identity-admin -> user-admin -> user-manage -> default-user
+    * 4. If user-admin or below, the users must be in the same domain
+     *
+     * NOTE: The only exception to the above rules is that user-managers within the same domain can list roles for each other.
+     *
+     * @throws ForbiddenException if the call is not allowed to list roles for the given user
+    */
+    public void verifyCallerCanListRolesForUser(BaseUser caller, BaseUser user) {
+        if (!user.getId().equals(caller.getId()) &&
+                !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())) {
+
+            verifyCallerPrecedenceOverUserForListRoles(caller, user);
+
+            IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+            if (userType.isDomainBasedAccessLevel() && !caller.getDomainId().equals(user.getDomainId())) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+        }
+    }
+
+    private void verifyCallerPrecedenceOverUserForListRoles(BaseUser caller, BaseUser user) {
         if (!(caller instanceof EndUser && user instanceof EndUser)) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }

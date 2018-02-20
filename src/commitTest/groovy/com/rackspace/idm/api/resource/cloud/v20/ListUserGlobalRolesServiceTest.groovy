@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -34,6 +33,7 @@ class ListUserGlobalRolesServiceTest extends RootServiceTest {
         mockTenantService(service)
         mockJAXBObjectFactories(service)
         mockRoleConverter(service)
+        mockPrecedenceValidator(service)
     }
 
     /**
@@ -97,7 +97,7 @@ class ListUserGlobalRolesServiceTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerToken(token) >> callerToken
         1 * identityUserService.checkAndGetEndUserById(targetUserId) >> targetUser // Verifies target user is a end user that exists
         1 * requestContext.getEffectiveCaller() >> caller
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) >> true
+        1 * precedenceValidator.verifyCallerCanListRolesForUser(caller, targetUser)
         1 * tenantService.getEffectiveGlobalRolesForUserExcludeRcnRoles(targetUser) >> roles
         1 * roleConverter.toRoleListJaxb(roles) >> roleList
         1 * openStackIdentityV2Factory.createRoles(roleList) >> Mock(JAXBElement)
@@ -141,7 +141,7 @@ class ListUserGlobalRolesServiceTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerToken(token) >> callerToken
         1 * identityUserService.checkAndGetEndUserById(targetUserId) >> targetUser // Verifies target user is a provisioned user that exists
         1 * requestContext.getEffectiveCaller() >> caller // Verify the caller is checked to be a provisioned  user
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) >> true
+        1 * precedenceValidator.verifyCallerCanListRolesForUser(caller, targetUser)
         1 * tenantService.getEffectiveGlobalRolesForUserIncludeRcnRoles(targetUser) >> roles
         1 * roleConverter.toRoleListJaxb(roles) >> roleList
         1 * openStackIdentityV2Factory.createRoles(roleList) >> Mock(JAXBElement)

@@ -30,6 +30,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         mockTenantService(service)
         mockExceptionHandler(service)
         mockRoleAssignmentConverter(service)
+        mockPrecedenceValidator(service)
     }
 
     /**
@@ -60,35 +61,10 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         then:
         1 * securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * precedenceValidator.verifyCallerCanListRolesForUser(caller, user) >> { args -> throw new ForbiddenException() }
         1 * userService.checkAndGetUserById(user.id) >> user
         1 * requestContext.getEffectiveCaller() >> caller
-        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> { throw new ForbiddenException() }
         1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
-    }
-
-    def "grantRoleAssignments: When calling on self, the precedence validator is not called"() {
-        given:
-        def user = new User().with {
-            it.id = "userId"
-            it
-        }
-
-        def token = "token"
-        def headers = Mock(HttpHeaders)
-        def params = new ListEffectiveRolesForUserParams()
-
-        when:
-        service.listEffectiveRolesForUser(headers, token, user.id, params)
-
-        then:
-        1 * securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
-        1 * userService.checkAndGetUserById(user.id) >> user
-        1 * requestContext.getEffectiveCaller() >> user
-        0 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
-        0 * idmExceptionHandler.exceptionResponse(_)
     }
 
     def "grantRoleAssignments: Calls appropriate processing services"() {

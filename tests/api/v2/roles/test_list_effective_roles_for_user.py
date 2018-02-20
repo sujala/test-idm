@@ -84,8 +84,8 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         resp = self.user_admin_client.list_effective_roles_for_user(
             user_id=self.user_client.default_headers[const.X_USER_ID])
 
-        # validate return 403
-        self.assertEqual(resp.status_code, 403)
+        # validate return 200
+        self.assertEqual(resp.status_code, 200)
 
         # get roles as identity admin
         resp = self.identity_admin_client.list_effective_roles_for_user(
