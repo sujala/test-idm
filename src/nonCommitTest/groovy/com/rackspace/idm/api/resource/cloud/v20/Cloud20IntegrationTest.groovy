@@ -1799,19 +1799,32 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
     }
 
-    def "listUsers caller is identity-admin or higher returns paged results"() {
-        expect:
+    @Unroll
+    def "listUsers caller is identity-admin or higher returns paged results. type: #userType; offset: #offset ; limit: #limit"() {
+        // Using identity admin to list all users to get a paged list so need to disable the protection against this.
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, false)
+        def token
+        if (userType == "ia") {
+            token = identityAdminToken
+        } else {
+            token = serviceAdminToken
+        }
+
+        when:
+        def response = cloud20.listUsers(token, offset, limit)
+
+        then:
         response.status == 200
         response.headers.getFirst("Link") != null
 
         where:
-        response << [
-                cloud20.listUsers(identityAdminToken),
-                cloud20.listUsers(identityAdminToken, "0", "10"),
-                cloud20.listUsers(identityAdminToken, "15", "10"),
-                cloud20.listUsers(serviceAdminToken),
-                cloud20.listUsers(serviceAdminToken, "0", "10"),
-                cloud20.listUsers(serviceAdminToken, "15", "10"),
+        [userType, offset, limit] << [
+                ["ia", null, null],
+                ["ia", "0", "10"],
+                ["ia", "15", "10"],
+                ["sa", null, null],
+                ["sa", "0", "10"],
+                ["sa", "15", "10"],
         ]
     }
 
@@ -1828,7 +1841,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         ]
     }
 
-    def "listUsers returns 200 and empty list when offset exceedes result set size"() {
+    def "listUsers returns 200 and empty list when offset exceeds result set size"() {
         expect:
         response.status == 200
         response.getEntity(UserList).value.user.size == 0

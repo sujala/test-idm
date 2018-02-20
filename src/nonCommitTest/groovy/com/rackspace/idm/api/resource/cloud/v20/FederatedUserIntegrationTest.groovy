@@ -2110,6 +2110,9 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         entityUserList.user.find({it.id == federatedUserId}).multiFactorEnabled == false
 
         when: "list users"
+        // Using identity admin to list all users for test so need to disable the protection against this.
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, false)
+
         response = cloud20.listUsers(utils.getIdentityAdminToken(), "0", "1000", mediaType)
         entityUserList = testUtils.getEntity(response, UserList)
 

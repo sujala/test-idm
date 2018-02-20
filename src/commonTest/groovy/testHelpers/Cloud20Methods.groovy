@@ -1145,8 +1145,12 @@ class Cloud20Methods {
 
     def pageParams(String offset, String limit) {
         new MultivaluedMapImpl().with {
-            it.add("marker", offset)
-            it.add("limit", limit)
+            if (offset != null) {
+                it.add("marker", offset)
+            }
+            if (limit != null) {
+                it.add("limit", limit)
+            }
             return it
         }
     }
