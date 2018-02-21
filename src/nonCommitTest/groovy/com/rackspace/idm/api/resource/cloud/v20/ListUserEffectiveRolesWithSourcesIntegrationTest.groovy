@@ -425,6 +425,60 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
     }
 
     @Unroll
+    def "ListUserEffectiveRolesOnTenant: Rbac Role are applied to tenant outside of user's domain: media: #media"() {
+        given:
+        def iaToken = utils.getIdentityAdminToken()
+
+        // Create cloud account to include both files and cloud tenant creation
+        def userAdmin = utils.createCloudAccount(iaToken)
+        def domainId = userAdmin.domainId
+
+        // Create tenant
+        def tenant = utils.createTenant()
+        // Add role to user on tenant
+        utils.addRoleToUserOnTenant(userAdmin, tenant, Constants.ROLE_RBAC1_ID)
+
+        when: "Get user's effective roles"
+        def response = cloud20.listUserEffectiveRolesWithSources(iaToken, userAdmin.id, new ListEffectiveRolesForUserParams(tenant.id), media)
+        response.status == HttpStatus.SC_OK
+        RoleAssignments assignments = response.getEntity(RoleAssignments)
+
+        then:
+        assignments != null
+        def tenantAssignments = assignments.tenantAssignments.tenantAssignment
+        // Expect only rbac role assignment
+        tenantAssignments.size() == 1
+
+        and: "Has rbac role"
+        def rbacAssignment = tenantAssignments.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        rbacAssignment != null
+        rbacAssignment.onRole == Constants.ROLE_RBAC1_ID
+        rbacAssignment.onRoleName == Constants.ROLE_RBAC1_NAME
+        rbacAssignment.forTenants != null
+        rbacAssignment.forTenants.size() == 1
+        rbacAssignment.forTenants[0] == tenant.id
+
+        and: "Source lists rbac role appropriately"
+        rbacAssignment.sources.source.size() == 1
+        def rbacSource = rbacAssignment.sources.source[0]
+        rbacSource.sourceType == SourceTypeEnum.USER
+        rbacSource.sourceId == userAdmin.id
+        rbacSource.assignmentType == AssignmentTypeEnum.TENANT
+        rbacSource.forTenants != null
+        rbacSource.forTenants.size() == 1
+        rbacSource.forTenants[0] == tenant.id
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+        utils.deleteTenantQuietly(tenant.id)
+        utils.deleteTenantQuietly(utils.getNastTenant(userAdmin.domainId))
+
+        where:
+        media << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
     def "ListUserEffectiveRolesOnTenant: query onTenantId invalid cases: media: #media"() {
         given:
         def iaToken = utils.getIdentityAdminToken()

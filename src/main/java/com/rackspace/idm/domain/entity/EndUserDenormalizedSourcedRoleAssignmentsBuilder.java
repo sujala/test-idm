@@ -38,11 +38,6 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
      */
     private Set<String> hiddenTenantPrefixes = Collections.emptySet();
 
-    /**
-     * Filter source role assignments by tenant ID when set.
-     */
-    private String tenantIdFilter;
-
     private SourcedRoleAssignments interimSourcedRoleAssignments;
     private SourcedRoleAssignments finalSourcedRoleAssignments;
 
@@ -78,10 +73,6 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         }
     }
 
-    public void setTenantIdFilter(String tenantId) {
-        this.tenantIdFilter = tenantId;
-    }
-
     public SourcedRoleAssignments build() {
         if (finalSourcedRoleAssignments != null) {
             return finalSourcedRoleAssignments;
@@ -111,21 +102,12 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
          */
         finalSourcedRoleAssignments = new SourcedRoleAssignments(userRoleLookupService.getUser());
 
-        Set<SourcedRoleAssignments.SourcedRoleAssignment> sourcedRoleAssignments;
-        if (StringUtils.isNotBlank(tenantIdFilter)) {
-            sourcedRoleAssignments = interimSourcedRoleAssignments.getSourcedRoleAssignmentsOnTenant(
-                    tenantIdFilter, getDomainAssignmentTenants(userType));
-        } else {
-            sourcedRoleAssignments = interimSourcedRoleAssignments.getSourcedRoleAssignments();
-        }
-
-        for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : sourcedRoleAssignments) {
+        for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : interimSourcedRoleAssignments.getSourcedRoleAssignments()) {
             ImmutableClientRole cr = sourcedRoleAssignment.getRole();
 
             for (SourcedRoleAssignments.Source rawSource : sourcedRoleAssignment.getSources()) {
                 Set<String> finalTenantIds = calculateFinalEffectiveTenantIdsForSource(userType, rawSource);
-                SourcedRoleAssignments.Source revisedSource = new SourcedRoleAssignments.Source(
-                        rawSource.getSourceType(), rawSource.getSourceId(), rawSource.getAssignmentType(), finalTenantIds);
+                SourcedRoleAssignments.Source revisedSource = new SourcedRoleAssignments.Source(rawSource.getSourceType(), rawSource.getSourceId(), rawSource.getAssignmentType(), finalTenantIds);
                 finalSourcedRoleAssignments.addSourceForRole(cr, revisedSource);
             }
         }
@@ -251,9 +233,7 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
 
     private Set<String> calculateFinalEffectiveTenantIdsForSource(IdentityUserTypeEnum userType, SourcedRoleAssignments.Source source) {
         Set<String> effectiveTenantIds = new HashSet<>();
-        if (StringUtils.isNotBlank(tenantIdFilter)) {
-            effectiveTenantIds.add(tenantIdFilter);
-        } else if (source.getAssignmentType() == SourcedRoleAssignments.AssignmentType.DOMAIN) {
+        if (source.getAssignmentType() == SourcedRoleAssignments.AssignmentType.DOMAIN) {
             effectiveTenantIds.addAll(getDomainAssignmentTenants(userType));
         } else {
             // TENANT | RCN - already calculated as part of preliminary calculation

@@ -689,21 +689,4 @@ public interface TenantService {
      */
     SourcedRoleAssignments getSourcedRoleAssignmentsForUser(EndUser user);
 
-    /**
-     * Return the set of effective role assignments on specified tenant for the specified user.
-     *
-     * The service considers:
-     * <ul>
-     *     <li>All roles explicitly assigned to user on tenant</li>
-     *     <li>The identity:tenant-access role as appropriate for tenant in user's domain</li>
-     *     <li>Roles received via group membership (if enabled for user's domain)</li>
-     *     <li>RCN Role logic to apply RCN roles across all applicable tenants with the user's RCN</li>
-     *     <li>Hidden tenants that a user only receives domain roles if explicitly assigned a role on the tenant</li>
-     * </ul>
-     *
-     * @param user
-     * @param tenantId
-     * @return
-     */
-    SourcedRoleAssignments getSourcedRoleAssignmentsForUserOnTenant(EndUser user, String tenantId);
 }

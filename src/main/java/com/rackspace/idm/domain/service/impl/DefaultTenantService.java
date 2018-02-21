@@ -1657,40 +1657,6 @@ public class DefaultTenantService implements TenantService {
         Validate.notNull(user.getId());
         Validate.notNull(user.getDomainId());
 
-        EndUserDenormalizedSourcedRoleAssignmentsBuilder sourcedRoleAssignmentsBuilder = getEndUserDenormalizedSourcedRoleAssignmentsBuilder(user);
-
-        return sourcedRoleAssignmentsBuilder.build();
-    }
-
-    /**
-     * Returns a list of effective roles the user has assigned on a specific tenant. This can includes roles the user
-     * explicitly has assigned on the tenant, if enabled, the automatically assigned "access" role and those due to
-     * group membership.
-     *
-     * @param user
-     * @param tenantId
-     * @throws NotFoundException is user's domain is not found
-     * @throws IllegalArgumentException if the user, userId, userDomainId, or tenantId is null
-     * @return
-     */
-    @Override
-    public SourcedRoleAssignments getSourcedRoleAssignmentsForUserOnTenant(EndUser user, String tenantId) {
-        logger.debug("Getting effective tenant roles for user on tenant");
-        Validate.notNull(user);
-        Validate.notNull(user.getId());
-        Validate.notNull(user.getDomainId());
-        Validate.notNull(tenantId);
-
-        EndUserDenormalizedSourcedRoleAssignmentsBuilder sourcedRoleAssignmentsBuilder = getEndUserDenormalizedSourcedRoleAssignmentsBuilder(user);
-        sourcedRoleAssignmentsBuilder.setTenantIdFilter(tenantId);
-
-        return sourcedRoleAssignmentsBuilder.build();
-    }
-
-    /**
-     * Returns end user denormalized source role assignments builder for user.
-     */
-    private EndUserDenormalizedSourcedRoleAssignmentsBuilder getEndUserDenormalizedSourcedRoleAssignmentsBuilder(EndUser user) {
         // Code smell. Need to replace this with factory or some other manner to avoid all these 'instanceof'
         UserRoleLookupService userRoleLookupService = null;
         if (user instanceof ProvisionedUserDelegate) {
@@ -1705,7 +1671,7 @@ public class DefaultTenantService implements TenantService {
             sourcedRoleAssignmentsBuilder.setHiddenTenantPrefixes(new HashSet<>(hiddenTenantPrefixes));
         }
 
-        return sourcedRoleAssignmentsBuilder;
+        return sourcedRoleAssignmentsBuilder.build();
     }
 
     /**

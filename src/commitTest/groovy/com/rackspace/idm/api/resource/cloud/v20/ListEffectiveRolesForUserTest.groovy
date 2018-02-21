@@ -1,6 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.google.common.collect.Sets
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.idm.api.security.ImmutableClientRole
+import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -105,9 +108,14 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         def token = "token"
         def headers = Mock(HttpHeaders)
         def tenantId = "tenantId"
-        def params = new ListEffectiveRolesForUserParams(tenantId)
 
-        SourcedRoleAssignments assignments = new SourcedRoleAssignments()
+        // Create source role assignments
+        SourcedRoleAssignments assignments = new SourcedRoleAssignments(user)
+
+        ClientRole clientRole = entityFactory.createClientRole()
+        ImmutableClientRole immutableClientRole = new ImmutableClientRole(clientRole)
+
+        assignments.addUserSourcedAssignment(immutableClientRole, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
 
         // Standard mocks to get past authorization
         securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
@@ -116,12 +124,33 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         userService.checkAndGetUserById(user.id) >> user
         requestContext.getEffectiveCaller() >> user
 
-        when:
+        when: "valid tenantId"
+        def params = new ListEffectiveRolesForUserParams(tenantId)
         service.listEffectiveRolesForUser(headers, token, user.id, params)
 
         then:
-        0 * tenantService.getSourcedRoleAssignmentsForUser(user)
-        1 * tenantService.getSourcedRoleAssignmentsForUserOnTenant(user, tenantId) >> assignments
-        1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(assignments) >> new RoleAssignments()
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> assignments
+        1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(_) >> { SourcedRoleAssignments sra ->
+            Set<SourcedRoleAssignments.SourcedRoleAssignment> sraSet = sra.getSourcedRoleAssignments()
+            assert sraSet.size() == 1
+            SourcedRoleAssignments.SourcedRoleAssignment roleAssignment = sraSet.iterator().next();
+            assert roleAssignment.tenantIds.size() == 1
+            assert roleAssignment.tenantIds.iterator().next() == tenantId
+            assert roleAssignment.role.id == clientRole.id
+
+            new RoleAssignments()
+        }
+
+        when: "invalid tenantId"
+        params = new ListEffectiveRolesForUserParams("invalid")
+        service.listEffectiveRolesForUser(headers, token, user.id, params)
+
+        then:
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> assignments
+        1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(_) >> { SourcedRoleAssignments sra ->
+            Set<SourcedRoleAssignments.SourcedRoleAssignment> sraSet = sra.getSourcedRoleAssignments()
+            assert sraSet.size() == 0
+            new RoleAssignments()
+        }
     }
 }
