@@ -98,7 +98,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(assignments) >> new RoleAssignments()
     }
 
-    def "listEffectiveRolesForUser: Calls appropriate processing services when using onTenantId query param"() {
+    def "listEffectiveRolesForUser: filter assignments using onTenantId query param"() {
         given:
         def user = new User().with {
             it.id = "targetId"
@@ -109,12 +109,24 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         def headers = Mock(HttpHeaders)
         def tenantId = "tenantId"
 
-        // Create source role assignments
+        // Create roles for assignments
         SourcedRoleAssignments assignments = new SourcedRoleAssignments(user)
 
-        ClientRole clientRole = entityFactory.createClientRole()
+        ClientRole clientRole = entityFactory.createClientRole().with {
+            it.name = "role1"
+            it.id = "id1"
+            it
+        }
         ImmutableClientRole immutableClientRole = new ImmutableClientRole(clientRole)
 
+        ClientRole clientRole2 = entityFactory.createClientRole().with {
+            it.name = "role2"
+            it.id = "id2"
+            it
+        }
+        ImmutableClientRole immutableClientRole2 = new ImmutableClientRole(clientRole2)
+
+        // Add user source Assignment
         assignments.addUserSourcedAssignment(immutableClientRole, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
 
         // Standard mocks to get past authorization
@@ -134,9 +146,70 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
             Set<SourcedRoleAssignments.SourcedRoleAssignment> sraSet = sra.getSourcedRoleAssignments()
             assert sraSet.size() == 1
             SourcedRoleAssignments.SourcedRoleAssignment roleAssignment = sraSet.iterator().next();
+            assert roleAssignment.sources.size() == 1
             assert roleAssignment.tenantIds.size() == 1
             assert roleAssignment.tenantIds.iterator().next() == tenantId
             assert roleAssignment.role.id == clientRole.id
+
+            new RoleAssignments()
+        }
+
+        when: "case insensitive"
+        params = new ListEffectiveRolesForUserParams(tenantId.toUpperCase())
+        service.listEffectiveRolesForUser(headers, token, user.id, params)
+
+        then:
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> assignments
+        1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(_) >> { SourcedRoleAssignments sra ->
+            Set<SourcedRoleAssignments.SourcedRoleAssignment> sraSet = sra.getSourcedRoleAssignments()
+            assert sraSet.size() == 1
+            SourcedRoleAssignments.SourcedRoleAssignment roleAssignment = sraSet.iterator().next();
+            assert roleAssignment.sources.size() == 1
+            assert roleAssignment.tenantIds.size() == 1
+            assert roleAssignment.tenantIds.iterator().next() == tenantId
+            assert roleAssignment.role.id == clientRole.id
+
+            new RoleAssignments()
+        }
+
+        when: "role assignments having multiple sources on tenant"
+        SourcedRoleAssignments.Source source = new SourcedRoleAssignments.Source(SourcedRoleAssignments.SourceType.USERGROUP, "groupId", SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet(tenantId))
+        assignments.sourcedRoleAssignments.iterator().next().addAdditionalSource(source)
+        service.listEffectiveRolesForUser(headers, token, user.id, params)
+
+        then:
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> assignments
+        1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(_) >> { SourcedRoleAssignments sra ->
+            Set<SourcedRoleAssignments.SourcedRoleAssignment> sraSet = sra.getSourcedRoleAssignments()
+            assert sraSet.size() == 1
+            SourcedRoleAssignments.SourcedRoleAssignment roleAssignment = sraSet.iterator().next();
+            assert roleAssignment.sources.size() == 2
+            assert roleAssignment.sources.find {it.sourceId == user.id} != null
+            assert roleAssignment.sources.find {it.sourceId == "groupId"} != null
+            assert roleAssignment.tenantIds.size() == 1
+            assert roleAssignment.tenantIds.iterator().next() == tenantId
+            assert roleAssignment.role.id == clientRole.id
+
+            new RoleAssignments()
+        }
+
+        when: "having multiple roles on the same tenant"
+        assignments.addUserSourcedAssignment(immutableClientRole2, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
+        service.listEffectiveRolesForUser(headers, token, user.id, params)
+
+        then:
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> assignments
+        1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(_) >> { SourcedRoleAssignments sra ->
+            Set<SourcedRoleAssignments.SourcedRoleAssignment> sraSet = sra.getSourcedRoleAssignments()
+            assert sraSet.size() == 2
+
+            SourcedRoleAssignments.SourcedRoleAssignment ra1 = sraSet.find {it.role.id == clientRole.id}
+            assert ra1.tenantIds.size() == 1
+            assert ra1.sources.size() == 2
+
+            SourcedRoleAssignments.SourcedRoleAssignment ra2 = sraSet.find {it.role.id == clientRole2.id}
+            assert ra2.tenantIds.size() == 1
+            assert ra2.sources.size() == 1
 
             new RoleAssignments()
         }
@@ -150,6 +223,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(_) >> { SourcedRoleAssignments sra ->
             Set<SourcedRoleAssignments.SourcedRoleAssignment> sraSet = sra.getSourcedRoleAssignments()
             assert sraSet.size() == 0
+
             new RoleAssignments()
         }
     }

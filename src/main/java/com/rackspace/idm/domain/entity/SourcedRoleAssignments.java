@@ -104,12 +104,16 @@ public class SourcedRoleAssignments {
         for (SourcedRoleAssignment sa : sourcedRoleAssignments.values()) {
             SourcedRoleAssignment sourcedRoleAssignment = null;
             for (Source s : sa.getSources()) {
-                Set<String> sourceTenantIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-                sourceTenantIds.addAll(s.tenantIds);
-
-                if (sourceTenantIds.contains(tenantId)) {
-                    Source source = new Source(s.sourceType, s.sourceId, s.assignmentType, Sets.newHashSet(tenantId));
-                    sourcedRoleAssignment = new SourcedRoleAssignment(sa.role, source);
+                for (String tid : s.tenantIds) {
+                    if (tid.equalsIgnoreCase(tenantId)) {
+                        Source source = new Source(s.sourceType, s.sourceId, s.assignmentType, Sets.newHashSet(tid));
+                        if (sourcedRoleAssignment == null) {
+                            sourcedRoleAssignment = new SourcedRoleAssignment(sa.role, source);
+                        } else {
+                            sourcedRoleAssignment.addAdditionalSource(source);
+                        }
+                        break;
+                    }
                 }
             }
 

@@ -425,7 +425,75 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
     }
 
     @Unroll
-    def "ListUserEffectiveRolesOnTenant: Rbac Role are applied to tenant outside of user's domain: media: #media"() {
+    def "ListUserEffectiveRolesOnTenant: Rbac role is assigned with multiple sources: media: #media"() {
+        given:
+        def iaToken = utils.getIdentityAdminToken()
+
+        // Create cloud account to include both files and cloud tenant creation
+        def userAdmin = utils.createCloudAccount(iaToken)
+        // Figure out mosso tenant
+        Tenants tenants = utils.listDomainTenants(userAdmin.domainId)
+        def mossoTenant = tenants.tenant.find {it.id == userAdmin.domainId}
+
+        utils.addRoleToUserOnTenant(userAdmin, mossoTenant, Constants.ROLE_RBAC1_ID)
+        // Create user group
+        UserGroup group = utils.createUserGroup(userAdmin.domainId)
+
+        // Add roles assignment to user group
+        utils.grantRoleAssignmentsOnUserGroup(group, v2Factory.createSingleRoleAssignment(Constants.ROLE_RBAC1_ID, [mossoTenant.id]))
+        // Add user to user group
+        utils.addUserToUserGroup(userAdmin.id, group)
+
+        when: "Get user's effective roles"
+        def response = cloud20.listUserEffectiveRolesWithSources(iaToken, userAdmin.id, new ListEffectiveRolesForUserParams(mossoTenant.id), media)
+        response.status == HttpStatus.SC_OK
+        RoleAssignments assignments = response.getEntity(RoleAssignments)
+
+        then:
+        assignments != null
+        def tenantAssignments = assignments.tenantAssignments.tenantAssignment
+        tenantAssignments.size() == 4
+
+        and: "Has rbac role"
+        def rbacAssignment = tenantAssignments.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        rbacAssignment != null
+        rbacAssignment.onRole == Constants.ROLE_RBAC1_ID
+        rbacAssignment.onRoleName == Constants.ROLE_RBAC1_NAME
+        rbacAssignment.forTenants != null
+        rbacAssignment.forTenants.size() == 1
+        rbacAssignment.forTenants[0] == mossoTenant.id
+
+        and: "Source lists rbac role appropriately"
+        rbacAssignment.sources.source.size() == 2
+
+        def userSourceType = rbacAssignment.sources.source.find {it.sourceId == userAdmin.id}
+        userSourceType.sourceType == SourceTypeEnum.USER
+        userSourceType.sourceId == userAdmin.id
+        userSourceType.assignmentType == AssignmentTypeEnum.TENANT
+        userSourceType.forTenants != null
+        userSourceType.forTenants.size() == 1
+        userSourceType.forTenants[0] == mossoTenant.id
+
+        def groupSourceType = rbacAssignment.sources.source.find {it.sourceId == group.id}
+        groupSourceType.sourceType == SourceTypeEnum.USERGROUP
+        groupSourceType.sourceId == group.id
+        groupSourceType.assignmentType == AssignmentTypeEnum.TENANT
+        groupSourceType.forTenants != null
+        groupSourceType.forTenants.size() == 1
+        groupSourceType.forTenants[0] == mossoTenant.id
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+        utils.deleteTenantQuietly(mossoTenant)
+        utils.deleteTenantQuietly(utils.getNastTenant(mossoTenant))
+
+        where:
+        media << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "ListUserEffectiveRolesOnTenant: Rbac role is applied to tenant outside of user's domain: media: #media"() {
         given:
         def iaToken = utils.getIdentityAdminToken()
 
