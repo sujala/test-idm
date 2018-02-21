@@ -6,7 +6,6 @@ import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.domain.service.rolecalculator.UserRoleLookupService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -102,6 +101,7 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
          * Finalize the assignments
          */
         finalSourcedRoleAssignments = new SourcedRoleAssignments(userRoleLookupService.getUser());
+
         for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : interimSourcedRoleAssignments.getSourcedRoleAssignments()) {
             ImmutableClientRole cr = sourcedRoleAssignment.getRole();
 
@@ -232,7 +232,6 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
     }
 
     private Set<String> calculateFinalEffectiveTenantIdsForSource(IdentityUserTypeEnum userType, SourcedRoleAssignments.Source source) {
-
         Set<String> effectiveTenantIds = new HashSet<>();
         if (source.getAssignmentType() == SourcedRoleAssignments.AssignmentType.DOMAIN) {
             effectiveTenantIds.addAll(getDomainAssignmentTenants(userType));

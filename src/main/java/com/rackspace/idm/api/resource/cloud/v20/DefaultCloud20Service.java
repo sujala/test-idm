@@ -3102,6 +3102,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             precedenceValidator.verifyCallerCanListRolesForUser(caller, targetUser);
 
             SourcedRoleAssignments assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
+
+            if (StringUtils.isNotBlank(params.onTenantId)) {
+                assignments = assignments.filterByTenantId(params.onTenantId);
+            }
+
             return Response.ok(roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(assignments));
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

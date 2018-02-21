@@ -1,15 +1,13 @@
 package com.rackspace.idm.domain.entity;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.api.security.ImmutableClientRole;
-import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 
 import java.util.*;
@@ -55,7 +53,6 @@ public class SourcedRoleAssignments {
         return finalUserType;
     }
 
-
     /**
      * Represents each {@link SourcedRoleAssignment} as a TenantRole through the {@link SourcedRoleAssignment#asTenantRole()}.
      *
@@ -98,6 +95,36 @@ public class SourcedRoleAssignments {
         return finalTenantRoles;
     }
 
+    /**
+     * Returns a set of source role assignments filtered by a tenantId.
+     */
+    public SourcedRoleAssignments filterByTenantId(String tenantId) {
+        SourcedRoleAssignments finalSourcedRoleAssignments = new SourcedRoleAssignments(user);
+
+        for (SourcedRoleAssignment sa : sourcedRoleAssignments.values()) {
+            SourcedRoleAssignment sourcedRoleAssignment = null;
+            for (Source s : sa.getSources()) {
+                for (String tid : s.tenantIds) {
+                    if (tid.equalsIgnoreCase(tenantId)) {
+                        Source source = new Source(s.sourceType, s.sourceId, s.assignmentType, Sets.newHashSet(tid));
+                        if (sourcedRoleAssignment == null) {
+                            sourcedRoleAssignment = new SourcedRoleAssignment(sa.role, source);
+                        } else {
+                            sourcedRoleAssignment.addAdditionalSource(source);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Add sourceRoleAssignment if the list of sources is not emtpy.
+            if (sourcedRoleAssignment != null && !sourcedRoleAssignment.getSources().isEmpty()) {
+                finalSourcedRoleAssignments.sourcedRoleAssignments.put(sourcedRoleAssignment.role.getId(), sourcedRoleAssignment);
+            }
+        }
+
+        return finalSourcedRoleAssignments;
+    }
 
     /**
      * Must provide explicit tenantIds since wildcard is not allowed.

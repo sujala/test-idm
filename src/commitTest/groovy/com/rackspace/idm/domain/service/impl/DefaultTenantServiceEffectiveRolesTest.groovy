@@ -298,7 +298,6 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         userGroups << [["1", "2", "3"] as String[]]
     }
 
-
     TenantRole createTenantRole(String roleId = "roleId_" + RandomStringUtils.randomAlphabetic(10)) {
         new TenantRole().with {
             it.roleRsId = roleId

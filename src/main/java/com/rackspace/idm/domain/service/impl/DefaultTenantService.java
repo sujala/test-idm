@@ -1657,8 +1657,6 @@ public class DefaultTenantService implements TenantService {
         Validate.notNull(user.getId());
         Validate.notNull(user.getDomainId());
 
-        SourcedRoleAssignments assignments = null;
-
         // Code smell. Need to replace this with factory or some other manner to avoid all these 'instanceof'
         UserRoleLookupService userRoleLookupService = null;
         if (user instanceof ProvisionedUserDelegate) {

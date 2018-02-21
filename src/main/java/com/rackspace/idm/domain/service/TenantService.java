@@ -688,4 +688,5 @@ public interface TenantService {
      * @return
      */
     SourcedRoleAssignments getSourcedRoleAssignmentsForUser(EndUser user);
+
 }
