@@ -3,6 +3,7 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.IdentityProviderSearchParams
+import com.rackspace.idm.api.resource.cloud.v20.ListEffectiveRolesForUserParams
 import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
@@ -235,9 +236,13 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_CHANGE_PASSWORD).accept(accept).type(request).entity(cp).post(ClientResponse)
     }
 
-    def listUserEffectiveRolesWithSources(String token, String userId,  MediaType media = APPLICATION_XML_TYPE) {
+    def listUserEffectiveRolesWithSources(String token, String userId, ListEffectiveRolesForUserParams params = new ListEffectiveRolesForUserParams(null), MediaType media = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(SERVICE_PATH_ROLES).accept(media).type(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        def queryParams = new MultivaluedMapImpl()
+        if (params.onTenantId != null) {
+            queryParams.add("onTenantId", params.onTenantId)
+        }
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(SERVICE_PATH_ROLES).queryParams(queryParams).accept(media).type(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def addApiKeyToUser(String token, String userId, credential) {

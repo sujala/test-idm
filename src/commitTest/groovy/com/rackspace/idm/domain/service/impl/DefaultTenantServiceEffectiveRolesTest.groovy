@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
+import com.unboundid.ldap.sdk.DN
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
@@ -298,6 +299,127 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         userGroups << [["1", "2", "3"] as String[]]
     }
 
+    def "getSourcedRoleAssignmentsForUserOnTenant: Error when supply null user"() {
+        when:
+        service.getSourcedRoleAssignmentsForUserOnTenant(null, "tenantId")
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "getSourcedRoleAssignmentsForUserOnTenant: Error when supply user with missing id"() {
+        when:
+        service.getSourcedRoleAssignmentsForUserOnTenant(new User().with {
+            it.domainId = "domainId"
+            it
+        }, "tenantId")
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "getSourcedRoleAssignmentsForUserOnTenant: Error when supply user with missing domain"() {
+        when:
+        service.getSourcedRoleAssignmentsForUserOnTenant(new User().with {
+            it.id = "userId"
+            it
+        }, "tenantId")
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "getSourcedRoleAssignmentsForUserOnTenant: Error when teantId is null"() {
+        when:
+        service.getSourcedRoleAssignmentsForUserOnTenant(new User().with {
+            it.id = "userId"
+            it
+        }, null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "getSourcedRoleAssignmentsForUserOnTenant: Retrieves tenant roles assigned to user on tenant"() {
+        given:
+        def user = new User().with {
+            it.id = "id"
+            it.domainId = "domainId"
+            it.userGroupDNs = [new DN("rsId=groupId")]
+            it
+        }
+        def tenantId = "tenantId"
+        def domain = new Domain().with {
+            it.domainId = user.domainId
+            it.tenantIds = [tenantId]
+            it
+        }
+        domainService.checkAndGetDomain(user.domainId) >> domain
+        domainService.getDomain(user.getDomainId()) >> domain // Called by logic for created tenant access
+        def tenantRole = createTenantRole("roleId")
+        def icr = createImmutableCrFromTenantRole(IdentityUserTypeEnum.DEFAULT_USER.roleName, tenantRole)
+
+        def userSourceTenantRole = createTenantRole().with {
+            it.roleRsId = "userTenantRoleId"
+            it.tenantIds = [tenantId, "t1"] as Set
+            it
+        }
+        def icr2 = createImmutableCrFromTenantRole(userSourceTenantRole)
+
+        // Filter group tenant role
+        def groupSourceTr = createTenantRole().with {
+            it.roleRsId = "groupRoleId"
+            it.tenantIds = ["t1"] as Set
+            it
+        }
+        def icr3 = createImmutableCrFromTenantRole(groupSourceTr)
+
+        when:
+        SourcedRoleAssignments assignments = service.getSourcedRoleAssignmentsForUserOnTenant(user, tenantId)
+
+        then:
+        // retrieves user sourced roles
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> [tenantRole, userSourceTenantRole]
+
+        // Looks up the client role from cache associated to tenant role
+        1 * applicationService.getCachedClientRoleById(tenantRole.roleRsId) >> icr
+        1 * applicationService.getCachedClientRoleById(userSourceTenantRole.roleRsId) >> icr2
+        1 * userGroupAuthorizationService.areUserGroupsEnabledForDomain(user.getDomainId()) >> true
+
+        // retrieve user group assignments
+        1 * userGroupService.getRoleAssignmentsOnGroup("groupId") >> [groupSourceTr]
+
+        // retrieve the user's domain
+        (1.._) * domainService.getDomain(user.getDomainId()) >> domain
+
+        and: "returns user role assignment on appropriate tenant"
+        assignments != null
+        assignments.user == user
+        assignments.sourcedRoleAssignments != null
+        assignments.sourcedRoleAssignments.size() == 2
+
+        and: "user type contains correct info"
+        SourcedRoleAssignments.SourcedRoleAssignment userTypeAssignment = assignments.sourcedRoleAssignments.find {it.role.name == icr.name}
+        def userType = userTypeAssignment.sources.find {it.sourceId == user.id}
+        userType != null
+        userType.tenantIds.size() == 1
+        CollectionUtils.isEqualCollection(userType.tenantIds, [tenantId] as Set)
+        userType.sourceType == SourcedRoleAssignments.SourceType.USER
+        userType.assignmentType == SourcedRoleAssignments.AssignmentType.DOMAIN
+
+        and: "user source contains correct info"
+        SourcedRoleAssignments.SourcedRoleAssignment userSourceAssignment = assignments.sourcedRoleAssignments.find {it.role.name == icr2.name}
+        def userSource = userSourceAssignment.sources.find {it.sourceId == user.id}
+        userSource != null
+        userSource.sourceType == SourcedRoleAssignments.SourceType.USER
+        userType.tenantIds.size() == 1
+        CollectionUtils.isEqualCollection(userSource.tenantIds, [tenantId] as Set)
+        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+
+        and: "assert excluded assignments"
+        SourcedRoleAssignments.SourcedRoleAssignment groupSourceAssignment = assignments.sourcedRoleAssignments.find {it.role.name == icr3.name}
+        groupSourceAssignment == null
+    }
 
     TenantRole createTenantRole(String roleId = "roleId_" + RandomStringUtils.randomAlphabetic(10)) {
         new TenantRole().with {

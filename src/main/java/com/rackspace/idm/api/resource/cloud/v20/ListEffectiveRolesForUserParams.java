@@ -12,4 +12,9 @@ import javax.annotation.Nullable;
 @AllArgsConstructor
 public class ListEffectiveRolesForUserParams {
 
+    /**
+     * Filters the list of effective roles for user by tenantId.
+     */
+    @Nullable
+    String onTenantId;
 }

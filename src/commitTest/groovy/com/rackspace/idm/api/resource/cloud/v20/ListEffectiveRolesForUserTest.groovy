@@ -39,7 +39,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
      * 2. Caller is authorized to call the service
      * 3. Caller is authorized to call the service on the specified user
      */
-    def "grantRoleAssignments: Calls appropriate authorization services and exception handler"() {
+    def "listEffectiveRolesForUser: Calls appropriate authorization services and exception handler"() {
         given:
         def user = new User().with {
             it.id = "targetId"
@@ -53,7 +53,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
 
         def token = "token"
         def headers = Mock(HttpHeaders)
-        def params = new ListEffectiveRolesForUserParams()
+        def params = new ListEffectiveRolesForUserParams(null)
 
         when:
         service.listEffectiveRolesForUser(headers, token, user.id, params)
@@ -67,7 +67,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
     }
 
-    def "grantRoleAssignments: Calls appropriate processing services"() {
+    def "listEffectiveRolesForUser: Calls appropriate processing services"() {
         given:
         def user = new User().with {
             it.id = "targetId"
@@ -76,7 +76,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
 
         def token = "token"
         def headers = Mock(HttpHeaders)
-        def params = new ListEffectiveRolesForUserParams()
+        def params = new ListEffectiveRolesForUserParams(null)
 
         SourcedRoleAssignments assignments = new SourcedRoleAssignments()
 
@@ -92,6 +92,36 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
 
         then:
         1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> assignments
+        1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(assignments) >> new RoleAssignments()
+    }
+
+    def "listEffectiveRolesForUser: Calls appropriate processing services when using onTenantId query param"() {
+        given:
+        def user = new User().with {
+            it.id = "targetId"
+            it
+        }
+
+        def token = "token"
+        def headers = Mock(HttpHeaders)
+        def tenantId = "tenantId"
+        def params = new ListEffectiveRolesForUserParams(tenantId)
+
+        SourcedRoleAssignments assignments = new SourcedRoleAssignments()
+
+        // Standard mocks to get past authorization
+        securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
+        requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        userService.checkAndGetUserById(user.id) >> user
+        requestContext.getEffectiveCaller() >> user
+
+        when:
+        service.listEffectiveRolesForUser(headers, token, user.id, params)
+
+        then:
+        0 * tenantService.getSourcedRoleAssignmentsForUser(user)
+        1 * tenantService.getSourcedRoleAssignmentsForUserOnTenant(user, tenantId) >> assignments
         1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(assignments) >> new RoleAssignments()
     }
 }

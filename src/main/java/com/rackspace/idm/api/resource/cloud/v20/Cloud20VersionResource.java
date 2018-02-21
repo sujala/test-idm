@@ -159,8 +159,9 @@ public class Cloud20VersionResource {
     @Path("/users/{userId}/RAX-AUTH/roles")
     public Response listEffectiveRolesForUser(@Context HttpHeaders httpHeaders,
                                               @HeaderParam(X_AUTH_TOKEN) String authToken,
-                                              @PathParam("userId") String userId) throws IOException, JAXBException {
-        return cloud20Service.listEffectiveRolesForUser(httpHeaders, authToken, userId, new ListEffectiveRolesForUserParams()).build();
+                                              @PathParam("userId") String userId,
+                                              @QueryParam("onTenantId") String onTenantId) throws IOException, JAXBException {
+        return cloud20Service.listEffectiveRolesForUser(httpHeaders, authToken, userId, new ListEffectiveRolesForUserParams(onTenantId)).build();
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)

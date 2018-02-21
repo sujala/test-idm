@@ -420,6 +420,89 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
     }
 
+    def "build: filter source assignments by tenantId"() {
+        given:
+        def user = defaultUser()
+        def domain = defaultDomain().with {
+            it.tenantIds = ["t1", "t2", "t3"] as String[]
+            it
+        }
+        userRoleLookupService.getUserDomain() >> domain
+        userRoleLookupService.getUser() >> user
+
+        EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
+        builder.setTenantIdFilter("t1")
+
+        def userTypeTr = createTenantRole()
+        def userTypeIcr = createImmutableCrFromTenantRole(IdentityUserTypeEnum.USER_ADMIN.roleName, userTypeTr)
+
+        def userSourceTr = createTenantRole().with {
+            it.tenantIds = ["t1"] as Set
+            it
+        }
+        def icr = createImmutableCrFromTenantRole(userSourceTr)
+
+        // Tenant role that should be filtered
+        def otherUserSourceTr = createTenantRole().with {
+            it.roleRsId = "otherUserRoleId"
+            it.tenantIds = ["t2"] as Set
+            it
+        }
+        def icr2 = createImmutableCrFromTenantRole(otherUserSourceTr)
+
+        def groupSourceTr = createTenantRole().with {
+            it.roleRsId = "groupRoleId"
+            it.tenantIds = ["t1"] as Set
+            it
+        }
+        Map<String, List<TenantRole>> groupAssignments = ["aGroupId":[groupSourceTr]] as Map
+        def icr3 = createImmutableCrFromTenantRole(groupSourceTr)
+
+        when: "get all tenant roles assigned to filtered tenantId"
+        SourcedRoleAssignments result = builder.build()
+
+        then:
+        1 * userRoleLookupService.getUserSourcedRoles() >> [userTypeTr, userSourceTr, otherUserSourceTr]
+        1 * userRoleLookupService.getGroupSourcedRoles() >> groupAssignments
+        (1.._) * userRoleLookupService.getImmutableClientRole(userTypeIcr.id) >> userTypeIcr
+        (1.._) * userRoleLookupService.getImmutableClientRole(icr.id) >> icr
+        (1.._) * userRoleLookupService.getImmutableClientRole(icr2.id) >> icr2
+        (1.._) * userRoleLookupService.getImmutableClientRole(icr3.id) >> icr3
+
+        result.sourcedRoleAssignments.size() == 3
+
+        and: "User type contains correct info"
+        SourcedRoleAssignments.SourcedRoleAssignment userTypeAssignment = result.sourcedRoleAssignments.find {it.role.name == userTypeIcr.name}
+        def userType = userTypeAssignment.sources.find {it.sourceId == user.id}
+        userType != null
+        userType.tenantIds.size() == 1
+        CollectionUtils.isEqualCollection(userType.tenantIds, ["t1"] as Set)
+        userType.sourceType == SourcedRoleAssignments.SourceType.USER
+        userType.assignmentType == SourcedRoleAssignments.AssignmentType.DOMAIN
+
+        and: "User source contains correct info"
+        SourcedRoleAssignments.SourcedRoleAssignment userSourceAssignment = result.sourcedRoleAssignments.find {it.role.name == icr.name}
+        def userSource = userSourceAssignment.sources.find {it.sourceId == user.id}
+        userSource != null
+        userSource.sourceType == SourcedRoleAssignments.SourceType.USER
+        userType.tenantIds.size() == 1
+        CollectionUtils.isEqualCollection(userSource.tenantIds, ["t1"] as Set)
+        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+
+        and: "group source contains expected info"
+        SourcedRoleAssignments.SourcedRoleAssignment groupSourceAssignment = result.sourcedRoleAssignments.find {it.role.name == icr3.name}
+        def groupSource = groupSourceAssignment.sources.find {it.sourceId == "aGroupId"}
+        groupSource != null
+        groupSource.sourceType == SourcedRoleAssignments.SourceType.USERGROUP
+        userType.tenantIds.size() == 1
+        CollectionUtils.isEqualCollection(groupSource.tenantIds, ["t1"] as Set)
+        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+
+        and: "assert excluded assignment"
+        SourcedRoleAssignments.SourcedRoleAssignment userOtherSourceAssignment = result.sourcedRoleAssignments.find {it.role.name == icr2.name}
+        userOtherSourceAssignment == null
+    }
+
     def "Mixing global source and tenant source results in role on all domain tenants"() {
         given:
         def user = defaultUser()

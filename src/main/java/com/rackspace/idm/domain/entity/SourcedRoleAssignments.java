@@ -1,15 +1,13 @@
 package com.rackspace.idm.domain.entity;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.api.security.ImmutableClientRole;
-import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 
 import java.util.*;
@@ -37,6 +35,39 @@ public class SourcedRoleAssignments {
 
     public Set<SourcedRoleAssignment> getSourcedRoleAssignments() {
         return ImmutableSet.copyOf(sourcedRoleAssignments.values());
+    }
+
+    /**
+     * Returns a set of source role assignments filtered by a tenantId.
+     */
+    public Set<SourcedRoleAssignment> getSourcedRoleAssignmentsOnTenant(String tenantId, Set<String> domainTenants) {
+        Set<SourcedRoleAssignment> finalSourcedRoleAssignments = new HashSet<>();
+        // List of tenantIds that belong to user's domain
+        Set<String> validTenantsOnDomain = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        validTenantsOnDomain.addAll(domainTenants);
+
+        for (SourcedRoleAssignment sa : sourcedRoleAssignments.values()) {
+            SourcedRoleAssignment sourcedRoleAssignment = null;
+            for (Source s : sa.getSources()) {
+                Set<String> sourceTenantIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+                sourceTenantIds.addAll(s.tenantIds);
+                /* Determine if a source for assignment need to be created by passing one of the following checks:
+                 * 1. Verify tenantId belongs to the list of domain tenants. (global roles)
+                 * 2. Verify that the list of tenants on source contains the tenantId.
+                 */
+                if ((sourceTenantIds.isEmpty() && validTenantsOnDomain.contains(tenantId)) || sourceTenantIds.contains(tenantId)) {
+                    Source source = new Source(s.sourceType, s.sourceId, s.assignmentType, Sets.newHashSet(tenantId));
+                    sourcedRoleAssignment = new SourcedRoleAssignment(sa.role, source);
+                }
+            }
+
+            // Add sourceRoleAssignment if the list of sources is not emtpy.
+            if (sourcedRoleAssignment != null && !sourcedRoleAssignment.getSources().isEmpty()) {
+                finalSourcedRoleAssignments.add(sourcedRoleAssignment);
+            }
+        }
+
+        return finalSourcedRoleAssignments;
     }
 
     public IdentityUserTypeEnum getUserTypeFromAssignedRoles() {
@@ -97,7 +128,6 @@ public class SourcedRoleAssignments {
 
         return finalTenantRoles;
     }
-
 
     /**
      * Must provide explicit tenantIds since wildcard is not allowed.
