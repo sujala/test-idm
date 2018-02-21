@@ -341,7 +341,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         taSource.forTenants.size() == 1
         CollectionUtils.isEqualCollection(taSource.forTenants, [mossoTenant.id])
 
-        and: "Has RBAC role on mosso form user group"
+        and: "Has RBAC role on mosso from user group"
         def groupAssignment = tenantAssignments.find {it.onRoleName == Constants.ROLE_RBAC1_NAME}
         groupAssignment != null
         groupAssignment.onRole == Constants.ROLE_RBAC1_ID
