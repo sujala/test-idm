@@ -22,13 +22,7 @@ public final class HashHelper {
     private static Logger logger = LoggerFactory.getLogger(HashHelper.class);
 
     public static String getRandomSha1() {
-        SecureRandom random = null;
-        try {
-            random = SecureRandom.getInstance("SHA1PRNG");
-        } catch (NoSuchAlgorithmException e) {
-            logger.info("failed to Secure Random based on SHA1PRNG: " + e.getMessage());
-            throw new IdmException("failed to create Secure Random based on SHA1PRNG", e);
-        }
+        SecureRandom random = getSecureRandom();
 
         // Salt generation 64 bits long
         byte[] bSalt = new byte[SALT_SIZE];
@@ -41,6 +35,18 @@ public final class HashHelper {
         String randomSha1 = makeSHA1Hash(sSalt + timestamp);
 
         return randomSha1;
+    }
+
+    public static SecureRandom getSecureRandom() {
+        SecureRandom random = null;
+        try {
+            random = SecureRandom.getInstance("SHA1PRNG");
+        } catch (NoSuchAlgorithmException e) {
+            logger.info("failed to Secure Random based on SHA1PRNG: " + e.getMessage());
+            throw new IdmException("failed to create Secure Random based on SHA1PRNG", e);
+        }
+        return random;
+
     }
 
     public static String byteToBase64(byte[] data) {

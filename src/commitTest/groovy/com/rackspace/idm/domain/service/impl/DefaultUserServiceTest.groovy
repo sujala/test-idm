@@ -1271,7 +1271,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     }
 
 
-    def "Add UserV20 with phone PIN"() {
+    def "Add UserV20 with phone PIN feature turned ON"() {
         given:
         def user = this.createUser("DFW", true, domainId)
         user.setRoles([entityFactory.createTenantRole("roleName")].asList())
@@ -1308,6 +1308,41 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.phonePin != null
         user.phonePin.isNumber()
         user.phonePin.size() == 4
+
+        when: "create another user with the same PIN length"
+
+        def user1 = this.createUser("DFW", true, domainId)
+        user1.setRoles([entityFactory.createTenantRole("roleName")].asList())
+        user1.username = "userWithPin1"
+
+        service.addUserAdminV20(user1, false)
+
+        then:
+
+        user1.phonePin != null
+        user1.phonePin.isNumber()
+        user1.phonePin.size() == 4
+    }
+
+    def "Add UserV20 with phone PIN feature turned OFF"() {
+        given:
+        def user = this.createUser("DFW", true, domainId)
+        user.setRoles([entityFactory.createTenantRole("roleName")].asList())
+        user.username = "userWithoutPin"
+
+        reloadableConfig.getEnablePhonePinOnUserFlag() >> false
+
+        propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> "0"
+        userDao.getUsersByDomain(domainId) >> [].asList()
+        userDao.nextUserId >> "nextId"
+        mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
+        cryptHelper.generateSalt() >> "a1 b2"
+
+        when:
+        service.addUserAdminV20(user, false)
+
+        then:
+        user.phonePin == null
     }
 
     def createStringPaginatorContext() {

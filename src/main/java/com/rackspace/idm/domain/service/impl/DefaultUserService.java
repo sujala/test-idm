@@ -232,7 +232,7 @@ public class DefaultUserService implements UserService {
         user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
 
         if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
-            user.setPhonePin(RandomStringUtils.randomNumeric(identityConfig.getReloadableConfig().getUserPhonePinSize()));
+            user.setPhonePin(RandomStringUtils.random(identityConfig.getReloadableConfig().getUserPhonePinSize(), 0, 0, false, true, null, HashHelper.getSecureRandom()));
         }
         userDao.addUser(user);
 

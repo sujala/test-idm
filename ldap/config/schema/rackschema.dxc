@@ -1163,9 +1163,9 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.148) = {
     description = "The associated delegates for the agreement"
 };
 
-schema set attribute (1.3.6.1.4.1.20988.2.1.150) = {
-    name = phonePin
-    ldap-names = phonePin
+schema set attribute (1.3.6.1.4.1.20988.2.1.149) = {
+    name = rsPhonePin
+    ldap-names = rsPhonePin
     syntax = octetString
     description = "Phone pin"
 };
@@ -1231,7 +1231,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         rsMultiFactorFailedAttemptCount,
         rsMultiFactorLastFailedTimestamp,
         rsPasswordHistory,
-        phonePin
+        rsPhonePin
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {

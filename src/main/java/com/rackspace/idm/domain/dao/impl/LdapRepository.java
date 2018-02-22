@@ -201,7 +201,7 @@ public abstract class LdapRepository {
     public static final String ATTR_IDP_NAME = "rsIdpName";
     public static final String ATTR_TENANT_ALIAS = "rsTenantAlias";
     public static final String ATTR_CONTACT_ID = "rsContactId";
-    public static final String ATTR_PHONE_PIN = "phonePin";
+    public static final String ATTR_PHONE_PIN = "rsPhonePin";
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
