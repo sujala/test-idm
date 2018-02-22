@@ -19,10 +19,10 @@ import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
+import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.validation.Validator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
@@ -232,7 +232,7 @@ public class DefaultUserService implements UserService {
         user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
 
         if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
-            user.setPhonePin(RandomStringUtils.random(identityConfig.getReloadableConfig().getUserPhonePinSize(), 0, 0, false, true, null, HashHelper.getSecureRandom()));
+            user.setPhonePin(RandomGeneratorUtil.generateSecureRandomNumber(identityConfig.getReloadableConfig().getUserPhonePinSize()));
         }
         userDao.addUser(user);
 

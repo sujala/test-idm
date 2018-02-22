@@ -42,11 +42,10 @@ public final class HashHelper {
         try {
             random = SecureRandom.getInstance("SHA1PRNG");
         } catch (NoSuchAlgorithmException e) {
-            logger.info("failed to Secure Random based on SHA1PRNG: " + e.getMessage());
-            throw new IdmException("failed to create Secure Random based on SHA1PRNG", e);
+            logger.info("Failed to Secure Random based on SHA1PRNG: " + e.getMessage());
+            throw new IdmException("Failed to create Secure Random based on SHA1PRNG", e);
         }
         return random;
-
     }
 
     public static String byteToBase64(byte[] data) {

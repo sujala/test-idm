@@ -7,8 +7,6 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
-import javax.ws.rs.core.MediaType
-
 class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
     @Shared
@@ -20,7 +18,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     UserService userService
 
     @Unroll
-    def "Create identityAdmin, userAdmin, userManage, defaultUser with phone PIN - accept == #accept, featureEnabled == #featureEnabled" () {
+    def "Create identityAdmin, userAdmin, userManage, defaultUser with phone PIN - featureEnabled == #featureEnabled" () {
         given:
         def domainId = utils.createDomain()
         def pinLength = 4
@@ -39,30 +37,30 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         then:
 
         if (featureEnabled) {
-            identityAdminUserEntity.phonePin != null
-            identityAdminUserEntity.encryptedPhonePin != null
-            identityAdminUserEntity.phonePin.size() == pinLength
-            identityAdminUserEntity.phonePin.isNumber()
+            assert identityAdminUserEntity.phonePin != null
+            assert identityAdminUserEntity.encryptedPhonePin != null
+            assert identityAdminUserEntity.phonePin.size() == pinLength
+            assert identityAdminUserEntity.phonePin.isNumber()
 
-            userAdminUserEntity.phonePin != null
-            userAdminUserEntity.encryptedApiKey != null
-            userAdminUserEntity.phonePin.size() == pinLength
-            userAdminUserEntity.phonePin.isNumber()
+            assert userAdminUserEntity.phonePin != null
+            assert userAdminUserEntity.encryptedApiKey != null
+            assert userAdminUserEntity.phonePin.size() == pinLength
+            assert userAdminUserEntity.phonePin.isNumber()
 
-            userManageUserEntity.phonePin != null
-            userManageUserEntity.encryptedApiKey != null
-            userManageUserEntity.phonePin.size() == pinLength
-            userManageUserEntity.phonePin.isNumber()
+            assert userManageUserEntity.phonePin != null
+            assert userManageUserEntity.encryptedApiKey != null
+            assert userManageUserEntity.phonePin.size() == pinLength
+            assert userManageUserEntity.phonePin.isNumber()
 
-            defaultUserUserEntity.phonePin != null
-            defaultUserUserEntity.encryptedApiKey != null
-            defaultUserUserEntity.phonePin.size() == pinLength
-            defaultUserUserEntity.phonePin.isNumber()
+            assert defaultUserUserEntity.phonePin != null
+            assert defaultUserUserEntity.encryptedApiKey != null
+            assert defaultUserUserEntity.phonePin.size() == pinLength
+            assert defaultUserUserEntity.phonePin.isNumber()
         } else {
-            identityAdminUserEntity.phonePin == null
-            userAdminUserEntity.phonePin == null
-            userManageUserEntity.phonePin == null
-            defaultUserUserEntity.phonePin == null
+            assert identityAdminUserEntity.phonePin == null
+            assert userAdminUserEntity.phonePin == null
+            assert userManageUserEntity.phonePin == null
+            assert defaultUserUserEntity.phonePin == null
         }
 
         cleanup:
@@ -70,7 +68,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
 
         where:
-        [accept, featureEnabled] << [[MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE], [true, false]].combinations()
+        [featureEnabled] << [[true, false]].combinations()
     }
 
     @Unroll
@@ -85,22 +83,16 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         def userEntity = userService.getUserById(user.id)
 
         then:
-
-        if (pinLength == 10) {
-            userEntity.phonePin != null
-            userEntity.encryptedApiKey != null
-            userEntity.phonePin.size() == pinLength
-            userEntity.phonePin.isNumber()
-        } else if (pinLength == 4) {
-            userEntity.phonePin != null
-            userEntity.encryptedApiKey != null
-            userEntity.phonePin.size() == pinLength
-            userEntity.phonePin.isNumber()
-        } else if (pinLength == 0) {
-            userEntity.phonePin != null
-            userEntity.encryptedApiKey != null
-            userEntity.phonePin.size() == pinLength
-            userEntity.phonePin.isEmpty()
+        if (pinLength > 0) {
+            assert userEntity.phonePin != null
+            assert userEntity.encryptedApiKey != null
+            assert userEntity.phonePin.size() == pinLength
+            assert userEntity.phonePin.isNumber()
+        }  else if (pinLength == 0) {
+            assert userEntity.phonePin != null
+            assert userEntity.encryptedApiKey != null
+            assert userEntity.phonePin.size() == pinLength
+            assert userEntity.phonePin.isEmpty()
         }
 
         cleanup:
