@@ -10,6 +10,7 @@ V11_GET_USER_URL = V11_DELETE_USER_URL = (V11_USER_URL + '/{user_id}')
 
 '''URLs'''
 ADD_ENDPOINT_TO_TENANT_URL = '/tenants/{tenant_id}/OS-KSCATALOG/endpoints'
+ADD_MULTIPLE_ROLES_TO_USER_URL = '/users/{user_id}/RAX-AUTH/roles'
 ADD_OTP_DEVICE_URL = '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices'
 ADD_ROLE_TO_USER_FOR_TENANT_URL = DEL_ROLE_FROM_USER_FOR_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/{role_id}')

@@ -1761,3 +1761,10 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 tenant_id=tenant_id))
         return self.request(
             'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
+    def add_role_assignments_to_user(self, user_id, request_object,
+                                     requestslib_kwargs=None):
+        url = self.url + const.ADD_MULTIPLE_ROLES_TO_USER_URL.format(
+            user_id=user_id)
+        return self.request('PUT', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
