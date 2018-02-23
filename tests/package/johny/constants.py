@@ -515,6 +515,7 @@ COMPUTE_ROLE_NAME = "compute:default"
 COMPUTE_ROLE_ID = '6'
 ENDPOINT_RULE_ADMIN_ROLE_NAME = 'identity:endpoint-rule-admin'
 IDENTITY_ADMIN_ROLE_ID = '1'
+IDENTITY_ADMIN_ROLE_NAME = 'identity:admin'
 OBJECT_STORE_ROLE_NAME = 'object-store:default'
 SERVICE_ADMIN_ROLE_ID = '4'
 TENANT_ACCESS_ROLE_NAME = 'identity:tenant-access'
@@ -530,6 +531,9 @@ IDENTITY_PROPERTY_ADMIN_ROLE_NAME = 'identity:property-admin'
 USER_ADMIN_ROLE_NAME = 'identity:user-admin'
 RCN_ADMIN_ROLE_NAME = 'rcn:admin'
 RCN_SWITCH_ROLE_NAME = 'identity:domain-rcn-switch'
+
+GLOBAL_USER_ROLES_ROLE_NAME = 'identity:get-user-roles-global'
+GLOBAL_USER_ROLES_ROLE_ID = '14'
 
 '''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES = (

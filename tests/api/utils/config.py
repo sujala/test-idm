@@ -59,6 +59,16 @@ class IdentityConfig(data_interfaces.ConfigSectionInterface):
         return self.get('identity_admin_apikey')
 
     @property
+    def global_roles_user_name(self):
+        """User Admin User with Global Roles role."""
+        return self.get('global_roles_user_name')
+
+    @property
+    def global_roles_password(self):
+        """Password for the User Admin User with Global Roles role."""
+        return self.get('global_roles_password')
+
+    @property
     def racker_username(self):
         """Racker Username."""
         return self.get('racker_username')

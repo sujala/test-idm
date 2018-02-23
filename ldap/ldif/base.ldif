@@ -5961,3 +5961,37 @@ rsPropertyValue: RCN-TEST1,RCN-TEST2,RCN-TEST3
 rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE
+
+dn: rsId=b59a7a0ac6e2433ca45c3af059c75325,ou=users,o=rackspace,dc=rackspace,dc=com
+rsId: b59a7a0ac6e2433ca45c3af059c75325
+objectClass: rsPerson
+enabled: TRUE
+encryptionSalt: 21 ea 4a 42 96 9d c8 98 07 c2 d4 59 a3 3a f0 e3
+encryptionVersionId: 0
+mail: uaGlobalRolesUser@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20180221210815.257Z
+rsApiKey:: CKQwasL8ugb4koMw70inWwsXLZRuXL1mv6ioLuGcOKwpzRr8J267EF/W0nl1excz
+rsDomainId: 23l4kjdslh38sd978
+rsPasswordHistory: {SSHA512}UrFXbj/vTcX8tTtKlgZNP8fgMr2trWmDkPf9vwC2KlRC/UDNjTsojkuEyD0L+eTZ5999ihT1xTLTTe7p3XdRgvuXvRM=
+rsRegion: ORD
+secretAnswer:: mH78L7VtVEOdgH+7iKjrqA==
+secretQuestion:: TJibGwPLbcTmx5S6pk7new==
+uid: uaGlobalRolesUser
+userPassword: {SSHA512}1uZoyruhlHczVZL8iDwK9o1tPnv75/CuUs1dh49AkcS4UVEgt8h94ijYCwHOSoav5tHWwo4emagN9JvcUjFLmu5iM0s=
+
+dn: cn=ROLES,rsId=b59a7a0ac6e2433ca45c3af059c75325,ou=users,o=rackspace,dc=rackspace,dc=com
+cn: ROLES
+objectClass: rsContainer
+
+dn: roleRsId=14,cn=ROLES,rsId=b59a7a0ac6e2433ca45c3af059c75325,ou=users,o=rackspace,dc=rackspace,dc=com
+roleRsId: 14
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: b59a7a0ac6e2433ca45c3af059c75325
+
+dn: roleRsId=3,cn=ROLES,rsId=b59a7a0ac6e2433ca45c3af059c75325,ou=users,o=rackspace,dc=rackspace,dc=com
+roleRsId: 3
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: b59a7a0ac6e2433ca45c3af059c75325
