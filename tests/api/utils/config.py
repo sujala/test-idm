@@ -135,3 +135,8 @@ class TestConfig(data_interfaces.ConfigSectionInterface):
             return True
         else:
             return False
+
+    @property
+    def da_rcn(self):
+        """approved RCN for delegation agreements"""
+        return self.get('da_rcn')

@@ -1762,6 +1762,30 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return self.request(
             'DELETE', url, requestslib_kwargs=requestslib_kwargs)
 
+    def create_delegation_agreement(
+            self, request_object, requestslib_kwargs=None):
+        """
+        POST RAX-AUTH/delegation-agreements
+        """
+        url = self.url + const.DELEGATION_AGREEMENTS_URL
+        return self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def get_delegation_agreement(self, da_id, requestslib_kwargs=None):
+        """
+        GET RAX-AUTH/delegation-agreements
+        """
+        url = self.url + const.DELEGATION_AGREEMENTS_RD_URL.format(da_id=da_id)
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+
+    def delete_delegation_agreement(self, da_id, requestslib_kwargs=None):
+        """
+        DELETE RAX-AUTH/delegation-agreements
+        """
+        url = self.url + const.DELEGATION_AGREEMENTS_RD_URL.format(da_id=da_id)
+        return self.request(
+            'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
     def add_role_assignments_to_user(self, user_id, request_object,
                                      requestslib_kwargs=None):
         url = self.url + const.ADD_MULTIPLE_ROLES_TO_USER_URL.format(
