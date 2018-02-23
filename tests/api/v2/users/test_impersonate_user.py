@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
+
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 from tests.api.v2.models import responses
@@ -17,8 +20,13 @@ class TestImpersonateUser(base.TestBaseV2):
 
         self.user_name = self.generate_random_string(
             pattern=const.USER_ADMIN_PATTERN)
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
+        input_data = {
+            'domain_id': domain_id
+        }
         add_user_request_obj = factory.get_add_user_request_object(
-            username=self.user_name)
+            username=self.user_name, input_data=input_data)
         resp = self.identity_admin_client.add_user(
             request_object=add_user_request_obj)
         user = responses.User(resp.json())
@@ -27,6 +35,7 @@ class TestImpersonateUser(base.TestBaseV2):
 
         self.racker_client = self.generate_racker_client()
 
+    @attr(type='smoke_no_log_alpha')
     def test_impersonate_user(self):
         '''Test for user impersonation.'''
         impersonation_request_obj = requests.ImpersonateUser(
@@ -71,11 +80,14 @@ class TestImpersonateUser(base.TestBaseV2):
         self.assertSchema(response=analyze_token_resp,
                           json_schema=tokens_json.analyze_token)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all users created in the tests
         for id_ in self.user_ids:
             resp = self.identity_admin_client.delete_user(user_id=id_)
-            self.assertEqual(resp.status_code, 204)
+            self.assertEqual(resp.status_code, 204,
+                             msg='User with ID {0} failed to delete'.format(
+                                 id_))
         for id_ in self.domain_ids:
             # Disable domain and delete domain
             domain_object = requests.Domain(
@@ -84,6 +96,8 @@ class TestImpersonateUser(base.TestBaseV2):
                 domain_id=id_, request_object=domain_object)
             self.assertEqual(update_domain_resp.status_code, 200)
             resp = self.identity_admin_client.delete_domain(domain_id=id_)
-            self.assertEqual(resp.status_code, 204)
+            self.assertEqual(resp.status_code, 204,
+                             msg='Domain with ID {0} failed to delete'.format(
+                                 id_))
 
         super(TestImpersonateUser, self).tearDown()

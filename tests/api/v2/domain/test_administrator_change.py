@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
+
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 
 from tests.package.johny import constants as const
@@ -18,8 +21,10 @@ class TestAdministratorChange(base.TestBaseV2):
         """
         super(TestAdministratorChange, cls).setUpClass()
 
-        cls.test_domain_id = cls.generate_random_string(
-            pattern='[\d]{7}')
+        # cls.test_domain_id = cls.generate_random_string(
+        #     pattern='[\d]{7}')
+        cls.test_domain_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.test_user_admin_name = cls.generate_random_string(
             pattern=const.USER_NAME_PATTERN
         )
@@ -50,6 +55,7 @@ class TestAdministratorChange(base.TestBaseV2):
         self.test_user_admin_client.add_role_to_user(
             const.USER_MANAGER_ROLE_ID, self.test_user_manager_id)
 
+    @attr(type='smoke_alpha')
     def test_admin_swap(self):
         request_object = requests.DomainAdministratorChange(
             self.test_user_manager_id,
@@ -95,14 +101,34 @@ class TestAdministratorChange(base.TestBaseV2):
                          str(auth.json()[const.ACCESS][const.USER][
                                  const.ROLES]))
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all users created in the tests
+        resp = self.identity_admin_client.delete_user(
+            self.test_user_admin_client.default_headers[const.X_USER_ID])
+        self.assertEqual(
+            resp.status_code, 204,
+            msg='User with ID {0} failed to delete'.format(
+                self.test_user_admin_client.default_headers[const.X_USER_ID]))
+
         for id_ in self.sub_user_ids:
-            self.identity_admin_client.delete_user(user_id=id_)
+            resp = self.identity_admin_client.delete_user(user_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(id_))
+
+        disable_domain_req = requests.Domain(enabled=False)
+        resp = self.identity_admin_client.update_domain(
+            domain_id=self.test_domain_id, request_object=disable_domain_req)
+
+        resp = self.identity_admin_client.delete_domain(
+            domain_id=self.test_domain_id)
+        self.assertEqual(
+            resp.status_code, 204,
+            msg='Domain with ID {0} failed to delete'.format(
+                self.test_domain_id))
         super(TestAdministratorChange, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
-        cls.delete_client(client=cls.test_user_admin_client,
-                          parent_client=cls.identity_admin_client)
         super(TestAdministratorChange, cls).tearDownClass()

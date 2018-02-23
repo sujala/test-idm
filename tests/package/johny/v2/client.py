@@ -1587,7 +1587,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """Return response object from the change password api call
 
         POST
-        {AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}}/passwordPolicy
+        /users/RAX-AUTH/change-pwd
         """
         url = self.url + const.CHANGE_PASSWORD_URL
         return self.request('POST', url, request_entity=request_object,
