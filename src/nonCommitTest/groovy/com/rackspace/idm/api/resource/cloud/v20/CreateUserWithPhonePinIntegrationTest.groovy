@@ -43,17 +43,17 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
             assert identityAdminUserEntity.phonePin.isNumber()
 
             assert userAdminUserEntity.phonePin != null
-            assert userAdminUserEntity.encryptedApiKey != null
+            assert userAdminUserEntity.encryptedPhonePin != null
             assert userAdminUserEntity.phonePin.size() == pinLength
             assert userAdminUserEntity.phonePin.isNumber()
 
             assert userManageUserEntity.phonePin != null
-            assert userManageUserEntity.encryptedApiKey != null
+            assert userManageUserEntity.encryptedPhonePin != null
             assert userManageUserEntity.phonePin.size() == pinLength
             assert userManageUserEntity.phonePin.isNumber()
 
             assert defaultUserUserEntity.phonePin != null
-            assert defaultUserUserEntity.encryptedApiKey != null
+            assert defaultUserUserEntity.encryptedPhonePin != null
             assert defaultUserUserEntity.phonePin.size() == pinLength
             assert defaultUserUserEntity.phonePin.isNumber()
         } else {
@@ -85,12 +85,12 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         then:
         if (pinLength > 0) {
             assert userEntity.phonePin != null
-            assert userEntity.encryptedApiKey != null
+            assert userEntity.encryptedPhonePin != null
             assert userEntity.phonePin.size() == pinLength
             assert userEntity.phonePin.isNumber()
         }  else if (pinLength == 0) {
             assert userEntity.phonePin != null
-            assert userEntity.encryptedApiKey != null
+            assert userEntity.encryptedPhonePin != null
             assert userEntity.phonePin.size() == pinLength
             assert userEntity.phonePin.isEmpty()
         }
