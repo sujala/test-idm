@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 from random import randrange
 
 import ddt
@@ -99,11 +100,21 @@ class TestListUsers(base.TestBaseV2):
         for user in resp.json()[const.USERS]:
             self.assertEqual(user[const.EMAIL], self.EMAIL_TEST)
 
+    @attr(type='smoke_alpha')
     def test_list_users_by_identity_admin(self):
         """List by identity admin user
         """
         resp = self.identity_admin_client.list_users()
+        # we should only return users for admin's domain
+
+        self.assertEqual(len(resp.json()[const.USERS]), 1)
+
+        # no users returned that were added to user-admin's domain
+        found_user = next((user for user in resp.json()[
+            const.USERS] if user['id'] in self.sub_user_ids), None)
+
         self.assertEqual(resp.status_code, 200)
+        self.assertEquals(found_user, None)
 
         self.assertSchema(response=resp,
                           json_schema=users_json.list_users)
@@ -170,6 +181,7 @@ class TestListUsers(base.TestBaseV2):
         # for user in resp.json()[const.USERS]:
         #     self.assertEqual(user[const.EMAIL], self.EMAIL_TEST)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all users created in the tests
         for id in self.sub_user_ids:
@@ -179,6 +191,7 @@ class TestListUsers(base.TestBaseV2):
         super(TestListUsers, self).tearDown()
 
     @classmethod
+    @base.base.log_tearDown_error
     def tearDownClass(cls):
         # Delete all users created in the setUpClass
         cls.delete_client(client=cls.user_client,
