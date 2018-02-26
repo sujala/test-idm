@@ -554,6 +554,12 @@ public class IdentityConfig {
     public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP = "enable.delegation.agreements.for.rcns";
     public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT = "";
 
+    public static final String FEATURE_ENABLE_PHONE_PIN_ON_USER = "feature.enable.phone.pin.on.user";
+    public static final boolean FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT = true;
+
+    public static final String USER_PHONE_PIN_SIZE = "user.phone.pin.size";
+    public static final int USER_PHONE_PIN_SIZE_DEFAULT = 4;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -779,6 +785,9 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP, FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_PHONE_PIN_ON_USER, FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT);
+        defaults.put(USER_PHONE_PIN_SIZE, USER_PHONE_PIN_SIZE_DEFAULT);
 
         return defaults;
     }
@@ -2146,6 +2155,16 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, versionAdded = "3.20.0", description = "Whether to enable the grant multiple roles to user service.")
         public boolean isGrantRolesToUserServiceEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_PHONE_PIN_ON_USER, versionAdded = "3.21.0", description = "Specifies whether to generate and store a user's phone PIN when the user is created. Phone PINs are generated for provisioned users created through v2.0 create user calls and Domain federated users.")
+        public boolean getEnablePhonePinOnUserFlag() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_PHONE_PIN_ON_USER);
+        }
+
+        @IdmProp(key = USER_PHONE_PIN_SIZE, versionAdded = "3.21.0", description = "Specifies the length, in characters, of the phone PIN.")
+        public int getUserPhonePinSize() {
+            return getIntSafely(reloadableConfiguration, USER_PHONE_PIN_SIZE);
         }
 
     }
