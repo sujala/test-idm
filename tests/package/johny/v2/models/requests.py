@@ -1153,3 +1153,20 @@ class TenantRoleAssignments(base.AutoMarshallingModel):
             }
         }
         return json.dumps(tenant_role_assignments_request)
+
+
+class DelegationAgreements(base.AutoMarshallingModel):
+    def __init__(self, da_name, delegate_id, description=None):
+        self.da_name = da_name
+        self.delegate_id = delegate_id
+        self.description = description
+
+    def _obj_to_json(self):
+        delegation_agreement_request = {
+            const.RAX_AUTH_DELEGATION_AGREEMENT: {
+                const.NAME: self.da_name,
+                const.DELEGATE_ID: self.delegate_id,
+                const.DESCRIPTION: self.description
+            }
+        }
+        return json.dumps(delegation_agreement_request)

@@ -1587,7 +1587,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """Return response object from the change password api call
 
         POST
-        {AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}}/passwordPolicy
+        /users/RAX-AUTH/change-pwd
         """
         url = self.url + const.CHANGE_PASSWORD_URL
         return self.request('POST', url, request_entity=request_object,
@@ -1759,6 +1759,30 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             const.DELETE_ROLE_FROM_USER_GROUP_ON_TENANT_URL.format(
                 domain_id=domain_id, group_id=group_id, role_id=role_id,
                 tenant_id=tenant_id))
+        return self.request(
+            'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
+    def create_delegation_agreement(
+            self, request_object, requestslib_kwargs=None):
+        """
+        POST RAX-AUTH/delegation-agreements
+        """
+        url = self.url + const.DELEGATION_AGREEMENTS_URL
+        return self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def get_delegation_agreement(self, da_id, requestslib_kwargs=None):
+        """
+        GET RAX-AUTH/delegation-agreements
+        """
+        url = self.url + const.DELEGATION_AGREEMENTS_RD_URL.format(da_id=da_id)
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+
+    def delete_delegation_agreement(self, da_id, requestslib_kwargs=None):
+        """
+        DELETE RAX-AUTH/delegation-agreements
+        """
+        url = self.url + const.DELEGATION_AGREEMENTS_RD_URL.format(da_id=da_id)
         return self.request(
             'DELETE', url, requestslib_kwargs=requestslib_kwargs)
 

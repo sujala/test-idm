@@ -453,14 +453,14 @@ class TestUpdateUser(base.TestBaseV2):
     @classmethod
     def tearDownClass(cls):
         # Delete all users created in the setUpClass
-        cls.delete_client(client=cls.user_client,
-                          parent_client=cls.user_admin_client)
-        cls.delete_client(client=cls.test_user_client,
-                          parent_client=cls.user_admin_client)
-        cls.delete_client(client=cls.user_admin_client,
-                          parent_client=cls.identity_admin_client)
+        cls.identity_admin_client.delete_user(
+            cls.user_client.default_headers[const.X_USER_ID])
+        cls.identity_admin_client.delete_user(
+            cls.test_user_client.default_headers[const.X_USER_ID])
+        cls.service_admin_client.delete_user(
+            cls.test_identity_admin_client.default_headers[const.X_USER_ID])
         cls.delete_client(client=cls.test_user_admin_client,
                           parent_client=cls.identity_admin_client)
-        cls.delete_client(client=cls.test_identity_admin_client,
-                          parent_client=cls.service_admin_client)
+        cls.delete_client(client=cls.user_admin_client,
+                          parent_client=cls.identity_admin_client)
         super(TestUpdateUser, cls).tearDownClass()

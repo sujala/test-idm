@@ -6,6 +6,8 @@ from tests.api.v2 import base
 from tests.api.v2.models import factory, responses
 
 from tests.package.johny import constants as const
+from tests.package.johny.v2 import client
+from tests.package.johny.v2.models import requests
 
 
 class TestListEffectiveRolesForUser(base.TestBaseV2):
@@ -43,16 +45,31 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                 'domain_id': cls.domain_id,
                 'user_name': sub_user_name})
 
+        cls.global_roles_client = client.IdentityAPIClient(
+            url=cls.url,
+            serialize_format=cls.test_config.serialize_format,
+            deserialize_format=cls.test_config.deserialize_format)
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=cls.identity_config.global_roles_user_name,
+            password=cls.identity_config.global_roles_password)
+        resp = cls.global_roles_client.get_auth_token(request_object=req_obj)
+        auth_token = resp.json()[const.ACCESS][const.TOKEN][
+            const.ID]
+        cls.global_roles_client.default_headers[const.X_AUTH_TOKEN] = (
+            auth_token)
+        cls.global_roles_user_id = resp.json()[const.ACCESS][const.USER][
+            const.ID]
+
         cls.role_ids = []
         cls.tenant_ids = []
 
     @attr(type='smoke_alpha')
     def test_effective_roles_for_default_user(self):
         # create global role
-        global_role_id, global_role_name = self.create_role()
+        role_id, role_name = self.create_role()
         # add global role to sub-user
         resp = self.identity_admin_client.add_role_to_user(
-            role_id=global_role_id,
+            role_id=role_id,
             user_id=self.user_client.default_headers[const.X_USER_ID])
         self.assertEqual(resp.status_code, 200)
 
@@ -71,7 +88,10 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         user_group_role_id, user_group_role_name = self.create_role(
             admin_role=const.USER_MANAGE_ROLE_NAME)
         # Create user group; add to user-default
-        user_group = self.add_sub_user_to_user_group()
+        user_group = self.add_user_to_user_group(
+            self.user_admin_client,
+            self.user_client
+        )
         # add role to user group
         self.user_manager_client.add_role_to_user_group_for_tenant(
             domain_id=self.domain_id,
@@ -80,12 +100,62 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
             tenant_id=tenant.id)
         self.assertEqual(resp.status_code, 200)
 
+        # get roles as default
+        resp = self.user_client.list_effective_roles_for_user(
+            user_id=self.user_client.default_headers[const.X_USER_ID])
+
+        # validate return 200
+        self.assertEqual(resp.status_code, 200)
+
+        # tenant role, identity:default, global role, user group role
+        # tenant access
+        self.assertEqual(
+            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS]),
+            5)
+
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_DEFAULT_ROLE_NAME
+        )
+
+        # get roles as user manage
+        resp = self.user_manager_client.list_effective_roles_for_user(
+            user_id=self.user_client.default_headers[const.X_USER_ID])
+
+        # validate return 200
+        self.assertEqual(resp.status_code, 200)
+
+        # tenant role, identity:default, global role, user group role
+        # tenant access
+        self.assertEqual(
+            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS]),
+            5)
+
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_DEFAULT_ROLE_NAME
+        )
+
         # get roles as user admin
         resp = self.user_admin_client.list_effective_roles_for_user(
             user_id=self.user_client.default_headers[const.X_USER_ID])
 
         # validate return 200
         self.assertEqual(resp.status_code, 200)
+
+        # tenant role, identity:default, global role, user group role
+        # tenant access
+        self.assertEqual(
+            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS]),
+            5)
+
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_DEFAULT_ROLE_NAME
+        )
 
         # get roles as identity admin
         resp = self.identity_admin_client.list_effective_roles_for_user(
@@ -101,9 +171,217 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                     const.TENANT_ASSIGNMENTS]),
             5)
 
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_DEFAULT_ROLE_NAME
+        )
+
+    @attr(type='smoke_alpha')
+    def test_effective_roles_for_manage_user(self):
+        # create global role
+        role_id, role_name = self.create_role()
+        # add global role to manage
+        resp = self.identity_admin_client.add_role_to_user(
+            role_id=role_id,
+            user_id=self.user_manager_client.default_headers[const.X_USER_ID])
+        self.assertEqual(resp.status_code, 200)
+
+        # create tenant
+        tenant = self.create_tenant()
+        # create tenant role
+        tenant_role_id, tenant_role_name = self.create_role()
+        # add tenant role to sub user for tenant
+        resp = self.identity_admin_client.add_role_to_user_for_tenant(
+            tenant_id=tenant.id,
+            user_id=self.user_manager_client.default_headers[const.X_USER_ID],
+            role_id=tenant_role_id)
+        self.assertEqual(resp.status_code, 200)
+
+        # create user group role
+        user_group_role_id, user_group_role_name = self.create_role(
+            admin_role=const.USER_MANAGE_ROLE_NAME)
+        # Create user group; add to user-default
+        user_group = self.add_user_to_user_group(
+            self.user_admin_client,
+            self.user_manager_client
+        )
+        # add role to user group
+        self.user_admin_client.add_role_to_user_group_for_tenant(
+            domain_id=self.domain_id,
+            group_id=user_group.id,
+            role_id=user_group_role_id,
+            tenant_id=tenant.id)
+        self.assertEqual(resp.status_code, 200)
+
+        # get roles as user manage
+        resp = self.user_manager_client.list_effective_roles_for_user(
+            user_id=self.user_manager_client.default_headers[const.X_USER_ID])
+
+        # validate return 200
+        self.assertEqual(resp.status_code, 200)
+
+        # tenant role, identity:default, global role, user group role
+        # tenant access
+        self.assertEqual(
+            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS]),
+            6)
+
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_MANAGE_ROLE_NAME
+        )
+
+        # get roles as user admin
+        resp = self.user_admin_client.list_effective_roles_for_user(
+            user_id=self.user_manager_client.default_headers[const.X_USER_ID])
+
+        # validate return 200
+        self.assertEqual(resp.status_code, 200)
+
+        # tenant role, identity:default, global role, user group role
+        # tenant access
+        self.assertEqual(
+            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS]),
+            6)
+
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_MANAGE_ROLE_NAME
+        )
+
+        # get roles as identity admin
+        resp = self.identity_admin_client.list_effective_roles_for_user(
+            user_id=self.user_manager_client.default_headers[const.X_USER_ID])
+
+        # validate return 200
+        self.assertEqual(resp.status_code, 200)
+
+        # tenant role, identity:default, global role, user group role
+        # tenant access
+        self.assertEqual(
+            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS]),
+            6)
+
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_MANAGE_ROLE_NAME
+        )
+
+    @attr(type='smoke_alpha')
+    def test_effective_roles_for_admin_user(self):
+        # create global role
+        role_id, role_name = self.create_role()
+        # add global role to manage
+        resp = self.identity_admin_client.add_role_to_user(
+            role_id=role_id,
+            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
+        self.assertEqual(resp.status_code, 200)
+
+        # create tenant
+        tenant = self.create_tenant()
+        # create tenant role
+        tenant_role_id, tenant_role_name = self.create_role()
+        # add tenant role to sub user for tenant
+        resp = self.identity_admin_client.add_role_to_user_for_tenant(
+            tenant_id=tenant.id,
+            user_id=self.user_admin_client.default_headers[const.X_USER_ID],
+            role_id=tenant_role_id)
+        self.assertEqual(resp.status_code, 200)
+
+        # create user group role
+        user_group_role_id, user_group_role_name = self.create_role(
+            admin_role=const.USER_MANAGE_ROLE_NAME)
+        # Create user group; add to user-default
+        user_group = self.add_user_to_user_group(
+            self.identity_admin_client,
+            self.user_admin_client
+        )
+        # add role to user group
+        self.identity_admin_client.add_role_to_user_group_for_tenant(
+            domain_id=self.domain_id,
+            group_id=user_group.id,
+            role_id=user_group_role_id,
+            tenant_id=tenant.id)
+        self.assertEqual(resp.status_code, 200)
+
+        # get roles as user admin
+        resp = self.user_admin_client.list_effective_roles_for_user(
+            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
+
+        # validate return 200
+        self.assertEqual(resp.status_code, 200)
+
+        # tenant role, identity:default, global role, user group role
+        # tenant access
+        self.assertEqual(
+            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS]),
+            5)
+
+        # get roles as identity admin
+        resp = self.identity_admin_client.list_effective_roles_for_user(
+            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
+
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_ADMIN_ROLE_NAME
+        )
+
+        # validate return 200
+        self.assertEqual(resp.status_code, 200)
+
+        # tenant role, identity:default, global role, user group role
+        # tenant access
+        self.assertEqual(
+            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS]),
+            5)
+
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_ADMIN_ROLE_NAME
+        )
+
+        # validate that default user cannot get user-admin's roles
+
+        # get roles as default
+        resp = self.user_client.list_effective_roles_for_user(
+            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
+
+        # validate return 403
+        self.assertEqual(resp.status_code, 403)
+
+        # validate that a user with global-user-roles role can see roles
+
+        # get roles as global-user-roles user
+        resp = self.global_roles_client.list_effective_roles_for_user(
+            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
+
+        # validate return 200
+        self.assertEqual(resp.status_code, 200)
+
+        # tenant role, identity:default, global role, user group role
+        # tenant access
+        self.assertEqual(
+            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS]),
+            5)
+
+        self.validate_assignment_checks(
+            resp, tenant_role_name, role_name, user_group_role_name,
+            const.USER_ADMIN_ROLE_NAME
+        )
+
+    def validate_assignment_checks(
+            self, resp, tenant_role_name, role_name,
+            user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME):
         tenant_role_assignment_checked = False
         user_group_role_assignment_checked = False
-        identity_default_role_assignment_checked = False
+        identity_role_assignment_checked = False
         global_role_assignment_checked = False
         tenant_access_role_assignment_checked = False
 
@@ -120,8 +398,8 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                     const.TENANT_ASSIGNMENT_TYPE
                 )
             elif tenant_assignment[
-                    "onRoleName"] == const.USER_DEFAULT_ROLE_NAME:
-                identity_default_role_assignment_checked = True
+                    "onRoleName"] == identity_role_name:
+                identity_role_assignment_checked = True
                 self.assertEqual(
                     tenant_assignment["sources"][0]["sourceType"],
                     const.USER_SOURCE_TYPE
@@ -130,7 +408,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                     tenant_assignment["sources"][0]["assignmentType"],
                     const.DOMAIN_ASSIGNMENT_TYPE
                 )
-            elif tenant_assignment["onRoleName"] == global_role_name:
+            elif tenant_assignment["onRoleName"] == role_name:
                 global_role_assignment_checked = True
                 self.assertEqual(
                     tenant_assignment["sources"][0]["sourceType"],
@@ -163,14 +441,15 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                 )
 
         self.assertEqual(tenant_role_assignment_checked, True)
-        self.assertEqual(identity_default_role_assignment_checked, True)
+        self.assertEqual(identity_role_assignment_checked, True)
         self.assertEqual(global_role_assignment_checked, True)
         self.assertEqual(tenant_access_role_assignment_checked, True)
         self.assertEqual(user_group_role_assignment_checked, True)
 
-    def create_role(self, admin_role=None):
-        role_name = self.generate_random_string(
-            pattern=const.ROLE_NAME_PATTERN)
+    def create_role(self, admin_role=None, role_name=None):
+        if role_name is None:
+            role_name = self.generate_random_string(
+                pattern=const.ROLE_NAME_PATTERN)
         if admin_role:
             role_object = factory.get_add_role_request_object(
                 role_name=role_name,
@@ -193,16 +472,16 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         self.tenant_ids.append(tenant.id)
         return tenant
 
-    def add_sub_user_to_user_group(self):
+    def add_user_to_user_group(self, parent_client, child_client):
         group_req = factory.get_add_user_group_request(self.domain_id)
-        resp = self.user_admin_client.add_user_group_to_domain(
+        resp = parent_client.add_user_group_to_domain(
             domain_id=self.domain_id, request_object=group_req)
         self.assertEqual(resp.status_code, 201)
         group = responses.UserGroup(resp.json())
 
         # adding user to the user group
-        add_resp = self.user_admin_client.add_user_to_user_group(
-            user_id=self.user_client.default_headers[
+        add_resp = parent_client.add_user_to_user_group(
+            user_id=child_client.default_headers[
                 const.X_USER_ID],
             group_id=group.id, domain_id=self.domain_id
         )
