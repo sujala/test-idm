@@ -111,6 +111,12 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_MFA_MIGRATION_MFA_NOT_ENABLED = "MFAM-000";
     public static final String ERROR_CODE_MFA_MIGRATION_OTP_ENABLED = "MFAM-001";
 
+    //Phone PIN
+    public static final String ERROR_CODE_PHONE_PIN_NOT_FOUND = "PP-000";
+    public static final String ERROR_CODE_PHONE_PIN_BAD_REQUEST = "PP-001";
+    public static final String ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION = "GEN-004";
+
+
     //Endpoint Assignment
     public static final String ERROR_CODE_EP_MISSING_ENDPOINT = "EP-000";
 

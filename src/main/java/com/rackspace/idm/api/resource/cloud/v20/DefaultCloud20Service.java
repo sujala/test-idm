@@ -5,6 +5,7 @@ import com.newrelic.api.agent.NewRelic;
 import com.rackspace.docs.core.event.EventType;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
@@ -358,6 +359,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private RuleService ruleService;
+
+    @Autowired
+    private PhonePinService phonePinService;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -2482,6 +2486,45 @@ public class DefaultCloud20Service implements Cloud20Service {
             secrets.setQuestion(user.getSecretQuestion());
             return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets).getValue());
 
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getPhonePin(String authToken, String userId) {
+        try {
+            ScopeAccess callersScopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserLevelAccess(callersScopeAccess);
+
+            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+                throw new ForbiddenException("Impersonation tokens cannot be used to retrieve the phone pin.", ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+            }
+
+            EndUser caller = (EndUser) userService.getUserByScopeAccess(callersScopeAccess, false);
+            boolean isSelf = caller.getId().equals(userId);
+            IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+
+            if (IdentityUserTypeEnum.DEFAULT_USER == callerType && !isSelf) {
+                throw new ForbiddenException("Default user (sub-user) token of another user cannot retrieve the PIN",
+                        ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+            }
+
+            EndUser user = this.identityUserService.checkAndGetEndUserById(userId);
+            if(!isSelf) {
+                precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+                if (IdentityUserTypeEnum.USER_ADMIN == callerType || IdentityUserTypeEnum.USER_MANAGER == callerType) {
+                    if (!caller.getDomainId().equals(user.getDomainId())) {
+                        throw new ForbiddenException("User with user-admin/user-manage token from another domain cannot retrieve the PIN",
+                                ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+                    }
+                }
+            }
+            com.rackspace.idm.domain.entity.PhonePin phonePinEntity = phonePinService.checkAndGetPhonePin(user);
+            PhonePin phonePin =  jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createPhonePin();
+            phonePin.setPin(phonePinEntity.getPin());
+
+            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createPhonePin(phonePin).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
