@@ -552,14 +552,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    def list_effective_roles_for_user(self, user_id, requestslib_kwargs=None):
+    def list_effective_roles_for_user(self, user_id,
+                                      params=None, requestslib_kwargs=None):
         """ Return response object from list roles for specific user
 
         GET /v2.0/users/{user_id}/RAX-AUTH/roles
         """
         url = self.url + const.LIST_EFFECTIVE_ROLES_FOR_USER_URL.format(
             user_id=user_id)
-        resp = self.request(method='GET', url=url,
+        resp = self.request(method='GET', url=url, params=params,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
