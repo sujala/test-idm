@@ -14,24 +14,32 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
     def defaultSalt = "c7 73 21 8c 7e c8 ee 99"
     def defaultEncryptionVersionId = "0"
 
-    def "Set user, fedUser encryption salt and version populates both values"() {
+    def "Set user encryption salt and version populates both values"() {
         given:
         def user = entityFactory.createUser()
-        def fedUser = entityFactory.createFederatedUser()
 
         when:
         encryptionService.setUserEncryptionSaltAndVersion(user);
-        encryptionService.setUserEncryptionSaltAndVersion(fedUser);
 
         then:
         assert user.salt != null
         assert user.encryptionVersion != null
+    }
 
+    def "Set fedUser encryption salt and version populates both values"() {
+        given:
+        def fedUser = entityFactory.createFederatedUser()
+
+        when:
+        encryptionService.setUserEncryptionSaltAndVersion(fedUser);
+
+        then:
         assert fedUser.salt != null
         assert fedUser.encryptionVersion != null
     }
 
-    def "Encrypt user, fedUser gets default salt from config if salt NOT set in user object"() {
+
+    def "Encrypt user gets default salt from config if salt NOT set in user object"() {
         given:
         def password = "password"
         def secretQuestion = "secretQuestion"
@@ -50,22 +58,30 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         user.apiKey = apiKey
         user.phonePin = phonePin
 
+        when:
+        encryptionService.encryptUser(user);
+
+        then:
+        assert user.salt == defaultSalt
+    }
+
+    def "Encrypt fedUser gets default salt from config if salt NOT set in user object"() {
+        given:
+        def phonePin = "2321"
         def fedUser = entityFactory.createFederatedUser()
         fedUser.phonePin = phonePin
 
         when:
-        encryptionService.encryptUser(user);
         encryptionService.encryptUser(fedUser)
         then:
-        assert user.salt == defaultSalt
         assert fedUser.salt == defaultSalt
     }
 
-    def "Can encrypt and decrypt a user, fedUser"() {
+    def "Can encrypt and decrypt a user"() {
         given:
         def password = "password"
         def secretQuestion = "secretQuestion"
-        def secretAnwser = "secretAnwser"
+        def secretAnswer = "secretAnswer"
         def secretQuestionId = "secretQuestionId"
         def displayName = "displayName"
         def apiKey = "apiKey"
@@ -74,15 +90,11 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         def user = entityFactory.createUser()
         user.password = password
         user.secretQuestion = secretQuestion
-        user.secretAnswer = secretAnwser
+        user.secretAnswer = secretAnswer
         user.secretQuestionId = secretQuestionId
         user.displayName = displayName
         user.apiKey = apiKey
         user.phonePin = phonePin
-
-        def fedUser = entityFactory.createFederatedUser()
-        fedUser.phonePin = phonePin
-
 
         when:
         encryptionService.encryptUser(user);
@@ -93,22 +105,35 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         user.displayName = ""
         user.apiKey = ""
         user.phonePin = ""
+
         encryptionService.decryptUser(user);
 
+
+        then:
+        assert user.password == ""
+        assert secretQuestion == user.secretQuestion
+        assert secretAnswer == user.secretAnswer
+        assert secretQuestionId == user.secretQuestionId
+        assert displayName == user.displayName
+        assert apiKey == user.apiKey
+        assert phonePin == user.phonePin
+    }
+
+
+    def "Can encrypt and decrypt a fedUser"() {
+        given:
+        def phonePin = "1234"
+        def fedUser = entityFactory.createFederatedUser()
+        fedUser.phonePin = phonePin
+
+
+        when:
         encryptionService.encryptUser(fedUser)
         fedUser.phonePin = ""
 
         encryptionService.decryptUser(fedUser)
 
         then:
-        assert user.password == ""
-        assert secretQuestion == user.secretQuestion
-        assert secretAnwser == user.secretAnswer
-        assert secretQuestionId == user.secretQuestionId
-        assert displayName == user.displayName
-        assert apiKey == user.apiKey
-        assert phonePin == user.phonePin
-
         assert phonePin == fedUser.phonePin
     }
 

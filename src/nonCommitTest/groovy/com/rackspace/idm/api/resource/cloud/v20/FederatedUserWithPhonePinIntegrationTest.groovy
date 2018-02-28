@@ -122,7 +122,7 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         }
 
         where:
-        [featureEnabled] << [[true, false]].combinations()
+        featureEnabled << [true, false]
     }
 
     @Unroll
@@ -171,7 +171,7 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         }
 
         where:
-        [pinLength] << [[0,4,10]].combinations()
+        pinLength << [0,4,10]
     }
 
     @Unroll
@@ -217,7 +217,7 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         }
 
         where:
-        [featureEnabled] << [[true, false]].combinations()
+        featureEnabled << [true, false]
     }
 
     @Unroll
@@ -266,7 +266,7 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         }
 
         where:
-        [pinLength] << [[0,4,10]].combinations()
+        pinLength << [0,4,10]
     }
 
     def deleteFederatedUserQuietly(username) {

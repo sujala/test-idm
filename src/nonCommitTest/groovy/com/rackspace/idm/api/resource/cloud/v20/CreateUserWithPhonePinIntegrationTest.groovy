@@ -68,7 +68,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
 
         where:
-        [featureEnabled] << [[true, false]].combinations()
+        featureEnabled << [true, false]
     }
 
     @Unroll
@@ -99,7 +99,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(user)
 
         where:
-        [pinLength] << [[10,4,0]].combinations()
+        pinLength << [10,4,0]
     }
 }
 

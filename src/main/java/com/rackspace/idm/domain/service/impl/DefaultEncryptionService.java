@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.EncryptionService;
@@ -44,42 +43,19 @@ public class DefaultEncryptionService implements EncryptionService {
     PropertiesService propertiesService;
 
     @Override
-    public void setUserEncryptionSaltAndVersion(EndUser user) {
-        if(user instanceof User) {
-            setUserEncryptionSaltAndVersionForProvUser((User) user);
-        } else if (user instanceof FederatedUser) {
-            setUserEncryptionSaltAndVersionForFedUser((FederatedUser) user);
-        } else {
-            logger.error(String.format("Unknown user type '%s' when setting user " +
-                    "encryption salt and version ", user.getClass().getName()));
-            throw new IllegalStateException(String.format("Unknown user type '%s'", user.getClass().getName()));
-        }
-    }
-
-    private void setUserEncryptionSaltAndVersionForProvUser(User user) {
-        user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
-        user.setSalt(cryptHelper.generateSalt());
-    }
-
-    private void setUserEncryptionSaltAndVersionForFedUser(FederatedUser user) {
+    public void setUserEncryptionSaltAndVersion(User user) {
         user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
         user.setSalt(cryptHelper.generateSalt());
     }
 
     @Override
-    public void encryptUser(EndUser user) {
-        if(user instanceof User) {
-            encryptProvisionedUser((User) user);
-        } else if (user instanceof FederatedUser) {
-            encryptFederatedUser((FederatedUser) user);
-        } else {
-            logger.error(String.format("Unknown user type '%s' when setting encrypting " +
-                    "user objects ", user.getClass().getName()));
-            throw new IllegalStateException(String.format("Unknown user type '%s'", user.getClass().getName()));
-        }
+    public void setUserEncryptionSaltAndVersion(FederatedUser user) {
+        user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
+        user.setSalt(cryptHelper.generateSalt());
     }
 
-    private void encryptProvisionedUser(User user) {
+    @Override
+    public void encryptUser(User user) {
         String encryptionVersionId = getCryptoVersionId(user);
         String encryptionSalt = getCryptoSalt(user);
         user.setEncryptionVersion(encryptionVersionId);
@@ -146,8 +122,8 @@ public class DefaultEncryptionService implements EncryptionService {
         }
     }
 
-
-    private void encryptFederatedUser(FederatedUser user) {
+    @Override
+    public void encryptUser(FederatedUser user) {
         String encryptionVersionId = getCryptoVersionId(user);
         String encryptionSalt = getCryptoSalt(user);
         user.setEncryptionVersion(encryptionVersionId);
@@ -165,38 +141,37 @@ public class DefaultEncryptionService implements EncryptionService {
 
     }
 
-    private String getCryptoVersionId(EndUser user) {
-        if(user instanceof User && StringUtils.isNotBlank(((User) user).getEncryptionVersion())) {
-            return ((User) user).getEncryptionVersion();
-        } else if (user instanceof FederatedUser && StringUtils.isNotBlank(((FederatedUser) user).getEncryptionVersion())) {
-            return ((FederatedUser) user).getEncryptionVersion();
+    private String getCryptoVersionId(User user) {
+        if(StringUtils.isNotBlank(user.getEncryptionVersion())) {
+            return user.getEncryptionVersion();
         }
         return propertiesService.getValue(ENCRYPTION_VERSION_ID);
     }
 
-    private String getCryptoSalt(EndUser user) {
-        if(user instanceof User && StringUtils.isNotBlank(((User) user).getSalt())) {
-            return ((User) user).getSalt();
-        } else if (user instanceof FederatedUser && StringUtils.isNotBlank(((FederatedUser) user).getSalt())) {
-            return ((FederatedUser) user).getSalt();
+    private String getCryptoSalt(User user) {
+        if(StringUtils.isNotBlank(user.getSalt())) {
+            return user.getSalt();
+        }
+        return config.getString(CRYPTO_SALT);
+    }
+
+
+    private String getCryptoVersionId(FederatedUser user) {
+       if (StringUtils.isNotBlank(user.getEncryptionVersion())) {
+            return user.getEncryptionVersion();
+       }
+       return propertiesService.getValue(ENCRYPTION_VERSION_ID);
+    }
+
+    private String getCryptoSalt(FederatedUser user) {
+        if (StringUtils.isNotBlank(user.getSalt())) {
+            return user.getSalt();
         }
         return config.getString(CRYPTO_SALT);
     }
 
     @Override
-    public void decryptUser(EndUser user) {
-        if(user instanceof User) {
-            decryptProvisionedUser((User) user);
-        } else if (user instanceof FederatedUser) {
-            decryptFederatedUser((FederatedUser) user);
-        } else {
-            logger.error(String.format("Unknown user type '%s' when setting decrypting " +
-                    "user objects ", user.getClass().getName()));
-            throw new IllegalStateException(String.format("Unknown user type '%s'", user.getClass().getName()));
-        }
-    }
-
-    private void decryptProvisionedUser(User user) {
+    public void decryptUser(User user) {
         String encryptionVersionId = getCryptoVersionId(user);
         String encryptionSalt = getCryptoSalt(user);
 
@@ -261,7 +236,8 @@ public class DefaultEncryptionService implements EncryptionService {
         }
     }
 
-    private void decryptFederatedUser(FederatedUser user) {
+    @Override
+    public void decryptUser(FederatedUser user) {
         String encryptionVersionId = getCryptoVersionId(user);
         String encryptionSalt = getCryptoSalt(user);
 
