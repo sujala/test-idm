@@ -194,8 +194,8 @@ class TestListUsers(base.TestBaseV2):
     @base.base.log_tearDown_error
     def tearDownClass(cls):
         # Delete all users created in the setUpClass
-        cls.delete_client(client=cls.user_client,
-                          parent_client=cls.user_admin_client)
+        cls.identity_admin_client.delete_user(
+            cls.user_client.default_headers[const.X_USER_ID])
         cls.delete_client(client=cls.user_admin_client,
                           parent_client=cls.identity_admin_client)
         super(TestListUsers, cls).tearDownClass()

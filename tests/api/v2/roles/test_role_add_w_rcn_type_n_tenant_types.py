@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*
 import ddt
 import copy
+from nose.plugins.attrib import attr
 
 from tests.api.v2 import base
 from tests.api.v2.schema import roles as roles_json
 from tests.api.v2.models import factory
 
 from tests.package.johny import constants as const
-from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt
@@ -45,11 +45,6 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
     def setUpClass(cls):
         super(TestRoleAddWTypeAndTenantTypes, cls).setUpClass()
 
-    def create_tenant_type(self, name):
-        request_object = requests.TenantType(name, 'description')
-        self.service_admin_client.add_tenant_type(tenant_type=request_object)
-        self.tenant_type_ids.append(name.lower())
-
     def setUp(self):
         super(TestRoleAddWTypeAndTenantTypes, self).setUp()
         self.role_ids = []
@@ -64,6 +59,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
         return role_id, resp
 
     @ddt.file_data('data_add_role_with_type.json')
+    @attr(type='smoke_alpha')
     def test_add_role_w_type(self, test_data):
         # create role with type and tenant_types
         add_input = test_data['additional_input']
@@ -112,8 +108,10 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
         self.assertEqual(role_resp.json()[const.BAD_REQUEST][const.MESSAGE],
                          test_data['expected_resp']['message'])
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         for id_ in self.role_ids:
-            self.identity_admin_client.delete_role(role_id=id_)
-        for name in self.tenant_type_ids:
-            self.service_admin_client.delete_tenant_type(name=name)
+            resp = self.identity_admin_client.delete_role(role_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Role with ID {0} failed to delete'.format(id_))

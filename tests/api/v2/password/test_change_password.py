@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 from tests.api.v2.models import responses
@@ -14,14 +16,23 @@ class TestChangePassword(base.TestBaseV2):
     def setUp(self):
         super(TestChangePassword, self).setUp()
         self.user_ids = []
+        self.domain_ids = []
 
+    @attr(type='smoke_alpha')
     def test_change_password(self):
 
-        add_user_object = factory.get_add_user_one_call_request_object()
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
+        input_data = {
+            'domain_id': domain_id
+        }
+        add_user_object = factory.get_add_user_request_object(
+            input_data=input_data)
         resp = self.identity_admin_client.add_user(
             request_object=add_user_object)
         user_resp = responses.User(resp_json=resp.json())
         self.user_ids.append(user_resp.id)
+        self.domain_ids.append(user_resp.domain_id)
 
         user_admin_client = client.IdentityAPIClient(
             url=self.url,
@@ -44,7 +55,21 @@ class TestChangePassword(base.TestBaseV2):
         resp = user_admin_client.get_auth_token(request_object=auth_req_obj)
         self.assertEqual(resp.status_code, 200)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         super(TestChangePassword, self).tearDown()
         for user_id in self.user_ids:
-            self.identity_admin_client.delete_user(user_id=user_id)
+            resp = self.identity_admin_client.delete_user(user_id=user_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(user_id))
+        for domain_id in self.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=domain_id, request_object=disable_domain_req)
+
+            resp = self.identity_admin_client.delete_domain(
+                domain_id=domain_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Domain with ID {0} failed to delete'.format(domain_id))
