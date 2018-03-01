@@ -15,6 +15,7 @@ import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
+import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.unboundid.ldap.sdk.DN;
@@ -523,6 +524,9 @@ public class FederatedDomainRequestHandler {
 
         for (UserGroup userGroup : requestedUserGroups) {
             federatedUser.getUserGroupDNs().add(userGroup.getGroupDn());
+        }
+        if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
+            federatedUser.setPhonePin(RandomGeneratorUtil.generateSecureRandomNumber(identityConfig.getReloadableConfig().getUserPhonePinSize()));
         }
 
         federatedUserDao.addUser(originIdp, federatedUser);
