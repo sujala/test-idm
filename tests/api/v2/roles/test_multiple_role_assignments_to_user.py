@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -56,7 +55,6 @@ class TestMultipleRoleAssignmentsToUser(base.TestBaseV2):
         }
         return tenant_assignment_request
 
-    @attr(type='smoke_alpha')
     def test_grant_multiple_roles_to_user(self):
 
         # create roles
