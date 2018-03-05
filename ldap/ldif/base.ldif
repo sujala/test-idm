@@ -1063,6 +1063,14 @@ cn: nova:observer
 description: Nova Observer Role for Account User
 rsWeight: 1000
 
+dn: rsId=8ac541ae2e9d4ab3879e14bd9003fc01,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: observer
+description: Observer Role for Account User
+rsWeight: 1000
+
 dn: rsId=10010176,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
  c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole

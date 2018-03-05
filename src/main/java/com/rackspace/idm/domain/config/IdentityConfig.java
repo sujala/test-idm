@@ -543,6 +543,9 @@ public class IdentityConfig {
     public static final String FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME = "feature.use.subtree.delete.control.for.subtree.deletion.enabled";
     public static final boolean FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE = true;
 
+    public static final String FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP = "feature.enable.ignore.comments.for.saml.parser";
+    public static final boolean FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_DEFAULT = true;
+
     public static final String FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP = "feature.enable.include.password.expiration.date";
     public static final boolean FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT = false;
   
@@ -782,6 +785,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP, FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP, FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_DEFAULT);
 
@@ -1578,6 +1582,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, description = "Whether or not to keep the signoff object in sync with the loaded AE Key cache", versionAdded = "2.16.0")
         public boolean getAESyncSignOffEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP, versionAdded = "3.20.1", description = "Enable the document loader that loads saml object to strip comments when loading.")
+        public boolean ignoreCommentsWhenLoadingSaml() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP);
         }
 
         public String getNodeName() {

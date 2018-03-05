@@ -1137,7 +1137,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then: "the correct pwd expiration is returned"
         1 * domainService.getDomain(user.domainId) >> domain
-        passwordExpiration == passwordLastUpdated.plusWeeks(passwordPolicyLengthInWeeks)
+        passwordExpiration == passwordLastUpdated.plus(passwordPolicyLengthInWeeks*7l*24l*60l*60l*1000l)
 
         when: "get pwd expiration for user w/o a pwd change date and domain w/ a password duration"
         user.passwordLastUpdated = null
