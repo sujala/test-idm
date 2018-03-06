@@ -7,10 +7,7 @@ import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
-import com.rackspace.idm.domain.service.TenantAssignmentService;
-import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -43,6 +40,9 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     @Override
     public List<TenantRole> replaceTenantAssignmentsOnUser(User user, List<TenantAssignment> tenantAssignments, Integer allowedRoleAccess) {
@@ -191,10 +191,25 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
             // Validate role being added to user
             String roleId = tenantAssignment.getOnRole();
             ClientRole role = cache.roleCache.get(roleId);
-            if ((IdentityUserTypeEnum.isIdentityUserTypeRoleName(role.getName())
-                    && IdentityUserTypeEnum.fromRoleName(role.getName()) != IdentityUserTypeEnum.USER_MANAGER)
-                    || role.getRsWeight() < allowedRoleAccess) {
+
+            if (role.getRsWeight() < allowedRoleAccess) {
                 throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId), ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            // Identity user type roles can not be assigned to users via assignments, except for the
+            // "identity:user-manage" role.
+            if (IdentityUserTypeEnum.isIdentityUserTypeRoleName(role.getName())) {
+                if (IdentityUserTypeEnum.fromRoleName(role.getName()) != IdentityUserTypeEnum.USER_MANAGER) {
+                    throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId), ERROR_CODE_INVALID_ATTRIBUTE);
+                }
+                // Verify that target user has the "identity:default" role.
+                if(!authorizationService.hasDefaultUserRole(user)) {
+                    throw new ForbiddenException(ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER_MSG, ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER);
+                }
+                // Verify that the "identity:user-manage" role is assigned globally.
+                if (!isDomainAssignment(tenantAssignment)) {
+                    throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_GLOBAL_ROLE_ASSIGNMENT_ONLY_MSG_PATTERN, tenantAssignment.getOnRole()), ERROR_CODE_INVALID_ATTRIBUTE);
+                }
             }
         }
 
