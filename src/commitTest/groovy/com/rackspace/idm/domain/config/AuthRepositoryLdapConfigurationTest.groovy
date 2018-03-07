@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config
 
+import com.unboundid.ldap.sdk.LDAPConnection
 import org.apache.commons.configuration.Configuration
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -23,13 +24,28 @@ class AuthRepositoryLdapConfigurationTest extends Specification {
         legacyConfig.getInt("auth.ldap.server.port", AuthRepositoryLdapConfiguration.DEFAULT_SERVER_PORT) >> AuthRepositoryLdapConfiguration.DEFAULT_SERVER_PORT
     }
 
+    def "eDir config uses identity configuration for timeouts"() {
+        given:
+        staticConfig.getEDirServerTrusted() >> true
+        edirConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _) >> GroovyMock(LDAPConnection)
+
+        when: "create a new connection"
+        edirConfiguration.connection()
+
+        then: "identity configuration is used"
+        1 * staticConfig.getEDirConnectionConnectTimeout()
+        1 * staticConfig.getEDirConnectionBindTimeout()
+        1 * staticConfig.getEDirConnectionSearchTimeout()
+    }
+
     @Unroll
     def "eDir config returns a null connection pool for non-trusted servers - trusted == #trusted"() {
         given:
-        legacyConfig.getBoolean("ldap.server.trusted", false) >> trusted
+        edirConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _) >> GroovyMock(LDAPConnection)
+        staticConfig.getEDirServerTrusted() >> trusted
         legacyConfig.getBoolean("auth.ldap.useSSL") >> false
         if (trusted) {
-            edirConnectionFactory.createAnonymousUnenryptedConnection(_, _) >> null
+            edirConnectionFactory.createAuthenticatedEncryptedConnection(_, _) >> null
         }
 
         when:
@@ -46,39 +62,16 @@ class AuthRepositoryLdapConfigurationTest extends Specification {
         trusted << [true, false]
     }
 
-    def "eDir config only allows authenticated connections with encrypted connections"() {
+    def "eDir config creates authenticated connections"() {
         given:
-        legacyConfig.getBoolean("ldap.server.trusted", false) >> true
-
-        when: "try to create a connection WITHOUT SSL/TLS and WITH authentication"
-        legacyConfig.getBoolean("auth.ldap.useSSL") >> false
-        staticConfig.shouldEdirConnectionPoolUseAuthenticatedConnections() >> true
-        edirConfiguration.connection()
-
-        then:
-        thrown IllegalStateException
-
-        when: "try to create a connection WITH SSL/TLS and WITH authentication"
-        legacyConfig.getBoolean("auth.ldap.useSSL") >> true
-        staticConfig.shouldEdirConnectionPoolUseAuthenticatedConnections() >> true
-        edirConfiguration.connection()
-
-        then:
-        1 * edirConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _)
-    }
-
-    def "eDir config creates authenticated connections only when feature is enabled"() {
-        given:
-        legacyConfig.getBoolean("ldap.server.trusted", false) >> true
+        staticConfig.getEDirServerTrusted() >> true
 
         when: "try to create a connection WITH SSL/TLS and WITHOUT authentication"
         legacyConfig.getBoolean("auth.ldap.useSSL") >> true
-        staticConfig.shouldEdirConnectionPoolUseAuthenticatedConnections() >> false
         edirConfiguration.connection()
 
         then:
-        1 * edirConnectionFactory.createAnonymousEnryptedConnection(_, _, _)
+        1 * edirConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _) >> GroovyMock(LDAPConnection)
         1 * edirConnectionFactory.createConnectionPool(_, _, _)
     }
-
 }
