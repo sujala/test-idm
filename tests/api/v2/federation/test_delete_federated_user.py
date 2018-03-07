@@ -34,7 +34,7 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
         cls.idp_request_object = factory.get_add_idp_request_object(
             public_certificates=[cls.pem_encoded_cert],
             approved_domain_ids=[cls.domain_id])
-        cls.idp_ia_client.create_idp(cls.idp_request_object)
+        cls.identity_admin_client.create_idp(cls.idp_request_object)
 
     def setUp(self):
         super(TestDeleteFederatedUser, self).setUp()
