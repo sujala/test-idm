@@ -1,15 +1,16 @@
 package com.rackspace.idm.domain.entity;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RolespaceType;
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.DN;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.persist.*;
+import com.unboundid.ldap.sdk.persist.FilterUsage;
+import com.unboundid.ldap.sdk.persist.LDAPDNField;
+import com.unboundid.ldap.sdk.persist.LDAPField;
+import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
-import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,10 @@ public class Domain implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_PASSWORD_POLICY, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private byte[] internalPasswordPolicy;
+
+    @DeleteNullValues
+    @LDAPField(attribute=LdapRepository.ATTR_USER_ADMIN_DN, objectClass=LdapRepository.OBJECTCLASS_DOMAIN, filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    private DN userAdminDN;
 
     public void setTenantIds(String[] tenantIDs) {
         if (tenantIDs == null) {
