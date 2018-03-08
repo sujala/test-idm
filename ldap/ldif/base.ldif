@@ -1063,6 +1063,14 @@ cn: nova:observer
 description: Nova Observer Role for Account User
 rsWeight: 1000
 
+dn: rsId=8ac541ae2e9d4ab3879e14bd9003fc01,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: observer
+description: Observer Role for Account User
+rsWeight: 1000
+
 dn: rsId=10010176,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
  c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole
@@ -4980,6 +4988,14 @@ clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
 tenantRsId: 983452
 userRsId: 173189
 
+dn: roleRsId=8470c459cfa043ef989976a66ba4d74e,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: top
+objectClass: tenantRole
+roleRsId: 8470c459cfa043ef989976a66ba4d74e
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 173189
+
 dn: roleRsId=2b4d276b677d47dd85d254168ed452d2,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
  m
 objectClass: tenantRole
@@ -5934,7 +5950,7 @@ rsPropertyValueType: JSON
 rsReloadable: TRUE
 rsSearchable: TRUE
 description: The default policy used when creating an IDP
-rsPropertyValue: {"property":{"value":"default policy"}}
+rsPropertyValue: {"mapping": {"rules": [{"local": {"user": {"domain": "{D}","name":   "{D}","email": "{D}","roles":  "{D}","expire": "{D}"}}}],"version": "RAX-1"}}
 
 dn: rsId=9eba81bfbcf14f1a94f8de935eb1adc5,ou=properties,ou=cloud,o=configura
  tion,dc=rackspace,dc=com

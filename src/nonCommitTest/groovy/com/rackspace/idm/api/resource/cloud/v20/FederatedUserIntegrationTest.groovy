@@ -28,6 +28,7 @@ import com.rackspace.idm.util.SamlUnmarshaller
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.codec.binary.StringUtils
 import org.apache.commons.lang.BooleanUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.codehaus.jackson.map.ObjectMapper
@@ -2187,6 +2188,56 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         where:
         mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Injecting comments post signature allows attackers to alter values only if ignore comments is disabled: ignoreComments: #ignoreComments"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP, ignoreComments)
+
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        def usernamePart1 = RandomStringUtils.randomAlphabetic(8)
+        def usernamePart2 = RandomStringUtils.randomAlphabetic(8)
+        def username = "$usernamePart1$usernamePart2"
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        def original = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, Arrays.asList("nova:observer"), email);
+        def exploited = original.replaceAll("nova:observer", "nova:<!---->observer")
+                .replaceAll(username, "$usernamePart1<!---->$usernamePart2")
+
+        when: "Auth with unaltered response"
+        def authClientResponse = cloud20.federatedAuthenticate(original, false, GlobalConstants.FEDERATION_API_V1_0)
+
+        then: "Response contains appropriate content"
+        authClientResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
+        authResponse.user.name == username
+        authResponse.user.roles.role.find {it.name == "nova:observer"} != null
+
+        when: "Auth with altered response"
+        def authClientResponseAltered = cloud20.federatedAuthenticate(exploited, false, GlobalConstants.FEDERATION_API_V1_0)
+
+        then: "Processed successfully w/ altered username and roles if disabled"
+        authClientResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponseAltered = authClientResponseAltered.getEntity(AuthenticateResponse).value
+        if (ignoreComments) {
+            assert authResponseAltered.user.name == username
+            assert authResponseAltered.user.roles.role.find {it.name == "nova:observer"} != null
+        } else {
+            assert authResponseAltered.user.name == usernamePart2
+            assert authResponseAltered.user.roles.role.find {it.name == "observer"} != null
+        }
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+
+        where:
+        ignoreComments << [false, true]
     }
 
     def getFederatedUser(String domainId, mediaType) {

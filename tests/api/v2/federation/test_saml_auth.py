@@ -46,18 +46,16 @@ class TestSAMLAuth(federation.TestBaseFederation):
         dom_id = self.generate_random_string(const.NUMERIC_DOMAIN_ID_PATTERN)
         test_email = "random@rackspace.com"
         issuer = self.idp.issuer
-        assertion = saml_helper.create_saml_assertion(
-            domain=dom_id, subject=subject, issuer=issuer,
-            email=test_email, base64_url_encode=base64_url_encode,
-            private_key_path=self.key_path,
-            public_key_path=self.cert_path)
+        assertion = saml_helper.create_saml_assertion_v2(
+            domain=dom_id, username=subject, issuer=issuer,
+            email=test_email, private_key_path=self.key_path,
+            public_key_path=self.cert_path, response_flavor='v2DomainOrigin')
         resp = self.identity_admin_client.auth_with_saml(
             saml=assertion, content_type=content_type,
             base64_url_encode=base64_url_encode, new_url=new_url)
         self.assertEquals(
             resp.json()[const.FORBIDDEN][const.MESSAGE],
-            "Error code: 'FED-000'; v1 Authentication "
-            "is not supported for this IDP")
+            "Error code: 'FED2-004'; The Origin IDP is not valid")
         self.assertEquals(403, resp.status_code)
 
     def tearDown(self):

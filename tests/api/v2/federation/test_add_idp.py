@@ -27,28 +27,25 @@ class TestAddIDP(federation.TestBaseFederation):
         super(TestAddIDP, self).setUp()
 
     def test_add_idp_email_domain(self):
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
-        idp_ia_client = self.create_identity_admin_with_role(
-            const.PROVIDER_MANAGEMENT_ROLE_NAME)
         email_domains = []
         email_domains.append(self.generate_random_string(const.EMAIL_PATTERN))
 
         domain_id = self.create_one_user_and_get_domain(
-            auth_client=idp_ia_client)
+            auth_client=self.identity_admin_client)
 
         # Add IDP with email domain.
         request_object = factory.get_add_idp_request_object(
             federation_type='DOMAIN', approved_domain_ids=[domain_id],
             email_domains=email_domains)
-        resp = self.idp_ia_client.create_idp(request_object)
+
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         idp_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(idp_id)
 
-        # Get IDP by email domain.
+        # Get IDPs by email domain.
         option = {const.EMAIL_DOMAIN: email_domains[0]}
-        resp = self.idp_ia_client.list_idp(option=option)
+        resp = self.identity_admin_client.list_idp(option=option)
         idp = resp.json()[const.NS_IDENTITY_PROVIDERS][0]
         self.assertEqual(idp[const.ID], idp_id)
         self.assertSchema(
@@ -61,8 +58,9 @@ class TestAddIDP(federation.TestBaseFederation):
             const.EMAIL_PATTERN))
 
         idp_obj = requests.IDP(email_domains=updated_email_domains)
-        resp = self.idp_ia_client.update_idp(idp_id=idp_id,
-                                             request_object=idp_obj)
+        resp = self.identity_admin_client.update_idp(
+            idp_id=idp_id,
+            request_object=idp_obj)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             resp.json()[const.NS_IDENTITY_PROVIDER][const.EMAIL_DOMAINS],
@@ -72,7 +70,7 @@ class TestAddIDP(federation.TestBaseFederation):
             json_schema=idp_json.identity_provider_w_email_domain)
 
         # Get IDP by ID & verify response.
-        resp = self.idp_ia_client.get_idp(idp_id=idp_id)
+        resp = self.identity_admin_client.get_idp(idp_id=idp_id)
         self.assertEqual(
             resp.json()[const.NS_IDENTITY_PROVIDER][const.EMAIL_DOMAINS],
             updated_email_domains)
@@ -81,13 +79,10 @@ class TestAddIDP(federation.TestBaseFederation):
             json_schema=idp_json.identity_provider_w_email_domain)
 
     def test_add_idp_with_name(self):
-        '''Add with a name
-        '''
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
+        '''Add with a name.'''
 
         request_object = factory.get_add_idp_request_object()
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
@@ -95,43 +90,33 @@ class TestAddIDP(federation.TestBaseFederation):
                           request_object.idp_name)
 
     def test_add_idp_with_no_name(self):
-        '''Add with empty  name
-        '''
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
+        '''Add with empty  name.'''
         request_object = factory.get_add_idp_request_object()
         request_object.idp_name = None
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 400)
         self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                           "Error code: 'GEN-001'; 'name' is a required"
                           " attribute")
 
     def test_add_idp_with_empty_name(self):
-        '''Add with empty  name
-        '''
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
+        '''Add with empty name.'''
         request_object = factory.get_add_idp_request_object()
         request_object.idp_name = ""
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 400)
         self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                           "Error code: 'GEN-001'; 'name' is a required"
                           " attribute")
 
     def test_add_idp_with_dup_name(self):
-        '''Add with dup name
-        '''
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
-
+        '''Add with dup name.'''
         request_object = factory.get_add_idp_request_object()
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 409)
         self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                           "Error code: 'FED_IDP-005'; Identity provider with "
@@ -139,27 +124,24 @@ class TestAddIDP(federation.TestBaseFederation):
                               request_object.idp_name))
 
     def test_add_idp_name_max_length(self):
-        '''Add with bad characters in name
-        '''
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
+        '''Add with bad characters in name.'''
         request_object = factory.get_add_idp_request_object()
         request_object.idp_name = self.generate_random_string(
             const.MAX_IDP_NAME_PATTERN)
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
 
         # verify name wasn't truncated
-        get_name_resp = self.idp_ia_client.get_idp(idp_id=resp.json()[
+        get_name_resp = self.identity_admin_client.get_idp(idp_id=resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
         get_name = get_name_resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
         self.assertEquals(get_name, request_object.idp_name)
 
         # Try with longer name
         request_object.idp_name += "B"
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 400)
         self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                           "Error code: 'GEN-002'; name length cannot exceed "
@@ -192,7 +174,7 @@ class TestAddIDP(federation.TestBaseFederation):
         request_object = factory.get_add_idp_request_object(
             approved_domain_ids=dom_ids, federation_type=fed_type,
             approved_domain_group=dom_group)
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 400)
 
         self.assertEquals(
@@ -201,38 +183,29 @@ class TestAddIDP(federation.TestBaseFederation):
             " approvedDomainGroup must be set, and specified as GLOBAL")
 
     def test_add_idp_with_name_get_idp(self):
-        '''Verify get provider by id has name attribute
-        '''
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
-
+        '''Verify get provider by id has name attribute.'''
         request_object = factory.get_add_idp_request_object()
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
 
-        get_name_resp = self.idp_ia_client.get_idp(idp_id=resp.json()[
-            const.NS_IDENTITY_PROVIDER][const.ID])
+        get_name_resp = self.identity_admin_client.get_idp(
+            idp_id=resp.json()[const.NS_IDENTITY_PROVIDER][const.ID])
         get_name = get_name_resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
         self.assertEquals(get_name, request_object.idp_name)
 
     def test_add_idp_with_name_list_idp(self):
-        '''Verify list providers has name attribute
-        '''
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
-
+        '''Verify list providers has name attribute.'''
         request_object = factory.get_add_idp_request_object()
-        resp = self.idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
 
-        idp_resp = self.idp_ia_client.list_idp()
+        idp_resp = self.identity_admin_client.list_idp()
         self.assertEquals(resp.status_code, 201)
-        idps = idp_resp.json()[
-            const.NS_IDENTITY_PROVIDERS]
+        idps = idp_resp.json()[const.NS_IDENTITY_PROVIDERS]
         found = False
         for idp in idps:
             idp_name = idp[const.NAME]
@@ -243,21 +216,18 @@ class TestAddIDP(federation.TestBaseFederation):
     @ddt.data(*AllPairs([["issuer", "name"],
                          ["test12345", "*"]]))
     def test_list_idp_query_param_name_missed_hit(self, data):
-        '''Verify list providers can filter by name parameter
-        '''
+        '''Verify list providers can filter by name parameter.'''
         name = data[0]
         value = data[1]
 
         self.create_idp_helper()
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
-        idp_list = self.idp_ia_client.list_idp(
+        idp_list = self.identity_admin_client.list_idp(
             option={"name": None}).json()[
                 const.NS_IDENTITY_PROVIDERS]
 
         self.assertTrue(len(idp_list) > 1)
 
-        idp_resp = self.idp_ia_client.list_idp(option={name: value})
+        idp_resp = self.identity_admin_client.list_idp(option={name: value})
         self.assertEquals(idp_resp.status_code, 200)
         idp_list = idp_resp.json()[
             const.NS_IDENTITY_PROVIDERS]
@@ -265,13 +235,9 @@ class TestAddIDP(federation.TestBaseFederation):
         self.assertTrue(len(idp_list) == 0)
 
     def test_list_idp_query_param_issuer_case(self):
-        '''Verify list providers issuer filter is case sensitive
-        '''
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
-
+        '''Verify list providers issuer filter is case sensitive.'''
         idps = [self.create_idp_helper(), self.create_idp_helper()]
-        idp_resp = self.idp_ia_client.list_idp(
+        idp_resp = self.identity_admin_client.list_idp(
             option={"issuer": idps[0].issuer.upper()})
         idp_list = idp_resp.json()[
             const.NS_IDENTITY_PROVIDERS]
@@ -282,22 +248,19 @@ class TestAddIDP(federation.TestBaseFederation):
     @ddt.data(*AllPairs([["issuer", "name"],
                          [None, ""]]))
     def test_list_idp_query_param_ignore_null_empty(self, data):
-        '''Verify list providers can filter by name parameter
-        '''
+        '''Verify list providers can filter by name parameter.'''
         name = data[0]
         value = data[1]
 
         self.create_idp_helper()
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
-        idp_resp = self.idp_ia_client.list_idp(
+        idp_resp = self.identity_admin_client.list_idp(
             option={name: value})
 
         self.assertEquals(idp_resp.status_code, 200)
         idp_list = idp_resp.json()[
             const.NS_IDENTITY_PROVIDERS]
 
-        idp_resp2 = self.idp_ia_client.list_idp()
+        idp_resp2 = self.identity_admin_client.list_idp()
         self.assertEquals(idp_resp.status_code, 200)
         idp_list2 = idp_resp2.json()[
             const.NS_IDENTITY_PROVIDERS]
@@ -309,8 +272,6 @@ class TestAddIDP(federation.TestBaseFederation):
         '''Verify list providers can filter by name parameter
            Also tests that additional values are ignored.
         '''
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
         idps = [self.create_idp_helper(), self.create_idp_helper()]
         found = True
         for idp in idps:
@@ -319,7 +280,7 @@ class TestAddIDP(federation.TestBaseFederation):
             else:
                 # Note that issuer search is not case insensitive like name.
                 value = [idp.issuer, "blah"]
-            idp_resp = self.idp_ia_client.list_idp(
+            idp_resp = self.identity_admin_client.list_idp(
                 option={name: value})
             self.assertEquals(idp_resp.status_code, 200)
             idp_list = idp_resp.json()[
@@ -336,18 +297,17 @@ class TestAddIDP(federation.TestBaseFederation):
         '''
         name = data[0]
         value = data[1]
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
+
+        # create  user
         user_name = self.generate_random_string(
             pattern=const.SUB_USER_PATTERN)
-        # create admin user
         dom_id = self.generate_random_string(const.NUMERIC_DOMAIN_ID_PATTERN)
         request_object = requests.UserAdd(
             user_name=user_name,
             domain_id=dom_id)
         self.domain_ids.append(dom_id)
 
-        resp = self.idp_ia_client.add_user(request_object)
+        resp = self.identity_admin_client.add_user(request_object)
         self.user_ids.append(resp.json()[const.USER][const.ID])
         dom_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         idps = [self.create_idp_helper(dom_ids=[dom_id]),
@@ -361,7 +321,7 @@ class TestAddIDP(federation.TestBaseFederation):
                     value = [idp.issuer]
             option = {name: value,
                       "approved_DomainId": dom_id}
-            idp_resp = self.idp_ia_client.list_idp(option=option)
+            idp_resp = self.identity_admin_client.list_idp(option=option)
             self.assertEquals(idp_resp.status_code, 200)
             idp_list = idp_resp.json()[
                 const.NS_IDENTITY_PROVIDERS]
@@ -374,6 +334,50 @@ class TestAddIDP(federation.TestBaseFederation):
                 found = False
 
         self.assertEquals(found, True)
+
+    @ddt.data('GLOBAL', 'RACKER', 'BROKER')
+    def test_list_idps_for_global_and_racker_idps(self, idp_flavor):
+        """
+        Tests for verifying CID-1423, that is, if empty list is populated
+        for approved domain ids if idp is a GLOBAL, RACKER, BROKER idp
+        """
+
+        issuer = self.generate_random_string(pattern=const.ISSUER_PATTERN)
+        if idp_flavor == const.APPROVED_DOMAIN_GROUP_GLOBAL:
+            request_object = factory.get_add_idp_request_object(
+                approved_domain_group=const.APPROVED_DOMAIN_GROUP_GLOBAL,
+                issuer=issuer
+            )
+        elif idp_flavor == const.BROKER:
+            request_object = factory.get_add_idp_request_object(
+                federation_type=const.BROKER, issuer=issuer,
+                approved_domain_group=const.APPROVED_DOMAIN_GROUP_GLOBAL
+            )
+        else:
+            request_object = factory.get_add_idp_request_object(
+                federation_type=idp_flavor, issuer=issuer)
+        resp = self.identity_admin_client.create_idp(request_object)
+        self.assertEquals(resp.status_code, 201)
+        self.provider_ids.append(resp.json()[
+            const.NS_IDENTITY_PROVIDER][const.ID])
+        option = {
+            const.ISSUER: issuer
+        }
+        # list idps with query param
+        list_resp = self.identity_admin_client.list_idp(option=option)
+        self.assertEqual(list_resp.json()[const.NS_IDENTITY_PROVIDERS][0][
+                             const.APPROVED_DOMAIN_Ids], [])
+
+        # list idps without query param
+        list_resp = self.identity_admin_client.list_idp()
+        for idp in list_resp.json()[const.NS_IDENTITY_PROVIDERS]:
+            if (idp[const.FEDERATION_TYPE] in {const.BROKER, const.RACKER} or
+                (const.APPROVED_DOMAIN_GROUP in idp and idp[
+                        const.APPROVED_DOMAIN_GROUP] == (
+                            const.APPROVED_DOMAIN_GROUP_GLOBAL))):
+                self.assertEqual(idp[const.APPROVED_DOMAIN_Ids], [])
+            else:
+                self.assertNotEqual(idp[const.APPROVED_DOMAIN_Ids], [])
 
     def tearDown(self):
         super(TestAddIDP, self).tearDown()

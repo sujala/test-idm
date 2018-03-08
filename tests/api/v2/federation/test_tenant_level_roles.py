@@ -28,17 +28,6 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         cls.idp_ua_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': dom_id})
-        idp_ua_id = cls.idp_ua_client.default_headers[const.X_USER_ID]
-
-        if cls.test_config.run_service_admin_tests:
-            option = {
-                const.PARAM_ROLE_NAME: const.PROVIDER_MANAGEMENT_ROLE_NAME
-            }
-            list_resp = cls.service_admin_client.list_roles(option=option)
-            idp_manager_role_id = list_resp.json()[const.ROLES][0][const.ID]
-            cls.service_admin_client.add_role_to_user(
-                user_id=idp_ua_id, role_id=idp_manager_role_id)
-
         cls.test_email = 'random@rackspace.com'
 
     def setUp(self):
@@ -95,7 +84,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             request_object = factory.get_add_idp_request_object(
                 federation_type='DOMAIN', approved_domain_ids=[domain_id],
                 issuer=issuer, public_certificates=[pem_encoded_cert])
-            resp = self.idp_ua_client.create_idp(request_object)
+            resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
@@ -124,6 +113,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
 
     @ddt.file_data('data_tenant_level_roles.json')
     def test_tenant_level_roles_in_fed_auth(self, test_data):
+        ''' Verify appropriate roles are on the federated users.'''
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
         provider_id, cert_path, key_path = self.create_idp_with_certs(
