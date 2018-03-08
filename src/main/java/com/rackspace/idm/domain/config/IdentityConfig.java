@@ -504,9 +504,6 @@ public class IdentityConfig {
     public static final String LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP = "ldap.auth.password.lockout.duration";
     public static final Duration LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_DEFAULT = Duration.parse("PT1S"); // In seconds
 
-    private static final String FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP = "feature.edir.use.authenticated.connections";
-    private static final boolean FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_DEFAULT = false;
-
     private static final String EDIR_BIND_DN = "edir.bind.dn";
     private static final String EDIR_BIND_PASSWORD = "edir.bind.password";
 
@@ -559,6 +556,18 @@ public class IdentityConfig {
 
     public static final String USER_PHONE_PIN_SIZE = "user.phone.pin.size";
     public static final int USER_PHONE_PIN_SIZE_DEFAULT = 4;
+
+    public static final String EDIR_LDAP_SERVER_TRUSTED_PROP = "ldap.server.trusted";
+    public static final boolean EDIR_LDAP_SERVER_TRUSED_DEFAULT = false;
+
+    public static final String EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP = "edir.ldap.connection.connect.timeout.ms";
+    public static final int EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT = 10000;
+
+    public static final String EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP = "edir.ldap.connection.bind.timeout.ms";
+    public static final int EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_DEFAULT = 30000;
+
+    public static final String EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP = "edir.ldap.connection.search.timeout.ms";
+    public static final int EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT = 300000;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -695,8 +704,6 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP, FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_DEFAULT);
 
-        defaults.put(FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP, FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_DEFAULT);
-
         defaults.put(FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT);
         defaults.put(FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP, FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_DEFAULT);
         defaults.put(FEATURE_POST_IDP_FEED_EVENTS_PROP, FEATURE_POST_IDP_FEED_EVENTS_DEFAULT);
@@ -788,6 +795,11 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_PHONE_PIN_ON_USER, FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT);
         defaults.put(USER_PHONE_PIN_SIZE, USER_PHONE_PIN_SIZE_DEFAULT);
+
+        defaults.put(EDIR_LDAP_SERVER_TRUSTED_PROP, EDIR_LDAP_SERVER_TRUSED_DEFAULT);
+        defaults.put(EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT);
+        defaults.put(EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_DEFAULT);
+        defaults.put(EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT);
 
         return defaults;
     }
@@ -1457,11 +1469,6 @@ public class IdentityConfig {
             return getBooleanSafely(staticConfiguration, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP);
         }
 
-        @IdmProp(key = FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP, versionAdded = "3.15.0", description = "Indicates whether to use authenticated connections to eDir.")
-        public boolean shouldEdirConnectionPoolUseAuthenticatedConnections() {
-            return getBooleanSafely(staticConfiguration, FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP);
-        }
-
         @IdmProp(key = EDIR_BIND_DN, versionAdded = "3.15.0", description = "The bind DN for eDir authenticated connections.")
         public String getEdirBindDn() {
             return getStringSafely(staticConfiguration, EDIR_BIND_DN);
@@ -1511,6 +1518,26 @@ public class IdentityConfig {
         @IdmProp(key = LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_PROP, versionAdded = "3.19.0", description = "Specifies the minimum length of time in milliseconds that should pass between connections closed because they have been established for longer than the maximum connection age.")
         public long getLDAPServerPoolMinDisconnectIntervalTime() {
             return getLongSafely(staticConfiguration, LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_PROP);
+        }
+
+        @IdmProp(key = EDIR_LDAP_SERVER_TRUSTED_PROP, versionAdded = "1.0.14.8", description = "Specifies if the edir connection is trusted")
+        public boolean getEDirServerTrusted() {
+            return getBooleanSafely(staticConfiguration, EDIR_LDAP_SERVER_TRUSTED_PROP);
+        }
+
+        @IdmProp(key = EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default connect timeout, in milliseconds.")
+        public int getEDirConnectionConnectTimeout() {
+            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default value for response timeouts, in milliseconds, for bind operations.")
+        public int getEDirConnectionBindTimeout() {
+            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default value for response timeouts, in milliseconds, for search operations.")
+        public int getEDirConnectionSearchTimeout() {
+            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP);
         }
     }
 
@@ -2166,7 +2193,6 @@ public class IdentityConfig {
         public int getUserPhonePinSize() {
             return getIntSafely(reloadableConfiguration, USER_PHONE_PIN_SIZE);
         }
-
     }
 
     public class RepositoryConfig {
