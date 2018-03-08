@@ -9,7 +9,7 @@
     </nodes>
     <filters>
       <!-- Only enable for fed calls via standard fed endpoint. -->
-      <filter name="compression" uri-regex="^.*/v2.0/RAX-AUTH/federation/saml/auth$"/>
+      <filter name="compression" uri-regex="^.*/v2\.0/RAX-AUTH/(federation/saml/auth|saml-tokens)$"/>
       <!-- Need to create whitelist regex for this. For now just exclude fed calls -->
       <filter name="content-type-stripper" />
       <filter name="translation" />
@@ -23,7 +23,7 @@
       <filter name="scripting" />
       <filter name="herp" />
       <!-- Only enable for fed calls via standard endpoint. -->
-      <filter name="saml-policy" uri-regex="^.*/v2.0/RAX-AUTH/federation/saml/auth$"/>
+      <filter name="saml-policy" uri-regex="^.*/v2\.0/RAX-AUTH/(federation/saml/auth|saml-tokens)$"/>
       <!-- Only enable for policy validation of identity providers. -->
       <filter name="attribute-mapping-policy-validation" uri-regex="^.*/v2.0/RAX-AUTH/federation/identity-providers/.*/mapping$"/>
     </filters>

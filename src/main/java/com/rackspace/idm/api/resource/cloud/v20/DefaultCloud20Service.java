@@ -1773,7 +1773,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                 providerEntities = filteredProviderEntities;
             }
 
-            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProviders(identityProviderConverterCloudV20.toIdentityProviderList(providerEntities)).getValue());
+            IdentityProviders providers = identityProviderConverterCloudV20.toIdentityProviderList(providerEntities);
+
+            // If enabled, ensure an approvedDomainIds object exists for every provider
+            if (providers != null && CollectionUtils.isNotEmpty(providers.getIdentityProvider()) && identityConfig.getReloadableConfig().listIdpsAlwaysReturnsApprovedDomainIds()) {
+                for (IdentityProvider identityProvider : providers.getIdentityProvider()) {
+                    if (identityProvider.getApprovedDomainIds() == null) {
+                        identityProvider.setApprovedDomainIds(new ApprovedDomainIds());
+                    }
+                }
+            }
+
+            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProviders(providers).getValue());
         } catch (SizeLimitExceededException ex) {
             return exceptionHandler.exceptionResponse(new ForbiddenException(ex.getMessage())); //translate size limit to forbidden
         } catch (Exception ex) {

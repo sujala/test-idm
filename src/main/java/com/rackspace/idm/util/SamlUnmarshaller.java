@@ -1,5 +1,6 @@
 package com.rackspace.idm.util;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.codec.binary.StringUtils;
@@ -11,6 +12,7 @@ import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.io.Unmarshaller;
 import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.core.xml.io.UnmarshallingException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -24,6 +26,9 @@ import java.io.IOException;
 
 @Component
 public class SamlUnmarshaller {
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     public Response unmarshallResponse(final String responseString) {
         return unmarshallResponse(StringUtils.getBytesUtf8(responseString));
@@ -57,6 +62,10 @@ public class SamlUnmarshaller {
         //chances are this is thread safe and could just create a single time. Something to look at later...
         final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         documentBuilderFactory.setNamespaceAware(true);
+        if (identityConfig.getReloadableConfig().ignoreCommentsWhenLoadingSaml()) {
+            documentBuilderFactory.setIgnoringComments(true);
+        }
+
         final DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
 
         final Document document = docBuilder.parse(is);

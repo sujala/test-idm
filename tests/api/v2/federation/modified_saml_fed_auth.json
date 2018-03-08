@@ -1,0 +1,20 @@
+{
+    "new_fed_auth": {
+        "fed_input": {
+            "base64_url_encode": false,
+            "new_url": true,
+            "content_type": "xml",
+            "fed_api": "v2",
+            "roles": ["rbacRole2"]
+        }
+    },
+    "legacy_fed_auth": {
+        "fed_input": {
+            "base64_url_encode": false,
+            "new_url": false,
+            "content_type": "xml",
+            "fed_api": "v1",
+            "roles": ["rbacRole2"]
+        }
+    }
+}

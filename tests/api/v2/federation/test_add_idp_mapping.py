@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*
-import ddt
+import copy
 import json
 import os
+
+import ddt
 
 from tests.api.utils import data_file_iterator
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -24,17 +26,11 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         """
 
         super(TestAddMappingIDP, cls).setUpClass()
-        cls.idp_ia_clients = {}
-        roles = [const.PROVIDER_MANAGEMENT_ROLE_NAME,
-                 const.PROVIDER_RO_ROLE_NAME, "None"]
-        for role in roles:
-            cls.idp_ia_clients[
-                role] = cls.create_identity_admin_with_role(role)
 
         # user admin client
         cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
         cls.idp_user_admin_client = cls.generate_client(
-            parent_client=cls.idp_ia_clients["None"],
+            parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
         cls.idp_user_admin_client.serialize_format = 'xml'
         cls.idp_user_admin_client.default_headers[
@@ -48,6 +44,9 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         cls.idp_user_manage_client.serialize_format = 'xml'
         cls.idp_user_manage_client.default_headers[
             const.CONTENT_TYPE] = 'application/xml'
+
+        cls.default_headers = copy.deepcopy(
+            cls.identity_admin_client.default_headers)
 
     def setUp(self):
         super(TestAddMappingIDP, self).setUp()
@@ -69,11 +68,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         return resp_get_ro
 
     def add_idp(self, idp_ia_client):
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
-
         request_object = factory.get_add_idp_request_object()
-        resp = idp_ia_client.create_idp(request_object)
+        resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
@@ -133,27 +129,22 @@ class TestAddMappingIDP(federation.TestBaseFederation):
     ))
     def test_add_mapping_blacklisted_yaml_with_auth(self, mapping):
         domain_id = self.create_one_user_and_get_domain(
-            auth_client=self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+            auth_client=self.identity_admin_client)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
         provider_id, cert_path, key_path = self.create_idp_with_certs(
             domain_id=domain_id, issuer=issuer,
-            auth_client=self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+            auth_client=self.identity_admin_client)
 
         resp_get_ro = self.create_and_validate_idp_mapping(
-            mapping, provider_id, api_client=self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+            mapping, provider_id, api_client=self.identity_admin_client)
         self.assertEquals(resp_get_ro.status_code, 200)
         self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
                           const.YAML_CONTENT_TYPE_VALUE)
         self.assertEquals(resp_get_ro.text, mapping)
 
         self.validate_fed_user_auth_bad_request(
-            cert_path, domain_id, issuer, key_path,
-            self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+            cert_path, domain_id, issuer, key_path, self.identity_admin_client)
 
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
@@ -195,8 +186,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path=cert_path, api_client=self.idp_user_manage_client)
 
         resp_get_ro = self.create_and_validate_idp_mapping(
-            mapping, self.idp_id, api_client=self.idp_user_manage_client
-        )
+            mapping, self.idp_id, api_client=self.idp_user_manage_client)
 
         self.assertEquals(resp_get_ro.status_code, 200)
         self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
@@ -212,23 +202,18 @@ class TestAddMappingIDP(federation.TestBaseFederation):
     ))
     def test_add_mapping_valid_yaml_with_auth(self, mapping):
         domain_id = self.create_one_user_and_get_domain(
-            auth_client=self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+            auth_client=self.identity_admin_client)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
         provider_id, cert_path, key_path = self.create_idp_with_certs(
             domain_id=domain_id, issuer=issuer,
-            auth_client=self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+            auth_client=self.identity_admin_client)
 
         self.create_and_validate_idp_mapping(
-            mapping, provider_id, api_client=self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+            mapping, provider_id, api_client=self.identity_admin_client)
 
         self.validate_fed_auth_success(
-            cert_path, domain_id, issuer, key_path,
-            self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+            cert_path, domain_id, issuer, key_path, self.identity_admin_client)
 
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
@@ -291,56 +276,26 @@ class TestAddMappingIDP(federation.TestBaseFederation):
     # verify must have role manager for put, read only for get
     @ddt.file_data('data_update_idp_mapping_policy.json')
     def test_add_mapping_manager_role(self, mapping):
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
-
-        resp_put_manager = self.idp_ia_clients[
-            "None"].add_idp_mapping(
-                idp_id=provider_id,
-                request_data=mapping)
-        self.assertEquals(resp_put_manager.status_code, 403)
-
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_RO_ROLE_NAME].add_idp_mapping(
-                idp_id=provider_id,
-                request_data=mapping)
-        self.assertEquals(resp_put_manager.status_code, 403)
-
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
-                idp_id=provider_id,
-                request_data=mapping)
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
+            idp_id=provider_id, request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 204)
 
-        resp_get_none = self.idp_ia_clients[
-            "None"].get_idp_mapping(
-                idp_id=provider_id)
-        self.assertEquals(resp_get_none.status_code, 403)
-
-        resp_get_ro = self.idp_ia_clients[
-            const.PROVIDER_RO_ROLE_NAME].get_idp_mapping(
-                idp_id=provider_id)
-        self.assertEquals(resp_get_ro.status_code, 200)
-
-        resp_get_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
-                idp_id=provider_id)
+        resp_get_manager = self.identity_admin_client.get_idp_mapping(
+            idp_id=provider_id)
         self.assertEquals(resp_get_manager.status_code, 200)
 
     @ddt.file_data('data_update_idp_valid_mapping_policy.json')
     def test_add_mapping_valid_json(self, mapping):
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
 
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
-                idp_id=provider_id,
-                request_data=mapping)
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
+            idp_id=provider_id,
+            request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 204)
 
-        resp_get_ro = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
-                idp_id=provider_id)
+        resp_get_ro = self.identity_admin_client.get_idp_mapping(
+            idp_id=provider_id)
         self.assertEquals(resp_get_ro.status_code, 200)
         self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
                           const.CONTENT_TYPE_VALUE.format(
@@ -351,22 +306,18 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         "yaml/default_mapping_invalid_policy.yaml",
     ))
     def test_add_mapping_invalid_yaml(self, mapping):
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
 
-        current_resp_policy = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+        current_resp_policy = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
 
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
             request_data=mapping,
             content_type=const.YAML)
         self.assertEquals(resp_put_manager.status_code, 400)
 
-        resp_get_ro = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+        resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id, headers={
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
             })
@@ -375,8 +326,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                           "No [YAML] mapping policy found for IDP with "
                           "ID {}.".format(provider_id))
 
-        resp_get_ro = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+        resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
         self.assertEquals(resp_get_ro.status_code, 200)
         self.assertNotEquals(resp_get_ro.text, mapping)
@@ -390,15 +340,12 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         "yaml/roles_with_spaces_mapping_policy.yaml",
     ))
     def test_add_mapping_valid_yaml(self, mapping):
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
 
         self.create_and_validate_idp_mapping(
-            mapping, provider_id, api_client=self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+            mapping, provider_id, api_client=self.identity_admin_client)
 
-        resp_get_ro = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+        resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
         self.assertEquals(resp_get_ro.status_code, 404)
         self.assertEquals(resp_get_ro.json()["itemNotFound"]["message"],
@@ -410,20 +357,16 @@ class TestAddMappingIDP(federation.TestBaseFederation):
     def test_add_mapping_invalid_json(self, mapping):
         """We now fail invalid policies - CID-1000
         """
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
-        current_resp_policy = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
+        current_resp_policy = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
 
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
             request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 400)
 
-        resp_get_ro = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+        resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
         self.assertEquals(resp_get_ro.status_code, 200)
         self.assertNotEquals(resp_get_ro.json(), mapping)
@@ -432,13 +375,10 @@ class TestAddMappingIDP(federation.TestBaseFederation):
     # idp missing causes 404
     @ddt.file_data('data_update_idp_mapping_policy.json')
     def test_add_mapping_missing_idp(self, mapping):
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
         idp_id = "xxx{0}xxx".format(provider_id)
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
-                idp_id=idp_id,
-                request_data=mapping)
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
+            idp_id=idp_id, request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 404)
         self.assertEquals(resp_put_manager.json()[const.ITEM_NOT_FOUND][
             const.MESSAGE], "Identity Provider with id/name: '{0}' was"
@@ -446,53 +386,43 @@ class TestAddMappingIDP(federation.TestBaseFederation):
 
     @ddt.data("xml", "xhtml_xml")
     def test_idp_mapping_content_type_xml(self, content_type):
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
-        self.idp_ia_clients[
-            "bad_content_type"] = self.create_identity_admin_with_role(
-                const.PROVIDER_MANAGEMENT_ROLE_NAME)
-        self.idp_ia_clients["bad_content_type"].default_headers[
-            const.CONTENT_TYPE] = (const.CONTENT_TYPE_VALUE.format(
-                content_type))
-        resp_put_manager = self.idp_ia_clients[
-            "bad_content_type"].add_idp_mapping(
-                idp_id=provider_id,
-                request_data={},
-                content_type=None)
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
+
+        self.identity_admin_client.default_headers[const.CONTENT_TYPE] = (
+            const.CONTENT_TYPE_VALUE.format(content_type))
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
+            idp_id=provider_id,
+            request_data={},
+            content_type=None)
+        self.identity_admin_client.default_headers[const.CONTENT_TYPE] = (
+            self.default_headers[const.CONTENT_TYPE])
         self.assertEquals(resp_put_manager.status_code, 400)
 
     @ddt.data("text", "x-www-form-urlencoded")
     def test_idp_mapping_content_type(self, content_type):
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
-        self.idp_ia_clients[
-            "bad_content_type"] = self.create_identity_admin_with_role(
-                const.PROVIDER_MANAGEMENT_ROLE_NAME)
-        self.idp_ia_clients["bad_content_type"].default_headers[
-            const.CONTENT_TYPE] = (const.CONTENT_TYPE_VALUE.format(
-                content_type))
-        resp_put_manager = self.idp_ia_clients[
-            "bad_content_type"].add_idp_mapping(
-                idp_id=provider_id,
-                request_data={},
-                content_type=None)
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
+        self.identity_admin_client.default_headers[const.CONTENT_TYPE] = (
+            const.CONTENT_TYPE_VALUE.format(content_type))
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
+            idp_id=provider_id,
+            request_data={},
+            content_type=None)
+        self.identity_admin_client.default_headers[const.CONTENT_TYPE] = (
+            self.default_headers[const.CONTENT_TYPE])
         self.assertEquals(resp_put_manager.status_code, 415)
 
     @ddt.data("xml", "xhtml_xml", "x-www-form-urlencoded")
     def test_idp_mapping_accept_type(self, accept_type):
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
-        self.idp_ia_clients[
-            "bad_accept_type"] = self.create_identity_admin_with_role(
-                const.PROVIDER_MANAGEMENT_ROLE_NAME)
-        self.idp_ia_clients["bad_accept_type"].default_headers[
-            const.ACCEPT] = (const.ACCEPT_ENCODING_VALUE.format(
-                accept_type))
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
+        self.identity_admin_client.default_headers[const.ACCEPT] = (
+            const.ACCEPT_ENCODING_VALUE.format(accept_type))
         mapping = self.get_valid_mapping_policy()
-        resp_put_manager = self.idp_ia_clients[
-            "bad_accept_type"].add_idp_mapping(
-                idp_id=provider_id,
-                request_data=mapping)
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
+            idp_id=provider_id, request_data=mapping)
+
+        self.identity_admin_client.default_headers[const.ACCEPT] = (
+            self.default_headers[const.ACCEPT])
+
         # According to Jorge, despite the AC, the accept type should just be
         # ignored OR return a 406 (from tomcat).
         self.assertTrue(resp_put_manager.status_code == 204 or
@@ -500,26 +430,21 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         # if the accept type was ignored, we still need to validate
         # the mapping was stored correctly.
         if resp_put_manager.status_code == 204:
-            resp_get_ro = self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
-                    idp_id=provider_id)
+            resp_get_ro = self.identity_admin_client.get_idp_mapping(
+                idp_id=provider_id)
             self.assertEquals(resp_get_ro.status_code, 200)
             self.assertEquals(resp_get_ro.json(), mapping)
 
     def test_idp_mapping_max_size(self):
         max_size_in_kilo = const.MAX_SIZE_IN_KILOBYTES
-        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME])
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
         mapping = self.get_valid_mapping_policy()
-        mapping[
-            'mapping']['rules'][0][
-            'remote'][0]['path'] = self.generate_random_string(
-            const.IDP_MAPPING_PATTERN.format(
-                mapping_size=5000))
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
-                idp_id=provider_id,
-                request_data=mapping)
+        mapping['mapping']['rules'][0]['remote'][0]['path'] = (
+            self.generate_random_string(const.IDP_MAPPING_PATTERN.format(
+                mapping_size=5000)))
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
+            idp_id=provider_id,
+            request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 400)
         self.assertEquals(resp_put_manager.json()[const.BAD_REQUEST][
             const.MESSAGE], u"Max size exceed. Policy file must be less tha"
@@ -529,16 +454,11 @@ class TestAddMappingIDP(federation.TestBaseFederation):
     def tearDown(self):
         # Delete all providers created in the tests
         for id_ in self.provider_ids:
-            self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME].delete_idp(idp_id=id_)
+            self.identity_admin_client.delete_idp(idp_id=id_)
         self.idp_user_admin_client.delete_idp(self.provider_ids)
 
         super(TestAddMappingIDP, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
-        # Delete all users created in the setUpClass
-        for idp_ia_client in cls.idp_ia_clients:
-            cls.delete_client(client=cls.idp_ia_clients[idp_ia_client],
-                              parent_client=cls.service_admin_client)
         super(TestAddMappingIDP, cls).tearDownClass()

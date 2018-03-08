@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.decorator
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.util.SamlUnmarshaller
 import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
@@ -13,9 +14,18 @@ class SamlResponseDecoratorTest extends Specification {
     @Shared def samlResponse
     @Shared def samlResponseDecorator
 
+    @Shared IdentityConfig identityConfig = Mock(IdentityConfig)
+    @Shared IdentityConfig.StaticConfig staticConfig = Mock(IdentityConfig.StaticConfig)
+    @Shared IdentityConfig.ReloadableConfig reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
 
     def setupSpec(){
         InitializationService.initialize()
+
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        identityConfig.getStaticConfig() >> staticConfig
+
+        def samlUnmarshaller = new SamlUnmarshaller()
+        samlUnmarshaller.identityConfig = identityConfig
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
                 "   <saml2:Issuer xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + IDP_URI + "</saml2:Issuer>\n" +
@@ -64,10 +74,12 @@ class SamlResponseDecoratorTest extends Specification {
                 "   </saml2:Assertion>\n" +
                 "</saml2p:Response>"
 
-        samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
+        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
 
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
     }
+
+
 
     def "Get saml response" () {
         when:
