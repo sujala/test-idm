@@ -53,3 +53,13 @@ Running the tests - without tox
 
     $ nosetests api (OR)
     $ nosetests --nologcapture api (to avoid the verbose requests log)
+
+Required Roles for running the tests
+=====================================
+
+The users are set up in the base.ldif appropriately. So no modifications are required
+to run the tests locally. When running the tests against a different env (staging etc),
+the users have to be set up with the roles below.
+
+1. identity_admin_user_name used in api.conf should have the following roles,
+    1.1 identity:identity-provider-manager

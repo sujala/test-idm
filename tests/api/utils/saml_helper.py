@@ -240,6 +240,10 @@ def create_saml_assertion_v2(
         command_list.extend(['-originPublicKey={}'.format(public_key_path)])
         command_list.extend(['-originPrivateKey={}'.format(private_key_path)])
         command_list.extend(['-originIssuer={}'.format(issuer)])
+    elif response_flavor == 'v2DomainBroker':
+        command_list.extend(['-brokerPublicKey={}'.format(public_key_path)])
+        command_list.extend(['-brokerPrivateKey={}'.format(private_key_path)])
+        command_list.extend(['-brokerIssuer={}'.format(issuer)])
 
     cert = subprocess.check_output(command_list,
                                    stderr=subprocess.STDOUT).strip()

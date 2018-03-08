@@ -539,4 +539,60 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
             // Eat
         }
     }
+
+    @Unroll
+    def "Injecting comments post signature allows attackers to alter values only if ignore comments is disabled: ignoreComments: #ignoreComments"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP, ignoreComments)
+
+        User userAdminEntity = userService.getUserById(sharedUserAdmin.id)
+        def fedRequest = createFedRequest().with {
+            it.username = "billybob"
+            it.roleNames = ["nova:observer"] as Set
+            it
+        }
+
+        def unsignedSamlResponse = sharedFederatedDomainAuthRequestGenerator.createUnsignedSAMLResponse(fedRequest)
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.signSAMLResponse(unsignedSamlResponse, sharedBrokerIdpCredential)
+
+        // Extract string representation of SAML response
+        def original = sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse)
+        def exploited = original.replaceAll("nova:observer", "nova:<!---->observer")
+                .replaceAll("billybob", "billy<!---->bob")
+
+        when: "Auth with unaltered response"
+        def authClientResponse = cloud20.federatedAuthenticateV2(original)
+
+        then: "Response contains appropriate content"
+        authClientResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
+        authResponse.user.name == "billybob"
+        authResponse.user.roles.role.find {it.name == "nova:observer"} != null
+        verifyAuthenticateResult(fedRequest, authResponse, fedAndPasswordGroup, userAdminEntity)
+
+        when: "Auth with altered response"
+        def authClientResponseAltered = cloud20.federatedAuthenticateV2(exploited)
+
+        then: "Processed successfully w/ altered username and roles if disabled"
+        authClientResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponseAltered = authClientResponseAltered.getEntity(AuthenticateResponse).value
+        if (ignoreComments) {
+            assert authResponseAltered.user.name == "billybob"
+            assert authResponseAltered.user.roles.role.find {it.name == "nova:observer"} != null
+            verifyAuthenticateResult(fedRequest, authResponse, fedAndPasswordGroup, userAdminEntity)
+        } else {
+            assert authResponseAltered.user.name == "bob"
+            assert authResponseAltered.user.roles.role.find {it.name == "observer"} != null
+        }
+
+        cleanup:
+        try {
+            deleteFederatedUserQuietly(fedRequest.username)
+        } catch (Exception ex) {
+            // Eat
+        }
+
+        where:
+        ignoreComments << [false, true]
+    }
 }

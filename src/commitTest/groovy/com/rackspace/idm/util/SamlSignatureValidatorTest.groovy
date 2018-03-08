@@ -1,5 +1,6 @@
 package com.rackspace.idm.util
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.exception.SignatureValidationException
 import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
@@ -9,8 +10,13 @@ import testHelpers.saml.SamlCredentialUtils
 import java.security.cert.X509Certificate
 
 class SamlSignatureValidatorTest extends Specification {
-    @Shared SamlSignatureValidator samlSignatureValidator;
-    @Shared SamlUnmarshaller samlUnmarshaller;
+    @Shared SamlSignatureValidator samlSignatureValidator
+    @Shared SamlUnmarshaller samlUnmarshaller
+
+    @Shared IdentityConfig identityConfig = Mock(IdentityConfig)
+    @Shared IdentityConfig.StaticConfig staticConfig = Mock(IdentityConfig.StaticConfig)
+    @Shared IdentityConfig.ReloadableConfig reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
+
 
     //This certificate was what was used to generate the valid saml string in test below
     @Shared String userCertificateStr = "" +
@@ -37,7 +43,12 @@ class SamlSignatureValidatorTest extends Specification {
         //initializes open saml. allows us use unmarshaller
         InitializationService.initialize()
         samlSignatureValidator = new SamlSignatureValidator()
+
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        identityConfig.getStaticConfig() >> staticConfig
+
         samlUnmarshaller = new SamlUnmarshaller()
+        samlUnmarshaller.identityConfig = identityConfig
     }
 
     def "validate signature when valid" (){
