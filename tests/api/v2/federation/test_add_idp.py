@@ -335,6 +335,50 @@ class TestAddIDP(federation.TestBaseFederation):
 
         self.assertEquals(found, True)
 
+    @ddt.data('GLOBAL', 'RACKER', 'BROKER')
+    def test_list_idps_for_global_and_racker_idps(self, idp_flavor):
+        """
+        Tests for verifying CID-1423, that is, if empty list is populated
+        for approved domain ids if idp is a GLOBAL, RACKER, BROKER idp
+        """
+
+        issuer = self.generate_random_string(pattern=const.ISSUER_PATTERN)
+        if idp_flavor == const.APPROVED_DOMAIN_GROUP_GLOBAL:
+            request_object = factory.get_add_idp_request_object(
+                approved_domain_group=const.APPROVED_DOMAIN_GROUP_GLOBAL,
+                issuer=issuer
+            )
+        elif idp_flavor == const.BROKER:
+            request_object = factory.get_add_idp_request_object(
+                federation_type=const.BROKER, issuer=issuer,
+                approved_domain_group=const.APPROVED_DOMAIN_GROUP_GLOBAL
+            )
+        else:
+            request_object = factory.get_add_idp_request_object(
+                federation_type=idp_flavor, issuer=issuer)
+        resp = self.identity_admin_client.create_idp(request_object)
+        self.assertEquals(resp.status_code, 201)
+        self.provider_ids.append(resp.json()[
+            const.NS_IDENTITY_PROVIDER][const.ID])
+        option = {
+            const.ISSUER: issuer
+        }
+        # list idps with query param
+        list_resp = self.identity_admin_client.list_idp(option=option)
+        self.assertEqual(list_resp.json()[const.NS_IDENTITY_PROVIDERS][0][
+                             const.APPROVED_DOMAIN_Ids], [])
+
+        # list idps without query param
+        list_resp = self.identity_admin_client.list_idp()
+        for idp in list_resp.json()[const.NS_IDENTITY_PROVIDERS]:
+            if (idp[const.FEDERATION_TYPE] in {const.BROKER, const.RACKER} or
+                (const.APPROVED_DOMAIN_GROUP in idp and idp[
+                        const.APPROVED_DOMAIN_GROUP] == (
+                            const.APPROVED_DOMAIN_GROUP_GLOBAL))):
+                self.assertEqual(idp[const.APPROVED_DOMAIN_Ids], [])
+            else:
+                self.assertNotEqual(idp[const.APPROVED_DOMAIN_Ids], [])
+
     def tearDown(self):
         super(TestAddIDP, self).tearDown()
 
