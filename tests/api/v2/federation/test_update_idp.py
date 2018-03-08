@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*
 import ddt
 
+from tests.api.utils import saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.v2.federation import federation
-from tests.api.v2.models import factory
+from tests.api.v2.models import factory, responses
 from tests.api.v2.schema import idp as idp_json
 
 from tests.package.johny import constants as const
@@ -60,6 +61,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.domains = []
         self.clients = []
         self.users = []
+        self.role_ids = []
 
     def add_idp_user(self):
         request_object = factory.get_add_idp_request_object()
@@ -352,6 +354,62 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.clients.append(client_instance)
         self.assert_update_idp(provider_id, client_instance)
 
+    def create_role(self):
+
+        role_req = factory.get_add_role_request_object(
+            administrator_role=const.USER_MANAGE_ROLE_NAME)
+        add_role_resp = self.identity_admin_client.add_role(
+            request_object=role_req)
+        self.assertEqual(add_role_resp.status_code, 201)
+        role = responses.Role(add_role_resp.json())
+        self.role_ids.append(role.id)
+        return role
+
+    @ddt.file_data('modified_saml_fed_auth.json')
+    def test_fed_auth_with_modified_saml(self, test_data):
+
+        domain_id = self.create_one_user_and_get_domain(users=self.users)
+        self.domains.append(domain_id)
+
+        issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
+        provider_id, cert_path, key_path = self.create_idp_with_certs(
+            domain_id=domain_id, issuer=issuer)
+
+        subject = self.generate_random_string(
+            pattern='fed[\-]user[\-][\d\w]{12}')
+        fed_input_data = test_data['fed_input']
+        base64_url_encode = fed_input_data['base64_url_encode']
+        new_url = fed_input_data['new_url']
+        content_type = fed_input_data['content_type']
+
+        role = self.create_role()
+        roles = [role.name]
+
+        if fed_input_data['fed_api'] == 'v2':
+            cert = saml_helper.create_saml_assertion_v2(
+                domain=domain_id, username=subject, issuer=issuer,
+                email=self.test_email, private_key_path=key_path,
+                public_key_path=cert_path, response_flavor='v2DomainOrigin',
+                output_format='xml', roles=roles)
+        else:
+            cert = saml_helper.create_saml_assertion_v2(
+                domain=domain_id, username=subject, issuer=issuer,
+                email=self.test_email, private_key_path=key_path,
+                public_key_path=cert_path, response_flavor='v2DomainOrigin',
+                output_format='xml', roles=roles)
+        first_part = role.name[:len(role.name)/2]
+        second_part = role.name[len(role.name)/2:]
+        cert = cert.replace(
+            roles[0], first_part + '<!-- -->' + second_part)
+
+        # Get fed auth token
+        auth = self.identity_admin_client.auth_with_saml(
+            saml=cert, content_type=content_type,
+            base64_url_encode=base64_url_encode, new_url=new_url)
+        roles_list = [role_[const.NAME] for role_ in (
+            auth.json()['access']['user']['roles'])]
+        self.assertIn(role.name, roles_list)
+
     def assert_update_idp(self, provider_id, client_instance):
         new_idp_name = self.generate_random_string(
             pattern=const.IDP_NAME_PATTERN)
@@ -380,6 +438,8 @@ class TestUpdateIDP(federation.TestBaseFederation):
             self.identity_admin_client.delete_idp(idp_id=id_)
         for id_ in self.users:
             self.identity_admin_client.delete_user(user_id=id_)
+        for id_ in self.role_ids:
+            self.identity_admin_client.delete_role(role_id=id_)
         for id_ in self.domains:
             req_obj = requests.Domain(domain_name=id_, domain_id=id_,
                                       enabled=False)

@@ -139,11 +139,10 @@ class TestBaseFederation(base.TestBaseV2):
                 public_key_path=public_key, response_flavor='v2DomainOrigin',
                 output_format='formEncode', roles=roles)
         else:
-            cert = saml_helper.create_saml_assertion(
-                domain=domain_id, subject=subject, issuer=issuer,
-                email=self.test_email, base64_url_encode=base64_url_encode,
-                private_key_path=private_key,
-                public_key_path=public_key)
+            cert = saml_helper.create_saml_assertion_v2(
+                domain=domain_id, username=subject, issuer=issuer,
+                email=self.test_email, private_key_path=private_key,
+                public_key_path=public_key, response_flavor='v2DomainOrigin')
 
         if auth_client is None:
             auth_client = self.identity_admin_client

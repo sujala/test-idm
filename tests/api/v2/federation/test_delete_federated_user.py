@@ -41,14 +41,13 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
 
         subject = self.generate_random_string(
             pattern=const.FED_USER_PATTERN)
-        self.assertion = saml_helper.create_saml_assertion(
+        self.assertion = saml_helper.create_saml_assertion_v2(
             domain=self.domain_id,
-            subject=subject,
+            username=subject,
             issuer=self.idp_request_object.issuer,
             email=const.EMAIL_RANDOM,
-            base64_url_encode=False,
             private_key_path=self.key_path,
-            public_key_path=self.cert_path)
+            public_key_path=self.cert_path, response_flavor='v2DomainOrigin')
 
         saml_resp = self.identity_admin_client.auth_with_saml(
             saml=self.assertion, content_type=const.XML,
