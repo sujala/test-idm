@@ -114,7 +114,7 @@ public final class ErrorCodes {
     //Phone PIN
     public static final String ERROR_CODE_PHONE_PIN_NOT_FOUND = "PP-000";
     public static final String ERROR_CODE_PHONE_PIN_BAD_REQUEST = "PP-001";
-    public static final String ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION = "GEN-004";
+    public static final String ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION = "PP-002";
 
 
     //Endpoint Assignment

@@ -2498,7 +2498,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserLevelAccess(callersScopeAccess);
 
             if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
-                throw new ForbiddenException("Impersonation tokens cannot be used to retrieve the phone pin.", ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+                throw new ForbiddenException("Impersonation tokens cannot be used to retrieve the phone PIN.", ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
             }
 
             EndUser caller = (EndUser) userService.getUserByScopeAccess(callersScopeAccess, false);
@@ -2506,7 +2506,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
 
             if (IdentityUserTypeEnum.DEFAULT_USER == callerType && !isSelf) {
-                throw new ForbiddenException("Default user (sub-user) token of another user cannot retrieve the PIN",
+                throw new ForbiddenException("Default user (sub-user) token of another user cannot retrieve the phone PIN.",
                         ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
             }
 
@@ -2515,7 +2515,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
                 if (IdentityUserTypeEnum.USER_ADMIN == callerType || IdentityUserTypeEnum.USER_MANAGER == callerType) {
                     if (!caller.getDomainId().equals(user.getDomainId())) {
-                        throw new ForbiddenException("User with user-admin/user-manage token from another domain cannot retrieve the PIN",
+                        throw new ForbiddenException("User with user-admin/user-manage token from another domain cannot retrieve the phone PIN.",
                                 ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
                     }
                 }

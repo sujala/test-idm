@@ -44,7 +44,7 @@ public class DefaultPhonePinService implements PhonePinService {
         }
 
         if(StringUtils.isBlank(phonePin.getPin())) {
-            String errMsg = String.format("Phone pin not found for userId: %s ", user.getId());
+            String errMsg = String.format("Phone pin not found for userId: '%s'", user.getId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg, ErrorCodes.ERROR_CODE_PHONE_PIN_NOT_FOUND);
         }

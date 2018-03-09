@@ -9,14 +9,18 @@ import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.FederatedUser
+import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.ForbiddenFault
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
@@ -27,7 +31,8 @@ import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.getRACKER_IMPERSONATE
 import static com.rackspace.idm.Constants.getRACKER_IMPERSONATE_PASSWORD
-import static org.apache.http.HttpStatus.*
+import static org.apache.http.HttpStatus.SC_CREATED
+import static org.apache.http.HttpStatus.SC_OK
 
 class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
 
@@ -126,19 +131,26 @@ class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.getPhonePin(impersonatedToken, fedUser.id)
 
         then:
-        assert response.status == SC_FORBIDDEN
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Impersonation tokens cannot be used to retrieve the phone PIN.")
 
-        when: "User admin token cannot retrieve the phone pin on a federated user"
-        def user = utils.createCloudAccount()
-        response = cloud20.getPhonePin(utils.getToken(user.username), fedUser.id)
+        when: "User admin of the federated user can retrieve the phone pin on the federated user"
+        response = cloud20.getPhonePin(utils.getToken(sharedUserAdmin.username), fedUser.id)
 
         then:
-        assert response.status == SC_FORBIDDEN
+        assert response.status == SC_OK
+        assert response.getEntity(PhonePin).pin == fedUser.phonePin
+
+        when: "User admin token of a different domain cannot retrieve the phone pin on a federated user"
+        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
+        response = cloud20.getPhonePin(utils.getToken(userAdmin.username), fedUser.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; User with user-admin/user-manage token from another domain cannot retrieve the phone PIN.")
 
         cleanup:
         try {
             deleteFederatedUserQuietly(fedRequest.username)
-            utils.deleteUser(user)
+            utils.deleteUser(userAdmin)
         } catch (Exception ex) {
             // Eat
         }
@@ -191,19 +203,27 @@ class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.getPhonePin(impersonatedToken, fedUser.id)
 
         then:
-        assert response.status == SC_FORBIDDEN
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Impersonation tokens cannot be used to retrieve the phone PIN.")
 
-        when: "User admin token cannot retrieve the phone pin on a federated user"
-        def user = utils.createCloudAccount()
-        response = cloud20.getPhonePin(utils.getToken(user.username), fedUser.id)
+        when: "User admin of the federated user can retrieve the phone pin on the federated user"
+        response = cloud20.getPhonePin(utils.getToken(sharedUserAdmin.username), fedUser.id)
 
         then:
-        assert response.status == SC_FORBIDDEN
+        assert response.status == SC_OK
+        assert response.getEntity(PhonePin).pin == fedUser.phonePin
+
+
+        when: "User admin token of a different domain cannot retrieve the phone pin on a federated user"
+        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
+        response = cloud20.getPhonePin(utils.getToken(userAdmin.username), fedUser.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; User with user-admin/user-manage token from another domain cannot retrieve the phone PIN.")
 
         cleanup:
         try {
             deleteFederatedUserQuietly(username)
-            utils.deleteUser(user)
+            utils.deleteUser(userAdmin)
         } catch (Exception ex) {
             // Eat
         }
@@ -227,7 +247,7 @@ class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         def response = cloud20.getPhonePin(utils.getServiceAdminToken(), fedUser.id)
 
         then:
-        assert response.status == SC_NOT_FOUND
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Error code: 'PP-000'; Phone pin not found for userId: '"+fedUser.id+"'")
 
         cleanup:
         try {
@@ -251,7 +271,7 @@ class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         def response = cloud20.getPhonePin(utils.getServiceAdminToken(), fedUser.id)
 
         then:
-        assert response.status == SC_NOT_FOUND
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Error code: 'PP-000'; Phone pin not found for userId: '"+fedUser.id+"'")
 
         cleanup:
         try {
