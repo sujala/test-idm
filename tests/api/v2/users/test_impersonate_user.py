@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -35,7 +34,6 @@ class TestImpersonateUser(base.TestBaseV2):
 
         self.racker_client = self.generate_racker_client()
 
-    @attr(type='smoke_no_log_alpha')
     def test_impersonate_user(self):
         '''Test for user impersonation.'''
         impersonation_request_obj = requests.ImpersonateUser(

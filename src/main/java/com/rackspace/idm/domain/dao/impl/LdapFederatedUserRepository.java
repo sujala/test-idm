@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.EncryptionService;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.util.Debug;
@@ -12,6 +14,7 @@ import com.unboundid.util.StaticUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +31,9 @@ import java.util.logging.Level;
 public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<FederatedUser> implements FederatedUserDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LdapFederatedUserRepository.class);
+
+    @Autowired
+    private EncryptionService encryptionService;
 
     @Override
     public String getLdapEntityClass() {
@@ -106,6 +112,16 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
             LOGGER.error("Error retrieving expired federated user", e);
             return null;
         }
+    }
+
+    @Override
+    public void doPreEncode(FederatedUser user) {
+        encryptionService.encryptUser(user);
+    }
+
+    @Override
+    public void doPostEncode(FederatedUser user) {
+        encryptionService.decryptUser(user);
     }
 
     private Filter searchFilterGetFederatedUser() {

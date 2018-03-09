@@ -12,6 +12,7 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
     EncryptionService encryptionService
 
     def defaultSalt = "c7 73 21 8c 7e c8 ee 99"
+    def defaultEncryptionVersionId = "0"
 
     def "Set user encryption salt and version populates both values"() {
         given:
@@ -21,9 +22,22 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         encryptionService.setUserEncryptionSaltAndVersion(user);
 
         then:
-        user.salt != null
-        user.encryptionVersion != null
+        assert user.salt != null
+        assert user.encryptionVersion != null
     }
+
+    def "Set fedUser encryption salt and version populates both values"() {
+        given:
+        def fedUser = entityFactory.createFederatedUser()
+
+        when:
+        encryptionService.setUserEncryptionSaltAndVersion(fedUser);
+
+        then:
+        assert fedUser.salt != null
+        assert fedUser.encryptionVersion != null
+    }
+
 
     def "Encrypt user gets default salt from config if salt NOT set in user object"() {
         given:
@@ -33,6 +47,7 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         def secretQuestionId = "secretQuestionId"
         def displayName = "displayName"
         def apiKey = "apiKey"
+        def phonePin = "2321"
 
         def user = entityFactory.createUser()
         user.password = password
@@ -41,32 +56,45 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         user.secretQuestionId = secretQuestionId
         user.displayName = displayName
         user.apiKey = apiKey
+        user.phonePin = phonePin
 
         when:
         encryptionService.encryptUser(user);
 
         then:
-        user.salt == defaultSalt
+        assert user.salt == defaultSalt
     }
 
-    def "can encrypt and decrypt a user"() {
+    def "Encrypt fedUser gets default salt from config if salt NOT set in user object"() {
+        given:
+        def phonePin = "2321"
+        def fedUser = entityFactory.createFederatedUser()
+        fedUser.phonePin = phonePin
+
+        when:
+        encryptionService.encryptUser(fedUser)
+        then:
+        assert fedUser.salt == defaultSalt
+    }
+
+    def "Can encrypt and decrypt a user"() {
         given:
         def password = "password"
         def secretQuestion = "secretQuestion"
-        def secretAnwser = "secretAnwser"
+        def secretAnswer = "secretAnswer"
         def secretQuestionId = "secretQuestionId"
-        def firstName = "firstName"
-        def lastName = "lastName"
         def displayName = "displayName"
         def apiKey = "apiKey"
+        def phonePin = "1234"
 
         def user = entityFactory.createUser()
         user.password = password
         user.secretQuestion = secretQuestion
-        user.secretAnswer = secretAnwser
+        user.secretAnswer = secretAnswer
         user.secretQuestionId = secretQuestionId
         user.displayName = displayName
         user.apiKey = apiKey
+        user.phonePin = phonePin
 
         when:
         encryptionService.encryptUser(user);
@@ -76,14 +104,45 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         user.secretQuestionId = ""
         user.displayName = ""
         user.apiKey = ""
+        user.phonePin = ""
+
         encryptionService.decryptUser(user);
 
+
         then:
-        user.password == ""
-        secretQuestion == user.secretQuestion
-        secretAnwser == user.secretAnswer
-        secretQuestionId == user.secretQuestionId
-        displayName == user.displayName
-        apiKey == user.apiKey
+        assert user.password == ""
+        assert secretQuestion == user.secretQuestion
+        assert secretAnswer == user.secretAnswer
+        assert secretQuestionId == user.secretQuestionId
+        assert displayName == user.displayName
+        assert apiKey == user.apiKey
+        assert phonePin == user.phonePin
+    }
+
+
+    def "Can encrypt and decrypt a fedUser"() {
+        given:
+        def phonePin = "1234"
+        def fedUser = entityFactory.createFederatedUser()
+        fedUser.phonePin = phonePin
+
+
+        when:
+        encryptionService.encryptUser(fedUser)
+        fedUser.phonePin = ""
+
+        encryptionService.decryptUser(fedUser)
+
+        then:
+        assert phonePin == fedUser.phonePin
+    }
+
+
+    def "Can read encryptionVersionId from properties service"() {
+        when:
+        def version = encryptionService.getEncryptionVersionId()
+
+        then:
+        assert version == defaultEncryptionVersionId
     }
 }

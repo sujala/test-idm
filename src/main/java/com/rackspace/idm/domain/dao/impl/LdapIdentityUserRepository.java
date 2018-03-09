@@ -329,6 +329,8 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
          */
         if (object instanceof User) {
             userDao.doPreEncode((User) object);
+        } else if (object instanceof FederatedUser) {
+            fedUserDao.doPreEncode((FederatedUser) object);
         }
     }
 
@@ -339,6 +341,8 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
          */
         if (object instanceof User) {
             userDao.doPostEncode((User) object);
+        } else if (object instanceof FederatedUser) {
+            fedUserDao.doPostEncode((FederatedUser) object);
         }
     }
 

@@ -252,7 +252,8 @@ class IdentityConfigComponentTest extends Specification {
         ""          | ""        | false // Empty rcnsAllowed means no rcn will match
         ""          | "123"     | false // Empty rcnsAllowed means no rcn will match
         null        | "123"     | false // Empty rcnsAllowed means no rcn will match
-        null        | null    | false // Empty rcnsAllowed means no rcn will match
+        null        | null      | false // Empty rcnsAllowed means no rcn will match
+        ","         | "123"     | false // Empty rcnsAllowed means no rcn will match
     }
 
     @SingleTestConfiguration

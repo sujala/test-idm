@@ -1,8 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.FederatedBaseUserDao;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.BaseUserToken;
+import com.rackspace.idm.domain.entity.FederatedBaseUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.service.EncryptionService;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
 /**
@@ -12,12 +17,19 @@ import org.springframework.util.Assert;
  */
 public abstract class LdapFederatedGenericRepository<T extends FederatedBaseUser> extends LdapGenericRepository<T> implements FederatedBaseUserDao<T>{
 
+    @Autowired
+    private EncryptionService encryptionService;
+
     @Override
     public void addUser(IdentityProvider provider, T user) {
         Assert.isTrue(user.getFederatedIdpUri().equals(provider.getUri()), "The user must have the same federated uri as the provider!");
         if (StringUtils.isBlank(user.getId())) {
             user.setId(getNextId());
         }
+        if(user instanceof FederatedUser) {
+            encryptionService.setUserEncryptionSaltAndVersion((FederatedUser)user);
+        }
+
         addObject(getBaseDnWithIdpId(provider.getProviderId()), user);
     }
 

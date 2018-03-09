@@ -15,271 +15,666 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
     """ List effective role for user
     """
 
-    @classmethod
-    def setUpClass(cls):
-        """Class level set up for the tests
-
-        Create users needed for the tests and generate clients for those users.
+    def setUp(self):
+        """Create users needed for the tests and generate clients for
+        those users.
         """
-        super(TestListEffectiveRolesForUser, cls).setUpClass()
+        super(TestListEffectiveRolesForUser, self).setUp()
 
         contact_id = randrange(start=const.CONTACT_ID_MIN,
                                stop=const.CONTACT_ID_MAX)
-        cls.domain_id = cls.generate_random_string(
+        self.domain_id = self.generate_random_string(
             pattern='test[\-]spec[\-]user[\-]list[\-][\d]{5}')
-        cls.user_admin_client = cls.generate_client(
-            parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': cls.domain_id,
+        self.user_admin_client = self.generate_client(
+            parent_client=self.identity_admin_client,
+            additional_input_data={'domain_id': self.domain_id,
                                    'contact_id': contact_id},
             one_call=True)
 
-        cls.user_manager_client = cls.generate_client(
-            parent_client=cls.user_admin_client,
+        self.user_manager_client = self.generate_client(
+            parent_client=self.user_admin_client,
             additional_input_data={'is_user_manager': True})
 
-        sub_user_name = cls.generate_random_string(
+        sub_user_name = self.generate_random_string(
             pattern=const.SUB_USER_PATTERN)
-        cls.user_client = cls.generate_client(
-            parent_client=cls.user_manager_client,
+        self.user_client = self.generate_client(
+            parent_client=self.user_manager_client,
             additional_input_data={
-                'domain_id': cls.domain_id,
+                'domain_id': self.domain_id,
                 'user_name': sub_user_name})
 
-        cls.global_roles_client = client.IdentityAPIClient(
-            url=cls.url,
-            serialize_format=cls.test_config.serialize_format,
-            deserialize_format=cls.test_config.deserialize_format)
+        self.global_roles_client = client.IdentityAPIClient(
+            url=self.url,
+            serialize_format=self.test_config.serialize_format,
+            deserialize_format=self.test_config.deserialize_format)
         req_obj = requests.AuthenticateWithPassword(
-            user_name=cls.identity_config.global_roles_user_name,
-            password=cls.identity_config.global_roles_password)
-        resp = cls.global_roles_client.get_auth_token(request_object=req_obj)
+            user_name=self.identity_config.global_roles_user_name,
+            password=self.identity_config.global_roles_password)
+        resp = self.global_roles_client.get_auth_token(request_object=req_obj)
         auth_token = resp.json()[const.ACCESS][const.TOKEN][
             const.ID]
-        cls.global_roles_client.default_headers[const.X_AUTH_TOKEN] = (
+        self.global_roles_client.default_headers[const.X_AUTH_TOKEN] = (
             auth_token)
-        cls.global_roles_user_id = resp.json()[const.ACCESS][const.USER][
-            const.ID]
 
-        cls.role_ids = []
-        cls.tenant_ids = []
+        self.role_ids = []
+        self.tenant_ids = []
 
     @attr(type='smoke_alpha')
     def test_effective_roles_for_default_user(self):
-        # create global role
-        role_id, role_name = self.create_role()
-        # add global role to sub-user
-        resp = self.identity_admin_client.add_role_to_user(
-            role_id=role_id,
-            user_id=self.user_client.default_headers[const.X_USER_ID])
-        self.assertEqual(resp.status_code, 200)
+        # create and add role to user
+        role_name = self.create_role_and_add_to_user(
+            self.user_client.default_headers[const.X_USER_ID]
+        )
 
-        # create tenant
-        tenant = self.create_tenant()
-        # create tenant role
-        tenant_role_id, tenant_role_name = self.create_role()
-        # add tenant role to sub user for tenant
-        resp = self.identity_admin_client.add_role_to_user_for_tenant(
-            tenant_id=tenant.id,
-            user_id=self.user_client.default_headers[const.X_USER_ID],
-            role_id=tenant_role_id)
-        self.assertEqual(resp.status_code, 200)
+        # create tenant and add role on tenant for user
+        tenant_one, tenant_role_name_one = \
+            self.create_tenant_and_add_role_on_tenant_for_user(
+                self.user_client.default_headers[const.X_USER_ID]
+            )
 
-        # create user group role
-        user_group_role_id, user_group_role_name = self.create_role(
-            admin_role=const.USER_MANAGE_ROLE_NAME)
-        # Create user group; add to user-default
-        user_group = self.add_user_to_user_group(
+        # create another tenant and add role on tenant for user
+        tenant_two, tenant_role_name_two = \
+            self.create_tenant_and_add_role_on_tenant_for_user(
+                self.user_client.default_headers[const.X_USER_ID]
+            )
+
+        user_group_role_name = self.create_group_and_role_and_add_to_tenant(
+            self.user_admin_client, self.user_client,
+            self.domain_id, tenant_one.id)
+
+        # validate effective roles as identity:default
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_client, [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name,
+            user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=6)
+
+        # validate effective roles as identity:default with filter: tenant one
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_client, [tenant_role_name_one],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=5, params={
+                const.ON_TENANT_ID: tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:default with filter: tenant two
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_client, [tenant_role_name_two],
+            role_name=role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=4, params={
+                const.ON_TENANT_ID: tenant_two.id
+            }
+        )
+
+        # validate effective roles as identity:default with invalid filter
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_client, [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=6, params={
+                'tenantid': tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:default with unknown tenant
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_client, [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=0, params={
+                const.ON_TENANT_ID: '{}unknown'.format(tenant_one.id)
+            }
+        )
+
+        # validate effective roles as identity:user-manage
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_manager_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name,
+            user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=6)
+
+        # validate effective roles as identity:user-manage with filter:
+        # tenant one
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_manager_client, [tenant_role_name_one],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=5, params={
+                const.ON_TENANT_ID: tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:user-manage with filter:
+        # tenant two
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_manager_client, [tenant_role_name_two],
+            role_name=role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=4, params={
+                const.ON_TENANT_ID: tenant_two.id
+            }
+        )
+
+        # validate effective roles as identity:user-manage with invalid filter
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_manager_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=6, params={
+                'tenantid': tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:user-manage with unknown tenant
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_manager_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=0, params={
+                const.ON_TENANT_ID: '{}unknown'.format(tenant_one.id)
+            }
+        )
+
+        # validate effective roles as identity:user-admin
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
             self.user_admin_client,
-            self.user_client
-        )
-        # add role to user group
-        self.user_manager_client.add_role_to_user_group_for_tenant(
-            domain_id=self.domain_id,
-            group_id=user_group.id,
-            role_id=user_group_role_id,
-            tenant_id=tenant.id)
-        self.assertEqual(resp.status_code, 200)
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name,
+            user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=6)
 
-        # get roles as default
-        resp = self.user_client.list_effective_roles_for_user(
-            user_id=self.user_client.default_headers[const.X_USER_ID])
-
-        # validate return 200
-        self.assertEqual(resp.status_code, 200)
-
-        # tenant role, identity:default, global role, user group role
-        # tenant access
-        self.assertEqual(
-            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
-            5)
-
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_DEFAULT_ROLE_NAME
+        # validate effective roles as identity:user-admin with filter:
+        # tenant one
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_admin_client, [tenant_role_name_one],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=5, params={
+                const.ON_TENANT_ID: tenant_one.id
+            }
         )
 
-        # get roles as user manage
-        resp = self.user_manager_client.list_effective_roles_for_user(
-            user_id=self.user_client.default_headers[const.X_USER_ID])
-
-        # validate return 200
-        self.assertEqual(resp.status_code, 200)
-
-        # tenant role, identity:default, global role, user group role
-        # tenant access
-        self.assertEqual(
-            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
-            5)
-
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_DEFAULT_ROLE_NAME
+        # validate effective roles as identity:user-admin with filter:
+        # tenant two
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_admin_client, [tenant_role_name_two],
+            role_name=role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=4, params={
+                const.ON_TENANT_ID: tenant_two.id
+            }
         )
 
-        # get roles as user admin
-        resp = self.user_admin_client.list_effective_roles_for_user(
-            user_id=self.user_client.default_headers[const.X_USER_ID])
-
-        # validate return 200
-        self.assertEqual(resp.status_code, 200)
-
-        # tenant role, identity:default, global role, user group role
-        # tenant access
-        self.assertEqual(
-            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
-            5)
-
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_DEFAULT_ROLE_NAME
+        # validate effective roles as identity:user-admin with invalid filter
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=6, params={
+                'tenantid': tenant_one.id
+            }
         )
 
-        # get roles as identity admin
-        resp = self.identity_admin_client.list_effective_roles_for_user(
-            user_id=self.user_client.default_headers[const.X_USER_ID])
+        # validate effective roles as identity:user-admin with unknown tenant
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.user_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=0, params={
+                const.ON_TENANT_ID: '{}unknown'.format(tenant_one.id)
+            }
+        )
 
-        # validate return 200
-        self.assertEqual(resp.status_code, 200)
+        # validate effective roles as identity:admin
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name,
+            user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=6)
 
-        # tenant role, identity:default, global role, user group role
-        # tenant access
-        self.assertEqual(
-            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
-            5)
+        # validate effective roles as identity:admin with filter:
+        # tenant one
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client, [tenant_role_name_one],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=5, params={
+                const.ON_TENANT_ID: tenant_one.id
+            }
+        )
 
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_DEFAULT_ROLE_NAME
+        # validate effective roles as identity:admin with filter: tenant two
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client, [tenant_role_name_two],
+            role_name=role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=4, params={
+                const.ON_TENANT_ID: tenant_two.id
+            }
+        )
+
+        # validate effective roles as identity:admin with invalid filter
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=6, params={
+                'tenantid': tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:admin with unknown tenant
+        self.validate_effective_roles(
+            self.user_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_DEFAULT_ROLE_NAME,
+            number_of_tenant_assignments=0, params={
+                const.ON_TENANT_ID: '{}unknown'.format(tenant_one.id)
+            }
         )
 
     @attr(type='smoke_alpha')
     def test_effective_roles_for_manage_user(self):
-        # create global role
-        role_id, role_name = self.create_role()
-        # add global role to manage
-        resp = self.identity_admin_client.add_role_to_user(
-            role_id=role_id,
-            user_id=self.user_manager_client.default_headers[const.X_USER_ID])
-        self.assertEqual(resp.status_code, 200)
+        # create and add role to user
+        role_name = self.create_role_and_add_to_user(
+            self.user_manager_client.default_headers[const.X_USER_ID]
+        )
 
-        # create tenant
-        tenant = self.create_tenant()
-        # create tenant role
-        tenant_role_id, tenant_role_name = self.create_role()
-        # add tenant role to sub user for tenant
-        resp = self.identity_admin_client.add_role_to_user_for_tenant(
-            tenant_id=tenant.id,
-            user_id=self.user_manager_client.default_headers[const.X_USER_ID],
-            role_id=tenant_role_id)
-        self.assertEqual(resp.status_code, 200)
+        # create tenant and add role on tenant for user
+        tenant_one, tenant_role_name_one = \
+            self.create_tenant_and_add_role_on_tenant_for_user(
+                self.user_manager_client.default_headers[const.X_USER_ID]
+            )
 
-        # create user group role
-        user_group_role_id, user_group_role_name = self.create_role(
-            admin_role=const.USER_MANAGE_ROLE_NAME)
-        # Create user group; add to user-default
-        user_group = self.add_user_to_user_group(
+        # create another tenant and add role on tenant for user
+        tenant_two, tenant_role_name_two = \
+            self.create_tenant_and_add_role_on_tenant_for_user(
+                self.user_manager_client.default_headers[const.X_USER_ID]
+            )
+
+        user_group_role_name = self.create_group_and_role_and_add_to_tenant(
+            self.user_admin_client, self.user_manager_client,
+            self.domain_id, tenant_one.id)
+
+        # validate effective roles as identity:user-manage
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.user_manager_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name,
+            user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=7)
+
+        # validate effective roles as identity:user-manage with filter:
+        # tenant one
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.user_manager_client, [tenant_role_name_one],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=6, params={
+                const.ON_TENANT_ID: tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:user-manage with filter:
+        # tenant two
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.user_manager_client, [tenant_role_name_two],
+            role_name=role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=5, params={
+                const.ON_TENANT_ID: tenant_two.id
+            }
+        )
+
+        # validate effective roles as identity:user-manage with invalid filter
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.user_manager_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=7, params={
+                'tenantid': tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:user-manage with unknown tenant
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.user_manager_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=0, params={
+                const.ON_TENANT_ID: '{}unknown'.format(tenant_one.id)
+            }
+        )
+
+        # validate effective roles as identity:user-admin
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
             self.user_admin_client,
-            self.user_manager_client
-        )
-        # add role to user group
-        self.user_admin_client.add_role_to_user_group_for_tenant(
-            domain_id=self.domain_id,
-            group_id=user_group.id,
-            role_id=user_group_role_id,
-            tenant_id=tenant.id)
-        self.assertEqual(resp.status_code, 200)
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name,
+            user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=7)
 
-        # get roles as user manage
-        resp = self.user_manager_client.list_effective_roles_for_user(
-            user_id=self.user_manager_client.default_headers[const.X_USER_ID])
-
-        # validate return 200
-        self.assertEqual(resp.status_code, 200)
-
-        # tenant role, identity:default, global role, user group role
-        # tenant access
-        self.assertEqual(
-            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
-            6)
-
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_MANAGE_ROLE_NAME
+        # validate effective roles as identity:user-admin with filter:
+        # tenant one
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.user_admin_client, [tenant_role_name_one],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=6, params={
+                const.ON_TENANT_ID: tenant_one.id
+            }
         )
 
-        # get roles as user admin
-        resp = self.user_admin_client.list_effective_roles_for_user(
-            user_id=self.user_manager_client.default_headers[const.X_USER_ID])
-
-        # validate return 200
-        self.assertEqual(resp.status_code, 200)
-
-        # tenant role, identity:default, global role, user group role
-        # tenant access
-        self.assertEqual(
-            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
-            6)
-
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_MANAGE_ROLE_NAME
+        # validate effective roles as identity:user-admin with filter:
+        # tenant two
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.user_admin_client, [tenant_role_name_two],
+            role_name=role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=5, params={
+                const.ON_TENANT_ID: tenant_two.id
+            }
         )
 
-        # get roles as identity admin
-        resp = self.identity_admin_client.list_effective_roles_for_user(
-            user_id=self.user_manager_client.default_headers[const.X_USER_ID])
+        # validate effective roles as identity:user-admin with invalid filter
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.user_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=7, params={
+                'tenantid': tenant_one.id
+            }
+        )
 
-        # validate return 200
-        self.assertEqual(resp.status_code, 200)
+        # validate effective roles as identity:user-admin with unknown tenant
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.user_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=0, params={
+                const.ON_TENANT_ID: '{}unknown'.format(tenant_one.id)
+            }
+        )
 
-        # tenant role, identity:default, global role, user group role
-        # tenant access
-        self.assertEqual(
-            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
-            6)
+        # validate effective roles as identity:admin
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name,
+            user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=7)
 
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_MANAGE_ROLE_NAME
+        # validate effective roles as identity:admin with filter: tenant one
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client, [tenant_role_name_one],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=6, params={
+                const.ON_TENANT_ID: tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:admin with filter:
+        # tenant two
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client, [tenant_role_name_two],
+            role_name=role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=5, params={
+                const.ON_TENANT_ID: tenant_two.id
+            }
+        )
+
+        # validate effective roles as identity:admin with invalid filter
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=7, params={
+                'tenantid': tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:admin with unknown tenant
+        self.validate_effective_roles(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_MANAGE_ROLE_NAME,
+            number_of_tenant_assignments=0, params={
+                const.ON_TENANT_ID: '{}unknown'.format(tenant_one.id)
+            }
         )
 
     @attr(type='smoke_alpha')
     def test_effective_roles_for_admin_user(self):
+        # create and add role to user
+        role_name = self.create_role_and_add_to_user(
+            self.user_admin_client.default_headers[const.X_USER_ID]
+        )
+
+        # create tenant and add role on tenant for user
+        tenant_one, tenant_role_name_one = \
+            self.create_tenant_and_add_role_on_tenant_for_user(
+                self.user_admin_client.default_headers[const.X_USER_ID]
+            )
+
+        # create another tenant and add role on tenant for user
+        tenant_two, tenant_role_name_two = \
+            self.create_tenant_and_add_role_on_tenant_for_user(
+                self.user_admin_client.default_headers[const.X_USER_ID]
+            )
+
+        user_group_role_name = self.create_group_and_role_and_add_to_tenant(
+            self.identity_admin_client, self.user_admin_client,
+            self.domain_id, tenant_one.id)
+
+        # validate effective roles as identity:user-admin
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.user_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name,
+            user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=6)
+
+        # validate effective roles as identity:user-admin with filter:
+        # tenant one
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.user_admin_client, [tenant_role_name_one],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=5, params={
+                const.ON_TENANT_ID: tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:user-admin with filter:
+        # tenant two
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.user_admin_client, [tenant_role_name_two],
+            role_name=role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=4, params={
+                const.ON_TENANT_ID: tenant_two.id
+            }
+        )
+
+        # validate effective roles as identity:user-admin with invalid filter
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.user_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=6, params={
+                'tenantid': tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:user-admin with unknown tenant
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.user_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=0, params={
+                const.ON_TENANT_ID: '{}unknown'.format(tenant_one.id)
+            }
+        )
+
+        # validate effective roles as identity:admin
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name,
+            user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=6)
+
+        # validate effective roles as identity:admin with filter: tenant one
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client, [tenant_role_name_one],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=5, params={
+                const.ON_TENANT_ID: tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:admin with filter: tenant two
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client, [tenant_role_name_two],
+            role_name=role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=4, params={
+                const.ON_TENANT_ID: tenant_two.id
+            }
+        )
+
+        # validate effective roles as identity:admin with invalid filter
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=6, params={
+                'tenantid': tenant_one.id
+            }
+        )
+
+        # validate effective roles as identity:admin with unknown tenant
+        self.validate_effective_roles(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            self.identity_admin_client,
+            [tenant_role_name_one, tenant_role_name_two],
+            role_name=role_name, user_group_role_name=user_group_role_name,
+            identity_role_name=const.USER_ADMIN_ROLE_NAME,
+            number_of_tenant_assignments=0, params={
+                const.ON_TENANT_ID: '{}unknown'.format(tenant_one.id)
+            }
+        )
+
+    def create_group_and_role_and_add_to_tenant(self, parent_client,
+                                                child_client, domain_id,
+                                                tenant_id):
+        # create user group role
+        user_group_role_id, user_group_role_name = self.create_role(
+            admin_role=const.USER_MANAGE_ROLE_NAME)
+        # Create user group; add to user-default
+        user_group = self.add_user_to_user_group(
+            parent_client=parent_client,
+            child_client=child_client
+        )
+        # add role to user group
+        resp = self.user_manager_client.add_role_to_user_group_for_tenant(
+            domain_id=domain_id,
+            group_id=user_group.id,
+            role_id=user_group_role_id,
+            tenant_id=tenant_id)
+
+        self.assertEqual(resp.status_code, 204)
+
+        return user_group_role_name
+
+    def create_role_and_add_to_user(self, user_id):
         # create global role
         role_id, role_name = self.create_role()
         # add global role to manage
         resp = self.identity_admin_client.add_role_to_user(
             role_id=role_id,
-            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
+            user_id=user_id)
         self.assertEqual(resp.status_code, 200)
 
+        return role_name
+
+    def create_tenant_and_add_role_on_tenant_for_user(self, user_id):
         # create tenant
         tenant = self.create_tenant()
         # create tenant role
@@ -287,47 +682,21 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         # add tenant role to sub user for tenant
         resp = self.identity_admin_client.add_role_to_user_for_tenant(
             tenant_id=tenant.id,
-            user_id=self.user_admin_client.default_headers[const.X_USER_ID],
+            user_id=user_id,
             role_id=tenant_role_id)
         self.assertEqual(resp.status_code, 200)
 
-        # create user group role
-        user_group_role_id, user_group_role_name = self.create_role(
-            admin_role=const.USER_MANAGE_ROLE_NAME)
-        # Create user group; add to user-default
-        user_group = self.add_user_to_user_group(
-            self.identity_admin_client,
-            self.user_admin_client
-        )
-        # add role to user group
-        self.identity_admin_client.add_role_to_user_group_for_tenant(
-            domain_id=self.domain_id,
-            group_id=user_group.id,
-            role_id=user_group_role_id,
-            tenant_id=tenant.id)
-        self.assertEqual(resp.status_code, 200)
+        return tenant, tenant_role_name
 
-        # get roles as user admin
-        resp = self.user_admin_client.list_effective_roles_for_user(
-            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
-
-        # validate return 200
-        self.assertEqual(resp.status_code, 200)
-
-        # tenant role, identity:default, global role, user group role
-        # tenant access
-        self.assertEqual(
-            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
-            5)
-
-        # get roles as identity admin
-        resp = self.identity_admin_client.list_effective_roles_for_user(
-            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
-
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_ADMIN_ROLE_NAME
+    def validate_effective_roles(self, user_id, auth_client,
+                                 tenant_role_name_list=[], role_name=None,
+                                 user_group_role_name=None,
+                                 identity_role_name=None,
+                                 number_of_tenant_assignments=5, params=None):
+        # get roles as user_id
+        resp = auth_client.list_effective_roles_for_user(
+            user_id=user_id,
+            params=params
         )
 
         # validate return 200
@@ -338,45 +707,16 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         self.assertEqual(
             len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
                     const.TENANT_ASSIGNMENTS]),
-            5)
+            number_of_tenant_assignments)
 
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_ADMIN_ROLE_NAME
-        )
-
-        # validate that default user cannot get user-admin's roles
-
-        # get roles as default
-        resp = self.user_client.list_effective_roles_for_user(
-            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
-
-        # validate return 403
-        self.assertEqual(resp.status_code, 403)
-
-        # validate that a user with global-user-roles role can see roles
-
-        # get roles as global-user-roles user
-        resp = self.global_roles_client.list_effective_roles_for_user(
-            user_id=self.user_admin_client.default_headers[const.X_USER_ID])
-
-        # validate return 200
-        self.assertEqual(resp.status_code, 200)
-
-        # tenant role, identity:default, global role, user group role
-        # tenant access
-        self.assertEqual(
-            len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
-            5)
-
-        self.validate_assignment_checks(
-            resp, tenant_role_name, role_name, user_group_role_name,
-            const.USER_ADMIN_ROLE_NAME
-        )
+        if number_of_tenant_assignments > 0:
+            self.validate_assignment_checks(
+                resp, tenant_role_name_list, role_name, user_group_role_name,
+                identity_role_name=identity_role_name
+            )
 
     def validate_assignment_checks(
-            self, resp, tenant_role_name, role_name,
+            self, resp, tenant_role_name_list, role_name,
             user_group_role_name,
             identity_role_name=const.USER_DEFAULT_ROLE_NAME):
         tenant_role_assignment_checked = False
@@ -387,7 +727,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
 
         for tenant_assignment in resp.json()[
                 const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]:
-            if tenant_assignment["onRoleName"] == tenant_role_name:
+            if tenant_assignment["onRoleName"] in tenant_role_name_list:
                 tenant_role_assignment_checked = True
                 self.assertEqual(
                     tenant_assignment["sources"][0]["sourceType"],
@@ -408,6 +748,10 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                     tenant_assignment["sources"][0]["assignmentType"],
                     const.DOMAIN_ASSIGNMENT_TYPE
                 )
+                self.assertEqual(
+                    len(tenant_assignment["forTenants"]),
+                    len(tenant_role_name_list)
+                )
             elif tenant_assignment["onRoleName"] == role_name:
                 global_role_assignment_checked = True
                 self.assertEqual(
@@ -417,6 +761,10 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                 self.assertEqual(
                     tenant_assignment["sources"][0]["assignmentType"],
                     const.DOMAIN_ASSIGNMENT_TYPE
+                )
+                self.assertEqual(
+                    len(tenant_assignment["forTenants"]),
+                    len(tenant_role_name_list)
                 )
             elif tenant_assignment[
                     "onRoleName"] == const.TENANT_ACCESS_ROLE_NAME:
@@ -429,6 +777,10 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                     tenant_assignment["sources"][0]["assignmentType"],
                     const.TENANT_ASSIGNMENT_TYPE
                 )
+                self.assertEqual(
+                    len(tenant_assignment["forTenants"]),
+                    len(tenant_role_name_list)
+                )
             elif tenant_assignment["onRoleName"] == user_group_role_name:
                 user_group_role_assignment_checked = True
                 self.assertEqual(
@@ -440,11 +792,17 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                     const.TENANT_ASSIGNMENT_TYPE
                 )
 
-        self.assertEqual(tenant_role_assignment_checked, True)
-        self.assertEqual(identity_role_assignment_checked, True)
-        self.assertEqual(global_role_assignment_checked, True)
+        if len(tenant_role_name_list) > 0:
+            self.assertEqual(tenant_role_assignment_checked, True)
+        if identity_role_name is not None:
+            self.assertEqual(identity_role_assignment_checked, True)
+        if role_name is not None:
+            self.assertEqual(global_role_assignment_checked, True)
+        if user_group_role_name is not None:
+            self.assertEqual(user_group_role_assignment_checked, True)
+
+        # tenant-access is always there
         self.assertEqual(tenant_access_role_assignment_checked, True)
-        self.assertEqual(user_group_role_assignment_checked, True)
 
     def create_role(self, admin_role=None, role_name=None):
         if role_name is None:
@@ -460,7 +818,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         resp = self.identity_admin_client.add_role(request_object=role_object)
         self.assertEqual(resp.status_code, 201)
         role_id = resp.json()[const.ROLE][const.ID]
-        self.role_ids.append(role_id)
+        self.role_ids.append((role_id, role_name))
         return role_id, role_name
 
     def create_tenant(self):
@@ -488,25 +846,25 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         self.assertEqual(add_resp.status_code, 204)
         return group
 
-    @classmethod
     @base.base.log_tearDown_error
-    def tearDownClass(cls):
+    def tearDown(self):
         # Delete sub users created in the setUpClass
-        resp = cls.identity_admin_client.delete_user(
-            cls.user_client.default_headers[const.X_USER_ID])
+        resp = self.identity_admin_client.delete_user(
+            self.user_client.default_headers[const.X_USER_ID])
         assert resp.status_code == 204, (
             'User with ID {0} failed to delete'.format(
-                cls.user_client.default_headers[const.X_USER_ID]))
-        resp = cls.identity_admin_client.delete_user(
-            cls.user_manager_client.default_headers[const.X_USER_ID])
+                self.user_client.default_headers[const.X_USER_ID]))
+        resp = self.identity_admin_client.delete_user(
+            self.user_manager_client.default_headers[const.X_USER_ID])
         assert resp.status_code == 204, (
             'User with ID {0} failed to delete'.format(
-                cls.user_manager_client.default_headers[const.X_USER_ID]))
+                self.user_manager_client.default_headers[const.X_USER_ID]))
         # Delete client will delete user-admin, tenant & the domain
-        cls.delete_client(client=cls.user_admin_client,
-                          parent_client=cls.identity_admin_client)
-        for role_id in cls.role_ids:
-            resp = cls.identity_admin_client.delete_role(role_id=role_id)
+        self.delete_client(client=self.user_admin_client,
+                           parent_client=self.identity_admin_client)
+        for role_id, role_name in self.role_ids:
+            resp = self.identity_admin_client.delete_role(role_id=role_id)
             assert resp.status_code == 204, (
-                'Role with ID {0} failed to delete'.format(role_id))
-        super(TestListEffectiveRolesForUser, cls).tearDownClass()
+                'Role with ID {0} failed to delete. Got {1} for {2}'.format(
+                    role_id, resp.status_code, role_name))
+        super(TestListEffectiveRolesForUser, self).tearDown()

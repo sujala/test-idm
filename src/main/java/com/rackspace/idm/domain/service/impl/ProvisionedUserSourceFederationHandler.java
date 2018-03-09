@@ -19,6 +19,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.util.DateHelper;
+import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
@@ -431,6 +432,10 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
         for (String groupId : domainUserAdmins.get(0).getRsGroupId()) {
             userToCreate.getRsGroupId().add(groupId);
+        }
+
+        if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
+            userToCreate.setPhonePin(RandomGeneratorUtil.generateSecureRandomNumber(identityConfig.getReloadableConfig().getUserPhonePinSize()));
         }
 
         federatedUserDao.addUser(request.getIdentityProvider(), userToCreate);

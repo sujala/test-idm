@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -55,7 +54,6 @@ class TestAdministratorChange(base.TestBaseV2):
         self.test_user_admin_client.add_role_to_user(
             const.USER_MANAGER_ROLE_ID, self.test_user_manager_id)
 
-    @attr(type='smoke_alpha')
     def test_admin_swap(self):
         request_object = requests.DomainAdministratorChange(
             self.test_user_manager_id,

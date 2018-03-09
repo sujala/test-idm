@@ -1,7 +1,9 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.User;
 
 import java.util.List;
 
@@ -69,4 +71,7 @@ public interface FederatedUserDao extends FederatedBaseUserDao<FederatedUser> {
      */
     FederatedUser getSingleExpiredFederatedUser();
 
+    void doPreEncode(FederatedUser user);
+
+    void doPostEncode(FederatedUser user);
 }

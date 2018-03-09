@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*
 import ddt
 import json
+from nose.plugins.attrib import attr
 
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 from tests.api import base as api_base
 from tests.api.v2.schema import roles as roles_json, users as users_json
@@ -45,7 +47,13 @@ class TestRoleApiCalls(base.TestBaseV2):
         return service_id
 
     def create_admin_user(self):
-        request_object = factory.get_add_user_request_object()
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
+        input_data = {
+            'domain_id': domain_id
+        }
+        request_object = factory.get_add_user_request_object(
+            input_data=input_data)
         resp = self.identity_admin_client.add_user(
             request_object=request_object)
         self.assertEqual(resp.status_code, 201)
@@ -64,6 +72,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         return role_id
 
     @ddt.file_data('data_add_role.json')
+    @attr(type='smoke_alpha')
     def test_add_role_by_identity_admin(self, test_data):
         """Add Role, Get Role
         Using data read from json file
@@ -115,6 +124,7 @@ class TestRoleApiCalls(base.TestBaseV2):
 
     @ddt.data('{}', '{"limit": 5}', '{"marker": 10}',
               '{"limit": 10, "marker": 5}')
+    @attr(type='smoke_alpha')
     def test_list_roles_api(self, test_data):
         """List Roles"""
         option = json.loads(test_data)
@@ -140,6 +150,7 @@ class TestRoleApiCalls(base.TestBaseV2):
             self.assertLessEqual(len(resp.json()[const.ROLES]),
                                  option['limit'])
 
+    @attr(type='smoke_alpha')
     def test_get_roles_for_identity_admin(self):
         """
         Get role for self identity admin
@@ -150,6 +161,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp, json_schema=roles_json.list_roles)
 
+    @attr(type='smoke_alpha')
     def test_add_and_delete_role_from_user(self):
         """
         Test Add role to User and Delete role from user
@@ -185,6 +197,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         self.assertNotIn(role_id, str(resp.json()[const.ROLES]))
 
+    @attr(type='smoke_alpha')
     def test_list_users_for_role(self):
         """
         Test list users for specific role
@@ -232,17 +245,30 @@ class TestRoleApiCalls(base.TestBaseV2):
             delete_role_resp.json()[const.FORBIDDEN][const.MESSAGE],
             "Identity user type roles cannot be deleted")
 
+    @base.base.log_tearDown_error
     def tearDown(self):
-        for id_ in self.role_ids:
-            self.identity_admin_client.delete_role(role_id=id_)
-        for id_ in self.service_ids:
-            self.service_admin_client.delete_service(service_id=id_)
         for id_ in self.user_ids:
-            self.identity_admin_client.delete_user(user_id=id_)
+            resp = self.identity_admin_client.delete_user(user_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(id_))
+        for id_ in self.role_ids:
+            resp = self.identity_admin_client.delete_role(role_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Role with ID {0} failed to delete'.format(id_))
+        if self.test_config.run_service_admin_tests:
+            for id_ in self.service_ids:
+                self.service_admin_client.delete_service(service_id=id_)
         for id_ in self.domain_ids:
             disable_domain_req = requests.Domain(enabled=False)
             self.identity_admin_client.update_domain(
                 domain_id=id_, request_object=disable_domain_req)
 
-            self.identity_admin_client.delete_domain(domain_id=id_)
+            resp = self.identity_admin_client.delete_domain(domain_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Domain with ID {0} failed to delete'.format(
+                    id_))
+
         super(TestRoleApiCalls, self).tearDown()
