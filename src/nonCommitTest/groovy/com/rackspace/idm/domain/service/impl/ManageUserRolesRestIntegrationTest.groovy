@@ -239,6 +239,80 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "Error: Do not allow authorized caller to grant the 'identity:user-manage' role to non-default user; mediaType = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = USER_MANAGE_ROLE_ID
+                            ta.forTenants.add("*")
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(identityAdmin.username), userAdmin, assignments, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER)
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteTestDomainQuietly(domainId)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Error: Do not allow authorized caller to grant the 'identity:user-manage' role on tenants; mediaType = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        def tenant = utils.createTenant()
+        utils.addTenantToDomain(domainId, tenant.id)
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = USER_MANAGE_ROLE_ID
+                            ta.forTenants.add(tenant.id)
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnUser(utils.getToken(userAdmin.username), defaultUser, assignments, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ERROR_CODE_INVALID_ATTRIBUTE)
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteTestDomainQuietly(domainId)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
     def "Error: Do not allow caller to grant roles they don't have access to; mediaType = #mediaType"() {
         given:
         def domainId = utils.createDomain()

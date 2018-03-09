@@ -130,6 +130,8 @@ public final class ErrorCodes {
 
     // User role assignments
     public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT = "ROLE-000";
+    public static final String ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER = "ROLE-001";
+
     public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT_MSG = "A given role can only be specified once";
 
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG = "All role assignments must include 'forTenants' field";
@@ -141,6 +143,8 @@ public final class ErrorCodes {
 
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_NONEXISTANT_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant does not exist.";
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_WRONG_DOMAIN_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant must belong to domain '%s'.";
+
+    public static final String ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER_MSG = "Cannot add the 'identity:user-manage' role to non default-user.";
 
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {
