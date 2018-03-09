@@ -150,7 +150,6 @@ class GetPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response7, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
 
-
         when: "User admin token of a different domain cannot retrieve the phone pin"
         def userAdmin1 = cloud20.createCloudAccount(utils.getIdentityAdminToken())
         def response8 = cloud20.getPhonePin(utils.getToken(userAdmin1.username), defaultUser.id)
@@ -169,6 +168,7 @@ class GetPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin, userAdmin1)
         utils.deleteUsers(users)
         utils.deleteDomain(domain2)
+        utils.deleteDomain(domainId)
 
         where:
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]

@@ -1395,6 +1395,16 @@ public class Cloud20VersionResource {
         return cloud20Service.getPhonePin(authToken, userId).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @POST
+    @Path("users/{userId}/RAX-AUTH/phone-pin/verify")
+    public Response verifyPhonePin(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            PhonePin phonePin){
+        return cloud20Service.verifyPhonePin(authToken, userId, phonePin).build();
+    }
+
     // ******************************************************* //
     // RAX-GRPADM Extension //
     // ******************************************************* //

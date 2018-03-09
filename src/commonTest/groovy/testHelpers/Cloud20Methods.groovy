@@ -983,6 +983,11 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def verifyPhonePin(String token, String userId, phonePin){
+        initOnUse()
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).path(SERVICE_PATH_VERIFY).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(phonePin).post(ClientResponse)
+    }
+
     def validateToken(String token, String validateToken, accept = APPLICATION_XML_TYPE){
         initOnUse()
         resource.path(path20).path(TOKENS).path(validateToken).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)

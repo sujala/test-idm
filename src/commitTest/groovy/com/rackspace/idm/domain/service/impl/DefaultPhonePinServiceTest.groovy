@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
 import spock.lang.Specification
@@ -42,7 +43,6 @@ class DefaultPhonePinServiceTest extends Specification {
 
     }
 
-
     def "Retrieve phone pin throws not found" () {
         given:
         User user = new User()
@@ -53,5 +53,29 @@ class DefaultPhonePinServiceTest extends Specification {
 
         then:
         thrown(NotFoundException)
+    }
+
+    def "Verify phone pin from provisioned user" () {
+        given:
+        User user = new User()
+        user.phonePin = pin
+
+        when:
+        phonePinService.verifyPhonePin(user, "1231")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Verify phone pin from federated user" () {
+        given:
+        FederatedUser user = new FederatedUser()
+        user.phonePin = pin
+
+        when:
+        phonePinService.verifyPhonePin(user, "1231")
+
+        then:
+        thrown(BadRequestException)
     }
 }
