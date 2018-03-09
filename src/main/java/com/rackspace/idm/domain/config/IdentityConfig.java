@@ -557,10 +557,10 @@ public class IdentityConfig {
     public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP = "enable.delegation.agreements.for.rcns";
     public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT = "";
 
-    public static final String FEATURE_ENABLE_PHONE_PIN_ON_USER = "feature.enable.phone.pin.on.user";
+    public static final String FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP = "feature.enable.phone.pin.on.user";
     public static final boolean FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT = true;
 
-    public static final String USER_PHONE_PIN_SIZE = "user.phone.pin.size";
+    public static final String USER_PHONE_PIN_SIZE_PROP = "user.phone.pin.size";
     public static final int USER_PHONE_PIN_SIZE_DEFAULT = 4;
 
     public static final String EDIR_LDAP_SERVER_TRUSTED_PROP = "ldap.server.trusted";
@@ -802,8 +802,8 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_DEFAULT);
 
-        defaults.put(FEATURE_ENABLE_PHONE_PIN_ON_USER, FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT);
-        defaults.put(USER_PHONE_PIN_SIZE, USER_PHONE_PIN_SIZE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT);
+        defaults.put(USER_PHONE_PIN_SIZE_PROP, USER_PHONE_PIN_SIZE_DEFAULT);
 
         defaults.put(EDIR_LDAP_SERVER_TRUSTED_PROP, EDIR_LDAP_SERVER_TRUSED_DEFAULT);
         defaults.put(EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT);
@@ -2203,14 +2203,14 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_PHONE_PIN_ON_USER, versionAdded = "3.21.0", description = "Specifies whether to generate and store a user's phone PIN when the user is created. Phone PINs are generated for provisioned users created through v2.0 create user calls and Domain federated users.")
+        @IdmProp(key = FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, versionAdded = "3.21.0", description = "Specifies whether to generate and store a user's phone PIN when the user is created. Phone PINs are generated for provisioned users created through v2.0 create user calls and Domain federated users.")
         public boolean getEnablePhonePinOnUserFlag() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_PHONE_PIN_ON_USER);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP);
         }
 
-        @IdmProp(key = USER_PHONE_PIN_SIZE, versionAdded = "3.21.0", description = "Specifies the length, in characters, of the phone PIN.")
+        @IdmProp(key = USER_PHONE_PIN_SIZE_PROP, versionAdded = "3.21.0", description = "Specifies the length, in characters, of the phone PIN.")
         public int getUserPhonePinSize() {
-            return getIntSafely(reloadableConfiguration, USER_PHONE_PIN_SIZE);
+            return getIntSafely(reloadableConfiguration, USER_PHONE_PIN_SIZE_PROP);
         }
     }
 

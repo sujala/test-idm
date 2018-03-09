@@ -83,8 +83,8 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     def "SAML assertion 2.0 - Create a federated user with phone PIN - featureEnabled == #featureEnabled"() {
         given:
         def pinLength = 4
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER, featureEnabled)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE, pinLength)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, featureEnabled)
+        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
 
         def fedRequest = createFedRequest()
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
@@ -128,8 +128,8 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "SAML assertion 2.0 - Create a federated user with phone PIN - pinLength == #pinLength" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER, true)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE, pinLength)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
 
         def fedRequest = createFedRequest()
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
@@ -178,8 +178,8 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     def "SAML assertion 1.0 - Create a federated user with phone PIN - featureEnabled == #featureEnabled"() {
         given:
         def pinLength = 4
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER, featureEnabled)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE, pinLength)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, featureEnabled)
+        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
 
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -223,8 +223,8 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "SAML assertion 1.0 - Create a federated user with phone PIN - pinLength == #pinLength" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER, true)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE, pinLength)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
 
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
