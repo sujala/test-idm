@@ -3244,6 +3244,10 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
     def "Create Identity Provider returns errors appropriately"() {
         given:
+        // Create Identity Admin that does not have the identity-provider-manager role
+        def iaAdmin = utils.createIdentityAdmin()
+        def iaAdminToken = utils.getToken(iaAdmin.username)
+
         def domainId = utils.createDomain()
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
         def idpManager = utils.createIdentityProviderManager()
@@ -3257,7 +3261,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         when: "caller doesn't have role"
         IdentityProvider validIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
-        def response = cloud20.createIdentityProvider(utils.getIdentityAdminToken(), validIdp)
+        def response = cloud20.createIdentityProvider(iaAdminToken, validIdp)
 
         then: "403"
         response.status == SC_FORBIDDEN
