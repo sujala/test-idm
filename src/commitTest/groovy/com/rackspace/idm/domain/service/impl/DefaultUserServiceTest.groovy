@@ -18,6 +18,7 @@ import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 class DefaultUserServiceTest extends RootServiceTest {
@@ -247,6 +248,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * domainService.addTenantToDomain(expectedNastTenantId, domainId)
         1 * userDao.addUser(user)
         1 * tenantService.addTenantRoleToUser(user, _);
+        1 * domainService.updateDomainUserAdminDN(user)
         endpointService.doesBaseUrlBelongToCloudRegion(_) >> true
 
         user.password != null
@@ -286,6 +288,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * domainService.createNewDomain(domainId)
         1 * userDao.addUser(user)
         1 * tenantService.addTenantRoleToUser(user, _);
+        1 * domainService.updateDomainUserAdminDN(user)
 
         user.password != null
         user.userPassword != null
@@ -295,6 +298,43 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.encryptionVersion == encryptionVersion
         user.salt == salt;
         user.enabled == true
+    }
+
+    @Unroll
+    def "addUserV20: creating user-admin calls appropriate services: createUserOneCall - #isCreateUserOneCall"() {
+        given:
+        def domain = entityFactory.createDomain()
+        TenantRole userAdminRole = entityFactory.createTenantRole().with {
+            it.name = Constants.IDENTITY_USER_ADMIN_ROLE
+            it.roleRsId = Constants.USER_ADMIN_ROLE_ID
+            it
+        }
+        ClientRole userAdminClientRole = entityFactory.createClientRole(Constants.IDENTITY_USER_ADMIN_ROLE)
+        def user = entityFactory.createUser().with {
+            it.domainId = domain.domainId
+            it.roles.add(userAdminRole)
+            it
+        }
+
+        when:
+        service.addUserAdminV20(user, isCreateUserOneCall)
+
+        then:
+        1 * domainService.getDomainAdmins(domain.domainId) >> []
+        1 * userDao.getUsersByDomain(domain.domainId) >> []
+        1 * userDao.addUser(user)
+        1 * domainService.updateDomainUserAdminDN(user)
+        if (isCreateUserOneCall) {
+            2 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            2 * domainService.getDomain(domain.domainId) >> domain
+            1 * staticConfig.getIdentityUserAdminRoleName() >> Constants.IDENTITY_USER_ADMIN_ROLE
+        } else {
+            1 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            1 * domainService.getDomain(domain.domainId) >> domain
+        }
+
+        where:
+        isCreateUserOneCall << [true, false]
     }
 
     def "Add User does not set default password if specified"() {

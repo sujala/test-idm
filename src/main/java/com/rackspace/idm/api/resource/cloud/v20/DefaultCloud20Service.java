@@ -2209,13 +2209,20 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, user);
             }
-            if (authorizationService.hasUserAdminRole(user) && userService.hasSubUsers(userId)) {
+
+            boolean hasUserAdminRole = authorizationService.hasUserAdminRole(user);
+            if (hasUserAdminRole && userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
             }
             if(callerHasUserManageRole && authorizationService.hasUserManageRole(user)) {
                 throw new NotAuthorizedException("Cannot delete user with same access level");
             }
             identityUserService.deleteUser(user);
+
+            if (user instanceof User && hasUserAdminRole) {
+                // Delete the userAdminDN on a provisioned user's domain.
+                domainService.deleteDomainUserAdminDN((User) user);
+            }
 
             atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);
 
@@ -5000,6 +5007,11 @@ public class DefaultCloud20Service implements Cloud20Service {
              */
             assignRoleToUser(promoteUser, userAdminRole);
             List<TenantRole> rolesDeletedFromPromotedUser = deleteUserClassificationAndRbacTenantRoles(promoteUserRoles);
+
+            // Update the domain's userAdminDN to the promoted user.
+            Domain domain = domainService.getDomain(promoteUser.getDomainId());
+            domain.setUserAdminDN(promoteUser.getDn());
+            domainService.updateDomain(domain);
 
             /*
              Modify the user to demote by first adding the user default role and then iterating through user's other roles

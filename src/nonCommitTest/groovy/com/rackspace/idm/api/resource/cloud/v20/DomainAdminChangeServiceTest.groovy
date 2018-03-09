@@ -21,8 +21,6 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 import testHelpers.IdmAssert
-import testHelpers.RootIntegrationTest
-import testHelpers.SingletonReloadableConfiguration
 
 import javax.ws.rs.core.Response
 
@@ -42,6 +40,7 @@ class DomainAdminChangeServiceTest extends Specification {
     @Shared ApplicationService applicationService
     @Shared AtomHopperClient atomHopperClient
     @Shared DefaultCloud20Service defaultCloud20Service
+    @Shared DomainService domainService
 
     @Shared def identityConfig
     @Shared def reloadableConfig
@@ -63,6 +62,7 @@ class DomainAdminChangeServiceTest extends Specification {
         tenantService = Mock(TenantService)
         applicationService = Mock(ApplicationService)
         atomHopperClient = Mock(AtomHopperClient)
+        domainService = Mock(DomainService)
 
         defaultCloud20Service = new DefaultCloud20Service()
         defaultCloud20Service.authorizationService = authorizationService
@@ -72,11 +72,14 @@ class DomainAdminChangeServiceTest extends Specification {
         defaultCloud20Service.tenantService = tenantService
         defaultCloud20Service.applicationService = applicationService
         defaultCloud20Service.atomHopperClient = atomHopperClient
+        defaultCloud20Service.domainService = domainService
 
         identityConfig = Mock(IdentityConfig)
         reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
         identityConfig.getReloadableConfig() >> reloadableConfig
         defaultCloud20Service.identityConfig = identityConfig
+
+
 
         // Common settings for the client role lookups. Based on convention for role names.
         authorizationService.getCachedIdentityRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
@@ -493,8 +496,18 @@ class DomainAdminChangeServiceTest extends Specification {
         given:
         reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
         def callerToken = "atoken"
-        def promoteUser = createUser("promoteUser")
-        def demoteUser = createUser("demoteUser")
+        def promoteUser = createUser("promoteUser").with {
+            it.uniqueId = "rsId=1"
+            it
+        }
+        def demoteUser = createUser("demoteUser").with {
+            it.uniqueId = "rsId=2"
+            it
+        }
+        def domain = new Domain().with {
+            it.userAdminDN = demoteUser.getDn()
+            it
+        }
 
         tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(promoteUser) >> [createTenantRole(DEFAULT_USER.roleName)]
         tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(demoteUser) >> [createTenantRole(USER_ADMIN.roleName)]
@@ -514,6 +527,13 @@ class DomainAdminChangeServiceTest extends Specification {
         then: "Promote users roles are properly modified"
         1 * tenantService.addTenantRoleToUser(promoteUser, {it.name == USER_ADMIN.roleName})
         1 * tenantService.deleteTenantRole({it.name == DEFAULT_USER.roleName})
+
+        and: "Domain's userAdminDN is properly updated"
+        1 * domainService.getDomain(promoteUser.domainId) >> domain
+        1 * domainService.updateDomain(domain) >> {arg ->
+            def domainArg = (Domain) arg[0]
+            assert domainArg.userAdminDN == promoteUser.getDn()
+        }
 
         and: "Demote users roles are properly modified"
         1 * tenantService.addTenantRoleToUser(demoteUser, {it.name == DEFAULT_USER.roleName})
@@ -542,8 +562,18 @@ class DomainAdminChangeServiceTest extends Specification {
         given:
         reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
         def callerToken = "atoken"
-        def promoteUser = createUser("promoteUser")
-        def demoteUser = createUser("demoteUser")
+        def promoteUser = createUser("promoteUser").with {
+            it.uniqueId = "rsId=1"
+            it
+        }
+        def demoteUser = createUser("demoteUser").with {
+            it.uniqueId = "rsId=2"
+            it
+        }
+        def domain = new Domain().with {
+            it.userAdminDN = demoteUser.getDn()
+            it
+        }
         tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(promoteUser) >> [createTenantRole("promoteRBAC"), createTenantRole("promote"),createTenantRole(DEFAULT_USER.roleName),createTenantRole(USER_MANAGER.roleName)]
         tenantService.getExplicitlyAssignedTenantRolesForUserPerformant(demoteUser) >> [createTenantRole("demoteRBAC"), createTenantRole("demote"), createTenantRole(USER_ADMIN.roleName)]
 
@@ -565,6 +595,13 @@ class DomainAdminChangeServiceTest extends Specification {
         1 * tenantService.deleteTenantRole({it.name == DEFAULT_USER.roleName})
         1 * tenantService.deleteTenantRole({it.name == USER_MANAGER.roleName})
         0 * tenantService.deleteTenantRole({it.name == "promote"})
+
+        and: "Domain's userAdminDN is properly updated"
+        1 * domainService.getDomain(promoteUser.domainId) >> domain
+        1 * domainService.updateDomain(domain) >> {arg ->
+            def domainArg = (Domain) arg[0]
+            assert domainArg.userAdminDN == promoteUser.getDn()
+        }
 
         and: "Demote users roles are properly modified"
         1 * tenantService.addTenantRoleToUser(demoteUser, {it.name == DEFAULT_USER.roleName})

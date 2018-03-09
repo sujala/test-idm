@@ -1,22 +1,20 @@
 package com.rackspace.idm.api.resource.cloud.v11
+
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple
 import com.rackspace.idm.api.security.AuthenticationContext
-import com.rackspace.idm.domain.config.JAXBContextResolver
 import com.rackspace.idm.domain.config.providers.cloudv11.Core11XMLWriter
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.validation.Validator
-import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog
 import com.rackspacecloud.docs.auth.api.v1.User
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
 import org.apache.http.HttpStatus
-import org.mortbay.jetty.security.Credential
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -25,9 +23,7 @@ import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriInfo
-import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBElement
-
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -512,6 +508,21 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
+    }
+
+    def "deleteUser - Delete userAdminDN on domain when deleting user-admin" () {
+        given:
+        allowAccess()
+        mockDomainService(service)
+        def user = entityFactory.createUser()
+
+        when:
+        service.deleteUser(request, user.username, headers)
+
+        then:
+        1 * userService.deleteUser(user)
+        1 * userService.getUser(user.username) >> user
+        1 * domainService.deleteDomainUserAdminDN(user)
     }
 
     def createCore11XMLWriter() {

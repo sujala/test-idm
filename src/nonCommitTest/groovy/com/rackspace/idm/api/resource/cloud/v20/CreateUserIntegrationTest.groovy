@@ -9,32 +9,24 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.DomainDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.BaseUser
+import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.service.EndpointService
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum
-import com.rackspace.idm.domain.service.ScopeAccessService
-import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.ForbiddenFault
-import org.openstack.docs.identity.api.v2.Role
-import org.openstack.docs.identity.api.v2.RoleList
-import org.openstack.docs.identity.api.v2.Tenants
-import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
-import testHelpers.RootIntegrationTest
 import testHelpers.IdmAssert
+import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
@@ -50,6 +42,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     @Autowired def Configuration config
     @Autowired def EndpointService endpointService
     @Autowired def DomainDao domainDao
+    @Autowired def UserDao userDao
 
     def setup() {
         identityAdminToken = utils.getIdentityAdminToken()
@@ -1778,5 +1771,36 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         where:
         featureEnabled << [true, false]
+    }
+
+    def "create user-admin sets the domain's userAdminDN"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
+        def domainId2 = utils.createDomain()
+        def userAdminWithTenants, users
+        (userAdminWithTenants, users) = utils.createUserAdminWithTenants(domainId2)
+
+        when: "userAdmin without tenants"
+        com.rackspace.idm.domain.entity.User userAdminEntity = userDao.getUserById(userAdmin.id)
+        Domain domain = domainDao.getDomain(domainId)
+
+        then:
+        domain.userAdminDN == userAdminEntity.getDn()
+
+        when: "userAdmin with tenants"
+        com.rackspace.idm.domain.entity.User userAdminWithTenantsEntity = userDao.getUserById(userAdminWithTenants.id)
+        Domain domain2 = domainDao.getDomain(domainId2)
+
+        then:
+        domain2.userAdminDN == userAdminWithTenantsEntity.getDn()
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteUserQuietly(users)
+        utils.deleteTestDomainQuietly(domainId)
+        utils.deleteTestDomainQuietly(domainId2)
+        utils.deleteTenantQuietly(domainId2)
+        utils.deleteTenantQuietly(utils.getNastTenant(domainId2))
     }
 }
