@@ -118,6 +118,7 @@ public abstract class LdapRepository {
     public static final String ATTR_POLICYTYPE = "policyType";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";
     public static final String ATTR_DOMAIN_ID = "rsDomainId";
+    public static final String ATTR_USER_ADMIN_DN = "rsUserAdminDN";
     public static final String ATTR_ENABLED = "enabled";
     public static final String ATTR_GIVEN_NAME = "rsGivenName";
     public static final String ATTR_GROUP_NAME = "name";
