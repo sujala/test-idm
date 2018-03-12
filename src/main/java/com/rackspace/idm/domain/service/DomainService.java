@@ -51,8 +51,8 @@ public interface DomainService {
     void updateDomainUserAdminDN(User user);
 
     /**
-     * Remove the user admin DN set on domain. This method will remove the "rsUserAdminDN" attribute on domain for any
-     * user registered whether or not the user is a user-admin.
+     * Remove the user admin DN set on domain. This method will remove the specified user from the "rsUserAdminDN"
+     * attribute on domain if the user is currently set as the "rsUserAdminDN".
      *
      * @param user
      * @throws IllegalArgumentException If supplied user, user's domainId, or user's uniqueId is null;

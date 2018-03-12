@@ -165,7 +165,7 @@ public class DefaultUserService implements UserService {
 
         assignUserRoles(user, false);
 
-        //Update domain's userAdminDN after the user has been created.
+        // Update domain's userAdminDN after the user has been created.
         domainService.updateDomainUserAdminDN(user);
 
         addExpiredScopeAccessesForUser(user);

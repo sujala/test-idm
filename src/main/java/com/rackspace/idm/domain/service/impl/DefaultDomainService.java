@@ -328,7 +328,7 @@ public class DefaultDomainService implements DomainService {
         Validate.notNull(user.getDomainId());
         Validate.notEmpty(user.getRoles());
 
-        //Verify user has user-admin role
+        // Verify user has user-admin role
         TenantRole userAdminRole = null;
         for (TenantRole tenantRole : user.getRoles()) {
             if (IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(tenantRole.getName())) {
