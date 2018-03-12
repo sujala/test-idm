@@ -394,6 +394,7 @@ CADF_INITIATOR = 'cadf:initiator'
 CADF_HOST = 'cadf:host'
 CADF_REASON = 'cadf:reason'
 DELEGATION_AGREEMENT = 'delegationAgreement'
+DELEGATION_AGREEMENT_ID = 'delegationAgreementId'
 ENDPOINT_ASSIGNMENT_RULES = 'endpointAssignmentRules'
 EMAIL_DOMAIN = 'emailDomain'
 EMAIL_DOMAINS = 'emailDomains'
@@ -421,6 +422,7 @@ NS_TYPES = 'RAX-AUTH:types'
 RAX_AUTH_ASSIGNMENT_TYPE = 'RAX-AUTH:assignmentType'
 RAX_AUTH_CHANGE_PASSWORD_CREDENTIALS = 'RAX-AUTH:changePasswordCredentials'
 RAX_AUTH_DELEGATION_AGREEMENT = 'RAX-AUTH:' + DELEGATION_AGREEMENT
+RAX_AUTH_DELEGATION_CREDENTIALS = 'RAX-AUTH:delegationCredentials'
 RAX_AUTH_DOMAIN = 'RAX-AUTH:domain'
 RAX_AUTH_DOMAIN_ID = 'RAX-AUTH:domainId'
 NS_ADMINISTRATOR_ROLE = 'RAX-AUTH:administratorRole'
@@ -484,6 +486,7 @@ UA = 'http://feeds.api.rackspacecloud.com/cadf/user-access-event'
 
 '''CONSTANTS'''
 AUTH_BY_LIST = ['APIKEY', 'PASSWORD', 'FEDERATED']
+AUTH_BY_PWD_DELEGATION = ['PASSWORD', 'DELEGATE']
 DC_LIST = ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']
 LIST_ENDPOINT_NAMES_FOR_MOSSO_TENANT = ['cloudMonitoring',
                                         'cloudLoadBalancers',

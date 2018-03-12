@@ -149,6 +149,25 @@ class AuthenticateAsRackerWithPassword(base.AutoMarshallingModel):
         return etree.tostring(auth)
 
 
+class AuthenticateWithDelegationAgreement(base.AutoMarshallingModel):
+    """Marshalling for Authentication with DelegationAgreement."""
+
+    def __init__(self, token, delegation_agreement_id):
+        self.token = token
+        self.delegation_agreement_id = delegation_agreement_id
+
+    def _obj_to_json(self):
+        get_token_request = {const.AUTH: {
+            const.RAX_AUTH_DELEGATION_CREDENTIALS: {
+                const.TOKEN: self.token,
+                const.DELEGATION_AGREEMENT_ID: self.delegation_agreement_id}
+        }}
+        return json.dumps(get_token_request)
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
+
+
 class UserAdd(base.AutoMarshallingModel):
     """Marshalling for Add Identity Admin User Request."""
 
