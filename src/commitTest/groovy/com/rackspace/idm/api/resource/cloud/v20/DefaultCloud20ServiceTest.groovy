@@ -3331,7 +3331,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * identityUserService.checkAndGetUserById(_) >> user
         1 * authorizationService.hasUserAdminRole(user) >> true
-        1 * domainService.deleteDomainUserAdminDN(user)
+        1 * domainService.removeDomainUserAdminDN(user)
         1 * identityUserService.deleteUser(_)
     }
 

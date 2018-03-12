@@ -522,7 +522,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         then:
         1 * userService.deleteUser(user)
         1 * userService.getUser(user.username) >> user
-        1 * domainService.deleteDomainUserAdminDN(user)
+        1 * domainService.removeDomainUserAdminDN(user)
     }
 
     def createCore11XMLWriter() {

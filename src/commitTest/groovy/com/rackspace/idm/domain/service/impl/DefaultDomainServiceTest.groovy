@@ -214,7 +214,7 @@ class DefaultDomainServiceTest extends RootServiceTest {
         }
 
         when:
-        service.deleteDomainUserAdminDN(user)
+        service.removeDomainUserAdminDN(user)
 
         then:
         1 * domainDao.getDomain(user.domainId) >> domain
@@ -233,7 +233,7 @@ class DefaultDomainServiceTest extends RootServiceTest {
         }
 
         when:
-        service.deleteDomainUserAdminDN(user)
+        service.removeDomainUserAdminDN(user)
 
         then:
         1 * domainDao.getDomain(user.domainId) >> domain

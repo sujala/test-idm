@@ -523,8 +523,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.deleteUser(retrievedUser);
 
-            // Delete the userAdminDN on user's domain
-            domainService.deleteDomainUserAdminDN(retrievedUser);
+            // This operation is conditional based on whether the supplied user is actually registered on the Domain
+            // entry as the user-admin.
+            domainService.removeDomainUserAdminDN(retrievedUser);
 
             //AtomHopper
             atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DELETED);

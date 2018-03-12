@@ -1803,4 +1803,29 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteTenantQuietly(domainId2)
         utils.deleteTenantQuietly(utils.getNastTenant(domainId2))
     }
+
+    def "create subUsers does not update the domain's userAdminDN"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
+
+        when: "get domain for userAdmin"
+        com.rackspace.idm.domain.entity.User userAdminEntity = userDao.getUserById(userAdmin.id)
+        Domain domain = domainDao.getDomain(domainId)
+
+        then: "assert userAdminDN on domain"
+        domain.userAdminDN == userAdminEntity.getDn()
+
+        when: "create subUser"
+        def subUser = cloud20.createSubUser(utils.getToken(userAdmin.username))
+        domain = domainDao.getDomain(domainId)
+
+        then: "assert userAdminDN on domain"
+        domain.userAdminDN == userAdminEntity.getDn()
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteUserQuietly(subUser)
+        utils.deleteTestDomainQuietly(domainId)
+    }
 }

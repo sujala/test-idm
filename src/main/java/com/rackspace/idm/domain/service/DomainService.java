@@ -42,7 +42,7 @@ public interface DomainService {
     String getDomainUUID();
 
     /**
-     * Update domain's userAdmin DN by supplied user. The user supplied must be have the "identity:user-admin" role.
+     * Update domain's userAdmin DN to supplied user. The user supplied must be have the "identity:user-admin" role.
      *
      * @param user
      * @throws IllegalArgumentException If supplied user, user's uniqueId, user's domainId, or user's roles are null.
@@ -51,10 +51,11 @@ public interface DomainService {
     void updateDomainUserAdminDN(User user);
 
     /**
-     * Delete the user admin DN set on domain.
+     * Remove the user admin DN set on domain. This method will remove the "rsUserAdminDN" attribute on domain for any
+     * user registered whether or not the user is a user-admin.
      *
      * @param user
      * @throws IllegalArgumentException If supplied user, user's domainId, or user's uniqueId is null;
      */
-    void deleteDomainUserAdminDN(User user);
+    void removeDomainUserAdminDN(User user);
 }

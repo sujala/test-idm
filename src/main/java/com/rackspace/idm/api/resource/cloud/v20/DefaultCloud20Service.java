@@ -2220,8 +2220,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             identityUserService.deleteUser(user);
 
             if (user instanceof User && hasUserAdminRole) {
-                // Delete the userAdminDN on a provisioned user's domain.
-                domainService.deleteDomainUserAdminDN((User) user);
+                // Remove the userAdminDN on a provisioned user's domain is conditional whether the user is registered
+                // on the domain as the user-admin.
+                domainService.removeDomainUserAdminDN((User) user);
             }
 
             atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);

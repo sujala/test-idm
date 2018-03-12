@@ -347,7 +347,7 @@ public class DefaultDomainService implements DomainService {
     }
 
     @Override
-    public void deleteDomainUserAdminDN(User user) {
+    public void removeDomainUserAdminDN(User user) {
         Validate.notNull(user);
         Validate.notNull(user.getDomainId());
         Validate.notNull(user.getUniqueId());
