@@ -90,12 +90,11 @@ class TestIDPMetadata(federation.TestBaseFederation):
         # V1 Federation - Auth as fed user in the registered domain
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
-        assertion = saml_helper.create_saml_assertion(
-            domain=self.domain_id, subject=subject, issuer=self.issuer,
-            email='meow@cats.com', base64_url_encode=False,
-            private_key_path=key_path,
-            public_key_path=cert_path,
-            seconds_to_expiration=300)
+        assertion = saml_helper.create_saml_assertion_v2(
+            domain=self.domain_id, username=subject, issuer=self.issuer,
+            email='meow@cats.com', private_key_path=key_path,
+            public_key_path=cert_path, seconds_to_expiration=300,
+            response_flavor='v2DomainOrigin')
         resp = self.identity_admin_client.auth_with_saml(
             saml=assertion, content_type='xml',
             base64_url_encode=False, new_url=False)
@@ -153,12 +152,11 @@ class TestIDPMetadata(federation.TestBaseFederation):
         # V1 Federation - Auth as fed user in the registered domain
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
-        assertion = saml_helper.create_saml_assertion(
-            domain=self.domain_id, subject=subject, issuer=self.issuer,
-            email='meow@cats.com', base64_url_encode=False,
-            private_key_path=key_path,
-            public_key_path=cert_path,
-            seconds_to_expiration=300)
+        assertion = saml_helper.create_saml_assertion_v2(
+            domain=self.domain_id, username=subject, issuer=self.issuer,
+            email='meow@cats.com', private_key_path=key_path,
+            public_key_path=cert_path, seconds_to_expiration=300,
+            response_flavor='v2DomainOrigin')
         resp = self.identity_admin_client.auth_with_saml(
             saml=assertion, content_type='xml',
             base64_url_encode=False, new_url=False)

@@ -100,11 +100,13 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         //initializes open saml. allows us use unmarshaller
         InitializationService.initialize();
 
-        samlUnmarshaller = new SamlUnmarshaller()
         provisionedUserSourceFederationHandler = new ProvisionedUserSourceFederationHandler();
     }
 
     def setup() {
+        samlUnmarshaller = new SamlUnmarshaller()
+        samlUnmarshaller.identityConfig = identityConfig
+
         identityConfig.getReloadableConfig() >> reloadableConfig
         identityConfig.getStaticConfig() >> staticConfig
 
@@ -153,7 +155,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
             it.domainId = DOMAIN_ID
             it.email = EMAIL
             return it
-        };
+        }
 
         endpoints = [].toList()
         roles = [].toList()
@@ -740,7 +742,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
     }
 
     def "Generate authentication info from saml response when user does not exist"() {
-        samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
+        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
 
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(USERNAME, IDP_ID) >> null
         mockTenantService.getTenantsByDomainId(_) >> tenants
@@ -769,7 +771,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
     }
 
     def "Generate authentication info from saml response when user already exists"() {
-        samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
+        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
 
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> theIdentityProvider
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(USERNAME, IDP_ID) >> user
@@ -802,7 +804,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
 
     def "Generate authentication info from saml response when user exists under different domainId throws exception"() {
         given:
-        samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
+        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         FederatedUser existingUser = new FederatedUser().with{
             it.domainId="diffDomain"
             return it

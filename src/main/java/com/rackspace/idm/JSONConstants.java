@@ -9,6 +9,7 @@ public final class JSONConstants {
     public static final String ALIAS = "alias";
     public static final String ANSWER = "answer";
     public static final String API_KEY = "apiKey";
+    public static final String APPROVED_DOMAIN_IDS = "approvedDomainIds";
     public static final String RAX_KSKEY_API_KEY_CREDENTIALS = "RAX-KSKEY:apiKeyCredentials";
     public static final String API_KEY_CREDENTIALS = "apiKeyCredentials";
     public static final String AUTH = "auth";
@@ -221,6 +222,10 @@ public final class JSONConstants {
 
     public static final String OTP_DEVICE = "otpDevice";
     public static final String RAX_AUTH_OTP_DEVICE = "RAX-AUTH:" + OTP_DEVICE;
+
+    public static final String PHONE_PIN_URL = "phone-pin";
+    public static final String PHONE_PIN = "phonePin";
+    public static final String RAX_AUTH_PHONE_PIN = "RAX-AUTH:" + PHONE_PIN;
 
     public static final String OTP_DEVICES = "otpDevices";
     public static final String RAX_AUTH_OTP_DEVICES = "RAX-AUTH:otpDevices";

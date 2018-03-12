@@ -1,5 +1,6 @@
 package com.rackspace.idm.util
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.exception.BadRequestException
 import org.joda.time.DateTime
 import org.opensaml.core.config.InitializationService
@@ -10,9 +11,20 @@ import spock.lang.Specification
 class SamlUnmarshallerTest extends Specification {
     @Shared SamlUnmarshaller samlUnmarshaller;
 
+    IdentityConfig identityConfig = Mock(IdentityConfig)
+    IdentityConfig.StaticConfig staticConfig = Mock(IdentityConfig.StaticConfig)
+    IdentityConfig.ReloadableConfig reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
+
     def setupSpec() {
-        InitializationService.initialize(); //initializes open saml
-        samlUnmarshaller = new SamlUnmarshaller();
+        InitializationService.initialize() //initializes open saml
+    }
+
+    def setup() {
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        identityConfig.getStaticConfig() >> staticConfig
+
+        samlUnmarshaller = new SamlUnmarshaller()
+        samlUnmarshaller.identityConfig = identityConfig
     }
 
     def "Unmarshall Saml Response" (){

@@ -233,6 +233,8 @@ public interface Cloud20Service {
     ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken,
         String userId, SecretQA secrets);
 
+    ResponseBuilder getPhonePin(String authToken, String userId);
+
     ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId, String serviceId,  boolean applyRcnRoles) ;
 
     ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String group, Integer marker, Integer limit) ;

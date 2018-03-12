@@ -1422,4 +1422,10 @@ class Cloud20Utils {
         def response = methods.removeUserFromUserGroup(token, userGroup.domainId, userGroup.id, userId)
         assert response.status == SC_NO_CONTENT
     }
+
+    def getPhonePin(User user, String token=getServiceAdminToken()) {
+        def response = methods.getPhonePin(token, user.id)
+        assert (response.status == SC_OK)
+        response.getEntity(PhonePin)
+    }
 }

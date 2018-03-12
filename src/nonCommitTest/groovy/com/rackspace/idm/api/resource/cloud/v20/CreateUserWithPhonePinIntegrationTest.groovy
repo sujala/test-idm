@@ -23,16 +23,16 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def pinLength = 4
 
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER, featureEnabled)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE, pinLength)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, featureEnabled)
+        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
 
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
         when:
-        def identityAdminUserEntity = userService.getUserById(userAdmin.id)
+        def identityAdminUserEntity = userService.getUserById(identityAdmin.id)
         def userAdminUserEntity = userService.getUserById(userAdmin.id)
-        def userManageUserEntity = userService.getUserById(userAdmin.id)
-        def defaultUserUserEntity = userService.getUserById(userAdmin.id)
+        def userManageUserEntity = userService.getUserById(userManage.id)
+        def defaultUserEntity = userService.getUserById(defaultUser.id)
 
         then:
 
@@ -52,15 +52,15 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
             assert userManageUserEntity.phonePin.size() == pinLength
             assert userManageUserEntity.phonePin.isNumber()
 
-            assert defaultUserUserEntity.phonePin != null
-            assert defaultUserUserEntity.encryptedPhonePin != null
-            assert defaultUserUserEntity.phonePin.size() == pinLength
-            assert defaultUserUserEntity.phonePin.isNumber()
+            assert defaultUserEntity.phonePin != null
+            assert defaultUserEntity.encryptedPhonePin != null
+            assert defaultUserEntity.phonePin.size() == pinLength
+            assert defaultUserEntity.phonePin.isNumber()
         } else {
             assert identityAdminUserEntity.phonePin == null
             assert userAdminUserEntity.phonePin == null
             assert userManageUserEntity.phonePin == null
-            assert defaultUserUserEntity.phonePin == null
+            assert defaultUserEntity.phonePin == null
         }
 
         cleanup:
@@ -74,8 +74,8 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Create userAdmin with phone PIN of different length - pinLength == #pinLength" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER, true)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE, pinLength)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
 
         def user = utils.createCloudAccount()
 

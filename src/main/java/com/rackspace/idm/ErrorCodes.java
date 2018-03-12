@@ -111,6 +111,12 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_MFA_MIGRATION_MFA_NOT_ENABLED = "MFAM-000";
     public static final String ERROR_CODE_MFA_MIGRATION_OTP_ENABLED = "MFAM-001";
 
+    //Phone PIN
+    public static final String ERROR_CODE_PHONE_PIN_NOT_FOUND = "PP-000";
+    public static final String ERROR_CODE_PHONE_PIN_BAD_REQUEST = "PP-001";
+    public static final String ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION = "PP-002";
+
+
     //Endpoint Assignment
     public static final String ERROR_CODE_EP_MISSING_ENDPOINT = "EP-000";
 
@@ -124,6 +130,8 @@ public final class ErrorCodes {
 
     // User role assignments
     public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT = "ROLE-000";
+    public static final String ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER = "ROLE-001";
+
     public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT_MSG = "A given role can only be specified once";
 
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG = "All role assignments must include 'forTenants' field";
@@ -135,6 +143,8 @@ public final class ErrorCodes {
 
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_NONEXISTANT_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant does not exist.";
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_WRONG_DOMAIN_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant must belong to domain '%s'.";
+
+    public static final String ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER_MSG = "Cannot add the 'identity:user-manage' role to non default-user.";
 
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {

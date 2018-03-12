@@ -2,6 +2,7 @@
 import ddt
 import time
 
+from tests.api.utils import data_file_iterator
 from tests.api.utils import saml_helper
 from tests.api.v2 import base
 from tests.api.v2.schema import users as users_json
@@ -27,11 +28,23 @@ class TestAdminsOfUser(base.TestBaseV2):
                 'domain_id': cls.generate_random_string(pattern='[\d]{7}')})
         cls.test_email = "random@rackspace.com"
         cls.issuer = 'http://identityqe.rackspace.com'
+        cls.idp_id = 'identityqe'
+
+    @data_file_iterator.data_file_provider((
+        "default_mapping_policy.yaml",
+    ))
+    def update_mapping_policy_for_idp(self, mapping):
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
+                idp_id=self.idp_id,
+                request_data=mapping,
+                content_type=const.YAML)
+        assert resp_put_manager.status_code == 204
 
     def setUp(self):
         super(TestAdminsOfUser, self).setUp()
         self.user_ids = []
         self.clients = []
+        self.update_mapping_policy_for_idp()
 
     @ddt.file_data('data_get_admins_for_fed_user.json')
     def test_admins_of_fed_user(self, test_data):
@@ -69,9 +82,13 @@ class TestAdminsOfUser(base.TestBaseV2):
         new_url = fed_input_data['new_url']
         content_type = fed_input_data['content_type']
 
-        cert = saml_helper.create_saml_assertion(
-            domain=domain_id, subject=subject, issuer=self.issuer,
-            email=self.test_email, base64_url_encode=base64_url_encode)
+        output_format = 'xml'
+        if base64_url_encode:
+            output_format = 'formEncode'
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=domain_id, username=subject, issuer=self.issuer,
+            email=self.test_email, response_flavor='v2DomainOrigin',
+            output_format=output_format)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
@@ -153,9 +170,13 @@ class TestAdminsOfUser(base.TestBaseV2):
         new_url = fed_input_data['new_url']
         content_type = fed_input_data['content_type']
 
-        cert = saml_helper.create_saml_assertion(
-            domain=domain_id, subject=subject, issuer=self.issuer,
-            email=self.test_email, base64_url_encode=base64_url_encode)
+        output_format = 'xml'
+        if base64_url_encode:
+            output_format = 'formEncode'
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=domain_id, username=subject, issuer=self.issuer,
+            email=self.test_email, response_flavor='v2DomainOrigin',
+            output_format=output_format)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
@@ -168,9 +189,10 @@ class TestAdminsOfUser(base.TestBaseV2):
         subject_2 = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
 
-        cert = saml_helper.create_saml_assertion(
-            domain=domain_id, subject=subject_2, issuer=self.issuer,
-            email=self.test_email, base64_url_encode=base64_url_encode)
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=domain_id, username=subject_2, issuer=self.issuer,
+            email=self.test_email, response_flavor='v2DomainOrigin',
+            output_format=output_format)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
@@ -216,9 +238,13 @@ class TestAdminsOfUser(base.TestBaseV2):
         new_url = fed_input_data['new_url']
         content_type = fed_input_data['content_type']
 
-        cert = saml_helper.create_saml_assertion(
-            domain=domain_id, subject=subject, issuer=self.issuer,
-            email=self.test_email, base64_url_encode=base64_url_encode)
+        output_format = 'xml'
+        if base64_url_encode:
+            output_format = 'formEncode'
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=domain_id, username=subject, issuer=self.issuer,
+            email=self.test_email, response_flavor='v2DomainOrigin',
+            output_format=output_format)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
@@ -291,9 +317,13 @@ class TestAdminsOfUser(base.TestBaseV2):
         new_url = fed_input_data['new_url']
         content_type = fed_input_data['content_type']
 
-        cert = saml_helper.create_saml_assertion(
-            domain=domain_id, subject=subject, issuer=self.issuer,
-            email=self.test_email, base64_url_encode=base64_url_encode)
+        output_format = 'xml'
+        if base64_url_encode:
+            output_format = 'formEncode'
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=domain_id, username=subject, issuer=self.issuer,
+            email=self.test_email, response_flavor='v2DomainOrigin',
+            output_format=output_format)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
@@ -372,9 +402,13 @@ class TestAdminsOfUser(base.TestBaseV2):
         new_url = fed_input_data['new_url']
         content_type = fed_input_data['content_type']
 
-        cert = saml_helper.create_saml_assertion(
-            domain=domain_id, subject=subject, issuer=self.issuer,
-            email=self.test_email, base64_url_encode=base64_url_encode)
+        output_format = 'xml'
+        if base64_url_encode:
+            output_format = 'formEncode'
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=domain_id, username=subject, issuer=self.issuer,
+            email=self.test_email, response_flavor='v2DomainOrigin',
+            output_format=output_format)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
@@ -431,10 +465,14 @@ class TestAdminsOfUser(base.TestBaseV2):
         content_type = fed_input_data['content_type']
         fed_user_lifetime = 5
 
-        cert = saml_helper.create_saml_assertion(
-            domain=domain_id, subject=subject, issuer=self.issuer,
-            email=self.test_email, base64_url_encode=base64_url_encode,
-            seconds_to_expiration=fed_user_lifetime)
+        output_format = 'xml'
+        if base64_url_encode:
+            output_format = 'formEncode'
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=domain_id, username=subject, issuer=self.issuer,
+            email=self.test_email, response_flavor='v2DomainOrigin',
+            seconds_to_expiration=fed_user_lifetime,
+            output_format=output_format)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
@@ -496,9 +534,13 @@ class TestAdminsOfUser(base.TestBaseV2):
         new_url = fed_input_data['new_url']
         content_type = fed_input_data['content_type']
 
-        cert = saml_helper.create_saml_assertion(
-            domain=domain_id, subject=subject, issuer=self.issuer,
-            email=self.test_email, base64_url_encode=base64_url_encode)
+        output_format = 'xml'
+        if base64_url_encode:
+            output_format = 'formEncode'
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=domain_id, username=subject, issuer=self.issuer,
+            email=self.test_email, response_flavor='v2DomainOrigin',
+            output_format=output_format)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
@@ -547,9 +589,13 @@ class TestAdminsOfUser(base.TestBaseV2):
         new_url = fed_input_data['new_url']
         content_type = fed_input_data['content_type']
 
-        cert = saml_helper.create_saml_assertion(
-            domain=domain_id, subject=subject, issuer=self.issuer,
-            email=self.test_email, base64_url_encode=base64_url_encode)
+        output_format = 'xml'
+        if base64_url_encode:
+            output_format = 'formEncode'
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=domain_id, username=subject, issuer=self.issuer,
+            email=self.test_email, response_flavor='v2DomainOrigin',
+            output_format=output_format)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
@@ -581,7 +627,7 @@ class TestAdminsOfUser(base.TestBaseV2):
     def tearDown(self):
         # Delete all users created in the tests
         for id_ in self.user_ids:
-            self.service_admin_client.delete_user(user_id=id_)
+            self.identity_admin_client.delete_user(user_id=id_)
         for client in self.clients:
             self.delete_client(client=client)
         super(TestAdminsOfUser, self).tearDown()

@@ -157,6 +157,9 @@ public class IdentityConfig {
     public static final String FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP = "feature.multifactor.locking.attempts.maximumNumber";
     public static final int FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_DEFAULT = 3;
 
+    public static final String FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP = "feature.enable.always.return.approved.domainids.for.list.idps";
+    public static final boolean FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_DEFAULT = true;
+
     public static final String FEATURE_DELETE_UNUSED_DUO_PHONES_PROP = "feature.delete.unused.duo.phones";
     public static final boolean FEATURE_DELETE_UNUSED_DUO_PHONES_DEFAULT = true;
 
@@ -504,9 +507,6 @@ public class IdentityConfig {
     public static final String LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP = "ldap.auth.password.lockout.duration";
     public static final Duration LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_DEFAULT = Duration.parse("PT1S"); // In seconds
 
-    private static final String FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP = "feature.edir.use.authenticated.connections";
-    private static final boolean FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_DEFAULT = false;
-
     private static final String EDIR_BIND_DN = "edir.bind.dn";
     private static final String EDIR_BIND_PASSWORD = "edir.bind.password";
 
@@ -540,6 +540,9 @@ public class IdentityConfig {
     public static final String FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME = "feature.use.subtree.delete.control.for.subtree.deletion.enabled";
     public static final boolean FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE = true;
 
+    public static final String FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP = "feature.enable.ignore.comments.for.saml.parser";
+    public static final boolean FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_DEFAULT = true;
+
     public static final String FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP = "feature.enable.include.password.expiration.date";
     public static final boolean FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT = false;
   
@@ -554,11 +557,23 @@ public class IdentityConfig {
     public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP = "enable.delegation.agreements.for.rcns";
     public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT = "";
 
-    public static final String FEATURE_ENABLE_PHONE_PIN_ON_USER = "feature.enable.phone.pin.on.user";
+    public static final String FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP = "feature.enable.phone.pin.on.user";
     public static final boolean FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT = true;
 
-    public static final String USER_PHONE_PIN_SIZE = "user.phone.pin.size";
+    public static final String USER_PHONE_PIN_SIZE_PROP = "user.phone.pin.size";
     public static final int USER_PHONE_PIN_SIZE_DEFAULT = 4;
+
+    public static final String EDIR_LDAP_SERVER_TRUSTED_PROP = "ldap.server.trusted";
+    public static final boolean EDIR_LDAP_SERVER_TRUSED_DEFAULT = false;
+
+    public static final String EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP = "edir.ldap.connection.connect.timeout.ms";
+    public static final int EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT = 10000;
+
+    public static final String EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP = "edir.ldap.connection.bind.timeout.ms";
+    public static final int EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_DEFAULT = 30000;
+
+    public static final String EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP = "edir.ldap.connection.search.timeout.ms";
+    public static final int EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT = 300000;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -695,8 +710,6 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP, FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_DEFAULT);
 
-        defaults.put(FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP, FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_DEFAULT);
-
         defaults.put(FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT);
         defaults.put(FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP, FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_DEFAULT);
         defaults.put(FEATURE_POST_IDP_FEED_EVENTS_PROP, FEATURE_POST_IDP_FEED_EVENTS_DEFAULT);
@@ -705,6 +718,8 @@ public class IdentityConfig {
 
         defaults.put(IDP_POLICY_MAX_KILOBYTE_SIZE_PROP, IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT);
         defaults.put(FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_DEFAULT);
 
         defaults.put(FEEDS_DEAMON_EVICTION_ENABLED_PROP, FEEDS_DEAMON_ENABLED_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT);
@@ -783,11 +798,17 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_PROP, FEATURE_ENABLE_LDAP_HEALTH_CHECK_CONNECTION_FOR_CONTINUED_USE_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP, FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP, FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_DEFAULT);
 
-        defaults.put(FEATURE_ENABLE_PHONE_PIN_ON_USER, FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT);
-        defaults.put(USER_PHONE_PIN_SIZE, USER_PHONE_PIN_SIZE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT);
+        defaults.put(USER_PHONE_PIN_SIZE_PROP, USER_PHONE_PIN_SIZE_DEFAULT);
+
+        defaults.put(EDIR_LDAP_SERVER_TRUSTED_PROP, EDIR_LDAP_SERVER_TRUSED_DEFAULT);
+        defaults.put(EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT);
+        defaults.put(EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_DEFAULT);
+        defaults.put(EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT);
 
         return defaults;
     }
@@ -1457,11 +1478,6 @@ public class IdentityConfig {
             return getBooleanSafely(staticConfiguration, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP);
         }
 
-        @IdmProp(key = FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP, versionAdded = "3.15.0", description = "Indicates whether to use authenticated connections to eDir.")
-        public boolean shouldEdirConnectionPoolUseAuthenticatedConnections() {
-            return getBooleanSafely(staticConfiguration, FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP);
-        }
-
         @IdmProp(key = EDIR_BIND_DN, versionAdded = "3.15.0", description = "The bind DN for eDir authenticated connections.")
         public String getEdirBindDn() {
             return getStringSafely(staticConfiguration, EDIR_BIND_DN);
@@ -1511,6 +1527,26 @@ public class IdentityConfig {
         @IdmProp(key = LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_PROP, versionAdded = "3.19.0", description = "Specifies the minimum length of time in milliseconds that should pass between connections closed because they have been established for longer than the maximum connection age.")
         public long getLDAPServerPoolMinDisconnectIntervalTime() {
             return getLongSafely(staticConfiguration, LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_PROP);
+        }
+
+        @IdmProp(key = EDIR_LDAP_SERVER_TRUSTED_PROP, versionAdded = "1.0.14.8", description = "Specifies if the edir connection is trusted")
+        public boolean getEDirServerTrusted() {
+            return getBooleanSafely(staticConfiguration, EDIR_LDAP_SERVER_TRUSTED_PROP);
+        }
+
+        @IdmProp(key = EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default connect timeout, in milliseconds.")
+        public int getEDirConnectionConnectTimeout() {
+            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default value for response timeouts, in milliseconds, for bind operations.")
+        public int getEDirConnectionBindTimeout() {
+            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default value for response timeouts, in milliseconds, for search operations.")
+        public int getEDirConnectionSearchTimeout() {
+            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP);
         }
     }
 
@@ -1582,6 +1618,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, description = "Whether or not to keep the signoff object in sync with the loaded AE Key cache", versionAdded = "2.16.0")
         public boolean getAESyncSignOffEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP, versionAdded = "3.20.1", description = "Enable the document loader that loads saml object to strip comments when loading.")
+        public boolean ignoreCommentsWhenLoadingSaml() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP);
         }
 
         public String getNodeName() {
@@ -1705,6 +1746,11 @@ public class IdentityConfig {
         @IdmProp(key = CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, versionAdded = "3.0.3", description = "Whether the AE Token cache will record stats.")
         public boolean cachedAETokenCacheRecordStats() {
             return getBooleanSafely(reloadableConfiguration, CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, versionAdded = "3.20.1", description = "Whether or not list idps should always return an approvedDomainId attribute for all idps.")
+        public boolean listIdpsAlwaysReturnsApprovedDomainIds() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP);
         }
 
         @IdmProp(key = FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME, versionAdded = "3.1.0", description = "The max token lifetime for a provisioned federated user token")
@@ -2157,16 +2203,15 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_PHONE_PIN_ON_USER, versionAdded = "3.21.0", description = "Specifies whether to generate and store a user's phone PIN when the user is created. Phone PINs are generated for provisioned users created through v2.0 create user calls and Domain federated users.")
+        @IdmProp(key = FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, versionAdded = "3.21.0", description = "Specifies whether to generate and store a user's phone PIN when the user is created. Phone PINs are generated for provisioned users created through v2.0 create user calls and Domain federated users.")
         public boolean getEnablePhonePinOnUserFlag() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_PHONE_PIN_ON_USER);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP);
         }
 
-        @IdmProp(key = USER_PHONE_PIN_SIZE, versionAdded = "3.21.0", description = "Specifies the length, in characters, of the phone PIN.")
+        @IdmProp(key = USER_PHONE_PIN_SIZE_PROP, versionAdded = "3.21.0", description = "Specifies the length, in characters, of the phone PIN.")
         public int getUserPhonePinSize() {
-            return getIntSafely(reloadableConfiguration, USER_PHONE_PIN_SIZE);
+            return getIntSafely(reloadableConfiguration, USER_PHONE_PIN_SIZE_PROP);
         }
-
     }
 
     public class RepositoryConfig {
