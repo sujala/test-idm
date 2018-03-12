@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
@@ -28,6 +29,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         service = new DefaultTenantAssignmentService()
 
         mockApplicationService(service)
+        mockAuthorizationService(service)
         mockTenantService(service)
         mockTenantRoleDao(service)
     }
@@ -107,6 +109,54 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         IdmExceptionAssert.assertException(ex4, BadRequestException, "GEN-005", ERROR_CODE_ROLE_ASSIGNMENT_INVALID_FOR_TENANTS_MSG)
         0 * tenantRoleDao._(*_)
         0 * applicationRoleDao._(*_)
+    }
+
+    def "verifyTenantAssignmentsWithCacheForUser: grant the 'identity:user-manage' role"() {
+        given:
+        def user = entityFactory.createUser()
+
+        ClientRole clientRole = entityFactory.createClientRole(Constants.USER_MANAGE_ROLE_NAME).with {
+            it.id = Constants.USER_MANAGE_ROLE_ID
+            it
+        }
+
+        def taGlobalRole = new TenantAssignment().with {ta ->  ta.onRole = clientRole.id; ta.forTenants.add("*"); ta}
+        List<TenantAssignment> tenantAssignmentsGlobalRole = new ArrayList<>()
+        tenantAssignmentsGlobalRole.add(taGlobalRole)
+
+        def taTenantRole = new TenantAssignment().with {ta ->  ta.onRole = clientRole.id; ta.forTenants.add("a"); ta}
+        List<TenantAssignment> tenantAssignmentsTenantRole = new ArrayList<>()
+        tenantAssignmentsTenantRole.add(taTenantRole)
+
+        when: "grant role to user"
+        service.verifyTenantAssignmentsWithCacheForUser(user, tenantAssignmentsGlobalRole, IdentityUserTypeEnum.IDENTITY_ADMIN.levelAsInt)
+
+        then:
+        notThrown(Exception)
+
+        1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
+        1 * authorizationService.hasDefaultUserRole(user) >> true
+
+        when: "authorized user adds role to user without the 'identity:default' role"
+        service.verifyTenantAssignmentsWithCacheForUser(user, tenantAssignmentsGlobalRole, IdentityUserTypeEnum.IDENTITY_ADMIN.levelAsInt)
+
+        then:
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException,ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER, ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER_MSG)
+
+        1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
+        1 * authorizationService.hasDefaultUserRole(user) >> false
+
+        when: "add non-global role to default user"
+        service.verifyTenantAssignmentsWithCacheForUser(user, tenantAssignmentsTenantRole, IdentityUserTypeEnum.IDENTITY_ADMIN.levelAsInt)
+
+        then:
+        ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, ERROR_CODE_INVALID_ATTRIBUTE, String.format(ERROR_CODE_ROLE_ASSIGNMENT_GLOBAL_ROLE_ASSIGNMENT_ONLY_MSG_PATTERN, clientRole.id))
+
+        1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
+        1 * authorizationService.hasDefaultUserRole(user) >> true
+        1 * tenantService.getTenant("a") >> new Tenant().with { it -> it.domainId = user.domainId; it}
     }
 
     def "replaceTenantAssignmentsOnUserGroup: Verify static check validations with no backend checks"() {

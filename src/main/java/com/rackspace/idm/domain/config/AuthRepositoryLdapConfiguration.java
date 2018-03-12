@@ -1,13 +1,9 @@
 package com.rackspace.idm.domain.config;
 
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPConnectionPool;
-import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +33,7 @@ public class AuthRepositoryLdapConfiguration {
 
     @Bean(destroyMethod = "close", name = "connectionToAuth")
     public LDAPConnectionPool connection() {
-        
-        boolean isTrusted = config.getBoolean("ldap.server.trusted", false);
-        if (!isTrusted) {
+        if (!identityConfig.getStaticConfig().getEDirServerTrusted()) {
             return null;
         }
         
@@ -58,24 +52,19 @@ public class AuthRepositoryLdapConfiguration {
 
         LDAPConnectionPool connPool;
         try {
-            boolean isSSL = config.getBoolean("auth.ldap.useSSL");
-            LDAPConnection conn;
-            if (isSSL) {
-                SSLSocketFactory socketFactory = new SSLUtil(new TrustAllTrustManager()).createSSLSocketFactory();
-                if (identityConfig.getStaticConfig().shouldEdirConnectionPoolUseAuthenticatedConnections()) {
-                    String bindDn = identityConfig.getStaticConfig().getEdirBindDn();
-                    String bindPw = identityConfig.getStaticConfig().getEdirBindPassword();
-                    conn = edirConnectionFactory.createAuthenticatedEncryptedConnection(socketFactory, host, port, bindDn, bindPw);
-                } else {
-                    conn = edirConnectionFactory.createAnonymousEnryptedConnection(socketFactory, host, port);
-                }
-            } else {
-                if (identityConfig.getStaticConfig().shouldEdirConnectionPoolUseAuthenticatedConnections()){
-                    throw new IllegalStateException("Cannot use authenticated connections to eDir without the use of TLS/SSL.");
-                }
-                conn = edirConnectionFactory.createAnonymousUnenryptedConnection(host, port);
-            }
-            connPool = edirConnectionFactory.createConnectionPool(conn, initPoolSize, maxPoolSize);
+            LDAPConnection connection;
+            SSLSocketFactory socketFactory = new SSLUtil(new TrustAllTrustManager()).createSSLSocketFactory();
+            String bindDn = identityConfig.getStaticConfig().getEdirBindDn();
+            String bindPw = identityConfig.getStaticConfig().getEdirBindPassword();
+            connection = edirConnectionFactory.createAuthenticatedEncryptedConnection(socketFactory, host, port, bindDn, bindPw);
+
+            LDAPConnectionOptions connectionOptions = new LDAPConnectionOptions();
+            connectionOptions.setConnectTimeoutMillis(identityConfig.getStaticConfig().getEDirConnectionConnectTimeout());
+            connectionOptions.setResponseTimeoutMillis(OperationType.BIND, identityConfig.getStaticConfig().getEDirConnectionBindTimeout());
+            connectionOptions.setResponseTimeoutMillis(OperationType.SEARCH, identityConfig.getStaticConfig().getEDirConnectionSearchTimeout());
+            connection.setConnectionOptions(connectionOptions);
+
+            connPool = edirConnectionFactory.createConnectionPool(connection, initPoolSize, maxPoolSize);
         } catch (LDAPException e) {
             logger.error(CONNECT_ERROR_STRING, e);
             throw new IllegalStateException(CONNECT_ERROR_STRING, e);

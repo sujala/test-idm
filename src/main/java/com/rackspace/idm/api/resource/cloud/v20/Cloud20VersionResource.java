@@ -1386,6 +1386,15 @@ public class Cloud20VersionResource {
         return cloud20Service.createSecretQA(authToken, userId, secretQA).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @GET
+    @Path("users/{userId}/RAX-AUTH/phone-pin")
+    public Response getPhonePin(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId){
+        return cloud20Service.getPhonePin(authToken, userId).build();
+    }
+
     // ******************************************************* //
     // RAX-GRPADM Extension //
     // ******************************************************* //

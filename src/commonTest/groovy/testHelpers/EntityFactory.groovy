@@ -302,6 +302,12 @@ class EntityFactory extends Specification {
         createTenantRole(name, RoleTypeEnum.STANDARD)
     }
 
+    def createPhonePin() {
+        return new PhonePin().with {
+            it.pin = "1234"
+            return it
+        }
+    }
 
     def createTenantRoleForGroup(String groupId = Cloud20Utils.createRandomString(), String roleId = Cloud20Utils.createRandomString()) {
         new TenantRole().with {

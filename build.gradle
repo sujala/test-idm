@@ -6,7 +6,9 @@ apply plugin: 'org.akhikhl.gretty'
 apply plugin: 'idea'
 apply plugin: 'nexus'
 apply plugin: 'jacoco'
+apply plugin: 'maven-publish'
 apply plugin: "org.unbroken-dome.test-sets"
+apply plugin: "com.jfrog.artifactory"
 
 testSets {
     commonTest
@@ -18,12 +20,14 @@ buildscript {
     repositories {
         maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/central" }
         maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/thirdparty"}
+        maven { url "${artifactory_contextUrl}/maven" }
     }
 
     dependencies {
         classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.3'
         classpath 'org.akhikhl.gretty:gretty:1.4.2'
         classpath 'org.unbroken-dome.gradle-plugins:gradle-testsets-plugin:1.4.2'
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4+"
     }
 }
 
@@ -160,7 +164,7 @@ dependencies {
         exclude(group: 'org.apache.struts', module: 'struts-taglib')
         exclude(group: 'org.apache.struts', module: 'struts-tiles')
     }
-    compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'3.1.1'
+    compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'4.0.4'
     compile group: 'commons-codec', name: 'commons-codec', version:'1.10'
     compile group: 'commons-configuration', name: 'commons-configuration', version:'1.9'
     compile group: 'commons-collections', name: 'commons-collections', version:'3.2.1'
@@ -659,5 +663,42 @@ task debugme << {
         println ""
         println "####runtimeClasspath#### = "+it.runtimeClasspath.asPath
         println "***********************************************************************"
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact zipResources
+            artifact zipConfig
+            artifact zipLdap
+            artifact zipEdirLdif
+            artifact zipEdirConfig
+            artifact zipResources
+            artifact zipRepose
+            artifact jar
+            artifact war
+        }
+    }
+}
+
+artifactory {
+    contextUrl = "${artifactory_contextUrl}"
+    publish {
+        repository {
+            repoKey = 'identity-maven-local'
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+            maven = true
+        }
+        defaults {
+            publications ('mavenJava')
+        }
+    }
+    resolve {
+        repository {
+            repoKey = 'gradle'
+            maven = true
+        }
     }
 }

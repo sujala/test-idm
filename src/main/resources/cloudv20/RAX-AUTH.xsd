@@ -107,6 +107,15 @@
     <element name="question" type="RAX-AUTH:Question" />
     <element name="secretqas" type="RAX-AUTH:SecretQAs" />
     <element name="secretqa" type="RAX-AUTH:SecretQA" />
+
+    <element name="phonePin" type="RAX-AUTH:PhonePin" >
+        <annotation>
+            <xsd:documentation>
+                <p>A numeric phone PIN that is assigned to the user when created.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
+
     <element name="rsaCredentials" type="RAX-AUTH:RsaCredentials" substitutionGroup="identity:credential" />
     <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
     <element name="forgotPasswordCredentials" type="RAX-AUTH:ForgotPasswordCredentials" />
@@ -517,6 +526,18 @@
         <sequence>
             <element name="question" type="RAX-AUTH:Question" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
+    </complexType>
+
+    <complexType name="PhonePin">
+        <attribute name="pin" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Unique numeric pin.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
     <complexType name="SecretQA">

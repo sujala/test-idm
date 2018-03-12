@@ -162,6 +162,7 @@ class RootServiceTest extends Specification {
     @Shared DefaultAuthenticateResponseService authenticateResponseService
     @Shared AETokenService aeTokenService
     @Shared AETokenRevocationService aeTokenRevocationService
+    @Shared PhonePinService  phonePinService
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -676,6 +677,11 @@ class RootServiceTest extends Specification {
     def mockTokenRevocationService(service) {
         tokenRevocationService = Mock()
         service.tokenRevocationService = tokenRevocationService
+    }
+
+    def mockPhonePinService(service) {
+        phonePinService = Mock()
+        service.phonePinService = phonePinService
     }
 
     /*

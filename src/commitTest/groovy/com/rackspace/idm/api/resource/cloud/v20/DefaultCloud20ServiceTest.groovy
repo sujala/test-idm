@@ -2142,6 +2142,89 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * identityUserService.checkAndGetUserById("userId") >> user
     }
 
+    def "Get phone pin verifies user level access throws NotAuthorizedException"() {
+        when:
+        def result = service.getPhonePin(authToken, "userId").build()
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess()
+        1 * authorizationService.verifyUserLevelAccess(_) >> { throw new NotAuthorizedException() }
+
+        assert result.status == 401
+    }
+
+    def "Get phone pin successfully retrieve the pin"() {
+        given:
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+        def phonePinEntity = entityFactory.createPhonePin()
+        def userScopeAccess = createUserScopeAccess("tokenString", "userRsId", "clientId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
+
+        when:
+        def result = service.getPhonePin(authToken, "userId").build()
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> userScopeAccess
+        1 * userService.getUserByScopeAccess(_, _) >> caller
+        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * identityUserService.checkAndGetEndUserById(_) >> user
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
+        1 * phonePinService.checkAndGetPhonePin(_) >> phonePinEntity
+
+        assert result.status == 200
+
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = result.entity
+        assert phonePin.pin == phonePinEntity.pin
+    }
+
+    def "Get phone pin returns 403 with identity:default caller of different user"() {
+        given:
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def userScopeAccess = createUserScopeAccess("tokenString", "userRsId", "clientId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
+
+        when:
+        def result = service.getPhonePin(authToken, "userId").build()
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> userScopeAccess
+        1 * userService.getUserByScopeAccess(_, _) >> caller
+        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.DEFAULT_USER
+
+        assert result.status == 403
+    }
+
+    def "Get phone pin with identity:user-admin caller belong to a different domain"() {
+        given:
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createUser("user", "userId", "domainId2", "REGION")
+        def userScopeAccess = createUserScopeAccess("tokenString", "userRsId", "clientId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
+
+        when:
+        def result = service.getPhonePin(authToken, "userId").build()
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> userScopeAccess
+        1 * userService.getUserByScopeAccess(_, _) >> caller
+        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * identityUserService.checkAndGetEndUserById(_) >> user
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
+
+        assert result.status == 403
+    }
+
+    def "Get phone pin returns 403 for a racker impersonated token"() {
+        given:
+        requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest() >> true
+
+        when:
+        def result = service.getPhonePin(authToken, "userId").build()
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createScopeAccess()
+
+        assert result.status == 403
+    }
+
     def "getAdminsForDefaultUser - Expired Fed users will return 404"() {
         given:
         allowUserAccess()
@@ -4366,6 +4449,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockRoleConverter(service)
         mockUserGroupService(service)
         mockRuleService(service)
+        mockPhonePinService(service)
     }
 
     def mockMisc() {

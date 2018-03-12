@@ -26,6 +26,7 @@ class TestBaseV2(base.TestBase):
             url=cls.url,
             serialize_format=cls.test_config.serialize_format,
             deserialize_format=cls.test_config.deserialize_format)
+
         req_obj = requests.AuthenticateWithPassword(
             user_name=cls.identity_config.identity_admin_user_name,
             password=cls.identity_config.identity_admin_password)
@@ -169,7 +170,7 @@ class TestBaseV2(base.TestBase):
         return id_client
 
     @classmethod
-    def generate_racker_client(cls,  request_object=None, token=None):
+    def generate_racker_client(cls, request_object=None, token=None):
 
         racker_client = client.IdentityAPIClient(
             url=cls.internal_url,
