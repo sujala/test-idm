@@ -3458,6 +3458,22 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 403
     }
 
+    def "deleteUser - Delete userAdminDN on domain when deleting user-admin" () {
+        given:
+        allowUserAccess()
+        def user = entityFactory.createUser()
+
+        when:
+        service.deleteUser(headers, authToken, "userId")
+
+        then:
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * identityUserService.checkAndGetUserById(_) >> user
+        1 * authorizationService.hasUserAdminRole(user) >> true
+        1 * domainService.removeDomainUserAdminDN(user)
+        1 * identityUserService.deleteUser(_)
+    }
+
     def "User with user-manage role can delete user" () {
         given:
         allowUserAccess()

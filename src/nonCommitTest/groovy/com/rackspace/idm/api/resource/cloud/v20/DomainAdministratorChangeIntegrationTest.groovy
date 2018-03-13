@@ -4,6 +4,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainAdministratorChange
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.DomainDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantService
@@ -20,7 +22,6 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 import static org.apache.http.HttpStatus.SC_OK
 
 class DomainAdministratorChangeIntegrationTest extends RootIntegrationTest {
@@ -36,6 +37,12 @@ class DomainAdministratorChangeIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityUserService identityUserService
+
+    @Autowired
+    UserDao userDao
+
+    @Autowired
+    DomainDao domainDao
 
     void doSetupSpec() {
         def response = cloud20.authenticatePassword(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
@@ -247,6 +254,42 @@ class DomainAdministratorChangeIntegrationTest extends RootIntegrationTest {
         utils.deleteTenant(tenant2)
         utils.deleteTenant(tenant3)
         reloadableConfiguration.reset()
+    }
+
+    def "changeDomainAdministrator: promote user updates domain's userAdminDN"() {
+        given:
+        def userAdmin = utils.createCloudAccount(identityAdminToken)
+        def domainId = userAdmin.domainId
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def userManage = utils.createUser(userAdminToken, testUtils.getRandomUUID("userManage"), domainId)
+        utils.addRoleToUser(userManage, Constants.USER_MANAGE_ROLE_ID)
+
+        when: "get userAdmin"
+        def userAdminEntity = userDao.getUserById(userAdmin.id)
+        def domainEntity = domainDao.getDomain(domainId)
+
+        then: "verify domain's userAdminDN"
+        domainEntity.userAdminDN == userAdminEntity.getDn()
+
+        when: "upgrade user-manager"
+        def promoteUserManagerChange = createAdminChange(userManage.id, userAdmin.id)
+        def userManagePromoteResponse = cloud20.changeDomainAdministrator(identityAdminToken, domainId, promoteUserManagerChange)
+
+        then:
+        userManagePromoteResponse.status == HttpStatus.SC_NO_CONTENT
+
+        when: "get promoted user manager"
+        def userManagerEntity = userDao.getUserById(userManage.id)
+        domainEntity = domainDao.getDomain(domainId)
+
+        then:
+        domainEntity.userAdminDN == userManagerEntity.getDn()
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteUserQuietly(userManage)
+        utils.deleteTestDomainQuietly(domainId)
     }
 
     enum TenantAssignmentType { GLOBAL, TENANT }

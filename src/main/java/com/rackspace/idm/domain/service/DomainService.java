@@ -40,4 +40,22 @@ public interface DomainService {
      * Generates a UUID for a new domain
      */
     String getDomainUUID();
+
+    /**
+     * Update domain's userAdmin DN to supplied user. The user supplied must be have the "identity:user-admin" role.
+     *
+     * @param user
+     * @throws IllegalArgumentException If supplied user, user's uniqueId, user's domainId, or user's roles are null.
+     * @throws IllegalArgumentException If supplied user is not a user-admin.
+     */
+    void updateDomainUserAdminDN(User user);
+
+    /**
+     * Remove the user admin DN set on domain. This method will remove the specified user from the "rsUserAdminDN"
+     * attribute on domain if the user is currently set as the "rsUserAdminDN".
+     *
+     * @param user
+     * @throws IllegalArgumentException If supplied user, user's domainId, or user's uniqueId is null;
+     */
+    void removeDomainUserAdminDN(User user);
 }
