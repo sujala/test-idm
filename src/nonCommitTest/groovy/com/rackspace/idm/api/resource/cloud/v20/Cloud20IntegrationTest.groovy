@@ -10,7 +10,8 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.config.IdentityConfig
-
+import com.rackspace.idm.domain.dao.DomainDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -54,6 +55,12 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Autowired
     @Qualifier("tokenRevocationService")
     TokenRevocationService tokenRevocationService;
+
+    @Autowired
+    DomainDao domainDao
+
+    @Autowired
+    UserDao userDao
 
     @Shared JAXBObjectFactories objFactories;
 
@@ -4300,6 +4307,40 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         contentType                     | _
         MediaType.APPLICATION_XML_TYPE  | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+
+    def "deleteUser: deleting user-admin unset the userAdminDN on domain"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userAdminEntity = userDao.getUserById(userAdmin.id)
+
+        when: "delete default user"
+        utils.deleteUser(defaultUser)
+        def domain = domainDao.getDomain(domainId)
+
+        then: "assert deleting default user does not update domain's userAdminDN"
+        domain.userAdminDN == userAdminEntity.getDn()
+
+        when: "delete user manage"
+        utils.deleteUser(userManage)
+        domain = domainDao.getDomain(domainId)
+
+        then: "assert deleting user manage does not update domain's userAdminDN"
+        domain.userAdminDN == userAdminEntity.getDn()
+
+        when: "delete user admin"
+        utils.deleteUser(userAdmin)
+        domain = domainDao.getDomain(domainId)
+
+        then: "assert deleting user admin removes domain's userAdminDN"
+        domain.userAdminDN == null
+
+        cleanup:
+        utils.deleteUserQuietly(identityAdmin)
+        utils.deleteDomain(domainId)
     }
 
     def getEntity(response, type) {

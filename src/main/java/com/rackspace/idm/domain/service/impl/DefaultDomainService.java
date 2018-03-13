@@ -11,6 +11,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -318,6 +319,46 @@ public class DefaultDomainService implements DomainService {
     @Override
     public String getDomainUUID() {
         return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    @Override
+    public void updateDomainUserAdminDN(User user) {
+        Validate.notNull(user);
+        Validate.notNull(user.getUniqueId());
+        Validate.notNull(user.getDomainId());
+        Validate.notEmpty(user.getRoles());
+
+        // Verify user has user-admin role
+        TenantRole userAdminRole = null;
+        for (TenantRole tenantRole : user.getRoles()) {
+            if (IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(tenantRole.getName())) {
+                userAdminRole = tenantRole;
+                break;
+            }
+        }
+
+        if (userAdminRole == null) {
+            throw new IllegalArgumentException("Supplied user is not a user-admin, cannot update domain's userAdminDN.");
+        }
+
+        Domain updateDomain = getDomain(user.getDomainId());
+        updateDomain.setUserAdminDN(user.getDn());
+        updateDomain(updateDomain);
+    }
+
+    @Override
+    public void removeDomainUserAdminDN(User user) {
+        Validate.notNull(user);
+        Validate.notNull(user.getDomainId());
+        Validate.notNull(user.getUniqueId());
+
+        Domain domain = getDomain(user.getDomainId());
+
+        // Verify that userAdminDn being delete matches the user's DN.
+        if (domain.getUserAdminDN() != null && domain.getUserAdminDN().equals(user.getDn())) {
+            domain.setUserAdminDN(null);
+            updateDomain(domain);
+        }
     }
 
     @Override

@@ -1,9 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.DomainDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspacecloud.docs.auth.api.v1.AuthData
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog
 import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault
@@ -22,6 +23,8 @@ import testHelpers.RootIntegrationTest
 class Cloud11IntegrationTest extends RootIntegrationTest {
 
     @Autowired Configuration config
+    @Autowired UserDao userDao
+    @Autowired DomainDao domainDao
 
     @Shared def serviceAdmin
     @Shared def serviceAdminToken
@@ -742,6 +745,43 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         ""     | 200
         "   "  | 200
         null   | 200
+    }
+
+    def "addUser: adding new user-admin sets domain's userAdminDN"() {
+        given:
+        def userAdmin = utils11.createUser()
+        def domainId = Integer.toString(userAdmin.mossoId)
+
+        when:
+        def userAdminEntity = userDao.getUserByUsername(userAdmin.id)
+        def domainEntity = domainDao.getDomain(domainId)
+
+        then:
+        domainEntity.userAdminDN == userAdminEntity.getDn()
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTenantQuietly(domainId)
+        utils.deleteTenantQuietly(userAdmin.nastId)
+        utils.deleteTestDomainQuietly(domainId)
+    }
+
+    def "deleteUser: removes domain's userAdminDN"() {
+        given:
+        def userAdmin = utils11.createUser()
+        def domainId = Integer.toString(userAdmin.mossoId)
+
+        when:
+        utils11.deleteUser(userAdmin)
+        def domainEntity = domainDao.getDomain(domainId)
+
+        then:
+        domainEntity.userAdminDN == null
+
+        cleanup:
+        utils.deleteTenantQuietly(domainId)
+        utils.deleteTenantQuietly(userAdmin.nastId)
+        utils.deleteTestDomainQuietly(domainId)
     }
 
     def authAndExpire(username, key) {

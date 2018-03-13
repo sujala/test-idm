@@ -94,6 +94,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     private AuthenticateResponseService authenticateResponseService;
 
+    @Autowired
+    private DomainService domainService;
+
     private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
     private org.openstack.docs.identity.api.v2.ObjectFactory v2ObjectFactory = new org.openstack.docs.identity.api.v2.ObjectFactory();
 
@@ -519,6 +522,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             this.userService.deleteUser(retrievedUser);
+
+            // This operation is conditional based on whether the supplied user is actually registered on the Domain
+            // entry as the user-admin.
+            domainService.removeDomainUserAdminDN(retrievedUser);
 
             //AtomHopper
             atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DELETED);
