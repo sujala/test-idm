@@ -355,7 +355,7 @@ public class DefaultDomainService implements DomainService {
         Domain domain = getDomain(user.getDomainId());
 
         // Verify that userAdminDn being delete matches the user's DN.
-        if (domain.getUserAdminDN() != null && domain.getUserAdminDN().equals(user.getDn())) {
+        if (domain != null && domain.getUserAdminDN() != null && domain.getUserAdminDN().equals(user.getDn())) {
             domain.setUserAdminDN(null);
             updateDomain(domain);
         }
