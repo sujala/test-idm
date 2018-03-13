@@ -3181,7 +3181,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             precedenceValidator.verifyCallerCanListRolesForUser(caller, targetUser);
 
-            SourcedRoleAssignments assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
+            SourcedRoleAssignments assignments;
+            ScopeAccess sa = requestContextHolder.getRequestContext().getSecurityContext().getCallerToken();
+            // If the token's user matches the user we are listing roles for, return the roles for the user under the DA
+            if (sa instanceof UserScopeAccess && ((UserScopeAccess) sa).isDelegationToken() && ((UserScopeAccess) sa).getUserRsId().equalsIgnoreCase(userId) && caller instanceof EndUser) {
+                assignments = tenantService.getSourcedRoleAssignmentsForUser((EndUser) caller);
+            } else {
+                assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
+            }
 
             if (StringUtils.isNotBlank(params.onTenantId)) {
                 assignments = assignments.filterByTenantId(params.onTenantId);
