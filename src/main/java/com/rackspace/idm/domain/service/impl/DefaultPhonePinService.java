@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.PhonePin;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.PhonePinService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -27,8 +28,11 @@ public class DefaultPhonePinService implements PhonePinService {
     }
 
     @Override
-    public void verifyPhonePin(EndUser user, String pin) throws IOException, JAXBException {
-        // Not Implemented
+    public void verifyPhonePin(EndUser user, String pin) {
+        if (!StringUtils.equals(pin, checkAndGetPhonePin(user).getPin())) {
+            throw new BadRequestException(String.format("Incorrect phone pin for userId: '%s'", user.getId()),
+                    ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+        }
     }
 
     @Override

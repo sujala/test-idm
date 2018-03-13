@@ -2539,6 +2539,24 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder verifyPhonePin(String authToken, String userId, PhonePin phonePin) {
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName());
+
+            if (phonePin != null && StringUtils.isBlank(phonePin.getPin())) {
+                throw new BadRequestException("Invalid phone pin", ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+            }
+            EndUser user = this.identityUserService.checkAndGetEndUserById(userId);
+            phonePinService.verifyPhonePin(user, phonePin.getPin());
+
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
     public ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));

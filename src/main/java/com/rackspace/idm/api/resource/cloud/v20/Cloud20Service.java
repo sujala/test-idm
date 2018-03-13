@@ -235,6 +235,8 @@ public interface Cloud20Service {
 
     ResponseBuilder getPhonePin(String authToken, String userId);
 
+    ResponseBuilder verifyPhonePin(String authToken, String userId, PhonePin phonePin);
+
     ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId, String serviceId,  boolean applyRcnRoles) ;
 
     ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String group, Integer marker, Integer limit) ;

@@ -2225,6 +2225,62 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         assert result.status == 403
     }
 
+    def "Successfully verified the phone pin"() {
+        given:
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
+            it.pin = "2342"
+            it
+        }
+
+        when:
+        def result = service.verifyPhonePin(authToken, "userId", phonePin).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> createUserScopeAccess()
+        1 * authorizationService.verifyEffectiveCallerHasRoleByName(_)
+        1 * identityUserService.checkAndGetEndUserById(_) >> user
+        1 * phonePinService.verifyPhonePin(_,_)
+
+        assert result.status == 204
+    }
+
+
+    def "Input phone pin empty for verify phone pin call"() {
+        given:
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
+            it.pin = ""
+            it
+        }
+
+        when:
+        def result = service.verifyPhonePin(authToken, "userId", phonePin).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> createUserScopeAccess()
+        1 * authorizationService.verifyEffectiveCallerHasRoleByName(_)
+
+        assert result.status == 400
+    }
+
+
+    def "Verify phone pin validates the token"() {
+        given:
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
+            it.pin = "2323"
+            it
+        }
+
+        when:
+        def result = service.verifyPhonePin(authToken, "userId", phonePin).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> { throw new NotAuthorizedException() }
+
+        assert result.status == 401
+    }
+
     def "getAdminsForDefaultUser - Expired Fed users will return 404"() {
         given:
         allowUserAccess()
