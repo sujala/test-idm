@@ -3172,7 +3172,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listEffectiveRolesForUser(HttpHeaders httpHeaders, String authToken, String userId, ListEffectiveRolesForUserParams params) {
         try {
             // Authorization Restrictions
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
@@ -3182,9 +3182,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             precedenceValidator.verifyCallerCanListRolesForUser(caller, targetUser);
 
             SourcedRoleAssignments assignments;
-            ScopeAccess sa = requestContextHolder.getRequestContext().getSecurityContext().getCallerToken();
             // If the token's user matches the user we are listing roles for, return the roles for the user under the DA
-            if (sa instanceof UserScopeAccess && ((UserScopeAccess) sa).isDelegationToken() && ((UserScopeAccess) sa).getUserRsId().equalsIgnoreCase(userId) && caller instanceof EndUser) {
+            if (token.isDelegationToken() && token.getIssuedToUserId().equalsIgnoreCase(userId) && caller instanceof EndUser) {
                 assignments = tenantService.getSourcedRoleAssignmentsForUser((EndUser) caller);
             } else {
                 assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
