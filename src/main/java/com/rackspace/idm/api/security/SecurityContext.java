@@ -2,6 +2,7 @@ package com.rackspace.idm.api.security;
 
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.exception.UnrecoverableIdmException;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.StringUtils;
@@ -74,10 +75,11 @@ public class SecurityContext {
      *
      * @param expectedAuthToken the expected token string.
      * @return
-     *
+     * @deprecated use {@link #getAndVerifyEffectiveCallerTokenAsBaseToken} when possible
      * @throws com.rackspace.idm.exception.NotFoundException if the token is not set in the security context
      * @throws java.lang.IllegalStateException If the specified token string does not match that in the security context
      */
+    @Deprecated
     public ScopeAccess getAndVerifyEffectiveCallerToken(String expectedAuthToken) {
         if (StringUtils.isBlank(expectedAuthToken) || effectiveCallerToken == null || effectiveCallerToken.isAccessTokenExpired(new DateTime())) {
             String errMsg = "No valid token provided. Please use the 'X-Auth-Token' header with a valid token.";
@@ -89,5 +91,22 @@ public class SecurityContext {
             throw new IllegalStateException(errMsg);
         }
         return effectiveCallerToken;
+    }
+
+    /**
+     * Returns interface rather than a concrete class to avoid coupling. Ideally all calls would migrate to using this
+     * call over {@link #getAndVerifyEffectiveCallerToken(String)} and the use of ScopeAccess would be eliminated...
+     *
+     * @return
+     */
+    public BaseUserToken getAndVerifyEffectiveCallerTokenAsBaseToken(String expectedAuthToken) {
+        ScopeAccess token = getAndVerifyEffectiveCallerToken(expectedAuthToken);
+
+        // The only ScopeAccess that is not a BaseUserToken is the unused ClientScopeAccess to this should never occur
+        if (!(token instanceof BaseUserToken)) {
+            throw new UnrecoverableIdmException("Unrecognized token type");
+        }
+
+        return (BaseUserToken) token;
     }
 }
