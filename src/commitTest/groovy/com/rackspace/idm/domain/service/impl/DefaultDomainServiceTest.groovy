@@ -2,17 +2,12 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.User
 import com.unboundid.ldap.sdk.DN
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
-/**
- * Created with IntelliJ IDEA.
- * User: jacob
- * Date: 2/27/13
- * Time: 2:02 PM
- * To change this template use File | Settings | File Templates.
- */
 class DefaultDomainServiceTest extends RootServiceTest {
 
     @Shared def DefaultDomainService service
@@ -27,6 +22,7 @@ class DefaultDomainServiceTest extends RootServiceTest {
         mockTenantService(service)
         mockDomainDao(service)
         mockAuthorizationService(service)
+        mockIdentityConfig(service)
     }
 
     def "filterUserAdmins checks users for user-admin role"() {
@@ -268,5 +264,162 @@ class DefaultDomainServiceTest extends RootServiceTest {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    @Unroll
+    def "getEnabledDomainAdmins: call correct service methods - domainUserAdminLookup = #domainUserAdminLookup"() {
+        def domain = entityFactory.createDomain()
+        def user = entityFactory.createUser()
+
+        when: "enabled user-admins"
+        List<User> userAdminList = service.getEnabledDomainAdmins(domain.domainId)
+
+        then:
+        1 * identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> domainUserAdminLookup
+
+        if (domainUserAdminLookup) {
+            1 * domainDao.getDomain(domain.domainId) >> domain
+            1 * userService.getUserAdminByDomain(domain) >> user
+            0 * userService.getUsersWithDomainAndEnabledFlag(_, _)
+        } else {
+            0 * domainDao.getDomain(_)
+            0 * userService.getUserAdminByDomain(_)
+            1 * userService.getUsersWithDomainAndEnabledFlag(domain.domainId, true) >> [user]
+            1 * authorizationService.hasUserAdminRole(user) >> true
+        }
+
+        userAdminList.size() == 1
+
+        when: "disabled user-admins"
+        user.enabled = false
+        userAdminList = service.getEnabledDomainAdmins(domain.domainId)
+
+        then:
+        1 * identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> domainUserAdminLookup
+
+        if (domainUserAdminLookup) {
+            1 * domainDao.getDomain(domain.domainId) >> domain
+            1 * userService.getUserAdminByDomain(domain) >> user
+            0 * userService.getUsersWithDomainAndEnabledFlag(_, _)
+        } else {
+            0 * domainDao.getDomain(_)
+            0 * userService.getUserAdminByDomain(_)
+            1 * userService.getUsersWithDomainAndEnabledFlag(domain.domainId, true) >> []
+        }
+
+        userAdminList.size() == 0
+
+        where:
+        domainUserAdminLookup << [true, false]
+    }
+
+    /**
+     * This method will make extra calls when 'feature.enable.user.admin.look.up.by.domain' is enabled for domains that
+     * have not had their user-admin migrated, the user is disabled, or if the user or domain do not exist.
+     */
+    def "getEnabledDomainAdmins:  test 'feature.enable.user.admin.look.up.by.domain' set to true"() {
+        def domain = entityFactory.createDomain()
+
+        identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> true
+
+        when: "domain not found"
+        List<User> userAdminList = service.getEnabledDomainAdmins(domain.domainId)
+
+        then:
+        1 * domainDao.getDomain(domain.domainId) >> null
+        0 * userService.getUserAdminByDomain(_)
+        1 * userService.getUsersWithDomainAndEnabledFlag(domain.domainId, true) >> []
+
+        userAdminList.size() == 0
+
+        when: "domain's userAdminDN is not set or the user is not found"
+        userAdminList = service.getEnabledDomainAdmins(domain.domainId)
+
+        then:
+        1 * domainDao.getDomain(domain.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> null
+        1 * userService.getUsersWithDomainAndEnabledFlag(domain.domainId, true) >> []
+
+        userAdminList.size() == 0
+    }
+
+    @Unroll
+    def "getDomainAdmins: call correct service methods - domainUserAdminLookup = #domainUserAdminLookup"() {
+        def domain = entityFactory.createDomain()
+        def user = entityFactory.createUser()
+
+        when: "enabled user-admins"
+        List<User> userAdminList = service.getDomainAdmins(domain.domainId)
+
+        then:
+        1 * identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> domainUserAdminLookup
+
+        if (domainUserAdminLookup) {
+            1 * domainDao.getDomain(domain.domainId) >> domain
+            1 * userService.getUserAdminByDomain(domain) >> user
+            0 * userService.getUsersWithDomain(_)
+        } else {
+            0 * domainDao.getDomain(_)
+            0 * userService.getUserAdminByDomain(_)
+            1 * userService.getUsersWithDomain(domain.domainId) >> [user]
+            1 * authorizationService.hasUserAdminRole(user) >> true
+        }
+
+        userAdminList.size() == 1
+        userAdminList.get(0) == user
+
+        when: "disabled user-admins"
+        user.enabled = false
+        userAdminList = service.getDomainAdmins(domain.domainId)
+
+        then:
+        1 * identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> domainUserAdminLookup
+
+        if (domainUserAdminLookup) {
+            1 * domainDao.getDomain(domain.domainId) >> domain
+            1 * userService.getUserAdminByDomain(domain) >> user
+            0 * userService.getUsersWithDomain(_)
+        } else {
+            0 * domainDao.getDomain(_)
+            0 * userService.getUserAdminByDomain(_)
+            1 * userService.getUsersWithDomain(domain.domainId) >> [user]
+            1 * authorizationService.hasUserAdminRole(user) >> true
+        }
+
+        userAdminList.size() == 1
+        userAdminList.get(0) == user
+
+        where:
+        domainUserAdminLookup << [true, false]
+    }
+
+    /**
+     * This method will make extra calls when 'feature.enable.user.admin.look.up.by.domain' is enabled for domains that
+     * have not had their user-admin migrated, or if the user or domain do not exist.
+     */
+    def "getDomainAdmins:  test 'feature.enable.user.admin.look.up.by.domain' set to true"() {
+        def domain = entityFactory.createDomain()
+
+        identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> true
+
+        when: "domain not found"
+        List<User> userAdminList = service.getDomainAdmins(domain.domainId)
+
+        then:
+        1 * domainDao.getDomain(domain.domainId) >> null
+        0 * userService.getUserAdminByDomain(_)
+        1 * userService.getUsersWithDomain(domain.domainId) >> []
+
+        userAdminList.size() == 0
+
+        when: "domain's userAdminDN is not set or the user is not found"
+        userAdminList = service.getDomainAdmins(domain.domainId)
+
+        then:
+        1 * domainDao.getDomain(domain.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> null
+        1 * userService.getUsersWithDomain(domain.domainId) >> []
+
+        userAdminList.size() == 0
     }
 }

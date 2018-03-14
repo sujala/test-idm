@@ -303,7 +303,25 @@ public class DefaultDomainService implements DomainService {
 
     @Override
     public List<User> getDomainAdmins(String domainId) {
-        return filterUserAdmins(userService.getUsersWithDomain(domainId));
+        List<User> userAdmins = new ArrayList<>();
+
+        if (identityConfig.getReloadableConfig().isUserAdminLookUpByDomain()) {
+            Domain domain = getDomain(domainId);
+            if (domain != null) {
+                User userAdmin = userService.getUserAdminByDomain(domain);
+                if (userAdmin != null) {
+                    userAdmins.add(userAdmin);
+                }
+            }
+        }
+
+        // Fallback to current mechanism if user-admin lookup by domain feature is disabled or no user-admin was set
+        // on the domain.
+        if (userAdmins.isEmpty()) {
+            userAdmins.addAll(filterUserAdmins(userService.getUsersWithDomain(domainId)));
+        }
+
+        return userAdmins;
     }
 
     @Override
@@ -313,7 +331,28 @@ public class DefaultDomainService implements DomainService {
 
     @Override
     public List<User> getEnabledDomainAdmins(String domainId) {
-        return filterUserAdmins(userService.getUsersWithDomainAndEnabledFlag(domainId, true));
+        List<User> userAdmins = new ArrayList<>();
+
+        boolean doesDomainUserAdminExist = false;
+        if (identityConfig.getReloadableConfig().isUserAdminLookUpByDomain()) {
+            Domain domain = getDomain(domainId);
+            if (domain != null) {
+                User userAdmin = userService.getUserAdminByDomain(domain);
+                doesDomainUserAdminExist = userAdmin != null;
+                if (doesDomainUserAdminExist && !userAdmin.isDisabled()) {
+                    userAdmins.add(userAdmin);
+                }
+            }
+        }
+
+        // Fallback to current mechanism if user-admin lookup by domain feature is disabled or no user-admin was set
+        // on the domain. Avoid calling fallback mechanism if the user-admin exist but is disabled.
+        if (userAdmins.isEmpty() && !doesDomainUserAdminExist) {
+            userAdmins.addAll(filterUserAdmins(userService.getUsersWithDomainAndEnabledFlag(domainId, true)));
+
+        }
+
+        return userAdmins;
     }
 
     @Override

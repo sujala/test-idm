@@ -4480,6 +4480,81 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == SC_BAD_REQUEST
     }
 
+    @Unroll
+    def "addUserToDomain: calls correct service methods - userType = #userType"() {
+        given:
+        allowUserAccess()
+        def domain = entityFactory.createDomain("someDomainId")
+        def user = entityFactory.createUser()
+        def role = entityFactory.createTenantRole()
+
+        when:
+        def response = service.addUserToDomain(authToken, domain.domainId, user.id)
+
+        then:
+        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
+
+        if (IdentityUserTypeEnum.SERVICE_ADMIN == userType) {
+            1 * authorizationService.verifyServiceAdminLevelAccess(_)
+            0 * domainService.getDomainAdmins(_)
+            1 * tenantService.getGlobalRolesForUser(user) >> [role]
+            1 * userService.updateUser(user)
+            0 * domainService.updateDomainUserAdminDN(_)
+        } else if (IdentityUserTypeEnum.IDENTITY_ADMIN == userType) {
+            1 * authorizationService.verifyServiceAdminLevelAccess(_)
+            0 * domainService.getDomainAdmins(_)
+            1 * tenantService.getGlobalRolesForUser(user) >> [role]
+            1 * userService.updateUser(user)
+            0 * domainService.updateDomainUserAdminDN(_)
+        } else if (IdentityUserTypeEnum.USER_ADMIN == userType) {
+            0 * authorizationService.verifyServiceAdminLevelAccess(_)
+            1 * domainService.getDomainAdmins(domain.domainId) >> []
+            1 * tenantService.getGlobalRolesForUser(user) >> [role]
+            1 * userService.updateUser(user)
+            1 * domainService.updateDomainUserAdminDN(user)
+        } else if (IdentityUserTypeEnum.USER_MANAGER == userType) {
+            0 * authorizationService.verifyServiceAdminLevelAccess(_)
+            0 * domainService.getDomainAdmins(_)
+            1 * tenantService.getGlobalRolesForUser(user) >> [role]
+            1 * userService.updateUser(user)
+            0 * domainService.updateDomainUserAdminDN(_)
+        } else if (IdentityUserTypeEnum.DEFAULT_USER == userType) {
+            0 * authorizationService.verifyServiceAdminLevelAccess(_)
+            0 * domainService.getDomainAdmins(_)
+            1 * tenantService.getGlobalRolesForUser(user) >> [role]
+            1 * userService.updateUser(user)
+            0 * domainService.updateDomainUserAdminDN(_)
+        }
+
+        response.status == SC_NO_CONTENT
+
+        where:
+        userType << IdentityUserTypeEnum.values()
+    }
+
+    def "addUserToDomain: error check for user-admins"() {
+        given:
+        allowUserAccess()
+        def domain = entityFactory.createDomain("someDomainId")
+        def user = entityFactory.createUser()
+        def existingUserAdmin = entityFactory.createUser().with {
+            it.domainId = domain.domainId
+            it
+        }
+
+        when: "domain has an existing user-admin"
+        service.addUserToDomain(authToken, domain.domainId, user.id)
+
+        then:
+        thrown(ForbiddenException)
+        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * domainService.getDomainAdmins(domain.domainId) >> [existingUserAdmin]
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)

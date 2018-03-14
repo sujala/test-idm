@@ -1,9 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.service.UserService
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
@@ -23,6 +22,9 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityConfig identityConfig
+
+    @Autowired
+    UserService userService
 
     def setup() {
         tenant = utils.createTenant()
@@ -149,7 +151,9 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID("name")
         def user = utils.createUser(adminToken, username, domainId)
         // NOTE(jorge.munoz) Add user to domain still allows to add user to default domain
-        utils.addUserToDomain(utils.getIdentityAdminToken(), user.id, defaultDomainId)
+        com.rackspace.idm.domain.entity.User userForUpdate = userService.getUserById(user.id)
+        userForUpdate.setDomainId(defaultDomainId)
+        userService.updateUser(userForUpdate)
 
         def tenantId1 = testUtils.getRandomUUID("tenant")
         def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["cloud"]).with {

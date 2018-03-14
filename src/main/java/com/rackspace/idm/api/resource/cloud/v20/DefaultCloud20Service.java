@@ -2680,7 +2680,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 final ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
                 authorizationService.verifyIdentityAdminLevelAccess(requesterScopeAccess);
 
-                final User user = userService.getUserByTenantId(tenantId);
+                User user = null;
+                if (identityConfig.getReloadableConfig().isUserAdminLookUpByDomain()) {
+                    user = userService.getUserAdminByTenantId(tenantId);
+                }
+                // Fallback to current mechanism if user-admin lookup by domain feature is disabled or no user-admin was
+                // set on the domain.
+                if (user == null){
+                    user = userService.getUserByTenantId(tenantId);
+                }
                 if (user == null) {
                     throw new NotFoundException(String.format("User with tenantId %s not found", tenantId));
                 }
@@ -3831,6 +3839,19 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyServiceAdminLevelAccess(scopeAccess);
         }
 
+        // Verify status of domain before adding new user-admin.
+        boolean isUserAdmin = IdentityUserTypeEnum.USER_ADMIN == userType;
+        boolean isSameDomain = userDO.getDomainId().equalsIgnoreCase(domainId);
+        if (isUserAdmin && !isSameDomain) {
+            // Return a list of user-admins on domain whether or not they are enabled.
+            // NOTE: This will make an additional getDomain call.
+            List<User> userAdmins = domainService.getDomainAdmins(domainId);
+            if (!userAdmins.isEmpty()) {
+                throw new ForbiddenException("User-admin already exists for domain.");
+            }
+
+        }
+
         List<TenantRole> roles = userDO.getRoles();
         List<TenantRole> globalRoles = tenantService.getGlobalRolesForUser(userDO);
         if ((roles == null || roles.size() == 0) && (globalRoles == null || globalRoles.size() == 0)) {
@@ -3839,6 +3860,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         userDO.setDomainId(domain.getDomainId());
         this.userService.updateUser(userDO);
+
+        if (isUserAdmin && !isSameDomain) {
+            userDO.setRoles(globalRoles);
+            domainService.updateDomainUserAdminDN(userDO);
+        }
+
         return Response.noContent();
     }
 

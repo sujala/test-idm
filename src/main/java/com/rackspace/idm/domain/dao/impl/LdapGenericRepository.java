@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DaoGetEntityType;
 import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
@@ -18,6 +17,7 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class LdapGenericRepository<T extends UniqueId> extends LdapRepository implements GenericDao<T> {
 
@@ -253,6 +255,25 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_ORGANIZATIONAL_UNIT)
                 .addEqualAttribute(ATTR_OU, ouName).build();
         return getSingleEntry(dn, SearchScope.ONE, filter);
+    }
+
+    public T getObject(DN dn) {
+        Validate.notNull(dn);
+
+        String loggerMsg = String.format("Doing search for %s", entityType.toString());
+        getLogger().debug(loggerMsg);
+
+        T object;
+        try {
+            SearchResultEntry entry = getAppInterface().getEntry(dn.toString());
+            object = (T) LDAPPersister.getInstance(getEntityTypeFromEntry(entry)).decode(entry);
+        } catch (LDAPException e) {
+            getLogger().error(ERROR_GETTING_OBJECT, e);
+            throw new IllegalStateException(e);
+        }
+
+        getLogger().debug("Found - {}", object);
+        return object;
     }
 
     @Override

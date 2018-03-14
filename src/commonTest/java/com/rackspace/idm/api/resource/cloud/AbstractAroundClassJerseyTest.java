@@ -147,6 +147,7 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
         jerseyTest.setUp();
         jerseyTest.client().setConnectTimeout(null);
         jerseyTest.client().setReadTimeout(null);
+        jerseyTest.client().setFollowRedirects(false);
         resource = jerseyTest.resource();
         return resource;
     }

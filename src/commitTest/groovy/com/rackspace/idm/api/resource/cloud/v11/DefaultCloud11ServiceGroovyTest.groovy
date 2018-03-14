@@ -16,6 +16,7 @@ import com.rackspacecloud.docs.auth.api.v1.UserCredentials
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
 import org.apache.http.HttpStatus
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import javax.servlet.http.HttpServletRequest
@@ -24,13 +25,7 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriInfo
 import javax.xml.bind.JAXBElement
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 12/12/12
- * Time: 1:11 PM
- * To change this template use File | Settings | File Templates.
- */
+
 class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
 
     @Shared DefaultCloud11Service service
@@ -72,6 +67,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         mockRequestContextHolder(service)
         mockAuthWithApiKeyCredentials(service)
         mockAuthConverterCloudV11(service)
+        mockIdentityConfig(service)
     }
 
     def "addBaseUrl handles missing attribute error"() {
@@ -174,34 +170,64 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         responseBuilder.build().status == 400
     }
 
-    def "GET - userByMossoId - returns 301" () {
+    @Unroll
+    def "GET - userByMossoId - returns 301 - domainUserAdminLookup = #domainUserAdminLookup" () {
         given:
         allowAccess()
-        userService.getUserByTenantId(_) >> createUser("1", "someName", 123, "nast")
+        def mossoId = "123"
+        def user = createUser("1", "someName", Integer.valueOf(mossoId), "nast")
 
 
         when:
-        Response.ResponseBuilder responseBuilder = service.getUserFromMossoId(request,123,null)
+        Response.ResponseBuilder responseBuilder = service.getUserFromMossoId(request, Integer.valueOf(mossoId),null)
 
         then:
         Response response = responseBuilder.build()
         response.status == 301
         response.metadata.get("Location")[0] == "/v1.1/users/someName"
+
+        1 * reloadableConfig.isUserAdminLookUpByDomain() >> domainUserAdminLookup
+
+        if (domainUserAdminLookup) {
+            1 * userService.getUserAdminByTenantId(mossoId) >> user
+            0 * userService.getUserByTenantId(mossoId)
+        } else {
+            0 * userService.getUserAdminByTenantId(mossoId)
+            1 * userService.getUserByTenantId(mossoId) >> user
+        }
+
+        where:
+        domainUserAdminLookup << [true, false]
     }
 
-    def "GET - userByNastId - returns 301" () {
+    @Unroll
+    def "GET - userByNastId - returns 301 - domainUserAdminLookup = #domainUserAdminLookup" () {
         given:
         allowAccess()
-        userService.getUserByTenantId(_) >> createUser("1", "someName", 123, "nast")
+        def nastId = "nast"
+        def user = createUser("1", "someName", 123, nastId)
 
 
         when:
-        Response.ResponseBuilder responseBuilder = service.getUserFromNastId(request,"nast",null)
+        Response.ResponseBuilder responseBuilder = service.getUserFromNastId(request, nastId,null)
 
         then:
         Response response = responseBuilder.build()
         response.status == 301
         response.metadata.get("Location")[0] == "/v1.1/users/someName"
+
+        1 * reloadableConfig.isUserAdminLookUpByDomain() >> domainUserAdminLookup
+
+        if (domainUserAdminLookup) {
+            1 * userService.getUserAdminByTenantId(nastId) >> user
+            0 * userService.getUserByTenantId(nastId)
+        } else {
+            0 * userService.getUserAdminByTenantId(nastId)
+            1 * userService.getUserByTenantId(nastId) >> user
+        }
+
+        where:
+        domainUserAdminLookup << [true, false]
     }
 
     def "validateToken should not return a token when the token is expired"() {
