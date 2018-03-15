@@ -235,6 +235,12 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         }
     }
 
+    /**
+     * This test tests that the correct services are called using the correct user in order to calculate the effective roles.
+     * This test does NOT test the authorization for making this call.
+     *
+     * @return
+     */
     def "listEffectiveRolesForUser: lists the role assignments from the DA if user ID matches the token's user"() {
         given:
         def targetUser = entityFactory.createUser().with {

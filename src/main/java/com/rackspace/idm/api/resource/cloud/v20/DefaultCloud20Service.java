@@ -3183,7 +3183,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             SourcedRoleAssignments assignments;
             // If the token's user matches the user we are listing roles for, return the roles for the user under the DA
-            if (token.isDelegationToken() && token.getIssuedToUserId().equalsIgnoreCase(userId) && caller instanceof EndUser) {
+            if (token.isDelegationToken() && token.getIssuedToUserId().equalsIgnoreCase(userId)) {
+                // Doing a cast to EndUser here. This is safe because only an EndUser can pass the default-user access check above
                 assignments = tenantService.getSourcedRoleAssignmentsForUser((EndUser) caller);
             } else {
                 assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
