@@ -2989,7 +2989,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId, boolean applyRcnRoles) {
 
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
             boolean sameToken = StringUtils.equals(authToken, tokenId);
 
@@ -3014,7 +3014,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             BaseUser baseUser = userService.getUserByScopeAccess(sa, false);
             ServiceCatalogInfo scInfo;
-            if (applyRcnRoles) {
+            if (applyRcnRoles || baseUser instanceof EndUserDelegate) {
                 scInfo = scopeAccessService.getServiceCatalogInfoApplyRcnRoles(baseUser);
             } else {
                 scInfo = scopeAccessService.getServiceCatalogInfo(baseUser);
