@@ -4495,36 +4495,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain
         1 * userService.checkAndGetUserById(user.id) >> user
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
+        1 * tenantService.getGlobalRolesForUser(user) >> [role]
+        1 * userService.updateUser(user)
 
-        if (IdentityUserTypeEnum.SERVICE_ADMIN == userType) {
+        if (IdentityUserTypeEnum.SERVICE_ADMIN == userType || IdentityUserTypeEnum.IDENTITY_ADMIN == userType) {
             1 * authorizationService.verifyServiceAdminLevelAccess(_)
             0 * domainService.getDomainAdmins(_)
-            1 * tenantService.getGlobalRolesForUser(user) >> [role]
-            1 * userService.updateUser(user)
             0 * domainService.updateDomainUserAdminDN(_)
-        } else if (IdentityUserTypeEnum.IDENTITY_ADMIN == userType) {
-            1 * authorizationService.verifyServiceAdminLevelAccess(_)
-            0 * domainService.getDomainAdmins(_)
-            1 * tenantService.getGlobalRolesForUser(user) >> [role]
-            1 * userService.updateUser(user)
-            0 * domainService.updateDomainUserAdminDN(_)
-        } else if (IdentityUserTypeEnum.USER_ADMIN == userType) {
+        }  else if (IdentityUserTypeEnum.USER_ADMIN == userType) {
             0 * authorizationService.verifyServiceAdminLevelAccess(_)
             1 * domainService.getDomainAdmins(domain.domainId) >> []
-            1 * tenantService.getGlobalRolesForUser(user) >> [role]
-            1 * userService.updateUser(user)
             1 * domainService.updateDomainUserAdminDN(user)
-        } else if (IdentityUserTypeEnum.USER_MANAGER == userType) {
+        } else if (IdentityUserTypeEnum.USER_MANAGER == userType || IdentityUserTypeEnum.DEFAULT_USER == userType) {
             0 * authorizationService.verifyServiceAdminLevelAccess(_)
             0 * domainService.getDomainAdmins(_)
-            1 * tenantService.getGlobalRolesForUser(user) >> [role]
-            1 * userService.updateUser(user)
-            0 * domainService.updateDomainUserAdminDN(_)
-        } else if (IdentityUserTypeEnum.DEFAULT_USER == userType) {
-            0 * authorizationService.verifyServiceAdminLevelAccess(_)
-            0 * domainService.getDomainAdmins(_)
-            1 * tenantService.getGlobalRolesForUser(user) >> [role]
-            1 * userService.updateUser(user)
             0 * domainService.updateDomainUserAdminDN(_)
         }
 
