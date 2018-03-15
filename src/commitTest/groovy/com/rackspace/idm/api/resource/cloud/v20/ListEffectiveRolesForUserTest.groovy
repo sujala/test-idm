@@ -69,7 +69,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         service.listEffectiveRolesForUser(headers, token, user.id, params)
 
         then:
-        1 * securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * precedenceValidator.verifyCallerCanListRolesForUser(caller, user) >> { args -> throw new ForbiddenException() }
         1 * userService.checkAndGetUserById(user.id) >> user
@@ -91,7 +91,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         SourcedRoleAssignments assignments = new SourcedRoleAssignments()
 
         // Standard mocks to get past authorization
-        securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
         requestContext.getAndVerifyEffectiveCallerIsEnabled()
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
         userService.checkAndGetUserById(user.id) >> user
@@ -137,7 +137,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         assignments.addUserSourcedAssignment(immutableClientRole, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
 
         // Standard mocks to get past authorization
-        securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
         requestContext.getAndVerifyEffectiveCallerIsEnabled()
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
         userService.checkAndGetUserById(user.id) >> user
@@ -271,9 +271,10 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         userService.checkAndGetUserById(targetUser.id) >> targetUser
         userService.checkAndGetUserById(otherUser.id) >> otherUser
         requestContextHolder.getRequestContext().getEffectiveCaller() >> delegate
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(daTokenString) >> delegateToken
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenString) >> token
 
         when: "list roles for self using DA token"
-        requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() >> delegateToken
         def response = service.listEffectiveRolesForUser(headers, daTokenString, targetUser.id,  new ListEffectiveRolesForUserParams())
         def builtResponse = response.build()
 
@@ -283,7 +284,6 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         0 * tenantService.getSourcedRoleAssignmentsForUser(targetUser)
 
         when: "list roles for self using non-DA token"
-        requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() >> token
         response = service.listEffectiveRolesForUser(headers, tokenString, targetUser.id,  new ListEffectiveRolesForUserParams())
         builtResponse = response.build()
 
@@ -293,7 +293,6 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         1 * tenantService.getSourcedRoleAssignmentsForUser(targetUser)
 
         when: "list roles for other user using DA token"
-        requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() >> delegateToken
         response = service.listEffectiveRolesForUser(headers, daTokenString, otherUser.id,  new ListEffectiveRolesForUserParams())
         builtResponse = response.build()
 
