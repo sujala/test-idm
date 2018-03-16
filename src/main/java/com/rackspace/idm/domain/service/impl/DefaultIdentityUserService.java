@@ -14,6 +14,7 @@ import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
+import com.unboundid.ldap.sdk.DN;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -127,6 +128,14 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Override
     public FederatedUser getFederatedUserById(String userId) {
         return identityUserRepository.getFederatedUserById(userId);
+    }
+
+    @Override
+    public FederatedUser getFederatedUserByDn(DN dn) {
+        if (dn == null) {
+            return null;
+        }
+        return identityUserRepository.getFederatedUserByDn(dn);
     }
 
     @Override
