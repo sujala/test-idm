@@ -3172,7 +3172,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listEffectiveRolesForUser(HttpHeaders httpHeaders, String authToken, String userId, ListEffectiveRolesForUserParams params) {
         try {
             // Authorization Restrictions
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
@@ -3181,7 +3181,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             precedenceValidator.verifyCallerCanListRolesForUser(caller, targetUser);
 
-            SourcedRoleAssignments assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
+            SourcedRoleAssignments assignments;
+            // If the token's user matches the user we are listing roles for, return the roles for the user under the DA
+            if (token.isDelegationToken() && token.getIssuedToUserId().equalsIgnoreCase(userId)) {
+                // Doing a cast to EndUser here. This is safe because only an EndUser can pass the default-user access check above
+                assignments = tenantService.getSourcedRoleAssignmentsForUser((EndUser) caller);
+            } else {
+                assignments = tenantService.getSourcedRoleAssignmentsForUser(targetUser);
+            }
 
             if (StringUtils.isNotBlank(params.onTenantId)) {
                 assignments = assignments.filterByTenantId(params.onTenantId);

@@ -147,8 +147,13 @@ public class RequestContext {
 
             BaseUser effectiveCaller = getEffectiveCaller();
 
+            List<TenantRole> userTenantRoles;
+            if (effectiveCaller instanceof EndUser) {
+                userTenantRoles = tenantService.getSourcedRoleAssignmentsForUser((EndUser) effectiveCaller).asTenantRoles();
+            } else {
+                userTenantRoles = IteratorUtils.toList(tenantService.getTenantRolesForUserNoDetail(effectiveCaller).iterator());
+            }
             //get all the tenant roles for the user, and limit down to "identity" ones
-            List<TenantRole> userTenantRoles = IteratorUtils.toList(tenantService.getTenantRolesForUserNoDetail(effectiveCaller).iterator());
             for (TenantRole userTenantRole : userTenantRoles) {
                 ImmutableClientRole identityRole = null;
 
