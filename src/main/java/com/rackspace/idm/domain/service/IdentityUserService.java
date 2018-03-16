@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
+import com.unboundid.ldap.sdk.DN;
 
 import java.util.List;
 
@@ -84,6 +85,14 @@ public interface IdentityUserService {
      * @return
      */
     FederatedUser getFederatedUserById(String userId);
+
+    /**
+     * Retrieves a federated user by DN
+     *
+     * @param dn
+     * @return
+     */
+    FederatedUser getFederatedUserByDn(DN dn);
 
     /**
      * Returns all federated users that are contained within the given identity provider.

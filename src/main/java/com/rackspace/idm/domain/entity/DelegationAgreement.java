@@ -73,7 +73,7 @@ public class DelegationAgreement implements Auditable, UniqueId {
                     return PrincipalType.USER;
                 }
             } catch (LDAPException e) {
-                throw new IllegalStateException("Error retrieving principal type");
+                throw new IllegalStateException("Error retrieving principal type", e);
             }
         }
         return result;
@@ -91,6 +91,17 @@ public class DelegationAgreement implements Auditable, UniqueId {
             }
         }
         return id;
+    }
+
+    public boolean isFederatedUserPrincipal() {
+        if (principalDN != null) {
+            try {
+                return principalDN.isDescendantOf(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN, false);
+            } catch (LDAPException e) {
+                throw new IllegalStateException("Error retrieving principal type", e);
+            }
+        }
+        return false;
     }
 
     public Set<DN> getDelegates() {

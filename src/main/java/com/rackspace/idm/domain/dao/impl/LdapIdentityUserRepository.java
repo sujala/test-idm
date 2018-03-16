@@ -5,10 +5,7 @@ import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -58,6 +55,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public EndUser getEndUserById(String userId) {
         return searchForUserById(userId, ENDUSER_CLASS_FILTERS, EndUser.class);
+    }
+
+    @Override
+    public FederatedUser getFederatedUserByDn(DN dn) {
+        return fedUserDao.getFederatedUserByDn(dn);
     }
 
     @Override

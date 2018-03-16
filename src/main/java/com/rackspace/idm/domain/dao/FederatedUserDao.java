@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.User;
+import com.unboundid.ldap.sdk.DN;
 
 import java.util.List;
 
@@ -70,6 +71,14 @@ public interface FederatedUserDao extends FederatedBaseUserDao<FederatedUser> {
      * Get one expired federated user
      */
     FederatedUser getSingleExpiredFederatedUser();
+
+    /**
+     * Retrieves a federated user by DN
+     *
+     * @param dn
+     * @return
+     */
+    FederatedUser getFederatedUserByDn(DN dn);
 
     void doPreEncode(FederatedUser user);
 
