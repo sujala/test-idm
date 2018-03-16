@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.EncryptionService
 import com.unboundid.ldap.sdk.*
 import testHelpers.RootServiceTest
 
@@ -13,6 +14,7 @@ class LdapUserRepositoryTest extends RootServiceTest {
 
     LdapConnectionPools ldapConnectionPools
     LDAPInterface ldapInterface
+    EncryptionService encryptionService
 
     def setup() {
         dao = new LdapUserRepository()
@@ -28,6 +30,10 @@ class LdapUserRepositoryTest extends RootServiceTest {
 
         ldapInterface = Mock()
         ldapConnectionPools.getAppConnPoolInterface() >> ldapInterface
+
+        encryptionService = Mock()
+        dao.encryptionService = encryptionService
+
     }
 
     def "getEnabledUsersByContactId: Get enabled users by contactId filter"() {
@@ -71,6 +77,7 @@ class LdapUserRepositoryTest extends RootServiceTest {
         user.getDn() == domain.userAdminDN
 
         1 * ldapInterface.getEntry(domain.userAdminDN.toString()) >> new SearchResultEntry(domain.userAdminDN.toString(), [])
+        1 * encryptionService.decryptUser(_)
     }
 
     def "getUserAdminByDomain: error check"() {
