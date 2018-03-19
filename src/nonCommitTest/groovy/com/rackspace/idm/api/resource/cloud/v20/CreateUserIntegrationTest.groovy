@@ -1828,4 +1828,29 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUserQuietly(subUser)
         utils.deleteTestDomainQuietly(domainId)
     }
+
+    @Unroll
+    def "Verify defaults retrieved from user-admin on subUser - feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+        def domainId = utils.createDomain()
+        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
+
+        when: "create subUser"
+        User subUser = (User) cloud20.createSubUser(utils.getToken(userAdmin.username))
+
+        then: "assert defaults"
+        subUser.defaultRegion == userAdmin.defaultRegion
+        subUser.domainId == userAdmin.domainId
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteUserQuietly(subUser)
+        utils.deleteTestDomainQuietly(domainId)
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled << [true, false]
+    }
+
 }

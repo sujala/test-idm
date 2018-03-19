@@ -680,7 +680,18 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             authenticateCloudAdminUserForGetRequests(request);
 
-            User user = this.userService.getUserByTenantId(String.valueOf(mossoId));
+            User user = null;
+
+            if (identityConfig.getReloadableConfig().isUserAdminLookUpByDomain()) {
+                user = userService.getUserAdminByTenantId(String.valueOf(mossoId));
+            }
+
+            // Fallback to current mechanism if user-admin lookup by domain feature is disabled, the user was not found,
+            // or no user-admin was set on the domain.
+            if (user == null) {
+                user = this.userService.getUserByTenantId(String.valueOf(mossoId));
+            }
+
             if (user == null) {
                 throw new NotFoundException(String.format("User with MossoId %s not found", mossoId));
             }
@@ -706,7 +717,18 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             authenticateCloudAdminUserForGetRequests(request);
 
-            User user = this.userService.getUserByTenantId(nastId);
+            User user = null;
+
+            if (identityConfig.getReloadableConfig().isUserAdminLookUpByDomain()) {
+                user = userService.getUserAdminByTenantId(nastId);
+            }
+
+            // Fallback to current mechanism if user-admin lookup by domain feature is disabled, the user was not found,
+            // or no user-admin was set on the domain.
+            if (user == null) {
+                user = this.userService.getUserByTenantId(nastId);
+            }
+
             if (user == null) {
                 throw new NotFoundException(String.format("User with NastId %s not found", nastId));
             }

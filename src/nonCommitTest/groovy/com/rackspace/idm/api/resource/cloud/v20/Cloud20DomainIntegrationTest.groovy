@@ -8,7 +8,6 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.TenantService
@@ -19,17 +18,13 @@ import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
-import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault
-import org.openstack.docs.identity.api.v2.Tenants
-import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
-
-import javax.ws.rs.core.HttpHeaders
 import testHelpers.RootIntegrationTest
 
+import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.UriInfo
 import javax.xml.datatype.DatatypeFactory
@@ -37,9 +32,7 @@ import java.time.Duration
 
 import static javax.servlet.http.HttpServletResponse.*
 import static org.mockito.Mockito.mock
-import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
-import static testHelpers.IdmAssert.assertOpenStackV2FaultResponseWithErrorCode
-import static testHelpers.IdmAssert.assertRackspaceCommonFaultResponse
+import static testHelpers.IdmAssert.*
 
 class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
@@ -1751,6 +1744,74 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         reloadableConfiguration.reset()
+    }
+
+    @Unroll
+    def "add user to  domain - feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+        def userAdmin = utils.createCloudAccount()
+        def otherDomain = utils.createDomainEntity()
+
+        when: "add user to another domain"
+        def response = cloud20.addUserToDomain(utils.identityAdminToken, userAdmin.id, otherDomain.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "get user by id"
+        response = cloud20.getUserById(utils.identityAdminToken, userAdmin.id)
+        User user = response.getEntity(User).value
+
+        then: "assert user was added to domain"
+        response.status == SC_OK
+        user.domainId == otherDomain.id
+
+        and: "get other domain"
+        com.rackspace.idm.domain.entity.User userEntity = userService.getUserById(userAdmin.id)
+        com.rackspace.idm.domain.entity.Domain domain = domainService.getDomain(otherDomain.id)
+
+        then: "assert userAdminDN for domain"
+        domain.userAdminDN == userEntity.getDn()
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTenantQuietly(userAdmin.domainId)
+        utils.deleteTenantQuietly(utils.getNastTenant(userAdmin.domainId))
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+
+        where:
+        featureEnabled << [true, false]
+    }
+
+    @Unroll
+    def "error check: add user to domain - feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+        def userAdmin = utils.createCloudAccount()
+        def userAdmin2 = utils.createCloudAccount()
+
+        when: "existing user-admin on domain"
+        def response = cloud20.addUserToDomain(utils.identityAdminToken, userAdmin.id, userAdmin2.domainId)
+        // NOTE: resource addUserToDomain does not use the exceptionHandler
+        def error = response.getEntity(com.rackspace.api.common.fault.v1.ForbiddenFault)
+
+        then:
+        response.status == SC_FORBIDDEN
+        error.message == "User-admin already exists for domain."
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTenantQuietly(userAdmin.domainId)
+        utils.deleteTenantQuietly(utils.getNastTenant(userAdmin.domainId))
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+        utils.deleteUserQuietly(userAdmin2)
+        utils.deleteTenantQuietly(userAdmin2.domainId)
+        utils.deleteTenantQuietly(utils.getNastTenant(userAdmin2.domainId))
+        utils.deleteTestDomainQuietly(userAdmin2.domainId)
+
+        where:
+        featureEnabled << [true, false]
     }
 
     def removeDomainFromUser(username) {

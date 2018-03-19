@@ -35,6 +35,16 @@ public interface UserDao {
 
     User getUserByUsername(String username);
 
+    /**
+     * Retrieve user-admin set on domain. Return null if domain's userAdminDN is not set, or the user is not found.
+     *
+     * @param domain
+     * @throws IllegalArgumentException If supplied domain is null.
+     *
+     * @return
+     */
+    User getUserAdminByDomain(Domain domain);
+
     Iterable<User> getUsersByEmail(String email);
 
     Iterable<User> getUsers(List<String> idList);

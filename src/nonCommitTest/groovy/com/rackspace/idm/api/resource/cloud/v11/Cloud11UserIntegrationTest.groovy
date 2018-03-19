@@ -1,10 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
 import com.rackspace.idm.Constants
-
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.User
 import groovy.json.JsonSlurper
+import org.apache.http.HttpStatus
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
@@ -190,5 +192,45 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
+    }
+
+    @Unroll
+    def "getUserFromNastId: get correct user-admin - feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+        def user = utils11.createUser()
+
+        when:
+        def response = cloud11.getUserFromNastId(user.nastId)
+
+        then:
+        response.status == HttpStatus.SC_MOVED_PERMANENTLY
+
+        cleanup:
+        utils11.deleteUser(user)
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled << [true, false]
+    }
+
+    @Unroll
+    def "getUserFromMossoId: get correct user-admin - feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+        def user = utils11.createUser()
+
+        when:
+        def response = cloud11.getUserFromMossoId(String.valueOf(user.mossoId))
+
+        then:
+        response.status == HttpStatus.SC_MOVED_PERMANENTLY
+
+        cleanup:
+        utils11.deleteUser(user)
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled << [true, false]
     }
 }

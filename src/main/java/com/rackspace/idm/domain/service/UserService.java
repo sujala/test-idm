@@ -7,7 +7,6 @@ import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
@@ -299,4 +298,23 @@ public interface UserService {
      * @return
      */
     PaginatorContext<TenantRole> getRoleAssignmentsOnUser(User user, PaginationParams paginationParams);
+
+    /**
+     * Retrieve the user-admin set on domain. If "rsUserAdminDN" is not set, return null.
+     *
+     * @param domain
+     * @throws IllegalArgumentException If supplied domain is null.
+     * @return
+     */
+    User getUserAdminByDomain(Domain domain);
+
+    /**
+     * Retrieve the user-admin associated with the specified tenantId. Return null if tenant, tenant's domain, or user
+     * are not found.
+     *
+     * @param tenantId
+     * @throws IllegalArgumentException If supplied tenantId is null.
+     * @return
+     */
+    User getUserAdminByTenantId(String tenantId);
 }
