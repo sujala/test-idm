@@ -42,4 +42,11 @@ public interface Token {
      * @return
      */
     boolean isAccessTokenExpired();
+
+    /**
+     * Retrieves the scope of the token
+     *
+     * @return
+     */
+    String getScope();
 }

@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
+import com.unboundid.ldap.sdk.DN;
 
 import java.util.List;
 
@@ -41,6 +42,14 @@ public interface IdentityUserDao {
      * @return
      */
     FederatedUser getFederatedUserById(String userId);
+
+    /**
+     * Retrieves a federated user by DN
+     *
+     * @param dn
+     * @return
+     */
+    FederatedUser getFederatedUserByDn(DN dn);
 
     /**
      * Search for a federated user with the specified username and idpId

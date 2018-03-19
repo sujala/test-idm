@@ -4,12 +4,19 @@ import com.google.common.collect.Sets
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.DelegationAgreement
+import com.rackspace.idm.domain.entity.ProvisionedUserDelegate
+import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.service.DomainSubUserDefaults
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.ForbiddenException
+import org.apache.commons.lang3.RandomStringUtils
 import org.opensaml.core.config.InitializationService
+import testHelpers.EntityFactory
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.HttpHeaders
@@ -62,7 +69,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         service.listEffectiveRolesForUser(headers, token, user.id, params)
 
         then:
-        1 * securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * precedenceValidator.verifyCallerCanListRolesForUser(caller, user) >> { args -> throw new ForbiddenException() }
         1 * userService.checkAndGetUserById(user.id) >> user
@@ -84,7 +91,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         SourcedRoleAssignments assignments = new SourcedRoleAssignments()
 
         // Standard mocks to get past authorization
-        securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
         requestContext.getAndVerifyEffectiveCallerIsEnabled()
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
         userService.checkAndGetUserById(user.id) >> user
@@ -130,7 +137,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         assignments.addUserSourcedAssignment(immutableClientRole, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
 
         // Standard mocks to get past authorization
-        securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
         requestContext.getAndVerifyEffectiveCallerIsEnabled()
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
         userService.checkAndGetUserById(user.id) >> user
@@ -227,4 +234,79 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
             new RoleAssignments()
         }
     }
+
+    /**
+     * This test tests that the correct services are called using the correct user in order to calculate the effective roles.
+     * This test does NOT test the authorization for making this call.
+     *
+     * @return
+     */
+    def "listEffectiveRolesForUser: lists the role assignments from the DA if user ID matches the token's user"() {
+        given:
+        def targetUser = entityFactory.createUser().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        def otherUser = entityFactory.createUser().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        def domain = entityFactory.createDomain()
+        def tokenString = "token"
+        def daTokenString = "daToken"
+        def delegationAgreement = new DelegationAgreement().with {
+            it.id = new RandomStringUtils().randomAlphanumeric(8)
+            it.domainId = domain.domainId
+            it
+        }
+        List<TenantRole> tenantRoles = []
+        def subUserDefaults = new DomainSubUserDefaults(domain, targetUser.getRsGroupId(), targetUser.getRegion(), tenantRoles)
+        def delegate = new ProvisionedUserDelegate(subUserDefaults, delegationAgreement, targetUser)
+        def delegateToken = new UserScopeAccess().with {
+            it.delegationAgreementId = delegationAgreement.id
+            it.userRsId = targetUser.id
+            it.accessTokenString = daTokenString
+            it
+        }
+        def token = new UserScopeAccess().with {
+            it.userRsId = targetUser.id
+            it.accessTokenString = tokenString
+            it
+        }
+        def headers = Mock(HttpHeaders)
+        userService.checkAndGetUserById(targetUser.id) >> targetUser
+        userService.checkAndGetUserById(otherUser.id) >> otherUser
+        requestContextHolder.getRequestContext().getEffectiveCaller() >> delegate
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(daTokenString) >> delegateToken
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenString) >> token
+
+        when: "list roles for self using DA token"
+        def response = service.listEffectiveRolesForUser(headers, daTokenString, targetUser.id,  new ListEffectiveRolesForUserParams())
+        def builtResponse = response.build()
+
+        then:
+        builtResponse.status == 200
+        1 * tenantService.getSourcedRoleAssignmentsForUser(delegate)
+        0 * tenantService.getSourcedRoleAssignmentsForUser(targetUser)
+
+        when: "list roles for self using non-DA token"
+        response = service.listEffectiveRolesForUser(headers, tokenString, targetUser.id,  new ListEffectiveRolesForUserParams())
+        builtResponse = response.build()
+
+        then:
+        builtResponse.status == 200
+        0 * tenantService.getSourcedRoleAssignmentsForUser(delegate)
+        1 * tenantService.getSourcedRoleAssignmentsForUser(targetUser)
+
+        when: "list roles for other user using DA token"
+        response = service.listEffectiveRolesForUser(headers, daTokenString, otherUser.id,  new ListEffectiveRolesForUserParams())
+        builtResponse = response.build()
+
+        then:
+        builtResponse.status == 200
+        0 * tenantService.getSourcedRoleAssignmentsForUser(delegate)
+        0 * tenantService.getSourcedRoleAssignmentsForUser(targetUser)
+        1 * tenantService.getSourcedRoleAssignmentsForUser(otherUser)
+    }
+
 }

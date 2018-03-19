@@ -151,8 +151,12 @@ class Cloud20Utils {
         return response.getEntity(AuthenticateResponse).value
     }
 
-    AuthenticateResponse authenticateTokenAndDelegationAgreement(token, delegationAgreementid, MediaType mediaType = MediaType.APPLICATION_JSON_TYPE) {
-        def response = methods.authenticateTokenAndDelegationAgreement(token, delegationAgreementid, mediaType)
+    String getDelegationAgreementToken(String username, String delegationAgreementId) {
+        return authenticateTokenAndDelegationAgreement(getToken(username), delegationAgreementId).token.id
+    }
+
+    AuthenticateResponse authenticateTokenAndDelegationAgreement(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_JSON_TYPE) {
+        def response = methods.authenticateTokenAndDelegationAgreement(token, delegationAgreementId, mediaType)
         assert(response.status == 200)
         AuthenticateResponse delegateSubUserAuthResponse
         if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
@@ -233,6 +237,25 @@ class Cloud20Utils {
      */
     User createCloudAccount(identityAdminToken = getIdentityAdminToken(), int domainId = testUtils.getRandomInteger()) {
         createUserWithTenants(identityAdminToken, testUtils.getRandomUUID("userAdmin"), String.valueOf(domainId))
+    }
+
+    /**
+     * Creates a cloud account with an RCN. If the RCN tenant does not exist, the RCN tenant is created and added to the cloud account's domain.
+     *
+     * @param identityAdminToken
+     * @param domainId
+     * @param rcn
+     * @return
+     */
+    User createCloudAccountWithRcn(identityAdminToken = getIdentityAdminToken(), int domainId = testUtils.getRandomInteger(), String rcn = testUtils.getRandomRCN()) {
+        def userAdmin = createUserWithTenants(identityAdminToken, testUtils.getRandomUUID("userAdmin"), String.valueOf(domainId))
+        def tenantResponse = methods.getTenant(getServiceAdminToken(), "rcn:${rcn}")
+        if (tenantResponse.status != SC_OK) {
+            createRcnTenantInDomain(rcn, userAdmin.domainId)
+        } else {
+            domainRcnSwitch(userAdmin.domainId, rcn)
+        }
+        return userAdmin
     }
 
     User createUserWithTenants(token=getIdentityAdminToken(), username=testUtils.getRandomUUID(), domainId=RandomStringUtils.randomNumeric(6)) {
@@ -669,6 +692,12 @@ class Cloud20Utils {
         response.getEntity(RoleList).value
     }
 
+    RoleAssignments listEffectiveRolesForUser(String userId, String token = getServiceAdminToken()) {
+        def response = methods.listUserEffectiveRolesWithSources(token, userId)
+        assert response.status == SC_OK
+        return response.getEntity(RoleAssignments)
+    }
+
     def listEndpointsForTenant(token, tenantId) {
         def response = methods.listEndpointsForTenant(token, tenantId)
         assert (response.status == SC_OK)
@@ -732,6 +761,24 @@ class Cloud20Utils {
 
     Tenant createTenantInDomain(String domainId) {
         createTenant(testUtils.getRandomUUID("tenant"), true, testUtils.getRandomUUID("tenant"), domainId)
+    }
+
+    /**
+     * Creates an RCN tenant within the specified domain. The domain is also switched to be in the specified RCN.
+     *
+     * @param rcn
+     * @param domainId
+     * @return
+     */
+    Tenant createRcnTenantInDomain(String rcn = testUtils.getRandomRCN(), String domainId) {
+        def rcnTenant = createRcnTenant(rcn)
+        domainRcnSwitch(domainId, rcn)
+        addTenantToDomain(domainId, rcnTenant.domainId)
+        return getTenant(rcnTenant.id)
+    }
+
+    Tenant createRcnTenant(String rcn = testUtils.getRandomRCN()) {
+        return createTenant("rcn:${rcn}")
     }
 
     Tenant createTenant(name=testUtils.getRandomUUID("tenant"), enabled=true, displayName=testUtils.getRandomUUID("tenant"), domainId=null) {
@@ -1194,7 +1241,19 @@ class Cloud20Utils {
 
     }
 
-    def createDelegationAgreement(String token, DelegationAgreement delegationAgreement) {
+    def createDelegationAgreementWithUserAsDelegate(String token, String domainId, String delegateUserId) {
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = domainId
+            it.delegateId = delegateUserId
+            it
+        }
+        def response = methods.createDelegationAgreement(token, daToCreate)
+        assert (response.status == SC_CREATED)
+        response.getEntity(DelegationAgreement)
+    }
+
+    DelegationAgreement createDelegationAgreement(String token, DelegationAgreement delegationAgreement) {
         def response = methods.createDelegationAgreement(token, delegationAgreement)
         assert (response.status == SC_CREATED)
         response.getEntity(DelegationAgreement)

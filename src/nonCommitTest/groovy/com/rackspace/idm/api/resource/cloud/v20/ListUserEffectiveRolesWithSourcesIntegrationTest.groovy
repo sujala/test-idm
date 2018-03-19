@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SourceTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.sun.jersey.api.client.ClientResponse
 import org.apache.commons.collections4.CollectionUtils
@@ -622,6 +623,44 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
 
         where:
         media << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "listEffectiveRoles returns DA roles for user if the token is a DA token and the userId in the path matches the DA delegate"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
+        def userAdmin1 = utils.createCloudAccountWithRcn()
+        def domain1 = utils.getDomain(userAdmin1.domainId)
+        def userAdmin2 = utils.createCloudAccountWithRcn(utils.getIdentityAdminToken(), testUtils.getRandomInteger(), domain1.rackspaceCustomerNumber)
+        def delegationAgreement = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin1.username), userAdmin1.domainId, userAdmin2.id)
+        def daToken = utils.getDelegationAgreementToken(userAdmin2.username, delegationAgreement.id)
+
+        when: "list roles for self using DA token"
+        def roles = utils.listEffectiveRolesForUser(userAdmin2.id, daToken)
+
+        then: "the user from cloud account 2 has a role assignment on cloud account 1"
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId)} != null
+
+        and: "the user from cloud account 2 does NOT have a role on cloud account 2"
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId)} == null
+
+        when: "list roles for self using non-DA token"
+        roles = utils.listEffectiveRolesForUser(userAdmin2.id, utils.getToken(userAdmin2.username))
+
+        then: "the user from cloud account 2 does NOT have a role assignment on cloud account 1"
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId)} == null
+
+        and: "the user from cloud account 2 has a role on cloud account 2"
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId)} != null
+
+        when: "list roles for other user using DA token"
+        def response = cloud20.listUserEffectiveRolesWithSources(daToken, userAdmin1.id)
+
+        then: "forbidden due to the DA user being effectively a sub-user in the target user's domain"
+        response.status == 403
+
+        cleanup:
+        utils.deleteUsers(userAdmin1, userAdmin2)
     }
 
 }

@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.api.security.ImmutableClientRole;
+import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.domain.config.CacheConfiguration;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
@@ -13,6 +14,8 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.HashHelper;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -21,10 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class DefaultApplicationService implements ApplicationService {
@@ -355,8 +355,20 @@ public class DefaultApplicationService implements ApplicationService {
         Set<String> tenantRoleIds = new HashSet<String>();
 
         if (clientRoles.size() > 0) {
-            for (TenantRole tenantRole : tenantService.getTenantRolesForUserById(user, clientRoles)) {
-                tenantRoleIds.add(tenantRole.getRoleRsId());
+            if (user instanceof ProvisionedUserDelegate) {
+               Collection<TenantRole> tenantRoles =  CollectionUtils.collect(((ProvisionedUserDelegate) user).getDefaultDomainRoles(), new Transformer<ImmutableTenantRole, TenantRole>() {
+                    @Override
+                    public TenantRole transform(ImmutableTenantRole input) {
+                        return input.asTenantRole();
+                    }
+                });
+                for (TenantRole tenantRole : tenantRoles) {
+                    tenantRoleIds.add(tenantRole.getRoleRsId());
+                }
+            } else {
+                for (TenantRole tenantRole : tenantService.getTenantRolesForUserById(user, clientRoles)) {
+                    tenantRoleIds.add(tenantRole.getRoleRsId());
+                }
             }
         }
 
