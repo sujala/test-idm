@@ -409,6 +409,12 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         endpoints.endpoint.find { e -> e.tenantId == userAdmin1.domainId } != null
         endpoints.endpoint.find { e -> e.tenantId == identityAdmin2.domainId } == null
 
+        when: "list endpoints for identity admin using DA token for another identity admin"
+        response = cloud20.listEndpointsForToken(daTokenDomain1IdentityAdmin2, utils.getToken(identityAdmin.username))
+
+        then:
+        response.status == 403
+
         when: "list endpoints for DA token using Identity admin with DA for different domain"
         endpoints = utils.listEndpointsForToken(daTokenDomain1UserAdmin2, utils.getToken(identityAdmin.username))
 
