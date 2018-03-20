@@ -60,6 +60,7 @@ class Constants {
 
     static def IDENTITY_ANALYZE_TOKEN_ROLE_ID = "2b4d276b677d47dd85d254168ed452d2"
     static def IDENTITY_PHONE_PIN_ADMIN_ROLE_ID = "fda6705a7ba640598f3eacd9884d8a0e"
+    static def IDENTITY_MIGRATE_DOMAIN_ADMIN = "b5e1ace62bb511e8b4670ed5f89f718b"
 
     static def DEFAULT_GROUP = "Default"
     static def RAX_STATUS_RESTRICTED_GROUP_NAME = "rax_status_restricted"

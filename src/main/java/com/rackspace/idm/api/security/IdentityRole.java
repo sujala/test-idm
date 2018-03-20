@@ -32,6 +32,7 @@ public enum IdentityRole {
     , IDENTITY_ANALYZE_TOKEN("identity:analyze-token")
     , IDENTITY_TENANT_ACCESS("identity:tenant-access")
     , IDENTITY_PHONE_PIN_ADMIN("identity:phone-pin-admin")
+    , IDENTITY_MIGRATE_DOMAIN_ADMIN("identity:migrate-domain-admin")
     ;
 
     @Getter

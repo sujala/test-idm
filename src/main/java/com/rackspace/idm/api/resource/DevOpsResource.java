@@ -140,7 +140,16 @@ public class DevOpsResource {
     @Produces({MediaType.APPLICATION_JSON})
     public Response analyzeToken(@HeaderParam(X_AUTH_TOKEN) String authToken,
                                  @HeaderParam(X_SUBJECT_TOKEN) String subjectToken,
-                                @QueryParam("tokenId") String tokenId) {
+                                 @QueryParam("tokenId") String tokenId) {
         return devOpsService.analyzeToken(authToken, subjectToken).build();
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @PUT
+    @Path("/migrate/domains/{domainId}/admin")
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response migrateDomainAdmin(@HeaderParam(X_AUTH_TOKEN) String authToken,
+                                      @PathParam("domainId") String domainId) {
+        return devOpsService.migrateDomainAdmin(authToken, domainId).build();
     }
 }

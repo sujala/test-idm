@@ -1,21 +1,19 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
-import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
-import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
-import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyConverter;
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.security.IdentityRole;
+import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.config.IdmProperty;
+import com.rackspace.idm.domain.config.IdmPropertyType;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.config.*;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
@@ -66,6 +64,9 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private TenantService tenantService;
 
     @Autowired
     IdentityUserService identityUserService;
@@ -418,6 +419,68 @@ public class DefaultDevOpsService implements DevOpsService {
             return Response.ok(tokenAnalysis);
         } catch (Exception ex) {
             logger.error("Error analyzing token", ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder migrateDomainAdmin(String authToken, String domainId) {
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_MIGRATE_DOMAIN_ADMIN.getRoleName());
+
+            Domain domain = domainService.checkAndGetDomain(domainId);
+
+            // Retrieve all user within a domain.
+            Iterable<User> userList = domainService.getUsersByDomainId(domainId);
+
+            // Get user-admin client role.
+            ImmutableClientRole userAdminCr = authorizationService.getCachedIdentityRoleByName(
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName());
+
+            // Determine the user-admins for domain.
+            List<User> enabledUserAdmin = new ArrayList<>();
+            List<User> disabledUserAdmin = new ArrayList<>();
+
+            for (User user : userList) {
+                // Check if user has user-admin role.
+                TenantRole userAdminTr = tenantService.getTenantRoleForUserById(user, userAdminCr.getId());
+                if (userAdminTr != null) {
+                    if (user.isDisabled()) {
+                        disabledUserAdmin.add(user);
+                    } else {
+                        enabledUserAdmin.add(user);
+                    }
+                }
+            }
+
+            // Determine user-admin to be set on domain.
+            DomainAdmin domainAdmin = new DomainAdmin(domainId);
+            User userAdmin = null;
+            if (!enabledUserAdmin.isEmpty()) {
+                userAdmin = enabledUserAdmin.get(0);
+            } else if (!disabledUserAdmin.isEmpty()) {
+                userAdmin = disabledUserAdmin.get(0);
+            }
+
+            // Update the domain's userAdminDn. If no user-admin is found for domain, return an empty string for
+            // 'userAdminDN`. If the userAdminDN was previously set 'previousUserAdminDN' to that value, else return
+            // an empty string.
+            if (userAdmin != null) {
+                if (!userAdmin.getDn().equals(domain.getUserAdminDN())) {
+                    if (domain.getUserAdminDN() != null) {
+                        domainAdmin.setPreviousUserAdminDN(domain.getUserAdminDN().toString());
+                    }
+                    domain.setUserAdminDN(userAdmin.getDn());
+                    domainService.updateDomain(domain);
+                }
+
+                domainAdmin.setUserAdminDN(userAdmin.getDn().toString());
+            }
+
+            return Response.ok(domainAdmin.toJson());
+        } catch (Exception ex) {
+            logger.error("Error migrating domain user admin.", ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }

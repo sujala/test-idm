@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.devops;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
 
 import javax.ws.rs.core.Response;
@@ -123,4 +122,14 @@ public interface DevOpsService {
      * @return
      */
     Response.ResponseBuilder analyzeToken(String authToken, String subjectToken);
+
+    /**
+     * Sets the 'rsDomainAdminDN' attribute for a specified domain if it's not already defined. Caller must have the
+     * 'identity:migrate-domain-admin' role.
+     *
+     * @param authToken
+     * @param domainId
+     * @return
+     */
+    Response.ResponseBuilder migrateDomainAdmin(String authToken, String domainId);
 }
