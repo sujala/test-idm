@@ -117,7 +117,7 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
 
     @Override
     public FederatedUser getFederatedUserByDn(DN dn) {
-        return getObject(searchFilterGetFederatedUser(), dn.toString(), SearchScope.BASE);
+        return getObject(dn);
     }
 
     @Override

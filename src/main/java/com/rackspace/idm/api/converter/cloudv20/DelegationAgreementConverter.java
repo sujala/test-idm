@@ -3,7 +3,6 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.DelegationService;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import org.apache.commons.collections.CollectionUtils;
@@ -44,19 +43,8 @@ public class DelegationAgreementConverter {
     public DelegationAgreement toDelegationAgreementWeb(com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreementEntity) {
         DelegationAgreement delegationAgreement = mapper.map(delegationAgreementEntity, DelegationAgreement.class);
 
-        delegationAgreement.setPrincipalType(delegationAgreementEntity.getPrincipalDnAsType());
-
-        String principalId = null;
-        if (delegationAgreementEntity.isFederatedUserPrincipal()) {
-            // Must retrieve the userId off the fed user as fed user DNs include the username, not the rsId
-            FederatedUser user = identityUserService.getFederatedUserByDn(delegationAgreementEntity.getPrincipalDN());
-            if (user != null) {
-                principalId = user.getId();
-            }
-        } else {
-            principalId = delegationAgreementEntity.getPrincipalDnId();
-        }
-        delegationAgreement.setPrincipalId(principalId);
+        delegationAgreement.setPrincipalType(delegationAgreementEntity.getPrincipalType());
+        delegationAgreement.setPrincipalId(delegationAgreementEntity.getPrincipalId());
 
         if (CollectionUtils.isNotEmpty(delegationAgreementEntity.getDelegates())) {
             delegationAgreement.setDelegateId(delegationAgreementEntity.getFirstDelegateId());

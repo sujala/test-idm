@@ -52,6 +52,14 @@ public interface IdentityUserDao {
     FederatedUser getFederatedUserByDn(DN dn);
 
     /**
+     * Retrieves an end user by DN
+     *
+     * @param dn
+     * @return
+     */
+    EndUser getEndUserByDn(DN dn);
+
+    /**
      * Search for a federated user with the specified username and idpId
      *
      * @param username

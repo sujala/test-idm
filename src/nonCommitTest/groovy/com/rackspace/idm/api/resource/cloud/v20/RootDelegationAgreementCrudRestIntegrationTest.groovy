@@ -271,37 +271,34 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.principalType == PrincipalType.USER
         createdDa.delegateId == sharedSubUser.id
 
-        /*
-        This will be uncommented in next PR when update get/delete to support fed users
-         */
-//        when:
-//        def getResponse = cloud20.getDelegationAgreement(token, createdDa.id)
-//
-//        then:
-//        getResponse.status == SC_OK
-//
-//        and: "da was returned appropriately"
-//        def getDa = getResponse.getEntity(DelegationAgreement)
-//        getDa != null
-//        getDa.id == createdDa.id
-//        getDa.domainId == sharedUserAdmin.domainId
-//        getDa.name == webDa.name
-//        getDa.description == webDa.description
-//        getDa.principalId == fedAuthResponse.user.id
-//        getDa.principalType == PrincipalType.USER
-//        getDa.delegateId == sharedSubUser.id
-//
-//        when:
-//        def deleteResponse = cloud20.deleteDelegationAgreement(token, createdDa.id)
-//
-//        then:
-//        deleteResponse.status == SC_NO_CONTENT
-//
-//        when: "Get DA after deleting"
-//        def getResponse2 = cloud20.getDelegationAgreement(token, createdDa.id)
-//
-//        then:
-//        getResponse2.status == SC_NOT_FOUND
+        when:
+        def getResponse = cloud20.getDelegationAgreement(token, createdDa.id)
+
+        then:
+        getResponse.status == SC_OK
+
+        and: "da was returned appropriately"
+        def getDa = getResponse.getEntity(DelegationAgreement)
+        getDa != null
+        getDa.id == createdDa.id
+        getDa.domainId == sharedUserAdmin.domainId
+        getDa.name == webDa.name
+        getDa.description == webDa.description
+        getDa.principalId == fedAuthResponse.user.id
+        getDa.principalType == PrincipalType.USER
+        getDa.delegateId == sharedSubUser.id
+
+        when:
+        def deleteResponse = cloud20.deleteDelegationAgreement(token, createdDa.id)
+
+        then:
+        deleteResponse.status == SC_NO_CONTENT
+
+        when: "Get DA after deleting"
+        def getResponse2 = cloud20.getDelegationAgreement(token, createdDa.id)
+
+        then:
+        getResponse2.status == SC_NOT_FOUND
     }
 
     def "Can create/get/delete basic root delegation agreement for user group belong to"() {
@@ -336,37 +333,34 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.principalType == PrincipalType.USER_GROUP
         createdDa.delegateId == sharedSubUser.id
 
-        /*
-        This will be uncommented in next PR when update get/delete to support usergroups
-         */
-//        when:
-//        def getResponse = cloud20.getDelegationAgreement(groupSubUserToken, createdDa.id)
-//
-//        then:
-//        getResponse.status == SC_OK
-//
-//        and: "da was returned appropriately"
-//        def getDa = getResponse.getEntity(DelegationAgreement)
-//        getDa != null
-//        getDa.id == createdDa.id
-//        getDa.domainId == userGroup.domainId
-//        getDa.name == webDa.name
-//        getDa.description == webDa.description
-//        getDa.principalId == userGroup.id
-//        getDa.principalType == PrincipalType.USER_GROUP
-//        getDa.delegateId == sharedSubUser.id
-//
-//        when:
-//        def deleteResponse = cloud20.deleteDelegationAgreement(groupSubUserToken, createdDa.id)
-//
-//        then:
-//        deleteResponse.status == SC_NO_CONTENT
-//
-//        when: "Get DA after deleting"
-//        def getResponse2 = cloud20.getDelegationAgreement(groupSubUserToken, createdDa.id)
-//
-//        then:
-//        getResponse2.status == SC_NOT_FOUND
+        when:
+        def getResponse = cloud20.getDelegationAgreement(groupSubUserToken, createdDa.id)
+
+        then:
+        getResponse.status == SC_OK
+
+        and: "da was returned appropriately"
+        def getDa = getResponse.getEntity(DelegationAgreement)
+        getDa != null
+        getDa.id == createdDa.id
+        getDa.domainId == userGroup.domainId
+        getDa.name == webDa.name
+        getDa.description == webDa.description
+        getDa.principalId == userGroup.id
+        getDa.principalType == PrincipalType.USER_GROUP
+        getDa.delegateId == sharedSubUser.id
+
+        when:
+        def deleteResponse = cloud20.deleteDelegationAgreement(groupSubUserToken, createdDa.id)
+
+        then:
+        deleteResponse.status == SC_NO_CONTENT
+
+        when: "Get DA after deleting"
+        def getResponse2 = cloud20.getDelegationAgreement(groupSubUserToken, createdDa.id)
+
+        then:
+        getResponse2.status == SC_NOT_FOUND
     }
 
 }

@@ -4,6 +4,7 @@ import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.impl.LdapGenericRepository;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
+import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Filter;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
@@ -43,6 +44,11 @@ public class LdapUserGroupRepository extends LdapGenericRepository<UserGroup> im
     @Override
     public UserGroup getGroupById(String groupId) {
         return getObject(searchByIdFilter(groupId));
+    }
+
+    @Override
+    public UserGroup getGroupByDn(DN dn) {
+        return getObject(dn);
     }
 
     @Override

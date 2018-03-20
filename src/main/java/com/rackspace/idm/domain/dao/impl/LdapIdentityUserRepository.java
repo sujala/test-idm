@@ -63,6 +63,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
+    public EndUser getEndUserByDn(DN dn) {
+        return searchForUserByDn(dn, EndUser.class);
+    }
+
+    @Override
     public User getProvisionedUserByIdWithPwdHis(String userId) {
         return searchForUserByIdWithPwdHis(userId, PROVISIONED_USER_CLASS_FILTERS, User.class);
     }
@@ -148,6 +153,15 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public Iterable<EndUser> getEndUsersInUserGroup(UserGroup group) {
         return (Iterable) getObjects(searchFilterGetUsersInUserGroup(group, ENDUSER_CLASS_FILTERS));
+    }
+
+    private <T extends BaseUser> T searchForUserByDn(DN dn, Class<T> clazz) {
+        Object obj = getObject(dn);
+        if (obj != null && !clazz.isAssignableFrom(obj.getClass())) {
+            // The DN does not represent a valid value of the specified type
+            throw new IllegalArgumentException("Specified DN is not of the specified type");
+        }
+        return (T) obj;
     }
 
     private <T extends BaseUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
