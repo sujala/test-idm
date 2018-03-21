@@ -7,6 +7,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
@@ -35,6 +36,9 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     UserDao userRepository
+
+    @Autowired
+    DomainService domainService
 
     def "test federation deletion call"() {
         given:
@@ -597,5 +601,71 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUser(identityAdmin)
+    }
+
+    def "migrateDomainAdmin: test domain's user-admin gets successfully migrated to domain"() {
+        given:
+        def caller = utils.createCloudAccount()
+        utils.addRoleToUser(caller, Constants.IDENTITY_MIGRATE_DOMAIN_ADMIN)
+
+        when: "domain with no user-admins"
+        def domain = utils.createDomainEntity()
+        def response = devops.migrateDomainAdmin(utils.getToken(caller.username), domain.id)
+        def entity = new org.codehaus.jackson.map.ObjectMapper().readValue(response.getEntity(String), Map).domain
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        entity.id == domain.id
+        entity.userAdminDN == ""
+        entity.previousUserAdminDN == ""
+
+        when: "domain with user-admin"
+        def userAdmin = utils.createCloudAccount()
+        def userEntity = userRepository.getUserById(userAdmin.id)
+        domainService.removeDomainUserAdminDN(userEntity)
+
+        response = devops.migrateDomainAdmin(utils.getToken(caller.username), userAdmin.domainId)
+        entity = new org.codehaus.jackson.map.ObjectMapper().readValue(response.getEntity(String), Map).domain
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        entity.id == userAdmin.domainId
+        entity.userAdminDN == userEntity.getDn().toString()
+        entity.previousUserAdminDN == ""
+
+
+        cleanup:
+        utils.deleteUserQuietly(caller)
+        utils.deleteUserQuietly(userAdmin)
+    }
+
+    def "migrateDomainAdmin: error check"() {
+        given:
+        def caller = utils.createCloudAccount()
+        utils.addRoleToUser(caller, Constants.IDENTITY_MIGRATE_DOMAIN_ADMIN)
+        def domain = utils.createDomainEntity()
+
+        when: "domain does not exist"
+        def response = devops.migrateDomainAdmin(utils.getToken(caller.username), "invalid")
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "invalid token"
+        response = devops.migrateDomainAdmin("invalid", domain.id)
+
+        then:
+        response.status == HttpStatus.SC_UNAUTHORIZED
+
+        when: "forbidden token"
+        response = devops.migrateDomainAdmin(utils.getServiceAdminToken(), domain.id)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUserQuietly(caller)
     }
 }

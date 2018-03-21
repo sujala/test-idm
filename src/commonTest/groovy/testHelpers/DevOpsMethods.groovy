@@ -1,7 +1,6 @@
 package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.idm.api.resource.DevOpsResource
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
@@ -70,5 +69,10 @@ class DevOpsMethods {
     def analyzeToken(String authToken, String subjectToken) {
         initOnUse()
         resource.path("devops/tokens/analyze").accept(MediaType.APPLICATION_JSON_TYPE).header(DevOpsResource.X_AUTH_TOKEN, authToken).header(DevOpsResource.X_SUBJECT_TOKEN, subjectToken).get(ClientResponse)
+    }
+
+    def migrateDomainAdmin(String authToken, String domainId) {
+        initOnUse()
+        resource.path("devops/migrate/domains").path(domainId).path("admin").accept(MediaType.APPLICATION_JSON_TYPE).header(DevOpsResource.X_AUTH_TOKEN, authToken).put(ClientResponse)
     }
 }
