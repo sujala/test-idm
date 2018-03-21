@@ -43,6 +43,7 @@ public class DelegationAgreement implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_RS_PRINCIPAL_DN, objectClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private DN principalDN;
+    private DelegationPrincipal principal;
 
     @LDAPField(attribute=LdapRepository.ATTR_DOMAIN_ID,
             objectClass=LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT,
@@ -59,38 +60,35 @@ public class DelegationAgreement implements Auditable, UniqueId {
     }
 
     public void setPrincipal(DelegationPrincipal delegationPrincipal) {
+        this.principal = delegationPrincipal;
         principalDN = delegationPrincipal.getDn();
     }
 
-    public PrincipalType getPrincipalDnAsType() {
+    public PrincipalType getPrincipalType() {
         PrincipalType result = null;
-        if (principalDN != null) {
-            try {
-                if (principalDN.isDescendantOf(Constants.USER_GROUP_BASE_DN, false)) {
-                    return PrincipalType.USER_GROUP;
-                } else if (principalDN.isDescendantOf(LdapRepository.USERS_BASE_DN, false)
-                        || principalDN.isDescendantOf(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN, false)) {
-                    return PrincipalType.USER;
-                }
-            } catch (LDAPException e) {
-                throw new IllegalStateException("Error retrieving principal type");
-            }
+        if (principal != null) {
+            result = principal.getPrincipalType();
         }
         return result;
     }
 
-    public String getPrincipalDnId() {
+    public String getPrincipalId() {
         String id = null;
-        if (principalDN != null) {
-            String rsIdDN = principalDN.getRDNString();
-            if (StringUtils.isNotBlank(rsIdDN)) {
-                String[] split = rsIdDN.split("=");
-                if (split.length == 2) {
-                    id = split[1];
-                }
-            }
+        if (principal != null) {
+            id = principal.getId();
         }
         return id;
+    }
+
+    public boolean isFederatedUserPrincipal() {
+        if (principalDN != null) {
+            try {
+                return principalDN.isDescendantOf(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN, false);
+            } catch (LDAPException e) {
+                throw new IllegalStateException("Error retrieving principal type", e);
+            }
+        }
+        return false;
     }
 
     public Set<DN> getDelegates() {

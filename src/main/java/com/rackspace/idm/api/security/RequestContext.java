@@ -1,14 +1,20 @@
 package com.rackspace.idm.api.security;
 
+import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.spi.container.ContainerRequest;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -30,6 +36,7 @@ import java.util.List;
 @Component
 @Scope(value = "request", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class RequestContext {
+    private static final Logger logger = LoggerFactory.getLogger(RequestContext.class);
 
     @Autowired
     private DomainService domainService;
@@ -149,6 +156,13 @@ public class RequestContext {
 
             List<TenantRole> userTenantRoles;
             if (effectiveCaller instanceof EndUser) {
+                if (StringUtils.isBlank(effectiveCaller.getDomainId())) {
+                    //TODO: Push this validation higher since not all services use this method yet.
+                    // All end users MUST belong to a domain or it's considered invalid data. Log specific error code
+                    // to identify this invalid data scenario.
+                    logger.error(String.format("Attempted to retrieve roles for user '%s', but user has no domain!", effectiveCaller.getDomainId()));
+                    throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG, ErrorCodes.ERROR_CODE_INVALID_DOMAIN_FOR_USER);
+                }
                 userTenantRoles = tenantService.getSourcedRoleAssignmentsForUser((EndUser) effectiveCaller).asTenantRoles();
             } else {
                 userTenantRoles = IteratorUtils.toList(tenantService.getTenantRolesForUserNoDetail(effectiveCaller).iterator());

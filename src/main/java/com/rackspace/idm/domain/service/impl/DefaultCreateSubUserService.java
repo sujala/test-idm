@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.federation.v2.FederatedDomainRequestHandler;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.DomainDefaultException;
 import com.rackspace.idm.util.RoleUtil;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
@@ -25,8 +24,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.rackspace.idm.ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION;
 
 
 @Component
@@ -152,16 +149,19 @@ public class DefaultCreateSubUserService implements CreateSubUserService {
      * @return
      */
     private String getRegionBasedOnCaller(User caller) {
+        String defaultRegion;
+
         List<User> admins = this.domainService.getDomainAdmins(caller.getDomainId());
         if (admins.size() == 1) {
-            return admins.get(0).getRegion();
+            defaultRegion = admins.get(0).getRegion();
         } else if (identityConfig.getStaticConfig().getDomainRestrictedToOneUserAdmin() && admins.size() > 1) {
             throw new IllegalStateException("Can't retrieve single user-admin for domain " + caller.getDomainId());
-        }
-        else {
+        } else {
             //either 0 admins or > 1 admins
-            return caller.getRegion();
+            defaultRegion = caller.getRegion();
         }
+
+        return defaultRegion;
     }
 
     /**

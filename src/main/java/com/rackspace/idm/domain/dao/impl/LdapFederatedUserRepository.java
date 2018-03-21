@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.EncryptionService;
+import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.util.Debug;
@@ -112,6 +113,11 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
             LOGGER.error("Error retrieving expired federated user", e);
             return null;
         }
+    }
+
+    @Override
+    public FederatedUser getFederatedUserByDn(DN dn) {
+        return getObject(dn);
     }
 
     @Override

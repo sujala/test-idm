@@ -687,6 +687,7 @@ public class DefaultUserService implements UserService {
     @Override
     public User getUserByTenantId(String tenantId) {
         logger.debug("Getting user by tenantId: {}", tenantId);
+
         // TODO: Note - this does NOT use the new auto-assignment methods.
         Iterable<User> users = getUsersByTenantId(tenantId);
 
@@ -1125,6 +1126,31 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
+    public User getUserAdminByDomain(Domain domain) {
+        Validate.notNull(domain);
+
+        return userDao.getUserAdminByDomain(domain);
+    }
+
+    @Override
+    public User getUserAdminByTenantId(String tenantId) {
+        Validate.notNull(tenantId);
+
+        User user = null;
+
+        Tenant tenant = tenantService.getTenant(tenantId);
+        // All tenant should have a domainId, but adding check just in case.
+        if (tenant != null && tenant.getDomainId() != null) {
+            Domain domain = domainService.getDomain(tenant.getDomainId());
+            if (domain != null) {
+                user = getUserAdminByDomain(domain);
+            }
+        }
+
+        return user;
+    }
+
+    @Override
     public void updateUserForMultiFactor(User user) {
         logger.info("Updating User: {}", user);
         userDao.updateUserAsIs(user);
@@ -1134,6 +1160,9 @@ public class DefaultUserService implements UserService {
 
     private void disableUserAdminSubUsers(User user) throws IOException, JAXBException {
         if (authorizationService.hasUserAdminRole(user)) {
+            // NOTE: Enabling "feature.enable.user.admin.look.up.by.domain" will cause all users within a domain to be
+            // disabled if the user-admin set on domain is disabled. This will occur whether or not there exist another
+            // user-admin in the domain.
             List<User> enabledUserAdmins = domainService.getEnabledDomainAdmins(user.getDomainId());
             if (enabledUserAdmins.size() != 0) {
                 return;

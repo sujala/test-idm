@@ -63,6 +63,7 @@ public final class JSONConstants {
     public static final String MOSSO_ID = "mossoId";
     public static final String NAME = "name";
     public static final String NAMESPACE = "namespace";
+
     public static final String NAST_CREDENTIALS = "nastCredentials";
     public static final String NAST_ID = "nastId";
     public static final String OS_KSADM_SERVICE = "OS-KSADM:service";

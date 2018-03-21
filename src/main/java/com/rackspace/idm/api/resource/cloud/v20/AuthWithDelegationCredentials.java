@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.naming.ServiceUnavailableException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,7 +83,6 @@ public class AuthWithDelegationCredentials {
 
         // User must be authorized to authenticate under DA. Currently only support provisioned users so direct
         // comparison of DNs possible.
-        boolean assignedToAgreement = false;
         if (!delegationAgreement.getDelegates().contains(user.getDn())) {
             logger.info(String.format("User '%s' not authorized to use DA '%s'", user.getId(), delegationAgreement.getId()));
             throw new NotFoundException("The specified agreement does not exist for this user"); // Return standard not found rather than expose that DA exists

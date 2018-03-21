@@ -31,14 +31,6 @@ import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.*
 import static org.apache.http.HttpStatus.SC_CREATED
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 6/27/13
- * Time: 1:00 PM
- * To change this template use File | Settings | File Templates.
- */
-
 
 @Component
 class Cloud20Methods {
@@ -642,6 +634,11 @@ class Cloud20Methods {
         }
 
         resource.path(path20).path(TENANTS).path(tenantId).path(USERS).queryParams(params).header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
+    }
+
+    def listUserAdminsOnTenant(String token, String tenantId, MediaType mediaType = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(TENANTS).path(tenantId).path(RAX_AUTH).path(ADMINS).header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
     }
 
     def listUsersWithTenantIdAndRole(String token, tenantId, roleId, offset = "0", limit = "1000") {

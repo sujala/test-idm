@@ -774,6 +774,58 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         utils.deleteUsersQuietly(users)
     }
 
+    @Unroll
+    def "list user admins on tenant: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+        def userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
+
+        when:
+        def response = cloud20.listUserAdminsOnTenant(utils.identityAdminToken, userAdmin.domainId)
+        User user = response.getEntity(User).value
+
+        then:
+        response.status == SC_OK
+        user.id == userAdmin.id
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTenantQuietly(userAdmin.domainId)
+        utils.deleteTenantQuietly(utils.getNastTenant(userAdmin.domainId))
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled << [true, false]
+    }
+
+    @Unroll
+    def "get admins for user: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        when:
+        def response = cloud20.getAdminsForUser(utils.identityAdminToken, defaultUser.id)
+        UserList userList = response.getEntity(UserList).value
+
+        then:
+        response.status == SC_OK
+        userList.user.size() == 1
+        userList.user.get(0).id == userAdmin.id
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteTestDomainQuietly(domainId)
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled << [true, false]
+    }
+
     def getUsersFromListUsers(response) {
         if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
             def returnedUsers = response.getEntity(UserList).value

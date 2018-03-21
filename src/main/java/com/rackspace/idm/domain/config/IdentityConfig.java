@@ -409,6 +409,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP = "feature.enable.grant.roles.to.user.service";
     public static final boolean FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_DEFAULT = true;
 
+    public static final String FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP = "feature.enable.user.admin.look.up.by.domain";
+    public static final boolean FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -809,6 +812,8 @@ public class IdentityConfig {
         defaults.put(EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT);
         defaults.put(EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_DEFAULT);
         defaults.put(EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_DEFAULT);
 
         return defaults;
     }
@@ -2211,6 +2216,11 @@ public class IdentityConfig {
         @IdmProp(key = USER_PHONE_PIN_SIZE_PROP, versionAdded = "3.21.0", description = "Specifies the length, in characters, of the phone PIN.")
         public int getUserPhonePinSize() {
             return getIntSafely(reloadableConfiguration, USER_PHONE_PIN_SIZE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, versionAdded = "3.21.0", description = "Whether to enable user-admin look up by domain.")
+        public boolean isUserAdminLookUpByDomain() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP);
         }
     }
 

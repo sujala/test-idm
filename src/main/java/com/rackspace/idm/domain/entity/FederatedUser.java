@@ -194,7 +194,7 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
 
     @Override
     public PrincipalType getPrincipalType() {
-        return null;
+        return PrincipalType.USER;
     }
 
     @Override

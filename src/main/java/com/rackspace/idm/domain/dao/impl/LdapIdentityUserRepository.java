@@ -5,10 +5,7 @@ import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -58,6 +55,16 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public EndUser getEndUserById(String userId) {
         return searchForUserById(userId, ENDUSER_CLASS_FILTERS, EndUser.class);
+    }
+
+    @Override
+    public FederatedUser getFederatedUserByDn(DN dn) {
+        return fedUserDao.getFederatedUserByDn(dn);
+    }
+
+    @Override
+    public EndUser getEndUserByDn(DN dn) {
+        return searchForUserByDn(dn, EndUser.class);
     }
 
     @Override
@@ -146,6 +153,15 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public Iterable<EndUser> getEndUsersInUserGroup(UserGroup group) {
         return (Iterable) getObjects(searchFilterGetUsersInUserGroup(group, ENDUSER_CLASS_FILTERS));
+    }
+
+    private <T extends BaseUser> T searchForUserByDn(DN dn, Class<T> clazz) {
+        Object obj = getObject(dn);
+        if (obj != null && !clazz.isAssignableFrom(obj.getClass())) {
+            // The DN does not represent a valid value of the specified type
+            throw new IllegalArgumentException("Specified DN is not of the specified type");
+        }
+        return (T) obj;
     }
 
     private <T extends BaseUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {

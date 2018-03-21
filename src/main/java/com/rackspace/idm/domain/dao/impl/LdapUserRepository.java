@@ -13,6 +13,7 @@ import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
@@ -216,6 +217,19 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     @Override
     public User getUserByUsername(String username) {
         return getObject(searchFilterGetUserByUsername(username));
+    }
+
+    @Override
+    public User getUserAdminByDomain(Domain domain) {
+        Validate.notNull(domain);
+
+        User user = null;
+
+        if (domain.getUserAdminDN() != null) {
+            user = getObject(domain.getUserAdminDN());
+        }
+
+        return user;
     }
 
     @Override

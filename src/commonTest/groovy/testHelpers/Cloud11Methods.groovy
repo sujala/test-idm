@@ -22,6 +22,9 @@ class Cloud11Methods {
     @Shared String authUser = "auth"
     @Shared String authPassword = "auth123"
 
+    static def SERVICE_PATH_NAST = "nast"
+    static def SERVICE_PATH_MOSSO = "mosso"
+
     private def initOnUse(){
         resource = ensureGrizzlyStarted("classpath:app-config.xml");
     }
@@ -49,6 +52,16 @@ class Cloud11Methods {
     def getUserByName(String username) {
         initOnUse()
         resource.path(path11).path(USERS).path(username).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getUserFromNastId(String nastId, MediaType mediaType = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path11).path(SERVICE_PATH_NAST).path(nastId).header("Authorization", getBasicAuth()).accept(mediaType).get(ClientResponse)
+    }
+
+    def getUserFromMossoId(String mossoId, MediaType mediaType = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path11).path(SERVICE_PATH_MOSSO).path(mossoId).header("Authorization", getBasicAuth()).accept(mediaType).get(ClientResponse)
     }
 
     def getServiceCatalog(String username) {

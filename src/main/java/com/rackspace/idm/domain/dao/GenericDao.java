@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 
 import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 
@@ -15,6 +16,17 @@ import com.unboundid.ldap.sdk.SearchScope;
 public interface GenericDao<T> {
     void addObject(T object);
     void addObject(String dn, T object);
+
+    /**
+     * Retrieve a single object by provided DN. Return null if no object was found.
+     *
+     * @param dn
+     * @throws IllegalArgumentException If supplied dn is null.
+     *
+     * @return
+     */
+    T getObject(DN dn);
+
     T getObject(Filter searchFilter);
     T getObject(Filter searchFilter, SearchScope scope);
     T getObject(Filter searchFilter, String dn);

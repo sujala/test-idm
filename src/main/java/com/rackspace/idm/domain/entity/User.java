@@ -351,7 +351,7 @@ public class User implements EndUser, DelegationPrincipal {
 
     @Override
     public PrincipalType getPrincipalType() {
-        return null;
+        return PrincipalType.USER;
     }
 
     @Override

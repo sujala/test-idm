@@ -107,6 +107,8 @@ public final class ErrorCodes {
 
     public static final String ERROR_MESSAGE_IDP_NOT_FOUND = "An Identity provider with the specified id was not found";
 
+    public static final String ERROR_CODE_INVALID_DOMAIN_FOR_USER = "DAT-000";
+
     //MFA
     public static final String ERROR_CODE_MFA_MIGRATION_MFA_NOT_ENABLED = "MFAM-000";
     public static final String ERROR_CODE_MFA_MIGRATION_OTP_ENABLED = "MFAM-001";

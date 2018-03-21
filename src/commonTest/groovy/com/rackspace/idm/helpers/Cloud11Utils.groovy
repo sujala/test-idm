@@ -1,18 +1,11 @@
 package com.rackspace.idm.helpers
 
-import com.rackspacecloud.docs.auth.api.v1.AuthData
-import com.rackspacecloud.docs.auth.api.v1.BaseURL
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
-import com.rackspacecloud.docs.auth.api.v1.GroupsList
-import com.rackspacecloud.docs.auth.api.v1.User
+import com.rackspacecloud.docs.auth.api.v1.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import testHelpers.Cloud11Methods
 import testHelpers.V1Factory
 import testHelpers.V2Factory
-
-import javax.annotation.PostConstruct
 
 import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.*

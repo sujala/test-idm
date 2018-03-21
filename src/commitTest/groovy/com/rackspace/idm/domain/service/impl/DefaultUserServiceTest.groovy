@@ -1385,6 +1385,94 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.phonePin == null
     }
 
+    def "getUserAdminByDomain: call correct dao method"() {
+        given:
+        def domain = entityFactory.createDomain()
+        def user = entityFactory.createUser()
+
+        when:
+        User userAdmin = service.getUserAdminByDomain(domain)
+
+        then:
+        1 * userDao.getUserAdminByDomain(domain) >> user
+        userAdmin == user
+    }
+
+    def "getUserAdminByDomain: error check"() {
+        when: "domain is null"
+        service.getUserAdminByDomain(null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "getUserAdminByTenantId: calls correct dao methods"() {
+        given:
+        def domain = entityFactory.createDomain()
+        def tenantId = "tenantId"
+        def tenant = entityFactory.createTenant(tenantId, tenantId).with {
+            it.domainId = domain.domainId
+            it
+        }
+        def user = entityFactory.createUser()
+
+        when:
+        User adminUser = service.getUserAdminByTenantId(tenantId)
+
+        then:
+        1 * tenantService.getTenant(tenantId) >> tenant
+        1 * domainService.getDomain(domain.domainId) >> domain
+        1 * userDao.getUserAdminByDomain(domain) >> user
+
+        adminUser == user
+    }
+
+    def "getUserAdminByTenantId: error check"() {
+        given:
+        def domain = entityFactory.createDomain()
+        def tenantId = "tenantId"
+        def tenant = entityFactory.createTenant(tenantId, tenantId).with {
+            it.domainId = domain.domainId
+            it
+        }
+
+        when: "tenantId is null"
+        service.getUserAdminByTenantId(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "tenant not found"
+        User userAdmin = service.getUserAdminByTenantId(tenantId)
+
+        then:
+        1 * tenantService.getTenant(tenantId) >> null
+        0 * domainService.getDomain(domain.domainId)
+        0 * userDao.getUserAdminByDomain(domain)
+
+        userAdmin == null
+
+        when: "domain not found"
+        service.getUserAdminByTenantId(tenantId)
+
+        then:
+        1 * tenantService.getTenant(tenantId) >> tenant
+        1 * domainService.getDomain(domain.domainId) >> null
+        0 * userDao.getUserAdminByDomain(domain)
+
+        userAdmin == null
+
+        when: "user not found"
+        service.getUserAdminByTenantId(tenantId)
+
+        then:
+        1 * tenantService.getTenant(tenantId) >> tenant
+        1 * domainService.getDomain(domain.domainId) >> domain
+        1 * userDao.getUserAdminByDomain(domain) >> null
+
+        userAdmin == null
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25

@@ -1,6 +1,7 @@
 package com.rackspace.idm.modules.usergroups.dao;
 
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
+import com.unboundid.ldap.sdk.DN;
 
 public interface UserGroupDao {
 
@@ -23,6 +24,8 @@ public interface UserGroupDao {
      * @return
      */
     UserGroup getGroupById(String groupId);
+
+    UserGroup getGroupByDn(DN dn);
 
     /**
      * Update the specified group.

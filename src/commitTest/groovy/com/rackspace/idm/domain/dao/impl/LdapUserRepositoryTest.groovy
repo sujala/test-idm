@@ -1,9 +1,9 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.EncryptionService
 import com.unboundid.ldap.sdk.*
 import testHelpers.RootServiceTest
-
-import java.lang.reflect.Field
 
 import static com.rackspace.idm.domain.dao.impl.LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_DEFAULT_VALUE
 import static com.rackspace.idm.domain.dao.impl.LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME
@@ -14,6 +14,7 @@ class LdapUserRepositoryTest extends RootServiceTest {
 
     LdapConnectionPools ldapConnectionPools
     LDAPInterface ldapInterface
+    EncryptionService encryptionService
 
     def setup() {
         dao = new LdapUserRepository()
@@ -29,6 +30,10 @@ class LdapUserRepositoryTest extends RootServiceTest {
 
         ldapInterface = Mock()
         ldapConnectionPools.getAppConnPoolInterface() >> ldapInterface
+
+        encryptionService = Mock()
+        dao.encryptionService = encryptionService
+
     }
 
     def "getEnabledUsersByContactId: Get enabled users by contactId filter"() {
@@ -55,5 +60,31 @@ class LdapUserRepositoryTest extends RootServiceTest {
             List<SearchResultEntry> searchResultList = Arrays.asList()
             return new SearchResult(1, null, null, null, new String[0], searchResultList, Collections.emptyList(), 2, 0)
         }
+    }
+
+    def "getUserAdminByDomain: calls correct backend service"() {
+        given:
+        def domain = entityFactory.createDomain().with {
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
+
+        when:
+        User user = dao.getUserAdminByDomain(domain)
+
+        then:
+        user != null
+        user.getDn() == domain.userAdminDN
+
+        1 * ldapInterface.getEntry(domain.userAdminDN.toString()) >> new SearchResultEntry(domain.userAdminDN.toString(), [])
+        1 * encryptionService.decryptUser(_)
+    }
+
+    def "getUserAdminByDomain: error check"() {
+        when: "domain is null"
+        dao.getUserAdminByDomain(null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }
