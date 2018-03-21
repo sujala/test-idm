@@ -1,11 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.entity.ProvisionedUserDelegate
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.service.DomainSubUserDefaults
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import org.opensaml.core.config.InitializationService
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.HttpHeaders
@@ -61,4 +64,27 @@ class ListEndpointsForTokenApiTest extends RootServiceTest {
         then:
         1 * scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
     }
+
+    @Unroll
+    def "listEndpointsForToken: always applies RCN roles for DA tokens, applyRcnRoles = #applyRcnRoles"() {
+        given:
+        def callerToken = "callerToken"
+        def subjectToken = "subjectToken"
+        ScopeAccess sa = entityFactory.createUserToken()
+        def subjectUser = Mock(ProvisionedUserDelegate)
+        scopeAccessService.getScopeAccessByAccessToken(subjectToken) >> sa
+        userService.getUserByScopeAccess(_, false) >> subjectUser
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(callerToken) >> entityFactory.createUserToken()
+
+        when:
+        service.listEndpointsForToken(headers, callerToken, subjectToken, applyRcnRoles)
+
+        then:
+        1 * scopeAccessService.getServiceCatalogInfoApplyRcnRoles(subjectUser) >> new ServiceCatalogInfo()
+        0 * scopeAccessService.getServiceCatalogInfo(subjectUser)
+
+        where:
+        applyRcnRoles << [true, false]
+    }
+
 }

@@ -14,6 +14,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ExceptionHandler;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
@@ -99,7 +100,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             // The principal must exist and caller must be authorized to create a DA for the principal
-            PrincipalValidator principalValidator = new PrincipalValidator(agreementWeb.getPrincipalType(), agreementWeb.getPrincipalId());
+            SimplePrincipalValidator principalValidator = new SimplePrincipalValidator(agreementWeb.getPrincipalType(), agreementWeb.getPrincipalId());
             principalValidator.verifyCallerAuthorizedOnPrincipal(caller);
             DelegationPrincipal principal = principalValidator.getPrincipal();
 
@@ -150,23 +151,20 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     public Response getAgreement(String authToken, String agreementId) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
 
-            // Caller must be the DA principal to view it for now TODO: Support delegate viewers
-            BaseUser callerBu = requestContextHolder.getRequestContext().getEffectiveCaller();
-
-            if (!(callerBu instanceof User)) {
-                throw new BadRequestException("Only provisioned users can retrieve delegation agreements");
-            }
-            User caller = (User) callerBu; // To get this far requires user to be EU
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
             // Currently only principals can retrieve DA
-            if (delegationAgreement == null || !caller.getDn().equals(delegationAgreement.getPrincipalDN())) {
+            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
                 throw new NotFoundException("The specified agreement does not exist for this user");
             }
 
@@ -183,19 +181,17 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             // Verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-            BaseUser callerBu = requestContextHolder.getRequestContext().getEffectiveCaller();
-
-            if (!(callerBu instanceof User)) {
-                throw new BadRequestException("Only provisioned users can retrieve delegation agreements");
-            }
-            User caller = (User) callerBu; // To get this far requires user to be EU
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
             // Caller must be the DA principal to delete it
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || !caller.getDn().equals(delegationAgreement.getPrincipalDN())) {
+            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
                 throw new NotFoundException("The specified agreement does not exist for this user");
             }
 
@@ -207,35 +203,51 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
         }
     }
 
-
-    private class PrincipalValidator {
+    private class SimplePrincipalValidator {
         @Getter
         String id;
         @Getter
         PrincipalType principalType;
-        PrincipalLookup innerLookup;
+        @Getter
+        DelegationPrincipal principal;
 
-        public PrincipalValidator(PrincipalType principalType, String id) {
+        PrincipalValidator validator;
+
+        public SimplePrincipalValidator(PrincipalType principalType, String id) {
             this.id = id;
             this.principalType = principalType;
 
+            PrincipalLookup innerLookup;
             if (principalType == PrincipalType.USER_GROUP) {
-                innerLookup = new UserGroupPrincipalLookup(id);
+                UserGroupPrincipalLookupValidator lv = new UserGroupPrincipalLookupValidator(id);
+                innerLookup = lv;
+                validator = lv;
             } else if (principalType == PrincipalType.USER) {
-                innerLookup = new UserPrincipalLookup(id);
+                EndUserPrincipalLookupValidator lv = new EndUserPrincipalLookupValidator(id);
+                innerLookup = lv;
+                validator = lv;
+            } else {
+                throw new IllegalArgumentException("Unrecognized principal type");
+            }
+            principal = innerLookup.getPrincipal();
+        }
+
+        public SimplePrincipalValidator(DelegationPrincipal delegationPrincipal) {
+            this.id = delegationPrincipal.getId();
+            this.principalType = delegationPrincipal.getPrincipalType();
+            this.principal = delegationPrincipal;
+
+            if (principalType == PrincipalType.USER_GROUP) {
+                validator = new UserGroupPrincipalLookupValidator(delegationPrincipal);
+            } else if (principalType == PrincipalType.USER) {
+                validator = new EndUserPrincipalLookupValidator(id);
             } else {
                 throw new IllegalArgumentException("Unrecognized principal type");
             }
         }
 
-        public DelegationPrincipal getPrincipal() {
-            return innerLookup.getPrincipal();
-        }
-
         public boolean isCallerAuthorizedOnPrincipal(EndUser caller) {
-            DelegationPrincipal principal = innerLookup.getPrincipal();
-
-            if (principal == null || !innerLookup.isCallerAuthorizedOnPrincipal(caller)) {
+            if (principal == null || !validator.isCallerAuthorizedOnPrincipal(caller)) {
                 return false;
             }
             return true;
@@ -251,23 +263,29 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     private interface PrincipalLookup {
         DelegationPrincipal getPrincipal();
         String getId();
+    }
 
-        /**
-         * Returns whether the caller is authorized for delegation agreements with the principal returned by {@link #getPrincipal()}
-         *
-         * @param caller
-         * @return
-         */
+    private interface PrincipalValidator {
         boolean isCallerAuthorizedOnPrincipal(EndUser caller);
     }
 
-    private class UserGroupPrincipalLookup implements PrincipalLookup {
+    private class UserGroupPrincipalLookupValidator implements PrincipalLookup, PrincipalValidator {
         private String groupId;
         com.rackspace.idm.modules.usergroups.entity.UserGroup userGroup;
 
-        public UserGroupPrincipalLookup(String groupId) {
+        public UserGroupPrincipalLookupValidator(String groupId) {
             this.groupId = groupId;
             this.userGroup = userGroupService.getGroupById(groupId);
+        }
+
+        public UserGroupPrincipalLookupValidator(DelegationPrincipal group) {
+            if (group != null) {
+                this.groupId = group.getId();
+                if (!(group instanceof UserGroup)) {
+                    throw new IllegalArgumentException("Supplied principal must be a user group");
+                }
+                this.userGroup = (UserGroup) group;
+            }
         }
 
         @Override
@@ -298,21 +316,33 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
         }
     }
 
-    private class UserPrincipalLookup implements PrincipalLookup {
+    private class EndUserPrincipalLookupValidator implements PrincipalLookup, PrincipalValidator {
         private String userId;
         private EndUser endUser;
 
-        public UserPrincipalLookup(String userId) {
+        public EndUserPrincipalLookupValidator(String userId) {
             this.userId = userId;
             this.endUser = identityUserService.getEndUserById(userId);
+            if (endUser != null) {
+                if (!(endUser instanceof DelegationPrincipal)) {
+                    throw new IllegalArgumentException("Specified user not a valid delegation principal");
+                }
+            }
+        }
+
+        public EndUserPrincipalLookupValidator(DelegationPrincipal user) {
+            if (user != null) {
+                this.userId = user.getId();
+                if (!(user instanceof EndUser)) {
+                    throw new IllegalArgumentException("Supplied user must be an end user");
+                }
+                this.endUser = (EndUser) user;
+            }
         }
 
         @Override
         public DelegationPrincipal getPrincipal() {
-            if (endUser instanceof DelegationPrincipal) {
-                return (DelegationPrincipal) endUser;
-            }
-            return null;
+            return (DelegationPrincipal) endUser;
         }
 
         @Override
