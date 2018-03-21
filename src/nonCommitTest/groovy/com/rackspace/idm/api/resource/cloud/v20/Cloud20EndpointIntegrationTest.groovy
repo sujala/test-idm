@@ -354,4 +354,73 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
     }
 
+    def "listEndpointsForToken correctly lists endpoints for DA tokens"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
+        def userAdmin1 = utils.createCloudAccountWithRcn()
+        def domain1 = utils.getDomain(userAdmin1.domainId)
+        def userAdmin2 = utils.createCloudAccountWithRcn(utils.getIdentityAdminToken(), testUtils.getRandomInteger(), domain1.rackspaceCustomerNumber)
+        def identityAdmin = utils.createIdentityAdmin()
+        def identityAdmin2 = utils.createIdentityAdmin()
+        utils.domainRcnSwitch(identityAdmin.domainId, domain1.rackspaceCustomerNumber)
+        utils.domainRcnSwitch(identityAdmin2.domainId, domain1.rackspaceCustomerNumber)
+        def daDomain1UserAdmin2 = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin1.username), userAdmin1.domainId, userAdmin2.id)
+        def daDomain1UserAdmin1 = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin1.username), userAdmin1.domainId, userAdmin1.id)
+        def daDomain1IdentityAdmin2 = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin1.username), userAdmin1.domainId, identityAdmin2.id)
+        def daTokenDomain1UserAdmin2 = utils.getDelegationAgreementToken(userAdmin2.username, daDomain1UserAdmin2.id)
+        def daTokenDomain1UserAdmin1 = utils.getDelegationAgreementToken(userAdmin1.username, daDomain1UserAdmin1.id)
+        def daTokenDomain1IdentityAdmin2 = utils.getDelegationAgreementToken(identityAdmin2.username, daDomain1IdentityAdmin2.id)
+
+        when: "list endpoints for DA token using same DA token"
+        EndpointList endpoints = utils.listEndpointsForToken(daTokenDomain1UserAdmin1, daTokenDomain1UserAdmin1)
+
+        then:
+        endpoints.endpoint.find { e -> e.tenantId == userAdmin1.domainId } != null
+
+        when: "list endpoints for user admin pw token using DA token"
+        def response = cloud20.listEndpointsForToken(daTokenDomain1UserAdmin2, utils.getToken(userAdmin1.username))
+
+        then:
+        response.status == 403
+
+        when: "list endpoints for DA token using user admin's pw token"
+        response = cloud20.listEndpointsForToken(utils.getToken(userAdmin1.username), daTokenDomain1UserAdmin2)
+
+        then:
+        response.status == 403
+
+        when: "list endpoints for DA token using same user's pw token when DA is for different domain"
+        response = cloud20.listEndpointsForToken(utils.getToken(userAdmin2.username), daTokenDomain1UserAdmin2)
+
+        then:
+        response.status == 403
+
+        when: "list endpoints for DA token using same user's pw token when DA is for same domain"
+        response = cloud20.listEndpointsForToken(utils.getToken(userAdmin1.username), daTokenDomain1UserAdmin1)
+
+        then:
+        response.status == 403
+
+        when: "list endpoints for DA token using Identity admin with DA for another identity admin"
+        endpoints = utils.listEndpointsForToken(daTokenDomain1IdentityAdmin2, utils.getToken(identityAdmin.username))
+
+        then:
+        endpoints.endpoint.find { e -> e.tenantId == userAdmin1.domainId } != null
+        endpoints.endpoint.find { e -> e.tenantId == identityAdmin2.domainId } == null
+
+        when: "list endpoints for identity admin using DA token for another identity admin"
+        response = cloud20.listEndpointsForToken(daTokenDomain1IdentityAdmin2, utils.getToken(identityAdmin.username))
+
+        then:
+        response.status == 403
+
+        when: "list endpoints for DA token using Identity admin with DA for different domain"
+        endpoints = utils.listEndpointsForToken(daTokenDomain1UserAdmin2, utils.getToken(identityAdmin.username))
+
+        then:
+        endpoints.endpoint.find { e -> e.tenantId == userAdmin1.domainId } != null
+        endpoints.endpoint.find { e -> e.tenantId == userAdmin2.domainId } == null
+    }
+
 }
