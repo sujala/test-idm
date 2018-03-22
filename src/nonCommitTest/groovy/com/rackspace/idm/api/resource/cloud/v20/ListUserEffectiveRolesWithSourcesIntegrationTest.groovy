@@ -632,14 +632,22 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         def userAdmin1 = utils.createCloudAccountWithRcn()
         def domain1 = utils.getDomain(userAdmin1.domainId)
         def userAdmin2 = utils.createCloudAccountWithRcn(utils.getIdentityAdminToken(), testUtils.getRandomInteger(), domain1.rackspaceCustomerNumber)
+        def defaultUserDomain2 = utils.createUser(utils.getToken(userAdmin2.username))
         def delegationAgreement = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin1.username), userAdmin1.domainId, userAdmin2.id)
-        def daToken = utils.getDelegationAgreementToken(userAdmin2.username, delegationAgreement.id)
+        def delegationAgreementDomain1DefaultUser = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin1.username), userAdmin1.domainId, defaultUserDomain2.id)
+        def delegationAgreementDomain2DefaultUser = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin2.username), userAdmin2.domainId, defaultUserDomain2.id)
+        def daTokenDomain1UserAdmin2 = utils.getDelegationAgreementToken(userAdmin2.username, delegationAgreement.id)
+        def daTokenDomain1DefaultUser = utils.getDelegationAgreementToken(defaultUserDomain2.username, delegationAgreementDomain1DefaultUser.id)
+        def daTokenDomain2DefaultUser = utils.getDelegationAgreementToken(defaultUserDomain2.username, delegationAgreementDomain2DefaultUser.id)
+        def tenantDomain1 = utils.createTenant()
+        utils.addTenantToDomain(domain1.id, tenantDomain1.id)
 
         when: "list roles for self using DA token"
-        def roles = utils.listEffectiveRolesForUser(userAdmin2.id, daToken)
+        def roles = utils.listEffectiveRolesForUser(userAdmin2.id, daTokenDomain1UserAdmin2)
 
         then: "the user from cloud account 2 has a role assignment on cloud account 1"
         roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId)} != null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id)} != null
 
         and: "the user from cloud account 2 does NOT have a role on cloud account 2"
         roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId)} == null
@@ -649,18 +657,55 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
 
         then: "the user from cloud account 2 does NOT have a role assignment on cloud account 1"
         roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId)} == null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id)} == null
 
         and: "the user from cloud account 2 has a role on cloud account 2"
         roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId)} != null
 
         when: "list roles for other user using DA token"
-        def response = cloud20.listUserEffectiveRolesWithSources(daToken, userAdmin1.id)
+        def response = cloud20.listUserEffectiveRolesWithSources(daTokenDomain1UserAdmin2, userAdmin1.id)
 
         then: "forbidden due to the DA user being effectively a sub-user in the target user's domain"
         response.status == 403
 
+        when: "default user is not able to list effective roles for a user admin in same domain"
+        response = cloud20.listUserEffectiveRolesWithSources(utils.getToken(defaultUserDomain2.username), userAdmin2.id)
+
+        then:
+        response.status == 403
+
+        when: "default user is not able to list effective roles for a user admin in another domain"
+        response = cloud20.listUserEffectiveRolesWithSources(utils.getToken(defaultUserDomain2.username), userAdmin1.id)
+
+        then:
+        response.status == 403
+
+        when: "default user listing roles for their own DA token in same domain"
+        roles = utils.listEffectiveRolesForUser(defaultUserDomain2.id, daTokenDomain2DefaultUser)
+
+        then:
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId)} != null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId)} == null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id)} == null
+
+        when: "default user listing roles for their own DA token in another domain"
+        roles = utils.listEffectiveRolesForUser(defaultUserDomain2.id, daTokenDomain1DefaultUser)
+
+        then:
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId)} == null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId)} != null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id)} != null
+
+        when: "user admin in same domain list roles for default user"
+        roles = utils.listEffectiveRolesForUser(defaultUserDomain2.id, utils.getToken(userAdmin2.username))
+
+        then:
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId)} != null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId)} == null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id)} == null
+
         cleanup:
-        utils.deleteUsers(userAdmin1, userAdmin2)
+        utils.deleteUsers(userAdmin1, defaultUserDomain2, userAdmin2)
     }
 
 }
