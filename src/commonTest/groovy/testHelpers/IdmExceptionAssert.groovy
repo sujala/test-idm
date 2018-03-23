@@ -22,7 +22,7 @@ class IdmExceptionAssert {
 
         assert exception.class.isAssignableFrom(expectedIdmExceptionClazz)
 
-        T castException = (T) exception;
+        T castException = (T) exception
 
         assert castException.errorCode == expectedErrorCode
 

@@ -12,9 +12,11 @@ import com.rackspace.idm.domain.entity.Token
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
+import com.rackspace.idm.validation.Validator20
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -48,6 +50,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         mockDelegationAgreementConverter(service)
         mockDomainService(service)
         mockIdmPathUtils(service)
+        mockValidator20(service)
     }
 
     /**
@@ -138,6 +141,54 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
             IdmExceptionAssert.assertException(exception, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
             Response.status(SC_FORBIDDEN)
         }
+    }
+
+    @Unroll
+    def "addAgreement: Validates name and description length"() {
+        UriInfo uriInfo = Mock()
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        def token = "token"
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+
+        reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it
+        }
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+
+        DelegationAgreement daInvalidWeb = new DelegationAgreement()
+
+        def invalidName = RandomStringUtils.randomAlphabetic(33)
+        def validName = RandomStringUtils.randomAlphabetic(32)
+        def invalidDescription = RandomStringUtils.randomAlphabetic(256)
+
+        when: "Don't Provide name"
+        service.addAgreement(uriInfo, token, daInvalidWeb)
+
+        then:
+        1 * validator20.validateStringNotNullWithMaxLength("name", null, 32) >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
+
+        when: "Provide name exceeding 32"
+        daInvalidWeb.setName(invalidName)
+        service.addAgreement(uriInfo, token, daInvalidWeb)
+
+        then:
+        1 * validator20.validateStringNotNullWithMaxLength("name", invalidName, 32) >> {throw new BadRequestException("asd")}
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
+
+        when: "Provide description exceeding 255"
+        daInvalidWeb.setName(validName)
+        daInvalidWeb.setDescription(invalidDescription)
+        service.addAgreement(uriInfo, token, daInvalidWeb)
+
+        then:
+        1 * validator20.validateStringNotNullWithMaxLength("name", validName, 32)
+        1 * validator20.validateStringMaxLength("description", invalidDescription, 255) >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
     }
 
     def "addAgreement: Success when specified USER principal is same as caller"() {

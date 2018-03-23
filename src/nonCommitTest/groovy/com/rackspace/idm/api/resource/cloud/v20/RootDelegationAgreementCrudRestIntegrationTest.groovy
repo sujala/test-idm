@@ -94,7 +94,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, false)
 
         // Execute the closure
-        def response = responseCall()
+        def response = responseCall("invalidToken")
 
         then:
         response.status == SC_SERVICE_UNAVAILABLE
@@ -108,13 +108,36 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
 
         where:
         [name, responseCall]  << [
-                ["createDelegationAgreement", {cloud20.createDelegationAgreement("invalidToken", new DelegationAgreement())}]
-                , ["getDelegationAgreement", {cloud20.getDelegationAgreement("invalidToken", "id")}]
-                , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement("invalidToken", "id")}]
-                , ["addUserDelegate", {cloud20.addUserDelegate("invalidToken", "id", "id")}]
-                , ["addUserGroupDelegate", {cloud20.addUserDelegate("invalidToken", "id", "id")}]
-                , ["deleteUserDelegate", {cloud20.addUserDelegate("invalidToken", "id", "id")}]
-                , ["deleteUserGroupDelegate", {cloud20.addUserDelegate("invalidToken", "id", "id")}]
+                ["createDelegationAgreement", {cloud20.createDelegationAgreement(it, new DelegationAgreement())}]
+                , ["getDelegationAgreement", {cloud20.getDelegationAgreement(it, "id")}]
+                , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement(it, "id")}]
+                , ["addUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["addUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["deleteUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["deleteUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+        ]
+    }
+
+    @Unroll
+    def "Delegation service '#name' rejects racker tokens"() {
+        def token = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD).token.id
+
+        when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
+        def response = responseCall(token)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        where:
+        [name, responseCall]  << [
+                ["createDelegationAgreement", {cloud20.createDelegationAgreement(it, new DelegationAgreement())}]
+                , ["getDelegationAgreement", {cloud20.getDelegationAgreement(it, "id")}]
+                , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement(it, "id")}]
+                , ["addUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["addUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["deleteUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["deleteUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
         ]
     }
 

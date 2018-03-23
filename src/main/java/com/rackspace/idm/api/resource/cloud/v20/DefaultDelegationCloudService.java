@@ -16,6 +16,7 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
+import com.rackspace.idm.validation.Validator20;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
@@ -69,6 +70,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     @Autowired
     private DelegationAgreementConverter delegationAgreementConverter;
 
+    @Autowired
+    private Validator20 validator20;
+
     @Override
     public Response addAgreement(UriInfo uriInfo, String authToken, DelegationAgreement agreementWeb) {
         try {
@@ -91,6 +95,10 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new BadRequestException("Only provisioned and federated users can create delegation agreements", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
             EndUser caller = (EndUser) callerBu;
+
+            // Verify field lengths
+            validator20.validateStringNotNullWithMaxLength("name", agreementWeb.getName(), Validator20.MAX_LENGTH_32);
+            validator20.validateStringMaxLength("description", agreementWeb.getDescription(), Validator20.MAX_LENGTH_255);
 
             // If a principal is not specified, default to the caller
             if (StringUtils.isBlank(agreementWeb.getPrincipalId())) {
