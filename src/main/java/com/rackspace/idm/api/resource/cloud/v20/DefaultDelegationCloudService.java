@@ -37,6 +37,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDelegationCloudService.class);
 
     public static final String ERROR_MSG_PRINCIPAL_NOT_FOUND = "The specified principal was not found or you are not authorized to use this principal";
+    public static final String ERROR_MSG_DELEGATE_NOT_FOUND = "The specified delegate was not found or you are not authorized to use this delegate";
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -110,29 +111,25 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException("This domain is not allowed to create delegation agreements", ErrorCodes.ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN);
             }
 
-            User delegate = identityUserService.getProvisionedUserById(agreementWeb.getDelegateId());
-            if (delegate == null) {
-                throw new NotFoundException("Invalid delegate", ErrorCodes.ERROR_CODE_NOT_FOUND);
-            }
-
-            // Verify the delegate is within same RCN as caller. If in same domain, allow delegation even if no RCN set
-            boolean sameDomain = callerDomain.getDomainId().equalsIgnoreCase(delegate.getDomainId());
-            if (!sameDomain) {
-                // Must compare RCNs of each user's domain if not in same domain
-                Domain delegateDomain = domainService.getDomain(delegate.getDomainId());
-
-                boolean missingRcns = delegateDomain == null || StringUtils.isBlank(callerDomain.getRackspaceCustomerNumber()) || StringUtils.isBlank(delegateDomain.getRackspaceCustomerNumber());
-
-                if (missingRcns || !callerDomain.getRackspaceCustomerNumber().equalsIgnoreCase(delegateDomain.getRackspaceCustomerNumber())) {
-                    throw new NotFoundException("Invalid delegate", ErrorCodes.ERROR_CODE_NOT_FOUND);
-                }
+            /*
+             Temp hack to avoid altering this contract and having to fix lots of things as part of initial PR. Will
+             remove this and update other tests later.
+              */
+            DelegationDelegate delegate = null;
+            if (StringUtils.isNotBlank(agreementWeb.getDelegateId())) {
+                SimpleDelegateValidator delegateValidator = new SimpleDelegateValidator(new EndUserDelegateReference(agreementWeb.getDelegateId()));
+                delegateValidator.verifyDelegateCanBeAddedToAgreementInDomain(callerDomain.getDomainId());
+                delegate = delegateValidator.getDelegate();
             }
 
             // Convert to entity object
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationAgreementConverter.fromDelegationAgreementWeb(agreementWeb);
             delegationAgreement.setPrincipal(principal);
             delegationAgreement.setDomainId(principal.getDomainId());
-            delegationAgreement.getDelegates().add(delegate.getDn());
+
+            if (delegate != null) {
+                delegationAgreement.getDelegates().add(delegate.getDn());
+            }
 
             // Add the agreement
             delegationService.addDelegationAgreement(delegationAgreement);
@@ -179,7 +176,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     public Response deleteAgreement(String authToken, String agreementId) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
             // Verify caller is enabled
             BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
@@ -196,6 +193,71 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             delegationService.deleteDelegationAgreement(delegationAgreement);
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error deleting delegation agreement '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response addDelegate(String authToken, String agreementId, DelegateReference delegateReference) {
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal to modify delegates
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
+                throw new NotFoundException("The specified agreement does not exist for this user");
+            }
+
+            // Verify delegate is valid for the specified agreement
+            SimpleDelegateValidator delegateLookupValidator = new SimpleDelegateValidator(delegateReference);
+            delegateLookupValidator.verifyDelegateCanBeAddedToAgreement(delegationAgreement);
+
+            delegationService.addDelegate(delegationAgreement, delegateLookupValidator.delegate);
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error deleting delegation agreement '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response deleteDelegate(String authToken, String agreementId, DelegateReference delegateReference) {
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal to modify delegates
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
+                throw new NotFoundException("The specified agreement does not exist for this user");
+            }
+
+            // No validation required for delegate
+            boolean wasRemoved = delegationService.deleteDelegate(delegationAgreement, delegateReference);
+
+            if (!wasRemoved) {
+                throw new NotFoundException("Delegate does not exist on this agreement");
+            }
             return Response.noContent().build();
         } catch (Exception ex) {
             LOG.debug(String.format("Error deleting delegation agreement '%s'", agreementId), ex);
@@ -359,6 +421,45 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
         @Override
         public String getId() {
             return userId;
+        }
+    }
+
+    private class SimpleDelegateValidator {
+        @Getter
+        DelegateReference delegateReference;
+
+        @Getter
+        DelegationDelegate delegate;
+
+        public SimpleDelegateValidator(DelegateReference delegateReference) {
+            this.delegateReference = delegateReference;
+            delegate = delegationService.getDelegateByReference(delegateReference);
+        }
+
+        public void verifyDelegateCanBeAddedToAgreement(com.rackspace.idm.domain.entity.DelegationAgreement da) {
+            verifyDelegateCanBeAddedToAgreementInDomain(da.getDomainId());
+        }
+
+        public void verifyDelegateCanBeAddedToAgreementInDomain(String domainId) {
+            // Delegate must be within same domain as agreement or same RCN
+            if (delegate == null || StringUtils.isBlank(domainId)) {
+                throw new NotFoundException(ERROR_MSG_DELEGATE_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            // Verify the delegate is within same RCN as specified domain. If in same domain, allow even if
+            // no RCN set
+            boolean sameDomain = domainId.equalsIgnoreCase(delegate.getDomainId());
+            if (!sameDomain) {
+                // Must compare RCNs if not in same domain
+                Domain delegateDomain = domainService.getDomain(delegate.getDomainId());
+                Domain daDomain = domainService.getDomain(domainId);
+
+                boolean missingRcns = delegateDomain == null || daDomain == null || StringUtils.isBlank(daDomain.getRackspaceCustomerNumber()) || StringUtils.isBlank(delegateDomain.getRackspaceCustomerNumber());
+
+                if (missingRcns || !daDomain.getRackspaceCustomerNumber().equalsIgnoreCase(delegateDomain.getRackspaceCustomerNumber())) {
+                    throw new NotFoundException(ERROR_MSG_DELEGATE_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND);
+                }
+            }
         }
     }
 }

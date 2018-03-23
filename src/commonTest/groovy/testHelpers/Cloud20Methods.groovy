@@ -76,6 +76,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_ROLES ="roles"
     static def SERVICE_PATH_USERS ="users"
     static def SERVICE_PATH_DA ="delegation-agreements"
+    static def SERVICE_PATH_DELEGATES ="delegates"
 
     static def ENDPOINTS = "endpoints"
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
@@ -1356,6 +1357,25 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).delete(ClientResponse)
     }
 
+    def addUserDelegate(token, delegationAgreementId, String userId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).path(SERVICE_PATH_DELEGATES).path(SERVICE_PATH_USERS).path(userId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).put(ClientResponse)
+    }
+
+    def deleteUserDelegate(token, delegationAgreementId, String userId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).path(SERVICE_PATH_DELEGATES).path(SERVICE_PATH_USERS).path(userId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).delete(ClientResponse)
+    }
+
+    def addUserGroupDelegate(token, delegationAgreementId, String userGroupId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).path(SERVICE_PATH_DELEGATES).path(SERVICE_PATH_USER_GROUPS).path(userGroupId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).put(ClientResponse)
+    }
+
+    def deleteUserGroupDelegate(token, delegationAgreementId, String userGroupId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).path(SERVICE_PATH_DELEGATES).path(SERVICE_PATH_USER_GROUPS).path(userGroupId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).delete(ClientResponse)
+    }
 
     /**
      * Creates a new IDP, verifying the IDP was created successfully, and return the IDP rather than the raw response

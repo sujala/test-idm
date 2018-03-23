@@ -6,6 +6,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;
+import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
+import com.rackspace.idm.api.resource.cloud.v20.EndUserDelegateReference;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter;
 import com.rackspace.idm.validation.MessageTexts;
@@ -27,7 +29,7 @@ import java.util.*;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
-public class User implements EndUser, DelegationPrincipal {
+public class User implements EndUser, DelegationPrincipal, DelegationDelegate {
     private static final Logger log = LoggerFactory.getLogger(User.class);
 
     @LDAPEntryField
@@ -365,5 +367,10 @@ public class User implements EndUser, DelegationPrincipal {
             }
         }
         return dn;
+    }
+
+    @Override
+    public DelegateReference getDelegateReference() {
+        return new EndUserDelegateReference(id);
     }
 }

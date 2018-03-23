@@ -56,6 +56,11 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
     @Override
     public void deleteAgreement(DelegationAgreement delegationAgreement) { deleteObject(delegationAgreement); }
 
+    @Override
+    public void updateAgreement(DelegationAgreement delegationAgreement) {
+        updateObject(delegationAgreement);
+    }
+
     Filter searchByIdFilter(String id) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)

@@ -1,9 +1,12 @@
 package com.rackspace.idm.modules.usergroups.entity;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
+import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
+import com.rackspace.idm.api.resource.cloud.v20.UserGroupDelegateReference;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Auditable;
+import com.rackspace.idm.domain.entity.DelegationDelegate;
 import com.rackspace.idm.domain.entity.DelegationPrincipal;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.unboundid.ldap.sdk.DN;
@@ -25,7 +28,7 @@ import org.slf4j.LoggerFactory;
 @Getter
 @Setter
 @LDAPObject(structuralClass = Constants.OBJECTCLASS_USER_GROUP, superiorClass={ "groupOfNames", "top" })
-public class UserGroup implements Auditable, UniqueId, DelegationPrincipal {
+public class UserGroup implements Auditable, UniqueId, DelegationPrincipal, DelegationDelegate {
 
     public static final String INVALID_GROUP_DN = "Group dn could not be parsed";
 
@@ -69,5 +72,10 @@ public class UserGroup implements Auditable, UniqueId, DelegationPrincipal {
     @Override
     public DN getDn() {
         return getGroupDn();
+    }
+
+    @Override
+    public DelegateReference getDelegateReference() {
+        return new UserGroupDelegateReference(id);
     }
 }

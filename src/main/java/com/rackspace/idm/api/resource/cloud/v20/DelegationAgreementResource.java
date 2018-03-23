@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.event.ApiResourceType;
 import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.ExceptionHandler;
-import com.rackspace.idm.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -71,6 +70,74 @@ public class DelegationAgreementResource {
         try {
             verifyServiceEnabled();
             return delegationCloudService.deleteAgreement(authToken, agreementId);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @PUT
+    @Path("/{agreementId}/delegates/users/{userId}")
+    public Response addUserDelegate (
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @PathParam("agreementId") String agreementId,
+            @PathParam("userId") String userId,
+            @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken) {
+        try {
+            verifyServiceEnabled();
+            return delegationCloudService.addDelegate(authToken, agreementId, new EndUserDelegateReference(userId));
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @DELETE
+    @Path("/{agreementId}/delegates/users/{userId}")
+    public Response deleteUserDelegate (
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @PathParam("agreementId") String agreementId,
+            @PathParam("userId") String userId,
+            @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken) {
+        try {
+            verifyServiceEnabled();
+            return delegationCloudService.deleteDelegate(authToken, agreementId, new EndUserDelegateReference(userId));
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @PUT
+    @Path("/{agreementId}/delegates/groups/{groupId}")
+    public Response addUserGroupDelegate (
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @PathParam("agreementId") String agreementId,
+            @PathParam("groupId") String groupId,
+            @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken) {
+        try {
+            verifyServiceEnabled();
+            return delegationCloudService.addDelegate(authToken, agreementId, new UserGroupDelegateReference(groupId));
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @DELETE
+    @Path("/{agreementId}/delegates/groups/{groupId}")
+    public Response deleteUserGroupDelegate (
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @PathParam("agreementId") String agreementId,
+            @PathParam("groupId") String groupId,
+            @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken) {
+        try {
+            verifyServiceEnabled();
+            return delegationCloudService.deleteDelegate(authToken, agreementId, new UserGroupDelegateReference(groupId));
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex).build();
         }

@@ -4,11 +4,14 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.domain.entity.EndUser
+import com.rackspace.idm.domain.service.DelegationService
+import com.rackspace.idm.domain.service.IdentityUserService
+import com.sun.jersey.api.client.ClientResponse
 import org.apache.commons.lang3.RandomStringUtils
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -31,7 +34,11 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
     @Shared User sharedUserManager
     @Shared def sharedUserManagerToken
 
-    @Shared EndpointTemplate endpointTemplate
+    @Autowired
+    DelegationService delegationService
+
+    @Autowired
+    IdentityUserService identityUserService
 
     def setupSpec() {
         def authResponse = cloud20.authenticatePassword(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
@@ -72,49 +79,43 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
     }
 
+
     /**
      * Verifies the delegation services accessibility is controlled via the high level feature flag. Uses as invalid
-     * token to verify. If the services are disabled, the token will never be checked and a 503 will
-     * be immediately returned. If the services are enabled, the token will be found invalid and a 401 will be returned.
+     * token as token validity is the first thing checked by services.
+     *
+     * - If the services are disabled, a 503 should be returned
+     * - If the services are enabled, the token will be validated, found invalid, and a 401 will be returned.
      */
     @Unroll
-    def "Create/get/delete require delegation feature flag to be enabled: enabled: #enableServices"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, enableServices)
+    def "Delegation service '#name' is protected by feature flag 'feature.enable.delegation.agreement.services'"() {
 
-        def invalidToken = "invalidToken"
+        when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, false)
 
-        when: "Call the create service"
-        def createResponse = cloud20.createDelegationAgreement(invalidToken, new DelegationAgreement())
+        // Execute the closure
+        def response = responseCall()
 
-        then: "Service is properly controlled"
-        if (enableServices) {
-            assert createResponse.status == SC_UNAUTHORIZED
-        } else {
-            assert createResponse.status == SC_SERVICE_UNAVAILABLE
-        }
+        then:
+        response.status == SC_SERVICE_UNAVAILABLE
 
-        when: "Call the get service"
-        def getResponse = cloud20.getDelegationAgreement(invalidToken, "id")
+        when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
+        response = responseCall()
 
-        then: "Service is properly controlled"
-        if (enableServices) {
-            assert getResponse.status == SC_UNAUTHORIZED
-        } else {
-            assert getResponse.status == SC_SERVICE_UNAVAILABLE
-        }
-
-        when: "Call the delete service"
-        def deleteResponse = cloud20.deleteDelegationAgreement(invalidToken, "id")
-
-        then: "Service is properly controlled"
-        if (enableServices) {
-            assert deleteResponse.status == SC_UNAUTHORIZED
-        } else {
-            assert deleteResponse.status == SC_SERVICE_UNAVAILABLE
-        }
+        then:
+        response.status == SC_UNAUTHORIZED
 
         where:
-        enableServices << [true, false]
+        [name, responseCall]  << [
+                ["createDelegationAgreement", {cloud20.createDelegationAgreement("invalidToken", new DelegationAgreement())}]
+                , ["getDelegationAgreement", {cloud20.getDelegationAgreement("invalidToken", "id")}]
+                , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement("invalidToken", "id")}]
+                , ["addUserDelegate", {cloud20.addUserDelegate("invalidToken", "id", "id")}]
+                , ["addUserGroupDelegate", {cloud20.addUserDelegate("invalidToken", "id", "id")}]
+                , ["deleteUserDelegate", {cloud20.addUserDelegate("invalidToken", "id", "id")}]
+                , ["deleteUserGroupDelegate", {cloud20.addUserDelegate("invalidToken", "id", "id")}]
+        ]
     }
 
     /**
@@ -363,4 +364,153 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getResponse2.status == SC_NOT_FOUND
     }
 
+    def "Can manage user delegates on root delegation agreement"() {
+        DelegationAgreement webDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it
+        }
+
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, webDa)
+
+        EndUser delegateEntity = identityUserService.getEndUserById(sharedSubUser.id)
+
+        when: "Add user delegate"
+        def addResponse = cloud20.addUserDelegate(sharedUserAdminToken, da.id, delegateEntity.id)
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = delegationService.getDelegationAgreementById(da.getId())
+
+        then: "successful"
+        addResponse.status == SC_NO_CONTENT
+
+        and: "backend lists user as delegate"
+        daEntity.isAuthorizedDelegate(delegateEntity)
+
+        when: "Delete delegate"
+        def deleteResponse = cloud20.deleteUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
+        daEntity = delegationService.getDelegationAgreementById(da.getId())
+
+        then: "successful"
+        deleteResponse.status == SC_NO_CONTENT
+
+        and: "backend no longer lists user as delegate"
+        !daEntity.isAuthorizedDelegate(delegateEntity)
+
+        when: "Delete delegate again"
+        def deleteResponse2 = cloud20.deleteUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
+
+        then: "error"
+        deleteResponse2.status == SC_NOT_FOUND
+    }
+
+    /**
+     * Test managing a user group as a delegate on a DA and that users are considered delegates when they are a member
+     * of the group.
+     *
+     * @return
+     */
+    def "Can manage user group delegates on root delegation agreement"() {
+        def userGroup = utils.createUserGroup(sharedUserAdmin.domainId)
+        def groupSubUser = cloud20.createSubUser(sharedUserAdminToken)
+
+        DelegationAgreement webDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it
+        }
+
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, webDa)
+        EndUser groupUserEntity = identityUserService.getEndUserById(groupSubUser.id)
+
+        when: "Add user group delegate"
+        def addResponse = cloud20.addUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = delegationService.getDelegationAgreementById(da.getId())
+
+        then: "successful"
+        addResponse.status == SC_NO_CONTENT
+
+        and: "Backend does not list non-group member as delegate"
+        !daEntity.isAuthorizedDelegate(groupUserEntity)
+
+        when: "When user added to group"
+        utils.addUserToUserGroup(groupUserEntity.id, userGroup)
+        groupUserEntity = identityUserService.getEndUserById(groupSubUser.id) // Reload as user's group membership changed
+
+        then: "User is now a delegate"
+        daEntity.isAuthorizedDelegate(groupUserEntity)
+
+        when: "Delete user group delegate"
+        def deleteResponse = cloud20.deleteUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
+        daEntity = delegationService.getDelegationAgreementById(da.getId()) // Reload as delegates changed
+
+        then: "successful"
+        deleteResponse.status == SC_NO_CONTENT
+
+        and: "User no longer a delegate"
+        !daEntity.isAuthorizedDelegate(groupUserEntity)
+    }
+
+    /**
+     * Test setting multiple delegates on a DA
+     *
+     * @return
+     */
+    def "Can manage multiple delegates on root delegation agreement"() {
+        def userGroup = utils.createUserGroup(sharedUserAdmin.domainId)
+        def groupSubUser = cloud20.createSubUser(sharedUserAdminToken)
+        utils.addUserToUserGroup(groupSubUser.id, userGroup)
+
+        DelegationAgreement webDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it
+        }
+
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, webDa)
+        EndUser groupUserEntity = identityUserService.getEndUserById(groupSubUser.id)
+        EndUser userDelegateEntity = identityUserService.getEndUserById(sharedSubUser.id)
+
+        // Verify start state. Neither are delegates
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = delegationService.getDelegationAgreementById(da.getId())
+        assert !daEntity.isAuthorizedDelegate(groupUserEntity)
+        assert !daEntity.isAuthorizedDelegate(userDelegateEntity)
+
+        when: "Add user group delegate"
+        def addResponse = cloud20.addUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
+        daEntity = delegationService.getDelegationAgreementById(da.getId())
+
+        then: "successful"
+        addResponse.status == SC_NO_CONTENT
+
+        and: "Group member is now a delegate"
+        daEntity.isAuthorizedDelegate(groupUserEntity)
+
+        and: "User is still not a delegate"
+        !daEntity.isAuthorizedDelegate(userDelegateEntity)
+
+        when: "Add user delegate"
+        addResponse = cloud20.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
+        daEntity = delegationService.getDelegationAgreementById(da.getId())
+
+        then: "successful"
+        addResponse.status == SC_NO_CONTENT
+
+        and: "User is now a delegate"
+        daEntity.isAuthorizedDelegate(userDelegateEntity)
+
+        and: "Group member is still a delegate"
+        daEntity.isAuthorizedDelegate(groupUserEntity)
+
+        when: "Remove group delegate"
+        def response = cloud20.deleteUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
+        daEntity = delegationService.getDelegationAgreementById(da.getId())
+
+        then: "successful"
+        response.status == SC_NO_CONTENT
+
+        and: "User is still a delegate"
+        daEntity.isAuthorizedDelegate(userDelegateEntity)
+
+        and: "Group member is no longer a delegate"
+        !daEntity.isAuthorizedDelegate(groupUserEntity)
+    }
 }

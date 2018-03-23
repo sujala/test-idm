@@ -48,4 +48,24 @@ public interface DelegationCloudService {
      * @return
      */
     Response deleteAgreement(String authToken, String agreementId);
+
+    /**
+     * Adds a delegate to an existing delegation agreement.
+     *
+     * @param authToken
+     * @param agreementId
+     * @param delegateReference
+     * @return
+     */
+    Response addDelegate(String authToken, String agreementId, DelegateReference delegateReference);
+
+    /**
+     * Deletes a delegate from an existing delegation agreement
+     *
+     * @param authToken
+     * @param agreementId
+     * @param delegateReference
+     * @return
+     */
+    Response deleteDelegate(String authToken, String agreementId, DelegateReference delegateReference);
 }

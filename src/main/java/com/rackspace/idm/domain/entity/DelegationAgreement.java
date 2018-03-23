@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.google.common.collect.Sets;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
@@ -80,17 +81,6 @@ public class DelegationAgreement implements Auditable, UniqueId {
         return id;
     }
 
-    public boolean isFederatedUserPrincipal() {
-        if (principalDN != null) {
-            try {
-                return principalDN.isDescendantOf(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN, false);
-            } catch (LDAPException e) {
-                throw new IllegalStateException("Error retrieving principal type", e);
-            }
-        }
-        return false;
-    }
-
     public Set<DN> getDelegates() {
         if (delegates == null) {
             delegates = new HashSet<DN>();
@@ -117,9 +107,9 @@ public class DelegationAgreement implements Auditable, UniqueId {
         return id;
     }
 
-
     /**
-     * Must null out delegates if empty.
+     * Null out delegates if empty as LDAP can not store empty values. Called by UnboundId just before persisting the
+     * entry.
      *
      * @param entry
      * @throws LDAPPersistException
@@ -129,5 +119,27 @@ public class DelegationAgreement implements Auditable, UniqueId {
         if (dns != null && dns.length == 0) {
             entry.removeAttribute(LdapRepository.ATTR_MEMBER);
         }
+    }
+
+    /**
+     * Whether the specified user is considered a delegate on the agreement. Compares the user's DN and any user
+     * groups in which the user belongs to the delegate DNs on the delegation agreement.
+     *
+     * @param endUser
+     * @return
+     */
+    public boolean isAuthorizedDelegate(EndUser endUser) {
+        HashSet<DN> userEffectiveDns = new HashSet<>();
+
+        // Add user if possible to be a delegate itself
+        if (endUser instanceof DelegationDelegate) {
+            userEffectiveDns.add(((DelegationDelegate) endUser).getDn());
+        }
+
+        // Add user groups
+        userEffectiveDns.addAll(endUser.getUserGroupDNs());
+
+        Sets.SetView<DN> view = Sets.intersection(userEffectiveDns, getDelegates());
+        return !view.isEmpty();
     }
 }

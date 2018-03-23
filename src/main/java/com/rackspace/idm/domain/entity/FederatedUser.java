@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.entity;
 import com.google.common.collect.ImmutableSet;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.annotation.DeleteNullValues;
+import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
+import com.rackspace.idm.api.resource.cloud.v20.EndUserDelegateReference;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
@@ -25,7 +27,7 @@ import java.util.*;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON)
-public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrincipal {
+public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrincipal, DelegationDelegate {
     private static final Logger log = LoggerFactory.getLogger(FederatedUser.class);
 
     @LDAPDNField
@@ -208,5 +210,10 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
             }
         }
         return dn;
+    }
+
+    @Override
+    public DelegateReference getDelegateReference() {
+        return new EndUserDelegateReference(id);
     }
 }

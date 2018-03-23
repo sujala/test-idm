@@ -6,5 +6,13 @@ public interface DelegationAgreementDao {
     String getNextAgreementId();
     void addAgreement(DelegationAgreement delegationAgreement);
     void deleteAgreement(DelegationAgreement delegationAgreement);
+
+    /**
+     * Updates the existing delegation agreement
+     *
+     * @param delegationAgreement
+     */
+    void updateAgreement(DelegationAgreement delegationAgreement);
+
     DelegationAgreement getAgreementById(String agreementId);
 }

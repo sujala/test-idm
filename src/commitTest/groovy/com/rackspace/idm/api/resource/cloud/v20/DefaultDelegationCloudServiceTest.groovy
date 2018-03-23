@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.BaseUserToken
+import com.rackspace.idm.domain.entity.DelegateType
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.Token
@@ -176,6 +177,12 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
 
         then:
         1 * identityUserService.getEndUserById(caller.id) >> caller
+        1 * delegationService.getDelegateByReference(_) >> {args ->
+            DelegateReference delegateReference = args[0]
+            assert delegateReference.id == caller.id
+            assert delegateReference.delegateType == DelegateType.USER
+            caller
+        }
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
         1 * delegationAgreementConverter.toDelegationAgreementWeb(_) >> new DelegationAgreement()
         response.status == SC_CREATED
@@ -279,7 +286,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         }
     }
 
-    def "addAgreement: Can use user group principal when caller is member"() {
+    def "addAgreement: Can specify user group principal when caller is member"() {
         UriInfo uriInfo = Mock()
         ScopeAccess tokenScopeAccess = new UserScopeAccess()
         def token = "token"
@@ -302,7 +309,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
 
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
-        identityUserService.getProvisionedUserById(caller.id) >> caller // Delegate call
+        delegationService.getDelegateByReference(_) >> caller // Delegate call
         Domain callerDomain = new Domain().with {
             it.domainId = caller.domainId
             it
@@ -456,8 +463,14 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
 
         then:
         response.status == SC_CREATED
-        1 * identityUserService.getProvisionedUserById(delegate.id) >> delegate
+        1 * delegationService.getDelegateByReference(_) >> {args ->
+            DelegateReference delegateReference = args[0]
+            assert delegateReference.id == delegate.id
+            assert delegateReference.delegateType == DelegateType.USER
+            delegate
+        }
         domainService.getDomain(delegate.domainId) >> delegateDomain
+        domainService.getDomain(caller.domainId) >> callerDomain
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(daWeb) >> daEntity
         1 * delegationService.addDelegationAgreement(daEntity)
         1 * delegationAgreementConverter.toDelegationAgreementWeb(daEntity) >> daWeb
@@ -531,8 +544,14 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         def response = service.addAgreement(uriInfo, token, daWeb)
 
         then:
-        1 * identityUserService.getProvisionedUserById(delegate.id) >> delegate
+        1 * delegationService.getDelegateByReference(_) >> {args ->
+            DelegateReference delegateReference = args[0]
+            assert delegateReference.id == delegate.id
+            assert delegateReference.delegateType == DelegateType.USER
+            delegate
+        }
         domainService.getDomain(delegate.domainId) >> delegateDomain
+        domainService.getDomain(caller.domainId) >> callerDomain
         response.status == SC_NOT_FOUND
         capturedException != null
 
