@@ -50,6 +50,10 @@ public class ProvisionedUserDelegate implements EndUserDelegate {
         return subUserDefaults.getSubUserTenantRoles();
     }
 
+    public EndUser getOriginalEndUser() {
+        return originalEndUser;
+    }
+
     /**
      * Never pull roles off user.
      *

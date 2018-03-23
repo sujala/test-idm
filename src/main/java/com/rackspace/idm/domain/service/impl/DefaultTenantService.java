@@ -218,6 +218,17 @@ public class DefaultTenantService implements TenantService {
         if (user instanceof Racker) {
             //rackers are assumed to have the "RACKER" role
             return identityConfig.getStaticConfig().getRackerRoleId().equals(roleId);
+
+        } else if (user instanceof ProvisionedUserDelegate) {
+            ProvisionedUserDelegate provisionedUserDelegate = (ProvisionedUserDelegate)user;
+            SourcedRoleAssignments sourcedRoleAssignments = getSourcedRoleAssignmentsForUser(provisionedUserDelegate);
+            List<TenantRole> tenantRoles = sourcedRoleAssignments.asTenantRoles();
+
+            for (TenantRole currentTenantRole : tenantRoles) {
+                if (currentTenantRole.getRoleRsId().equals(roleId)) {
+                    return true;
+                }
+            }
         } else if (user instanceof EndUser){
             EndUser eu = (EndUser) user;
             TenantRole tenantRole = tenantRoleDao.getTenantRoleForUser(eu, roleId);

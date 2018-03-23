@@ -8,10 +8,14 @@ import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.ExternalBeansConfiguration
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.IdentityConfig.ReloadableConfig
+import com.rackspace.idm.domain.entity.DelegationAgreement
+import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.domain.entity.ProvisionedUserDelegate
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.AuthorizationService
+import com.rackspace.idm.domain.service.DomainSubUserDefaults
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.Role
@@ -330,6 +334,32 @@ class UserConverterCloudV20Test extends Specification {
         user.region == userEntity.defaultRegion
     }
 
+    def "convert delegate user to jersey object"() {
+        given:
+        def provisionedUserDelegate = provisionedUserDelegate(true)
+
+        when:
+        org.openstack.docs.identity.api.v2.User user = converterCloudV20.toUser(provisionedUserDelegate)
+
+        then:
+        provisionedUserDelegate.domainId == user.domainId
+        provisionedUserDelegate.region == user.defaultRegion
+        provisionedUserDelegate.delegationAgreement.id == user.delegationAgreementId
+    }
+
+    def "convert delegate user to jersey object illegal user"() {
+        given:
+        def provisionedUserDelegate = provisionedUserDelegate(true).with {
+            it.originalEndUser = new ProvisionedUserDelegate(null, null, null)
+            it
+        }
+
+        when:
+        converterCloudV20.toUser(provisionedUserDelegate)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
 
     def user() {
         user(true)
@@ -373,6 +403,34 @@ class UserConverterCloudV20Test extends Specification {
             it.password = "password"
             return it
         }
+    }
+
+    def provisionedUserDelegate(Boolean enabled) {
+        def user = new User().with {
+            it.id = "id"
+            it.username = "username"
+            it.email = "email@email.com"
+            it.displayName = "display"
+            it.enabled = enabled
+            it.region = "region"
+            it.created = created()
+            it.multifactorEnabled = true
+            it.roles = [ new TenantRole() ].asList()
+            it.rsGroupId = new HashSet<String> ()
+            it.secretQuestion = "question"
+            it.secretAnswer = "answer"
+            it.password = "password"
+            return it
+        }
+
+        def delegationAgreement = new DelegationAgreement().with {
+            it.id = "id"
+            return it
+        }
+
+        def domainSubUserDefaults = Mock(DomainSubUserDefaults)
+
+        new ProvisionedUserDelegate(domainSubUserDefaults, delegationAgreement, user)
     }
 
     def userWithNoRolesOrGroup(Boolean enabled) {

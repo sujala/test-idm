@@ -4,13 +4,19 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.api.security.ImmutableClientRole
+import com.rackspace.idm.api.security.ImmutableTenantRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.DelegationAgreement
 import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.EndUserDenormalizedSourcedRoleAssignmentsBuilder
+import com.rackspace.idm.domain.entity.ProvisionedUserDelegate
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.DomainSubUserDefaults
 import com.rackspace.idm.domain.service.RoleLevelEnum
+import com.rackspace.idm.domain.service.rolecalculator.UserRoleLookupService
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
@@ -1139,6 +1145,52 @@ class DefaultTenantServiceTest extends RootServiceTest {
         1 * applicationService.getClientRoleById(nonPropagatingRole.roleRsId) >> nonPropagatingClientRole
         roles.find { role -> role.roleRsId == propagatingRole.roleRsId }.propagate == true
         roles.find { role -> role.roleRsId == nonPropagatingRole.roleRsId }.propagate == false
+    }
+
+    def "doesUserContainTenantRole checks provisioned users role assginment"() {
+        given:
+        def domain = Mock(Domain)
+        domain.domainId >> "domainId"
+
+        def user = Mock(User)
+        user.id >> "id"
+        user.domainId >> "domainId"
+
+        def tenantRole = new TenantRole().with {
+            it.roleRsId = "id"
+            it.name = "name"
+            it
+        }
+
+        def clientRole = new ClientRole().with {
+            it.name = "identity:admin"
+            it.id = "id"
+            it
+        }
+
+        def delegationAgreement = Mock(DelegationAgreement)
+        def subUserDefaults = Mock(DomainSubUserDefaults)
+        subUserDefaults.domainId >> "domainId"
+        subUserDefaults.getSubUserTenantRoles() >> [new ImmutableTenantRole(tenantRole)]
+
+        def provisionedUserDelegate = new ProvisionedUserDelegate(subUserDefaults, delegationAgreement, user)
+        GroovyMock(EndUserDenormalizedSourcedRoleAssignmentsBuilder, global: true)
+        def endUserDenormalizedSourcedRoleAssignmentsBuilder = Mock(EndUserDenormalizedSourcedRoleAssignmentsBuilder)
+        def userRoleLookupService = Mock(UserRoleLookupService)
+        endUserDenormalizedSourcedRoleAssignmentsBuilder.userRoleLookupService >> userRoleLookupService
+        domainService.getDomain(_) >> domain
+        applicationService.getCachedClientRoleById(_) >> new ImmutableClientRole(clientRole)
+
+        when:
+        def containsRole = service.doesUserContainTenantRole(provisionedUserDelegate, roleId)
+
+        then:
+        shouldContainRole == containsRole
+
+        where:
+        shouldContainRole | roleId
+        true              | "id"
+        false             | "id2"
     }
 
     def createImmutableClientRole(String name, int weight = 1000) {

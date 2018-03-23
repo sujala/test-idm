@@ -186,8 +186,22 @@ public class UserConverterCloudV20 {
             return toUser((com.rackspace.idm.domain.entity.User)user, false);
         } else if (user instanceof FederatedUser) {
             return toFederatedUser((FederatedUser) user);
+        } else if (user instanceof ProvisionedUserDelegate) {
+            return toDelegateUser((com.rackspace.idm.domain.entity.ProvisionedUserDelegate)user);
         }
         throw new IllegalArgumentException("Unrecognized end user");
+    }
+
+    private User toDelegateUser(ProvisionedUserDelegate user) {
+        if (user.getOriginalEndUser() instanceof com.rackspace.idm.domain.entity.User) {
+            User jaxbUser = toUser((com.rackspace.idm.domain.entity.User)user.getOriginalEndUser(), false);
+            jaxbUser.setDomainId(user.getDomainId());
+            jaxbUser.setDefaultRegion(user.getRegion());
+            jaxbUser.setDelegationAgreementId(user.getDelegationAgreement().getId());
+            return jaxbUser;
+        } else {
+            throw new IllegalArgumentException("Unrecognized end user");
+        }
     }
 
     public User toUser(com.rackspace.idm.domain.entity.User user, boolean includeOtherAttributes) {

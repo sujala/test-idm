@@ -357,6 +357,7 @@ class JSONReaderWriterTest extends RootServiceTest {
         def enabled = true
         def displayName = "displayName"
         def multiFactorEnabled = true
+        def delegationAgreementId = "delegationAgreementId "
 
         User userObject = v2Factory.createUser().with {
             it.displayName = displayName
@@ -365,6 +366,7 @@ class JSONReaderWriterTest extends RootServiceTest {
             it.email = email
             it.enabled = enabled
             it.multiFactorEnabled = multiFactorEnabled
+            it.delegationAgreementId = delegationAgreementId
             it
         }
 
