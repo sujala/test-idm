@@ -661,6 +661,9 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     def "A default user CAN be added by identity admin in domain with a disabled user-admin IF there is also an enabled user-admin"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false)
+        // This scenario will only work when user-admin lookup by domain is disabled. When enabled, the list of enabled
+        // user-admins on domain will be 0, resulting in a Bad Request.
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, false)
         def domainId = utils.createDomain()
         def username1 = testUtils.getRandomUUID("defaultUser")
         def userAdmin1, users1
@@ -706,6 +709,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(userAdmin2)
         utils.deleteUsers(users1)
         staticIdmConfiguration.reset()
+        reloadableConfiguration.reset()
     }
 
     @Unroll

@@ -265,7 +265,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
         T object;
         try {
-            SearchResultEntry entry = getAppInterface().getEntry(dn.toString());
+            SearchResultEntry entry = getAppInterface().getEntry(dn.toString(), getSearchAttributes());
             object = (T) LDAPPersister.getInstance(getEntityTypeFromEntry(entry)).decode(entry);
             doPostEncode(object);
         } catch (LDAPException e) {

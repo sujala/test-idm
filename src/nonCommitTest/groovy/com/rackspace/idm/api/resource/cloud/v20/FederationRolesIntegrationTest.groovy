@@ -360,6 +360,9 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     def "trying to pass a saml assertion for a domain with more than one user admin returns 500 if 'domain.restricted.to.one.user.admin.enabled' == true"() {
         given:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        // This scenario will only work when user-admin lookup by domain is disabled. When enabled, the list of enabled
+        // user-admins on domain will be 1, resulting in a valid request.
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, false)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -399,6 +402,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users1)
         utils.deleteUsers(userAdmin2)
         staticIdmConfiguration.reset()
+        reloadableConfiguration.reset()
     }
 
     def "identity access roles can not be provided in saml assertions"() {

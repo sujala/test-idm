@@ -76,7 +76,7 @@ class LdapUserRepositoryTest extends RootServiceTest {
         user != null
         user.getDn() == domain.userAdminDN
 
-        1 * ldapInterface.getEntry(domain.userAdminDN.toString()) >> new SearchResultEntry(domain.userAdminDN.toString(), [])
+        1 * ldapInterface.getEntry(domain.userAdminDN.toString(), dao.getSearchAttributes()) >> new SearchResultEntry(domain.userAdminDN.toString(), [])
         1 * encryptionService.decryptUser(_)
     }
 

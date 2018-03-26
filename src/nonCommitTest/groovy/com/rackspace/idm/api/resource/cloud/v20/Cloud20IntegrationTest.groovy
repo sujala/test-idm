@@ -3199,8 +3199,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "[CIDMDEV-5357] get user admin by tenant id"() {
         given:
-        def nastId = "983452"
-        def mossoId = "StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09"
+        def userAdmin = utils.createCloudAccount()
+        def nastId = utils.getNastTenant(userAdmin.domainId)
+        def mossoId = userAdmin.domainId
         def response, userObject
 
         when:
