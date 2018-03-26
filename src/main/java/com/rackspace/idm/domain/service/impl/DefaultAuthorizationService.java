@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
@@ -46,6 +47,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private DelegationService delegationService;
+
+    @Autowired
+    private UserGroupService userGroupService;
 
     @Autowired
     private RequestContextHolder requestContextHolder;

@@ -1,22 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.entity.BaseUserToken
-import com.rackspace.idm.domain.entity.DelegateType
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.entity.Domain
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.entity.Token
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
-import com.rackspace.idm.validation.Validator20
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -27,10 +20,7 @@ import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriInfo
 
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST
-import static org.apache.http.HttpStatus.SC_CREATED
-import static org.apache.http.HttpStatus.SC_FORBIDDEN
-import static org.apache.http.HttpStatus.SC_NOT_FOUND
+import static org.apache.http.HttpStatus.*
 
 class DefaultDelegationCloudServiceTest extends RootServiceTest {
 
@@ -51,6 +41,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         mockDomainService(service)
         mockIdmPathUtils(service)
         mockValidator20(service)
+        mockRoleAssignmentConverter(service)
     }
 
     /**
@@ -508,6 +499,125 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
             def ex = args[0]
             IdmExceptionAssert.assertException(ex, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, IdmExceptionAssert.PATTERN_ALL)
             return Response.status(HttpServletResponse.SC_NOT_FOUND) }
+    }
+
+    def "grantRolesToAgreement: calls appropriate services"() {
+        def domainId = "domainId"
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = domainId
+            it
+        }
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+                ta.tenantAssignment.add(new TenantAssignment().with {
+                    it.onRole = "roleId"
+                    it.forTenants.addAll("tenantId")
+                    it
+                })
+            it.tenantAssignments = ta
+            it
+        }
+        def tokenStr = "callerTokenStr"
+        def token = Mock(BaseUserToken)
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.id = "id"
+            it.domainId = domainId
+            it.principal = Mock(DelegationPrincipal)
+            it
+        }
+        daEntity.principal.getId() >> caller.id
+        daEntity.principal.principalType >> PrincipalType.USER
+
+        when:
+        def response = service.grantRolesToAgreement(tokenStr, daEntity.id, assignments)
+
+        then:
+        response.status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * identityUserService.getEndUserById(caller.id) >> caller
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * delegationService.replaceRoleAssignmentsOnDelegationAgreement(daEntity, assignments)
+        1 * delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, _) >> []
+        1 * roleAssignmentConverter.toRoleAssignmentsWeb(_)
+    }
+
+    def "grantRolesToAgreement: error check"() {
+        def domainId = "domainId"
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = domainId
+            it
+        }
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+                ta.tenantAssignment.add(new TenantAssignment().with {
+                    it.onRole = "roleId"
+                    it.forTenants.addAll("tenantId")
+                    it
+                })
+            it.tenantAssignments = ta
+            it
+        }
+        def tokenStr = "callerTokenStr"
+        def token = Mock(BaseUserToken)
+        def invalidToken = Mock(BaseUserToken)
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.id = "id"
+            it.domainId = domainId
+            it.principal = Mock(DelegationPrincipal)
+            it
+        }
+        daEntity.principal.getId() >> caller.id
+        daEntity.principal.principalType >> PrincipalType.USER
+
+        when: "scoped token"
+        invalidToken.getScope() >> "scope"
+        service.grantRolesToAgreement(tokenStr, daEntity.id, assignments)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> invalidToken
+        1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> {args ->
+            def exception = args[0]
+            IdmExceptionAssert.assertException(exception, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
+            Response.status(SC_FORBIDDEN)
+        }
+
+        when: "DA does not exist"
+        service.grantRolesToAgreement(tokenStr, daEntity.id, assignments)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> null
+        1 * exceptionHandler.exceptionResponse(_ as NotFoundException) >> {args ->
+            def exception = args[0]
+            IdmExceptionAssert.assertException(exception, NotFoundException, null, "The specified agreement does not exist for this user")
+            Response.status(SC_NOT_FOUND)
+        }
+
+        when: "null roleAssignments"
+        service.grantRolesToAgreement(tokenStr, daEntity.id, null)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * identityUserService.getEndUserById(caller.id) >> caller
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * exceptionHandler.exceptionResponse(_ as BadRequestException) >> {args ->
+            def exception = args[0]
+            IdmExceptionAssert.assertException(exception, BadRequestException, null, "Must supply a set of assignments")
+            Response.status(SC_BAD_REQUEST)
+        }
     }
 }
 
