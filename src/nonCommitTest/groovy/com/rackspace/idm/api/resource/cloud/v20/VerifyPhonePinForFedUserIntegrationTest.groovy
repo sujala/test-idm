@@ -15,6 +15,7 @@ import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -28,6 +29,7 @@ import javax.ws.rs.core.MediaType
 
 import static org.apache.http.HttpStatus.*
 
+@Ignore
 class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
 
     private static final Logger LOG = Logger.getLogger(FederatedUserWithPhonePinIntegrationTest.class)

@@ -561,7 +561,7 @@ public class IdentityConfig {
     public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT = "";
 
     public static final String FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP = "feature.enable.phone.pin.on.user";
-    public static final boolean FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT = true;
+    public static final boolean FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT = false;
 
     public static final String USER_PHONE_PIN_SIZE_PROP = "user.phone.pin.size";
     public static final int USER_PHONE_PIN_SIZE_DEFAULT = 6;

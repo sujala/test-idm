@@ -16,6 +16,7 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -32,6 +33,7 @@ import static com.rackspace.idm.Constants.getRACKER_IMPERSONATE_PASSWORD
 import static org.apache.http.HttpStatus.SC_CREATED
 import static org.apache.http.HttpStatus.SC_OK
 
+@Ignore
 class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
 
     private static final Logger LOG = Logger.getLogger(FederatedUserWithPhonePinIntegrationTest.class)

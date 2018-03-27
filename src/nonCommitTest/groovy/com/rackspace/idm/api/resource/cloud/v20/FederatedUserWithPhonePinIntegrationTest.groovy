@@ -13,6 +13,7 @@ import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -25,6 +26,7 @@ import javax.servlet.http.HttpServletResponse
 
 import static org.apache.http.HttpStatus.SC_CREATED
 
+@Ignore
 class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
     private static final Logger LOG = Logger.getLogger(FederatedUserWithPhonePinIntegrationTest.class)

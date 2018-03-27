@@ -8,6 +8,7 @@ import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Ignore
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
@@ -16,6 +17,7 @@ import javax.ws.rs.core.MediaType
 
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
 
+@Ignore
 class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
 
     @Autowired

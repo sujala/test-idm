@@ -3,10 +3,12 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
+@Ignore
 class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
     @Shared

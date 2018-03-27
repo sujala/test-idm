@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -16,6 +17,7 @@ import static com.rackspace.idm.Constants.getRACKER_IMPERSONATE
 import static com.rackspace.idm.Constants.getRACKER_IMPERSONATE_PASSWORD
 import static org.apache.http.HttpStatus.SC_OK
 
+@Ignore
 class ResetPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
 
     @Shared
