@@ -564,7 +564,7 @@ public class IdentityConfig {
     public static final boolean FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT = true;
 
     public static final String USER_PHONE_PIN_SIZE_PROP = "user.phone.pin.size";
-    public static final int USER_PHONE_PIN_SIZE_DEFAULT = 4;
+    public static final int USER_PHONE_PIN_SIZE_DEFAULT = 6;
 
     public static final String EDIR_LDAP_SERVER_TRUSTED_PROP = "ldap.server.trusted";
     public static final boolean EDIR_LDAP_SERVER_TRUSED_DEFAULT = false;

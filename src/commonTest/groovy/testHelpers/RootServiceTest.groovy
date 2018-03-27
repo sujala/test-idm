@@ -176,6 +176,7 @@ class RootServiceTest extends Specification {
     @Shared AuthDao authDao
     @Shared DomainDao domainDao
     @Shared MobilePhoneDao mobilePhoneDao
+    @Shared IdentityUserDao identityUserDao
 
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
@@ -741,6 +742,11 @@ class RootServiceTest extends Specification {
     def mockMobilePhoneRepository(service) {
         mobilePhoneDao = Mock()
         service.mobilePhoneDao = mobilePhoneDao
+    }
+
+    def mockIdentityUserDao(service) {
+        identityUserDao = Mock()
+        service.identityUserDao = identityUserDao
     }
 
     /*

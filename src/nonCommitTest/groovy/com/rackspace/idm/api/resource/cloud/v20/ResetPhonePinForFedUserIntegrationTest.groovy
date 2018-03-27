@@ -2,16 +2,16 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin
 import com.rackspace.idm.Constants
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.dao.FederatedUserDao
-import com.rackspace.idm.domain.entity.FederatedUser
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,9 +26,12 @@ import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.ws.rs.core.MediaType
 
-import static org.apache.http.HttpStatus.*
+import static com.rackspace.idm.Constants.getRACKER_IMPERSONATE
+import static com.rackspace.idm.Constants.getRACKER_IMPERSONATE_PASSWORD
+import static org.apache.http.HttpStatus.SC_CREATED
+import static org.apache.http.HttpStatus.SC_OK
 
-class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
+class ResetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
 
     private static final Logger LOG = Logger.getLogger(FederatedUserWithPhonePinIntegrationTest.class)
 
@@ -82,7 +85,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "SAML assertion 2.0 - Verify phone pin for a federated user; media = #accept"() {
+    def "SAML assertion 2.0 - Get phone pin for a federated user; media = #accept"() {
         given:
         def fedRequest = createFedRequest()
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
@@ -91,65 +94,58 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
         AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
         def fedUserId = authResponse.user.id
-        FederatedUser fedUser = federatedUserRepository.getUserById(fedUserId)
+        def fedUserToken = authResponse.token.id
 
         then:
         assert authClientResponse.status == SC_OK
 
-        when: "verify phone pin with default identityAdminToken that has got identity:phone-pin-admin added to it"
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = fedUser.phonePin
-            it
-        }
-        def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, phonePin)
+        when: "Service admin token cannot reset the phone pin"
+        def response = cloud20.resetPhonePin(utils.getServiceAdminToken(), fedUserId)
 
         then:
-        assert response.status == SC_NO_CONTENT
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
-        when: "verify phone pin with SAML auth token"
-        response = cloud20.verifyPhonePin(authResponse.token.id, fedUserId, phonePin)
+        when: "Identity admin token can reset the phone pin"
+        def pin1 = utils.getPhonePin(fedUserId, fedUserToken).pin
+        response = cloud20.resetPhonePin(utils.getIdentityAdminToken(), fedUserId)
+        def pinFromResponse = response.getEntity(PhonePin).pin
+        def pin2 = utils.getPhonePin(fedUserId, fedUserToken).pin
 
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
+        then: "phone pin before and after reset are different"
+        assert response.status == SC_OK
+        assert pinFromResponse != pin1
+        assert pinFromResponse == pin2
 
-        when: "verify phone pin with cloud userAdmin auth token"
-        def userAdmin = cloud20.createCloudAccount(sharedIdentityAdminToken)
-        response = cloud20.verifyPhonePin(utils.getToken(userAdmin.username), fedUserId, phonePin)
+        when: "Federated user token can reset the phone pin"
+        response = cloud20.resetPhonePin(fedUserToken, fedUserId)
+        pinFromResponse = response.getEntity(PhonePin).pin
+        pin1 = utils.getPhonePin(fedUserId, fedUserToken).pin
 
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
+        then: "phone pin before and after reset are different"
+        assert response.status == SC_OK
+        assert pinFromResponse != pin2
+        assert pinFromResponse == pin1
 
-        when: "verify phone pin with cloud userAdmin auth token that has got identity:phone-pin-admin added to it"
-        utils.addRoleToUser(userAdmin, Constants.IDENTITY_PHONE_PIN_ADMIN_ROLE_ID)
-        response = cloud20.verifyPhonePin(utils.getToken(userAdmin.username), fedUserId, phonePin)
+        when: "Racker impersonated token cannot reset the phone pin"
+        def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
+        def federatedUser = utils.getUserById(authResponse.user.id)
+        def impersonationResponse = cloud20.impersonate(rackerToken, federatedUser)
+        def impersonatedToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
 
-        then:
-        assert response.status == SC_NO_CONTENT
-
-        when: "verify phone pin with empty phone pin"
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin emptyPhonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = ""
-            it
-        }
-        response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, emptyPhonePin)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Invalid phone pin.")
-
-        when: "verify phone pin with incorrect phone pin"
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin incorrectPhonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = "12345433"
-            it
-        }
-        response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, incorrectPhonePin)
+        response = cloud20.resetPhonePin(impersonatedToken, fedUserId)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect phone pin for the user.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Impersonation tokens cannot be used to reset the phone PIN.")
+
+        when: "User admin of the federated user cannot reset the phone pin"
+        response = cloud20.resetPhonePin(utils.getToken(sharedUserAdmin.username), fedUserId)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
         cleanup:
         try {
             deleteFederatedUserQuietly(fedRequest.username)
-            utils.deleteUser(userAdmin)
         } catch (Exception ex) {
             // Eat
         }
@@ -159,7 +155,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "SAML assertion 1.0 - Verify phone pin for a federated user; media = #accept"() {
+    def "SAML assertion 1.0 - Get phone pin for a federated user; media = #accept"() {
         given:
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, Constants.DEFAULT_SAML_EXP_SECS, sharedUserAdmin.domainId, null, "test@rackspace.com")
@@ -168,36 +164,54 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
         def authResponse = samlResponse.getEntity(AuthenticateResponse).value
         def fedUserId = authResponse.user.id
-        FederatedUser fedUser = federatedUserRepository.getUserById(fedUserId)
+        def fedUserToken = authResponse.token.id
 
         then:
         assert samlResponse.status == SC_OK
 
-        when: "verify phone pin with default identityAdminToken that has got identity:phone-pin-admin added to it"
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = fedUser.phonePin
-            it
-        }
-        def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, phonePin)
+        when: "Service admin token able to reset the pin for federated user"
+        def response = cloud20.resetPhonePin(utils.getServiceAdminToken(), fedUserId)
 
         then:
-        assert response.status == SC_NO_CONTENT
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
-        when: "verify phone pin with SAML auth token"
-        response = cloud20.verifyPhonePin(authResponse.token.id, fedUserId, phonePin)
+        when: "Identity admin token can reset the phone pin"
+        def pin1 = utils.getPhonePin(fedUserId, fedUserToken).pin
+        response = cloud20.resetPhonePin(utils.getIdentityAdminToken(), fedUserId)
+        def pinFromResponse = response.getEntity(PhonePin).pin
+        def pin2 = utils.getPhonePin(fedUserId, fedUserToken).pin
+
+        then: "phone pin before and after reset are different"
+        assert response.status == SC_OK
+        assert pinFromResponse != pin1
+        assert pinFromResponse == pin2
+
+        when: "Federated user token can reset the phone pin"
+        response = cloud20.resetPhonePin(fedUserToken, fedUserId)
+        pinFromResponse = response.getEntity(PhonePin).pin
+        pin1 = utils.getPhonePin(fedUserId, fedUserToken).pin
+
+        then: "phone pin before and after reset are different"
+        assert response.status == SC_OK
+        assert pinFromResponse != pin2
+        assert pinFromResponse == pin1
+
+        when: "Racker impersonated token cannot be used to reset the phone pin"
+        def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
+        def federatedUser = utils.getUserById(authResponse.user.id)
+        def impersonationResponse = cloud20.impersonate(rackerToken, federatedUser)
+        def impersonatedToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
+
+        response = cloud20.resetPhonePin(impersonatedToken, fedUserId)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Impersonation tokens cannot be used to reset the phone PIN.")
 
-        when: "verify phone pin with incorrect phone pin"
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin incorrectPhonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = "12345433"
-            it
-        }
-        response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, incorrectPhonePin)
+        when: "User admin of the federated user cannot reset the phone pin"
+        response = cloud20.resetPhonePin(utils.getToken(sharedUserAdmin.username), fedUserId)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect phone pin for the user.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
         cleanup:
         try {

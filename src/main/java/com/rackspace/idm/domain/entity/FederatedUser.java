@@ -27,7 +27,7 @@ import java.util.*;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON)
-public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrincipal, DelegationDelegate {
+public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrincipal, DelegationDelegate, PhonePinProtectedUser {
     private static final Logger log = LoggerFactory.getLogger(FederatedUser.class);
 
     @LDAPDNField

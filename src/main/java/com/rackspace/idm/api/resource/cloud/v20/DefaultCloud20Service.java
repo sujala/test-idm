@@ -2502,33 +2502,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getPhonePin(String authToken, String userId) {
         try {
-            ScopeAccess callersScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(callersScopeAccess);
+            // Verify if the token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
+            // Verify if the caller is self
+            if (!StringUtils.equals(caller.getId(), userId)) {
+                throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+            }
             if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
                 throw new ForbiddenException("Impersonation tokens cannot be used to retrieve the phone PIN.", ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
             }
-
-            EndUser caller = (EndUser) userService.getUserByScopeAccess(callersScopeAccess, false);
-            boolean isSelf = caller.getId().equals(userId);
-            IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
-
-            if (IdentityUserTypeEnum.DEFAULT_USER == callerType && !isSelf) {
-                throw new ForbiddenException("Default user (sub-user) token of another user cannot retrieve the phone PIN.",
-                        ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
-            }
-
-            EndUser user = this.identityUserService.checkAndGetEndUserById(userId);
-            if(!isSelf) {
-                precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-                if (IdentityUserTypeEnum.USER_ADMIN == callerType || IdentityUserTypeEnum.USER_MANAGER == callerType) {
-                    if (!caller.getDomainId().equals(user.getDomainId())) {
-                        throw new ForbiddenException("User with user-admin/user-manage token from another domain cannot retrieve the phone PIN.",
-                                ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
-                    }
-                }
-            }
-            com.rackspace.idm.domain.entity.PhonePin phonePinEntity = phonePinService.checkAndGetPhonePin(user);
+            PhonePinProtectedUser phonePinProtectedUser = getPhonePinProtectedUser(userId);
+            com.rackspace.idm.domain.entity.PhonePin phonePinEntity = phonePinService.checkAndGetPhonePin(phonePinProtectedUser);
             PhonePin phonePin =  jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createPhonePin();
             phonePin.setPin(phonePinEntity.getPin());
 
@@ -2541,19 +2527,53 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder verifyPhonePin(String authToken, String userId, PhonePin phonePin) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName());
 
             if (phonePin != null && StringUtils.isBlank(phonePin.getPin())) {
-                throw new BadRequestException("Invalid phone pin", ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+                throw new BadRequestException("Invalid phone pin.", ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
             }
-            EndUser user = this.identityUserService.checkAndGetEndUserById(userId);
-            phonePinService.verifyPhonePin(user, phonePin.getPin());
+            PhonePinProtectedUser phonePinProtectedUser = getPhonePinProtectedUser(userId);
+            phonePinService.verifyPhonePin(phonePinProtectedUser, phonePin.getPin());
 
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    @Override
+    public ResponseBuilder resetPhonePin(String authToken, String userId) {
+        try {
+            // Verify if the token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify if the caller is either identity:admin or self
+            if (requestContextHolder.getRequestContext().getEffectiveCallersUserType() != IdentityUserTypeEnum.IDENTITY_ADMIN
+                    && !StringUtils.equals(caller.getId(), userId)) {
+                throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+            }
+            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+                throw new ForbiddenException("Impersonation tokens cannot be used to reset the phone PIN.", ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+            }
+            PhonePinProtectedUser phonePinProtectedUser = getPhonePinProtectedUser(userId);
+            com.rackspace.idm.domain.entity.PhonePin phonePinEntity = phonePinService.resetPhonePin(phonePinProtectedUser);
+            PhonePin phonePin =  jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createPhonePin();
+            phonePin.setPin(phonePinEntity.getPin());
+
+            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createPhonePin(phonePin).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private PhonePinProtectedUser getPhonePinProtectedUser(String userId) {
+        EndUser endUser = this.identityUserService.checkAndGetEndUserById(userId);
+        if(!(endUser instanceof User || endUser instanceof FederatedUser)) {
+            throw new IllegalStateException(String.format("Unknown user type '%s'", endUser.getClass().getName()));
+        }
+        return (PhonePinProtectedUser) endUser;
     }
 
     @Override

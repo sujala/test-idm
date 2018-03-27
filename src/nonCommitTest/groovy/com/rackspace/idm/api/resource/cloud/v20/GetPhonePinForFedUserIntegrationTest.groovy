@@ -6,7 +6,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin
 import com.rackspace.idm.Constants
 import com.rackspace.idm.SAMLConstants
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.FederatedUser
 import org.apache.http.HttpStatus
@@ -15,7 +14,6 @@ import org.joda.time.DateTime
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.ForbiddenFault
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -96,27 +94,26 @@ class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         when:
         def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
         AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
-        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+        def fedUserId = authResponse.user.id
+        FederatedUser fedUser = federatedUserRepository.getUserById(fedUserId)
 
         then:
         assert authClientResponse.status == SC_OK
 
-        when: "Service admin token able to retrieve the pin for federated user"
-        def response = cloud20.getPhonePin(utils.getServiceAdminToken(), fedUser.id)
+        when: "Service admin token will not be able to retrieve the pin"
+        def response = cloud20.getPhonePin(utils.getServiceAdminToken(), fedUserId)
 
         then:
-        assert response.status == SC_OK
-        assert response.getEntity(PhonePin).pin == fedUser.phonePin
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
-        when: "Identity admin token able to retrieve the pin for federated user"
-        response = cloud20.getPhonePin(utils.getIdentityAdminToken(), fedUser.id)
+        when: "Identity admin token will not be able to retrieve the pin"
+        response = cloud20.getPhonePin(utils.getIdentityAdminToken(), fedUserId)
 
         then:
-        assert response.status == SC_OK
-        assert response.getEntity(PhonePin).pin == fedUser.phonePin
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
         when: "Federated user token can retrieve the phone pin"
-        response = cloud20.getPhonePin(authResponse.token.id, fedUser.id)
+        response = cloud20.getPhonePin(authResponse.token.id, fedUserId)
 
         then:
         assert response.status == SC_OK
@@ -128,29 +125,20 @@ class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         def impersonationResponse = cloud20.impersonate(rackerToken, federatedUser)
         def impersonatedToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
 
-        response = cloud20.getPhonePin(impersonatedToken, fedUser.id)
+        response = cloud20.getPhonePin(impersonatedToken, fedUserId)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Impersonation tokens cannot be used to retrieve the phone PIN.")
 
-        when: "User admin of the federated user can retrieve the phone pin on the federated user"
-        response = cloud20.getPhonePin(utils.getToken(sharedUserAdmin.username), fedUser.id)
+        when: "User admin of the federated user cannot retrieve the phone pin"
+        response = cloud20.getPhonePin(utils.getToken(sharedUserAdmin.username), fedUserId)
 
         then:
-        assert response.status == SC_OK
-        assert response.getEntity(PhonePin).pin == fedUser.phonePin
-
-        when: "User admin token of a different domain cannot retrieve the phone pin on a federated user"
-        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
-        response = cloud20.getPhonePin(utils.getToken(userAdmin.username), fedUser.id)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; User with user-admin/user-manage token from another domain cannot retrieve the phone PIN.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
         cleanup:
         try {
             deleteFederatedUserQuietly(fedRequest.username)
-            utils.deleteUser(userAdmin)
         } catch (Exception ex) {
             // Eat
         }
@@ -168,27 +156,26 @@ class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         when:
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
         def authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+        def fedUserId = authResponse.user.id
+        FederatedUser fedUser = federatedUserRepository.getUserById(fedUserId)
 
         then:
         assert samlResponse.status == SC_OK
 
-        when: "Service admin token able to retrieve the pin for federated user"
-        def response = cloud20.getPhonePin(utils.getServiceAdminToken(), fedUser.id)
+        when: "Service admin token cannot retrieve the pin for federated user"
+        def response = cloud20.getPhonePin(utils.getServiceAdminToken(), fedUserId)
 
         then:
-        assert response.status == SC_OK
-        assert response.getEntity(PhonePin).pin == fedUser.phonePin
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
-        when: "Identity admin token able to retrieve the pin for federated user"
-        response = cloud20.getPhonePin(utils.getIdentityAdminToken(), fedUser.id)
+        when: "Identity admin token cannot retrieve the pin for federated user"
+        response = cloud20.getPhonePin(utils.getIdentityAdminToken(), fedUserId)
 
         then:
-        assert response.status == SC_OK
-        assert response.getEntity(PhonePin).pin == fedUser.phonePin
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
         when: "Federated user token can retrieve the phone pin"
-        response = cloud20.getPhonePin(authResponse.token.id, fedUser.id)
+        response = cloud20.getPhonePin(authResponse.token.id, fedUserId)
 
         then:
         assert response.status == SC_OK
@@ -200,85 +187,26 @@ class GetPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         def impersonationResponse = cloud20.impersonate(rackerToken, federatedUser)
         def impersonatedToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
 
-        response = cloud20.getPhonePin(impersonatedToken, fedUser.id)
+        response = cloud20.getPhonePin(impersonatedToken, fedUserId)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Impersonation tokens cannot be used to retrieve the phone PIN.")
 
-        when: "User admin of the federated user can retrieve the phone pin on the federated user"
-        response = cloud20.getPhonePin(utils.getToken(sharedUserAdmin.username), fedUser.id)
+        when: "User admin of the federated user cannot retrieve the phone pin"
+        response = cloud20.getPhonePin(utils.getToken(sharedUserAdmin.username), fedUserId)
 
         then:
-        assert response.status == SC_OK
-        assert response.getEntity(PhonePin).pin == fedUser.phonePin
-
-
-        when: "User admin token of a different domain cannot retrieve the phone pin on a federated user"
-        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
-        response = cloud20.getPhonePin(utils.getToken(userAdmin.username), fedUser.id)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; User with user-admin/user-manage token from another domain cannot retrieve the phone PIN.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Error code: 'PP-002'; Not Authorized")
 
         cleanup:
         try {
             deleteFederatedUserQuietly(username)
-            utils.deleteUser(userAdmin)
         } catch (Exception ex) {
             // Eat
         }
 
         where:
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
-    }
-
-
-    def "SAML assertion 2.0 - Get phone pin on federated user returns 404 when phone pin is not assigned during saml assertion"() {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-
-        def fedRequest = createFedRequest()
-        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
-        def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
-        AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
-        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
-
-        when:
-        def response = cloud20.getPhonePin(utils.getServiceAdminToken(), fedUser.id)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Error code: 'PP-000'; Phone pin not found for userId: '"+fedUser.id+"'")
-
-        cleanup:
-        try {
-            deleteFederatedUserQuietly(fedRequest.username)
-        } catch (Exception ex) {
-            // Eat
-        }
-    }
-
-    def "SAML assertion 1.0 - Get phone pin on federated user returns 404 when phone pin is not assigned during saml assertion"() {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, Constants.DEFAULT_SAML_EXP_SECS, sharedUserAdmin.domainId, null, "test@rackspace.com")
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def fedUser = federatedUserRepository.getUserById(authResponse.user.id)
-
-        when:
-        def response = cloud20.getPhonePin(utils.getServiceAdminToken(), fedUser.id)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Error code: 'PP-000'; Phone pin not found for userId: '"+fedUser.id+"'")
-
-        cleanup:
-        try {
-            deleteFederatedUserQuietly(username)
-        } catch (Exception ex) {
-            // Eat
-        }
     }
 
     def deleteFederatedUserQuietly(username) {

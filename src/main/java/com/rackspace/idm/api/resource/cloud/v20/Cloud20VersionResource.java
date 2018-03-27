@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
@@ -1392,6 +1393,9 @@ public class Cloud20VersionResource {
     public Response getPhonePin(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId){
+        if(!identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()){
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
         return cloud20Service.getPhonePin(authToken, userId).build();
     }
 
@@ -1402,7 +1406,22 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
             PhonePin phonePin){
+        if(!identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()){
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
         return cloud20Service.verifyPhonePin(authToken, userId, phonePin).build();
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @POST
+    @Path("users/{userId}/RAX-AUTH/phone-pin/reset")
+    public Response resetPhonePin(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId) {
+        if(!identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()){
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
+        return cloud20Service.resetPhonePin(authToken, userId).build();
     }
 
     // ******************************************************* //

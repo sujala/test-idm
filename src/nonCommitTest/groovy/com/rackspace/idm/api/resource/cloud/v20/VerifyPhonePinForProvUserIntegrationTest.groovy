@@ -2,11 +2,11 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.service.PhonePinService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -14,7 +14,6 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
 
 class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
@@ -22,17 +21,14 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
     @Autowired
     UserService userService
 
-    @Autowired
-    PhonePinService phonePinService
-
     @Unroll
     def "Verify phone pin on userAdmin; media = #accept" () {
         given:
         def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
-        def userAdminUserEntity = userService.getUserById(userAdmin.id)
-        def phonePinEntity = phonePinService.checkAndGetPhonePin(userAdminUserEntity)
+        def pin = userService.checkAndGetUserById(userAdmin.id).phonePin
+
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = phonePinEntity.pin
+            it.pin = pin
             it
         }
 
@@ -63,7 +59,7 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         def response3 = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), userAdmin.id, emptyPhonePin)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response3, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Invalid phone pin")
+        IdmAssert.assertOpenStackV2FaultResponse(response3, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Invalid phone pin.")
 
         when: "verify phone pin with incorrect phone pin"
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin incorrectPhonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
@@ -73,8 +69,7 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         response2 = cloud20.verifyPhonePin(utils.getToken(userAdmin.username), userAdmin.id, incorrectPhonePin)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response2, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect phone pin for userId: '"+userAdmin.id+"'")
-
+        IdmAssert.assertOpenStackV2FaultResponse(response2, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect phone pin for the user.")
 
         when: "verify phone pin with userAdmin that is disabled"
         userAdmin.enabled = false
@@ -106,10 +101,9 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
-    def "Verify phone pin on userAdmin returns 404 when phone pin is not assigned at the time of create user" () {
+    def "Verify phone pin returns 404 when phone pin feature is disabled" () {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
 
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
             it.pin = "1234"
@@ -117,13 +111,12 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         }
 
         when:
-        def response = cloud20.verifyPhonePin(utils.getServiceAdminToken(), userAdmin.id, phonePin)
+        def response = cloud20.verifyPhonePin(utils.getServiceAdminToken(), "anyUserId", phonePin)
 
         then:
-        assert response.status == SC_NOT_FOUND
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Service Not Found")
 
         cleanup:
-        utils.deleteUser(userAdmin)
         staticIdmConfiguration.reset()
     }
 }

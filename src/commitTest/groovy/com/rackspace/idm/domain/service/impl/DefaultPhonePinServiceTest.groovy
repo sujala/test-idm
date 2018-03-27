@@ -4,78 +4,131 @@ import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotFoundException
+import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
-import spock.lang.Specification
+import testHelpers.RootServiceTest
 
-class DefaultPhonePinServiceTest extends Specification {
+class DefaultPhonePinServiceTest extends RootServiceTest {
 
-    @Shared DefaultPhonePinService phonePinService
+    @Shared
+    DefaultPhonePinService service
 
     def setupSpec() {
-        phonePinService = new DefaultPhonePinService();
+        InitializationService.initialize()
+        service = new DefaultPhonePinService()
+        service.identityConfig = identityConfig
     }
 
-    def pin = "3432"
+    def setup() {
+        mockServices()
+    }
 
-    def "Retrieve phone pin from provisioned user" () {
+    def pin = "343223"
+
+    def "Retrieve phone pin from provisioned user"() {
         given:
         User user = new User()
+        user.id = "userId"
         user.phonePin = pin
 
         when:
-        def pp = phonePinService.checkAndGetPhonePin(user)
+        def pp = service.checkAndGetPhonePin(user)
 
         then:
         pp.getPin() == pin
-
     }
 
-    def "Retrieve phone pin from federated user" () {
+    def "Retrieve phone pin from federated user"() {
         given:
         FederatedUser user = new FederatedUser()
         user.phonePin = pin
+        user.id = "userId"
 
         when:
-        def pp = phonePinService.checkAndGetPhonePin(user)
+        def pp = service.checkAndGetPhonePin(user)
 
         then:
         pp.getPin() == pin
 
     }
 
-    def "Retrieve phone pin throws not found" () {
+    def "Retrieve phone pin throws not found"() {
         given:
         User user = new User()
         user.phonePin = null
 
         when:
-        phonePinService.checkAndGetPhonePin(user)
+        service.checkAndGetPhonePin(user)
 
         then:
         thrown(NotFoundException)
     }
 
-    def "Verify phone pin from provisioned user" () {
+    def "Verify phone pin from provisioned user"() {
         given:
         User user = new User()
         user.phonePin = pin
 
         when:
-        phonePinService.verifyPhonePin(user, "1231")
+        service.verifyPhonePin(user, "123231")
 
         then:
         thrown(BadRequestException)
     }
 
-    def "Verify phone pin from federated user" () {
+    def "Verify phone pin from federated user"() {
         given:
         FederatedUser user = new FederatedUser()
         user.phonePin = pin
 
         when:
-        phonePinService.verifyPhonePin(user, "1231")
+        service.verifyPhonePin(user, "123231")
 
         then:
         thrown(BadRequestException)
+    }
+
+    def "Reset phone pin for provisioned user" () {
+        given:
+        identityConfig.getReloadableConfig().getUserPhonePinSize() >> 6
+
+        User user = new User()
+        user.id = "userId"
+        user.phonePin = pin
+
+        when:
+        def pp = service.resetPhonePin(user)
+
+        then:
+        1 * identityUserDao.updateIdentityUser(_)
+
+        pp.getPin() != pin
+        pp.getPin().size() == 6
+        pp.getPin().isNumber()
+    }
+
+    def "Reset phone pin for federated user" () {
+        given:
+        identityConfig.getReloadableConfig().getUserPhonePinSize() >> 6
+
+        FederatedUser user = new FederatedUser()
+        user.id = "userId"
+        user.phonePin = pin
+
+        when:
+        def pp = service.resetPhonePin(user)
+
+        then:
+        1 * identityUserDao.updateIdentityUser(_)
+
+        pp.getPin() != pin
+        pp.getPin().size() == 6
+        pp.getPin().isNumber()
+    }
+
+    def mockServices() {
+        mockIdentityUserDao(service)
+        mockIdentityConfig(service)
+        mockIdentityUserService(service)
     }
 }

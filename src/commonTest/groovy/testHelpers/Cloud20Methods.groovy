@@ -59,6 +59,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_MOBILE_PHONES = "mobile-phones"
     static def SERVICE_PATH_MULTI_FACTOR = "multi-factor"
     static def SERVICE_PATH_VERIFY = "verify"
+    static def SERVICE_PATH_RESET = "reset"
     static def SERVICE_PATH_VERIFICATION_CODE = "verificationcode"
     static def SERVICE_PATH_BYPASS_CODES = "bypass-codes"
     static def SERVICE_PATH_OTP_DEVICES = "otp-devices"
@@ -976,14 +977,19 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSADM).path(ROLES).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def getPhonePin(String token, String userId){
+    def getPhonePin(String token, String userId, MediaType accept = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
-    def verifyPhonePin(String token, String userId, phonePin){
+    def verifyPhonePin(String token, String userId, phonePin, MediaType requestType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).path(SERVICE_PATH_VERIFY).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(phonePin).post(ClientResponse)
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).path(SERVICE_PATH_VERIFY).header(X_AUTH_TOKEN, token).type(requestType).entity(phonePin).post(ClientResponse)
+    }
+
+    def resetPhonePin(String token, String userId, MediaType accept = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).path(SERVICE_PATH_RESET).header(X_AUTH_TOKEN, token).accept(accept).post(ClientResponse)
     }
 
     def validateToken(String token, String validateToken, accept = APPLICATION_XML_TYPE){

@@ -29,7 +29,7 @@ import java.util.*;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
-public class User implements EndUser, DelegationPrincipal, DelegationDelegate {
+public class User implements EndUser, DelegationPrincipal, DelegationDelegate, PhonePinProtectedUser {
     private static final Logger log = LoggerFactory.getLogger(User.class);
 
     @LDAPEntryField
