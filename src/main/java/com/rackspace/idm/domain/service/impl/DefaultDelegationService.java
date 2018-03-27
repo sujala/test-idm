@@ -1,20 +1,17 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.entity.DelegateType;
-import com.rackspace.idm.domain.entity.DelegationAgreement;
-import com.rackspace.idm.domain.entity.DelegationDelegate;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.DelegationService;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.TenantAssignmentService;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.unboundid.ldap.sdk.DN;
@@ -63,6 +60,14 @@ public class DefaultDelegationService implements DelegationService {
     }
 
     @Override
+    public TenantRole getRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId) {
+        Validate.notNull(delegationAgreement);
+        Validate.notNull(roleId);
+
+        return tenantRoleDao.getRoleAssignmentOnDelegationAgreement(delegationAgreement, roleId);
+    }
+
+    @Override
     public PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, PaginationParams paginationParams) {
         return tenantRoleDao.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, paginationParams);
     }
@@ -79,6 +84,19 @@ public class DefaultDelegationService implements DelegationService {
 
         return tenantAssignmentService.replaceTenantAssignmentsOnDelegationAgreement(
                 delegationAgreement, roleAssignments.getTenantAssignments().getTenantAssignment());
+    }
+
+    @Override
+    public void revokeRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId) {
+        Validate.notNull(delegationAgreement);
+        Validate.notNull(roleId);
+
+        TenantRole assignedRole = getRoleAssignmentOnDelegationAgreement(delegationAgreement, roleId);
+        if (assignedRole == null) {
+            throw new NotFoundException("The specified role does not exist for agreement", ErrorCodes.ERROR_CODE_NOT_FOUND);
+        }
+
+        tenantRoleDao.deleteTenantRole(assignedRole);
     }
 
     @Override

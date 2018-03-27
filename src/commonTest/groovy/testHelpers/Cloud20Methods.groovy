@@ -1388,6 +1388,10 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreement.id).path(SERVICE_PATH_ROLES).type(media).accept(media).header(X_AUTH_TOKEN, token).entity(roleAssignments).put(ClientResponse)
     }
 
+    def revokeRoleAssignmentFromDelegationAgreement(String token, DelegationAgreement delegationAgreement, String roleId) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreement.id).path(SERVICE_PATH_ROLES).path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
     /**
      * Creates a new IDP, verifying the IDP was created successfully, and return the IDP rather than the raw response
      * @param type

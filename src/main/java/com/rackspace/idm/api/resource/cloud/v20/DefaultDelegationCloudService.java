@@ -322,11 +322,11 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             // Caller must be the DA principal to modify roles
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
             if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
-                throw new NotFoundException("The specified agreement does not exist for this user");
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
             if (roleAssignments == null) {
-                throw new BadRequestException("Must supply a set of assignments");
+                throw new BadRequestException("Must supply a set of assignments", ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
             }
 
             delegationService.replaceRoleAssignmentsOnDelegationAgreement(delegationAgreement, roleAssignments);
@@ -337,6 +337,40 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
         } catch (Exception ex) {
             LOG.debug(String.format("Error granting roles to delegation agreement '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response revokeRoleFromAgreement(String authToken, String agreementId, String roleId) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal to modify delegates
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            delegationService.revokeRoleAssignmentOnDelegationAgreement(delegationAgreement, roleId);
+
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error revoking role '%s' from delegation agreement '%s'", roleId, agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
     }
