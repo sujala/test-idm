@@ -876,24 +876,19 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         if not new_url:
             url = self.url + const.LEGACY_FED_AUTH_URL
-            headers = {
-                'Accept': 'application/{0}'.format(accept_type),
-                'Content-Type': 'application/{0}'.format(
-                    content_type or 'xml')
-            }
         else:
             url = self.url + const.NEW_FED_AUTH_URL
-            headers = {
-                'Accept': 'application/{0}'.format(accept_type)
-            }
-            if base64_url_encode:
-                headers['Content-Type'] = 'application/{0}'.format(
-                    content_type or 'x-www-form-urlencoded'
-                )
-            else:
-                headers['Content-Type'] = 'application/{0}'.format(
-                    content_type or 'xml'
-                )
+        headers = {
+            'Accept': 'application/{0}'.format(accept_type)
+        }
+        if base64_url_encode:
+            headers['Content-Type'] = 'application/{0}'.format(
+                content_type or 'x-www-form-urlencoded'
+            )
+        else:
+            headers['Content-Type'] = 'application/{0}'.format(
+                content_type or 'xml'
+            )
 
         resp = self.request('POST', url, data=saml, headers=headers,
                             requestslib_kwargs=requestslib_kwargs)

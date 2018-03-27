@@ -6,7 +6,7 @@ from tests.api.utils import saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
 
 from tests.api.v2 import base
-from tests.api.v2.models import factory
+from tests.api.v2.models import factory, responses
 from tests.api.v2.schema import idp as idp_json
 from tests.api.v2.schema import tokens as tokens_json
 
@@ -250,14 +250,35 @@ class TestBaseFederation(base.TestBaseV2):
             self.service_admin_client.add_role_to_user(
                 user_id=user_id, role_id=mapping_rules_role_id)
 
+    def create_and_add_user_group_to_domain(self, client,
+                                            domain_id=None,
+                                            status_code=201):
+        if domain_id is None:
+            domain_id = self.domain_id
+        group_req = factory.get_add_user_group_request(domain_id)
+        # set the serialize format to json since that's what we support
+        # for user groups
+        client_default_serialize_format = client.serialize_format
+        client.serialize_format = const.JSON
+        resp = client.add_user_group_to_domain(
+            domain_id=domain_id, request_object=group_req)
+        self.assertEqual(resp.status_code, status_code)
+        client.serialize_format = client_default_serialize_format
+
+        if status_code != 201:
+            return None
+        else:
+            return responses.UserGroup(resp.json())
+
     def tearDown(self):
         # Delete all providers created in the tests
-
         for id_ in self.provider_ids:
             self.identity_admin_client.delete_idp(idp_id=id_)
+
         # Delete all users created in the tests
         for id in self.user_ids:
             self.identity_admin_client.delete_user(user_id=id)
+
         for dom in self.domain_ids:
             disable_domain_req = requests.Domain(enabled=False)
             self.identity_admin_client.update_domain(

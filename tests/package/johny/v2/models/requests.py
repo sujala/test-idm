@@ -1175,10 +1175,13 @@ class TenantRoleAssignments(base.AutoMarshallingModel):
 
 
 class DelegationAgreements(base.AutoMarshallingModel):
-    def __init__(self, da_name, delegate_id, description=None):
+    def __init__(self, da_name, delegate_id, principal_id=None,
+                 principal_type=None, description=None):
         self.da_name = da_name
         self.delegate_id = delegate_id
         self.description = description
+        self.principal_id = principal_id
+        self.principal_type = principal_type
 
     def _obj_to_json(self):
         delegation_agreement_request = {
@@ -1188,4 +1191,10 @@ class DelegationAgreements(base.AutoMarshallingModel):
                 const.DESCRIPTION: self.description
             }
         }
+        if self.principal_id:
+            delegation_agreement_request[const.RAX_AUTH_DELEGATION_AGREEMENT][
+                const.PRINCIPAL_ID] = self.principal_id
+        if self.principal_type:
+            delegation_agreement_request[const.RAX_AUTH_DELEGATION_AGREEMENT][
+                const.PRINCIPAL_TYPE] = self.principal_type
         return json.dumps(delegation_agreement_request)

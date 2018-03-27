@@ -12,3 +12,4 @@ crypto==1.4.1
 cryptography==1.7.2
 pyOpenSSL==16.2.0
 allpairspy==2.1.0
+munch==2.2.0

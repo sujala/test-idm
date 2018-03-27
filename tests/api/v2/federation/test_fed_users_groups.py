@@ -45,26 +45,6 @@ class TestFedUserGroups(federation.TestBaseFederation):
         self.tenant_ids = []
         self.group_ids = []
 
-    def create_and_add_user_group_to_domain(self, client,
-                                            domain_id=None,
-                                            status_code=201):
-        if domain_id is None:
-            domain_id = self.domain_id
-        group_req = factory.get_add_user_group_request(domain_id)
-        # set the serialize format to json since that's what we support
-        # for user groups
-        client_default_serialize_format = client.serialize_format
-        client.serialize_format = const.JSON
-        resp = client.add_user_group_to_domain(
-            domain_id=domain_id, request_object=group_req)
-        self.assertEqual(resp.status_code, status_code)
-        client.serialize_format = client_default_serialize_format
-
-        if status_code is not 201:
-            return None
-        else:
-            return responses.UserGroup(resp.json())
-
     def create_role(self):
 
         role_req = factory.get_add_role_request_object(
