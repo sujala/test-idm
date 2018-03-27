@@ -170,7 +170,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             // Currently only principals can retrieve DA
             if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
-                throw new NotFoundException("The specified agreement does not exist for this user");
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
             return Response.ok().entity(delegationAgreementConverter.toDelegationAgreementWeb(delegationAgreement)).build();
@@ -197,7 +197,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             // Caller must be the DA principal to delete it
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
             if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
-                throw new NotFoundException("The specified agreement does not exist for this user");
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
             delegationService.deleteDelegationAgreement(delegationAgreement);
@@ -225,7 +225,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             // Caller must be the DA principal to modify delegates
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
             if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
-                throw new NotFoundException("The specified agreement does not exist for this user");
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
             // Verify delegate is valid for the specified agreement
@@ -257,7 +257,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             // Caller must be the DA principal to modify delegates
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
             if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
-                throw new NotFoundException("The specified agreement does not exist for this user");
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
             // No validation required for delegate

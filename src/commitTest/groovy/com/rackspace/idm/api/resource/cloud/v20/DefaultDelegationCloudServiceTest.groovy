@@ -54,42 +54,43 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
     }
 
     /**
-     * Verifies the request is authorized appropriately. Fails the check to verify domain to test for
-     * standard exception handling.
+     * Verifies each service performs that standard authorization on the passed in token appropriate. Each test will
+     * fail for different reasons after the authorization checks. The tests also verify the standard exception handler
+     * is called for each test.
      *
      * @return
      */
-    def "addAgreement: Verifies token and caller with standard exception handling"() {
-        DelegationAgreement daWeb = new DelegationAgreement()
+    @Unroll
+    def "Verifies service '#name' calls standard services to validate the provided token, the user, the user's authorization level and uses standard exception handling."() {
         User caller = new User().with {
             it.id = RandomStringUtils.randomAlphabetic(10)
             it
         }
-        Domain callerDomain = new Domain().with {
-            it.rackspaceCustomerNumber = "myRcn"
-            it
-        }
-        UriInfo uriInfo = Mock()
         def tokenStr = "callerTokenStr"
-        def token = Mock(BaseUserToken)
-
         def capturedException
-        exceptionHandler.exceptionResponse(_ as ForbiddenException) >> { args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN) }
 
         when:
-        service.addAgreement(uriInfo, tokenStr, daWeb)
+        methodClosure(tokenStr)
 
         then:
-        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> Mock(BaseUserToken)
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * identityUserService.getEndUserById(caller.id) >> caller
-        1 * requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
-        1 * reloadableConfig.areDelegationAgreementsEnabledForRcn(callerDomain.rackspaceCustomerNumber) >> false
+        1 * exceptionHandler.exceptionResponse(_) >> { args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN) }
 
         and: "Appropriate exception thrown"
-        IdmExceptionAssert.assertException(capturedException, ForbiddenException, ErrorCodes.ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN, IdmExceptionAssert.PATTERN_ALL)
+        IdmExceptionAssert.assertException(capturedException, expectedFailureExceptionClass, expectedErrorCode, IdmExceptionAssert.PATTERN_ALL)
+
+        where:
+        [name, methodClosure, expectedFailureExceptionClass, expectedErrorCode] << [
+                ["addAgreement", {token -> service.addAgreement(Mock(UriInfo), token, new DelegationAgreement())}, NotFoundException,"GEN-004"]
+                , ["getAgreement", {token -> service.getAgreement(token, "id")}, NotFoundException, "GEN-004"]
+                , ["deleteAgreement", {token -> service.deleteAgreement(token, "id")}, NotFoundException, "GEN-004"]
+                , ["addDelegate", {token -> service.addDelegate(token, "id", new EndUserDelegateReference("user"))}, NotFoundException, "GEN-004"]
+                , ["deleteDelegate", {token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user"))}, NotFoundException, "GEN-004"]
+        ]
     }
+
 
     def "addAgreement: Verifies token is not scoped or delegate token"() {
         reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
