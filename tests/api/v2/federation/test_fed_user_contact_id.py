@@ -1,5 +1,9 @@
+from nose.plugins.attrib import attr
+
 from tests.api.utils.create_cert import create_self_signed_cert
+from tests.api.utils import func_helper
 from tests.api.utils import saml_helper
+from tests.api.v2 import base
 from tests.api.v2.federation import federation
 
 from tests.package.johny import constants as const
@@ -17,7 +21,8 @@ class TestFedUserContactId(federation.TestBaseFederation):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestFedUserContactId, cls).setUpClass()
-        cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
+        cls.domain_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
@@ -33,6 +38,7 @@ class TestFedUserContactId(federation.TestBaseFederation):
         super(TestFedUserContactId, self).setUp()
         self.users = []
 
+    @attr(type='smoke_alpha')
     def test_fed_user_contact_id(self):
         """
         Test to Add Contact Id on a fed user.
@@ -104,11 +110,17 @@ class TestFedUserContactId(federation.TestBaseFederation):
         self.assertEqual(
             resp.json()[const.ACCESS][const.USER][const.RAX_AUTH_CONTACTID],
             contact_id)
+        # self.assertEqual(1, 2)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
 
         for user_id in self.users:
-            self.identity_admin_client.delete_user(user_id=user_id)
+            resp = self.identity_admin_client.delete_user(user_id=user_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(user_id))
+
         super(TestFedUserContactId, self).tearDown()
 
     @classmethod

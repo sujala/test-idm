@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*
 import ddt
+from nose.plugins.attrib import attr
 
-from tests.api.utils import saml_helper
+from tests.api.utils import func_helper, saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
+from tests.api.v2 import base
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory, responses
 from tests.api.v2.schema import idp as idp_json
@@ -32,7 +34,8 @@ class TestUpdateIDP(federation.TestBaseFederation):
         super(TestUpdateIDP, self).setUp()
 
         # user admin client
-        self.domain_id = self.generate_random_string(pattern='[\d]{7}')
+        self.domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
 
         self.user_clients = {}
         idp_user_admin_client = self.generate_client(
@@ -72,6 +75,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         provider_name = resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
         return provider_id, provider_name
 
+    @attr(type='regression')
     def test_update_idp_valid_name(self):
         """Test update with valid name randomly generate name with
         alphanumeric, '.', and '-' characters in range from 1 to 255
@@ -107,6 +111,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             idp_id=provider_id, request_object=update_idp_obj)
         self.assertEqual(resp.status_code, 200)
 
+    @attr(type='regression')
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_approved_domain_ids_with_spaces(self, test_data):
 
@@ -138,6 +143,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(fed_auth.status_code, 200)
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
+    @attr(type='regression')
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_enable_disable_idp(self, test_data):
 
@@ -210,6 +216,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(fed_auth.status_code, 200)
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
+    @attr(type='regression')
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_verify_delete_logs_and_re_auth(self, test_data):
 
@@ -243,9 +250,12 @@ class TestUpdateIDP(federation.TestBaseFederation):
             test_data=test_data, key_path=key_path, cert_path=cert_path,
             issuer=issuer, domain_1=domain_id, domain_2=domain_id_2)
 
+    @attr(type='regression')
     def test_update_idp_approved_domain_ids_with_duplicates(self):
-
-        request_object = factory.get_domain_request_object({})
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
+        dom_req = {'domain_id': domain_id}
+        request_object = factory.get_domain_request_object(dom_req)
         dom_resp = self.identity_admin_client.add_domain(request_object)
         domain_id = dom_resp.json()[const.RAX_AUTH_DOMAIN][const.ID]
         self.domains.append(domain_id)
@@ -264,6 +274,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             resp.json()[const.NS_IDENTITY_PROVIDER][const.APPROVED_DOMAIN_Ids],
             [domain_id])
 
+    @attr(type='regression')
     def test_update_idp_by_rcn_admin(self):
 
         request_object = factory.get_domain_request_object({})
@@ -321,6 +332,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         # should be changed to test w/ an existing RCN in Staging/Prod,
         self.assertEqual(resp.status_code, 200)
 
+    @attr(type='regression')
     def test_update_idp_by_user_clients(self):
         request_object = factory.get_domain_request_object({})
         dom_resp = self.identity_admin_client.add_domain(request_object)
@@ -341,6 +353,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.clients.append(user_client)
         self.assert_update_idp(provider_id, user_client)
 
+    @attr(type='regression')
     @ddt.data("user:admin", "user:manage")
     def test_update_idp_by_user_clients_metadata(self, client_key):
         (pem_encoded_cert, cert_path, _, key_path,
@@ -365,6 +378,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.role_ids.append(role.id)
         return role
 
+    @attr(type='regression')
     @ddt.file_data('modified_saml_fed_auth.json')
     def test_fed_auth_with_modified_saml(self, test_data):
 
@@ -432,20 +446,32 @@ class TestUpdateIDP(federation.TestBaseFederation):
             const.CONTENT_TYPE] = 'application/xml'
         client_instance.serialize_format = 'xml'
 
+    @base.base.log_tearDown_error
     def tearDown(self):
+        self.identity_admin_client.delete_user(
+            self.user_clients["user:manage"].default_headers[const.X_USER_ID])
         # Delete all providers created in the tests
         for id_ in self.provider_ids:
-            self.identity_admin_client.delete_idp(idp_id=id_)
+            resp = self.identity_admin_client.delete_idp(idp_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='IDP with ID {0} failed to delete'.format(id_))
         for id_ in self.users:
-            self.identity_admin_client.delete_user(user_id=id_)
+            resp = self.identity_admin_client.delete_user(user_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(id_))
         for id_ in self.role_ids:
-            self.identity_admin_client.delete_role(role_id=id_)
+            resp = self.identity_admin_client.delete_role(role_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Role with ID {0} failed to delete'.format(id_))
         for id_ in self.domains:
             req_obj = requests.Domain(domain_name=id_, domain_id=id_,
                                       enabled=False)
             self.identity_admin_client.update_domain(
                 domain_id=str(id_), request_object=req_obj)
-            self.identity_admin_client.delete_domain(
+            resp = self.identity_admin_client.delete_domain(
                 domain_id=id_)
         for client_ in self.clients:
             self.delete_client(client=client_)

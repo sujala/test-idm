@@ -4,9 +4,12 @@ import json
 import os
 
 import ddt
+from nose.plugins.attrib import attr
 
 from tests.api.utils import data_file_iterator
+from tests.api.utils import func_helper
 from tests.api.utils.create_cert import create_self_signed_cert
+from tests.api.v2 import base
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory
 
@@ -28,7 +31,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         super(TestAddMappingIDP, cls).setUpClass()
 
         # user admin client
-        cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
+        cls.domain_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.idp_user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
@@ -124,6 +128,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
         fed_token, _, _ = self.parse_auth_response(fed_auth)
 
+    @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
     ))
@@ -146,6 +151,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.validate_fed_user_auth_bad_request(
             cert_path, domain_id, issuer, key_path, self.identity_admin_client)
 
+    @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
     ))
@@ -175,6 +181,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path, self.domain_id, self.issuer, key_path,
             self.idp_user_admin_client)
 
+    @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
     ))
@@ -197,6 +204,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path, self.domain_id, self.issuer, key_path,
             self.idp_user_manage_client)
 
+    @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
     ))
@@ -215,6 +223,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.validate_fed_auth_success(
             cert_path, domain_id, issuer, key_path, self.identity_admin_client)
 
+    @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
     ))
@@ -244,6 +253,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path, self.domain_id, self.issuer, key_path,
             self.idp_user_admin_client)
 
+    @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
     ))
@@ -274,6 +284,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.idp_user_manage_client)
 
     # verify must have role manager for put, read only for get
+    @attr(type='regression')
     @ddt.file_data('data_update_idp_mapping_policy.json')
     def test_add_mapping_manager_role(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
@@ -285,6 +296,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=provider_id)
         self.assertEquals(resp_get_manager.status_code, 200)
 
+    @attr(type='regression')
     @ddt.file_data('data_update_idp_valid_mapping_policy.json')
     def test_add_mapping_valid_json(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
@@ -302,6 +314,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                               const.JSON))
         self.assertEquals(resp_get_ro.json(), mapping)
 
+    @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_invalid_policy.yaml",
     ))
@@ -332,6 +345,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertNotEquals(resp_get_ro.text, mapping)
         self.assertEquals(resp_get_ro.json(), current_resp_policy.json())
 
+    @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
         "yaml/blacklist_mapping_policy.yaml",
@@ -451,12 +465,15 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                             "n {max_size}"
                             " Kilobytes.".format(max_size=max_size_in_kilo))
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all providers created in the tests
         for id_ in self.provider_ids:
-            self.identity_admin_client.delete_idp(idp_id=id_)
+            resp = self.identity_admin_client.delete_idp(idp_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='IDP with ID {0} failed to delete'.format(id_))
         self.idp_user_admin_client.delete_idp(self.provider_ids)
-
         super(TestAddMappingIDP, self).tearDown()
 
     @classmethod

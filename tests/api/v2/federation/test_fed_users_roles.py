@@ -1,5 +1,9 @@
+from nose.plugins.attrib import attr
+
 from tests.api.utils.create_cert import create_self_signed_cert
+from tests.api.utils import func_helper
 from tests.api.utils import saml_helper
+from tests.api.v2 import base
 from tests.api.v2.federation import federation
 
 from tests.package.johny import constants as const
@@ -16,7 +20,8 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestFedUserGlobalRoles, cls).setUpClass()
-        cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
+        cls.domain_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
@@ -32,6 +37,7 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         super(TestFedUserGlobalRoles, self).setUp()
         self.users = []
 
+    @attr(type='smoke_alpha')
     def test_fed_user_global_roles(self):
         """
         Test to List fed user's global roles.
@@ -76,9 +82,12 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         role_ids = [role[const.ID] for role in list_resp.json()[const.ROLES]]
         self.assertIn(const.USER_DEFAULT_ROLE_ID, role_ids)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
-
         for user_id in self.users:
-            self.identity_admin_client.delete_user(user_id=user_id)
+            resp = self.identity_admin_client.delete_user(user_id=user_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(user_id))
         self.delete_client(self.user_admin_client)
         super(TestFedUserGlobalRoles, self).tearDown()

@@ -85,6 +85,7 @@ LIST_EFFECTIVE_ROLES_FOR_USER_URL = '/users/{user_id}/RAX-AUTH/roles'
 LIST_ROLES_FOR_USER_ON_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles')
 LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
+LIST_USERS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/users'
 LIST_TENANT_ROLE_ASSIGNMENTS_FOR_USER_GROUP_URL = (
     ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL)
 LIST_USER_ROLES_URL = '/users/{user_id}/roles'

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*
+from tests.api.v2 import base
 from tests.api.v2.federation import federation
 from tests.api.v2.schema import tokens as tokens_json
 
 from tests.api.utils.create_cert import create_self_signed_cert
+from tests.api.utils import func_helper
 from tests.api.utils import saml_helper
 
 from tests.package.johny import constants as const
@@ -20,7 +22,8 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestFedUserImpersonation, cls).setUpClass()
-        cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
+        cls.domain_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
@@ -107,7 +110,8 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         # to use the analyze token endpoint, else will result in HTTP 403.
         self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
             token_id
-        analyze_token_resp = self.identity_admin_client.analyze_token()
+        analyze_token_resp = self.identity_admin_client.analyze_token(
+            idm_url=self.identity_config.idm_url)
         self.assertEqual(analyze_token_resp.status_code, 200)
         self.assertSchema(
             response=analyze_token_resp,
@@ -128,7 +132,8 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         # Analyze Token
         self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
             token_id
-        analyze_token_resp = self.identity_admin_client.analyze_token()
+        analyze_token_resp = self.identity_admin_client.analyze_token(
+            idm_url=self.identity_config.idm_url)
         self.assertEqual(analyze_token_resp.status_code, 200)
         self.assertSchema(
             response=analyze_token_resp,
@@ -145,19 +150,25 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         # Analyze Token
         self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
             token_id
-        analyze_token_resp = self.identity_admin_client.analyze_token()
+        analyze_token_resp = self.identity_admin_client.analyze_token(
+            idm_url=self.identity_config.idm_url)
         self.assertEqual(analyze_token_resp.status_code, 200)
         self.assertSchema(
             response=analyze_token_resp,
             json_schema=tokens_json.analyze_token_fed_user_impersonation)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         super(TestFedUserImpersonation, self).tearDown()
         for idp_id in self.provider_ids:
             # Fails with HTTP 403 - https://jira.rax.io/browse/CID-943
-            self.user_admin_client.delete_idp(idp_id=idp_id)
+            resp = self.user_admin_client.delete_idp(idp_id=idp_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='IDP with ID {0} failed to delete'.format(idp_id))
 
     @classmethod
+    @base.base.log_tearDown_error
     def tearDownClass(cls):
         super(TestFedUserImpersonation, cls).tearDownClass()
 
@@ -167,9 +178,13 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
 
         for user_id in user_ids:
             resp = cls.identity_admin_client.delete_user(user_id=user_id)
+            assert resp.status_code == 204, \
+                'User with ID {0} failed to delete'.format(user_id)
 
         for domain_id in cls.domain_ids:
             disable_domain_req = requests.Domain(enabled=False)
             cls.identity_admin_client.update_domain(
                 domain_id=domain_id, request_object=disable_domain_req)
-            cls.identity_admin_client.delete_domain(domain_id=domain_id)
+            resp = cls.identity_admin_client.delete_domain(domain_id=domain_id)
+            assert resp.status_code == 204, \
+                'Domain with ID {0} failed to delete'.format(domain_id)

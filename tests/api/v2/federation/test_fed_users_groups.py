@@ -1,5 +1,9 @@
+from nose.plugins.attrib import attr
+
 from tests.api.utils.create_cert import create_self_signed_cert
-from tests.api.utils import saml_helper
+from tests.api.utils import func_helper, saml_helper
+
+from tests.api.v2 import base
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory, responses
 
@@ -21,7 +25,8 @@ class TestFedUserGroups(federation.TestBaseFederation):
         if cls.test_config.use_domain_for_user_groups:
             cls.domain_id = cls.test_config.domain_id
         else:
-            cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
+            cls.domain_id = func_helper.generate_randomized_domain_id(
+                client=cls.identity_admin_client)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
@@ -73,6 +78,7 @@ class TestFedUserGroups(federation.TestBaseFederation):
         }
         return tenant_assignment_request
 
+    @attr(type='regression')
     def test_fed_user_groups(self):
         """
         Test to List fed user's groups:
@@ -335,6 +341,7 @@ class TestFedUserGroups(federation.TestBaseFederation):
 
         self.assertNotIn(fed_user_id, user_ids)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         for user_id in self.users:
             self.identity_admin_client.delete_user(user_id=user_id)
@@ -364,6 +371,23 @@ class TestFedUserGroups(federation.TestBaseFederation):
         super(TestFedUserGroups, self).tearDown()
 
     @classmethod
+    @base.base.log_tearDown_error
     def tearDownClass(cls):
-        cls.identity_admin_client.delete_domain(cls.domain_id)
+        resp = cls.identity_admin_client.list_users_in_domain(
+            domain_id=cls.domain_id)
+        users = resp.json()[const.USERS]
+        user_ids = [user[const.ID] for user in users]
+
+        for user_id in user_ids:
+            resp = cls.identity_admin_client.delete_user(user_id=user_id)
+            assert resp.status_code == 204, \
+                'User with ID {0} failed to delete'.format(user_id)
+
+        disable_domain_req = requests.Domain(enabled=False)
+        cls.identity_admin_client.update_domain(
+            domain_id=cls.domain_id, request_object=disable_domain_req)
+        resp = cls.identity_admin_client.delete_domain(cls.domain_id)
+        assert resp.status_code == 204, \
+            'Domain with ID {0} failed to delete'.format(cls.domain_id)
+
         super(TestFedUserGroups, cls).tearDownClass()

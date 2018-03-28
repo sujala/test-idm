@@ -2,6 +2,7 @@
 import copy
 import os
 
+from tests.api.utils import func_helper
 from tests.api.utils import saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
 
@@ -153,7 +154,10 @@ class TestBaseFederation(base.TestBaseV2):
 
     def create_one_user_and_get_domain(self, auth_client=None, users=None):
 
-        request_object = factory.get_add_user_one_call_request_object()
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
+        request_object = factory.get_add_user_one_call_request_object(
+            domainid=domain_id)
 
         if auth_client is None:
             auth_client = self.identity_admin_client
@@ -270,20 +274,31 @@ class TestBaseFederation(base.TestBaseV2):
         else:
             return responses.UserGroup(resp.json())
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all providers created in the tests
         for id_ in self.provider_ids:
-            self.identity_admin_client.delete_idp(idp_id=id_)
+            resp = self.identity_admin_client.delete_idp(idp_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='IDP with ID {0} failed to delete'.format(id_))
 
         # Delete all users created in the tests
-        for id in self.user_ids:
-            self.identity_admin_client.delete_user(user_id=id)
+        for id_ in self.user_ids:
+            resp = self.identity_admin_client.delete_user(user_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(id_))
 
         for dom in self.domain_ids:
             disable_domain_req = requests.Domain(enabled=False)
             self.identity_admin_client.update_domain(
                 domain_id=dom, request_object=disable_domain_req)
-            self.identity_admin_client.delete_domain(domain_id=dom)
+            resp = self.identity_admin_client.delete_domain(domain_id=dom)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Domain with ID {0} failed to delete'.format(dom))
+
         super(TestBaseFederation, self).tearDown()
 
     @classmethod

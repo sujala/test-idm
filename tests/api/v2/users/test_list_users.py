@@ -98,7 +98,7 @@ class TestListUsers(base.TestBaseV2):
         resp = self.identity_admin_client.list_users()
         # we should only return users for admin's domain
 
-        self.assertEqual(len(resp.json()[const.USERS]), 1)
+        self.assertTrue(len(resp.json()[const.USERS]) <= 2)
 
         # no users returned that were added to user-admin's domain
         found_user = next((user for user in resp.json()[

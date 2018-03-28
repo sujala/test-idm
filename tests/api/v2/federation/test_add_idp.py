@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*
 from allpairspy import AllPairs
+
 import ddt
+from nose.plugins.attrib import attr
 
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory
@@ -26,6 +28,7 @@ class TestAddIDP(federation.TestBaseFederation):
     def setUp(self):
         super(TestAddIDP, self).setUp()
 
+    @attr(type='regression')
     def test_add_idp_email_domain(self):
         email_domains = []
         email_domains.append(self.generate_random_string(const.EMAIL_PATTERN))
@@ -78,6 +81,7 @@ class TestAddIDP(federation.TestBaseFederation):
             response=resp,
             json_schema=idp_json.identity_provider_w_email_domain)
 
+    @attr(type='regression')
     def test_add_idp_with_name(self):
         '''Add with a name.'''
 
@@ -182,6 +186,7 @@ class TestAddIDP(federation.TestBaseFederation):
             "Error code: 'FED_IDP-001'; When BROKER IDP is specified, the"
             " approvedDomainGroup must be set, and specified as GLOBAL")
 
+    @attr(type='regression')
     def test_add_idp_with_name_get_idp(self):
         '''Verify get provider by id has name attribute.'''
         request_object = factory.get_add_idp_request_object()
@@ -195,6 +200,7 @@ class TestAddIDP(federation.TestBaseFederation):
         get_name = get_name_resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
         self.assertEquals(get_name, request_object.idp_name)
 
+    @attr(type='regression')
     def test_add_idp_with_name_list_idp(self):
         '''Verify list providers has name attribute.'''
         request_object = factory.get_add_idp_request_object()
@@ -213,6 +219,7 @@ class TestAddIDP(federation.TestBaseFederation):
                 found = True
         self.assertEquals(found, True)
 
+    @attr(type='regression')
     @ddt.data(*AllPairs([["issuer", "name"],
                          ["test12345", "*"]]))
     def test_list_idp_query_param_name_missed_hit(self, data):
@@ -335,6 +342,7 @@ class TestAddIDP(federation.TestBaseFederation):
 
         self.assertEquals(found, True)
 
+    @attr(type='regression')
     @ddt.data('GLOBAL', 'RACKER', 'BROKER')
     def test_list_idps_for_global_and_racker_idps(self, idp_flavor):
         """
@@ -365,16 +373,17 @@ class TestAddIDP(federation.TestBaseFederation):
         }
         # list idps with query param
         list_resp = self.identity_admin_client.list_idp(option=option)
-        self.assertEqual(list_resp.json()[const.NS_IDENTITY_PROVIDERS][0][
-                             const.APPROVED_DOMAIN_Ids], [])
+        self.assertEqual(
+            list_resp.json()[
+                const.NS_IDENTITY_PROVIDERS][0][const.APPROVED_DOMAIN_Ids], [])
 
         # list idps without query param
         list_resp = self.identity_admin_client.list_idp()
         for idp in list_resp.json()[const.NS_IDENTITY_PROVIDERS]:
             if (idp[const.FEDERATION_TYPE] in {const.BROKER, const.RACKER} or
                 (const.APPROVED_DOMAIN_GROUP in idp and idp[
-                        const.APPROVED_DOMAIN_GROUP] == (
-                            const.APPROVED_DOMAIN_GROUP_GLOBAL))):
+                    const.APPROVED_DOMAIN_GROUP] == (
+                        const.APPROVED_DOMAIN_GROUP_GLOBAL))):
                 self.assertEqual(idp[const.APPROVED_DOMAIN_Ids], [])
             else:
                 self.assertNotEqual(idp[const.APPROVED_DOMAIN_Ids], [])

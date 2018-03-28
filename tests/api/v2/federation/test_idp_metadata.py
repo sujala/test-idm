@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*
 import copy
 
+from nose.plugins.attrib import attr
+
 from tests.api.utils import func_helper
+from tests.api.v2 import base
 from tests.api.v2.federation import federation
 from tests.api.v2.schema import idp as idp_json
 from tests.api.v2.schema import users as user_json
@@ -54,6 +57,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
     def setUp(self):
         super(TestIDPMetadata, self).setUp()
 
+    @attr(type='regression')
     def test_add_idp_auth_fed_user(self):
         '''
         Test to Add IDP with metadata & auth as a fed user for the domain.
@@ -116,6 +120,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
         self.assertSchema(response=get_resp,
                           json_schema=updated_get_user_schema)
 
+    @attr(type='regression')
     def test_update_idp_cert_w_metadata(self):
         '''
         Test to Add IDP with metadata & auth as a fed user for the domain.
@@ -169,6 +174,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
             idp_id=idp_id, request_object=idp_request_object)
         self.assertEqual(resp.status_code, 403)
 
+    @attr(type='regression')
     def test_list_idp(self):
         '''Test to List IDP.'''
         (pem_encoded_cert, cert_path, _, key_path,
@@ -181,6 +187,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp, json_schema=idp_json.list_idps)
 
+    @attr(type='regression')
     def test_add_mapping_user_default(self):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
@@ -223,18 +230,22 @@ class TestIDPMetadata(federation.TestBaseFederation):
         super(TestIDPMetadata, self).tearDown()
 
     @classmethod
+    @base.base.log_tearDown_error
     def tearDownClass(cls):
         super(TestIDPMetadata, cls).tearDownClass()
-
         resp = cls.user_admin_client.list_users()
         users = resp.json()[const.USERS]
         user_ids = [user[const.ID] for user in users]
 
         for user_id in user_ids:
             resp = cls.identity_admin_client.delete_user(user_id=user_id)
+            assert resp.status_code == 204, \
+                'User with ID {0} failed to delete'.format(user_id)
 
         for domain_id in cls.domain_ids:
             disable_domain_req = requests.Domain(enabled=False)
             cls.identity_admin_client.update_domain(
                 domain_id=domain_id, request_object=disable_domain_req)
-            cls.identity_admin_client.delete_domain(domain_id=domain_id)
+            resp = cls.identity_admin_client.delete_domain(domain_id=domain_id)
+            assert resp.status_code == 204, \
+                'Domain with ID {0} failed to delete'.format(domain_id)

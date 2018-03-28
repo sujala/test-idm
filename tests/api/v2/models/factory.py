@@ -154,10 +154,10 @@ def get_add_group_request_object(group_name=None, group_desc=None):
     # Gather all args into dictionary
 
     default_data = {}
-    default_data["group_name"] = "newgroup"+TestBase.generate_random_string(
-                                    pattern=const.LOWER_CASE_LETTERS)
-    default_data["group_desc"] = "newgrpdesc"+TestBase.generate_random_string(
-                                    pattern=const.LOWER_CASE_LETTERS)
+    default_data["group_name"] = "newgroup" + TestBase.generate_random_string(
+        pattern=const.LOWER_CASE_LETTERS)
+    default_data["group_desc"] = "newgrpdesc" + \
+        TestBase.generate_random_string(pattern=const.LOWER_CASE_LETTERS)
     if group_name:
         default_data["group_name"] = group_name
     if group_desc:
@@ -171,14 +171,15 @@ def get_domain_request_object(domain_req):
 
     if "enabled" in domain_req:
         enabled = domain_req["enabled"]
+    if "domain_id" in domain_req:
+        domain_id = domain_req["domain_id"]
+    else:
+        domain_id = TestBase.generate_random_string(const.ID_PATTERN)
 
     dom = requests.Domain(
-        domain_name=TestBase.generate_random_string(
-            const.DOMAIN_PATTERN),
-        domain_id=TestBase.generate_random_string(
-            const.ID_PATTERN),
-        description=TestBase.generate_random_string(
-            const.DOMAIN_PATTERN),
+        domain_name=TestBase.generate_random_string(const.DOMAIN_PATTERN),
+        domain_id=domain_id,
+        description=TestBase.generate_random_string(const.DOMAIN_PATTERN),
         enabled=enabled)
 
     return dom

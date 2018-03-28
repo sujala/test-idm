@@ -63,3 +63,4 @@ the users have to be set up with the roles below.
 
 1. identity_admin_user_name used in api.conf should have the following roles,
     1.1 identity:identity-provider-manager
+    1.2 identity:analyze-token

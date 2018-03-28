@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*
 import ddt
+from nose.plugins.attrib import attr
 
-from tests.api.utils import saml_helper
+from tests.api.utils import func_helper, saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
+from tests.api.v2 import base
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory, responses
 
@@ -23,8 +25,8 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestTenantLevelRolesForFederation, cls).setUpClass()
-        dom_id = cls.generate_random_string(
-            pattern=const.NUMERIC_DOMAIN_ID_PATTERN)
+        dom_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.idp_ua_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': dom_id})
@@ -36,7 +38,8 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         self.roles = []
         self.users = []
 
-        self.domain_id = self.generate_random_string(pattern='[\d]{7}')
+        self.domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
         request_object = factory.get_add_user_one_call_request_object(
             domainid=self.domain_id)
         self.user_admin_client = self.generate_client(
@@ -111,6 +114,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
                 role_present = True
         self.assertEqual(role_present, positive)
 
+    @attr(type='regression')
     @ddt.file_data('data_tenant_level_roles.json')
     def test_tenant_level_roles_in_fed_auth(self, test_data):
         ''' Verify appropriate roles are on the federated users.'''
@@ -167,14 +171,24 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             self.validate_role_present(auth_resp=fed_auth, role=role_0,
                                        positive=False)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all providers created in the tests
         for id_ in self.provider_ids:
-            self.idp_ua_client.delete_idp(idp_id=id_)
+            resp = self.idp_ua_client.delete_idp(idp_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='IDP with ID {0} failed to delete'.format(id_))
         for user_id in self.users:
-            self.identity_admin_client.delete_user(user_id=user_id)
+            resp = self.identity_admin_client.delete_user(user_id=user_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(user_id))
         for role_id in self.roles:
-            self.identity_admin_client.delete_role(role_id=role_id)
+            resp = self.identity_admin_client.delete_role(role_id=role_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Role with ID {0} failed to delete'.format(role_id))
         self.delete_client(self.user_admin_client)
         super(TestTenantLevelRolesForFederation, self).tearDown()
 
@@ -182,5 +196,5 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
     def tearDownClass(cls):
         # Delete all users created in the setUpClass
         cls.delete_client(client=cls.idp_ua_client,
-                          parent_client=cls.service_admin_client)
+                          parent_client=cls.identity_admin_client)
         super(TestTenantLevelRolesForFederation, cls).tearDownClass()

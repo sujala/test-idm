@@ -217,12 +217,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = url.format(user_id=user_id)
         return self.request('DELETE', url)
 
-    def analyze_token(self):
+    def analyze_token(self, idm_url=const.IDM_URL):
         """Analyze Tokens."""
         parsed_url = urlparse(self.url)
         url = "{0}://{1}{2}{3}{4}".format(parsed_url.scheme,
                                           parsed_url.netloc,
-                                          const.IDM_URL,
+                                          idm_url,
                                           const.DEVOPS_URL,
                                           const.ANALYZE_TOKEN_URL)
         return self.request('GET', url)

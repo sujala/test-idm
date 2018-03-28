@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*
 import ddt
+from nose.plugins.attrib import attr
 
+from tests.api.utils import func_helper
 from tests.api.utils import saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.v2.federation import federation
@@ -21,7 +23,8 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
         super(TestDeleteFederatedUser, cls).setUpClass()
 
         # Add User
-        cls.domain_id = cls.generate_random_string(const.DOMAIN_PATTERN)
+        cls.domain_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
@@ -56,6 +59,7 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
         self.assertEquals(saml_resp.status_code, 200)
         self.auth_resp = responses.Access(saml_resp.json())
 
+    @attr(type='regression')
     def test_delete_federated_user(self):
         resp = self.user_admin_client.delete_user(
             user_id=self.auth_resp.access.user.id)
@@ -67,6 +71,7 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
             new_url=False)
         self.assertEquals(saml_resp.status_code, 200)
 
+    @attr(type='regression')
     def test_validate_token_for_deleted_federated_user(self):
         resp = self.user_admin_client.delete_user(
             user_id=self.auth_resp.access.user.id)
