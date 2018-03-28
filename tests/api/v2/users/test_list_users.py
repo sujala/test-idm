@@ -4,6 +4,7 @@ from random import randrange
 
 import ddt
 
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 from tests.api.v2.schema import users as users_json
 
@@ -25,11 +26,10 @@ class TestListUsers(base.TestBaseV2):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestListUsers, cls).setUpClass()
-        cls.DOMAIN_ID_TEST = "test-spec-user-list"
         contact_id = randrange(start=const.CONTACT_ID_MIN,
                                stop=const.CONTACT_ID_MAX)
-        cls.DOMAIN_ID_TEST = cls.generate_random_string(
-            pattern='test[\-]spec[\-]user[\-]list[\-][\d]{5}')
+        cls.DOMAIN_ID_TEST = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.DOMAIN_ID_TEST,

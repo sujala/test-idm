@@ -6,8 +6,6 @@ from tests.api.v2 import base
 from tests.api.v2.models import factory, responses
 
 from tests.package.johny import constants as const
-from tests.package.johny.v2 import client
-from tests.package.johny.v2.models import requests
 
 
 class TestListEffectiveRolesForUser(base.TestBaseV2):
@@ -42,19 +40,6 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
             additional_input_data={
                 'domain_id': self.domain_id,
                 'user_name': sub_user_name})
-
-        self.global_roles_client = client.IdentityAPIClient(
-            url=self.url,
-            serialize_format=self.test_config.serialize_format,
-            deserialize_format=self.test_config.deserialize_format)
-        req_obj = requests.AuthenticateWithPassword(
-            user_name=self.identity_config.global_roles_user_name,
-            password=self.identity_config.global_roles_password)
-        resp = self.global_roles_client.get_auth_token(request_object=req_obj)
-        auth_token = resp.json()[const.ACCESS][const.TOKEN][
-            const.ID]
-        self.global_roles_client.default_headers[const.X_AUTH_TOKEN] = (
-            auth_token)
 
         self.role_ids = []
         self.tenant_ids = []
