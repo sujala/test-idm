@@ -1788,3 +1788,56 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             user_id=user_id)
         return self.request('PUT', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
+
+    def add_user_delegate_to_delegation_agreement(self, da_id, user_id,
+                                                  requestslib_kwargs=None):
+        """
+        PUT v2.0/RAX-AUTH/delegation-agreements/{delegationAgreementId}/
+        delegates/users/{userId}
+        """
+        url = self.url + (
+            const.ADD_USER_DELEGATE_TO_DELEGATION_AGREEMENT_URL.format(
+              da_id=da_id, user_id=user_id))
+
+        return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)
+
+    def delete_user_delegate_from_delegation_agreement(
+            self, da_id, user_id, requestslib_kwargs=None):
+        """
+        DELETE v2.0/RAX-AUTH/delegation-agreements/{delegationAgreementId}/
+        delegates/users/{user_id}
+        """
+        url = self.url + (
+            const.DELETE_USER_DELEGATE_FROM_DELEGATION_AGREEMENT_URL.format(
+              da_id=da_id, user_id=user_id))
+
+        return self.request('DELETE', url,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def add_user_group_delegate_to_delegation_agreement(
+            self, da_id, user_group_id, requestslib_kwargs=None):
+        """
+        PUT v2.0/RAX-AUTH/delegation-agreements/{delegationAgreementId}/
+        delegates/groups/{user_group_id}
+        """
+        url = self.url + (
+            const.ADD_USER_GROUP_DELEGATE_TO_DELEGATION_AGREEMENT_URL.format(
+              da_id=da_id, user_group_id=user_group_id))
+
+        return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)
+
+    def delete_user_group_delegate_from_delegation_agreement(
+            self, da_id, user_group_id, requestslib_kwargs=None):
+        """
+        DELETE v2.0/RAX-AUTH/delegation-agreements/{delegationAgreementId}/
+        delegates/groups/{user_group_id}
+        """
+        # Had to define it due to flake8
+        delete_url = (
+            const.DELETE_USER_GROUP_DELEGATE_FROM_DELEGATION_AGREEMENT_URL)
+        delete_url = delete_url.format(
+            da_id=da_id, user_group_id=user_group_id)
+        url = self.url + delete_url
+
+        return self.request('DELETE', url,
+                            requestslib_kwargs=requestslib_kwargs)
