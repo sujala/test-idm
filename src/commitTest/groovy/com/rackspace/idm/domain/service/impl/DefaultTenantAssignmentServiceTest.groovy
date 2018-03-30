@@ -1016,7 +1016,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         1 * userService.getUserById(principalUser.id) >> principalUser
         1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
-        when: "role with higer permissions"
+        when: "role with higher permissions"
         service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
 
         then:

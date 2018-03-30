@@ -42,7 +42,7 @@ public interface DelegationService {
 
     /**
      * Retrieve the set of roles assignments on the delegation agreement that match the specified criteria. If no roles match,
-     * a context will an empty list of results will be returned.
+     * a context with an empty list of results will be returned.
      *
      * @param delegationAgreement
      * @param paginationParams

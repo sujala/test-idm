@@ -505,6 +505,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         def domainId = "domainId"
         User caller = new User().with {
             it.id = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = "rsId=" + it.id
             it.domainId = domainId
             it
         }
@@ -526,6 +527,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
             it.id = "id"
             it.domainId = domainId
             it.principal = Mock(DelegationPrincipal)
+            it.principalDN = caller.getDn()
             it
         }
         daEntity.principal.getId() >> caller.id
@@ -540,7 +542,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * identityUserService.getEndUserById(caller.id) >> caller
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
         1 * delegationService.replaceRoleAssignmentsOnDelegationAgreement(daEntity, assignments)
         1 * delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, _) >> []
@@ -551,6 +552,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         def domainId = "domainId"
         User caller = new User().with {
             it.id = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = "rsId=" + it.id
             it.domainId = domainId
             it
         }
@@ -573,6 +575,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
             it.id = "id"
             it.domainId = domainId
             it.principal = Mock(DelegationPrincipal)
+            it.principalDN = caller.dn
             it
         }
         daEntity.principal.getId() >> caller.id
@@ -596,7 +599,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         then:
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> null
         1 * exceptionHandler.exceptionResponse(_ as NotFoundException) >> {args ->
             def exception = args[0]
@@ -611,7 +613,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * identityUserService.getEndUserById(caller.id) >> caller
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
         1 * exceptionHandler.exceptionResponse(_ as BadRequestException) >> {args ->
             def exception = args[0]
