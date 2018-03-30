@@ -78,8 +78,7 @@ class TestManageDelegates(base.TestBaseV2):
         add_user_delegate_resp = (
             self.user_admin_client.add_user_delegate_to_delegation_agreement(
               da_id=da_id, user_id=self.sub_user_id))
-        # Once CID-1451 is fixed, this will change to 409
-        self.assertEqual(add_user_delegate_resp.status_code, 204)
+        self.assertEqual(add_user_delegate_resp.status_code, 409)
 
         # add user delegate to DA
         add_user_delegate_resp = (
@@ -143,8 +142,7 @@ class TestManageDelegates(base.TestBaseV2):
         add_user_group_delegate_resp = (
             ua_client.add_user_group_delegate_to_delegation_agreement(
               da_id=da_id, user_group_id=group_one.id))
-        # Once CID-1451 is fixed, this will change to 409
-        self.assertEqual(add_user_group_delegate_resp.status_code, 204)
+        self.assertEqual(add_user_group_delegate_resp.status_code, 409)
 
         # delete user group delegate from DA
         delete_resp = (

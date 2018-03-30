@@ -122,13 +122,13 @@ public class DelegationAgreement implements Auditable, UniqueId {
     }
 
     /**
-     * Whether the specified user is considered a delegate on the agreement. Compares the user's DN and any user
-     * groups in which the user belongs to the delegate DNs on the delegation agreement.
+     * Whether the specified user is effectively considered a delegate on the agreement. The user may be directly
+     * assigned as the delegate, or, if the user is a member of a user group that is a delegate.
      *
      * @param endUser
      * @return
      */
-    public boolean isAuthorizedDelegate(EndUser endUser) {
+    public boolean isEffectiveDelegate(EndUser endUser) {
         HashSet<DN> userEffectiveDns = new HashSet<>();
 
         // Add user if possible to be a delegate itself
@@ -141,5 +141,43 @@ public class DelegationAgreement implements Auditable, UniqueId {
 
         Sets.SetView<DN> view = Sets.intersection(userEffectiveDns, getDelegates());
         return !view.isEmpty();
+    }
+
+    /**
+     * Whether the specified user is effectively considered a principal on the agreement. The user may be directly
+     * assigned as the principal, or, if the principal is a user group, a member of the user group.
+     *
+     * @param endUser
+     * @return
+     */
+    public boolean isEffectivePrincipal(EndUser endUser) {
+        boolean result = false;
+
+        if (getPrincipalDN() != null) {
+            HashSet<DN> userEffectiveDns = new HashSet<>();
+
+            // Add user if possible to be a delegate itself
+            if (endUser instanceof DelegationPrincipal) {
+                userEffectiveDns.add(((DelegationPrincipal) endUser).getDn());
+            }
+
+            // Add user groups
+            userEffectiveDns.addAll(endUser.getUserGroupDNs());
+
+            result = userEffectiveDns.contains(getPrincipalDN());
+        }
+        return result;
+    }
+
+
+    /**
+     * Whether the specified potential delegate is explicitly listed as a delegate on the DA. This differs from
+     * {@link #isEffectiveDelegate(EndUser)} in that this method does not take into consideration user group membership.
+     *
+     * @param delegate
+     * @return
+     */
+    public boolean isDelegate(DelegationDelegate delegate) {
+        return getDelegates().contains(delegate.getDn());
     }
 }

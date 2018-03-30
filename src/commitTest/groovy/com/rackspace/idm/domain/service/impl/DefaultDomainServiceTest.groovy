@@ -4,6 +4,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
 import com.unboundid.ldap.sdk.DN
+import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -422,4 +423,93 @@ class DefaultDomainServiceTest extends RootServiceTest {
 
         userAdminList.size() == 0
     }
+
+    @Unroll
+    def "doDomainsShareRcn: a null or blank value for either domain will result in false: d1: '#d1'; d2: '#d2'"() {
+        when:
+        def result = service.doDomainsShareRcn(d1, d2)
+
+        then:
+        !result
+        0 * domainDao.getDomain(d1)
+        0 * domainDao.getDomain(d2)
+
+        where:
+        d1 | d2
+        null | null
+        "d1" | null
+        null | "d2"
+        "" | "d2"
+        "d1" | "   "
+    }
+
+    @Unroll
+    def "doDomainsShareRcn: equal domains (case insensitive), will result in true: d1: '#d1'; d2: '#d2'"() {
+        when:
+        def result = service.doDomainsShareRcn(d1, d2)
+
+        then:
+        result
+        0 * domainDao.getDomain(d1)
+        0 * domainDao.getDomain(d2)
+
+        where:
+        d1 | d2
+        "value" | "VaLuE"
+        "123" | "123"
+        "value" | "value"
+    }
+
+    @Unroll
+    def "doDomainsShareRcn: distinct domains with missing RCNs or unequal RCNs (case insensitive), will result in false: d1 RCN: '#d1Rcn'; d2 RCN: '#d2Rcn'"() {
+        Domain d1 = new Domain().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.rackspaceCustomerNumber = d1Rcn
+            it
+        }
+        Domain d2 = new Domain().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.rackspaceCustomerNumber = d2Rcn
+            it
+        }
+        domainDao.getDomain(d1.getDomainId()) >> d1
+        domainDao.getDomain(d2.getDomainId()) >> d2
+
+        expect:
+        !service.doDomainsShareRcn(d1.domainId, d2.domainId)
+
+        where:
+        d1Rcn | d2Rcn
+        "" | ""
+        " " | "r2"
+        null | null
+        "r1" | "r2"
+        "r1" | null
+        null | "r2"
+    }
+
+    @Unroll
+    def "doDomainsShareRcn: distinct domains with equal RCNs (case insensitive), will result in true: d1 RCN: '#d1Rcn'; d2 RCN: '#d2Rcn'"() {
+        Domain d1 = new Domain().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.rackspaceCustomerNumber = d1Rcn
+            it
+        }
+        Domain d2 = new Domain().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.rackspaceCustomerNumber = d2Rcn
+            it
+        }
+        domainDao.getDomain(d1.getDomainId()) >> d1
+        domainDao.getDomain(d2.getDomainId()) >> d2
+
+        expect:
+        service.doDomainsShareRcn(d1.domainId, d2.domainId)
+
+        where:
+        d1Rcn | d2Rcn
+        "r1" | "r1"
+        "r1" | "R1"
+    }
+
 }

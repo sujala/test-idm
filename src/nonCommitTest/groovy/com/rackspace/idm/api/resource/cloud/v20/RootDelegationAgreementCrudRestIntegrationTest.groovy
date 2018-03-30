@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.service.DelegationService
 import com.rackspace.idm.domain.service.IdentityUserService
-import com.sun.jersey.api.client.ClientResponse
 import org.apache.commons.lang3.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
@@ -406,7 +405,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         addResponse.status == SC_NO_CONTENT
 
         and: "backend lists user as delegate"
-        daEntity.isAuthorizedDelegate(delegateEntity)
+        daEntity.isEffectiveDelegate(delegateEntity)
 
         when: "Delete delegate"
         def deleteResponse = cloud20.deleteUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
@@ -416,7 +415,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         deleteResponse.status == SC_NO_CONTENT
 
         and: "backend no longer lists user as delegate"
-        !daEntity.isAuthorizedDelegate(delegateEntity)
+        !daEntity.isEffectiveDelegate(delegateEntity)
 
         when: "Delete delegate again"
         def deleteResponse2 = cloud20.deleteUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
@@ -452,14 +451,14 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         addResponse.status == SC_NO_CONTENT
 
         and: "Backend does not list non-group member as delegate"
-        !daEntity.isAuthorizedDelegate(groupUserEntity)
+        !daEntity.isEffectiveDelegate(groupUserEntity)
 
         when: "When user added to group"
         utils.addUserToUserGroup(groupUserEntity.id, userGroup)
         groupUserEntity = identityUserService.getEndUserById(groupSubUser.id) // Reload as user's group membership changed
 
         then: "User is now a delegate"
-        daEntity.isAuthorizedDelegate(groupUserEntity)
+        daEntity.isEffectiveDelegate(groupUserEntity)
 
         when: "Delete user group delegate"
         def deleteResponse = cloud20.deleteUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
@@ -469,7 +468,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         deleteResponse.status == SC_NO_CONTENT
 
         and: "User no longer a delegate"
-        !daEntity.isAuthorizedDelegate(groupUserEntity)
+        !daEntity.isEffectiveDelegate(groupUserEntity)
     }
 
     /**
@@ -494,8 +493,8 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
 
         // Verify start state. Neither are delegates
         com.rackspace.idm.domain.entity.DelegationAgreement daEntity = delegationService.getDelegationAgreementById(da.getId())
-        assert !daEntity.isAuthorizedDelegate(groupUserEntity)
-        assert !daEntity.isAuthorizedDelegate(userDelegateEntity)
+        assert !daEntity.isEffectiveDelegate(groupUserEntity)
+        assert !daEntity.isEffectiveDelegate(userDelegateEntity)
 
         when: "Add user group delegate"
         def addResponse = cloud20.addUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
@@ -505,10 +504,10 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         addResponse.status == SC_NO_CONTENT
 
         and: "Group member is now a delegate"
-        daEntity.isAuthorizedDelegate(groupUserEntity)
+        daEntity.isEffectiveDelegate(groupUserEntity)
 
         and: "User is still not a delegate"
-        !daEntity.isAuthorizedDelegate(userDelegateEntity)
+        !daEntity.isEffectiveDelegate(userDelegateEntity)
 
         when: "Add user delegate"
         addResponse = cloud20.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
@@ -518,10 +517,10 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         addResponse.status == SC_NO_CONTENT
 
         and: "User is now a delegate"
-        daEntity.isAuthorizedDelegate(userDelegateEntity)
+        daEntity.isEffectiveDelegate(userDelegateEntity)
 
         and: "Group member is still a delegate"
-        daEntity.isAuthorizedDelegate(groupUserEntity)
+        daEntity.isEffectiveDelegate(groupUserEntity)
 
         when: "Remove group delegate"
         def response = cloud20.deleteUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
@@ -531,9 +530,9 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         response.status == SC_NO_CONTENT
 
         and: "User is still a delegate"
-        daEntity.isAuthorizedDelegate(userDelegateEntity)
+        daEntity.isEffectiveDelegate(userDelegateEntity)
 
         and: "Group member is no longer a delegate"
-        !daEntity.isAuthorizedDelegate(groupUserEntity)
+        !daEntity.isEffectiveDelegate(groupUserEntity)
     }
 }

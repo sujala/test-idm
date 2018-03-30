@@ -61,19 +61,22 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
      * @return
      */
     @Unroll
-    def "Verifies service '#name' calls standard services to validate the provided token, the user, the user's authorization level and uses standard exception handling."() {
+    def "'#name' calls standard services to validate the provided token, the user, the user's authorization level and uses standard exception handling."() {
         User caller = new User().with {
             it.id = RandomStringUtils.randomAlphabetic(10)
             it
         }
         def tokenStr = "callerTokenStr"
+        def baseToken = Mock(BaseUserToken)
         def capturedException
 
         when:
         methodClosure(tokenStr)
 
         then:
-        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> Mock(BaseUserToken)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> baseToken
+        1 * baseToken.getScope() >> null
+        1 * baseToken.isDelegationToken() >> false
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * exceptionHandler.exceptionResponse(_) >> { args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN) }
@@ -91,38 +94,20 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         ]
     }
 
-
-    def "addAgreement: Verifies token is not scoped or delegate token"() {
+    @Unroll
+    def "'#name': Throws forbidden exception when scoped or delegate token is used"() {
         reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
-
-        DelegationAgreement daWeb = new DelegationAgreement()
-        User caller = new User().with {
-            it.id = RandomStringUtils.randomAlphabetic(10)
-            it
-        }
-        Domain callerDomain = new Domain().with {
-            it.rackspaceCustomerNumber = "myRcn"
-            it
-        }
-
-        UriInfo uriInfo = Mock()
         def tokenStr = "callerTokenStr"
-        def token = Mock(BaseUserToken)
 
-        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
-        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
-        identityUserService.getEndUserById(caller.id) >> caller
-        requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
+        def baseToken = Mock(BaseUserToken)
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> baseToken
 
         when: "Delegation token"
-        service.addAgreement(uriInfo, tokenStr, daWeb)
+        methodClosure(tokenStr)
 
-        then:
-        token.getScope() >> ""
-        1 * token.isDelegationToken() >> true
-
-        and: "Appropriate exception thrown"
+        then: "rejected"
+        1 * baseToken.isDelegationToken() >> true
+        baseToken.getScope() >> ""
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             def exception = args[0]
             IdmExceptionAssert.assertException(exception, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
@@ -130,18 +115,25 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         }
 
         when: "Scoped token"
-        service.addAgreement(uriInfo, tokenStr, daWeb)
+        methodClosure(tokenStr)
 
         then:
-        1 * token.getScope() >> "Something"
-        token.isDelegationToken() >> true
-
-        and: "Appropriate exception thrown"
+        1 * baseToken.getScope() >> "Something"
+        baseToken.isDelegationToken() >> false
         exceptionHandler.exceptionResponse(_) >> {args ->
             def exception = args[0]
             IdmExceptionAssert.assertException(exception, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
             Response.status(SC_FORBIDDEN)
         }
+
+        where:
+        [name, methodClosure] << [
+                ["addAgreement", {token -> service.addAgreement(Mock(UriInfo), token, new DelegationAgreement())}]
+                , ["getAgreement", {token -> service.getAgreement(token, "id")}]
+                , ["deleteAgreement", {token -> service.deleteAgreement(token, "id")}]
+                , ["addDelegate", {token -> service.addDelegate(token, "id", new EndUserDelegateReference("user"))}]
+                , ["deleteDelegate", {token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user"))}]
+        ]
     }
 
     @Unroll
@@ -192,7 +184,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
     }
 
-    def "addAgreement: Success when specified USER principal is same as caller"() {
+    def "addAgreement: Success when specify USER principal is same as caller"() {
         UriInfo uriInfo = Mock()
         ScopeAccess tokenScopeAccess = new UserScopeAccess()
         def token = "token"
@@ -237,11 +229,12 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         }
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
         1 * delegationAgreementConverter.toDelegationAgreementWeb(_) >> new DelegationAgreement()
+        1 * domainService.doDomainsShareRcn(caller.domainId, caller.domainId) >> true
         response.status == SC_CREATED
     }
 
     @Unroll
-    def "addAgreement Error: Error when specified USER principal not same as caller"() {
+    def "addAgreement Error: Error when specify a USER principal that is other than caller"() {
         UriInfo uriInfo = Mock()
         ScopeAccess tokenScopeAccess = new UserScopeAccess()
         def token = "token"
@@ -384,6 +377,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * userGroupService.getGroupById(ug.id) >> ug
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
         1 * delegationAgreementConverter.toDelegationAgreementWeb(_) >> new DelegationAgreement()
+        1 * domainService.doDomainsShareRcn(caller.domainId, caller.domainId) >> true
         response.status == SC_CREATED
     }
 
@@ -455,20 +449,13 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
     }
 
     /**
-     * Tests logic verifying the principal can delegate to the specified user. The delegate is generally required to be within
-     * the same RCN as the user (principal and delegate domains have the same non-blank RCN value). However, when rcns
-     * are globally enabled, we also allow the principal and delegate to belong to the same domain even if the RCN for
-     * the domain is blank.
-     *
-     * Other tests verify when RCNs are NOT globally enabled, that the domains must contain RCNs. This test assumes that
-     * the callers RCN is allowed to create DAs (because it's in the list, or globally enabled).
-     *
-     * This test focuses on the valid cases
+     * Tests that appropriate authorization is performed that the principal is allowed to delegate to the specified delegate
+     * by calling the standard check.
      *
      * @return
      */
     @Unroll
-    def "createDelegationAgreement: Verify allowable cases of delegate to principal - callerDomainId: '#callerDomainId'; callerRcn: '#callerRcn'; delegateDomainId: '#delegateDomainId'; delegateRcn: '#delegateRcn'"() {
+    def "createDelegationAgreement: Verify authorization for specified delegate is performed"() {
         UriInfo uriInfo = Mock()
         ScopeAccess tokenScopeAccess = new UserScopeAccess()
         DelegationAgreement daWeb = new DelegationAgreement().with {
@@ -476,149 +463,51 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
             it
         }
         def token = "token"
-
-        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
-        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-
         User caller = new User().with {
             it.id = "callerId"
-            it.domainId = callerDomainId
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
             it
         }
-        1 * identityUserService.getEndUserById(caller.id) >> caller
+        identityUserService.getEndUserById(caller.id) >> caller
 
         User delegate = new User().with {
             it.id = daWeb.delegateId
-            it.domainId = delegateDomainId
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
             it
         }
+        def callerDomain = new Domain().with {
+            it.domainId = caller.domainId
+            it
+        }
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement()
 
-        Domain callerDomain = new Domain().with {
-            it.domainId = callerDomainId
-            it.rackspaceCustomerNumber = callerRcn
-            it
-        }
-
-        Domain delegateDomain = new Domain().with {
-            it.domainId = delegateDomainId
-            it.rackspaceCustomerNumber = delegateRcn
-            it
-        }
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
         reloadableConfig.areDelegationAgreementsEnabledForRcn(callerDomain.rackspaceCustomerNumber) >> true
+        delegationService.getDelegateByReference(_) >> delegate
 
-        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement()
-
-        when:
+        when: "Delegate belongs to same RCN"
         def response = service.addAgreement(uriInfo, token, daWeb)
 
         then:
         response.status == SC_CREATED
-        1 * delegationService.getDelegateByReference(_) >> {args ->
-            DelegateReference delegateReference = args[0]
-            assert delegateReference.id == delegate.id
-            assert delegateReference.delegateType == DelegateType.USER
-            delegate
-        }
-        domainService.getDomain(delegate.domainId) >> delegateDomain
-        domainService.getDomain(caller.domainId) >> callerDomain
+        1 * domainService.doDomainsShareRcn(delegate.domainId, caller.domainId) >> true
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(daWeb) >> daEntity
         1 * delegationService.addDelegationAgreement(daEntity)
         1 * delegationAgreementConverter.toDelegationAgreementWeb(daEntity) >> daWeb
 
-        where:
-        callerDomainId | callerRcn | delegateDomainId | delegateRcn
-        "123"          | ""        | "123"            | ""
-        "123"          | null      | "123"            | null
-        "123"          | "abc"     | "123"            | "abc"
-        "123"          | "abc"     | "456"            | "abc"
-    }
+        when: "Delegate does not belong to same RCN"
+        response = service.addAgreement(uriInfo, token, daWeb)
 
-    /**
-     * Tests logic verifying the principal can delegate to the specified user. The delegate is generally required to be within
-     * the same RCN as the user (principal and delegate domains have the same non-blank RCN value). However, when rcns
-     * are globally enabled, we also allow the principal and delegate to belong to the same domain even if the RCN for
-     * the domain is blank.
-     *
-     * Other tests verify when RCNs are NOT globally enabled, that the domains must contain RCNs. This test assumes that
-     * the callers RCN is allowed to create DAs (because it's in the list, or globally enabled).
-     *
-     * This test focuses on the invalid cases
-     *
-     * @return
-     */
-    @Unroll
-    def "createDelegationAgreement: Verify disallowed cases of delegate to principal - callerDomainId: '#callerDomainId'; callerRcn: '#callerRcn'; delegateDomainId: '#delegateDomainId'; delegateRcn: '#delegateRcn'"() {
-        UriInfo uriInfo = Mock()
-        ScopeAccess tokenScopeAccess = new UserScopeAccess()
-        DelegationAgreement daWeb = new DelegationAgreement().with {
-            it.delegateId = "delegateId"
-            it
-        }
-        def token = "token"
-
-        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
-        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-
-        User caller = new User().with {
-            it.id = "callerId"
-            it.domainId = callerDomainId
-            it
-        }
-
-        User delegate = new User().with {
-            it.id = "delegateId"
-            it.domainId = delegateDomainId
-            it
-        }
-
-        Domain callerDomain = new Domain().with {
-            it.domainId = callerDomainId
-            it.rackspaceCustomerNumber = callerRcn
-            it
-        }
-
-        Domain delegateDomain = new Domain().with {
-            it.domainId = delegateDomainId
-            it.rackspaceCustomerNumber = delegateRcn
-            it
-        }
-        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
-        identityUserService.getEndUserById(caller.id) >> caller
-        requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
-        reloadableConfig.areDelegationAgreementsEnabledForRcn(callerDomain.rackspaceCustomerNumber) >> true
-
-        def capturedException
-        exceptionHandler.exceptionResponse(_) >> { args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_NOT_FOUND) }
-
-        when:
-        def response = service.addAgreement(uriInfo, token, daWeb)
-
-        then:
-        1 * delegationService.getDelegateByReference(_) >> {args ->
-            DelegateReference delegateReference = args[0]
-            assert delegateReference.id == delegate.id
-            assert delegateReference.delegateType == DelegateType.USER
-            delegate
-        }
-        domainService.getDomain(delegate.domainId) >> delegateDomain
-        domainService.getDomain(caller.domainId) >> callerDomain
+        then: "Throws not found exception"
         response.status == SC_NOT_FOUND
-        capturedException != null
-
-        and: "Appropriate exception thrown"
-        IdmExceptionAssert.assertException(capturedException, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, IdmExceptionAssert.PATTERN_ALL)
-
-        where:
-        callerDomainId | callerRcn | delegateDomainId | delegateRcn
-        "123"          | ""        | "456"            | ""
-        "123"          | "abc"     | "456"            | ""
-        "123"          | "abc"     | "456"            | "def"
-        "123"          | ""        | "456"            | "abc"
-        "123"          | null      | "456"            | null
-        "123"          | "abc"     | "456"            | null
-        "123"          | null      | "456"            | "abc"
+        1 * domainService.doDomainsShareRcn(delegate.domainId, caller.domainId) >> false
+        1 * exceptionHandler.exceptionResponse(_) >> { args ->
+            def ex = args[0]
+            IdmExceptionAssert.assertException(ex, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, IdmExceptionAssert.PATTERN_ALL)
+            return Response.status(HttpServletResponse.SC_NOT_FOUND) }
     }
 }
 

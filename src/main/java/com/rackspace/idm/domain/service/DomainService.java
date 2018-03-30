@@ -58,4 +58,24 @@ public interface DomainService {
      * @throws IllegalArgumentException If supplied user, user's domainId, or user's uniqueId is null;
      */
     void removeDomainUserAdminDN(User user);
+
+    /**
+     * Returns true if the domains share the same RCN. Domains are considered to share the same RCN if:
+     * <ul>
+     *     <li>The domain IDs are the same (case insensitive) - regardless of whether an RCN is actually set on the domain</li>
+     *     <li>The domains contain the same case insensitive RCN</li>
+     * </ul>
+     *
+     * Will always return false in following cases:
+     * <ul>
+     *     <li>At least one supplied domainId is null or blank</li>
+     *     <li>At least one supplied domainId does not resolve to a domain</li>
+     *     <li>If supplied domain IDs are distinct (case insenstive) and at least one domain does not contain an RCN</li>
+     * </ul>
+     *
+     * @param domainId1
+     * @param domainId2
+     * @return
+     */
+    boolean doDomainsShareRcn(String domainId1, String domainId2);
 }

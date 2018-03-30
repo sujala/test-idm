@@ -129,6 +129,7 @@ public final class ErrorCodes {
 
     // Delegation Agreements
     public static final String ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN = "DA-000";
+    public static final String ERROR_CODE_DELEGATE_ALREADY_EXISTS = "DA-001";
 
     // User role assignments
     public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT = "ROLE-000";

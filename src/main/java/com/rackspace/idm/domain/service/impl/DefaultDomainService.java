@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.*;
@@ -449,6 +450,26 @@ public class DefaultDomainService implements DomainService {
         if (!alphaNumericColonHyphenSpace.matcher(domain.getName()).matches()) {
             throw new BadRequestException("Domain name has invalid characters.");
         }
+    }
+
+    @Override
+    public boolean doDomainsShareRcn(String domainId1, String domainId2) {
+        boolean sameRcn = false;
+        if (StringUtils.isBlank(domainId1) || StringUtils.isBlank(domainId2)) {
+            sameRcn = false;
+        } else if (domainId1.equalsIgnoreCase(domainId2)) {
+            sameRcn = true;
+        } else {
+            // Must compare RCNs if not in same domain
+            Domain domain1 = getDomain(domainId1);
+            if (domain1 != null && StringUtils.isNotBlank(domain1.getRackspaceCustomerNumber())) {
+                Domain domain2 = getDomain(domainId2);
+                if (domain2 != null && StringUtils.isNotBlank(domain2.getRackspaceCustomerNumber())) {
+                    sameRcn = domain1.getRackspaceCustomerNumber().equalsIgnoreCase(domain2.getRackspaceCustomerNumber());
+                }
+            }
+        }
+        return sameRcn;
     }
 
     public void setTenantService(TenantService tenantService) {
