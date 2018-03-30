@@ -29,6 +29,9 @@ class TestAuthUnderDelegationAgreement(base.TestBaseV2):
             parent_client=cls.identity_admin_client,
             additional_input_data=additional_input_data)
 
+        cls.admin_auth_token = cls.identity_admin_client.default_headers[
+            const.X_AUTH_TOKEN]
+
         # Add Domain 2
         cls.domain_id_2 = func_helper.generate_randomized_domain_id(
             client=cls.identity_admin_client)
@@ -93,6 +96,23 @@ class TestAuthUnderDelegationAgreement(base.TestBaseV2):
         resp = self.identity_admin_client.validate_token(
             token_id=delegation_token)
         self.assertEqual(resp.status_code, 200)
+        user_id = resp.json()[const.ACCESS][const.USER][const.ID]
+
+        resp = self.identity_admin_client.get_user(user_id)
+
+        # validate that delegation agreement does not exist in response
+        self.assertNotIn(const.RAX_AUTH_DELEGATION_AGREEMENT_ID,
+                         resp.json()[const.USER])
+
+        self.identity_admin_client.default_headers[const.X_AUTH_TOKEN] = (
+            delegation_token)
+
+        resp = self.identity_admin_client.get_user(user_id)
+
+        # validate that delegation agreement exists in response
+        self.assertEquals(
+            resp.json()[const.USER][const.RAX_AUTH_DELEGATION_AGREEMENT_ID],
+            da_id)
 
     @attr(type='regression')
     def test_mfa_auth_followed_by_delegation(self):
@@ -152,6 +172,11 @@ class TestAuthUnderDelegationAgreement(base.TestBaseV2):
 
         kwargs = {'session_id': session_id, 'pass_code': code}
         return self.identity_admin_client.auth_with_mfa_cred(**kwargs)
+
+    def tearDown(self):
+        super(TestAuthUnderDelegationAgreement, self).tearDown()
+        self.identity_admin_client.default_headers[const.X_AUTH_TOKEN] = (
+            self.admin_auth_token)
 
     @classmethod
     @base.base.log_tearDown_error
