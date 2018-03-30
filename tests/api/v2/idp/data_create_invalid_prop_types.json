@@ -1,5 +1,5 @@
 {
-        "inavlid_string": {
+        "invalid_string": {
                 "prop_value_type": "STRING",
                 "prop_value": null,
                 "prop_description": "myDesc",

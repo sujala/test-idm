@@ -23,8 +23,7 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
 
     def setUp(self):
         super(TestMigrateDefaultIDPtoLDAP, self).setUp()
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
+        self.idp_ids = []
         self.devops_props_ids = []
         self.tenant_ids = []
         self.user_ids = []
@@ -59,9 +58,9 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
             'federation_type': "DOMAIN",
             'approved_domain_ids': [domain_id]}
         req_obj = requests.IDP(**idp_data)
-        resp = self.service_admin_client.create_idp(req_obj)
+        resp = self.identity_admin_client.create_idp(req_obj)
         self.assertEqual(resp.status_code, 201)
-        self.devops_props_ids.append(
+        self.idp_ids.append(
             resp.json()[const.NS_IDENTITY_PROVIDER][const.ID])
         return resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
 
@@ -71,9 +70,9 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         return resp.json()
 
-    def verify_policy(self, devops_props_id, policy):
-        resp = self.service_admin_client.get_idp_mapping(
-            idp_id=devops_props_id)
+    def verify_policy(self, idp_id, policy):
+        resp = self.identity_admin_client.get_idp_mapping(
+            idp_id=idp_id)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             resp.json(),
@@ -96,6 +95,15 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
         self.assertEqual(
             json.loads(default_policy_2[const.PROPERTIES][0][const.VALUE]),
             json.loads(updated_property))
+
+    def reset_default_policy(self, policy):
+
+        default_policy_1 = self.get_default_policy()
+        property_id = default_policy_1[const.PROPERTIES][0][const.ID]
+        req_obj = requests.DevopsProp(prop_value=policy)
+        resp = self.devops_client.update_devops_prop(
+            devops_props_id=property_id, request_object=req_obj)
+        self.assertEqual(resp.status_code, 200)
 
     def get_domain_id_from_one_call_user_create(self):
         req_obj = factory.get_add_user_one_call_request_object()
@@ -132,36 +140,46 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
         domain_id = self.get_domain_id_from_one_call_user_create()
 
         # Create IDP
-        devops_props_id = self.create_idp(domain_id)
+        idp_id = self.create_idp(domain_id)
 
         # Get current default policy
         default_policy_1 = self.get_default_policy()
+        original_mapping = default_policy_1[const.PROPERTIES][0][
+            const.PROP_VALUE]
 
-        # Update default policy
-        self.update_default_policy()
+        try:
+            # Update default policy
+            self.update_default_policy()
 
-        # Create another IDP
-        devops_props_id_2 = self.create_idp(domain_id)
+            # Create another IDP
+            idp_id_2 = self.create_idp(domain_id)
 
-        # Get updated default policy
-        default_policy_2 = self.get_default_policy()
+            # Get updated default policy
+            default_policy_2 = self.get_default_policy()
 
-        # Verify mapping on this IDP matches the newly updated default policy
-        self.verify_policy(devops_props_id_2, default_policy_2)
+            # Verify mapping on this IDP matches the newly updated default
+            # policy
+            self.verify_policy(idp_id_2, default_policy_2)
 
-        # Verify the IDP previously created still has previous mapping
-        self.verify_policy(devops_props_id, default_policy_1)
+            # Verify the IDP previously created still has previous mapping
+            self.verify_policy(idp_id, default_policy_1)
+
+        finally:
+            # Reset the default policy
+            self.reset_default_policy(original_mapping)
 
     def tearDown(self):
         for user_id in self.user_ids:
-            self.service_admin_client.delete_user(user_id=user_id)
+            self.identity_admin_client.delete_user(user_id=user_id)
         for tenant_id in self.tenant_ids:
-            self.service_admin_client.delete_tenant(tenant_id=tenant_id)
+            self.identity_admin_client.delete_tenant(tenant_id=tenant_id)
         for domain_id in self.domain_ids:
             disable_domain_req = requests.Domain(enabled=False)
             self.identity_admin_client.update_domain(
                 domain_id=domain_id, request_object=disable_domain_req)
             self.identity_admin_client.delete_domain(domain_id=domain_id)
+        for idp_id in self.idp_ids:
+            self.identity_admin_client.delete_idp(idp_id=idp_id)
         for devops_props_id in self.devops_props_ids:
             self.devops_client.delete_devops_prop(
                 devops_props_id=devops_props_id)

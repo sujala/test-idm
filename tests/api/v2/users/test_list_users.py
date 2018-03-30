@@ -52,7 +52,8 @@ class TestListUsers(base.TestBaseV2):
         for i in xrange(2):
             # create user admin to test
             user_name = self.generate_random_string()
-            domain_id = self.generate_random_string(pattern='[\d]{7}')
+            domain_id = func_helper.generate_randomized_domain_id(
+                client=self.identity_admin_client)
             request_input = requests.UserAdd(user_name=user_name,
                                              domain_id=domain_id)
             resp = self.identity_admin_client.add_user(

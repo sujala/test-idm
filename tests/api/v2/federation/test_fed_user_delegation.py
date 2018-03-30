@@ -16,7 +16,10 @@ from tests.package.johny.v2.models import requests
 @ddt.ddt
 class TestDelegationWithFederation(federation.TestBaseFederation):
 
-    """Tests for Fed User Impersonation."""
+    """
+    Tests for Fed Users creating Delegation agreements, either directly or
+    as being member of a user group
+    """
 
     @classmethod
     def setUpClass(cls):
