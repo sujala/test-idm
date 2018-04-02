@@ -86,7 +86,7 @@ public interface DelegationService {
      * @param delegationAgreement
      * @param roleId
      * @throws IllegalArgumentException if DA, DA's uniqueId, or roleId is null
-     * @throws com.rackspace.idm.exception.NotFoundException If role is not assigned to group
+     * @throws com.rackspace.idm.exception.NotFoundException If role is not assigned to DA
      */
     void revokeRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId);
 

@@ -82,6 +82,8 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["deleteAgreement", {token -> service.deleteAgreement(token, "id")}, NotFoundException, "GEN-004"]
                 , ["addDelegate", {token -> service.addDelegate(token, "id", new EndUserDelegateReference("user"))}, NotFoundException, "GEN-004"]
                 , ["deleteDelegate", {token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user"))}, NotFoundException, "GEN-004"]
+                , ["grantRolesToAgreement", {token -> service.grantRolesToAgreement(token, "id", new RoleAssignments())}, NotFoundException, "GEN-004"]
+                , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}, NotFoundException, "GEN-004"]
         ]
     }
 
@@ -124,6 +126,8 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["deleteAgreement", {token -> service.deleteAgreement(token, "id")}]
                 , ["addDelegate", {token -> service.addDelegate(token, "id", new EndUserDelegateReference("user"))}]
                 , ["deleteDelegate", {token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user"))}]
+                , ["grantRolesToAgreement", {token -> service.grantRolesToAgreement(token, "id", new RoleAssignments())}]
+                , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}]
         ]
     }
 
