@@ -1,6 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -9,6 +12,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.service.IdentityUserService
+import org.apache.commons.lang3.RandomStringUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
@@ -17,6 +21,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
+import testHelpers.SamlGenerator
 
 import javax.ws.rs.core.MediaType
 
@@ -60,6 +65,16 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
 
         // Create a cloud account
         sharedUserAdmin = cloud20.createCloudAccount(sharedIdentityAdminToken)
+
+        // created "hidden" tenant in account (faws is configured as such)
+        def tenantResponse = cloud20.addTenant(sharedIdentityAdminToken, new Tenant().with {
+            it.name = Constants.TENANT_TYPE_FAWS + ":" + RandomStringUtils.randomAlphabetic(5)
+            it.id = it.name
+            it.domainId = sharedUserAdmin.domainId
+            it
+        })
+
+        assert tenantResponse.status == SC_CREATED
 
         authResponse = cloud20.authenticatePassword(sharedUserAdmin.username, Constants.DEFAULT_PASSWORD)
         assert authResponse.status == SC_OK
@@ -199,7 +214,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
      *  vanilla subuser within the domain for which apply_rcn_roles was applied.
      */
     @Unroll
-    def "Valid auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled, mediaType = #mediaType"() {
+    def "Valid user delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled, mediaType = #mediaType"() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
@@ -218,47 +233,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id, mediaType)
 
         then: "resultant info is appropriate"
-        // Token info same (though not id..)
-        delegateAuthResponse.token.tenant.name == realSubUserAuthResponse.token.tenant.name
-        delegateAuthResponse.token.tenant.id == realSubUserAuthResponse.token.tenant.id
-        delegateAuthResponse.token.id != realSubUserAuthResponse.token.tenant.id
-
-        // Token reflects delegate authentication
-        delegateAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
-        delegateAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.DELEGATE.getValue())
-
-        // Domain based user info is same
-        delegateAuthResponse.user.domainId == realSubUserAuthResponse.user.domainId
-        delegateAuthResponse.user.defaultRegion == realSubUserAuthResponse.user.defaultRegion
-        delegateAuthResponse.user.sessionInactivityTimeout == realSubUserAuthResponse.user.sessionInactivityTimeout
-
-        // Roles are same
-        delegateAuthResponse.user.roles.role.size() == realSubUserAuthResponse.user.roles.role.size()
-        delegateAuthResponse.user.roles.role.each { delegateRole ->
-            def matchingSubuserRole = realSubUserAuthResponse.user.roles.role.find {it.id == delegateRole.id && it.tenantId == delegateRole.tenantId}
-            assert matchingSubuserRole != null
-            assert delegateRole.name == matchingSubuserRole.name
-        }
-
-        // User identifying information reflects user authenticating
-        delegateAuthResponse.user.id == sharedSubUser2.id // User reflects the delegate
-        delegateAuthResponse.user.name == sharedSubUser2.username // User reflects the delegate
-
-        // service catalogs are the same
-        delegateAuthResponse.serviceCatalog.service.size() == realSubUserAuthResponse.serviceCatalog.service.size()
-        delegateAuthResponse.serviceCatalog.service.each {dServiceForCatalog ->
-            ServiceForCatalog matchingSubUserServiceForCatalog = realSubUserAuthResponse.serviceCatalog.service.find {it.name == dServiceForCatalog.name}
-            assert matchingSubUserServiceForCatalog != null
-
-            // now iterate through endpoints
-            dServiceForCatalog.endpoint.size() == matchingSubUserServiceForCatalog.endpoint.size()
-            dServiceForCatalog.endpoint.each {dEndpointForService ->
-                EndpointForService matchingSubUserEndpointForService = matchingSubUserServiceForCatalog.endpoint.find {
-                    it.tenantId == dEndpointForService.tenantId && it.publicURL == dEndpointForService.publicURL && it.adminURL == dEndpointForService.adminURL && it.region == dEndpointForService.region
-                }
-                assert matchingSubUserEndpointForService != null
-            }
-        }
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -270,4 +245,121 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         true           | MediaType.APPLICATION_JSON_TYPE
         false          | MediaType.APPLICATION_JSON_TYPE
     }
+
+    @Unroll
+    def "Valid user group delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled, mediaType = #mediaType"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+
+        // Create a user group in domain 2 and add user to it
+        UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)
+        utils.addUserToUserGroup(sharedSubUser2.id, domain2UserGroup)
+
+        // Create a DA w/ no delegate
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        assert cloud20.addUserGroupDelegate(sharedUserAdminToken, da.id, domain2UserGroup.id).status == SC_NO_CONTENT
+
+        // Auth as regular subuser under the domain1 w/ applyrcnrole logic
+        AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
+
+        when: "Auth as delegate from domain2 under the domain1"
+        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id)
+
+        then: "resultant info is appropriate"
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2)
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled << [true, false]
+    }
+
+    @Unroll
+    def "Valid fed user delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled, mediaType = #mediaType"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+
+        // Create a fed user under common global IDP
+        AuthenticateResponse fedUserAuthResponse = utils.createFederatedUserForAuthResponse(sharedUserAdmin2.domainId)
+
+        // Create a DA w/ no delegate
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        assert cloud20.addUserDelegate(sharedUserAdminToken, da.id, fedUserAuthResponse.user.id).status == SC_NO_CONTENT
+
+        // Auth as regular subuser under the domain1 w/ applyrcnrole logic
+        AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
+
+        def adapterForFedUser = new User().with {
+            it.id = fedUserAuthResponse.user.id
+            it.username = fedUserAuthResponse.user.name
+            it
+        }
+
+        when: "Auth as delegate from domain2 under the domain1"
+        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id)
+
+        then: "resultant info is appropriate"
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, adapterForFedUser)
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled << [true, false]
+    }
+
+    void assertDelegateAuthSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser) {
+        // Token info same (though not id..)
+        assert delegateAuthResponse.token.tenant.name == realSubUserAuthResponse.token.tenant.name
+        assert delegateAuthResponse.token.tenant.id == realSubUserAuthResponse.token.tenant.id
+        assert delegateAuthResponse.token.id != realSubUserAuthResponse.token.tenant.id
+
+        // Token reflects delegate authentication
+        assert delegateAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
+        assert delegateAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.DELEGATE.getValue())
+
+        // Domain based user info is same
+        assert delegateAuthResponse.user.domainId == realSubUserAuthResponse.user.domainId
+        assert delegateAuthResponse.user.defaultRegion == realSubUserAuthResponse.user.defaultRegion
+        assert delegateAuthResponse.user.sessionInactivityTimeout == realSubUserAuthResponse.user.sessionInactivityTimeout
+
+        // Roles are same
+        assert delegateAuthResponse.user.roles.role.size() == realSubUserAuthResponse.user.roles.role.size()
+        delegateAuthResponse.user.roles.role.each { delegateRole ->
+            def matchingSubuserRole = realSubUserAuthResponse.user.roles.role.find {it.id == delegateRole.id && it.tenantId == delegateRole.tenantId}
+            assert matchingSubuserRole != null
+            assert delegateRole.name == matchingSubuserRole.name
+        }
+
+        // User identifying information reflects user authenticating
+        assert delegateAuthResponse.user.id == delegateUser.id // User reflects the delegate
+        assert delegateAuthResponse.user.name == delegateUser.username // User reflects the delegate
+
+        // service catalogs are the same
+        delegateAuthResponse.serviceCatalog.service.size() == realSubUserAuthResponse.serviceCatalog.service.size()
+        delegateAuthResponse.serviceCatalog.service.each {dServiceForCatalog ->
+            ServiceForCatalog matchingSubUserServiceForCatalog = realSubUserAuthResponse.serviceCatalog.service.find {it.name == dServiceForCatalog.name}
+            assert matchingSubUserServiceForCatalog != null
+
+            // now iterate through endpoints
+            assert dServiceForCatalog.endpoint.size() == matchingSubUserServiceForCatalog.endpoint.size()
+            dServiceForCatalog.endpoint.each {dEndpointForService ->
+                EndpointForService matchingSubUserEndpointForService = matchingSubUserServiceForCatalog.endpoint.find {
+                    it.tenantId == dEndpointForService.tenantId && it.publicURL == dEndpointForService.publicURL && it.adminURL == dEndpointForService.adminURL && it.region == dEndpointForService.region
+                }
+                assert matchingSubUserEndpointForService != null
+            }
+        }
+
+    }
+
 }

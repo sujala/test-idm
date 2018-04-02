@@ -557,11 +557,11 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return null;
         } else if (baseUser instanceof FederatedUser) {
             return IdentityUserTypeEnum.DEFAULT_USER; //efficiency. Fed users are hardcoded to be default users
-        } else if (!(baseUser instanceof User)) {
+        } else if (!(baseUser instanceof EndUser)) {
             throw new IllegalStateException(String.format("Unknown user type '%s'", baseUser.getClass().getName()));
         }
 
-        User user = (User) baseUser;
+        EndUser user = (EndUser) baseUser;
 
         ClientRole identityRole = applicationService.getUserIdentityRole(user);
 

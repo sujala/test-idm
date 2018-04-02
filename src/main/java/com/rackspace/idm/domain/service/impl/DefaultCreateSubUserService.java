@@ -30,6 +30,8 @@ import java.util.List;
 public class DefaultCreateSubUserService implements CreateSubUserService {
     private static final Logger log = LoggerFactory.getLogger(FederatedDomainRequestHandler.class);
 
+    public static final String ERROR_MSG_DOMAIN_DEFAULT_INVALID = "Domain defaults can not be determined";
+
     @Autowired
     RoleService roleService;
 
@@ -96,7 +98,7 @@ public class DefaultCreateSubUserService implements CreateSubUserService {
 
         if(userAdmins.size() == 0) {
             log.error("A user admin for domain {} does not exist", domainId);
-            throw new DomainDefaultException("Domain defaults can not be determined", ErrorCodes.ERROR_CODE_DOMAIN_DEFAULT_MISSING_USER_ADMIN);
+            throw new DomainDefaultException(ERROR_MSG_DOMAIN_DEFAULT_INVALID, ErrorCodes.ERROR_CODE_DOMAIN_DEFAULT_MISSING_USER_ADMIN);
         }
 
         if(userAdmins.size() > 1 && identityConfig.getStaticConfig().getDomainRestrictedToOneUserAdmin()) {
@@ -107,7 +109,7 @@ public class DefaultCreateSubUserService implements CreateSubUserService {
         User firstEnabledUserAdmin = org.apache.commons.collections4.CollectionUtils.find(userAdmins, new UserEnabledPredicate());
         if(firstEnabledUserAdmin == null) {
             log.error("An enabled user admin does not exist for domain {}", domainId);
-            throw new DomainDefaultException("Domain defaults can not be determined", ErrorCodes.ERROR_CODE_DOMAIN_DEFAULT_NO_ENABLED_USER_ADMIN);
+            throw new DomainDefaultException(ERROR_MSG_DOMAIN_DEFAULT_INVALID, ErrorCodes.ERROR_CODE_DOMAIN_DEFAULT_NO_ENABLED_USER_ADMIN);
         }
         return firstEnabledUserAdmin;
     }

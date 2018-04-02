@@ -152,6 +152,7 @@ class RootServiceTest extends Specification {
     @Shared CryptHelper cryptHelper
     @Shared DefaultFederatedIdentityService defaultFederatedIdentityService;
     @Shared IdentityUserService  identityUserService
+    @Shared CreateSubUserService createSubUserService
     @Shared FederatedUserDao federatedUserDao
     @Shared MultiFactorCloud20Service multiFactorCloud20Service
     @Shared MultiFactorService multiFactorService;
@@ -403,6 +404,11 @@ class RootServiceTest extends Specification {
     def mockIdentityUserService(service) {
         identityUserService = Mock()
         service.identityUserService = identityUserService
+    }
+
+    def mockCreateSubUserService(service) {
+        createSubUserService = Mock()
+        service.createSubUserService = createSubUserService
     }
 
     def mockFederatedUserDao(service) {
