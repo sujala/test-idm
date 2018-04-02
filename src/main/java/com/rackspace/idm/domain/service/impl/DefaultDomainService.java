@@ -460,7 +460,7 @@ public class DefaultDomainService implements DomainService {
         } else if (domainId1.equalsIgnoreCase(domainId2)) {
             sameRcn = true;
         } else {
-            // Must compare RCNs if not in same domain
+            // If domains are not the same, must compare RCNs
             Domain domain1 = getDomain(domainId1);
             if (domain1 != null && StringUtils.isNotBlank(domain1.getRackspaceCustomerNumber())) {
                 Domain domain2 = getDomain(domainId2);

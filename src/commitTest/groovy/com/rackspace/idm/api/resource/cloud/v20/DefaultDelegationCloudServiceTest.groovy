@@ -175,7 +175,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
     }
 
-    def "addAgreement: Success when specify USER principal is same as caller"() {
+    def "addAgreement: Success when set the USER principal to be the same user as the caller"() {
         UriInfo uriInfo = Mock()
         ScopeAccess tokenScopeAccess = new UserScopeAccess()
         def token = "token"

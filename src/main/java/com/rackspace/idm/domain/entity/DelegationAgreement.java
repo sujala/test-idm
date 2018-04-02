@@ -131,7 +131,8 @@ public class DelegationAgreement implements Auditable, UniqueId {
     public boolean isEffectiveDelegate(EndUser endUser) {
         HashSet<DN> userEffectiveDns = new HashSet<>();
 
-        // Add user if possible to be a delegate itself
+        // If the specified endUser is also a DelegationDelegate, then possible for the DA to include
+        // the endUser's DN explicitly. If not a DelegationDelegate, then no point in adding the user's DN
         if (endUser instanceof DelegationDelegate) {
             userEffectiveDns.add(((DelegationDelegate) endUser).getDn());
         }
@@ -156,7 +157,8 @@ public class DelegationAgreement implements Auditable, UniqueId {
         if (getPrincipalDN() != null) {
             HashSet<DN> userEffectiveDns = new HashSet<>();
 
-            // Add user if possible to be a delegate itself
+            // If the specified endUser is also a DelegationPrincipal, then possible for the DA to include
+            // the endUser's DN explicitly. If not a DelegationPrincipal, then no point in adding the user's DN
             if (endUser instanceof DelegationPrincipal) {
                 userEffectiveDns.add(((DelegationPrincipal) endUser).getDn());
             }
