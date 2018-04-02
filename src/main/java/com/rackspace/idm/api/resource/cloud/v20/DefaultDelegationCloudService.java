@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.DelegationAgreementConverter;
@@ -11,6 +12,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.validation.Validator20;
@@ -69,6 +71,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     @Autowired
     private Validator20 validator20;
+
+    @Autowired
+    private RoleAssignmentConverter roleAssignmentConverter;
 
     @Override
     public Response addAgreement(UriInfo uriInfo, String authToken, DelegationAgreement agreementWeb) {
@@ -291,6 +296,47 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             return Response.noContent().build();
         } catch (Exception ex) {
             LOG.debug(String.format("Error deleting delegation agreement '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response grantRolesToAgreement(String authToken, String agreementId, RoleAssignments roleAssignments) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal to modify roles
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+                throw new NotFoundException("The specified agreement does not exist for this user");
+            }
+
+            if (roleAssignments == null) {
+                throw new BadRequestException("Must supply a set of assignments");
+            }
+
+            delegationService.replaceRoleAssignmentsOnDelegationAgreement(delegationAgreement, roleAssignments);
+
+            // Retrieve the first 1000 assigned roles on the user
+            PaginatorContext<TenantRole> tenantRolePage = delegationService.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, new PaginationParams(0, 1000));
+
+            return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error granting roles to delegation agreement '%s'", agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
     }

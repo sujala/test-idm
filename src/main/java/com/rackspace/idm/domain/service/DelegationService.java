@@ -1,12 +1,15 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.DelegationDelegate;
-import com.rackspace.idm.domain.entity.DelegationPrincipal;
-import com.unboundid.ldap.sdk.DN;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 
-import java.util.Set;
+import java.util.List;
 
 public interface DelegationService {
 
@@ -36,6 +39,36 @@ public interface DelegationService {
      * @return
      */
     DelegationAgreement getDelegationAgreementById(String delegationAgreementId);
+
+    /**
+     * Retrieve the set of roles assignments on the delegation agreement that match the specified criteria. If no roles match,
+     * a context with an empty list of results will be returned.
+     *
+     * @param delegationAgreement
+     * @param paginationParams
+     * @return
+     */
+    PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, PaginationParams paginationParams);
+
+    /**
+     * Assign the specified roles to a delegation agreement (DA). Validation is performed on all roles prior to persisting
+     * any assignment to reduce the likelihood of failure. If any assignment is deemed invalid during the initial
+     * validation, none will be saved. If an error is encountered during saving, processing assignments will stop.
+     *
+     * @param delegationAgreement
+     * @param roleAssignments
+     *
+     * @throws IllegalArgumentException if delegationAgreement, delegationAgreement.getUniqueId(), or tenantAssignments is null
+     * @throws com.rackspace.idm.exception.BadRequestException If same role is repeated multiple times or assignment contains
+     * invalid tenant set such as not specifying any, or containing '*' AND a set of tenants
+     * @throws com.rackspace.idm.exception.NotFoundException If role or tenant is not found
+     * @throws com.rackspace.idm.exception.ForbiddenException If role can not be assigned to the DA as specified
+     *
+     * @throws FailedGrantRoleAssignmentsException If error encountered
+     * persisting the assignments post-validation
+     * @return the tenant roles saved
+     */
+    List<TenantRole> replaceRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, RoleAssignments roleAssignments);
 
     /**
      * Given a reference to a delegate, look up the delegate.

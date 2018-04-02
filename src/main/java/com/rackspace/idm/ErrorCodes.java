@@ -143,6 +143,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_GLOBAL_ROLE_ASSIGNMENT_ONLY_MSG_PATTERN = "Invalid assignment for role '%s'. This role must be assigned globally.";
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_TENANT_ASSIGNMENT_ONLY_MSG_PATTERN = "Invalid assignment for role '%s'. This role must be assigned to explicit tenants.";
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN = "Invalid assignment for role '%s'. Not authorized to assign this role.";
+    public static final String ERROR_CODE_ROLE_ASSIGNMENT_WRONG_TENANTS_MSG_PATTERN = "Invalid assignment for role '%s'. Not authorized to assign this role with provided tenants.";
 
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_NONEXISTANT_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant does not exist.";
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_WRONG_DOMAIN_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant must belong to domain '%s'.";

@@ -276,6 +276,34 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return context;
     }
 
+    @Override
+    public void addRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, TenantRole tenantRole) {
+        addObject(getTenantRoleDn(delegationAgreement.getUniqueId()), tenantRole);
+    }
+
+    @Override
+    public TenantRole getRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId) {
+        SearchResultEntry entry = getLdapContainer(delegationAgreement.getUniqueId(), CONTAINER_ROLES);
+        if (entry == null) {
+            return null;
+        } else {
+            return getTenantRole(entry.getDN(), roleId);
+        }
+    }
+
+    @Override
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, PaginationParams paginationParams) {
+        SearchResultEntry entry = getLdapContainer(delegationAgreement.getUniqueId(), CONTAINER_ROLES);
+
+        PaginatorContext<TenantRole> context = new PaginatorContext<>();
+        if (entry == null) {
+            context.update(Collections.EMPTY_LIST, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
+        } else {
+            context = getObjectsPaged(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
+        }
+        return context;
+    }
+
     private TenantRole getTenantRole(String dn, String roleId) {
         return getObject(searchFilterGetTenantRoleByRoleId(roleId), dn, SearchScope.SUB);
     }

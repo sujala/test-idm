@@ -1,14 +1,12 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.Tenant
-import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.entity.DelegationAgreement
+import com.rackspace.idm.domain.entity.DelegationPrincipal
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.BadRequestException
@@ -32,6 +30,9 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         mockAuthorizationService(service)
         mockTenantService(service)
         mockTenantRoleDao(service)
+        mockUserService(service)
+        mockUserGroupService(service)
+        mockDomainService(service)
     }
 
     def "replaceTenantAssignmentsOnUser: Verify static check validations with no backend checks"() {
@@ -781,5 +782,284 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         and:
         result.size() == 1
         result.find {it.roleRsId == roleAId} != null
+    }
+
+    def "replaceTenantAssignmentsOnDelegationAgreement: Verify static check validations with no backend checks"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement()
+
+        def tenantOtherDomain = "tenantOther"
+        def roleIdWrongWeight = "roleIdWrongWeight"
+        def roleIdMissing = "roleIdMissing"
+
+        // Generate 5 valid roles
+        List validRoles = new ArrayList<>()
+        5.times { index ->
+            ClientRole role = new ClientRole().with {
+                it.id = "validId_" + index
+                it.name = "validName_" + index
+                it.rsWeight = RoleLevelEnum.LEVEL_1000.levelAsInt
+                it.clientId = "clientId"
+                it
+            }
+            validRoles.add(role)
+        }
+
+        def taNoTenants = new TenantAssignment().with {ta ->  ta.onRole = validRoles[0].id; ta}
+        def taAllandExplicitTenants = new TenantAssignment().with {ta ->  ta.onRole = validRoles[1].id; ta.forTenants = ["*", "a"]; ta}
+        def taWrongDomainTenant = new TenantAssignment().with {ta ->  ta.onRole = validRoles[2].id; ta.forTenants = [tenantOtherDomain]; ta}
+        def taNonExistantTenant = new TenantAssignment().with {ta ->  ta.onRole = validRoles[3].id; ta.forTenants = ["noexisttenant"]; ta}
+        def taInvalidRoleWeight = new TenantAssignment().with {ta ->  ta.onRole = roleIdWrongWeight; ta.forTenants = ["*"]; ta}
+        def taMissingRole = new TenantAssignment().with {ta ->  ta.onRole = roleIdMissing; ta.forTenants = ["*"]; ta}
+        def taEmptyStringTenants = new TenantAssignment().with {ta ->  ta.onRole = validRoles[4].id; ta.forTenants = [""]; ta}
+
+        RoleAssignments roleAssignments = genRoleAssignments(taNoTenants, taAllandExplicitTenants, taMissingRole, taWrongDomainTenant, taInvalidRoleWeight, taNoTenants)
+
+        when: "Duplicate role exist along with other validation errors"
+        service.replaceTenantAssignmentsOnDelegationAgreement(da, roleAssignments.tenantAssignments.tenantAssignment)
+
+        then: "Throws 400 due to dup roles"
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, BadRequestException, "ROLE-000", ERROR_CODE_DUP_ROLE_ASSIGNMENT_MSG)
+        0 * tenantRoleDao._(*_)
+        0 * applicationRoleDao._(*_)
+
+        when: "Submit request that includes missing forTenants and invalid for tenants along with invalid backend role errors"
+        roleAssignments = genRoleAssignments(taMissingRole, taWrongDomainTenant, taInvalidRoleWeight, taNoTenants, taAllandExplicitTenants, taNonExistantTenant)
+        service.replaceTenantAssignmentsOnDelegationAgreement(da, roleAssignments.tenantAssignments.tenantAssignment)
+
+        then: "Throws 400 on first static tenant error encountered"
+        Exception ex2 = thrown()
+        IdmExceptionAssert.assertException(ex2, BadRequestException, "GEN-001", ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG)
+        0 * tenantRoleDao._(*_)
+        0 * applicationRoleDao._(*_)
+
+        when: "Submit request that includes missing forTenants and invalid forTenants definition along with invalid backend role errors"
+        roleAssignments = genRoleAssignments(taMissingRole, taWrongDomainTenant, taInvalidRoleWeight, taAllandExplicitTenants, taNoTenants)
+        service.replaceTenantAssignmentsOnDelegationAgreement(da, roleAssignments.tenantAssignments.tenantAssignment)
+
+        then: "Throws 400 on first tenant error encountered"
+        Exception ex3 = thrown()
+        IdmExceptionAssert.assertException(ex3, BadRequestException, "GEN-005", ERROR_CODE_ROLE_ASSIGNMENT_INVALID_FOR_TENANTS_MSG)
+        0 * tenantRoleDao._(*_)
+        0 * applicationRoleDao._(*_)
+
+        when: "Submit request that includes empty string forTenants"
+        roleAssignments = genRoleAssignments(taEmptyStringTenants)
+        service.replaceTenantAssignmentsOnDelegationAgreement(da, roleAssignments.tenantAssignments.tenantAssignment)
+
+        then: "Throws 400"
+        Exception ex4 = thrown()
+        IdmExceptionAssert.assertException(ex4, BadRequestException, "GEN-005", ERROR_CODE_ROLE_ASSIGNMENT_INVALID_FOR_TENANTS_MSG)
+        0 * tenantRoleDao._(*_)
+        0 * applicationRoleDao._(*_)
+    }
+
+    def "verifyTenantAssignmentsWithCacheForDelegationAgreement: creates appropriate assignmentCache"() {
+        given:
+        def tenant = entityFactory.createTenant("tenantA", "tenantA")
+        def domain = entityFactory.createDomain().with {
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+        tenant.domainId = domain.domainId
+
+        // Setup principals for DA
+        def principalUser = entityFactory.createUser()
+        def principalUserGroup = new UserGroup().with {
+            it.id = "groupId"
+            it
+        }
+
+        DelegationAgreement da = new DelegationAgreement().with {
+            it.principal = Mock(DelegationPrincipal)
+            it.domainId = domain.domainId
+            it
+        }
+
+        // Setup assignments
+        ClientRole clientRole = entityFactory.createClientRole().with {
+            it.rsWeight = DefaultTenantAssignmentService.DOMAIN_MANAGER_ALLOWED_ROLE_WEIGHT
+            it
+        }
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = clientRole.id
+                            ta.onRoleName = "roleName"
+                            ta.forTenants.add(tenant.tenantId)
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+        TenantRole globalTenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = clientRole.id
+            it
+        }
+
+        when: "USER principal"
+        DefaultTenantAssignmentService.AssignmentCache assignmentCache = service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        !assignmentCache.roleCache.isEmpty()
+        assignmentCache.roleCache.size() == 1
+        assignmentCache.roleCache.get(clientRole.id).id == clientRole.id
+
+        da.principal.getPrincipalType() >> PrincipalType.USER
+        da.principal.getId() >> principalUser.id
+
+        1 * tenantService.getTenant(tenant.tenantId) >> tenant
+        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
+
+        when: "USER_GROUP principal using sub set of tenantIds"
+        assignmentCache = service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        !assignmentCache.roleCache.isEmpty()
+        assignmentCache.roleCache.size() == 1
+        assignmentCache.roleCache.get(clientRole.id).id == clientRole.id
+
+        da.principal.getPrincipalType() >> PrincipalType.USER_GROUP
+        da.principal.getId() >> principalUserGroup.id
+
+        1 * tenantService.getTenant(tenant.tenantId) >> tenant
+        1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
+        1 * userGroupService.getRoleAssignmentsOnGroup(principalUserGroup.id) >> [globalTenantRole]
+        1 * domainService.getDomain(domain.domainId) >> domain
+        0 * userService.getUserById(principalUser.id)
+        0 * authorizationService.getIdentityTypeRoleAsEnum(principalUser)
+    }
+
+    def "verifyTenantAssignmentsWithCacheForDelegationAgreement: error check"() {
+        given:
+        def tenant = entityFactory.createTenant("tenantA", "tenantA")
+        def domain = entityFactory.createDomain().with {
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+        tenant.domainId = domain.domainId
+
+        // Setup DA
+        def principalUser = entityFactory.createUser()
+        def principalUserGroup = new UserGroup().with {
+            it.id = "groupId"
+            it.domainId = domain.domainId
+            it
+        }
+
+        DelegationAgreement da = new DelegationAgreement().with {
+            it.principal = Mock(DelegationPrincipal)
+            it.domainId = domain.domainId
+            it
+        }
+
+        // Create test client roles
+        def roleId = "roleId"
+        ClientRole clientRole = entityFactory.createClientRole().with {
+            it.id = roleId
+            it.rsWeight = DefaultTenantAssignmentService.DOMAIN_MANAGER_ALLOWED_ROLE_WEIGHT
+            it
+        }
+        ClientRole invalidClientRole = entityFactory.createClientRole().with {
+            it.id = roleId
+            it.rsWeight = 500
+            it
+        }
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = roleId
+                            ta.forTenants.add(tenant.tenantId)
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+        TenantRole allowedTenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = clientRole.id
+            it.tenantIds.add("tenantB")
+            it
+        }
+
+        when: "principal of DA is an 'identity:admin' user"
+        service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, null, GlobalConstants.NOT_AUTHORIZED_MSG)
+
+        da.principal.getPrincipalType() >> PrincipalType.USER
+        da.principal.getId() >> principalUser.id
+
+        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.IDENTITY_ADMIN
+
+        when: "principal of DA is an 'identity:service-admin' user"
+        service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, null, GlobalConstants.NOT_AUTHORIZED_MSG)
+
+        da.principal.getPrincipalType() >> PrincipalType.USER
+        da.principal.getId() >> principalUser.id
+
+        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.SERVICE_ADMIN
+
+        when: "role with higher permissions"
+        service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId))
+
+        da.principal.getPrincipalType() >> PrincipalType.USER
+        da.principal.getId() >> principalUser.id
+
+        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * tenantService.getTenant(tenant.tenantId) >> tenant
+        1 * applicationService.getClientRoleById(roleId) >> invalidClientRole
+
+        when: "tenant assignment is not part of the allowed tenant roles - USER"
+        service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_WRONG_TENANTS_MSG_PATTERN, roleId))
+
+        da.principal.getPrincipalType() >> PrincipalType.USER
+        da.principal.getId() >> principalUser.id
+
+        1 * tenantService.getTenant(tenant.tenantId) >> tenant
+        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.DEFAULT_USER
+        1 * tenantService.getTenantRolesForUserPerformant(principalUser) >> [allowedTenantRole]
+
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+
+        when: "tenant assignment is not part of the allowed tenant roles - USER_GROUP"
+        service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_WRONG_TENANTS_MSG_PATTERN, roleId))
+
+        da.principal.getPrincipalType() >> PrincipalType.USER_GROUP
+        da.principal.getId() >> principalUserGroup.id
+
+        1 * tenantService.getTenant(tenant.tenantId) >> tenant
+        1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
+        1 * userGroupService.getRoleAssignmentsOnGroup(principalUserGroup.id) >> [allowedTenantRole]
     }
 }

@@ -1,17 +1,24 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
+import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.DelegateType;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.DelegationDelegate;
 import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.DelegationService;
 import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.TenantAssignmentService;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.unboundid.ldap.sdk.DN;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.Validate;
 import org.eclipse.persistence.jpa.jpql.Assert;
 import org.slf4j.Logger;
@@ -20,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 public class DefaultDelegationService implements DelegationService {
@@ -34,6 +43,12 @@ public class DefaultDelegationService implements DelegationService {
     @Autowired
     private IdentityUserService identityUserService;
 
+    @Autowired
+    private TenantAssignmentService tenantAssignmentService;
+
+    @Autowired
+    private TenantRoleDao tenantRoleDao;
+
     @Override
     public DelegationAgreement addDelegationAgreement(DelegationAgreement delegationAgreement) {
         Assert.isNotNull(delegationAgreement, "Delegation agreement must be provided");
@@ -45,6 +60,25 @@ public class DefaultDelegationService implements DelegationService {
     @Override
     public DelegationAgreement getDelegationAgreementById(String delegationAgreementId) {
         return delegationAgreementDao.getAgreementById(delegationAgreementId);
+    }
+
+    @Override
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, PaginationParams paginationParams) {
+        return tenantRoleDao.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, paginationParams);
+    }
+
+    @Override
+    public List<TenantRole> replaceRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, RoleAssignments roleAssignments) {
+        Validate.notNull(delegationAgreement);
+        Validate.notNull(delegationAgreement.getUniqueId());
+        Validate.notNull(roleAssignments);
+
+        if (roleAssignments.getTenantAssignments() == null || CollectionUtils.isEmpty(roleAssignments.getTenantAssignments().getTenantAssignment())) {
+            return Collections.emptyList();
+        }
+
+        return tenantAssignmentService.replaceTenantAssignmentsOnDelegationAgreement(
+                delegationAgreement, roleAssignments.getTenantAssignments().getTenantAssignment());
     }
 
     @Override

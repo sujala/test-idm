@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.event.ApiResourceType;
@@ -138,6 +139,22 @@ public class DelegationAgreementResource {
         try {
             verifyServiceEnabled();
             return delegationCloudService.deleteDelegate(authToken, agreementId, new UserGroupDelegateReference(groupId));
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @PUT
+    @Path("/{agreementId}/roles")
+    public Response grantRolesToDelegationAgreement (
+            @Context HttpHeaders httpHeaders,
+            @PathParam("agreementId") String agreementId,
+            @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken,
+            RoleAssignments roleAssignments) {
+        try {
+            verifyServiceEnabled();
+            return delegationCloudService.grantRolesToAgreement(authToken, agreementId, roleAssignments);
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex).build();
         }

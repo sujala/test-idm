@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -68,4 +69,39 @@ public interface DelegationCloudService {
      * @return
      */
     Response deleteDelegate(String authToken, String agreementId, DelegateReference delegateReference);
+
+    /**
+     * Grant or update the role assignments on a delegation agreement (DA). If any role is currently assigned to the DA
+     * it is replaced with the provided one. A given role can only appear once in the list of roles to assign. The same
+     * constraints apply for each individual role assignment specified as if they were being assigned individually. The
+     * entire request will be validated prior to assigning any roles.
+     *
+     * If the request is deemed valid, the assignments are iterated over to apply. If an error is encountered,
+     * processing will stop on the current assignment, but no efforts will be made to rollback previously successful
+     * assignments. Upon receiving an error the caller should verify the state of the user roles and take corrective
+     * action as necessary.
+     *
+     * On success returns:
+     * <ol>
+     *     <li>A 200 response</li>
+     *     <li>The response body is the final role assignments associated with the DA after applying the updates.</li>
+     * </ol>
+     *
+     * On failure will return appropriate v2 error responses:
+     * <ol>
+     *     <li>401 - If the supplied token is not a valid token or expired</li>
+     *     <li>403 - If the caller is not allowed to modify target DA</li>
+     *     <li>404 - If the DA does not exist</li>
+     *     <li>400 - If the request does not meet validation requirements.</li>
+     *     <li>403 - If role can not be assigned to the DA</li>
+     *     <li>403 - If adding an identity user type role</li>
+     *     <li>500 - Catch all for any other exception thrown by implementation</li>
+     * </ol>
+     *
+     * @param authToken
+     * @param agreementId
+     * @param roleAssignments
+     * @return
+     */
+    Response grantRolesToAgreement(String authToken, String agreementId, RoleAssignments roleAssignments);
 }

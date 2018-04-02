@@ -163,6 +163,7 @@ class RootServiceTest extends Specification {
     @Shared AETokenService aeTokenService
     @Shared AETokenRevocationService aeTokenRevocationService
     @Shared PhonePinService  phonePinService
+    @Shared TenantAssignmentService tenantAssignmentService
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -638,6 +639,11 @@ class RootServiceTest extends Specification {
     def mockRoleService(service) {
         roleService = Mock()
         service.roleService = roleService
+    }
+
+    def mockTenantAssignmentService(service) {
+        tenantAssignmentService = Mock()
+        service.tenantAssignmentService = tenantAssignmentService
     }
 
     def mockIdmPathUtils(service) {

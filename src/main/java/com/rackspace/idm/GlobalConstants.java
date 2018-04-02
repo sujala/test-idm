@@ -86,6 +86,7 @@ public final class GlobalConstants {
     public static final String ERROR_MSG_DELETE_DOMAIN_WITH_TENANTS = "Cannot delete domains which contain tenants";
     public static final String ERROR_MSG_DELETE_DOMAIN_WITH_USERS = "Cannot delete Domains which contain users";
     public static final String ERROR_MSG_SERVICE_NOT_FOUND = "Service not found";
+    public static final String NOT_AUTHORIZED_MSG = "Not Authorized";
 
     public static final String DELETE_USER_LOG_NAME = "userDelete";
     public static final String FORBIDDEN_DUE_TO_RESTRICTED_TOKEN = "The scope of this token does not allow access to this resource";
