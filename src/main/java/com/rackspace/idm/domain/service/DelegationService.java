@@ -41,6 +41,15 @@ public interface DelegationService {
     DelegationAgreement getDelegationAgreementById(String delegationAgreementId);
 
     /**
+     * Retrieve the specified role on the delegation agreement (DA), or null if the role does not exist on the DA.
+     *
+     * @param delegationAgreement
+     * @param roleId
+     * @return
+     */
+    TenantRole getRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId);
+
+    /**
      * Retrieve the set of roles assignments on the delegation agreement that match the specified criteria. If no roles match,
      * a context with an empty list of results will be returned.
      *
@@ -69,6 +78,17 @@ public interface DelegationService {
      * @return the tenant roles saved
      */
     List<TenantRole> replaceRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, RoleAssignments roleAssignments);
+
+    /**
+     * Removes the specified role from the delegation agreement (DA) regardless of whether it is assigned as a domain or
+     * tenant role.
+     *
+     * @param delegationAgreement
+     * @param roleId
+     * @throws IllegalArgumentException if DA, DA's uniqueId, or roleId is null
+     * @throws com.rackspace.idm.exception.NotFoundException If role is not assigned to DA
+     */
+    void revokeRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId);
 
     /**
      * Given a reference to a delegate, look up the delegate.

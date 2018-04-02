@@ -160,6 +160,23 @@ public class DelegationAgreementResource {
         }
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @DELETE
+    @Path("/{agreementId}/roles/{roleId}")
+    public Response revokeRoleFromDelegationAgreement (
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @PathParam("agreementId") String agreementId,
+            @PathParam("roleId") String roleId,
+            @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken) {
+        try {
+            verifyServiceEnabled();
+            return delegationCloudService.revokeRoleFromAgreement(authToken, agreementId, roleId);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
     private void verifyServiceEnabled() throws ServiceUnavailableException {
         if (!identityConfig.getReloadableConfig().areDelegationAgreementServicesEnabled()) {
             throw new ServiceUnavailableException(GlobalConstants.ERROR_MSG_SERVICE_NOT_FOUND);

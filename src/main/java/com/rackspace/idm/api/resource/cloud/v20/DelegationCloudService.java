@@ -104,4 +104,30 @@ public interface DelegationCloudService {
      * @return
      */
     Response grantRolesToAgreement(String authToken, String agreementId, RoleAssignments roleAssignments);
+
+    /**
+     * Remove the assignment of the specified role from the delegation agreement (DA). This service removes the entire
+     * assignment regardless of whether it was assigned for all tenants or a subset of tenants with in a domain.
+     *
+     * On success returns:
+     * <ol>
+     *     <li>A 204 response</li>
+     *     <li>No response body</li>
+     * </ol>
+     *
+     * On failure will return appropriate v2 error responses:
+     * <ol>
+     *     <li>401 - If the supplied token is not a valid token or expired</li>
+     *     <li>403 - If the caller is not allowed to remove role from DA</li>
+     *     <li>404 - If the domain or DA does not exist</li>
+     *     <li>404 - If the role is not assigned to DA</li>
+     *     <li>500 - Catchall for any other exception thrown by implementation</li>
+     * </ol>
+     *
+     * @param authToken
+     * @param agreementId
+     * @param roleId
+     * @return
+     */
+    Response revokeRoleFromAgreement(String authToken, String agreementId, String roleId);
 }

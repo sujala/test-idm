@@ -3,10 +3,13 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.entity.DelegationAgreement
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.DelegationService
+import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
+import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
 class DefaultDelegationServiceTest extends RootServiceTest {
@@ -17,6 +20,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
     def setup() {
         service = new DefaultDelegationService()
         mockTenantAssignmentService(service)
+        mockTenantRoleDao(service)
     }
 
     def "replaceRoleAssignmentsOnDelegationAgreement: calls correct service"() {
@@ -85,5 +89,75 @@ class DefaultDelegationServiceTest extends RootServiceTest {
 
         then:
         tenantRoles.isEmpty()
+    }
+
+    def "getRoleAssignmentOnDelegationAgreement: calls correct dao"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement()
+        TenantRole tenantRole = entityFactory.createTenantRole()
+
+        when:
+        service.getRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId)
+
+        then:
+        1 * tenantRoleDao.getRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId)
+    }
+
+    def "getRoleAssignmentOnDelegationAgreement: error check"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement()
+        TenantRole tenantRole = entityFactory.createTenantRole()
+
+        when: "agreement is null"
+        service.getRoleAssignmentOnDelegationAgreement(null, tenantRole.roleRsId)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "roleId is null"
+        service.getRoleAssignmentOnDelegationAgreement(da, null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "revokeRoleAssignmentOnDelegationAgreement: calls correct daos"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement()
+        TenantRole tenantRole = entityFactory.createTenantRole()
+
+        when:
+        service.revokeRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId)
+
+        then:
+        1 * tenantRoleDao.getRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId) >> tenantRole
+        1 * tenantRoleDao.deleteTenantRole(tenantRole)
+    }
+
+    def "revokeRoleAssignmentOnDelegationAgreement: error check"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement()
+        TenantRole tenantRole = entityFactory.createTenantRole()
+
+        when: "agreement is null"
+        service.revokeRoleAssignmentOnDelegationAgreement(null, tenantRole.roleRsId)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "roleId is null"
+        service.revokeRoleAssignmentOnDelegationAgreement(da, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "assignment does not exists"
+        service.revokeRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId)
+
+        then:
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified role does not exist for agreement")
+
+        1 * tenantRoleDao.getRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId) >> null
     }
 }

@@ -82,6 +82,8 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["deleteAgreement", {token -> service.deleteAgreement(token, "id")}, NotFoundException, "GEN-004"]
                 , ["addDelegate", {token -> service.addDelegate(token, "id", new EndUserDelegateReference("user"))}, NotFoundException, "GEN-004"]
                 , ["deleteDelegate", {token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user"))}, NotFoundException, "GEN-004"]
+                , ["grantRolesToAgreement", {token -> service.grantRolesToAgreement(token, "id", new RoleAssignments())}, NotFoundException, "GEN-004"]
+                , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}, NotFoundException, "GEN-004"]
         ]
     }
 
@@ -124,6 +126,8 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["deleteAgreement", {token -> service.deleteAgreement(token, "id")}]
                 , ["addDelegate", {token -> service.addDelegate(token, "id", new EndUserDelegateReference("user"))}]
                 , ["deleteDelegate", {token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user"))}]
+                , ["grantRolesToAgreement", {token -> service.grantRolesToAgreement(token, "id", new RoleAssignments())}]
+                , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}]
         ]
     }
 
@@ -602,7 +606,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> null
         1 * exceptionHandler.exceptionResponse(_ as NotFoundException) >> {args ->
             def exception = args[0]
-            IdmExceptionAssert.assertException(exception, NotFoundException, null, "The specified agreement does not exist for this user")
+            IdmExceptionAssert.assertException(exception, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified agreement does not exist for this user")
             Response.status(SC_NOT_FOUND)
         }
 
@@ -616,8 +620,95 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
         1 * exceptionHandler.exceptionResponse(_ as BadRequestException) >> {args ->
             def exception = args[0]
-            IdmExceptionAssert.assertException(exception, BadRequestException, null, "Must supply a set of assignments")
+            IdmExceptionAssert.assertException(exception, BadRequestException, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE, "Must supply a set of assignments")
             Response.status(SC_BAD_REQUEST)
+        }
+    }
+
+    def "revokeRoleFromAgreement: calls appropriate services"() {
+        def domainId = "domainId"
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = "rsId=" + it.id
+            it.domainId = domainId
+            it
+        }
+
+        def roleId = "roleId"
+        def tokenStr = "callerTokenStr"
+        def token = Mock(BaseUserToken)
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.id = "id"
+            it.domainId = domainId
+            it.principal = Mock(DelegationPrincipal)
+            it.principalDN = caller.dn
+            it
+        }
+        daEntity.principal.getId() >> caller.id
+        daEntity.principal.principalType >> PrincipalType.USER
+
+        when:
+        def response = service.revokeRoleFromAgreement(tokenStr, daEntity.id, roleId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * delegationService.revokeRoleAssignmentOnDelegationAgreement(daEntity, roleId)
+    }
+
+    def "revokeRoleFromAgreement: error check"() {
+        def domainId = "domainId"
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = domainId
+            it
+        }
+
+        def roleId = "roleId"
+
+        def tokenStr = "callerTokenStr"
+        def token = Mock(BaseUserToken)
+        def invalidToken = Mock(BaseUserToken)
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.id = "id"
+            it.domainId = domainId
+            it.principal = Mock(DelegationPrincipal)
+            it
+        }
+
+        when: "scoped token"
+        invalidToken.getScope() >> "scope"
+        service.revokeRoleFromAgreement(tokenStr, daEntity.id, roleId)
+
+        then:
+        daEntity.principal.getId() >> caller.id
+        daEntity.principal.principalType >> PrincipalType.USER
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> invalidToken
+        1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> {args ->
+            def exception = args[0]
+            IdmExceptionAssert.assertException(exception, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
+            Response.status(SC_FORBIDDEN)
+        }
+
+        when: "DA does not exist"
+        service.revokeRoleFromAgreement(tokenStr, daEntity.id, roleId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> null
+        1 * exceptionHandler.exceptionResponse(_ as NotFoundException) >> {args ->
+            def exception = args[0]
+            IdmExceptionAssert.assertException(exception, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified agreement does not exist for this user")
+            Response.status(SC_NOT_FOUND)
         }
     }
 }

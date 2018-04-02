@@ -311,7 +311,7 @@ public class DefaultUserGroupService implements UserGroupService {
         if (tenantRole == null ||
                 tenantRole.getTenantIds().isEmpty() ||
                 !tenantRole.getTenantIds().contains(tenantId) && !tenantRole.getTenantIds().contains(USER_GROUP_ROLE_ASSIGNMENT_FOR_ALL_TENANTS)) {
-            String errMsg = String.format("Role assignemnt does not exist.", roleId);
+            String errMsg = String.format("Role assignment does not exist.", roleId);
             throw new NotFoundException(errMsg);
         } else if (tenantRole.getTenantIds().contains(USER_GROUP_ROLE_ASSIGNMENT_FOR_ALL_TENANTS)) {
             String errMsg = "Role assignment exist as global role.";

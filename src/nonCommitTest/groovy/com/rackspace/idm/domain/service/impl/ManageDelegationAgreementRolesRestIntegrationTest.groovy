@@ -289,7 +289,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
     }
 
     @Unroll
-    def "Verify no additional roles can be assigned when the principal is a 'identity:service-admin' or 'identity:admin'; mediaType = #mediaType"() {
+    def "verify no additional roles can be assigned when the principal is a 'identity:service-admin' or 'identity:admin'; mediaType = #mediaType"() {
         given:
         def identityAdmin = utils.createIdentityAdmin()
         def identityAdmin2 = utils.createIdentityAdmin()
@@ -321,7 +321,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
     }
 
     @Unroll
-    def "Error: Do not allowed to grant user-manage role to delegation agreement; mediaType = #mediaType"() {
+    def "error: Do not allowed to grant user-manage role to delegation agreement; mediaType = #mediaType"() {
         given:
         def userAdmin = utils.createCloudAccount()
         def userAdminToken = utils.getToken(userAdmin.username)
@@ -382,7 +382,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
     }
 
     @Unroll
-    def "Error: No forTenants value on role assignment returns error; mediaType = #mediaType"() {
+    def "error: No forTenants value on role assignment returns error; mediaType = #mediaType"() {
         def userAdmin = utils.createCloudAccount()
         def userAdminToken = utils.getToken(userAdmin.username)
         def defaultUser = utils.createUser(userAdminToken)
@@ -417,7 +417,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
     }
 
     @Unroll
-    def "Error: Common errors for granting role assignments to delegation agreement; Principal = USER, mediaType = #mediaType"() {
+    def "error: Common errors for granting role assignments to delegation agreement; Principal = USER, mediaType = #mediaType"() {
         given:
         def userAdmin = utils.createCloudAccount()
         def userAdminToken = utils.getToken(userAdmin.username)
@@ -449,8 +449,8 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, invalidDA, assignments, mediaType)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND
-                , "The specified agreement does not exist for this user")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND,
+                ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified agreement does not exist for this user")
 
         when: "invalid token"
         response = cloud20.grantRoleAssignmentsOnDelegationAgreement("invalid", createdDA, assignments, mediaType)
@@ -531,7 +531,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
     }
 
     @Unroll
-    def "Error: Common errors for granting role assignments to delegation agreement; Principal = USER_GROUP, mediaType = #mediaType"() {
+    def "error: Common errors for granting role assignments to delegation agreement; Principal = USER_GROUP, mediaType = #mediaType"() {
         given:
         def userAdmin = utils.createCloudAccount()
         def userAdminToken = utils.getToken(userAdmin.username)
@@ -580,8 +580,8 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, invalidDA, assignments1, mediaType)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND
-                , "The specified agreement does not exist for this user")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND,
+                ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified agreement does not exist for this user")
 
         when: "invalid token"
         response = cloud20.grantRoleAssignmentsOnDelegationAgreement("invalid", createdDA, assignments1, mediaType)
@@ -676,6 +676,88 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "test a role assignment can be revoked from a delegation agreement"() {
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def defaultUser = utils.createUser(userAdminToken)
+
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it.delegateId = defaultUser.id
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+
+        def cloudTenantId = userAdmin.domainId
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+        cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments)
+
+        when:
+        def response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+    }
+
+    def "error: Common errors for revoking a role from a delegation agreement"() {
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def defaultUser = utils.createUser(userAdminToken)
+
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it.delegateId = defaultUser.id
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+
+        def cloudTenantId = userAdmin.domainId
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+        cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments)
+
+        when: "invalid delegation agreement"
+        def invalidDA = new DelegationAgreement().with {
+            it.id = "invalid"
+            it
+        }
+        def response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, invalidDA, ROLE_RBAC1_ID)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND,
+                ErrorCodes.ERROR_CODE_NOT_FOUND , "The specified agreement does not exist for this user")
+
+        when: "invalid token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement("invalid", createdDA, ROLE_RBAC1_ID)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, UnauthorizedFault, HttpStatus.SC_UNAUTHORIZED
+                , "No valid token provided. Please use the 'X-Auth-Token' header with a valid token.")
+
+        when: "invalid roleId"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, "invalid")
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified role does not exist for agreement")
     }
 
     void verifyContainsAssignment(RoleAssignments roleAssignments, String roleId, List<String> tenantIds) {
