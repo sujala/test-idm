@@ -539,7 +539,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup2, ROLE_RBAC2_ID, sharedUserAdminCloudTenant.id)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Role assignemnt does not exist.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Role assignment does not exist.")
 
         cleanup:
         utils.deleteUserGroup(createdGroup1)
