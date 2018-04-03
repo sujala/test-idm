@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
-import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
+import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -23,9 +23,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class DefaultDelegationService implements DelegationService {
@@ -68,8 +68,11 @@ public class DefaultDelegationService implements DelegationService {
     }
 
     @Override
-    public PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, PaginationParams paginationParams) {
-        return tenantRoleDao.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, paginationParams);
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, DelegationAgreementRoleSearchParams searchParams) {
+        Validate.notNull(delegationAgreement);
+        Validate.notNull(searchParams);
+
+        return tenantRoleDao.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, searchParams.getPaginationRequest());
     }
 
     @Override

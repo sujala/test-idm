@@ -84,6 +84,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["deleteDelegate", {token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user"))}, NotFoundException, "GEN-004"]
                 , ["grantRolesToAgreement", {token -> service.grantRolesToAgreement(token, "id", new RoleAssignments())}, NotFoundException, "GEN-004"]
                 , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}, NotFoundException, "GEN-004"]
+                , ["listRoleAssignmentsOnAgreement", {token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams()))}, NotFoundException, "GEN-004"]
         ]
     }
 
@@ -128,6 +129,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["deleteDelegate", {token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user"))}]
                 , ["grantRolesToAgreement", {token -> service.grantRolesToAgreement(token, "id", new RoleAssignments())}]
                 , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}]
+                , ["listRoleAssignmentsOnAgreement", {token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams()))}]
         ]
     }
 
@@ -699,6 +701,95 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
 
         when: "DA does not exist"
         service.revokeRoleFromAgreement(tokenStr, daEntity.id, roleId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> null
+        1 * exceptionHandler.exceptionResponse(_ as NotFoundException) >> {args ->
+            def exception = args[0]
+            IdmExceptionAssert.assertException(exception, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified agreement does not exist for this user")
+            Response.status(SC_NOT_FOUND)
+        }
+    }
+
+    def "listRoleAssignmentsOnAgreement: calls appropriate services"() {
+        def domainId = "domainId"
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = "rsId=" + it.id
+            it.domainId = domainId
+            it
+        }
+
+        def tokenStr = "callerTokenStr"
+        def token = Mock(BaseUserToken)
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.id = "id"
+            it.domainId = domainId
+            it.principal = Mock(DelegationPrincipal)
+            it.principalDN = caller.dn
+            it
+        }
+        daEntity.principal.getId() >> caller.id
+        daEntity.principal.principalType >> PrincipalType.USER
+
+        UriInfo uriInfo = Mock()
+
+        when:
+        def response = service.listRoleAssignmentsOnAgreement(uriInfo, tokenStr, daEntity.id, new DelegationAgreementRoleSearchParams(new PaginationParams()))
+
+        then:
+        response.status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, _) >> new PaginatorContext<>()
+        1 * roleAssignmentConverter.toRoleAssignmentsWeb(_)
+    }
+
+    def "listRoleAssignmentsOnAgreement: error check"() {
+        def domainId = "domainId"
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = domainId
+            it
+        }
+
+        def tokenStr = "callerTokenStr"
+        def token = Mock(BaseUserToken)
+        def invalidToken = Mock(BaseUserToken)
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.id = "id"
+            it.domainId = domainId
+            it.principal = Mock(DelegationPrincipal)
+            it
+        }
+
+        UriInfo uriInfo = Mock()
+
+        when: "scoped token"
+        invalidToken.getScope() >> "scope"
+        service.listRoleAssignmentsOnAgreement(uriInfo, tokenStr, daEntity.id, new DelegationAgreementRoleSearchParams(new PaginationParams()))
+
+        then:
+        daEntity.principal.getId() >> caller.id
+        daEntity.principal.principalType >> PrincipalType.USER
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> invalidToken
+        1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> {args ->
+            def exception = args[0]
+            IdmExceptionAssert.assertException(exception, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
+            Response.status(SC_FORBIDDEN)
+        }
+
+        when: "DA does not exist"
+        service.listRoleAssignmentsOnAgreement(uriInfo, tokenStr, daEntity.id, new DelegationAgreementRoleSearchParams(new PaginationParams()))
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token

@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
-import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
+import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.DelegationDelegate;
 import com.rackspace.idm.domain.entity.PaginatorContext;
@@ -54,10 +54,13 @@ public interface DelegationService {
      * a context with an empty list of results will be returned.
      *
      * @param delegationAgreement
-     * @param paginationParams
+     * @param searchParams
+     *
+     * @throws IllegalArgumentException if delegationAgreement, or searchParams is null
+     *
      * @return
      */
-    PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, PaginationParams paginationParams);
+    PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, DelegationAgreementRoleSearchParams searchParams);
 
     /**
      * Assign the specified roles to a delegation agreement (DA). Validation is performed on all roles prior to persisting
