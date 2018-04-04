@@ -265,7 +265,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
         }
         DelegationAgreement createdDA = utils.createDelegationAgreement(userToken, delegationAgreement)
 
-        // Assign role to both user group and user on mosso tenant
+        // Assign role to user on mosso tenant
         utils.addRoleToUserOnTenantId(user, user.domainId, Constants.ROLE_RBAC1_ID)
 
         TenantAssignment ta = new TenantAssignment().with {
