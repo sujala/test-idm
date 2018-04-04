@@ -1,12 +1,11 @@
 package com.rackspace.idm.domain.service
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.impl.DefaultIdentityUserService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
@@ -20,6 +19,7 @@ import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.ROLE_RBAC1_ID
+import static com.rackspace.idm.Constants.ROLE_RBAC2_ID
 
 class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
@@ -37,6 +37,9 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     UserGroupService userGroupService
+
+    @Autowired
+    DelegationService delegationService
 
     def cleanup() {
         reloadableConfiguration.reset()
@@ -246,5 +249,55 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
         then: "no user ids"
         userGroupRoles.size() == 1
         userGroupRoles[0].userId == null
+    }
+
+    def "getUsersByTenantId: Does not return delegation agreement tenant roles"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
+
+        User user = utils.createCloudAccount()
+        def userToken = utils.getToken(user.username)
+        DelegationAgreement delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = user.domainId
+            it
+        }
+        DelegationAgreement createdDA = utils.createDelegationAgreement(userToken, delegationAgreement)
+
+        // Assign role to both user group and user on mosso tenant
+        utils.addRoleToUserOnTenantId(user, user.domainId, Constants.ROLE_RBAC1_ID)
+
+        TenantAssignment ta = new TenantAssignment().with {
+            ta ->
+                ta.onRole = Constants.ROLE_RBAC2_ID
+                ta.forTenants = [user.domainId]
+                ta
+        }
+        RoleAssignments assignments1 = new RoleAssignments().with {
+            TenantAssignments tas = new TenantAssignments()
+            it.tenantAssignments = tas
+            tas.tenantAssignment.add(ta)
+            it
+        }
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userToken, createdDA, assignments1)
+        assert response.status == HttpStatus.SC_OK
+
+        when:
+        Iterable<User> users = userService.getUsersByTenantId(user.domainId)
+
+        then:
+        List<User> userList = IteratorUtils.toList(users.iterator())
+        userList.size() == 1
+        userList.get(0).id == user.id
+
+        when: "retrieve delegation agreement assignment"
+        def daEntity = delegationService.getDelegationAgreementById(createdDA.id)
+        PaginatorContext<TenantRole> daRoles = delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, new PaginationParams())
+
+        then: "no user ids"
+        daRoles.searchResultEntryList.size() == 1
+        daRoles.searchResultEntryList.get(0).getAttribute("roleRsId").values[0].toString() == ROLE_RBAC2_ID
+        daRoles.searchResultEntryList.get(0).getAttribute("userId") == null
     }
 }

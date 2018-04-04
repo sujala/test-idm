@@ -206,6 +206,27 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
         }
     }
 
+    def "getIdsForUsersWithTenantRole: test to ignore tenantRole on delegation agreement"() {
+
+        when:
+        def userIds = dao.getIdsForUsersWithTenantRole("roleId", 10)
+
+        then:
+        userIds != null
+        userIds.size() == 1
+        userIds.get(0) == "test2"
+
+        1 * identityConfig.getReloadableConfig().getMaxDirectoryPageSize() >> 1000
+
+        1 * ldapInterface.search(_ as SearchRequest) >> { args ->
+            List<SearchResultEntry> searchResultList = Arrays.asList(new SearchResultEntry("cn=ROLES,rsId=test1," + LdapRepository.DELEGATION_AGREEMENT_BASE_DN, new Attribute[0], new Control[0]),
+                                    new SearchResultEntry("cn=ROLES,rsId=test2," + LdapRepository.USERS_BASE_DN, new Attribute[0], new Control[0]))
+
+            SearchRequest request = (SearchRequest) args[0]
+            new SearchResult(1, null, null, null, new String[0], searchResultList, Collections.emptyList(), 2, 0)
+        }
+    }
+
     @Unroll
     def "getRoleAssignmentsOnUser: Get role assignments on user using param limits: marker: #marker; limit: #limit"() {
         def containerDN = "cn=ROLES,rsId=abc," + Constants.USER_GROUP_BASE_DN
@@ -254,7 +275,7 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
     def "addRoleAssignmentOnDelegationAgreement: adding new assignment checks for container"() {
         DelegationAgreement da = new DelegationAgreement().with {
             it.id = "daId"
-            it.uniqueId = "rsId=" + it.id  + "," + Constants.DELEGATION_AGREEMENT_BASE_DN
+            it.uniqueId = "rsId=" + it.id  + "," + LdapRepository.DELEGATION_AGREEMENT_BASE_DN
             it
         }
 
@@ -296,11 +317,11 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
 
     @Unroll
     def "getRoleAssignmentsOnDelegationAgreement: Get role assignments on DA using param limits: marker: #marker; limit: #limit"() {
-        def containerDN = "cn=ROLES,rsId=abc," + Constants.DELEGATION_AGREEMENT_BASE_DN
+        def containerDN = "cn=ROLES,rsId=abc," + LdapRepository.DELEGATION_AGREEMENT_BASE_DN
 
         DelegationAgreement da = new DelegationAgreement().with {
             it.id = "daId"
-            it.uniqueId = "rsId=" + it.id + "," + Constants.DELEGATION_AGREEMENT_BASE_DN
+            it.uniqueId = "rsId=" + it.id + "," + LdapRepository.DELEGATION_AGREEMENT_BASE_DN
             it
         }
 
@@ -337,10 +358,10 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
 
     def "getRoleAssignmentOnDelegationAgreement: Get tenant role on DA"() {
         given:
-        def containerDN = "cn=ROLES,rsId=abc," + Constants.DELEGATION_AGREEMENT_BASE_DN
+        def containerDN = "cn=ROLES,rsId=abc," + LdapRepository.DELEGATION_AGREEMENT_BASE_DN
         DelegationAgreement da = new DelegationAgreement().with {
             it.id = "daId"
-            it.uniqueId = "rsId=" + it.id + "," + Constants.DELEGATION_AGREEMENT_BASE_DN
+            it.uniqueId = "rsId=" + it.id + "," + LdapRepository.DELEGATION_AGREEMENT_BASE_DN
             it
         }
         def roleId = "roleId"

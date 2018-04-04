@@ -8,6 +8,7 @@ import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.Domain;
@@ -672,9 +673,10 @@ public class DefaultUserService implements UserService {
         //TODO This should be a Set or should use logic to not add same user twice
         List<String> idList = new ArrayList<String>();
         for(TenantRole t : tenantRoles){
-            // Determine if user group tenant role cause this service must ignore them
+            // Ignore user group or delegation agreement tenant roles
             String path = t.getUniqueId();
-            if (!StringUtils.endsWithIgnoreCase(path, Constants.USER_GROUP_BASE_DN)) {
+            if (!(StringUtils.endsWithIgnoreCase(path, Constants.USER_GROUP_BASE_DN)
+                    || StringUtils.endsWithIgnoreCase(path, LdapRepository.DELEGATION_AGREEMENT_BASE_DN))) {
                 if(t.getUserId() == null) {
                     tenantService.addUserIdToTenantRole(t);
                 }
