@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -159,36 +160,112 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         AuthenticateResponse delegateValidateResponse = utils.validateToken(delegateToken, mediaType)
 
         then: "resultant info is appropriate"
+        assertDelegateValidateSameAsSubuser(delegateValidateResponse, realSubUserAuthResponse, sharedSubUser2)
+
+        where:
+        mediaType << [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]
+    }
+
+    @Unroll
+    def "Valid user group delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+
+        // Create a user group in domain 2 and add user to it
+        UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)
+        utils.addUserToUserGroup(sharedSubUser2.id, domain2UserGroup)
+
+        // Create a DA w/ no delegate
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        assert cloud20.addUserGroupDelegate(sharedUserAdminToken, da.id, domain2UserGroup.id).status == SC_NO_CONTENT
+
+        AuthenticateResponse realSubUserAuthResponse = utils.validateTokenApplyRcnRoles(sharedSubUserToken)
+        def delegateToken = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id).token.id
+
+        when: "Validated the delegate token"
+        AuthenticateResponse delegateAuthResponse = utils.validateToken(delegateToken)
+
+        then: "resultant info is appropriate"
+        assertDelegateValidateSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2)
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled << [true, false]
+    }
+
+    @Unroll
+    def "Fed user delegate token matches subuser: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
+
+        // Create a fed user under common global IDP
+        AuthenticateResponse fedUserAuthResponse = utils.createFederatedUserForAuthResponse(sharedUserAdmin2.domainId)
+
+        // Create a DA
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it
+        }
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        assert cloud20.addUserDelegate(sharedUserAdminToken, da.id, fedUserAuthResponse.user.id).status == SC_NO_CONTENT
+
+        // Auth as regular subuser under the domain1 w/ applyrcnrole logic
+        AuthenticateResponse realSubUserAuthResponse = utils.validateTokenApplyRcnRoles(sharedSubUserToken)
+
+        def adapterForFedUser = new User().with {
+            it.id = fedUserAuthResponse.user.id
+            it.username = fedUserAuthResponse.user.name
+            it
+        }
+
+        def delegateToken = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id).token.id
+
+        when: "Validated the delegate token"
+        AuthenticateResponse delegateAuthResponse = utils.validateToken(delegateToken)
+
+        then: "resultant info is appropriate"
+        assertDelegateValidateSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, adapterForFedUser)
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled << [true, false]
+    }
+
+    void assertDelegateValidateSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser) {
         // Token info same (though not id..)
-        delegateValidateResponse.token.tenant.name == realSubUserAuthResponse.token.tenant.name
-        delegateValidateResponse.token.tenant.id == realSubUserAuthResponse.token.tenant.id
-        delegateValidateResponse.token.id != realSubUserAuthResponse.token.tenant.id
+        assert delegateAuthResponse.token.tenant.name == realSubUserAuthResponse.token.tenant.name
+        assert delegateAuthResponse.token.tenant.id == realSubUserAuthResponse.token.tenant.id
+        assert delegateAuthResponse.token.id != realSubUserAuthResponse.token.tenant.id
 
         // Token reflects delegate authentication
-        delegateValidateResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
-        delegateValidateResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.DELEGATE.getValue())
+        assert delegateAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
+        assert delegateAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.DELEGATE.getValue())
 
         // Domain based user info is same
-        delegateValidateResponse.user.domainId == realSubUserAuthResponse.user.domainId
-        delegateValidateResponse.user.defaultRegion == realSubUserAuthResponse.user.defaultRegion
-        delegateValidateResponse.user.sessionInactivityTimeout == realSubUserAuthResponse.user.sessionInactivityTimeout
+        assert delegateAuthResponse.user.domainId == realSubUserAuthResponse.user.domainId
+        assert delegateAuthResponse.user.defaultRegion == realSubUserAuthResponse.user.defaultRegion
+        assert delegateAuthResponse.user.sessionInactivityTimeout == realSubUserAuthResponse.user.sessionInactivityTimeout
 
         // Roles are same
-        delegateValidateResponse.user.roles.role.size() == realSubUserAuthResponse.user.roles.role.size()
-        delegateValidateResponse.user.roles.role.each { delegateRole ->
+        assert delegateAuthResponse.user.roles.role.size() == realSubUserAuthResponse.user.roles.role.size()
+        delegateAuthResponse.user.roles.role.each { delegateRole ->
             def matchingSubuserRole = realSubUserAuthResponse.user.roles.role.find {it.id == delegateRole.id && it.tenantId == delegateRole.tenantId}
             assert matchingSubuserRole != null
             assert delegateRole.name == matchingSubuserRole.name
         }
 
         // User identifying information reflects user authenticating
-        delegateValidateResponse.user.id == sharedSubUser2.id
-        delegateValidateResponse.user.name == sharedSubUser2.username
+        assert delegateAuthResponse.user.id == delegateUser.id // User reflects the delegate
+        assert delegateAuthResponse.user.name == delegateUser.username // User reflects the delegate
 
         // service catalog is empty (like for all validates)
-        delegateValidateResponse.serviceCatalog == null || delegateValidateResponse.serviceCatalog.service.size() == 0
-
-        where:
-        mediaType << [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]
+        assert (delegateAuthResponse.serviceCatalog == null || delegateAuthResponse.serviceCatalog.service.size() == 0)
     }
 }

@@ -1245,16 +1245,16 @@ public class DefaultUserService implements UserService {
             }
         } else if (scopeAccess instanceof UserScopeAccess) {
             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
-            if (CollectionUtils.isNotEmpty(userScopeAccess.getAuthenticatedBy()) && userScopeAccess.getAuthenticatedBy().contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)) {
-                //will be a federated user  (FederatedUser)
-                user = federatedUserDao.getUserByToken(userScopeAccess);
-            } else if (userScopeAccess.isDelegationToken()) {
+            if (userScopeAccess.isDelegationToken()) {
                 EndUser realUser = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
                 DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(userScopeAccess.getDelegationAgreementId());
                 if (realUser != null && delegationAgreement != null) {
                     DomainSubUserDefaults domainSubUserDefaults = createSubUserService.calculateDomainSubUserDefaults(delegationAgreement.getDomainId());
                     user = new ProvisionedUserDelegate(domainSubUserDefaults, delegationAgreement, realUser);
                 }
+            } else if (CollectionUtils.isNotEmpty(userScopeAccess.getAuthenticatedBy()) && userScopeAccess.getAuthenticatedBy().contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)) {
+                //will be a federated user  (FederatedUser)
+                user = federatedUserDao.getUserByToken(userScopeAccess);
             } else {
                 //will be a "provisioned" user (User)
                 user = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
