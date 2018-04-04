@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.IdentityProviderSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.ListEffectiveRolesForUserParams
 import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams
@@ -1386,6 +1387,16 @@ class Cloud20Methods {
     def grantRoleAssignmentsOnDelegationAgreement(String token, DelegationAgreement delegationAgreement, RoleAssignments roleAssignments, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreement.id).path(SERVICE_PATH_ROLES).type(media).accept(media).header(X_AUTH_TOKEN, token).entity(roleAssignments).put(ClientResponse)
+    }
+
+    def listRolesOnDelegationAgreement(String token, DelegationAgreement delegationAgreement, DelegationAgreementRoleSearchParams searchParams = null, MediaType media=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        WebResource resource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreement.id).path(SERVICE_PATH_ROLES)
+
+        if (searchParams != null && searchParams.paginationRequest != null) {
+            resource = resource.queryParams(pageParams(String.valueOf(searchParams.getPaginationRequest().marker), String.valueOf(searchParams.getPaginationRequest().limit)))
+        }
+        resource.accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def revokeRoleAssignmentFromDelegationAgreement(String token, DelegationAgreement delegationAgreement, String roleId) {
