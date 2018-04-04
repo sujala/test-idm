@@ -389,5 +389,35 @@ def v20_list_global_roles_for_user_id: ChainBuilder = {
       .exitHereIfFailed
 
   }
+
+
+  /**
+    * This flow will test the list roles for identity:admin
+    *
+    * @return
+    */
+  def v20_list_roles_for_identity_admin: ChainBuilder = {
+    feed(usersFeeder_v20_admin)
+      .exec(
+      http("GET TOKEN FOR admin_user")
+        .post("/v2.0/tokens")
+        .header("X-Forwarded-For", "${ipaddress}")
+        .header("Content-type", "application/json")
+        .body(StringBody("""{"auth": {"passwordCredentials": {"username": "${user_name}","password": "${password}"}}}""")).asJSON
+        .check(status.is(200))
+        .check(jsonPath("$.access.token.id").saveAs("user_token"))
+    )
+    .exitHereIfFailed
+    .exec(
+      http("LIST ROLES")
+        .get("/v2.0/OS-KSADM/roles?limit=1000")
+        .header("X-Forwarded-For", "${ipaddress}")
+        .header("x-auth-token", "${user_token}")
+        .check(status.is(200))
+    )
+    .exitHereIfFailed
+
+  }
+
 }
 

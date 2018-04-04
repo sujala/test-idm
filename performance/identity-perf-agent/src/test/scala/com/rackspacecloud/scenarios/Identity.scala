@@ -105,6 +105,10 @@ object Identity {
   val v20_list_global_roles_for_user_id_internal      = scenario("V2.0_List_Global_Roles_For_User_Id_Internal").exec(Tokens.v20_list_global_roles_for_user_id).exitHereIfFailed
   val v20_list_global_roles_for_user_id_internal_repl = scenario("V2.0_List_Global_Roles_For_User_Id_Internal_Replication").exec(Tokens.v20_list_global_roles_for_user_id).exitHereIfFailed
 
+  // V20 List roles
+
+  val v20_list_all_roles = scenario("V2.0_List_Roles_For_Identity_Admin").exec(Tokens.v20_list_roles_for_identity_admin).exitHereIfFailed
+
   // Can uncomment once we are ready add this memory-leak test to regular perf suite
   // val v20_list_users_in_a_domain = scenario("V2.0_List_Users_In_Domain_Id").exec(Tokens.v20_list_users_in_a_domain).exitHereIfFailed
 
