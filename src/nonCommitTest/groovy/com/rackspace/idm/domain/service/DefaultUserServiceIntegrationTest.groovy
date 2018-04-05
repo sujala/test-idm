@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
@@ -293,7 +294,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
         when: "retrieve delegation agreement assignment"
         def daEntity = delegationService.getDelegationAgreementById(createdDA.id)
-        PaginatorContext<TenantRole> daRoles = delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, new PaginationParams())
+        PaginatorContext<TenantRole> daRoles = delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, new DelegationAgreementRoleSearchParams(new PaginationParams()))
 
         then: "no user ids"
         daRoles.searchResultEntryList.size() == 1
