@@ -6,7 +6,6 @@ public class Constants {
     public static final String OBJECTCLASS_USER_GROUP = "rsUserGroup";
 
     public static final String USER_GROUP_BASE_DN = "ou=userGroups,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com";
-    public static final String DELEGATION_AGREEMENT_BASE_DN = "ou=delegationAgreements,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
     public static final int USER_GROUP_ALLOWED_ROLE_WEIGHT = 1000;
 
