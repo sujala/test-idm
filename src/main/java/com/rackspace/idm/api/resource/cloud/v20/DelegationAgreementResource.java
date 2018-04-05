@@ -6,6 +6,7 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.event.ApiResourceType;
 import com.rackspace.idm.event.IdentityApi;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -161,6 +162,28 @@ public class DelegationAgreementResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @GET
+    @Path("/{agreementId}/roles")
+    public Response getRolesOnDelegationAgreement (
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @PathParam("agreementId") String agreementId,
+            @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken,
+            @QueryParam("marker") Integer marker,
+            @QueryParam("limit") Integer limit) {
+        try {
+            verifyServiceEnabled();
+            return delegationCloudService.listRoleAssignmentsOnAgreement(
+                    uriInfo,
+                    authToken,
+                    agreementId,
+                    new DelegationAgreementRoleSearchParams(new PaginationParams(validateMarker(marker), validateLimit(limit))));
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @DELETE
     @Path("/{agreementId}/roles/{roleId}")
     public Response revokeRoleFromDelegationAgreement (
@@ -180,6 +203,33 @@ public class DelegationAgreementResource {
     private void verifyServiceEnabled() throws ServiceUnavailableException {
         if (!identityConfig.getReloadableConfig().areDelegationAgreementServicesEnabled()) {
             throw new ServiceUnavailableException(GlobalConstants.ERROR_MSG_SERVICE_NOT_FOUND);
+        }
+    }
+
+    // TODO: Move to common location
+    protected int validateMarker(Integer offset) {
+        if (offset == null) {
+            return 0;
+        }
+        if (offset < 0) {
+            throw new BadRequestException("Marker must be non negative");
+        }
+        return offset;
+    }
+
+    // TODO: Move to common location
+    protected int validateLimit(Integer limit) {
+        if (limit == null) {
+            return identityConfig.getStaticConfig().getLdapPagingDefault();
+        }
+        if (limit < 0) {
+            throw new BadRequestException("Limit must be non negative");
+        } else if (limit == 0) {
+            return identityConfig.getStaticConfig().getLdapPagingDefault();
+        } else if (limit > identityConfig.getStaticConfig().getLdapPagingMaximum()) {
+            return identityConfig.getStaticConfig().getLdapPagingMaximum();
+        } else {
+            return limit;
         }
     }
 }

@@ -703,11 +703,29 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         }
         cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments)
 
-        when:
-        def response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, ROLE_RBAC1_ID)
+        when: "list roles for DA"
+        def response = cloud20.listRolesOnDelegationAgreement(userAdminToken, createdDA)
+        def retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, ROLE_RBAC1_ID)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userAdminToken, createdDA)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
     }
 
     def "error: Common errors for revoking a role from a delegation agreement"() {

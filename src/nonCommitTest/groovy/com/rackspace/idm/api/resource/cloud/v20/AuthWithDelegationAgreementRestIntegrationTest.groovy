@@ -359,7 +359,6 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
                 assert matchingSubUserEndpointForService != null
             }
         }
-
     }
 
 }

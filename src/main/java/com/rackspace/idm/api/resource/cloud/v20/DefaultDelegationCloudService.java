@@ -22,6 +22,7 @@ import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
@@ -332,11 +333,51 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             delegationService.replaceRoleAssignmentsOnDelegationAgreement(delegationAgreement, roleAssignments);
 
             // Retrieve the first 1000 assigned roles on the user
-            PaginatorContext<TenantRole> tenantRolePage = delegationService.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, new PaginationParams(0, 1000));
+            PaginatorContext<TenantRole> tenantRolePage = delegationService.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, new DelegationAgreementRoleSearchParams(new PaginationParams(0, 1000)));
 
             return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
         } catch (Exception ex) {
             LOG.debug(String.format("Error granting roles to delegation agreement '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response listRoleAssignmentsOnAgreement(UriInfo uriInfo, String authToken, String agreementId, DelegationAgreementRoleSearchParams searchParams) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal or a delegate to list DA roles
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null
+                    || !(delegationAgreement.isEffectivePrincipal(caller)
+                    || delegationAgreement.isEffectiveDelegate(caller))) {
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            PaginatorContext<TenantRole> tenantRolePage = delegationService.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, searchParams);
+
+            String linkHeader = idmPathUtils.createLinkHeader(uriInfo, tenantRolePage);
+
+            return Response.status(200)
+                    .header(HttpHeaders.LINK, linkHeader)
+                    .entity(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error retrieving roles from delegation agreement '%s'", agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
     }
