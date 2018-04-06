@@ -9,7 +9,6 @@ import com.rackspace.idm.helpers.CloudTestUtils
 import com.sun.jersey.api.client.WebResource
 import org.apache.commons.lang.math.RandomUtils
 import org.joda.time.DateTime
-import org.junit.Rule
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.model.HttpRequest
 import org.mockserver.model.HttpResponse
@@ -20,7 +19,7 @@ import spock.lang.Specification
 
 import javax.ws.rs.core.MediaType
 
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+import static org.mockserver.integration.ClientAndServer.startClientAndServer
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class RootIntegrationTest extends Specification {
@@ -235,5 +234,9 @@ class RootIntegrationTest extends Specification {
 
     static def getRandomIntegerGreaterThan(int min) {
         return getRandomIntegerInRange(min, Integer.MAX_VALUE);
+    }
+
+    static def getRandomRCN() {
+        return String.format("RCN-%d-%d-%d", RandomUtils.nextInt(900) + 100, RandomUtils.nextInt(900) + 100, RandomUtils.nextInt(900) + 100)
     }
 }

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -60,7 +59,6 @@ class TestManageDelegates(base.TestBaseV2):
             const.X_AUTH_TOKEN]
         cls.group_ids = []
 
-    @attr(type='regression')
     def test_add_and_remove_user_delegate(self):
 
         # Create a Delegation Agreement for Domain 1, with sub user in Domain 2
@@ -115,7 +113,6 @@ class TestManageDelegates(base.TestBaseV2):
         else:
             return responses.UserGroup(resp.json())
 
-    @attr(type='regression')
     def test_add_and_remove_user_group_delegate(self):
 
         group_one = self.create_and_add_user_group_to_domain(

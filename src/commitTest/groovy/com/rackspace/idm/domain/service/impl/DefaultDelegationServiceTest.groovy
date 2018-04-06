@@ -4,6 +4,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.entity.DelegationAgreement
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.DelegationService
@@ -159,5 +161,35 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         IdmExceptionAssert.assertException(ex, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified role does not exist for agreement")
 
         1 * tenantRoleDao.getRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId) >> null
+    }
+
+    def "getRoleAssignmentsOnDelegationAgreement: calls correct daos"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement()
+        def searchParams = new DelegationAgreementRoleSearchParams(new PaginationParams())
+
+        when:
+        service.getRoleAssignmentsOnDelegationAgreement(da, searchParams)
+
+        then:
+        1 * tenantRoleDao.getRoleAssignmentsOnDelegationAgreement(da, searchParams.getPaginationRequest());
+    }
+
+    def "getRoleAssignmentsOnDelegationAgreement: error check"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement()
+        def searchParams = new DelegationAgreementRoleSearchParams(new PaginationParams())
+
+        when: "DA is null"
+        service.getRoleAssignmentsOnDelegationAgreement(null, searchParams)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "searchParam is null"
+        service.getRoleAssignmentsOnDelegationAgreement(da, null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }

@@ -1265,6 +1265,12 @@ class Cloud20Utils {
         response.getEntity(DelegationAgreement).value
     }
 
+    def grantRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, RoleAssignments roleAssignments, token = getIdentityAdminToken()) {
+        def response = methods.grantRoleAssignmentsOnDelegationAgreement(token, delegationAgreement, roleAssignments)
+        assert response.status == SC_OK
+        return response.getEntity(RoleAssignments)
+    }
+
     def extractSessionIdFromFirstWwwAuthenticateHeader(MultivaluedMap<String, String> headers) {
         return extractSessionIdFromWwwAuthenticateHeader(headers.getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE));
     }
