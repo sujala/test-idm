@@ -112,7 +112,6 @@ object Tokens {
       .header("X-Forwarded-For", "${ipaddress}")
       .header("Accept-Encoding", "identity")
       .header("Content-Type", "application/xml")
-      .header("Identity-API-Version", "2.0")
       .body(StringBody(session => {
 ////         val output = command.!!
 //         val baos = new ByteArrayOutputStream
@@ -152,6 +151,76 @@ object Tokens {
       result
       })) 
       .check(status.is(200), status.saveAs("status"), bodyString.saveAs("responseBody")))
+      .exitHereIfFailed
+  }
+  def v20_saml_authenticate_same_user: ChainBuilder = {
+    feed(fedDomainFeeder)
+      .exec(http("POST /v2.0/RAX-AUTH/federation/saml/auth")
+        .post("/v2.0/RAX-AUTH/federation/saml/auth")
+        .header("X-Forwarded-For", "${ipaddress}")
+        .header("Accept-Encoding", "identity")
+        .header("Content-Type", "application/xml")
+        .body(StringBody(session => {
+          val domain = session("domainid").as[String]
+          val username = s"fed_user_$domain"
+          val email = "federated@rackspace.com"
+          val brokerIssuer = null
+          val originIssuer = "https://perf-" + domain+ ".issuer.com"
+          val tokenExpirationSeconds = 5000
+          val PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+          val rawFlavor = "v2DomainOrigin"
+          val responseFlavor = ResponseFlavor.fromFlavor(rawFlavor)
+          val request= new FederatedDomainAuthGenerationRequest()
+          request.setUsername(username)
+          request.setEmail(email)
+          request.setDomainId(domain)
+          request.setBrokerIssuer(brokerIssuer)
+          request.setOriginIssuer(originIssuer)
+          request.setValiditySeconds(tokenExpirationSeconds)
+          request.setAuthContextRefClass(PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
+          request.setRequestIssueInstant(new DateTime())
+          request.setResponseFlavor(responseFlavor.asInstanceOf[ResponseFlavor])
+          val response = generator.createSignedSAMLResponse(request)
+          val result = generator.convertResponseToString(response)
+          println(result)
+          result
+        }))
+        .check(status.is(200), status.saveAs("status"), bodyString.saveAs("responseBody")))
+      .exitHereIfFailed
+  }
+  def v20_saml_authenticate_same_user_old_endpoint: ChainBuilder = {
+    feed(fedDomainFeeder)
+      .exec(http("POST /v2.0/RAX-AUTH/saml-tokens")
+        .post("/v2.0/RAX-AUTH/saml-tokens")
+        .header("X-Forwarded-For", "${ipaddress}")
+        .header("Accept-Encoding", "identity")
+        .header("Content-Type", "application/xml")
+        .body(StringBody(session => {
+          val domain = session("domainid").as[String]
+          val username = s"fed_user_$domain"
+          val email = "federated@rackspace.com"
+          val brokerIssuer = null
+          val originIssuer = "https://perf-" + domain+ ".issuer.com"
+          val tokenExpirationSeconds = 5000
+          val PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+          val rawFlavor = "v2DomainOrigin"
+          val responseFlavor = ResponseFlavor.fromFlavor(rawFlavor)
+          val request= new FederatedDomainAuthGenerationRequest()
+          request.setUsername(username)
+          request.setEmail(email)
+          request.setDomainId(domain)
+          request.setBrokerIssuer(brokerIssuer)
+          request.setOriginIssuer(originIssuer)
+          request.setValiditySeconds(tokenExpirationSeconds)
+          request.setAuthContextRefClass(PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
+          request.setRequestIssueInstant(new DateTime())
+          request.setResponseFlavor(responseFlavor.asInstanceOf[ResponseFlavor])
+          val response = generator.createSignedSAMLResponse(request)
+          val result = generator.convertResponseToString(response)
+          println(result)
+          result
+        }))
+        .check(status.is(200), status.saveAs("status"), bodyString.saveAs("responseBody")))
       .exitHereIfFailed
   }
   def v20_impersonate: ChainBuilder = {
