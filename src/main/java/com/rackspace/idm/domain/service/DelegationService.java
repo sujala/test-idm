@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.DelegationDelegate;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
+import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 
 import java.util.List;
 
@@ -92,6 +93,14 @@ public interface DelegationService {
      * @throws com.rackspace.idm.exception.NotFoundException If role is not assigned to DA
      */
     void revokeRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId);
+
+    /**
+     * Retrieves the delegation agreements by the specified search params
+     *
+     * @param findDelegationAgreementParams
+     * @return
+     */
+    List<DelegationAgreement> findDelegationAgreements(FindDelegationAgreementParams findDelegationAgreementParams);
 
     /**
      * Given a reference to a delegate, look up the delegate.

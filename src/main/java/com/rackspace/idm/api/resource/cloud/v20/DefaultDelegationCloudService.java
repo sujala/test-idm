@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.List;
 
 /**
  * Implementation of the delegation API services. Implementation is greatly simplified and standardized by combining
@@ -166,11 +167,11 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
-            // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
-
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
 
@@ -189,6 +190,52 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     }
 
     @Override
+    public Response listAgreements(String authToken, String relationshipType) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            DelegationDelegate delegationDelegate = caller instanceof DelegationDelegate ? (DelegationDelegate) caller : null;
+            DelegationPrincipal delegationPrincipal = caller instanceof DelegationPrincipal ? (DelegationPrincipal) caller : null;
+
+            FindDelegationAgreementParams findDelegationAgreementParams = null;
+            try {
+                if (StringUtils.isBlank(relationshipType)) {
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegate, delegationPrincipal);
+                } else if (StringUtils.equalsIgnoreCase("delegate", relationshipType)) {
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegate, null);
+                } else if (StringUtils.equalsIgnoreCase("principal", relationshipType)) {
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(null, delegationPrincipal);
+                } else {
+                    throw new BadRequestException("Invalid relationship param", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+                }
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Invalid caller for relationship", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            List<com.rackspace.idm.domain.entity.DelegationAgreement> delegationAgreements = delegationService.findDelegationAgreements(findDelegationAgreementParams);
+
+            return Response.ok().entity(delegationAgreementConverter.toDelegationAgreementsWeb(delegationAgreements)).build();
+        } catch (Exception ex) {
+            LOG.debug("Error finding delegation agreements", ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
     public Response deleteAgreement(String authToken, String agreementId) {
         try {
             // Verify token exists and valid
@@ -199,11 +246,11 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
-            // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
-
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
@@ -232,11 +279,11 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
-            // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
-
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
@@ -274,11 +321,11 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
-            // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
-
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 

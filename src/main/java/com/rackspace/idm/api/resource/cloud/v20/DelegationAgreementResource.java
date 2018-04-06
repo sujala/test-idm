@@ -47,6 +47,22 @@ public class DelegationAgreementResource {
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
+    public Response listDelegationAgreements (
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @QueryParam("relationship") String relationship,
+            @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken) {
+        try {
+            verifyServiceEnabled();
+            return delegationCloudService.listAgreements(authToken, relationship);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @GET
     @Path("/{agreementId}")
     public Response getDelegationAgreement (
             @Context HttpHeaders httpHeaders,

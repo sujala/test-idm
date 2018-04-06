@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreements;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.service.DelegationService;
@@ -10,6 +11,8 @@ import org.apache.commons.configuration.Configuration;
 import org.dozer.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class DelegationAgreementConverter {
@@ -53,4 +56,11 @@ public class DelegationAgreementConverter {
         return delegationAgreement;
     }
 
+    public DelegationAgreements toDelegationAgreementsWeb(List<com.rackspace.idm.domain.entity.DelegationAgreement> delegationAgreements) {
+        DelegationAgreements agreementsWeb = new DelegationAgreements();
+        for (com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement : delegationAgreements) {
+            agreementsWeb.getDelegationAgreement().add(toDelegationAgreementWeb(delegationAgreement));
+        }
+        return agreementsWeb;
+    }
 }

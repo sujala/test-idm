@@ -42,6 +42,23 @@ public interface DelegationCloudService {
     Response getAgreement(String authToken, String agreementId);
 
     /**
+     * Retrieves the delegation agreements (DA) associated with the caller with the specified relationship. Possible
+     * values (case insensitive):
+     * <ul>
+     *     <li>delegate</li>
+     *     <li>principal</li>
+     * </ul>
+     *
+     * A null or blank value for relationship implies both. Any other value must result in a BadRequestException and
+     * return a 400 response code.
+     *
+     * @param authToken
+     * @param relationshipType
+     * @return
+     */
+    Response listAgreements(String authToken, String relationshipType);
+
+    /**
      * Deletes the specified delegation agreement (DA). The caller must be the principal of the DA to delete it.
      *
      * @param authToken

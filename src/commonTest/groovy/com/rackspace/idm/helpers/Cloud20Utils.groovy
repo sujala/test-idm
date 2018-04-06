@@ -46,7 +46,6 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
@@ -1269,6 +1268,22 @@ class Cloud20Utils {
         def response = methods.grantRoleAssignmentsOnDelegationAgreement(token, delegationAgreement, roleAssignments)
         assert response.status == SC_OK
         return response.getEntity(RoleAssignments)
+    }
+
+    def addUserDelegate(String token, String delegationAgreementId, String userId) {
+        def response = methods.addUserDelegate(token, delegationAgreementId, userId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def addUserGroupDelegate(String token, String delegationAgreementId, String userGroupId) {
+        def response = methods.addUserGroupDelegate(token, delegationAgreementId, userGroupId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def listDelegationAgreements(token, relationship = null) {
+        def response = methods.listDelegationAgreements(token, relationship)
+        assert (response.status == SC_OK)
+        response.getEntity(DelegationAgreements)
     }
 
     def extractSessionIdFromFirstWwwAuthenticateHeader(MultivaluedMap<String, String> headers) {

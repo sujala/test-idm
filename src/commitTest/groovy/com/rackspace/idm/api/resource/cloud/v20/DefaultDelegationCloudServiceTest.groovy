@@ -11,6 +11,7 @@ import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import org.apache.commons.lang3.RandomStringUtils
+import org.mockserver.model.HttpResponse
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmExceptionAssert
@@ -47,7 +48,9 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
     /**
      * Verifies each service performs that standard authorization on the passed in token appropriate. Each test will
      * fail for different reasons after the authorization checks. The tests also verify the standard exception handler
-     * is called for each test.
+     * is called for each test. Each "where" entry must provide a closure that will cause the call to throw an exception.
+     * The expected exception is specified to verify the method under test sends the exception to the standard
+     * error handling routing.
      *
      * @return
      */
@@ -85,6 +88,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["grantRolesToAgreement", {token -> service.grantRolesToAgreement(token, "id", new RoleAssignments())}, NotFoundException, "GEN-004"]
                 , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}, NotFoundException, "GEN-004"]
                 , ["listRoleAssignmentsOnAgreement", {token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams()))}, NotFoundException, "GEN-004"]
+                , ["listDelegationAgreements", {token -> service.listAgreements(token, "invalidRelationship")}, BadRequestException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE]
         ]
     }
 

@@ -202,7 +202,8 @@
     <element name="tenantAssignments" type="RAX-AUTH:TenantAssignments" />
     <element name="roleAssignments" type="RAX-AUTH:RoleAssignments" />
     <element name="delegationAgreement" type="RAX-AUTH:DelegationAgreement" />
-    
+    <element name="delegationAgreements" type="RAX-AUTH:DelegationAgreements" />
+
     <!-- Complex Types -->
     <complexType name="Types">
         <sequence>
@@ -1288,7 +1289,13 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+    </complexType>
 
+    <complexType name="DelegationAgreements">
+        <sequence>
+            <element name="delegationAgreement" type="RAX-AUTH:DelegationAgreement" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
 
     <complexType name="UserGroup">

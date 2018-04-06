@@ -1359,6 +1359,20 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).get(ClientResponse)
     }
 
+    def listDelegationAgreements(token, relationship = null, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+
+        WebResource resource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA)
+        if (StringUtils.isNotBlank(relationship)) {
+            MultivaluedMapImpl map = new MultivaluedMapImpl().with {
+                it.add("relationship", relationship)
+                return it
+            }
+            resource = resource.queryParams(map)
+        }
+        resource.header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
+    }
+
     def deleteDelegationAgreement(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).delete(ClientResponse)

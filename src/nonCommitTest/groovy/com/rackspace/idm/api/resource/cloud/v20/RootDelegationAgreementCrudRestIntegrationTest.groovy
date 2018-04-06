@@ -111,9 +111,10 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
                 , ["getDelegationAgreement", {cloud20.getDelegationAgreement(it, "id")}]
                 , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement(it, "id")}]
                 , ["addUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["addUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["addUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
                 , ["deleteUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["deleteUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["deleteUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
+                , ["listDelegationAgreements", {cloud20.listDelegationAgreements(it, null)}]
         ]
     }
 
@@ -134,9 +135,10 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
                 , ["getDelegationAgreement", {cloud20.getDelegationAgreement(it, "id")}]
                 , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement(it, "id")}]
                 , ["addUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["addUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["addUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
                 , ["deleteUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["deleteUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["deleteUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
+                , ["listDelegationAgreements", {cloud20.listDelegationAgreements(it, null)}]
         ]
     }
 
