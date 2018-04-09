@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.*;
@@ -19,7 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Component
@@ -310,7 +312,7 @@ public class DefaultDomainService implements DomainService {
             Domain domain = getDomain(domainId);
             if (domain != null) {
                 User userAdmin = userService.getUserAdminByDomain(domain);
-                if (userAdmin != null) {
+                if (userAdmin != null && domainId.equalsIgnoreCase(userAdmin.getDomainId())) {
                     userAdmins.add(userAdmin);
                 }
             }
