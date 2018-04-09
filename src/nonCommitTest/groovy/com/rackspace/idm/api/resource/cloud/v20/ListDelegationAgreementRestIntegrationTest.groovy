@@ -108,8 +108,7 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         assert (rcnSwitchResponse.status == SC_NO_CONTENT)
         rcnSwitchResponse = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), userAdminD2.domainId, commonRcn)
         assert (rcnSwitchResponse.status == SC_NO_CONTENT)
-
-
+        
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it

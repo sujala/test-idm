@@ -49,7 +49,6 @@ public class DelegationAgreementResource {
     @GET
     public Response listDelegationAgreements (
             @Context HttpHeaders httpHeaders,
-            @Context UriInfo uriInfo,
             @QueryParam("relationship") String relationship,
             @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken) {
         try {

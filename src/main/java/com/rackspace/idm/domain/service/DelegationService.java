@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
+import com.rackspace.idm.exception.SizeLimitExceededException;
 
 import java.util.List;
 
@@ -99,6 +100,8 @@ public interface DelegationService {
      *
      * @param findDelegationAgreementParams
      * @return
+     *
+     * @throws SizeLimitExceededException if the search results in too many results being returned. The user must specify params to limit the result size.
      */
     List<DelegationAgreement> findDelegationAgreements(FindDelegationAgreementParams findDelegationAgreementParams);
 

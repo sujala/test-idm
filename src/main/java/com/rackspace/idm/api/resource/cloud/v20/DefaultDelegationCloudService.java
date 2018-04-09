@@ -208,17 +208,32 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            DelegationDelegate delegationDelegate = caller instanceof DelegationDelegate ? (DelegationDelegate) caller : null;
-            DelegationPrincipal delegationPrincipal = caller instanceof DelegationPrincipal ? (DelegationPrincipal) caller : null;
+            /*
+            To search for DAs by principal and/or delegate must provide the delegate and/or principal to search on. This
+            is done by providing a DelegationDelegate or DelegationPrincipal. Currently this call is limited to solely
+            search for DAs for which the *caller* is an (effective) principal or (effective) delegate. All Federated
+            users and provisioned users
+            can potentially be a delegate or principal. However, not all implementations of EndUser can currently be
+            a delegate or principal. In particular, EndUserDelegates can not be principals until Derived DAs are allowed.
+             */
+            DelegationDelegate delegationDelegateSearchReference = caller instanceof DelegationDelegate ? (DelegationDelegate) caller : null;
+            DelegationPrincipal delegationPrincipalSearchReference = caller instanceof DelegationPrincipal ? (DelegationPrincipal) caller : null;
 
+            /*
+            The exact search params depend on the relationship requested.
+            - When no relationship is specified, search for all DAs for which caller is either an effective principal
+            or effective delegate.
+            - When delegate is specified, only find those DAs for which caller is an effective delegate
+            - When principal is specified, only find those DAs for which caller is an effective principal
+             */
             FindDelegationAgreementParams findDelegationAgreementParams = null;
             try {
                 if (StringUtils.isBlank(relationshipType)) {
-                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegate, delegationPrincipal);
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegateSearchReference, delegationPrincipalSearchReference);
                 } else if (StringUtils.equalsIgnoreCase("delegate", relationshipType)) {
-                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegate, null);
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegateSearchReference, null);
                 } else if (StringUtils.equalsIgnoreCase("principal", relationshipType)) {
-                    findDelegationAgreementParams = new FindDelegationAgreementParams(null, delegationPrincipal);
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(null, delegationPrincipalSearchReference);
                 } else {
                     throw new BadRequestException("Invalid relationship param", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
                 }
@@ -229,6 +244,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             List<com.rackspace.idm.domain.entity.DelegationAgreement> delegationAgreements = delegationService.findDelegationAgreements(findDelegationAgreementParams);
 
             return Response.ok().entity(delegationAgreementConverter.toDelegationAgreementsWeb(delegationAgreements)).build();
+        } catch (SizeLimitExceededException ex) {
+            // For consistency, always go through the standard exceptionHandler method to process exceptions.
+            return exceptionHandler.exceptionResponse(new ForbiddenException("The search resulted in too many results. Please apply filters to reduce the number of results.")).build();
         } catch (Exception ex) {
             LOG.debug("Error finding delegation agreements", ex);
             return exceptionHandler.exceptionResponse(ex).build();
