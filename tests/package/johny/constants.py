@@ -499,6 +499,7 @@ UA = 'http://feeds.api.rackspacecloud.com/cadf/user-access-event'
 '''CONSTANTS'''
 AUTH_BY_LIST = ['APIKEY', 'PASSWORD', 'FEDERATED']
 AUTH_BY_DELEGATION = 'DELEGATE'
+AUTH_BY_FEDERATED = 'FEDERATED'
 AUTH_BY_PWD = 'PASSWORD'
 AUTH_BY_OTPPASSCODE = 'OTPPASSCODE'
 DC_LIST = ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']

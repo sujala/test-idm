@@ -1175,7 +1175,7 @@ class TenantRoleAssignments(base.AutoMarshallingModel):
 
 
 class DelegationAgreements(base.AutoMarshallingModel):
-    def __init__(self, da_name, delegate_id, principal_id=None,
+    def __init__(self, da_name, delegate_id=None, principal_id=None,
                  principal_type=None, description=None):
         self.da_name = da_name
         self.delegate_id = delegate_id
