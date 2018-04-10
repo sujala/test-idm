@@ -42,6 +42,7 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                     Object fedIdp = userJson.get(JSONConstants.RAX_AUTH_FEDERATED_IDP);
                     Object contactId = userJson.get(JSONConstants.RAX_AUTH_CONTACT_ID);
                     Object sessionInactivityTimeout = userJson.get(JSONConstants.RAX_AUTH_SESSION_INACTIVITY_TIMEOUT);
+                    Object delegationAgreementId = userJson.get(JSONConstants.RAX_AUTH_DELEGATION_AGREEMENT_ID);
 
                     JSONArray userRolesArray = (JSONArray) userJson.get(JSONConstants.ROLES);
 
@@ -75,6 +76,10 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                         } catch (Exception e) {
                             LOGGER.error("Error converting session inactivity timeout to duration");
                         }
+                    }
+
+                    if (delegationAgreementId != null) {
+                        user.setDelegationAgreementId(delegationAgreementId.toString());
                     }
 
                     if (userRolesArray != null) {

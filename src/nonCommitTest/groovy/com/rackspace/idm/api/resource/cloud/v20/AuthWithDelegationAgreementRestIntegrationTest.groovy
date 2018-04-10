@@ -233,7 +233,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id, mediaType)
 
         then: "resultant info is appropriate"
-        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2)
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2, da)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -317,7 +317,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         featureEnabled << [true, false]
     }
 
-    void assertDelegateAuthSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser) {
+    void assertDelegateAuthSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser, DelegationAgreement da) {
         // Token info same (though not id..)
         assert delegateAuthResponse.token.tenant.name == realSubUserAuthResponse.token.tenant.name
         assert delegateAuthResponse.token.tenant.id == realSubUserAuthResponse.token.tenant.id
@@ -343,6 +343,9 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         // User identifying information reflects user authenticating
         assert delegateAuthResponse.user.id == delegateUser.id // User reflects the delegate
         assert delegateAuthResponse.user.name == delegateUser.username // User reflects the delegate
+        if (da != null) {
+            assert delegateAuthResponse.user.delegationAgreementId == da.id
+        }
 
         // service catalogs are the same
         delegateAuthResponse.serviceCatalog.service.size() == realSubUserAuthResponse.serviceCatalog.service.size()
