@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
@@ -21,7 +19,6 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
-import testHelpers.SamlGenerator
 
 import javax.ws.rs.core.MediaType
 
@@ -247,7 +244,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
     }
 
     @Unroll
-    def "Valid user group delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled, mediaType = #mediaType"() {
+    def "Valid user group delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
 
         // Create a user group in domain 2 and add user to it
@@ -270,7 +267,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id)
 
         then: "resultant info is appropriate"
-        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2)
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2, da)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -280,7 +277,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
     }
 
     @Unroll
-    def "Valid fed user delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled, mediaType = #mediaType"() {
+    def "Valid fed user delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
 
         // Create a fed user under common global IDP
@@ -308,7 +305,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id)
 
         then: "resultant info is appropriate"
-        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, adapterForFedUser)
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, adapterForFedUser, da)
 
         cleanup:
         reloadableConfiguration.reset()
