@@ -5,7 +5,6 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
-import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
