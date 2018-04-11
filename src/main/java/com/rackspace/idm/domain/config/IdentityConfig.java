@@ -2229,11 +2229,11 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP);
         }
 
-        @IdmProp(key = ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, versionAdded = "3.21.0", description = "Maximum number tenant assignment in request that grant roles.")
+        @IdmProp(key = ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, versionAdded = "3.21.1", description = "Maximum number tenant assignment in request that grant roles.")
         public int getRoleAssignmentsMaxTenantAssignmentsPerRequest() {
             return getIntSafely(reloadableConfiguration, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP);
         }
-       
+
     }
 
     public class RepositoryConfig {
