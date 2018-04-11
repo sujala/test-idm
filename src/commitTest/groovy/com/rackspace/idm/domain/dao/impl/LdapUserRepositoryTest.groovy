@@ -81,10 +81,23 @@ class LdapUserRepositoryTest extends RootServiceTest {
     }
 
     def "getUserAdminByDomain: error check"() {
+        given:
+        def domain = entityFactory.createDomain().with {
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
+
         when: "domain is null"
         dao.getUserAdminByDomain(null)
 
         then:
         thrown(IllegalArgumentException)
+
+        when: "dn does not exit"
+        User user = dao.getUserAdminByDomain(domain)
+
+        then:
+        1 * ldapInterface.getEntry(domain.userAdminDN.toString(), dao.getSearchAttributes()) >> null
+        user == null
     }
 }
