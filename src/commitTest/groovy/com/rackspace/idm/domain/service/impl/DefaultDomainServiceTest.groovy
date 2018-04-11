@@ -398,7 +398,7 @@ class DefaultDomainServiceTest extends RootServiceTest {
      * This method will make extra calls when 'feature.enable.user.admin.look.up.by.domain' is enabled for domains that
      * have not had their user-admin migrated, or if the user or domain do not exist.
      */
-    def "getDomainAdmins:  test 'feature.enable.user.admin.look.up.by.domain' set to true"() {
+    def "getDomainAdmins: test 'feature.enable.user.admin.look.up.by.domain' set to true"() {
         def domain = entityFactory.createDomain()
 
         identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> true
@@ -419,6 +419,33 @@ class DefaultDomainServiceTest extends RootServiceTest {
         then:
         1 * domainDao.getDomain(domain.domainId) >> domain
         1 * userService.getUserAdminByDomain(domain) >> null
+        1 * userService.getUsersWithDomain(domain.domainId) >> []
+
+        userAdminList.size() == 0
+    }
+
+    /**
+     * This test will verify a possible state when running an older version of identity which does not have the logic
+     * to remove or update the userAdminDN on a domain. This state can happen if the a user-admin was created using idm
+     * artifact 3.21.0, and then the user was deleted or was moved from a domain using an older version. This will
+     * cause the userAdminDN reference on domain to point to a user that does not exist or no longer belong to the
+     * specified domain.
+     */
+    def "getDomainAdmins: verify that if user retrieve no longer belong to the domainId specified fallback to the old logic"() {
+        def domainId = "someDomainId"
+        def domain = entityFactory.createDomain(domainId)
+        def user = entityFactory.createUser().with {
+            it.domainId = "otherDomainId"
+            it
+        }
+
+        when:
+        def userAdminList = service.getDomainAdmins(domain.domainId)
+
+        then:
+        1 * identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> true
+        1 * domainDao.getDomain(domain.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> user
         1 * userService.getUsersWithDomain(domain.domainId) >> []
 
         userAdminList.size() == 0
