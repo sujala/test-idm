@@ -38,8 +38,6 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
     @Shared org.openstack.docs.identity.api.v2.Tenant sharedUserAdminFilesTenant
 
     void doSetupSpec() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
-
         def authResponse = cloud20.authenticatePassword(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
         assert authResponse.status == HttpStatus.SC_OK
         sharedIdentityAdminToken = authResponse.getEntity(AuthenticateResponse).value.token.id
@@ -53,6 +51,14 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         sharedUserAdminFilesTenant = tenants.tenant.find() {
             it.id != sharedUserAdmin.domainId
         }
+    }
+
+    def setup() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
+    }
+
+    def cleanup() {
+        reloadableConfiguration.reset()
     }
 
     /**
@@ -186,6 +192,37 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Error: Do not allow more than the max tenant assignments when granting roles to user group - maxTenantAssignments = #maxTa"(){
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, maxTa)
+        UserGroup group = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.name = "addRoleTest_" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def createdGroup = cloud20.createUserGroup(sharedIdentityAdminToken, group).getEntity(UserGroup)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [sharedUserAdminCloudTenant.id]))
+            ta.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, [sharedUserAdminFilesTenant.id]))
+            it.tenantAssignments = ta
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST,
+                ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE,
+                String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_MAX_TENANT_ASSIGNMENT_MSG_PATTERN, maxTa))
+
+        where:
+        maxTa << [0, 1]
     }
 
     @Unroll

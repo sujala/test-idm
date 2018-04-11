@@ -31,9 +31,13 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
     @Autowired
     ApplicationService applicationService
 
-    void doSetupSpec() {
+    def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
+    }
+
+    def cleanup() {
+        reloadableConfiguration.reset()
     }
 
     /**
@@ -286,6 +290,44 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Error: Do not allow more than the max tenant assignments when granting roles to delegation agreement - maxTenantAssignments = #maxTa"(){
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, maxTa)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def defaultUser = utils.createUser(userAdminToken)
+
+        def cloudTenantId = userAdmin.domainId
+        def filesTenantId = utils.getNastTenant(userAdmin.domainId)
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it.delegateId = defaultUser.id
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+            ta.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, [filesTenantId]))
+            it.tenantAssignments = ta
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST,
+                ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE,
+                String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_MAX_TENANT_ASSIGNMENT_MSG_PATTERN, maxTa))
+
+        where:
+        maxTa << [0, 1]
     }
 
     @Unroll

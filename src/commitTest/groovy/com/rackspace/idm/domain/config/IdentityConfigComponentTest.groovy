@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.config
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
 import com.rackspace.idm.domain.entity.IdentityProperty
 import com.rackspace.idm.domain.security.TokenFormat
@@ -8,9 +7,6 @@ import com.rackspace.idm.domain.service.IdentityPropertyService
 import com.rackspace.test.SingleTestConfiguration
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy
-import org.apache.commons.lang.StringUtils
-import org.apache.commons.lang3.RandomStringUtils
-import org.junit.Rule
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -21,15 +17,6 @@ import spock.lang.Unroll
 import testHelpers.SingletonConfiguration
 import testHelpers.SingletonReloadableConfiguration
 import testHelpers.SingletonTestFileConfiguration
-
-import static org.apache.http.HttpStatus.SC_CREATED
-import static org.apache.http.HttpStatus.SC_CREATED
-import static org.apache.http.HttpStatus.SC_FORBIDDEN
-import static org.apache.http.HttpStatus.SC_FORBIDDEN
-import static org.apache.http.HttpStatus.SC_FORBIDDEN
-import static org.apache.http.HttpStatus.SC_FORBIDDEN
-import static org.apache.http.HttpStatus.SC_FORBIDDEN
-import static org.apache.http.HttpStatus.SC_FORBIDDEN
 
 @ContextConfiguration(classes=[SingletonTestFileConfiguration.class
         , IdentityConfig.class
@@ -115,6 +102,20 @@ class IdentityConfigComponentTest extends Specification {
 
         then: "Returns hardcoded default of 20"
         config.getReloadableConfig().getMaxUsersGroupsPerDomain() == 20
+    }
+
+    def "role.assignments.max.tenant.assignments.per.request: Verify hardcoded is set to 10"() {
+        when: "set property to value"
+        reloadableConfiguration.setProperty("role.assignments.max.tenant.assignments.per.request", 5)
+
+        then: "Returns that value"
+        config.getReloadableConfig().getRoleAssignmentsMaxTenantAssignmentsPerRequest() == 5
+
+        when: "property doesn't exist in reloadable"
+        reloadableConfiguration.clearProperty("role.assignments.max.tenant.assignments.per.request")
+
+        then: "Returns hardcoded default of 10"
+        config.getReloadableConfig().getRoleAssignmentsMaxTenantAssignmentsPerRequest() == 10
     }
 
     @Unroll
