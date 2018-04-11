@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -127,6 +129,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockFederatedUserDao(service)
         mockIdentityUserService(service)
         mockIdentityConfig(service)
+        mockTenantAssignmentService(service)
         service.authenticationContext = Mock(AuthenticationContext)
     }
 
@@ -1280,6 +1283,29 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         !isPasswordExpired
+    }
+
+    def "replaceRoleAssignmentsOnUser: calls correct service"() {
+        given:
+        def user = entityFactory.createUser()
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(new TenantAssignment().with {
+                it.onRole = "roleId"
+                it.forTenants.addAll("tenantId")
+                it
+            })
+            it.tenantAssignments = ta
+            it
+        }
+
+        def allowedRoleAccess = IdentityUserTypeEnum.USER_ADMIN.levelAsInt
+
+        when:
+        service.replaceRoleAssignmentsOnUser(user, assignments, allowedRoleAccess)
+
+        then:
+        1 * tenantAssignmentService.replaceTenantAssignmentsOnUser(user, assignments.tenantAssignments.tenantAssignment, allowedRoleAccess)
     }
 
     def "replaceRoleAssignmentsOnUser: Throws IllegalArgumentException if supplied user is invalid"() {

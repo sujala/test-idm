@@ -14,6 +14,7 @@ import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import org.apache.commons.collections4.CollectionUtils
+import testHelpers.IdmAssert
 import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
@@ -33,6 +34,9 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         mockUserService(service)
         mockUserGroupService(service)
         mockDomainService(service)
+        mockIdentityConfig(service)
+
+        reloadableConfig.getRoleAssignmentsMaxTenantAssignmentsPerRequest() >> 10
     }
 
     def "replaceTenantAssignmentsOnUser: Verify static check validations with no backend checks"() {
@@ -1061,5 +1065,33 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         1 * tenantService.getTenant(tenant.tenantId) >> tenant
         1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
         1 * userGroupService.getRoleAssignmentsOnGroup(principalUserGroup.id) >> [allowedTenantRole]
+    }
+
+    def "verifyTenantAssignments: check tenant assignment max size"() {
+        given:
+        List<TenantAssignment> tenantAssignments = new ArrayList<>()
+        TenantAssignment tenantAssignment = new TenantAssignment().with {
+            it.onRole = "1"
+            it.forTenants.add("t1")
+            it
+        }
+        tenantAssignments.add(tenantAssignment)
+
+        when: "valid tenantAssignments"
+        service.verifyTenantAssignments(tenantAssignments)
+
+        then:
+        1 * reloadableConfig.getRoleAssignmentsMaxTenantAssignmentsPerRequest() >> 1
+        notThrown(BadRequestException)
+
+        when: "exceed tenantAssignments max size"
+        service.verifyTenantAssignments(tenantAssignments)
+
+        then:
+        1 * reloadableConfig.getRoleAssignmentsMaxTenantAssignmentsPerRequest() >> 0
+
+        Exception ex = thrown()
+        def expectedMessage = String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_MAX_TENANT_ASSIGNMENT_MSG_PATTERN, 0);
+        IdmAssert.assertIdmExceptionWithMessagePattern(ex, BadRequestException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, expectedMessage)
     }
 }

@@ -3,7 +3,9 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -54,6 +56,9 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Override
     public List<TenantRole> replaceTenantAssignmentsOnUser(User user, List<TenantAssignment> tenantAssignments, Integer allowedRoleAccess) {
@@ -221,7 +226,14 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
      * @return
      */
     private void verifyTenantAssignments(List<TenantAssignment> tenantAssignments) {
-        // First validate no roles are duplicated
+        // Validate max tenant assignments size
+        Integer maxTenantAssignmentsAllowed = identityConfig.getReloadableConfig().getRoleAssignmentsMaxTenantAssignmentsPerRequest();
+        if (tenantAssignments.size() > maxTenantAssignmentsAllowed) {
+            String errMsg = String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_MAX_TENANT_ASSIGNMENT_MSG_PATTERN, maxTenantAssignmentsAllowed);
+            throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+        }
+
+        // Validate no roles are duplicated
         Set<String> roles = new HashSet();
         for (TenantAssignment tenantAssignment : tenantAssignments) {
             if (roles.contains(tenantAssignment.getOnRole())) {

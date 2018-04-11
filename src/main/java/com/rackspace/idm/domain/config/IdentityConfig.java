@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.config;
 
 import com.google.common.base.Splitter;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.ws.rs.core.MediaType;
@@ -411,6 +413,9 @@ public class IdentityConfig {
 
     public static final String FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP = "feature.enable.user.admin.look.up.by.domain";
     public static final boolean FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_DEFAULT = false;
+
+    public static final String ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP = "role.assignments.max.tenant.assignments.per.request";
+    public static final int ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_DEFAULT = 10;
 
     /**
      * Required static prop
@@ -814,6 +819,7 @@ public class IdentityConfig {
         defaults.put(EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_DEFAULT);
+        defaults.put(ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_DEFAULT);
 
         return defaults;
     }
@@ -2222,6 +2228,12 @@ public class IdentityConfig {
         public boolean isUserAdminLookUpByDomain() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP);
         }
+
+        @IdmProp(key = ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, versionAdded = "3.21.0", description = "Maximum number tenant assignment in request that grant roles.")
+        public int getRoleAssignmentsMaxTenantAssignmentsPerRequest() {
+            return getIntSafely(reloadableConfiguration, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP);
+        }
+       
     }
 
     public class RepositoryConfig {
