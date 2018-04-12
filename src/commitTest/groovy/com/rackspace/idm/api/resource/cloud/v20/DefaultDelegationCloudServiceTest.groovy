@@ -134,6 +134,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["grantRolesToAgreement", {token -> service.grantRolesToAgreement(token, "id", new RoleAssignments())}]
                 , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}]
                 , ["listRoleAssignmentsOnAgreement", {token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams()))}]
+                , ["listDelegationAgreements", {token -> service.listAgreements(token, "invalidRelationship")}]
         ]
     }
 

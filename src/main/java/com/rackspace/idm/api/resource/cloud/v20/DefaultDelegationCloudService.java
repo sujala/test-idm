@@ -235,7 +235,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 } else if (StringUtils.equalsIgnoreCase("principal", relationshipType)) {
                     findDelegationAgreementParams = new FindDelegationAgreementParams(null, delegationPrincipalSearchReference);
                 } else {
-                    throw new BadRequestException("Invalid relationship param", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+                    throw new BadRequestException("The specified relationship is invalid", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
                 }
             } catch (IllegalArgumentException e) {
                 throw new BadRequestException("Invalid caller for relationship", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
