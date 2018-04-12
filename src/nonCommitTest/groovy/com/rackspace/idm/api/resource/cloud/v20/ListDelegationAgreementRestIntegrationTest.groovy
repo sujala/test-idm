@@ -88,6 +88,17 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         entity != null
         entity.delegationAgreement.size() == 0
 
+        when: "Identity admin lists DAs"
+        response = cloud20.listDelegationAgreements(utils.getIdentityAdminToken())
+
+        then: "Get 200"
+        response.status == SC_OK
+
+        and:
+        DelegationAgreements entity1 = response.getEntity(DelegationAgreements)
+        entity1 != null
+        entity1.delegationAgreement.size() == 0
+
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
@@ -102,6 +113,7 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         def userAdminD2 = utils.createCloudAccount()
         def userAdminD2Token = utils.getToken(userAdminD2.username)
         def subUserD2 = cloud20.createSubUser(userAdminD2Token)
+        def subUserD2Token = utils.getToken(subUserD2.username)
 
         // Update domains to have same ID
         def rcnSwitchResponse = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), userAdminD1.domainId, commonRcn)
@@ -149,8 +161,20 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         agreements.delegationAgreement.size() == 1
         agreements.delegationAgreement[0].id == da_userAdminD2ToUserAdminD1.id
 
+        when: "userAdminD2 lists DAs w/ relationship = delegate"
+        agreements = utils.listDelegationAgreements(userAdminD2Token, "delegate")
+
+        then: "Get 0 agreements"
+        agreements.delegationAgreement.size() == 0
+
         when: "subUserD1 lists DAs w/o relationship"
         agreements = utils.listDelegationAgreements(subUserD1Token)
+
+        then: "Get 0 agreements"
+        agreements.delegationAgreement.size() == 0
+
+        when: "subUserD2 lists DAs w/ relationship = principal"
+        agreements = utils.listDelegationAgreements(subUserD2Token, "principal")
 
         then: "Get 0 agreements"
         agreements.delegationAgreement.size() == 0
