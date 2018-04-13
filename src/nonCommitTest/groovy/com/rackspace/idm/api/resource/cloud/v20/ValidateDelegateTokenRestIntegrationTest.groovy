@@ -160,7 +160,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         AuthenticateResponse delegateValidateResponse = utils.validateToken(delegateToken, mediaType)
 
         then: "resultant info is appropriate"
-        assertDelegateValidateSameAsSubuser(delegateValidateResponse, realSubUserAuthResponse, sharedSubUser2)
+        assertDelegateValidateSameAsSubuser(delegateValidateResponse, realSubUserAuthResponse, sharedSubUser2, sharedDa)
 
         where:
         mediaType << [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]
@@ -190,7 +190,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         AuthenticateResponse delegateAuthResponse = utils.validateToken(delegateToken)
 
         then: "resultant info is appropriate"
-        assertDelegateValidateSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2)
+        assertDelegateValidateSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2, da)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -229,7 +229,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         AuthenticateResponse delegateAuthResponse = utils.validateToken(delegateToken)
 
         then: "resultant info is appropriate"
-        assertDelegateValidateSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, adapterForFedUser)
+        assertDelegateValidateSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, adapterForFedUser, da)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -238,7 +238,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         featureEnabled << [true, false]
     }
 
-    void assertDelegateValidateSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser) {
+    void assertDelegateValidateSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser, DelegationAgreement da) {
         // Token info same (though not id..)
         assert delegateAuthResponse.token.tenant.name == realSubUserAuthResponse.token.tenant.name
         assert delegateAuthResponse.token.tenant.id == realSubUserAuthResponse.token.tenant.id
@@ -260,6 +260,9 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
             assert matchingSubuserRole != null
             assert delegateRole.name == matchingSubuserRole.name
         }
+
+        // Delegate information is populated
+        assert delegateAuthResponse.user.delegationAgreementId == da.id
 
         // User identifying information reflects user authenticating
         assert delegateAuthResponse.user.id == delegateUser.id // User reflects the delegate
