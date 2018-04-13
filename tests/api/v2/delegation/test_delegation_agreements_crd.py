@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*
+from munch import Munch
+
 from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
-from tests.api.v2.models import factory, responses
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
@@ -27,13 +28,12 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
             additional_input_data=additional_input_data)
 
         domain_id_2 = cls.create_domain_with_rcn()
-        input_data = {
-            'domain_id': domain_id_2
-        }
-        req_object = factory.get_add_user_request_object(
-            input_data=input_data)
-        resp = cls.identity_admin_client.add_user(req_object)
-        cls.user_admin_2 = responses.User(resp.json())
+        additional_input_data = {'domain_id': domain_id_2}
+        cls.user_admin_client_2 = cls.generate_client(
+            parent_client=cls.identity_admin_client,
+            additional_input_data=additional_input_data)
+        cls.user_admin_2_id = cls.user_admin_client_2.default_headers[
+            const.X_USER_ID]
 
     @classmethod
     def create_domain_with_rcn(cls):
@@ -52,10 +52,9 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
     def test_delegation_agreement_crd(self):
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=self.user_admin_2.id)
-        da_resp = self.user_admin_client.create_delegation_agreement(
-            request_object=da_req)
+        da_resp = self.call_create_delegation_agreement(
+            client=self.user_admin_client, delegate_id=self.user_admin_2_id,
+            da_name=da_name)
         self.assertEqual(da_resp.status_code, 201)
         # TODO: Add schema validations once contracts are finalized for
         # Delegation agreements
@@ -73,6 +72,63 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
             da_id=da_id)
         self.assertEqual(get_resp.status_code, 404)
 
+    @attr(type='regression')
+    def test_list_delegation_agreements(self):
+
+        # Create two DAs for same principal & see if list shows both
+        da_1_resp = self.call_create_delegation_agreement(
+            client=self.user_admin_client, delegate_id=self.user_admin_2_id)
+        da_1_resp_parsed = Munch.fromDict(da_1_resp.json())
+        da_1_id = da_1_resp_parsed[const.RAX_AUTH_DELEGATION_AGREEMENT].id
+
+        da_2_resp = self.call_create_delegation_agreement(
+            client=self.user_admin_client, delegate_id=self.user_admin_2_id)
+        da_2_resp_parsed = Munch.fromDict(da_2_resp.json())
+        da_2_id = da_2_resp_parsed[const.RAX_AUTH_DELEGATION_AGREEMENT].id
+
+        list_da_resp = self.user_admin_client.list_delegation_agreements()
+        self.validate_list_delegation_agreements_resp(
+            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
+
+        # Call list DAs as principal with query param & see both DAs are
+        # returned
+        option = {
+            const.RELATIONSHIP: const.QUERY_PARAM_PRINCIPAL
+        }
+        list_da_resp = self.user_admin_client.list_delegation_agreements(
+            option=option)
+        self.validate_list_delegation_agreements_resp(
+            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
+
+        # Call list DAs as delegate with query param 'delegate' & see both DAs
+        # are returned
+        option = {
+            const.RELATIONSHIP: const.QUERY_PARAM_DELEGATE
+        }
+        list_da_resp = self.user_admin_client_2.list_delegation_agreements(
+            option=option)
+        self.validate_list_delegation_agreements_resp(
+            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
+
+    def validate_list_delegation_agreements_resp(
+            self, list_da_resp, da_1_id, da_2_id):
+
+        self.assertEqual(list_da_resp.status_code, 200)
+        da_ids_from_resp = [da[const.ID] for da in list_da_resp.json()[
+            const.RAX_AUTH_DELEGATION_AGREEMENTS]]
+        self.assertIn(da_1_id, da_ids_from_resp)
+        self.assertIn(da_2_id, da_ids_from_resp)
+
+    def call_create_delegation_agreement(self, client, delegate_id,
+                                         da_name=None):
+        if not da_name:
+            da_name = self.generate_random_string(
+                pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
+        da_req = requests.DelegationAgreements(
+            da_name=da_name, delegate_id=delegate_id)
+        da_resp = client.create_delegation_agreement(request_object=da_req)
+        return da_resp
+
     @classmethod
     @base.base.log_tearDown_error
     def tearDownClass(cls):
@@ -83,9 +139,9 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
             'User with ID {0} failed to delete'.format(
               cls.user_admin_client.default_headers[const.X_USER_ID]))
         resp = cls.identity_admin_client.delete_user(
-            user_id=cls.user_admin_2.id)
+            user_id=cls.user_admin_2_id)
         assert resp.status_code == 204, (
-            'User with ID {0} failed to delete'.format(cls.user_admin_2.id))
+            'User with ID {0} failed to delete'.format(cls.user_admin_2_id))
 
         disable_domain_req = requests.Domain(enabled=False)
         for domain_id in cls.domain_ids:

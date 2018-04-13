@@ -1769,7 +1769,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
     def get_delegation_agreement(self, da_id, requestslib_kwargs=None):
         """
-        GET RAX-AUTH/delegation-agreements
+        GET RAX-AUTH/delegation-agreements/{da_id}
         """
         url = self.url + const.DELEGATION_AGREEMENTS_RD_URL.format(da_id=da_id)
         return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
@@ -1840,4 +1840,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + delete_url
 
         return self.request('DELETE', url,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def list_delegation_agreements(self, option=None, requestslib_kwargs=None):
+        """
+        GET RAX-AUTH/delegation-agreements
+        """
+        url = self.url + const.LIST_DELEGATION_AGREEMENTS_URL
+        return self.request('GET', url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
