@@ -50,6 +50,11 @@ class SamlFactory {
         return generateSamlAssertion(issuer, subject, expirationSeconds, attributes, SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, privateKey, publicKey, issueInstant)
     }
 
+    String generateSamlAssertionStringForFederatedUser(issuer, subject, expirationSeconds, HashMap<String, List<String>> attributes, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY, issueInstant = new DateTime()) {
+        Response response = generateSamlAssertion(issuer, subject, expirationSeconds, attributes, SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, privateKey, publicKey, issueInstant)
+        return convertResponseToString(response)
+    }
+
     String generateSamlAssertionStringForFederatedUser(issuer, subject, expirationSeconds, domain, List<String> roles = Collections.EMPTY_LIST, email = Constants.DEFAULT_FED_EMAIL, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY, issueInstant = new DateTime()) {
         Response response = generateSamlAssertionResponseForFederatedUser(issuer, subject, expirationSeconds, domain, roles, email, privateKey, publicKey, issueInstant)
         return convertResponseToString(response)
@@ -79,7 +84,7 @@ class SamlFactory {
         SamlProducer producer = new SamlProducer(privateKey, publicKey);
 
         Response responseInitial = producer.createSAMLResponse(subject, new DateTime(), attributes, issuer, expirationSeconds, authnContextClassRef, issueInstant);
-        return responseInitial;
+        return responseInitial
     }
 
     def generateSamlAssertion(issuer, subject, expirationSeconds, Map<String, List<String>> attributes, String authnContextClassRef = SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, SamlProducer samlProducer) {
@@ -87,12 +92,12 @@ class SamlFactory {
     }
 
     def convertResponseToString(Response samlResponse) {
-        ResponseMarshaller marshaller = new ResponseMarshaller();
-        Element element = marshaller.marshall(samlResponse);
+        ResponseMarshaller marshaller = new ResponseMarshaller()
+        Element element = marshaller.marshall(samlResponse)
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        SerializeSupport.writeNode(element, baos);
-        return new String(baos.toByteArray());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        SerializeSupport.writeNode(element, baos)
+        return new String(baos.toByteArray())
     }
 
     def generateLogoutRequestForFederatedUser(issuer, subject, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY, issueInstant = new DateTime()) {

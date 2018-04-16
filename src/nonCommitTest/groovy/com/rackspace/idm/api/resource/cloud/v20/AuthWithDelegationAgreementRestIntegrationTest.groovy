@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -19,6 +20,9 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
+import testHelpers.saml.SamlAttributeFactory
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
+import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.ws.rs.core.MediaType
 
@@ -49,7 +53,11 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
     AETokenService aeTokenService
 
     @Autowired
-    IdentityUserService identityUserService;
+    IdentityUserService identityUserService
+
+    @Shared FederatedDomainAuthRequestGenerator federatedDomainAuthRequestGenerator
+
+    @Shared String serviceAdminToken
 
     def setupSpec() {
         def authResponse = cloud20.authenticatePassword(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
@@ -94,11 +102,14 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         assert authResponse.status == SC_OK
         sharedSubUser2Token = authResponse.getEntity(AuthenticateResponse).value.token.id
 
-        // Update domains to have same ID
+        // Update domains to have same RCN
         def rcnSwitchResponse = cloud20.domainRcnSwitch(sharedServiceAdminToken, sharedUserAdmin.domainId, commonRcn)
         assert (rcnSwitchResponse.status == SC_NO_CONTENT)
         rcnSwitchResponse = cloud20.domainRcnSwitch(sharedServiceAdminToken, sharedUserAdmin2.domainId, commonRcn)
         assert (rcnSwitchResponse.status == SC_NO_CONTENT)
+
+        // Created v2 fed request generator for test. User groups can only be added via v2 IDPs
+        federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(Constants.DEFAULT_BROKER_IDP_PUBLIC_KEY, Constants.DEFAULT_BROKER_IDP_PRIVATE_KEY, Constants.IDP_V2_DOMAIN_PUBLIC_KEY, Constants.IDP_V2_DOMAIN_PRIVATE_KEY)
     }
 
     /**
@@ -211,7 +222,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
      *  vanilla subuser within the domain for which apply_rcn_roles was applied.
      */
     @Unroll
-    def "Valid user delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled, mediaType = #mediaType"() {
+    def "Valid user delegate auth with da receives token: feature.enable.user.admin.look.up.by.domain = #featureEnabled, mediaType = #mediaType"() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
@@ -243,15 +254,12 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         false          | MediaType.APPLICATION_JSON_TYPE
     }
 
-    @Unroll
-    def "Valid user group delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
-
+    def "Valid user group delegate auth with da receives token"() {
         // Create a user group in domain 2 and add user to it
         UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)
         utils.addUserToUserGroup(sharedSubUser2.id, domain2UserGroup)
 
-        // Create a DA w/ no delegate
+        // Create a DA with domain1 useradmin as principal and add domain2 user as delegate
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = sharedUserAdmin.domainId
@@ -271,19 +279,14 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
 
         cleanup:
         reloadableConfiguration.reset()
-
-        where:
-        featureEnabled << [true, false]
     }
 
-    @Unroll
-    def "Valid fed user delegate auth with da issues token: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
-
+    def "Valid fed user created via v1.0 Fed API can auth under DA when explicitly listed as delegate "() {
         // Create a fed user under common global IDP
-        AuthenticateResponse fedUserAuthResponse = utils.createFederatedUserForAuthResponse(sharedUserAdmin2.domainId)
+        def attributes = SamlAttributeFactory.createAttributes(sharedUserAdmin2.domainId, [], Constants.DEFAULT_FED_EMAIL, [])
+        AuthenticateResponse fedUserAuthResponse = utils.authenticateV1FederatedUser(attributes, true)
 
-        // Create a DA w/ no delegate
+        // Create a DA w/ fed user as delegate
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = sharedUserAdmin.domainId
@@ -301,7 +304,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
             it
         }
 
-        when: "Auth as delegate from domain2 under the domain1"
+        when: "Auth as fed delegate from domain2 under domain1 DA"
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id)
 
         then: "resultant info is appropriate"
@@ -309,9 +312,81 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
 
         cleanup:
         reloadableConfiguration.reset()
+    }
 
-        where:
-        featureEnabled << [true, false]
+    /**
+     * Fed 1.0 API does NOT support setting user groups. Because of this, fed users created under v1 API can not delegate
+     * under a DA for which they are an effective delegate only due to user group membership
+     * @return
+     */
+    def "Valid fed user created via v1.0 Fed API can not auth under DA when member of user group that is a delegate"() {
+        // Create a user group in domain 2
+        UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)
+
+        // Create a fed user under common global IDP and add to group
+        def attributes = SamlAttributeFactory.createAttributes(sharedUserAdmin2.domainId, [], Constants.DEFAULT_FED_EMAIL, [domain2UserGroup.getName()])
+        AuthenticateResponse fedUserAuthResponse = utils.authenticateV1FederatedUser(attributes, true)
+
+        // Create a DA w/ user group as delegate
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        assert cloud20.addUserGroupDelegate(sharedUserAdminToken, da.id, domain2UserGroup.id).status == SC_NO_CONTENT
+
+        when: "Auth as fed delegate from domain2 under the domain1 DA"
+        def delegateAuthResponse = cloud20.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id)
+
+        then: "resultant info is appropriate"
+        IdmAssert.assertOpenStackV2FaultResponse(delegateAuthResponse, ItemNotFoundFault, SC_NOT_FOUND, null, AuthWithDelegationCredentials.ERROR_MSG_MISSING_AGREEMENT)
+    }
+
+    def "v2.0 API Fed user that is member of delegate user group can auth under DA"() {
+        // Create a user group in domain 2
+        UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)
+
+        def samlRequest = new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = sharedUserAdmin2.domainId
+            it.validitySeconds = 100
+            it.brokerIssuer = Constants.DEFAULT_BROKER_IDP_URI
+            it.originIssuer = Constants.IDP_V2_DOMAIN_URI
+            it.email = Constants.DEFAULT_FED_EMAIL
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass =  SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = UUID.randomUUID().toString()
+            it.roleNames = [] as Set
+            it.groupNames = [domain2UserGroup.getName()] as Set
+            it
+        }
+
+        // Create a fed user through v2 that adds user to group
+        AuthenticateResponse fedUserAuthResponse = utils.authenticateV2FederatedUser(samlRequest)
+
+        // Create a DA w/ user group as delegate
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        assert cloud20.addUserGroupDelegate(sharedUserAdminToken, da.id, domain2UserGroup.id).status == SC_NO_CONTENT
+
+        // Auth as regular subuser under the domain1 w/ applyrcnrole logic
+        AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
+
+        def adapterForFedUser = new User().with {
+            it.id = fedUserAuthResponse.user.id
+            it.username = fedUserAuthResponse.user.name
+            it
+        }
+
+        when: "Auth as fed delegate from domain2 under the domain1 DA"
+        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id)
+
+        then: "resultant info is appropriate"
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, adapterForFedUser, da)
     }
 
     void assertDelegateAuthSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser, DelegationAgreement da) {
@@ -360,5 +435,4 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
             }
         }
     }
-
 }

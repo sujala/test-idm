@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
@@ -39,7 +40,10 @@ import testHelpers.Cloud20Methods
 import testHelpers.DevOpsMethods
 import testHelpers.V1Factory
 import testHelpers.V2Factory
+import testHelpers.saml.SamlAttributeFactory
 import testHelpers.saml.SamlFactory
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
+import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
@@ -85,6 +89,8 @@ class Cloud20Utils {
 
     @Autowired
     TenantRoleDao tenantRoleDao
+
+    FederatedDomainAuthRequestGenerator federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(DEFAULT_BROKER_IDP_PUBLIC_KEY, DEFAULT_BROKER_IDP_PRIVATE_KEY, IDP_V2_DOMAIN_PUBLIC_KEY, IDP_V2_DOMAIN_PRIVATE_KEY)
 
     @PostConstruct
     def init() {
@@ -1450,6 +1456,25 @@ class Cloud20Utils {
         def username = testUtils.getRandomUUID("samlUser")
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
         def samlResponse = methods.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
+    }
+
+    def authenticateV1FederatedUser(HashMap<String, List<String>> attributes, boolean apply_rcn_roles = true, mediaType = APPLICATION_XML_TYPE) {
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+
+        // Uses the v1 way of creating a SAML Response to auth with
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, attributes)
+        def samlResponse = methods.federatedAuthenticate(samlAssertion, apply_rcn_roles, GlobalConstants.FEDERATION_API_V1_0, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
+    }
+
+    def authenticateV2FederatedUser(FederatedDomainAuthGenerationRequest federatedDomainAuthGenerationRequest, boolean apply_rcn_roles = true, mediaType = APPLICATION_XML_TYPE) {
+        def inputSamlResponseStr = federatedDomainAuthRequestGenerator.convertResponseToString(federatedDomainAuthRequestGenerator.createSignedSAMLResponse(federatedDomainAuthGenerationRequest))
+        def samlResponse = methods.authenticateV2FederatedUser(inputSamlResponseStr, apply_rcn_roles, mediaType)
+        assert samlResponse.status == SC_OK
         def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
         return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
     }

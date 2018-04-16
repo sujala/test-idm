@@ -488,8 +488,21 @@ class Cloud20Methods {
         builder.post(ClientResponse)
     }
 
+    /**
+     * Federate using the V2 Fed API flow.
+     *
+     * @deprecated - Use authenticateV2FederatedUser(...) instead
+     * @param request
+     * @param accept
+     * @return
+     */
+    @Deprecated
     def federatedAuthenticateV2(request, accept = APPLICATION_XML) {
-        federatedAuthenticate(request, false, GlobalConstants.FEDERATION_API_V2_0, accept)
+        authenticateV2FederatedUser(request, false, accept)
+    }
+
+    def authenticateV2FederatedUser(request, applyRcnRoles = false, accept = APPLICATION_XML) {
+        federatedAuthenticate(request, applyRcnRoles, GlobalConstants.FEDERATION_API_V2_0, accept)
     }
 
     def federatedLogout(request, accept = APPLICATION_XML) {
