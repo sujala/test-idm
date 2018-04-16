@@ -4,6 +4,7 @@ import com.newrelic.api.agent.Trace;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationCredentials;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -101,16 +102,17 @@ public class AuthWithDelegationCredentials {
             throw new NotFoundException(ERROR_MSG_MISSING_AGREEMENT);
         }
 
-        // User must be authorized to authenticate under DA. Currently only support provisioned users so direct
-        // comparison of DNs possible.
+        // User must be authorized to authenticate under DA.
         if (!delegationAgreement.isEffectiveDelegate(user)) {
             logger.info(String.format("User '%s' not authorized to use DA '%s'", user.getId(), delegationAgreement.getId()));
+            Audit.logFailedDelegationAuth(user, delegationAgreement.getId(), "Not authorized for DA");
             throw new NotFoundException(ERROR_MSG_MISSING_AGREEMENT); // Return standard not found rather than expose that DA exists
         }
 
         // Target domain must be enabled to delegate under
         Domain domain = domainService.getDomain(delegationAgreement.getDomainId());
         if (domain == null || !Boolean.TRUE.equals(domain.getEnabled())) {
+            Audit.logFailedDelegationAuth(user, delegationAgreement.getId(), "DA domain is disabled");
             throw new ForbiddenException(ERROR_MSG_DISABLED_OR_MISSING_DOMAIN);
         }
 
@@ -122,8 +124,8 @@ public class AuthWithDelegationCredentials {
             subUserDefaults = createSubUserService.calculateDomainSubUserDefaults(delegationAgreement.getDomainId());
 
         } catch (DomainDefaultException ex) {
+            Audit.logFailedDelegationAuth(user, delegationAgreement.getId(), ex.getMessage());
             throw new ForbiddenException(ERROR_MSG_DISABLED_OR_MISSING_DOMAIN, ex.getErrorCode());
-
         }
 
         ProvisionedUserDelegate delegate = new ProvisionedUserDelegate(subUserDefaults, delegationAgreement, user);
@@ -139,6 +141,7 @@ public class AuthWithDelegationCredentials {
 
         requestContextHolder.getAuthenticationContext().setUsername(user.getUsername());
 
+        Audit.logSuccessfulDelegationAuth(delegate);
         return new AuthResponseTuple(delegate, (UserScopeAccess) delegateToken, null);
     }
 }

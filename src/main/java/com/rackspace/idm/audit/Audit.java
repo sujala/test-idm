@@ -35,6 +35,7 @@ public class Audit {
 		FEDERATEDAUTH,
 		FORGOTPWDAUTH,
 		PASSWORD_RESET,
+		DELEGATEAUTH,
 	}
 
 	private enum RESULT {
@@ -108,6 +109,26 @@ public class Audit {
 
 	public static Audit authImpersonation(Auditable o) {
 		return new Audit(o.getAuditContext()).addEvent(ACTION.IMPERSONATION);
+	}
+
+	public static void logSuccessfulDelegationAuth(ProvisionedUserDelegate delegate) {
+		Audit audit = new Audit(delegate.getAuditContext()).addEvent(ACTION.DELEGATEAUTH, String.format("userId='%s'", delegate.getId()));
+		audit.succeed();
+	}
+
+	public static void logFailedDelegationAuth(EndUser caller, String delegationId, String failureMsg) {
+		StringBuilder callerBuf = new StringBuilder();
+		if (caller != null) {
+			callerBuf.append(caller.getAuditContext());
+		} else {
+			callerBuf.append("UnknownCaller");
+		}
+		callerBuf.append(";delegationAgreementId=").append(delegationId);
+
+		String context = "userId=" + (caller != null ? caller.getId() : "UnknownCaller");
+
+		Audit audit = new Audit(callerBuf.toString()).addEvent(ACTION.DELEGATEAUTH, context);
+		audit.fail(failureMsg);
 	}
 
 	public static void logSuccessfulFederatedAuth(FederatedBaseUser federatedBaseUser) {

@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.domain.service.DomainSubUserDefaults;
 import com.unboundid.ldap.sdk.DN;
@@ -121,6 +120,6 @@ public class ProvisionedUserDelegate implements EndUserDelegate {
 
     @Override
     public String getAuditContext() {
-        throw new UnsupportedOperationException("Not supported");
+        return String.format("%s;delegationAgreementId=%s", originalEndUser.getAuditContext(), delegationAgreement.getId());
     }
 }
