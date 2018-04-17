@@ -367,6 +367,46 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     }
 
     @Override
+    public Response listDelegates(String authToken, String agreementId) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal or delegate to list delegates
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null || (!delegationAgreement.isEffectivePrincipal(caller) && !delegationAgreement.isEffectiveDelegate(caller))) {
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            /*
+            Retrieve the delegates. This is inefficient as it looks up each delegate, but must at least look up fed
+            users to retrieve the id associated with user. Expect limitations to be placed on how many delegates can
+            be associated with a DA to limit impact of this. Expect to want to retrieve more information
+            per user (e.g. like a name) to provide more context in response.
+             */
+            List<DelegationDelegate> delegates = delegationService.getDelegates(delegationAgreement);
+
+            return Response.ok().entity(delegationAgreementConverter.toDelegatesWeb(delegates)).build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error listing delegates for daId '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
     public Response grantRolesToAgreement(String authToken, String agreementId, RoleAssignments roleAssignments) {
         try {
             // Verify token exists and valid

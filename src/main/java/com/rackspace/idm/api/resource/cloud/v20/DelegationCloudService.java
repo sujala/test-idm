@@ -88,6 +88,16 @@ public interface DelegationCloudService {
     Response deleteDelegate(String authToken, String agreementId, DelegateReference delegateReference);
 
     /**
+     * Lists the delegates of an existing delegation agreement
+     *
+     * @param authToken
+     * @param agreementId
+     * @return
+     */
+    Response listDelegates(String authToken, String agreementId);
+
+
+    /**
      * Grant or update the role assignments on a delegation agreement (DA). If any role is currently assigned to the DA
      * it is replaced with the provided one. A given role can only appear once in the list of roles to assign. The same
      * constraints apply for each individual role assignment specified as if they were being assigned individually. The
