@@ -56,6 +56,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockUserGroupService(service)
         mockUserGroupAuthorizationService(service)
         mockIdentityUserService(service)
+        mockDelegationService(service)
     }
 
     def "get mossoId from roles returns compute:default tenantId"() {
@@ -1147,7 +1148,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         roles.find { role -> role.roleRsId == nonPropagatingRole.roleRsId }.propagate == false
     }
 
-    def "doesUserContainTenantRole checks provisioned users role assginment"() {
+    def "doesUserContainTenantRole checks provisioned users role assignment"() {
         given:
         def domain = Mock(Domain)
         domain.domainId >> "domainId"

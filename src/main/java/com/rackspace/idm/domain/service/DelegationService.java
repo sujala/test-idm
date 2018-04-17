@@ -65,6 +65,14 @@ public interface DelegationService {
     PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, DelegationAgreementRoleSearchParams searchParams);
 
     /**
+     * Retrieve an iterable of all the role assignments on a DA regardless of number.
+     *
+     * @param delegationAgreement
+     * @return
+     */
+    Iterable<TenantRole> getAllRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement);
+
+    /**
      * Assign the specified roles to a delegation agreement (DA). Validation is performed on all roles prior to persisting
      * any assignment to reduce the likelihood of failure. If any assignment is deemed invalid during the initial
      * validation, none will be saved. If an error is encountered during saving, processing assignments will stop.

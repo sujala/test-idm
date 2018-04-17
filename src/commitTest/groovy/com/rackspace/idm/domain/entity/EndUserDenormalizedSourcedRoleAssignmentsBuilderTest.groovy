@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.entity
 import com.google.common.collect.Sets
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.security.ImmutableClientRole
+import com.rackspace.idm.domain.entity.SourcedRoleAssignments.Source
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.rolecalculator.UserRoleLookupService
 import org.apache.commons.collections4.CollectionUtils
@@ -106,6 +107,7 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         1 * userRoleLookupService.getUserSourcedRoles()
         1 * userRoleLookupService.getGroupSourcedRoles()
         1 * userRoleLookupService.getSystemSourcedRoles()
+        1 * userRoleLookupService.getOtherSourcedRoles()
 
         and: "throws exception"
         thrown(IllegalStateException)
@@ -531,6 +533,55 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         systemSource.sourceId == "IDENTITY"
         CollectionUtils.isEqualCollection(systemSource.tenantIds, ["p1:t1"] as Set)
         systemSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+    }
+
+    def "Other source sets appropriate metadata"() {
+        given:
+        def user = defaultUser()
+        def domain = defaultDomain().with {
+            it.tenantIds = ["p1:t1", "p1:t2", "p2:t1"] as String[]
+            it
+        }
+        userRoleLookupService.getUserDomain() >> domain
+        userRoleLookupService.getUser() >> user
+
+        EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
+
+        def userTypeTr = createTenantRole()
+        def userTypeIcr = createImmutableCrFromTenantRole(IdentityUserTypeEnum.USER_ADMIN.roleName, userTypeTr)
+
+        def sourceTr = createTenantRole().with {
+            it.tenantIds = ["p1:t1"] as Set
+            it
+        }
+        def icr = createImmutableCrFromTenantRole(sourceTr)
+        Source otherSource = new Source(SourcedRoleAssignments.SourceType.DA, "abc", null, Collections.emptySet())
+        Map<TenantRole, SourcedRoleAssignments.Source> otherSources = [(sourceTr):otherSource] as Map
+
+        when: "Build"
+        SourcedRoleAssignments result = builder.build()
+
+        then:
+        1 * userRoleLookupService.getUserSourcedRoles() >> [userTypeTr]
+        (1.._) * userRoleLookupService.getImmutableClientRole(userTypeIcr.id) >> userTypeIcr
+        1 * userRoleLookupService.getOtherSourcedRoles() >> otherSources
+        (1.._) * userRoleLookupService.getImmutableClientRole(icr.id) >> icr
+
+        and: "custom role is associated with only specified tenantId"
+        result.sourcedRoleAssignments.size() == 2 // User type role and other role assignment
+        SourcedRoleAssignments.SourcedRoleAssignment assignment = result.sourcedRoleAssignments.find {it.role.name == icr.name}
+        assignment != null
+        CollectionUtils.isEqualCollection(assignment.tenantIds, ["p1:t1"] as Set)
+
+        and: "1 source exists for other role"
+        assignment.sources.size() == 1
+
+        and: "Other source contains correct info"
+        def finalOtherSource = assignment.sources[0]
+        finalOtherSource.sourceType == otherSource.sourceType
+        finalOtherSource.sourceId == otherSource.sourceId
+        CollectionUtils.isEqualCollection(finalOtherSource.tenantIds, ["p1:t1"] as Set)
+        finalOtherSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
     }
 
     def "When RCN role assigned, retrieves all tenants within RCN and grants role on all matching tenants"() {

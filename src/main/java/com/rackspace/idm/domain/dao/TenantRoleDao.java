@@ -120,4 +120,13 @@ public interface TenantRoleDao {
      * @return
      */
     PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, PaginationParams paginationParams);
+
+    /**
+     * Retrieves all the role assignments associated with a delegation agreement. This should only be used by internal
+     * services to prevent abuse.
+     *
+     * @param delegationAgreement
+     * @return
+     */
+    Iterable<TenantRole> getAllRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement);
 }

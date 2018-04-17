@@ -3,7 +3,12 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.entity.BaseUserToken
+import com.rackspace.idm.domain.entity.DelegationPrincipal
+import com.rackspace.idm.domain.entity.PaginatorContext
+import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.BadRequestException
@@ -11,7 +16,6 @@ import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import org.apache.commons.lang3.RandomStringUtils
-import org.mockserver.model.HttpResponse
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmExceptionAssert
@@ -226,7 +230,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * delegationService.getDelegateByReference(_) >> {args ->
             DelegateReference delegateReference = args[0]
             assert delegateReference.id == caller.id
-            assert delegateReference.delegateType == DelegateType.USER
+            assert delegateReference.delegateType == com.rackspace.idm.domain.entity.DelegateType.USER
             caller
         }
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()

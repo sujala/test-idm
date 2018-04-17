@@ -305,6 +305,15 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return context;
     }
 
+    @Override
+    public Iterable<TenantRole> getAllRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement) {
+        SearchResultEntry entry = getLdapContainer(delegationAgreement.getUniqueId(), CONTAINER_ROLES);
+        if (entry == null) {
+            return Collections.emptyList();
+        }
+        return getObjects(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB);
+    }
+
     private TenantRole getTenantRole(String dn, String roleId) {
         return getObject(searchFilterGetTenantRoleByRoleId(roleId), dn, SearchScope.SUB);
     }

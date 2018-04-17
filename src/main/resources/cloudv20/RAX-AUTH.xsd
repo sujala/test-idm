@@ -688,6 +688,7 @@
 
     <simpleType name="SourceTypeEnum">
         <restriction base="xsd:string">
+            <enumeration value="DA"/>
             <enumeration value="USER"/>
             <enumeration value="USERGROUP"/>
             <enumeration value="SYSTEM"/>
@@ -698,13 +699,6 @@
         <restriction base="xsd:string">
             <enumeration value="USER_GROUP"/>
             <enumeration value="USER"/>
-        </restriction>
-    </simpleType>
-
-    <simpleType name="RolespaceType">
-        <restriction base="xsd:string">
-            <enumeration value="DOMAIN"/>
-            <enumeration value="DELEGATION_AGREEMENT"/>
         </restriction>
     </simpleType>
 

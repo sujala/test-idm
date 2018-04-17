@@ -267,7 +267,7 @@ public class SourcedRoleAssignments {
     }
 
     public enum SourceType {
-        USER, USERGROUP, SYSTEM
+        USER, USERGROUP, SYSTEM, DA
     }
 
     public enum AssignmentType {

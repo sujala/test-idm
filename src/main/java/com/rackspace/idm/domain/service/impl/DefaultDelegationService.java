@@ -77,6 +77,13 @@ public class DefaultDelegationService implements DelegationService {
     }
 
     @Override
+    public Iterable<TenantRole> getAllRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement) {
+        Validate.notNull(delegationAgreement);
+
+        return tenantRoleDao.getAllRoleAssignmentsOnDelegationAgreement(delegationAgreement);
+    }
+
+    @Override
     public List<TenantRole> replaceRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, RoleAssignments roleAssignments) {
         Validate.notNull(delegationAgreement);
         Validate.notNull(delegationAgreement.getUniqueId());

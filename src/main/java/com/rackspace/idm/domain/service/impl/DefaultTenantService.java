@@ -103,7 +103,10 @@ public class DefaultTenantService implements TenantService {
     private UserGroupAuthorizationService userGroupAuthorizationService;
 
     @Autowired
-    FederatedUserDao federatedUserDao;
+    private FederatedUserDao federatedUserDao;
+
+    @Autowired
+    private DelegationService delegationService;
 
     // Not using component w/ Autowiring because want just a dumb a utility class
     private RoleUtil roleUtil = new RoleUtil();
@@ -1780,6 +1783,11 @@ public class DefaultTenantService implements TenantService {
         }
 
         @Override
+        public Map<TenantRole, SourcedRoleAssignments.Source> getOtherSourcedRoles() {
+            return Collections.emptyMap();
+        }
+
+        @Override
         public List<Tenant> calculateRcnTenants() {
             if (domainRcnTenants == null) {
                 domainRcnTenants = calculateRcnTenantsForRoleMatching(userDomain);
@@ -1885,6 +1893,28 @@ public class DefaultTenantService implements TenantService {
                 }
                 systemSourcedRoles = systemRoleMap;
             }
-            return systemSourcedRoles;        }
+            return systemSourcedRoles;
+        }
+
+        @Override
+        public Map<TenantRole, SourcedRoleAssignments.Source> getOtherSourcedRoles() {
+            return getDelegationAgreementSourcedRoles();
+        }
+
+        // TODO: Need to refactor these searches into a single call that retrieves all sources
+        private Map<TenantRole, SourcedRoleAssignments.Source> getDelegationAgreementSourcedRoles() {
+            Map<TenantRole, SourcedRoleAssignments.Source> daSourcedRoles = new LinkedHashMap<>();
+
+            Iterable<TenantRole> tenantRoles = delegationService.getAllRoleAssignmentsOnDelegationAgreement(provisionedUserDelegate.getDelegationAgreement());
+
+            if (tenantRoles != null) {
+                for (TenantRole tenantRole : tenantRoles) {
+                    SourcedRoleAssignments.Source source = new SourcedRoleAssignments.Source(SourcedRoleAssignments.SourceType.DA, provisionedUserDelegate.getDelegationAgreement().getId(), null, tenantRole.getTenantIds());
+                    daSourcedRoles.put(tenantRole, source);
+                }
+            }
+
+            return daSourcedRoles;
+        }
     }
 }

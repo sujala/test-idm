@@ -1,16 +1,21 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.SAMLConstants
+import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.service.IdentityUserService
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -26,6 +31,8 @@ import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.Constants.ROLE_RBAC1_ID
+import static com.rackspace.idm.Constants.ROLE_RBAC2_ID
 import static org.apache.http.HttpStatus.*
 
 class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
@@ -254,6 +261,46 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         false          | MediaType.APPLICATION_JSON_TYPE
     }
 
+    @Unroll
+    def "Valid user delegate auth with da including roles receives da roles, mediaType = #mediaType"() {
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+
+        // Give subuser2 access to same domain as subuser
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        utils.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser2.id)
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, ["*"]))
+                    tas
+            }
+            it
+        }
+        utils.grantRoleAssignmentsOnDelegationAgreement(da, assignments, sharedUserAdminToken)
+
+        // Auth as regular subuser under the domain
+        AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
+
+        when: "Auth as delegate from domain2 under the first domain"
+        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id, mediaType)
+
+        then: "resultant info is appropriate"
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2, da)
+
+        and: "user received DA roles"
+        // Assigned on MOSSO tenant
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == da.domainId} != null
+        // Assigned on NAST tenant
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId != da.domainId} != null
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
     def "Valid user group delegate auth with da receives token"() {
         // Create a user group in domain 2 and add user to it
         UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)
@@ -404,12 +451,12 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         assert delegateAuthResponse.user.defaultRegion == realSubUserAuthResponse.user.defaultRegion
         assert delegateAuthResponse.user.sessionInactivityTimeout == realSubUserAuthResponse.user.sessionInactivityTimeout
 
-        // Roles are same
-        assert delegateAuthResponse.user.roles.role.size() == realSubUserAuthResponse.user.roles.role.size()
-        delegateAuthResponse.user.roles.role.each { delegateRole ->
-            def matchingSubuserRole = realSubUserAuthResponse.user.roles.role.find {it.id == delegateRole.id && it.tenantId == delegateRole.tenantId}
-            assert matchingSubuserRole != null
-            assert delegateRole.name == matchingSubuserRole.name
+        // Delegate has all the same roles as the subuser (may have extra based on DA roles assigned)
+        assert delegateAuthResponse.user.roles.role.size() >= realSubUserAuthResponse.user.roles.role.size()
+        realSubUserAuthResponse.user.roles.role.each { subuserRoleId ->
+            def matchingDelegateRole = delegateAuthResponse.user.roles.role.find {it.id == subuserRoleId.id && it.tenantId == subuserRoleId.tenantId}
+            assert matchingDelegateRole != null
+            assert subuserRoleId.name == matchingDelegateRole.name
         }
 
         // User identifying information reflects user authenticating
@@ -434,5 +481,15 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
                 assert matchingSubUserEndpointForService != null
             }
         }
+    }
+
+    TenantAssignment createTenantAssignment(String roleId, List<String> tenants) {
+        def assignment = new TenantAssignment().with {
+            ta ->
+                ta.onRole = roleId
+                ta.forTenants.addAll(tenants)
+                ta
+        }
+        return assignment
     }
 }
