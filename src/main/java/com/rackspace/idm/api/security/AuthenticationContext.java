@@ -39,6 +39,11 @@ public class AuthenticationContext {
     private DateTime passwordExpiration;
 
     /**
+     * Only set for auth with token and tenant when the token is an impersonation token
+     */
+    private boolean includeImpersonateInAuthByList = false;
+
+    /**
      * Given an AuthenticationRequest populate the username for the request
      *
      * @param authenticationRequest

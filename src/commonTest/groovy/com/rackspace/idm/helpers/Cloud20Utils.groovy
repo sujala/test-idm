@@ -105,13 +105,17 @@ class Cloud20Utils {
         entity.token.id
     }
 
-    def getMFAToken(username, passcode, password=DEFAULT_PASSWORD) {
+    AuthenticateResponse authenticateMfa(username, passcode, password=DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(username, password)
         assert (response.status == SC_UNAUTHORIZED)
         def sessionId = extractSessionIdFromWwwAuthenticateHeader(response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE))
         response = methods.authenticateMFAWithSessionIdAndPasscode(sessionId, passcode)
         assert (response.status == SC_OK)
-        def entity = response.getEntity(AuthenticateResponse).value
+        return response.getEntity(AuthenticateResponse).value
+    }
+
+    def getMFAToken(username, passcode, password=DEFAULT_PASSWORD) {
+        def entity = authenticateMfa(username, passcode, password)
         assert (entity != null)
         entity.token.id
     }
@@ -204,6 +208,21 @@ class Cloud20Utils {
         def entity = response.getEntity(User).value
         assert (entity != null)
         return entity
+    }
+
+    def createUserWithOtpMfa(token, username=testUtils.getRandomUUID(), domainId=null) {
+        def user = createUser(token, username, domainId)
+        def otpDevice = new OTPDevice()
+        otpDevice.name = RandomStringUtils.randomAlphanumeric(8)
+        def device = addOTPDevice(getToken(user.username), user.id, otpDevice)
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(device.getKeyUri()), "UTF-8").find { it.name == 'secret' }.value)
+        def code = new VerificationCode()
+        code.setCode(otpHelper.TOTP(secret))
+        verifyOTPDevice(getToken(user.username), user.id, device.id, code)
+        def settings = new MultiFactor().with { it.enabled = true; it }
+        updateMultiFactor(getToken(user.username), user.id, settings)
+        user = getUserById(user.id)
+        return [user, secret]
     }
 
     def createUserWithUser(user, username=testUtils.getRandomUUID(), domainId=null) {

@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -18,6 +19,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
+import com.rackspace.idm.util.OTPHelper
 import groovy.json.JsonSlurper
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.configuration.Configuration
@@ -52,6 +54,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @Shared User userAdmin
     @Shared def domainId
     @Shared def userAdminToken
+
+    @Autowired
+    OTPHelper otpHelper
 
      /**
      * In various cases we request a token be valid for "x" amount of time. The validity period is relative to
@@ -1330,6 +1335,41 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+    }
+
+    def "auth with impersonation token returns token with IMPERSONATE in auth by list"() {
+        given:
+        def cloudUser
+        def mfaUser
+        def mfaSecret
+        (mfaUser, mfaSecret) = utils.createUserWithOtpMfa(utils.getServiceAdminToken())
+        cloudUser = utils.createCloudAccount()
+
+        when: "auth with imp token from service admin impersonating the user using a password token"
+        def impToken = utils.impersonate(utils.getServiceAdminToken(), cloudUser).token.id
+        def response = utils.authenticateTokenWithTenant(impToken, cloudUser.domainId)
+
+        then:
+        response.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.IMPERSONATE.value)
+        response.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.value)
+
+        when: "auth with imp token from racker impersonating the user using a password token"
+        impToken = utils.impersonateWithRacker(cloudUser).token.id
+        response = utils.authenticateTokenWithTenant(impToken, cloudUser.domainId)
+
+        then:
+        response.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.IMPERSONATE.value)
+        response.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.value)
+
+        when: "auth with imp token from identity admin w/ mfa impersonating the user using an mfa token"
+        def mfaToken = utils.getMFAToken(mfaUser.username, otpHelper.TOTP(mfaSecret))
+        impToken = utils.impersonate(mfaToken, cloudUser).token.id
+        response = utils.authenticateTokenWithTenant(impToken, cloudUser.domainId)
+
+        then:
+        response.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.IMPERSONATE.value)
+        response.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.value)
+        response.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.OTPPASSCODE.value)
     }
 
     /**
