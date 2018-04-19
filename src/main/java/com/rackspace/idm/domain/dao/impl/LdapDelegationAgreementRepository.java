@@ -53,6 +53,16 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
     @Override
     public void addAgreement(DelegationAgreement delegationAgreement) {
         delegationAgreement.setId(getNextAgreementId());
+
+        /*
+         Update with default when creating new DAs. While the DelegationAgreement entity has preencode/postencode
+         defined to default this value to false, callers of this service expect the passed in delegationAgreement to
+         reflect any defaults applied when saving the DA. Therefore we need to set the defaults on the object itself.
+         */
+        if (delegationAgreement.getAllowSubAgreements() == null) {
+            delegationAgreement.setAllowSubAgreements(Boolean.FALSE);
+        }
+
         addObject(delegationAgreement);
     }
 
