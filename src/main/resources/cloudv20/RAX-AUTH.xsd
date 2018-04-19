@@ -203,6 +203,14 @@
     <element name="roleAssignments" type="RAX-AUTH:RoleAssignments" />
     <element name="delegationAgreement" type="RAX-AUTH:DelegationAgreement" />
     <element name="delegationAgreements" type="RAX-AUTH:DelegationAgreements" />
+    <element name="delegateReference" type="RAX-AUTH:DelegateReference" />
+    <element name="delegateReferences" type="RAX-AUTH:DelegateReferences" >
+        <annotation>
+            <xsd:documentation>
+                <p>A list of delegates.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
 
     <!-- Complex Types -->
     <complexType name="Types">
@@ -696,6 +704,13 @@
     </simpleType>
 
     <simpleType name="PrincipalType">
+        <restriction base="xsd:string">
+            <enumeration value="USER_GROUP"/>
+            <enumeration value="USER"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="DelegateType">
         <restriction base="xsd:string">
             <enumeration value="USER_GROUP"/>
             <enumeration value="USER"/>
@@ -1227,6 +1242,25 @@
         <attribute name="demoteUserId" type="xsd:string" use="optional" />
     </complexType>
 
+    <complexType name="DelegateReference">
+        <attribute name="delegateType" type="RAX-AUTH:DelegateType"/>
+        <attribute name="delegateId" type="xsd:string">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The id of a delegate associated with this delegation agreement
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="DelegateReferences">
+        <sequence>
+            <element ref="RAX-AUTH:delegateReference" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
     <complexType name="DelegationAgreement">
         <attribute name="id" type="xsd:string" use="optional">
             <annotation>
@@ -1283,11 +1317,14 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+
+        <!-- Deprecated. Will be removed as part of CID-1450 -->
+        <attribute name="delegateType" type="RAX-AUTH:DelegateType" use="optional"/>
         <attribute name="delegateId" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
-                        The provisioned user assigned to this delegation agreement
+                        The id of a delegate associated with this delegation agreement
                     </p>
                 </xsd:documentation>
             </annotation>

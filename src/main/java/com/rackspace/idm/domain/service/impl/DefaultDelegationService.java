@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -209,4 +210,15 @@ public class DefaultDelegationService implements DelegationService {
         }
         return delegate;
     }
+
+    @Override
+    public List<DelegationDelegate> getDelegates(DelegationAgreement da) {
+        return delegationAgreementDao.getDelegationAgreementDelegates(da);
+    }
+
+    @Override
+    public DelegationDelegate getDelegateByDn(DN delegateDn) {
+        return delegationAgreementDao.getDelegateByDn(delegateDn);
+    }
+
 }

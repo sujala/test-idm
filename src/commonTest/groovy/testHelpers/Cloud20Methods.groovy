@@ -1411,6 +1411,11 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).path(SERVICE_PATH_DELEGATES).path(SERVICE_PATH_USER_GROUPS).path(userGroupId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).delete(ClientResponse)
     }
 
+    def listDelegates(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).path(SERVICE_PATH_DELEGATES).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).get(ClientResponse)
+    }
+
     def grantRoleAssignmentsOnDelegationAgreement(String token, DelegationAgreement delegationAgreement, RoleAssignments roleAssignments, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreement.id).path(SERVICE_PATH_ROLES).type(media).accept(media).header(X_AUTH_TOKEN, token).entity(roleAssignments).put(ClientResponse)
