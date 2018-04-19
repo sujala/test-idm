@@ -31,6 +31,7 @@ import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.Constants.DEFAULT_OBJECT_STORE_ROLE
 import static com.rackspace.idm.Constants.ROLE_RBAC1_ID
 import static com.rackspace.idm.Constants.ROLE_RBAC2_ID
 import static org.apache.http.HttpStatus.*
@@ -50,6 +51,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
     @Shared def sharedUserAdmin2Token
 
     @Shared User sharedSubUser2
+    @Shared AuthenticateResponse sharedSubUser2AuthResponse
     @Shared def sharedSubUser2Token
 
     @Shared String commonRcn = "RCN-234-567-654"
@@ -78,16 +80,6 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         // Create a cloud account
         sharedUserAdmin = cloud20.createCloudAccount(sharedIdentityAdminToken)
 
-        // created "hidden" tenant in account (faws is configured as such)
-        def tenantResponse = cloud20.addTenant(sharedIdentityAdminToken, new Tenant().with {
-            it.name = Constants.TENANT_TYPE_FAWS + ":" + RandomStringUtils.randomAlphabetic(5)
-            it.id = it.name
-            it.domainId = sharedUserAdmin.domainId
-            it
-        })
-
-        assert tenantResponse.status == SC_CREATED
-
         authResponse = cloud20.authenticatePassword(sharedUserAdmin.username, Constants.DEFAULT_PASSWORD)
         assert authResponse.status == SC_OK
         sharedUserAdminToken = authResponse.getEntity(AuthenticateResponse).value.token.id
@@ -107,7 +99,8 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         sharedSubUser2 = cloud20.createSubUser(sharedUserAdmin2Token)
         authResponse = cloud20.authenticatePassword(sharedSubUser2.username, Constants.DEFAULT_PASSWORD)
         assert authResponse.status == SC_OK
-        sharedSubUser2Token = authResponse.getEntity(AuthenticateResponse).value.token.id
+        sharedSubUser2AuthResponse = authResponse.getEntity(AuthenticateResponse).value
+        sharedSubUser2Token = sharedSubUser2AuthResponse.token.id
 
         // Update domains to have same RCN
         def rcnSwitchResponse = cloud20.domainRcnSwitch(sharedServiceAdminToken, sharedUserAdmin.domainId, commonRcn)
@@ -248,7 +241,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id, mediaType)
 
         then: "resultant info is appropriate"
-        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2, da)
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2AuthResponse.user, da)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -262,12 +255,101 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
     }
 
     @Unroll
-    def "Valid user delegate auth with da including roles receives da roles, mediaType = #mediaType"() {
+    def "Verify delegate auth returns appropriate DA assigned roles for each possible delegate type, mediaType = #mediaType"() {
+        UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)
+
+        // Create 2 fed users through v2; one of which is member of group
+        AuthenticateResponse fedUserAuthResponse = authBasicFedUser()
+        AuthenticateResponse fedUserAuthResponseGroupMember = authBasicFedUser([domain2UserGroup.getName()] as Set)
+
+        // Auth as regular subuser under the domain
+        AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
+
+        def mossoTenantId = sharedUserAdmin.domainId
+        def nastTenantId = realSubUserAuthResponse.user.roles.role.find {it.name == DEFAULT_OBJECT_STORE_ROLE}.tenantId
+
+        // Create a DA with subuser2, fed user, and user group as delegates
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = sharedUserAdmin.domainId
             it
         }
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        utils.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser2.id)
+        utils.addUserDelegate(sharedUserAdminToken, da.id, fedUserAuthResponse.user.id)
+        utils.addUserGroupDelegate(sharedUserAdminToken, da.id, domain2UserGroup.id)
+
+        // Grant the roles to the DA
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, ["*"]))
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, [mossoTenantId])) // mosso tenant
+                    tas
+            }
+            it
+        }
+        utils.grantRoleAssignmentsOnDelegationAgreement(da, assignments, sharedUserAdminToken)
+
+        when: "Auth as user delegate"
+        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id, mediaType)
+
+        then: "resultant info is appropriate"
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2AuthResponse.user, da)
+
+        and: "user received DA role 1 on all tenants"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == mossoTenantId} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == nastTenantId} != null
+
+        and: "user received DA role 2 on mosso tenant only"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == mossoTenantId} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == nastTenantId} == null
+
+        when: "Auth as fed user delegate"
+        delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id, mediaType)
+
+        then: "resultant info is appropriate"
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, fedUserAuthResponse.user, da)
+
+        and: "user received DA role 1 on all tenants"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == mossoTenantId} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == nastTenantId} != null
+
+        and: "user received DA role 2 on mosso tenant only"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == mossoTenantId} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == nastTenantId} == null
+
+        when: "Auth as user group member delegate"
+        delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponseGroupMember.token.id, da.id, mediaType)
+
+        then: "resultant info is appropriate"
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, fedUserAuthResponseGroupMember.user, da)
+
+        and: "user received DA role 1 on all tenants"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == mossoTenantId} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == nastTenantId} != null
+
+        and: "user received DA role 2 on mosso tenant only"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == mossoTenantId} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == nastTenantId} == null
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Verify delegate auth returns appropriate DA assigned roles when all DA assigned roles are domain roles, mediaType = #mediaType"() {
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+
+        // Auth as regular subuser under the domain
+        AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
+
+        def mossoTenantId = sharedUserAdmin.domainId
+        def nastTenantId = realSubUserAuthResponse.user.roles.role.find {it.name == DEFAULT_OBJECT_STORE_ROLE}.tenantId
 
         // Give subuser2 access to same domain as subuser
         def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
@@ -276,26 +358,125 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
             it.tenantAssignments = new TenantAssignments().with {
                 tas ->
                     tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, ["*"]))
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, ["*"]))
                     tas
             }
             it
         }
         utils.grantRoleAssignmentsOnDelegationAgreement(da, assignments, sharedUserAdminToken)
 
-        // Auth as regular subuser under the domain
-        AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
-
         when: "Auth as delegate from domain2 under the first domain"
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id, mediaType)
 
         then: "resultant info is appropriate"
-        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2, da)
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2AuthResponse.user, da)
 
-        and: "user received DA roles"
-        // Assigned on MOSSO tenant
-        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == da.domainId} != null
-        // Assigned on NAST tenant
-        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId != da.domainId} != null
+        and: "user received DA role 1 on all tenants"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == mossoTenantId} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == nastTenantId} != null
+
+        and: "user received DA role 2 on all tenants"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == mossoTenantId} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == nastTenantId} != null
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "Verify delegate auth returns roles on hidden tenants appropriately"() {
+        // Create 2 domains in same RCN
+        def ua1 = utils.createCloudAccount()
+        def ua2 = utils.createGenericUserAdmin()
+        utils.domainRcnSwitch(ua1.domainId, commonRcn)
+        utils.domainRcnSwitch(ua2.domainId, commonRcn)
+
+        // Create 3 faws tenants in d1
+        def faws1 = createFawsTenant(ua1.domainId)
+        def faws2 = createFawsTenant(ua1.domainId)
+        def faws3 = createFawsTenant(ua1.domainId)
+
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+
+        def ua1Token = utils.getToken(ua1.username)
+
+        // Auth as ua2
+        AuthenticateResponse ua2AuthResponse = utils.authenticate(ua2)
+
+        // Give ua2 access to d1
+        def da = utils.createDelegationAgreement(ua1Token, daToCreate)
+        utils.addUserDelegate(ua1Token, da.id, ua2.id)
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, ["*"]))
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, [faws2.id, faws3.id]))
+                    tas
+            }
+            it
+        }
+        utils.grantRoleAssignmentsOnDelegationAgreement(da, assignments, ua1Token)
+
+        when: "Auth as delegate from domain2 under the first domain"
+        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(ua2AuthResponse.token.id, da.id)
+
+        then: "Delegate gets role 1 on faws2 and faw3, but not faws1"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == faws1.id} == null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == faws2.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == faws3.id} != null
+
+        and: "Delegate gets role 2 on faws2 and faw3, but not faws1"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == faws1.id} == null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == faws2.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == faws3.id} != null
+    }
+
+    @Unroll
+    def "Verify delegate auth does not return any roles if the DA domain does not contain tenants; mediaType=#mediaType"() {
+        // Create 2 domains in same RCN without any tenants
+        def ua1 = utils.createGenericUserAdmin()
+        def ua2 = utils.createGenericUserAdmin()
+        utils.domainRcnSwitch(ua1.domainId, commonRcn)
+        utils.domainRcnSwitch(ua2.domainId, commonRcn)
+
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+
+        def ua1Token = utils.getToken(ua1.username)
+
+        // Auth as ua2
+        AuthenticateResponse ua2AuthResponse = utils.authenticate(ua2)
+
+        // Give ua2 access to d1
+        def da = utils.createDelegationAgreement(ua1Token, daToCreate)
+        utils.addUserDelegate(ua1Token, da.id, ua2.id)
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, ["*"]))
+                    tas
+            }
+            it
+        }
+        utils.grantRoleAssignmentsOnDelegationAgreement(da, assignments, ua1Token)
+
+        when: "Auth as delegate from domain2 under the first domain"
+        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(ua2AuthResponse.token.id, da.id, mediaType)
+
+        then: "Delegate receives no roles"
+        // Existing auth code has discrepancy where xml returns wrapper object, but json doesn't. Must account
+        // for this in test
+        if (mediaType == MediaType.APPLICATION_XML_TYPE) {
+            assert delegateAuthResponse.user.roles.role.size() == 0
+        } else {
+            assert delegateAuthResponse.user.roles == null
+        }
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -322,7 +503,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, da.id)
 
         then: "resultant info is appropriate"
-        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2, da)
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2AuthResponse.user, da)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -345,17 +526,11 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         // Auth as regular subuser under the domain1 w/ applyrcnrole logic
         AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
 
-        def adapterForFedUser = new User().with {
-            it.id = fedUserAuthResponse.user.id
-            it.username = fedUserAuthResponse.user.name
-            it
-        }
-
         when: "Auth as fed delegate from domain2 under domain1 DA"
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id)
 
         then: "resultant info is appropriate"
-        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, adapterForFedUser, da)
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, fedUserAuthResponse.user, da)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -394,22 +569,8 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         // Create a user group in domain 2
         UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)
 
-        def samlRequest = new FederatedDomainAuthGenerationRequest().with {
-            it.domainId = sharedUserAdmin2.domainId
-            it.validitySeconds = 100
-            it.brokerIssuer = Constants.DEFAULT_BROKER_IDP_URI
-            it.originIssuer = Constants.IDP_V2_DOMAIN_URI
-            it.email = Constants.DEFAULT_FED_EMAIL
-            it.responseIssueInstant = new DateTime()
-            it.authContextRefClass =  SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
-            it.username = UUID.randomUUID().toString()
-            it.roleNames = [] as Set
-            it.groupNames = [domain2UserGroup.getName()] as Set
-            it
-        }
-
         // Create a fed user through v2 that adds user to group
-        AuthenticateResponse fedUserAuthResponse = utils.authenticateV2FederatedUser(samlRequest)
+        AuthenticateResponse fedUserAuthResponse =authBasicFedUser([domain2UserGroup.getName()] as Set)
 
         // Create a DA w/ user group as delegate
         def daToCreate = new DelegationAgreement().with {
@@ -423,17 +584,11 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         // Auth as regular subuser under the domain1 w/ applyrcnrole logic
         AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
 
-        def adapterForFedUser = new User().with {
-            it.id = fedUserAuthResponse.user.id
-            it.username = fedUserAuthResponse.user.name
-            it
-        }
-
         when: "Auth as fed delegate from domain2 under the domain1 DA"
         AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id)
 
         then: "resultant info is appropriate"
-        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, adapterForFedUser, da)
+        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, fedUserAuthResponse.user, da)
     }
 
     void assertDelegateAuthSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser, DelegationAgreement da) {
@@ -461,7 +616,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
 
         // User identifying information reflects user authenticating
         assert delegateAuthResponse.user.id == delegateUser.id // User reflects the delegate
-        assert delegateAuthResponse.user.name == delegateUser.username // User reflects the delegate
+        assert delegateAuthResponse.user.name == delegateUser.name // User reflects the delegate
         if (da != null) {
             assert delegateAuthResponse.user.delegationAgreementId == da.id
         }
@@ -491,5 +646,37 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
                 ta
         }
         return assignment
+    }
+
+    AuthenticateResponse authBasicFedUser(Set<String> groupNames = [] as Set) {
+        def samlRequest = new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = sharedUserAdmin2.domainId
+            it.validitySeconds = 100
+            it.brokerIssuer = Constants.DEFAULT_BROKER_IDP_URI
+            it.originIssuer = Constants.IDP_V2_DOMAIN_URI
+            it.email = Constants.DEFAULT_FED_EMAIL
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = UUID.randomUUID().toString()
+            it.roleNames = [] as Set
+            it.groupNames = groupNames
+            it
+        }
+
+        return utils.authenticateV2FederatedUser(samlRequest)
+    }
+
+    // created "hidden" tenant in account (faws is configured as such)
+    Tenant createFawsTenant(String domainId) {
+        def tenantResponse = cloud20.addTenant(sharedIdentityAdminToken, new Tenant().with {
+            it.name = Constants.TENANT_TYPE_FAWS + ":" + RandomStringUtils.randomAlphabetic(5)
+            it.id = it.name
+            it.domainId = domainId
+            it
+        })
+        utils.createTenant()
+
+        assert tenantResponse.status == SC_CREATED
+        return tenantResponse.getEntity(Tenant).value
     }
 }

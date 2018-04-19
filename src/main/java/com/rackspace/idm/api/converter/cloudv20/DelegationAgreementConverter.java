@@ -42,6 +42,7 @@ public class DelegationAgreementConverter {
      */
     public com.rackspace.idm.domain.entity.DelegationAgreement fromDelegationAgreementWeb(DelegationAgreement delegationAgreementWeb) {
         com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = mapper.map(delegationAgreementWeb, com.rackspace.idm.domain.entity.DelegationAgreement.class);
+        delegationAgreement.setAllowSubAgreements(delegationAgreementWeb.isAllowSubAgreements());
 
         return delegationAgreement;
     }
@@ -49,6 +50,7 @@ public class DelegationAgreementConverter {
     public DelegationAgreement toDelegationAgreementWeb(com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreementEntity) {
         DelegationAgreement delegationAgreement = mapper.map(delegationAgreementEntity, DelegationAgreement.class);
 
+        delegationAgreement.setAllowSubAgreements(delegationAgreementEntity.getAllowSubAgreements());
         delegationAgreement.setPrincipalType(delegationAgreementEntity.getPrincipalType());
         delegationAgreement.setPrincipalId(delegationAgreementEntity.getPrincipalId());
 
