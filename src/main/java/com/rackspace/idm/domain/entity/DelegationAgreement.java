@@ -5,10 +5,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.modules.usergroups.Constants;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,6 +39,13 @@ public class DelegationAgreement implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
+
+    @LDAPField(attribute=LdapRepository.ATTR_RS_ALLOW_SUB_AGREEMENTS,
+            objectClass=LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED,
+            defaultEncodeValue = "false",
+            defaultDecodeValue = "false")
+    private Boolean allowSubAgreements;
 
     @LDAPField(attribute = LdapRepository.ATTR_RS_PRINCIPAL_DN, objectClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private DN principalDN;
