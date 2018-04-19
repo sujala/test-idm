@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.config;
 
 import com.google.common.base.Splitter;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
@@ -23,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.ws.rs.core.MediaType;
@@ -574,15 +572,6 @@ public class IdentityConfig {
     public static final String EDIR_LDAP_SERVER_TRUSTED_PROP = "ldap.server.trusted";
     public static final boolean EDIR_LDAP_SERVER_TRUSED_DEFAULT = false;
 
-    public static final String EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP = "edir.ldap.connection.connect.timeout.ms";
-    public static final int EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT = 10000;
-
-    public static final String EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP = "edir.ldap.connection.bind.timeout.ms";
-    public static final int EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_DEFAULT = 30000;
-
-    public static final String EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP = "edir.ldap.connection.search.timeout.ms";
-    public static final int EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT = 300000;
-
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -814,9 +803,6 @@ public class IdentityConfig {
         defaults.put(USER_PHONE_PIN_SIZE_PROP, USER_PHONE_PIN_SIZE_DEFAULT);
 
         defaults.put(EDIR_LDAP_SERVER_TRUSTED_PROP, EDIR_LDAP_SERVER_TRUSED_DEFAULT);
-        defaults.put(EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT);
-        defaults.put(EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_DEFAULT);
-        defaults.put(EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_DEFAULT);
         defaults.put(ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_DEFAULT);
@@ -1543,21 +1529,6 @@ public class IdentityConfig {
         @IdmProp(key = EDIR_LDAP_SERVER_TRUSTED_PROP, versionAdded = "1.0.14.8", description = "Specifies if the edir connection is trusted")
         public boolean getEDirServerTrusted() {
             return getBooleanSafely(staticConfiguration, EDIR_LDAP_SERVER_TRUSTED_PROP);
-        }
-
-        @IdmProp(key = EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default connect timeout, in milliseconds.")
-        public int getEDirConnectionConnectTimeout() {
-            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP);
-        }
-
-        @IdmProp(key = EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default value for response timeouts, in milliseconds, for bind operations.")
-        public int getEDirConnectionBindTimeout() {
-            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP);
-        }
-
-        @IdmProp(key = EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default value for response timeouts, in milliseconds, for search operations.")
-        public int getEDirConnectionSearchTimeout() {
-            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP);
         }
     }
 
