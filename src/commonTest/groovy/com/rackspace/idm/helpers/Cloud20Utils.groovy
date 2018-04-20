@@ -1269,12 +1269,16 @@ class Cloud20Utils {
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = domainId
-            it.delegateId = delegateUserId
             it
         }
         def response = methods.createDelegationAgreement(token, daToCreate)
         assert (response.status == SC_CREATED)
-        response.getEntity(DelegationAgreement)
+        def delegationAgreement = response.getEntity(DelegationAgreement)
+
+        def addUserDelegateResponse = methods.addUserDelegate(token, delegationAgreement.id, delegateUserId)
+        assert (addUserDelegateResponse.status == SC_NO_CONTENT)
+
+        return delegationAgreement
     }
 
     DelegationAgreement createDelegationAgreement(String token, DelegationAgreement delegationAgreement) {

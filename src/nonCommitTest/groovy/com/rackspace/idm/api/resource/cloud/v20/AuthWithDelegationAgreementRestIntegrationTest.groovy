@@ -234,12 +234,12 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedSubUser2.id
             it
         }
 
         // Give subuser2 access to same domain as subuser
         def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        utils.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser2.id)
 
         // Auth as regular subuser under the domain
         AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")

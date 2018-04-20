@@ -123,25 +123,10 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException("This domain is not allowed to create delegation agreements", ErrorCodes.ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN);
             }
 
-            /*
-             Temp hack to avoid altering this contract and having to fix lots of things as part of initial PR. Will
-             remove this and update other tests later.
-              */
-            DelegationDelegate delegate = null;
-            if (StringUtils.isNotBlank(agreementWeb.getDelegateId())) {
-                SimpleDelegateValidator delegateValidator = new SimpleDelegateValidator(new EndUserDelegateReference(agreementWeb.getDelegateId()));
-                delegateValidator.verifyDelegateCanBeAddedToAgreementInDomain(callerDomain.getDomainId());
-                delegate = delegateValidator.getDelegate();
-            }
-
             // Convert to entity object
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationAgreementConverter.fromDelegationAgreementWeb(agreementWeb);
             delegationAgreement.setPrincipal(principal);
             delegationAgreement.setDomainId(principal.getDomainId());
-
-            if (delegate != null) {
-                delegationAgreement.getDelegates().add(delegate.getDn());
-            }
 
             // Add the agreement
             delegationService.addDelegationAgreement(delegationAgreement);

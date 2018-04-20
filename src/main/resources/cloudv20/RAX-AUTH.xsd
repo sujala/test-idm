@@ -1274,15 +1274,6 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="delegateId" type="xsd:string" use="optional">
-            <annotation>
-                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        The provisioned user assigned to this delegation agreement
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
     </complexType>
 
     <complexType name="DelegationAgreements">
