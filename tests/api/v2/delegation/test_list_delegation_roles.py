@@ -116,16 +116,19 @@ class TestListDelegationRoles(base.TestBaseV2):
             tenant_assignment_req)
 
         # grant role to da (as principal)
-        self.user_admin_client.grant_roles_to_delegation_agreement(
+        ua_client = self.user_admin_client
+        ua_client.add_tenant_role_assignments_to_delegation_agreement(
             self.da_id, request_object=tenants_role_assignment_req)
 
         # get roles as a principal
-        resp = self.user_admin_client.list_delegation_agreement_roles(
+        resp = ua_client.list_tenant_role_assignments_for_delegation_agreement(
             self.da_id)
         self.assert_response(resp, role, tenant_1)
 
         # get roles as delegate
-        resp = self.sub_user_client.list_delegation_agreement_roles(self.da_id)
+        su_client = self.sub_user_client
+        resp = su_client.list_tenant_role_assignments_for_delegation_agreement(
+            self.da_id)
         self.assert_response(resp, role, tenant_1)
 
     def assert_response(self, resp, role, tenant):

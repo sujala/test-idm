@@ -15,6 +15,8 @@ ADD_OTP_DEVICE_URL = '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices'
 ADD_ROLE_TO_USER_FOR_TENANT_URL = DEL_ROLE_FROM_USER_FOR_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/{role_id}')
 ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
+ADD_TENANT_ROLE_ASSIGNMENTS_TO_DELEGATION_AGREEMENT_URL = (
+    '/RAX-AUTH/delegation-agreements/{da_id}/roles')
 ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL = (
     '/RAX-AUTH/domains/{domain_id}/groups/{group_id}/roles')
 ADD_ROLE_TO_USER_GROUP_ON_TENANT_URL = (
@@ -44,8 +46,6 @@ CHANGE_PASSWORD_URL = '/users/RAX-AUTH/change-pwd'
 DELETE_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}'
 DELEGATION_AGREEMENTS_URL = '/RAX-AUTH/delegation-agreements'
 DELEGATION_AGREEMENTS_RD_URL = '/RAX-AUTH/delegation-agreements/{da_id}'
-DELEGATION_AGREEMENT_ROLES_URL = ("/RAX-AUTH/delegation-agreements/{da_id}/"
-                                  "roles")
 GET_DOMAIN_URL = DELETE_DOMAIN_URL
 DELETE_ENDPOINT_FROM_TENANT_URL = (
     '/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}')
@@ -90,7 +90,6 @@ IMPERSONATION_URL = '/RAX-AUTH/impersonation-tokens'
 LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 LIST_DELEGATION_AGREEMENTS_URL = DELEGATION_AGREEMENTS_URL
-LIST_DELEGATION_AGREEMENT_ROLES_URL = DELEGATION_AGREEMENT_ROLES_URL
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
 LIST_GROUPS_URL = '/users/{user_id}/RAX-KSGRP'
 LIST_EFFECTIVE_ROLES_FOR_USER_URL = '/users/{user_id}/RAX-AUTH/roles'
@@ -98,6 +97,8 @@ LIST_ROLES_FOR_USER_ON_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles')
 LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
 LIST_USERS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/users'
+LIST_TENANT_ROLE_ASSIGNMENTS_FOR_DELEGATION_AGREEMENT_URL = (
+    ADD_TENANT_ROLE_ASSIGNMENTS_TO_DELEGATION_AGREEMENT_URL)
 LIST_TENANT_ROLE_ASSIGNMENTS_FOR_USER_GROUP_URL = (
     ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL)
 LIST_USER_ROLES_URL = '/users/{user_id}/roles'
