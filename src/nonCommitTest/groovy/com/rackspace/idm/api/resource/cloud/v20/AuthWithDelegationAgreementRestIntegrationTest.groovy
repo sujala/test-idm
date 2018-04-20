@@ -121,6 +121,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
     def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP, true)
     }
 
     /**
@@ -129,8 +130,8 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
      * be immediately returned. If the services are enabled, the token will be found invalid and a 401 will be returned.
      */
     @Unroll
-    def "Auth with da requires DA services to be enabled: enabled: #enableServices"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, enableServices)
+    def "Auth with da requires auth with DA to be enabled: enabled: #enableServices"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP, enableServices)
 
         when: "Auth"
         def response = cloud20.authenticateTokenAndDelegationAgreement("invalid", "invalid")

@@ -415,6 +415,9 @@ public class IdentityConfig {
     public static final String ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP = "role.assignments.max.tenant.assignments.per.request";
     public static final int ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_DEFAULT = 10;
 
+    public static final String FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP = "feature.enable.delegation.authentication";
+    public static final boolean FEATURE_ENABLE_DELEGATION_AUTHENTICATION_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -806,6 +809,7 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_DEFAULT);
         defaults.put(ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_DEFAULT);
+        defaults.put(FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP, FEATURE_ENABLE_DELEGATION_AUTHENTICATION_DEFAULT);
 
         return defaults;
     }
@@ -2203,6 +2207,11 @@ public class IdentityConfig {
         @IdmProp(key = ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, versionAdded = "3.21.1", description = "Maximum number tenant assignment in request that grant roles.")
         public int getRoleAssignmentsMaxTenantAssignmentsPerRequest() {
             return getIntSafely(reloadableConfiguration, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP, versionAdded = "3.21.1", description = "Whether to allow authentication with a delegation agreement.")
+        public boolean isDelegationAuthenticationEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP);
         }
 
     }

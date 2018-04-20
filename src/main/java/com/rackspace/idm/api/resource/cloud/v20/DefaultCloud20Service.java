@@ -1184,7 +1184,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 authResponseTuple = authWithToken.authenticate(authenticationRequest);
             } else if (authenticationRequest.getCredential().getValue() instanceof DelegationCredentials) {
                 NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthWithTokenDelegation.getTransactionName());
-                if (!identityConfig.getReloadableConfig().areDelegationAgreementServicesEnabled()) {
+                if (!identityConfig.getReloadableConfig().isDelegationAuthenticationEnabled()) {
                     throw new ServiceUnavailableException(GlobalConstants.ERROR_MSG_SERVICE_NOT_FOUND);
                 }
 
