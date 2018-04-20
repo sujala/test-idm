@@ -1849,3 +1849,32 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + const.LIST_DELEGATION_AGREEMENTS_URL
         return self.request('GET', url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
+
+    def list_delegation_agreement_roles(self, da_id,
+                                        option=None, requestslib_kwargs=None):
+        """
+        GET RAX-AUTH/delegation-agreements/{delegationAgreementId}/roles
+        """
+        url = self.url + const.LIST_DELEGATION_AGREEMENT_ROLES_URL.format(
+            da_id=da_id
+        )
+        return self.request('GET', url, params=option,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def grant_roles_to_delegation_agreement(self, da_id,
+                                            request_object,
+                                            requestslib_kwargs=None):
+        """
+        PUT RAX-AUTH/delegation-agreements/{delegationAgreementId}/roles
+        """
+        url = self.url + const.LIST_DELEGATION_AGREEMENT_ROLES_URL.format(
+            da_id=da_id
+        )
+        headers = {
+            const.CONTENT_TYPE: const.CONTENT_TYPE_VALUE.format(
+                const.JSON)
+        }
+        return self.request('PUT', url,
+                            headers=headers,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
