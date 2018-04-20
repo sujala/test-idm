@@ -115,7 +115,6 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         // Must allow services in order to get token
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
 
-        // Create delegation agreement and give user, fed user, and user group access
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = sharedUserAdmin.domainId
