@@ -44,6 +44,8 @@ CHANGE_PASSWORD_URL = '/users/RAX-AUTH/change-pwd'
 DELETE_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}'
 DELEGATION_AGREEMENTS_URL = '/RAX-AUTH/delegation-agreements'
 DELEGATION_AGREEMENTS_RD_URL = '/RAX-AUTH/delegation-agreements/{da_id}'
+DELEGATION_AGREEMENT_ROLES_URL = ("/RAX-AUTH/delegation-agreements/{da_id}/"
+                                  "roles")
 GET_DOMAIN_URL = DELETE_DOMAIN_URL
 DELETE_ENDPOINT_FROM_TENANT_URL = (
     '/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}')
@@ -88,6 +90,7 @@ IMPERSONATION_URL = '/RAX-AUTH/impersonation-tokens'
 LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 LIST_DELEGATION_AGREEMENTS_URL = DELEGATION_AGREEMENTS_URL
+LIST_DELEGATION_AGREEMENT_ROLES_URL = DELEGATION_AGREEMENT_ROLES_URL
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
 LIST_GROUPS_URL = '/users/{user_id}/RAX-KSGRP'
 LIST_EFFECTIVE_ROLES_FOR_USER_URL = '/users/{user_id}/RAX-AUTH/roles'
