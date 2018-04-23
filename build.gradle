@@ -164,7 +164,7 @@ dependencies {
         exclude(group: 'org.apache.struts', module: 'struts-taglib')
         exclude(group: 'org.apache.struts', module: 'struts-tiles')
     }
-    compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'4.0.4'
+    compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'3.1.1'
     compile group: 'commons-codec', name: 'commons-codec', version:'1.10'
     compile group: 'commons-configuration', name: 'commons-configuration', version:'1.9'
     compile group: 'commons-collections', name: 'commons-collections', version:'3.2.1'

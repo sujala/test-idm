@@ -15,6 +15,8 @@ ADD_OTP_DEVICE_URL = '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices'
 ADD_ROLE_TO_USER_FOR_TENANT_URL = DEL_ROLE_FROM_USER_FOR_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/{role_id}')
 ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
+ADD_TENANT_ROLE_ASSIGNMENTS_TO_DELEGATION_AGREEMENT_URL = (
+    '/RAX-AUTH/delegation-agreements/{da_id}/roles')
 ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL = (
     '/RAX-AUTH/domains/{domain_id}/groups/{group_id}/roles')
 ADD_ROLE_TO_USER_GROUP_ON_TENANT_URL = (
@@ -95,6 +97,8 @@ LIST_ROLES_FOR_USER_ON_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles')
 LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
 LIST_USERS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/users'
+LIST_TENANT_ROLE_ASSIGNMENTS_FOR_DELEGATION_AGREEMENT_URL = (
+    ADD_TENANT_ROLE_ASSIGNMENTS_TO_DELEGATION_AGREEMENT_URL)
 LIST_TENANT_ROLE_ASSIGNMENTS_FOR_USER_GROUP_URL = (
     ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL)
 LIST_USER_ROLES_URL = '/users/{user_id}/roles'

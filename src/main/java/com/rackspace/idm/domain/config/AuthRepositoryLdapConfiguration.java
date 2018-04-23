@@ -57,13 +57,6 @@ public class AuthRepositoryLdapConfiguration {
             String bindDn = identityConfig.getStaticConfig().getEdirBindDn();
             String bindPw = identityConfig.getStaticConfig().getEdirBindPassword();
             connection = edirConnectionFactory.createAuthenticatedEncryptedConnection(socketFactory, host, port, bindDn, bindPw);
-
-            LDAPConnectionOptions connectionOptions = new LDAPConnectionOptions();
-            connectionOptions.setConnectTimeoutMillis(identityConfig.getStaticConfig().getEDirConnectionConnectTimeout());
-            connectionOptions.setResponseTimeoutMillis(OperationType.BIND, identityConfig.getStaticConfig().getEDirConnectionBindTimeout());
-            connectionOptions.setResponseTimeoutMillis(OperationType.SEARCH, identityConfig.getStaticConfig().getEDirConnectionSearchTimeout());
-            connection.setConnectionOptions(connectionOptions);
-
             connPool = edirConnectionFactory.createConnectionPool(connection, initPoolSize, maxPoolSize);
         } catch (LDAPException e) {
             logger.error(CONNECT_ERROR_STRING, e);

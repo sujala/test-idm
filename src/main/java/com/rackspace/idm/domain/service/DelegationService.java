@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 import com.rackspace.idm.exception.SizeLimitExceededException;
+import com.unboundid.ldap.sdk.DN;
 
 import java.util.List;
 
@@ -132,6 +133,25 @@ public interface DelegationService {
      * @param delegate
      */
     void addDelegate(DelegationAgreement delegationAgreement, DelegationDelegate delegate);
+
+    /**
+     * Retrieves all the delegates on the delegation agreement.
+     *
+     * @param da
+     * @return
+     * @throws IllegalStateException If any delegate on the agreement is not an appropriate delegate. Delegates that can
+     * not be found are ignored.
+     */
+    List<DelegationDelegate> getDelegates(DelegationAgreement da);
+
+    /**
+     * Converts the specified DN to a delegate or null if no such delegate is found.
+     *
+     * @param delegateDn
+     * @return
+     * @throws IllegalArgumentException if the DN does not represent a valid delegate
+     */
+    DelegationDelegate getDelegateByDn(DN delegateDn);
 
     /**
      * Deletes the specified delegate from the delegation agreement if it exists. Returns true if the delegate existed

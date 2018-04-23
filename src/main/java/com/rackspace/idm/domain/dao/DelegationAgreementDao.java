@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
+import com.rackspace.idm.domain.entity.DelegationDelegate;
+import com.unboundid.ldap.sdk.DN;
 
 import java.util.List;
 
@@ -32,4 +34,25 @@ public interface DelegationAgreementDao {
      * @return
      */
     List<DelegationAgreement> findDelegationAgreements(FindDelegationAgreementParams findDelegationAgreementParams);
+
+    /**
+     * Retrieve the delegates listed on the delegation agreement. References to non-existant delegates are ignored, while
+     * references to objects that are not delegates (e.g. linked to a Domain rather than a user, user group, or fed user)
+     * will cause an IllegalStateException.
+     *
+     * @param delegationAgreement
+     * @return
+     *
+     * @throws IllegalStateException if the DA contains a delegate reference that does not resolve to a permissible delegate
+     */
+    List<DelegationDelegate> getDelegationAgreementDelegates(DelegationAgreement delegationAgreement);
+
+    /**
+     * Returns a delegate referenced by the DN. Returns null if the DN does not resolve to any object.
+     *
+     * @param dn
+     * @return
+     * @throws IllegalStateException If the DN resolves to an object that can not be a delegate.
+     */
+    DelegationDelegate getDelegateByDn(DN dn);
 }

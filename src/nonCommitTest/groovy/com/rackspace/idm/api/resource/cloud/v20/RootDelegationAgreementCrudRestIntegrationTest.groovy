@@ -170,6 +170,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == sharedUserAdmin.id
         createdDa.principalType == PrincipalType.USER
+        !createdDa.isAllowSubAgreements() // default when when not specified
 
         when:
         def getResponse = cloud20.getDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)
@@ -186,6 +187,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == sharedUserAdmin.id
         getDa.principalType == PrincipalType.USER
+        !getDa.isAllowSubAgreements() // default when when not specified
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)
@@ -210,6 +212,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
+            it.allowSubAgreements = true
             it
         }
 
@@ -228,6 +231,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == caller.id
         createdDa.principalType == PrincipalType.USER
+        createdDa.isAllowSubAgreements()
 
         when:
         def getResponse = cloud20.getDelegationAgreement(token, createdDa.id)
@@ -244,6 +248,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == caller.id
         getDa.principalType == PrincipalType.USER
+        getDa.isAllowSubAgreements()
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(token, createdDa.id)

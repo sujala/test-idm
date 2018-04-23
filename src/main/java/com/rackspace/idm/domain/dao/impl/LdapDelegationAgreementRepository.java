@@ -2,13 +2,11 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.annotation.LDAPComponent;
+import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
-import com.rackspace.idm.domain.entity.DelegateType;
-import com.rackspace.idm.domain.entity.DelegationAgreement;
-import com.rackspace.idm.domain.entity.DelegationPrincipal;
-import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.SizeLimitExceededException;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 import com.rackspace.idm.modules.usergroups.Constants;
@@ -20,7 +18,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @LDAPComponent
 public class LdapDelegationAgreementRepository extends LdapGenericRepository<DelegationAgreement> implements DelegationAgreementDao {
@@ -53,6 +53,16 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
     @Override
     public void addAgreement(DelegationAgreement delegationAgreement) {
         delegationAgreement.setId(getNextAgreementId());
+
+        /*
+         Update with default when creating new DAs. While the DelegationAgreement entity has preencode/postencode
+         defined to default this value to false, callers of this service expect the passed in delegationAgreement to
+         reflect any defaults applied when saving the DA. Therefore we need to set the defaults on the object itself.
+         */
+        if (delegationAgreement.getAllowSubAgreements() == null) {
+            delegationAgreement.setAllowSubAgreements(Boolean.FALSE);
+        }
+
         addObject(delegationAgreement);
     }
 
@@ -135,6 +145,55 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
                 throw new IllegalStateException(ldapEx);
             }
         }
+    }
+
+    @Override
+    public List<DelegationDelegate> getDelegationAgreementDelegates(DelegationAgreement delegationAgreement) {
+        if (CollectionUtils.isEmpty(delegationAgreement.getDelegates())) {
+            return Collections.emptyList();
+        }
+
+        List<DelegationDelegate> delegationDelegates = new ArrayList<>(delegationAgreement.getDelegates().size());
+        for (DN delegateDn : delegationAgreement.getDelegates()) {
+            try {
+                DelegationDelegate delegate = getDelegateByDn(delegateDn);
+                if (delegate == null) {
+                    String errorMsg = String.format("The delegation agreement %s references a missing delegate '%s'", delegationAgreement.getId(), delegateDn.toString());
+                    logger.error(errorMsg);
+                } else {
+                    delegationDelegates.add(delegate);
+                }
+            } catch (IllegalArgumentException e) {
+                String errorMsg = String.format("The delegation agreement %s contains an invalid delegate", delegationAgreement.getId());
+                logger.error(errorMsg, e);
+                throw new IllegalStateException(errorMsg, e);
+            }
+        }
+        return delegationDelegates;
+    }
+
+    @Override
+    public DelegationDelegate getDelegateByDn(DN delegateDn) {
+        Object rawObject = null;
+
+        // Need to use the specific daos to ensure the correct `doPostDecode` is run for the entries returned.
+        try {
+            if (delegateDn.isDescendantOf(Constants.USER_GROUP_BASE_DN, false)) {
+                rawObject = userGroupDao.getGroupByDn(delegateDn);
+            } else if (delegateDn.isDescendantOf(LdapRepository.USERS_BASE_DN, false)
+                    || delegateDn.isDescendantOf(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN, false)) {
+                rawObject = identityUserDao.getEndUserByDn(delegateDn);
+            }
+        } catch (LDAPException e) {
+            throw new IllegalArgumentException(String.format("The dn '%s' does not represent a permissible delegate", delegateDn.toString()));
+        }
+
+        // All references must be of specified type
+        if (rawObject != null && !(rawObject instanceof DelegationDelegate)) {
+            throw new IllegalArgumentException(String.format("The dn '%s' does not represent a permissible delegate", delegateDn.toString()));
+        }
+
+        return (DelegationDelegate) rawObject;
     }
 
     Filter searchByIdFilter(String id) {

@@ -1844,8 +1844,35 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
     def list_delegation_agreements(self, option=None, requestslib_kwargs=None):
         """
-        GET RAX-AUTH/delegation-agreements
+        GET v2.0/RAX-AUTH/delegation-agreements
         """
         url = self.url + const.LIST_DELEGATION_AGREEMENTS_URL
         return self.request('GET', url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
+
+    def add_tenant_role_assignments_to_delegation_agreement(
+            self, da_id, request_object, requestslib_kwargs=None):
+        """
+        PUT v2.0/RAX-AUTH/delegation-agreements/{delegationAgreementId}/roles
+        """
+        temp_url = (
+            const.ADD_TENANT_ROLE_ASSIGNMENTS_TO_DELEGATION_AGREEMENT_URL)
+        url = self.url + temp_url.format(da_id=da_id)
+        headers = {
+            const.CONTENT_TYPE: const.CONTENT_TYPE_VALUE.format(
+                const.JSON)
+        }
+        return self.request('PUT', url,
+                            headers=headers,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def list_tenant_role_assignments_for_delegation_agreement(
+            self, da_id, requestslib_kwargs=None):
+        """
+        GET v2.0/RAX-AUTH/delegation-agreements/{delegationAgreementId}/roles
+        """
+        temp_url = (
+            const.LIST_TENANT_ROLE_ASSIGNMENTS_FOR_DELEGATION_AGREEMENT_URL)
+        url = self.url + temp_url.format(da_id=da_id)
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)

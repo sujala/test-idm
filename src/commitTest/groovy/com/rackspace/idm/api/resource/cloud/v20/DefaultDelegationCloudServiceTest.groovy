@@ -1,6 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.BaseUserToken
@@ -93,6 +97,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}, NotFoundException, "GEN-004"]
                 , ["listRoleAssignmentsOnAgreement", {token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams()))}, NotFoundException, "GEN-004"]
                 , ["listDelegationAgreements", {token -> service.listAgreements(token, "invalidRelationship")}, BadRequestException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE]
+                , ["listDelegates", {token -> service.listDelegates(token, "id")}, NotFoundException, "GEN-004"]
         ]
     }
 
@@ -139,6 +144,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}]
                 , ["listRoleAssignmentsOnAgreement", {token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams()))}]
                 , ["listDelegationAgreements", {token -> service.listAgreements(token, "invalidRelationship")}]
+                , ["listDelegates", {token -> service.listDelegates(token, "id")}]
         ]
     }
 

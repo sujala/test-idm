@@ -24,20 +24,6 @@ class AuthRepositoryLdapConfigurationTest extends Specification {
         legacyConfig.getInt("auth.ldap.server.port", AuthRepositoryLdapConfiguration.DEFAULT_SERVER_PORT) >> AuthRepositoryLdapConfiguration.DEFAULT_SERVER_PORT
     }
 
-    def "eDir config uses identity configuration for timeouts"() {
-        given:
-        staticConfig.getEDirServerTrusted() >> true
-        edirConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _) >> GroovyMock(LDAPConnection)
-
-        when: "create a new connection"
-        edirConfiguration.connection()
-
-        then: "identity configuration is used"
-        1 * staticConfig.getEDirConnectionConnectTimeout()
-        1 * staticConfig.getEDirConnectionBindTimeout()
-        1 * staticConfig.getEDirConnectionSearchTimeout()
-    }
-
     @Unroll
     def "eDir config returns a null connection pool for non-trusted servers - trusted == #trusted"() {
         given:
