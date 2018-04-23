@@ -18,8 +18,8 @@ from tests.package.johny.v2.models import requests
 class TestDelegationWithFederation(federation.TestBaseFederation):
 
     """
-    Tests for Fed Users creating Delegation agreements, either directly or
-    as being member of a user group
+    Tests for Auth with Delegation agreements for federated users,
+    either directly or as member of a user group.
     """
 
     @classmethod
@@ -32,17 +32,14 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
 
         cls.rcn = cls.test_config.da_rcn
         cls.domain_id = cls.create_domain_with_rcn()
-        additional_input_data = {
-            'domain_id': cls.domain_id
-        }
+        additional_input_data = {'domain_id': cls.domain_id}
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data=additional_input_data)
 
         cls.domain_id_2 = cls.create_domain_with_rcn()
-        additional_input_data = {
-            'domain_id': cls.domain_id_2
-        }
+        additional_input_data = {'domain_id': cls.domain_id_2}
+
         cls.user_admin_client_2 = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data=additional_input_data)
@@ -114,6 +111,16 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         self.assertEqual(fed_auth_resp.status_code, 200)
         return fed_auth_resp
 
+    def validate_response(self, resp):
+        # Verifying that all auth methods are returned, ignoring the order
+        for auth_by in [const.AUTH_BY_DELEGATION, const.AUTH_BY_PWD,
+                        const.AUTH_BY_FEDERATED]:
+            self.assertIn(auth_by, resp.json()[
+                const.ACCESS][const.TOKEN][const.RAX_AUTH_AUTHENTICATED_BY])
+        delegation_domain = resp.json()[const.ACCESS][const.USER][
+            const.RAX_AUTH_DOMAIN_ID]
+        self.assertEqual(delegation_domain, self.domain_id)
+
     @attr(type='regression')
     def test_d_auth_with_fed_users_as_principal_and_delegate(self):
 
@@ -148,14 +155,13 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             token=fed_user_token, delegation_agreement_id=da_id)
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 200)
-        # Verifying that all auth methods are returned, ignoring the order
-        for auth_by in [const.AUTH_BY_DELEGATION, const.AUTH_BY_PWD,
-                        const.AUTH_BY_FEDERATED]:
-            self.assertIn(auth_by, resp.json()[
-                const.ACCESS][const.TOKEN][const.RAX_AUTH_AUTHENTICATED_BY])
-        delegation_domain = resp.json()[const.ACCESS][const.USER][
-            const.RAX_AUTH_DOMAIN_ID]
-        self.assertNotEqual(delegation_domain, self.domain_id_2)
+        self.validate_response(resp)
+        da_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+
+        # Validate Auth Token
+        resp = self.identity_admin_client.validate_token(token_id=da_token)
+        self.assertEqual(resp.status_code, 200)
+        self.validate_response(resp)
 
     @attr(type='regression')
     def test_d_auth_fed_user_with_user_group_as_delegate(self):
@@ -187,7 +193,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         ua_client = self.user_admin_client
         add_user_group_delegate_resp = (
             ua_client.add_user_group_delegate_to_delegation_agreement(
-              da_id=da_id, user_group_id=group_two.id))
+                da_id=da_id, user_group_id=group_two.id))
         self.assertEqual(add_user_group_delegate_resp.status_code, 204)
 
         # DA auth using fed user's token
@@ -195,15 +201,13 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             token=fed_user_token, delegation_agreement_id=da_id)
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 200)
+        self.validate_response(resp)
+        da_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
 
-        # Verifying that all auth methods are returned, ignoring the order
-        for auth_by in [const.AUTH_BY_DELEGATION, const.AUTH_BY_PWD,
-                        const.AUTH_BY_FEDERATED]:
-            self.assertIn(auth_by, resp.json()[
-                const.ACCESS][const.TOKEN][const.RAX_AUTH_AUTHENTICATED_BY])
-        delegation_domain = resp.json()[const.ACCESS][const.USER][
-            const.RAX_AUTH_DOMAIN_ID]
-        self.assertNotEqual(delegation_domain, self.domain_id_2)
+        # Validate Auth Token
+        resp = self.identity_admin_client.validate_token(token_id=da_token)
+        self.assertEqual(resp.status_code, 200)
+        self.validate_response(resp)
 
     @federation.base.base.log_tearDown_error
     def tearDown(self):
