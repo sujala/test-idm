@@ -100,7 +100,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         }
         def sharedDaResponse = cloud20.createDelegationAgreement(sharedUserAdminToken, daToCreate)
         assert sharedDaResponse.status == SC_CREATED
-        sharedDa = sharedDaResponse.getEntity(DelegationAgreement)
+        def sharedDa = sharedDaResponse.getEntity(DelegationAgreement)
 
         cloud20.addUserDelegate(sharedUserAdminToken, sharedDa.id, sharedSubUser2.id)
     }
@@ -129,12 +129,12 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedSubUser2.id
             it
         }
         def sharedDaResponse = cloud20.createDelegationAgreement(sharedUserAdminToken, daToCreate)
         assert sharedDaResponse.status == SC_CREATED
         def sharedDa = sharedDaResponse.getEntity(DelegationAgreement)
+        utils.addUserDelegate(sharedUserAdminToken, sharedDa.id, sharedSubUser2.id)
 
         def token = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, sharedDa.id).token.id
 
