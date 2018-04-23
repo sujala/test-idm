@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.*;
+import com.rackspace.idm.api.resource.cloud.AlwaysPluralizeJsonArrayTransformerHandler;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformer;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformerHandler;
+import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
+import com.rackspace.idm.api.resource.cloud.NeverPluralizeJsonArrayTransformerHandler;
 import com.rackspace.idm.exception.BadRequestException;
-import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -18,9 +20,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.MessageBodyReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
@@ -58,11 +62,8 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
 
     protected T read(InputStream entityStream, String rootValue, Map prefixValues, JsonArrayTransformerHandler arrayTransformerHandler) {
         try {
-
-            String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
-
             JSONParser parser = new JSONParser();
-            JSONObject outer = (JSONObject) parser.parse(jsonBody);
+            JSONObject outer = (JSONObject) parser.parse(new InputStreamReader(entityStream, StandardCharsets.UTF_8));
 
             if (outer == null || outer.keySet().size() < 1) {
                 throw new BadRequestException("Invalid json request body");
