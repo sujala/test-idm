@@ -29,6 +29,15 @@ public interface DelegationService {
     DelegationAgreement addDelegationAgreement(DelegationAgreement delegationAgreement);
 
     /**
+     * Update the existing delegation agreement (DA) with the provided information.
+     *
+     * @param delegationAgreement
+     * @throws IllegalArgumentException If the DA is null
+     * @return
+     */
+    void updateDelegationAgreement(DelegationAgreement delegationAgreement);
+
+    /**
      * Deletes the specified delegation agreement
      *
      * @param delegationAgreement

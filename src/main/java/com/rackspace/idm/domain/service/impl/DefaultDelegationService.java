@@ -57,6 +57,13 @@ public class DefaultDelegationService implements DelegationService {
     }
 
     @Override
+    public void updateDelegationAgreement(DelegationAgreement delegationAgreement) {
+        Validate.notNull(delegationAgreement);
+
+        delegationAgreementDao.updateAgreement(delegationAgreement);
+    }
+
+    @Override
     public DelegationAgreement getDelegationAgreementById(String delegationAgreementId) {
         return delegationAgreementDao.getAgreementById(delegationAgreementId);
     }

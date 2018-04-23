@@ -46,6 +46,24 @@ public class DelegationAgreementResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @PUT
+    @Path("/{agreementId}")
+    public Response updateDelegationAgreement (
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @HeaderParam(GlobalConstants.X_AUTH_TOKEN) String authToken,
+            @PathParam("agreementId") String agreementId,
+            DelegationAgreement agreement) {
+        try {
+            verifyServiceEnabled();
+            agreement.setId(agreementId); // Overwrite agreementId value specified in request with path param.
+            return delegationCloudService.updateAgreement(authToken, agreement);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     public Response listDelegationAgreements (
             @Context HttpHeaders httpHeaders,

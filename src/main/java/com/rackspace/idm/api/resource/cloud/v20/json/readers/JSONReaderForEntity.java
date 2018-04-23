@@ -64,7 +64,6 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-
             if (outer == null || outer.keySet().size() < 1) {
                 throw new BadRequestException("Invalid json request body");
             }
@@ -72,6 +71,15 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
             String rootElement = outer.keySet().iterator().next().toString();
             if(!rootElement.equals(rootValue)){
                 throw new BadRequestException("Invalid json request body");
+            }
+
+            /* When a new entity is created in our tests and no attributes are added, our parser converts the new entity
+             * as: "{"rootElement" : null}". This prevents us from testing empty request like "{"rootElement" : {}}".
+             * This check will ensure that a new instance of the entity is returned if the root element's value is set
+             * null. If a failure occurs when creating new instance, a bad request error will be returned.
+             */
+            if (outer.get(rootElement) == null) {
+                return entityType.newInstance();
             }
 
             JSONObject jsonObject;
@@ -82,7 +90,6 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
                 jsonObject = outer;
             }
 
-
             arrayTransformer.transformIncludeWrapper(jsonObject, arrayTransformerHandler);
 
             String jsonString = jsonObject.toString();
@@ -91,7 +98,7 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
             om.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
             return om.readValue(jsonString.getBytes(), entityType);
 
-        } catch (ParseException e) {
+        } catch (ParseException | IllegalAccessException | InstantiationException e) {
             throw new BadRequestException("Invalid json request body", e);
         } catch (InvalidFormatException e) {
             throw new BadRequestException(String.format("Invalid json request body for value '%s'", e.getValue()), e);
