@@ -21,6 +21,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
 
     def setup() {
         service = new DefaultDelegationService()
+        mockDelegationAgreementDao(service)
         mockTenantAssignmentService(service)
         mockTenantRoleDao(service)
     }
@@ -188,6 +189,28 @@ class DefaultDelegationServiceTest extends RootServiceTest {
 
         when: "searchParam is null"
         service.getRoleAssignmentsOnDelegationAgreement(da, null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "updateDelegationAgreement: calls correct daos"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement()
+
+        when:
+        service.updateDelegationAgreement(da)
+
+        then:
+        1 * delegationAgreementDao.updateAgreement(da);
+    }
+
+    def "updateDelegationAgreement: error check"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement()
+
+        when: "DA is null"
+        service.updateDelegationAgreement(null)
 
         then:
         thrown(IllegalArgumentException)

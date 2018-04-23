@@ -33,6 +33,31 @@ public interface DelegationCloudService {
     Response addAgreement(UriInfo uriInfo, String authToken, DelegationAgreement agreement);
 
     /**
+     * Update a delegation agreement (DA). Only name, description, and  allowSubAgreements fields are allowed to be
+     * updated on a DA.
+     *
+     * On success returns:
+     * <ol>
+     *     <li>200 response</li>
+     *     <li>The updated delegation agreement in the response body</li>
+     * </ol>
+     *
+     * On failure will return appropriate v2 error responses:
+     * <ol>
+     *     <li>401 - If the supplied token is not a valid token or expired</li>
+     *     <li>403 - If the caller is not an Identity Admin</li>
+     *     <li>404 - If the DA does not exist</li>
+     *     <li>400 - If the DA changes do not meet validation requirements
+     *     <li>500 - Catchall for any other exception thrown by implementation</li>
+     * </ol>
+     *
+     * @param authToken
+     * @param agreement
+     * @return
+     */
+    Response updateAgreement(String authToken, DelegationAgreement agreement);
+
+    /**
      * Retrieves the specified delegation agreement (DA). The caller must be the principal of the DA to retrieve it.
      *
      * @param authToken

@@ -157,6 +157,55 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     }
 
     @Override
+    public Response updateAgreement(String authToken, DelegationAgreement agreement) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal to update DA.
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreement.getId());
+            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            // Copy over only the attributes that are provided in the request and allowed to be updated.
+            if (agreement.getName() != null) {
+                validator20.validateStringNotNullWithMaxLength("name", agreement.getName(), Validator20.MAX_LENGTH_32);
+                delegationAgreement.setName(agreement.getName());
+            }
+
+            if (agreement.getDescription() != null) {
+                validator20.validateStringMaxLength("description", agreement.getDescription(), Validator20.MAX_LENGTH_255);
+                delegationAgreement.setDescription(agreement.getDescription());
+            }
+
+            if (agreement.isAllowSubAgreements() != null) {
+                delegationAgreement.setAllowSubAgreements(agreement.isAllowSubAgreements());
+            }
+
+            delegationService.updateDelegationAgreement(delegationAgreement);
+
+            return Response.ok(delegationAgreementConverter.toDelegationAgreementWeb(delegationAgreement)).build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error updating delegation agreement '%s'", agreement.getId()), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
     public Response getAgreement(String authToken, String agreementId) {
         try {
             // Verify token exists and valid

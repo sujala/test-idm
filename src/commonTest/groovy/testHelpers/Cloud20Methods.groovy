@@ -1367,6 +1367,11 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).entity(delegationAgreement).post(ClientResponse)
     }
 
+    def updateDelegationAgreement(token, delegationAgreementId, delegationAgreement, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).entity(delegationAgreement).put(ClientResponse)
+    }
+
     def getDelegationAgreement(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).get(ClientResponse)

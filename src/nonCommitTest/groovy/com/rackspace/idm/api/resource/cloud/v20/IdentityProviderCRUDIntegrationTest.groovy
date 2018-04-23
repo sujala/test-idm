@@ -2301,7 +2301,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def updateIdp = new IdentityProvider()
 
         when: "create a DOMAIN IDP with approvedDomainGroup, empty string description"
-        def updateIdpResponse = cloud20.updateIdentityProvider(idpManagerToken, createdIdp.id, updateIdp)
+        def updateIdpResponse = cloud20.updateIdentityProvider(idpManagerToken, createdIdp.id, updateIdp, requestContentType)
         def updateIdpEntity = updateIdpResponse.getEntity(IdentityProvider)
 
         then: "successful"
