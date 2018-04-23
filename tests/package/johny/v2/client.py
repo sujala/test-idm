@@ -1876,3 +1876,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             const.LIST_TENANT_ROLE_ASSIGNMENTS_FOR_DELEGATION_AGREEMENT_URL)
         url = self.url + temp_url.format(da_id=da_id)
         return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+
+    def delete_role_on_delegation_agreement(
+            self, da_id, role_id, requestslib_kwargs=None):
+        """
+        GET v2.0/RAX-AUTH/delegation-agreements/{delegationAgreementId}/
+        roles/{roldId}
+        """
+        url = self.url + const.DELETE_ROLE_ON_DELEGATION_AGREEMENT_URL.format(
+            da_id=da_id, role_id=role_id)
+        return self.request(
+            'DELETE', url, requestslib_kwargs=requestslib_kwargs)
