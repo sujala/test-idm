@@ -95,7 +95,7 @@ class TestDelegationRolesWithUserGroups(usergroups.TestUserGroups):
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
         da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=self.user_admin_2.id,
+            da_name=da_name,
             principal_id=group_one.id,
             principal_type=const.USER_GROUP)
         da_resp = self.user_admin_client.create_delegation_agreement(

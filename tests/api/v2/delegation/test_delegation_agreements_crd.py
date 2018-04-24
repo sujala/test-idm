@@ -49,12 +49,31 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
         return domain_id
 
     def test_delegation_agreement_crd(self):
-        # assert that the subAgreements attribute is false
-        self.validate_delegation_agreements_crud(False)
+        da_name = self.generate_random_string(
+            pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
+        da_resp = self.call_create_delegation_agreement(
+            client=self.user_admin_client, delegate_id=self.user_admin_2_id,
+            da_name=da_name)
+        self.assertEqual(da_resp.status_code, 201)
+        # TODO: Add schema validations once contracts are finalized for
+        # Delegation agreements
+        da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
 
-    def test_delegation_agreement_crd_with_sub_agreements(self):
-        # assert that the subAgreements attribute is true
-        self.validate_delegation_agreements_crud(True)
+        self.user_admin_client.add_user_delegate_to_delegation_agreement(
+            da_id, self.user_admin_2_id)
+
+        get_resp = self.user_admin_client.get_delegation_agreement(
+            da_id=da_id)
+        self.assertEqual(get_resp.status_code, 200)
+        self.assertEqual(
+            get_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.NAME],
+            da_name)
+        get_resp = self.user_admin_client.delete_delegation_agreement(
+            da_id=da_id)
+        self.assertEqual(get_resp.status_code, 204)
+        get_resp = self.user_admin_client.get_delegation_agreement(
+            da_id=da_id)
+        self.assertEqual(get_resp.status_code, 404)
 
     @attr(type='regression')
     def test_list_delegation_agreements(self):
@@ -65,10 +84,16 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
         da_1_resp_parsed = Munch.fromDict(da_1_resp.json())
         da_1_id = da_1_resp_parsed[const.RAX_AUTH_DELEGATION_AGREEMENT].id
 
+        self.user_admin_client.add_user_delegate_to_delegation_agreement(
+            da_1_id, self.user_admin_2_id)
+
         da_2_resp = self.call_create_delegation_agreement(
             client=self.user_admin_client, delegate_id=self.user_admin_2_id)
         da_2_resp_parsed = Munch.fromDict(da_2_resp.json())
         da_2_id = da_2_resp_parsed[const.RAX_AUTH_DELEGATION_AGREEMENT].id
+
+        self.user_admin_client.add_user_delegate_to_delegation_agreement(
+            da_2_id, self.user_admin_2_id)
 
         list_da_resp = self.user_admin_client.list_delegation_agreements()
         self.validate_list_delegation_agreements_resp(
@@ -146,10 +171,13 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
         if not da_name:
             da_name = self.generate_random_string(
                 pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=delegate_id,
-            allow_sub_agreements=allow_sub_agreements)
+        da_req = requests.DelegationAgreements(da_name=da_name)
         da_resp = client.create_delegation_agreement(request_object=da_req)
+        da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+
+        client.add_user_delegate_to_delegation_agreement(
+            da_id, delegate_id)
+
         return da_resp
 
     @classmethod

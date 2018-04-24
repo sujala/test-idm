@@ -92,6 +92,17 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         rcnSwitchResponse = cloud20.domainRcnSwitch(sharedServiceAdminToken, sharedUserAdmin2.domainId, commonRcn)
         assert (rcnSwitchResponse.status == SC_NO_CONTENT)
 
+        // Create delegation agreement and give subuser2 access to same domain as subuser
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+        def sharedDaResponse = cloud20.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        assert sharedDaResponse.status == SC_CREATED
+        def sharedDa = sharedDaResponse.getEntity(DelegationAgreement)
+
+        cloud20.addUserDelegate(sharedUserAdminToken, sharedDa.id, sharedSubUser2.id)
     }
 
     /**
@@ -118,12 +129,12 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedSubUser2.id
             it
         }
         def sharedDaResponse = cloud20.createDelegationAgreement(sharedUserAdminToken, daToCreate)
         assert sharedDaResponse.status == SC_CREATED
         def sharedDa = sharedDaResponse.getEntity(DelegationAgreement)
+        utils.addUserDelegate(sharedUserAdminToken, sharedDa.id, sharedSubUser2.id)
 
         def token = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, sharedDa.id).token.id
 

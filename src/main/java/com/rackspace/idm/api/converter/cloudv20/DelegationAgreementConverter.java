@@ -54,10 +54,6 @@ public class DelegationAgreementConverter {
         delegationAgreement.setPrincipalType(delegationAgreementEntity.getPrincipalType());
         delegationAgreement.setPrincipalId(delegationAgreementEntity.getPrincipalId());
 
-        if (CollectionUtils.isNotEmpty(delegationAgreementEntity.getDelegates())) {
-            delegationAgreement.setDelegateId(delegationAgreementEntity.getFirstDelegateId());
-        }
-
         return delegationAgreement;
     }
 

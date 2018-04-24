@@ -1317,18 +1317,6 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-
-        <!-- Deprecated. Will be removed as part of CID-1450 -->
-        <attribute name="delegateType" type="RAX-AUTH:DelegateType" use="optional"/>
-        <attribute name="delegateId" type="xsd:string" use="optional">
-            <annotation>
-                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        The id of a delegate associated with this delegation agreement
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
     </complexType>
 
     <complexType name="DelegationAgreements">

@@ -229,22 +229,14 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         DelegationAgreement daValidWeb = new DelegationAgreement().with {
             it.principalType = PrincipalType.USER
             it.principalId = caller.id
-            it.delegateId = caller.id // Set delegate to caller
             it
         }
         def response = service.addAgreement(uriInfo, token, daValidWeb)
 
         then:
         1 * identityUserService.getEndUserById(caller.id) >> caller
-        1 * delegationService.getDelegateByReference(_) >> {args ->
-            DelegateReference delegateReference = args[0]
-            assert delegateReference.id == caller.id
-            assert delegateReference.delegateType == com.rackspace.idm.domain.entity.DelegateType.USER
-            caller
-        }
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
         1 * delegationAgreementConverter.toDelegationAgreementWeb(_) >> new DelegationAgreement()
-        1 * domainService.doDomainsShareRcn(caller.domainId, caller.domainId) >> true
         response.status == SC_CREATED
     }
 
@@ -276,7 +268,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         DelegationAgreement daInvalidWeb = new DelegationAgreement().with {
             it.principalType = PrincipalType.USER
             it.principalId = principalUser.id
-            it.delegateId = caller.id // Set delegate to caller
             it
         }
         service.addAgreement(uriInfo, token, daInvalidWeb)
@@ -331,7 +322,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         DelegationAgreement daInvalidWeb = new DelegationAgreement().with {
             it.principalType = PrincipalType.USER
             it.principalId = RandomStringUtils.randomAlphabetic(10)
-            it.delegateId = caller.id // Set delegate to caller
             it
         }
 
@@ -381,7 +371,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         DelegationAgreement daValidWeb = new DelegationAgreement().with {
             it.principalType = PrincipalType.USER_GROUP
             it.principalId = ug.id
-            it.delegateId = caller.id // Set delegate to caller
             it
         }
 
@@ -392,7 +381,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * userGroupService.getGroupById(ug.id) >> ug
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
         1 * delegationAgreementConverter.toDelegationAgreementWeb(_) >> new DelegationAgreement()
-        1 * domainService.doDomainsShareRcn(caller.domainId, caller.domainId) >> true
         response.status == SC_CREATED
     }
 
@@ -431,7 +419,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         DelegationAgreement daValidWeb = new DelegationAgreement().with {
             it.principalType = PrincipalType.USER_GROUP
             it.principalId = principalId
-            it.delegateId = caller.id // Set delegate to caller
             it
         }
         service.addAgreement(uriInfo, token, daValidWeb)
@@ -474,7 +461,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         UriInfo uriInfo = Mock()
         ScopeAccess tokenScopeAccess = new UserScopeAccess()
         DelegationAgreement daWeb = new DelegationAgreement().with {
-            it.delegateId = "delegateId"
             it
         }
         def token = "token"
@@ -486,7 +472,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         identityUserService.getEndUserById(caller.id) >> caller
 
         User delegate = new User().with {
-            it.id = daWeb.delegateId
             it.domainId = RandomStringUtils.randomAlphabetic(10)
             it
         }
@@ -508,21 +493,9 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
 
         then:
         response.status == SC_CREATED
-        1 * domainService.doDomainsShareRcn(delegate.domainId, caller.domainId) >> true
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(daWeb) >> daEntity
         1 * delegationService.addDelegationAgreement(daEntity)
         1 * delegationAgreementConverter.toDelegationAgreementWeb(daEntity) >> daWeb
-
-        when: "Delegate does not belong to same RCN"
-        response = service.addAgreement(uriInfo, token, daWeb)
-
-        then: "Throws not found exception"
-        response.status == SC_NOT_FOUND
-        1 * domainService.doDomainsShareRcn(delegate.domainId, caller.domainId) >> false
-        1 * exceptionHandler.exceptionResponse(_) >> { args ->
-            def ex = args[0]
-            IdmExceptionAssert.assertException(ex, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, IdmExceptionAssert.PATTERN_ALL)
-            return Response.status(HttpServletResponse.SC_NOT_FOUND) }
     }
 
     def "grantRolesToAgreement: calls appropriate services"() {
