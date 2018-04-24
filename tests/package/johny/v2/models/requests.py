@@ -1187,7 +1187,6 @@ class DelegationAgreements(base.AutoMarshallingModel):
         delegation_agreement_request = {
             const.RAX_AUTH_DELEGATION_AGREEMENT: {
                 const.NAME: self.da_name,
-                const.DELEGATE_ID: self.delegate_id,
                 const.DESCRIPTION: self.description
             }
         }

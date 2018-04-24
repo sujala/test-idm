@@ -64,12 +64,15 @@ class TestListDelegationRoles(base.TestBaseV2):
         # as the delegate
         da_name = cls.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=cls.sub_user_id)
+        da_req = requests.DelegationAgreements(da_name=da_name)
         da_resp = cls.user_admin_client.create_delegation_agreement(
             request_object=da_req)
         cls.da_id = da_resp.json()[
             const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+
+        res = cls.user_admin_client.add_user_delegate_to_delegation_agreement(
+            cls.da_id, cls.sub_user_id)
+
         cls.tenant_ids = []
         cls.role_ids = []
 

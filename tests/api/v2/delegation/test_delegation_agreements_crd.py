@@ -59,6 +59,10 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
         # TODO: Add schema validations once contracts are finalized for
         # Delegation agreements
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+
+        res = self.user_admin_client.add_user_delegate_to_delegation_agreement(
+            da_id, self.user_admin_2_id)
+
         get_resp = self.user_admin_client.get_delegation_agreement(
             da_id=da_id)
         self.assertEqual(get_resp.status_code, 200)
@@ -81,10 +85,16 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
         da_1_resp_parsed = Munch.fromDict(da_1_resp.json())
         da_1_id = da_1_resp_parsed[const.RAX_AUTH_DELEGATION_AGREEMENT].id
 
+        res = self.user_admin_client.add_user_delegate_to_delegation_agreement(
+            da_1_id, self.user_admin_2_id)
+
         da_2_resp = self.call_create_delegation_agreement(
             client=self.user_admin_client, delegate_id=self.user_admin_2_id)
         da_2_resp_parsed = Munch.fromDict(da_2_resp.json())
         da_2_id = da_2_resp_parsed[const.RAX_AUTH_DELEGATION_AGREEMENT].id
+
+        res = self.user_admin_client.add_user_delegate_to_delegation_agreement(
+            da_2_id, self.user_admin_2_id)
 
         list_da_resp = self.user_admin_client.list_delegation_agreements()
         self.validate_list_delegation_agreements_resp(
@@ -124,9 +134,13 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
         if not da_name:
             da_name = self.generate_random_string(
                 pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=delegate_id)
+        da_req = requests.DelegationAgreements(da_name=da_name)
         da_resp = client.create_delegation_agreement(request_object=da_req)
+        da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+
+        res = client.add_user_delegate_to_delegation_agreement(
+            da_id, delegate_id)
+
         return da_resp
 
     @classmethod
