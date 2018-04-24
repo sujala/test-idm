@@ -31,7 +31,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         mockAuthorizationService(service)
         mockTenantService(service)
         mockTenantRoleDao(service)
-        mockUserService(service)
+        mockIdentityUserService(service)
         mockUserGroupService(service)
         mockDomainService(service)
         mockIdentityConfig(service)
@@ -917,7 +917,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         da.principal.getId() >> principalUser.id
 
         1 * tenantService.getTenant(tenant.tenantId) >> tenant
-        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * identityUserService.getEndUserById(principalUser.id) >> principalUser
         1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.USER_ADMIN
         1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
 
@@ -936,7 +936,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
         1 * userGroupService.getRoleAssignmentsOnGroup(principalUserGroup.id) >> [globalTenantRole]
         1 * domainService.getDomain(domain.domainId) >> domain
-        0 * userService.getUserById(principalUser.id)
+        0 * identityUserService.getEndUserById(principalUser.id)
         0 * authorizationService.getIdentityTypeRoleAsEnum(principalUser)
     }
 
@@ -1004,7 +1004,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         da.principal.getPrincipalType() >> PrincipalType.USER
         da.principal.getId() >> principalUser.id
 
-        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * identityUserService.getEndUserById(principalUser.id) >> principalUser
         1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.IDENTITY_ADMIN
 
         when: "principal of DA is an 'identity:service-admin' user"
@@ -1017,7 +1017,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         da.principal.getPrincipalType() >> PrincipalType.USER
         da.principal.getId() >> principalUser.id
 
-        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * identityUserService.getEndUserById(principalUser.id) >> principalUser
         1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
         when: "role with higher permissions"
@@ -1030,7 +1030,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         da.principal.getPrincipalType() >> PrincipalType.USER
         da.principal.getId() >> principalUser.id
 
-        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * identityUserService.getEndUserById(principalUser.id) >> principalUser
         1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.USER_ADMIN
         1 * tenantService.getTenant(tenant.tenantId) >> tenant
         1 * applicationService.getClientRoleById(roleId) >> invalidClientRole
@@ -1046,7 +1046,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         da.principal.getId() >> principalUser.id
 
         1 * tenantService.getTenant(tenant.tenantId) >> tenant
-        1 * userService.getUserById(principalUser.id) >> principalUser
+        1 * identityUserService.getEndUserById(principalUser.id) >> principalUser
         1 * authorizationService.getIdentityTypeRoleAsEnum(principalUser) >> IdentityUserTypeEnum.DEFAULT_USER
         1 * tenantService.getTenantRolesForUserPerformant(principalUser) >> [allowedTenantRole]
 
