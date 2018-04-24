@@ -463,37 +463,6 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-//    @Test
-//    public void assignProperRole_callsAuthorizeCloudUserAdmin() throws Exception {
-//        defaultCloud20Service.assignProperRole(null, null);
-//        verify(authorizationService).authorizeCloudUserAdmin(null);
-//    }
-//
-//    @Test
-//    public void assignProperRole_callsAuthorizeCloudIdentityAdmin() throws Exception {
-//        defaultCloud20Service.assignProperRole(null, null);
-//        verify(authorizationService).authorizeCloudIdentityAdmin(null);
-//    }
-//
-//    @Test
-//    public void assignProperRole_callsAuthorizeCloudServiceAdmin() throws Exception {
-//        defaultCloud20Service.assignProperRole(null, null);
-//        verify(authorizationService).authorizeCloudServiceAdmin(null);
-//    }
-
-    @Test
-    public void deleteTenant_validTenantAdminAndServiceAdmin_return204() throws Exception {
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        //Current time plus 10 min
-        scopeAccess.setAccessTokenExp(new Date(System.currentTimeMillis() + 600000));
-        scopeAccess.setRefreshTokenExp(new Date(System.currentTimeMillis() + 600000));
-        scopeAccess.setAccessTokenString("token");
-        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
-        when(tenantService.checkAndGetTenant("1")).thenReturn(tenant);
-        Response.ResponseBuilder responseBuilder = defaultCloud20Service.deleteTenant(null, authToken, "1");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
-    }
-
     @Test
     public void getExtension_badAlias_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);

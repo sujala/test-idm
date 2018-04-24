@@ -129,4 +129,14 @@ public interface TenantRoleDao {
      * @return
      */
     Iterable<TenantRole> getAllRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement);
+
+    /**
+     * Returns all the tenant roles explicitly assigned to the given tenant ID on a delegation agreement.
+     * Note: This does not return tenant roles assigned to the delegation agreement at the domain level.
+     *
+     * @param tenantId
+     * @return
+     */
+    Iterable<TenantRole> getTenantRolesForDelegationAgreementsForTenant(String tenantId);
+
 }

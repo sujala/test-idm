@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -89,6 +90,13 @@ public class DefaultDelegationService implements DelegationService {
         Validate.notNull(delegationAgreement);
 
         return tenantRoleDao.getAllRoleAssignmentsOnDelegationAgreement(delegationAgreement);
+    }
+
+    @Override
+    public Iterable<TenantRole> getTenantRolesForDelegationAgreementsForTenant(String tenantId) {
+        Validate.notNull(tenantId);
+
+        return tenantRoleDao.getTenantRolesForDelegationAgreementsForTenant(tenantId);
     }
 
     @Override

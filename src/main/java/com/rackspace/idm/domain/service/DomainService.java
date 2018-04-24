@@ -16,6 +16,7 @@ public interface DomainService {
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);
     void addTenantToDomain(String tenantId, String domainId);
+    void addTenantToDomain(Tenant tenant, Domain domain);
     void removeTenantFromDomain(String tenantId, String domainId);
     Iterable<User> getUsersByDomainId(String domainId);
     Iterable<User> getUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled);

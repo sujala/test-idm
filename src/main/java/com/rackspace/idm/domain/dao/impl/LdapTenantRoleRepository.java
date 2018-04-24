@@ -314,6 +314,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return getObjects(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB);
     }
 
+    @Override
+    public Iterable<TenantRole> getTenantRolesForDelegationAgreementsForTenant(String tenantId) {
+        return getObjects(searchFilterGetTenantRolesByTenantId(tenantId), DELEGATION_AGREEMENT_BASE_DN, SearchScope.SUB);
+    }
+
     private TenantRole getTenantRole(String dn, String roleId) {
         return getObject(searchFilterGetTenantRoleByRoleId(roleId), dn, SearchScope.SUB);
     }

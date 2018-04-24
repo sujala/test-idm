@@ -176,6 +176,12 @@ class Cloud20Utils {
         return delegateSubUserAuthResponse
     }
 
+    RoleAssignments listRolesOnDelegationAgreement(token, delegationAgreement) {
+        def response = methods.listRolesOnDelegationAgreement(token, delegationAgreement)
+        assert response.status == 200
+        return response.getEntity(RoleAssignments)
+    }
+
     def getTokenFromApiKeyAuth(String username, String apikey = DEFAULT_API_KEY) {
         def response = methods.authenticateApiKey(username, apikey)
         assert (response.status == SC_OK)

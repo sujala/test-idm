@@ -138,7 +138,8 @@ public class DefaultDomainService implements DomainService {
         addTenantToDomain(tenant, domain);
     }
 
-    private void addTenantToDomain(Tenant tenant, Domain newDomain) {
+    @Override
+    public void addTenantToDomain(Tenant tenant, Domain newDomain) {
         Assert.notNull(tenant);
         Assert.notNull(newDomain);
 
