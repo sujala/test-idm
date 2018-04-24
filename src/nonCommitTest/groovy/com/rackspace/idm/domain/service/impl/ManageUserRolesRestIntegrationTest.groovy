@@ -33,7 +33,6 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
     @Shared def sharedIdentityAdminToken
 
     void doSetupSpec() {
-
         def authResponse = cloud20.authenticatePassword(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD)
         assert authResponse.status == HttpStatus.SC_OK
         sharedIdentityAdminToken = authResponse.getEntity(AuthenticateResponse).value.token.id
