@@ -5,6 +5,7 @@ from munch import Munch
 from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
+from tests.api.v2.schema import tokens as tokens_json
 from tests.api.v2.federation import federation
 
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -155,12 +156,16 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             token=fed_user_token, delegation_agreement_id=da_id)
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(response=resp, json_schema=tokens_json.auth)
+
         self.validate_response(resp)
         da_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
 
         # Validate Auth Token
         resp = self.identity_admin_client.validate_token(token_id=da_token)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(
+            response=resp, json_schema=tokens_json.validate_token)
         self.validate_response(resp)
 
     @attr(type='regression')
@@ -201,12 +206,15 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             token=fed_user_token, delegation_agreement_id=da_id)
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(response=resp, json_schema=tokens_json.auth)
         self.validate_response(resp)
         da_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
 
         # Validate Auth Token
         resp = self.identity_admin_client.validate_token(token_id=da_token)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(
+            response=resp, json_schema=tokens_json.validate_token)
         self.validate_response(resp)
 
     @federation.base.base.log_tearDown_error

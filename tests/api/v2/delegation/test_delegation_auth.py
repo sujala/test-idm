@@ -3,6 +3,7 @@ from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
+from tests.api.v2.schema import tokens as tokens_json
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
@@ -87,6 +88,8 @@ class TestAuthUnderDelegationAgreement(base.TestBaseV2):
 
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(response=resp, json_schema=tokens_json.auth)
+
         # Verifying that all auth methods are returned, ignoring the order
         for auth_by in [const.AUTH_BY_DELEGATION, const.AUTH_BY_PWD]:
             self.assertIn(auth_by, resp.json()[
@@ -96,6 +99,8 @@ class TestAuthUnderDelegationAgreement(base.TestBaseV2):
         resp = self.identity_admin_client.validate_token(
             token_id=delegation_token)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(
+            response=resp, json_schema=tokens_json.validate_token)
         user_id = resp.json()[const.ACCESS][const.USER][const.ID]
 
         resp = self.identity_admin_client.get_user(user_id)
@@ -150,6 +155,8 @@ class TestAuthUnderDelegationAgreement(base.TestBaseV2):
 
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(response=resp, json_schema=tokens_json.auth)
+
         # Verifying that all auth methods are returned, ignoring the order
         for auth_by in [const.AUTH_BY_DELEGATION, const.AUTH_BY_PWD,
                         const.AUTH_BY_OTPPASSCODE]:
@@ -160,6 +167,8 @@ class TestAuthUnderDelegationAgreement(base.TestBaseV2):
         resp = self.identity_admin_client.validate_token(
             token_id=delegation_token)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(
+            response=resp, json_schema=tokens_json.validate_token)
 
     def call_second_step_of_mfa(self, first_auth_resp, secret):
 
