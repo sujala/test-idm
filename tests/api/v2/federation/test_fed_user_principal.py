@@ -96,8 +96,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
 
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=self.user_admin_2.id)
+        da_req = requests.DelegationAgreements(da_name=da_name)
 
         self.validate_da_crd(client=fed_client, da_req=da_req)
 
@@ -143,7 +142,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
         da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=self.user_admin_2.id,
+            da_name=da_name,
             principal_id=group_one.id,
             principal_type=const.USER_GROUP)
         self.validate_da_crd(client=fed_client, da_req=da_req)
