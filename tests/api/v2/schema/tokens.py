@@ -1,4 +1,4 @@
-"""Schema Definitions for Tokens Endpoints 
+"""Schema Definitions for Tokens Endpoints.
 This module will contain the json schema definitions for all API responses
 defined in
 http://docs-internal.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/Token_Calls.html # noqa
@@ -18,7 +18,7 @@ tenant_item = {
 
 token_item = {
     'type': 'object', 'properties': {
-        const.ID: {'type': 'string'},
+        const.ID: {'type': 'string', 'maxLength': 254},
         const.EXPIRES: {'type': 'string'},
         const.TENANT: tenant_item,
         const.RAX_AUTH_AUTHENTICATED_BY: {
