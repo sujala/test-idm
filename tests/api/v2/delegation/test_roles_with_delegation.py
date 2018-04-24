@@ -74,7 +74,7 @@ class TestRoleAssignmentsWithDelegation(base.TestBaseV2):
             request_object=da_req)
         da_id = da_resp.json()[
             const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
-        res = client.add_user_delegate_to_delegation_agreement(
+        client.add_user_delegate_to_delegation_agreement(
             da_id, user_id)
         return da_id
 

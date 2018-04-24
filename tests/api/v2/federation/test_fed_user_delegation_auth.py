@@ -150,7 +150,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         da = Munch.fromDict(da_resp.json())
         da_id = da[const.RAX_AUTH_DELEGATION_AGREEMENT].id
 
-        res = fed_client.add_user_delegate_to_delegation_agreement(
+        fed_client.add_user_delegate_to_delegation_agreement(
             da_id, fed_user_id)
 
         # DA auth using fed user's token

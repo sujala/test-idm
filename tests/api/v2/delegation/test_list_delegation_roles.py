@@ -70,7 +70,7 @@ class TestListDelegationRoles(base.TestBaseV2):
         cls.da_id = da_resp.json()[
             const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
 
-        res = cls.user_admin_client.add_user_delegate_to_delegation_agreement(
+        cls.user_admin_client.add_user_delegate_to_delegation_agreement(
             cls.da_id, cls.sub_user_id)
 
         cls.tenant_ids = []

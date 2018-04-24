@@ -70,7 +70,7 @@ class TestManageDelegates(base.TestBaseV2):
             request_object=da_req)
         self.assertEqual(da_resp.status_code, 201)
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
-        res = self.user_admin_client.add_user_delegate_to_delegation_agreement(
+        self.user_admin_client.add_user_delegate_to_delegation_agreement(
             da_id, self.sub_user_id)
 
         # add user delegate to DA
@@ -127,7 +127,7 @@ class TestManageDelegates(base.TestBaseV2):
             request_object=da_req)
         self.assertEqual(da_resp.status_code, 201)
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
-        res = self.user_admin_client.add_user_delegate_to_delegation_agreement(
+        self.user_admin_client.add_user_delegate_to_delegation_agreement(
             da_id, self.sub_user_id)
 
         # add user group delegate to DA
