@@ -8,6 +8,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
@@ -50,6 +51,7 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.SAMLConstants.*
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
@@ -1292,7 +1294,13 @@ class Cloud20Utils {
     def getDelegationAgreement(String token, String delegationAgreementId) {
         def response = methods.getDelegationAgreement(token, delegationAgreementId)
         assert (response.status == SC_OK)
-        response.getEntity(DelegationAgreement).value
+        response.getEntity(DelegationAgreement)
+    }
+
+    DelegateReferences listDelegatesForDelegationAgreement(String token, String delegationAgreementId) {
+        def response = methods.listDelegates(token, delegationAgreementId)
+        assert response.status == 200
+        return response.getEntity(DelegateReferences)
     }
 
     def grantRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, RoleAssignments roleAssignments, token = getIdentityAdminToken()) {
@@ -1494,6 +1502,23 @@ class Cloud20Utils {
         def samlResponse = methods.federatedAuthenticate(samlAssertion, apply_rcn_roles, GlobalConstants.FEDERATION_API_V1_0, mediaType)
         def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
         return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
+    }
+
+    AuthenticateResponse authenticateFederatedUser(String domainId, groupNames = [], roleNames = []) {
+        def samlRequest = new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = domainId
+            it.validitySeconds = 1000
+            it.brokerIssuer = Constants.DEFAULT_BROKER_IDP_URI
+            it.originIssuer = Constants.IDP_V2_DOMAIN_URI
+            it.email = Constants.DEFAULT_FED_EMAIL
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = "fedUser${RandomStringUtils.randomAlphanumeric(8)}"
+            it.roleNames = roleNames
+            it.groupNames = groupNames
+            it
+        }
+        authenticateV2FederatedUser(samlRequest)
     }
 
     def authenticateV2FederatedUser(FederatedDomainAuthGenerationRequest federatedDomainAuthGenerationRequest, boolean apply_rcn_roles = true, mediaType = APPLICATION_XML_TYPE) {

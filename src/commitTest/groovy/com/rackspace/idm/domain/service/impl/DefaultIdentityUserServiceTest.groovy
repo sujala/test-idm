@@ -1,17 +1,18 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.api.security.IdentityRole
+import com.rackspace.idm.domain.dao.IdentityUserDao
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.domain.service.TenantEndpointMeta
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
-import org.apache.commons.lang3.RandomStringUtils
-import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
-import com.rackspace.idm.domain.dao.IdentityUserDao
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
+import org.apache.commons.lang3.RandomStringUtils
 import org.slf4j.Logger
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -44,6 +45,7 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         mockTenantService(service)
         mockAuthorizationService(service)
         mockEndpointService(service)
+        mockDelegationService(service)
     }
 
     def "Add Group to user includes feed event"() {
@@ -351,4 +353,18 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         then:
         1 * identityUserRepository.updateIdentityUser(user)
     }
+
+
+    def "deleteUser deletes the user from explicit DA assignments"() {
+        given:
+        def user = new User()
+
+        when:
+        service.deleteUser(user)
+
+        then:
+        1 * tenantService.getTenantRolesForUser(user) >> []
+        1 * delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(user)
+    }
+
 }

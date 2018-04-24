@@ -176,6 +176,20 @@ public class DelegationAgreement implements Auditable, UniqueId {
         return result;
     }
 
+    /**
+     * Whether the specified potential principal is explicitly listed as the principal on the DA. This differs from
+     * {@link #isEffectivePrincipal(EndUser)} in that this method does not take into consideration user group membership.
+     *
+     * @param principal
+     * @return
+     */
+    public boolean isExplicitPrincipal(DelegationPrincipal principal) {
+        if (principal == null || getPrincipal() == null || getPrincipal().getId() == null || principal.getId() == null) {
+            return false;
+        }
+
+        return getPrincipalType() == principal.getPrincipalType() && getPrincipalDN().equals(principal.getDn());
+    }
 
     /**
      * Whether the specified potential delegate is explicitly listed as a delegate on the DA. This differs from
@@ -184,7 +198,8 @@ public class DelegationAgreement implements Auditable, UniqueId {
      * @param delegate
      * @return
      */
-    public boolean isDelegate(DelegationDelegate delegate) {
+    public boolean isExplicitDelegate(DelegationDelegate delegate) {
         return getDelegates().contains(delegate.getDn());
     }
+
 }

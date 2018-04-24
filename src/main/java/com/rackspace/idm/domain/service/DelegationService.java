@@ -181,4 +181,14 @@ public interface DelegationService {
      * @param delegateReference
      */
     boolean deleteDelegate(DelegationAgreement delegationAgreement, DelegateReference delegateReference);
+
+    /**
+     * Removes the DA consumer from all explicit assignments on all DAs. This includes:
+     *  - the DAs for which the consumer is the explicit principal
+     *  - the DAs for which the consumer is an explicit delegate
+     *
+     * @param user
+     */
+    void removeConsumerFromExplicitDelegationAgreementAssignments(DelegationConsumer user);
+
 }

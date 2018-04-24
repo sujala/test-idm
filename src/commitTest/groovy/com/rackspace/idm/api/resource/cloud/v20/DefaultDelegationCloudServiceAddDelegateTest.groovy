@@ -69,7 +69,7 @@ class DefaultDelegationCloudServiceAddDelegateTest extends RootServiceTest {
 
         then:
         response.status == SC_CONFLICT
-        1 * mockDa.isDelegate(delegate) >> true
+        1 * mockDa.isExplicitDelegate(delegate) >> true
         0 * delegationService.addDelegate(_, _)
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             def exception = args[0]
@@ -120,7 +120,7 @@ class DefaultDelegationCloudServiceAddDelegateTest extends RootServiceTest {
         def response = service.addDelegate(tokenStr, "daId", delegateReference)
 
         then:
-        1 * mockDa.isDelegate(delegate) >> false
+        1 * mockDa.isExplicitDelegate(delegate) >> false
         1 * delegationService.addDelegate(mockDa, delegate)
         response.status == SC_NO_CONTENT
 
