@@ -181,7 +181,7 @@ public class DelegationAgreementResource {
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
     @GET
     @Path("/{agreementId}/delegates")
-    public Response deleteUserDelegate (
+    public Response listDelegates (
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @PathParam("agreementId") String agreementId,

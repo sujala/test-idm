@@ -46,6 +46,7 @@ CHANGE_PASSWORD_URL = '/users/RAX-AUTH/change-pwd'
 DELETE_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}'
 DELEGATION_AGREEMENTS_URL = '/RAX-AUTH/delegation-agreements'
 DELEGATION_AGREEMENTS_RD_URL = '/RAX-AUTH/delegation-agreements/{da_id}'
+DA_DELEGATES_URL = '/RAX-AUTH/delegation-agreements/{da_id}/delegates'
 GET_DOMAIN_URL = DELETE_DOMAIN_URL
 DELETE_ENDPOINT_FROM_TENANT_URL = (
     '/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}')
@@ -269,6 +270,8 @@ DEFAULT_REGION = 'defaultRegion'
 DEMOTE_USER_ID = 'demoteUserId'
 DESCRIPTION = 'description'
 DEFAULT_VALUE = 'defaultValue'
+DELEGATE_REFERENCES = 'RAX-AUTH:delegateReferences'
+DELEGATE_TYPE = 'delegateType'
 DISPLAY_NAME = 'display-name'
 DOMAIN = 'domain'
 DOMAIN_ENABLED = 'domainEnabled'
