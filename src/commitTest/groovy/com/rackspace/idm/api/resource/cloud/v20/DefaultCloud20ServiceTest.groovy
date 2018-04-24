@@ -4578,6 +4578,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
         1 * tenantService.getGlobalRolesForUser(user) >> [role]
         1 * userService.updateUser(user)
+        1 * delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(user)
 
         if (IdentityUserTypeEnum.SERVICE_ADMIN == userType || IdentityUserTypeEnum.IDENTITY_ADMIN == userType) {
             1 * authorizationService.verifyServiceAdminLevelAccess(_)

@@ -4,8 +4,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
+import com.rackspace.idm.api.resource.cloud.v20.UserGroupDelegateReference
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.DelegationAgreement
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
@@ -36,6 +38,8 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         mockValidator20(service)
         mockIdentityConfig(service)
         mockTenantAssignmentService(service)
+        mockDelegationService(service)
+        mockIdentityUserService(service)
 
         dao = Mock()
         service.userGroupDao = dao
@@ -996,6 +1000,18 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
 
         then:
         tenantRoles.isEmpty()
+    }
+
+    def "deleteGroup removes the user group from explicit DA assignments"() {
+        given:
+        def userGroup = new UserGroup()
+
+        when:
+        service.deleteGroup(userGroup)
+
+        then:
+        1 * identityUserService.getEndUsersInUserGroup(userGroup) >> []
+        1 * delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(userGroup)
     }
 
 }

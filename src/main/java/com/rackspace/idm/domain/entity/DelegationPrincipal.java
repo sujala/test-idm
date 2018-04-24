@@ -6,14 +6,7 @@ import com.unboundid.ldap.sdk.DN;
 /**
  * Identifies the rolespace for a delegation agreement
  */
-public interface DelegationPrincipal {
-
-    /**
-     * Retrieves the unique identifier of the principal
-     *
-     * @return
-     */
-    String getId();
+public interface DelegationPrincipal extends DelegationConsumer {
 
     /**
      * Identifies the type of principal
@@ -21,7 +14,4 @@ public interface DelegationPrincipal {
      */
     PrincipalType getPrincipalType();
 
-    DN getDn();
-
-    String getDomainId();
 }
