@@ -19,6 +19,7 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
+import com.unboundid.ldap.sdk.DN
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -98,6 +99,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["listRoleAssignmentsOnAgreement", {token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams()))}, NotFoundException, "GEN-004"]
                 , ["listDelegationAgreements", {token -> service.listAgreements(token, "invalidRelationship")}, BadRequestException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE]
                 , ["listDelegates", {token -> service.listDelegates(token, "id")}, NotFoundException, "GEN-004"]
+                , ["updateAgreement", {token -> service.updateAgreement(token, new DelegationAgreement())}, NotFoundException, "GEN-004"]
         ]
     }
 
@@ -145,6 +147,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
                 , ["listRoleAssignmentsOnAgreement", {token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams()))}]
                 , ["listDelegationAgreements", {token -> service.listAgreements(token, "invalidRelationship")}]
                 , ["listDelegates", {token -> service.listDelegates(token, "id")}]
+                , ["updateAgreement", {token -> service.updateAgreement(token, new DelegationAgreement())}]
         ]
     }
 
@@ -789,6 +792,104 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
             IdmExceptionAssert.assertException(exception, NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified agreement does not exist for this user")
             Response.status(SC_NOT_FOUND)
         }
+    }
+
+    def "updateAgreement: calls appropriate services"() {
+        given:
+        def token = "token"
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        DelegationAgreement da = new DelegationAgreement()
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = "rsId=" + it.id
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it
+        }
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.principalDN = new DN(caller.uniqueId)
+            it
+        }
+
+
+        when:
+        service.updateAgreement(token, da)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(_) >> daEntity
+        1 * delegationService.updateDelegationAgreement(daEntity)
+    }
+
+    def "updateAgreement: error check"() {
+        given:
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        def token = "token"
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = "rsId=" + it.id
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it
+        }
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.principalDN = new DN(caller.uniqueId)
+            it
+        }
+        delegationService.getDelegationAgreementById(_) >> daEntity
+
+        DelegationAgreement daInvalidWeb = new DelegationAgreement()
+
+        def invalidName = RandomStringUtils.randomAlphabetic(33)
+        def validName = RandomStringUtils.randomAlphabetic(32)
+        def invalidDescription = RandomStringUtils.randomAlphabetic(256)
+        def validDescription = RandomStringUtils.randomAlphabetic(32)
+
+        when: "name exceeding 32"
+        daInvalidWeb.setName(invalidName)
+        service.updateAgreement(token, daInvalidWeb)
+
+        then:
+        1 * validator20.validateStringNotNullWithMaxLength("name", invalidName, 32) >> {throw new BadRequestException("asd")}
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
+
+        when: "description exceeding 255"
+        daInvalidWeb.setName(validName)
+        daInvalidWeb.setDescription(invalidDescription)
+        service.updateAgreement(token, daInvalidWeb)
+
+        then:
+        1 * validator20.validateStringNotNullWithMaxLength("name", validName, 32)
+        1 * validator20.validateStringMaxLength("description", invalidDescription, 255) >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
+        0 * delegationService.updateDelegationAgreement(_)
+
+        when: "da not found"
+        daInvalidWeb.setDescription(validDescription)
+        daInvalidWeb.setId("invalid")
+        service.updateAgreement(token, daInvalidWeb)
+
+        then:
+        1 * delegationService.getDelegationAgreementById("invalid") >> null
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
+        0 * validator20.validateStringNotNullWithMaxLength("name", validName, 32)
+        0 * validator20.validateStringMaxLength("description", invalidDescription, 255)
+        0 * delegationService.updateDelegationAgreement(_)
+
+        when: "caller is a delegate"
+        daEntity.setPrincipalDN(new DN("rsId=other"))
+        service.updateAgreement(token, new DelegationAgreement())
+
+        then:
+        1 * delegationService.getDelegationAgreementById(_) >> daEntity
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
+        0 * validator20.validateStringNotNullWithMaxLength("name", validName, 32)
+        0 * validator20.validateStringMaxLength("description", invalidDescription, 255)
+        0 * delegationService.updateDelegationAgreement(_)
     }
 }
 

@@ -4620,6 +4620,79 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * domainService.getDomainAdmins(domain.domainId) >> [existingUserAdmin]
     }
 
+    def "removeTenantFromDomain deletes tenant assigned roles off of the DA for the tenant"() {
+        given:
+        allowUserAccess()
+        def tenantId = RandomStringUtils.randomAlphanumeric(8)
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.tenantIds << tenantId
+            it
+        }
+
+        when:
+        service.removeTenantFromDomain(authToken, domainId, tenantId)
+
+        then:
+        1 * domainService.removeTenantFromDomain(tenantId, domainId)
+        1 * delegationService.getTenantRolesForDelegationAgreementsForTenant(tenantId) >> [tenantRole]
+        1 * tenantService.deleteTenantFromTenantRole(tenantRole, tenantId)
+    }
+
+    @Unroll
+    def "addTenantToDomain deletes tenant assigned roles off of the DA for the tenant: tenantDomainId = #tenantDomainId , domainTenantIds = #domainTenantIds, tenantRoleShouldBeDeleted = #tenantRoleShouldBeDeleted"() {
+        given:
+        allowUserAccess()
+        def domainId = "domainId"
+        def tenantId = "tenantId"
+        def tenant = entityFactory.createTenant().with {
+            it.tenantId = tenantId
+            it.domainId = tenantDomainId
+            it
+        }
+        def domain = entityFactory.createDomain().with {
+            it.domainId = domainId
+            it.tenantIds = domainTenantIds
+            it
+        }
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.tenantIds << tenantId
+            it
+        }
+
+        // roles are only deleted on the DA if the tenant does not point to the domain and the domain does not point to the tenant
+        if (tenantRoleShouldBeDeleted) {
+            1 * delegationService.getTenantRolesForDelegationAgreementsForTenant(tenantId) >> [tenantRole]
+            1 * tenantService.deleteTenantFromTenantRole(tenantRole, tenantId)
+        } else {
+            0 * delegationService.getTenantRolesForDelegationAgreementsForTenant(tenantId) >> [tenantRole]
+            0 * tenantService.deleteTenantFromTenantRole(tenantRole, tenantId)
+        }
+
+        when: "add tenant to domain where tenant already points to that domain"
+        service.addTenantToDomain(authToken, domainId, tenantId)
+
+        then:
+        1 * tenantService.checkAndGetTenant(tenantId) >> tenant
+        1 * domainService.addTenantToDomain(tenant, domain)
+        1 * domainService.checkAndGetDomain(domainId) >> domain
+
+        where:
+        tenantDomainId  | domainTenantIds   | tenantRoleShouldBeDeleted
+        null            | null              | true
+        null            | []                | true
+        null            | ["otherTenantId"] | true
+        "otherDomainId" | null              | true
+        "otherDomainId" | []                | true
+        "otherDomainId" | ["otherTenantId"] | true
+        null            | ["tenantId"]      | false
+        "otherDomainId" | ["tenantId"]      | false
+        "domainId"      | null              | false
+        "domainId"      | []                | false
+        "domainId"      | ["tenantId"]      | false
+        "domainId"      | ["otherTenantId"] | false
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)
@@ -4646,6 +4719,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserGroupService(service)
         mockRuleService(service)
         mockPhonePinService(service)
+        mockDelegationService(service)
     }
 
     def mockMisc() {

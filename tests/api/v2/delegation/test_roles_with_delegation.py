@@ -146,8 +146,8 @@ class TestRoleAssignmentsWithDelegation(base.TestBaseV2):
         tenant_1 = self.create_tenant()
         return role_1, role_2, tenant_1, da_id
 
-    @attr(type='smoke_alpha')
-    def test_grant_roles_to_da_when_user_manager_principal(self):
+    @attr(type='regression')
+    def test_grant_and_delete_roles_to_da_when_user_manager_principal(self):
         """
         Tests for when user manager is a principal for a DA.
         """
@@ -183,6 +183,15 @@ class TestRoleAssignmentsWithDelegation(base.TestBaseV2):
             tenant_assignments=tas, role_1=role_1, role_2=role_2,
             tenant_1=tenant_1)
 
+        # Checking if delete role on DA removes the global role on DA, by
+        # list call
+        self.validate_delete_role_from_DA(
+            client=um_client, da_id=da_id, role=role_2)
+
+        self.validate_delegation_auth_after_role_deletion(
+            da_id=da_id, role=role_2)
+
+    @attr(type='regression')
     def test_grant_roles_to_da_when_default_user_principal(self):
         """
         Tests for when default user is a principal for a DA. Various
@@ -262,6 +271,41 @@ class TestRoleAssignmentsWithDelegation(base.TestBaseV2):
         self.validate_list_da_roles_response(
             tenant_assignments=tas, role_1=role_1, role_2=role_2,
             tenant_1=tenant_1, for_default_user=True)
+
+        # Checking if delete role on DA removes the tenant role on DA, by
+        # list call
+        self.validate_delete_role_from_DA(
+            client=du_client, da_id=da_id, role=role_1)
+
+        self.validate_delegation_auth_after_role_deletion(
+            da_id=da_id, role=role_1)
+
+    def validate_delegation_auth_after_role_deletion(self, da_id, role):
+
+        delegation_auth_req = requests.AuthenticateWithDelegationAgreement(
+            token=self.sub_user_client.default_headers[const.X_AUTH_TOKEN],
+            delegation_agreement_id=da_id)
+        resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
+        self.assertEqual(resp.status_code, 200)
+        resp_parsed = Munch.fromDict(resp.json())
+        role_ids = map(lambda role_: role_.id, resp_parsed.access.user.roles)
+        self.assertNotIn(role.id, role_ids)
+
+    def validate_delete_role_from_DA(self, client, da_id, role):
+
+        delete_resp = client.delete_role_on_delegation_agreement(
+            da_id=da_id, role_id=role.id)
+        self.assertEqual(delete_resp.status_code, 204)
+        list_resp_parsed = self.call_list_da_roles_and_parse_the_response(
+            client=client, da_id=da_id)
+        tas = list_resp_parsed[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+            const.TENANT_ASSIGNMENTS]
+        role_ids = [role_['onRole'] for role_ in tas]
+        self.assertNotIn(role.id, role_ids)
+        delete_resp = client.delete_role_on_delegation_agreement(
+            da_id=da_id, role_id=role.id
+        )
+        self.assertEqual(delete_resp.status_code, 404)
 
     def tearDown(self):
         super(TestRoleAssignmentsWithDelegation, self).tearDown()

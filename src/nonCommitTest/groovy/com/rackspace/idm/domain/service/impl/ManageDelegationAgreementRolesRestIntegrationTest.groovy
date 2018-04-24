@@ -820,6 +820,74 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified role does not exist for agreement")
     }
 
+    def "changes to a tenant that remove the tenant from the domain removes all tenant assigned roles for the tenant on DAs"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def domainId = userAdmin.domainId
+        def cloudTenantId = domainId
+        def defaultUser = utils.createUser(utils.getToken(userAdmin.username))
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it.delegateId = defaultUser.id
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(utils.getToken(userAdmin.username), delegationAgreement)
+        def otherTenant = utils.createTenant()
+        utils.addTenantToDomain(domainId, otherTenant.id)
+
+        when: "verify that the tenant is assigned to the DA"
+        addRoleOnTenantsForDelegationAgreement(utils.getToken(userAdmin.username), [cloudTenantId, otherTenant.id], createdDA)
+        def roleAssignments = utils.listRolesOnDelegationAgreement(utils.getToken(userAdmin.username), createdDA)
+
+        then:
+        roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(cloudTenantId)
+        roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(otherTenant.id)
+
+        when: "delete the tenant off of the domain (moves it to the default domain)"
+        utils.deleteTenantFromDomain(domainId, cloudTenantId)
+        roleAssignments = utils.listRolesOnDelegationAgreement(utils.getToken(userAdmin.username), createdDA)
+
+        then:
+        !roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(cloudTenantId)
+        roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(otherTenant.id)
+
+        when: "add the tenant back to the original domain and assign the tenant back to the DA"
+        utils.addTenantToDomain(domainId, cloudTenantId)
+        addRoleOnTenantsForDelegationAgreement(utils.getToken(userAdmin.username), [cloudTenantId, otherTenant.id], createdDA)
+        roleAssignments = utils.listRolesOnDelegationAgreement(utils.getToken(userAdmin.username), createdDA)
+
+        then:
+        roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(cloudTenantId)
+        roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(otherTenant.id)
+
+        when: "move the tenant from one non-default domain to another non-default domain"
+        def otherDomain = utils.createDomainEntity()
+        utils.addTenantToDomain(otherDomain.id, cloudTenantId)
+        roleAssignments = utils.listRolesOnDelegationAgreement(utils.getToken(userAdmin.username), createdDA)
+
+        then:
+        !roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(cloudTenantId)
+        roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(otherTenant.id)
+
+        when: "add the tenant back to the original domain and assign the tenant back to the DA"
+        utils.addTenantToDomain(domainId, cloudTenantId)
+        addRoleOnTenantsForDelegationAgreement(utils.getToken(userAdmin.username), [cloudTenantId, otherTenant.id], createdDA)
+        roleAssignments = utils.listRolesOnDelegationAgreement(utils.getToken(userAdmin.username), createdDA)
+
+        then:
+        roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(cloudTenantId)
+        roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(otherTenant.id)
+
+        when: "delete the tenant"
+        utils.deleteTenant(cloudTenantId)
+        roleAssignments = utils.listRolesOnDelegationAgreement(utils.getToken(userAdmin.username), createdDA)
+
+        then:
+        !roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(cloudTenantId)
+        roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(otherTenant.id)
+    }
+
     void verifyContainsAssignment(RoleAssignments roleAssignments, String roleId, List<String> tenantIds) {
         ImmutableClientRole imr = applicationService.getCachedClientRoleById(roleId)
 
@@ -838,5 +906,17 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
                 ta
         }
         return assignment
+    }
+
+    def addRoleOnTenantsForDelegationAgreement(token, tenantIds, delegationAgreement, roleId = ROLE_RBAC1_ID) {
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(roleId, tenantIds))
+                    tas
+            }
+            it
+        }
+        cloud20.grantRoleAssignmentsOnDelegationAgreement(token, delegationAgreement, assignments)
     }
 }

@@ -14,6 +14,16 @@ public interface TenantService {
 
     void addTenant(Tenant tenant);
     void deleteTenant(Tenant tenant);
+
+    /**
+     * Deletes the tenant from the tenant role. If the tenant is the only tenant on
+     * the tenant role, the role is deleted.
+     *
+     * @param role
+     * @param tenantId
+     */
+    void deleteTenantFromTenantRole(TenantRole role, String tenantId);
+
     Tenant getTenant(String tenantId);
     Tenant checkAndGetTenant(String tenantId);
     Tenant getTenantByName(String name);

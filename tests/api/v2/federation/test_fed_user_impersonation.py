@@ -26,7 +26,8 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
             client=cls.identity_admin_client)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': cls.domain_id})
+            additional_input_data={'domain_id': cls.domain_id},
+            one_call=True)
         cls.user_admin_client.serialize_format = 'xml'
         cls.user_admin_client.default_headers[
             const.CONTENT_TYPE] = 'application/xml'
@@ -74,6 +75,9 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp,
                           json_schema=tokens_json.impersonation_item)
+        impersonation_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+        self.validate_auth_by_in_auth_with_token_and_tenant(
+            imp_token=impersonation_token)
 
         # Impersonate with identity admin client
         resp = self.identity_admin_client.impersonate_user(
@@ -81,6 +85,21 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp,
                           json_schema=tokens_json.impersonation_item)
+        impersonation_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+        self.validate_auth_by_in_auth_with_token_and_tenant(
+            imp_token=impersonation_token)
+
+    def validate_auth_by_in_auth_with_token_and_tenant(self, imp_token):
+
+        # Checking authBy field for auth with imp token & tenant
+        req_obj = requests.AuthenticateAsTenantWithToken(
+            token_id=imp_token, tenant_id=self.domain_id)
+        auth_resp = self.identity_admin_client.get_auth_token(
+            request_object=req_obj)
+        auth_by_list = auth_resp.json()[const.ACCESS][const.TOKEN][
+            const.RAX_AUTH_AUTHENTICATED_BY]
+        self.assertIn(const.IMPERSONATE, auth_by_list)
+        self.assertIn(const.PASSWORD.upper(), auth_by_list)
 
     def test_analyze_fed_user_tokens(self):
         (pem_encoded_cert, cert_path, _, key_path,
