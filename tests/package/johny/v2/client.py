@@ -1850,6 +1850,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return self.request('GET', url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
 
+    def list_delegates_for_delegation_agreement(self, da_id,
+                                                requestslib_kwargs=None):
+        """
+        GET v2.0/RAX-AUTH/delegation-agreements/{delegationAgreementId}/
+            delegates
+        """
+        url = self.url + const.DA_DELEGATES_URL.format(da_id=da_id)
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+
     def add_tenant_role_assignments_to_delegation_agreement(
             self, da_id, request_object, requestslib_kwargs=None):
         """
