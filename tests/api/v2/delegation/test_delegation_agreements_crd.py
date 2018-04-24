@@ -153,7 +153,7 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
             da_name = self.generate_random_string(
                 pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
         da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=delegate_id,
+            da_name=da_name,
             allow_sub_agreements=allow_sub_agreements)
         da_resp = client.create_delegation_agreement(request_object=da_req)
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]

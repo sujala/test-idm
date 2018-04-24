@@ -65,8 +65,7 @@ class TestListEffectiveRolesWithDA(base.TestBaseV2):
         # Domain 2 as the delegate
         da_name = cls.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name)
+        da_req = requests.DelegationAgreements(da_name=da_name)
         da_resp = cls.user_admin_client.create_delegation_agreement(
             request_object=da_req)
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
