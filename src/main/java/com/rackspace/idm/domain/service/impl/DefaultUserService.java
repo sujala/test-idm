@@ -500,6 +500,7 @@ public class DefaultUserService implements UserService {
         if(StringUtils.isNotBlank(user.getExternalMultiFactorUserId())) {
             multiFactorService.removeMultiFactorForUser(user.getId());
         }
+        delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(user);
         this.userDao.deleteUser(user);
         deleteUserLogger.warn(DELETE_USER_FORMAT,
                 new Object[] {user.getUsername(), user.getDomainId(), roles.toString()});

@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.modules.usergroups.Constants
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
+import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
 
@@ -280,6 +282,151 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         when: "assignment 5"
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments5, mediaType)
+        retrievedEntity = getResponse.getEntity(RoleAssignments)
+
+        then:
+        getResponse.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, ["*"])
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    /**
+     * Test a typical modification to the set of roles assigned to a delegation agreement with federated USER principal.
+     *
+     * 1. No roles -> 1 tenant assigned role : Verify result includes that role assignment
+     * 2. Assign 1 global role : Verify both roles returned appropriately
+     * 3. Update tenant assigned role to be a global assigned role, and global to be assigned to 2 tenants: Verify result
+     * 4. Update tenant assigned role to only have single tenant; verify result as expected
+     * 5. Reset tenant to global : Verify result
+     *
+     * Test all this through both json and xml to verify can appropriately reflect the states
+     */
+    @Unroll
+    def "modify roles on DA with federated USER principal; mediaType = #mediaType"() {
+        given:
+        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
+
+        def expSecs = DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, userAdmin.domainId, [ROLE_RBAC1_NAME, ROLE_RBAC2_NAME])
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def fedUserToken = authResponse.token.id
+
+        def cloudTenantId = userAdmin.domainId
+        def filesTenantId = utils.getNastTenant(cloudTenantId)
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = domainId
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(fedUserToken, delegationAgreement)
+
+        RoleAssignments assignments0 = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments()
+            it
+        }
+
+        RoleAssignments assignments1 = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+            it.tenantAssignments = ta
+            it
+        }
+
+        RoleAssignments assignments2 = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, ["*"]))
+                    tas
+            }
+            it
+        }
+
+        RoleAssignments assignments3 = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, ["*"]))
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, [cloudTenantId, filesTenantId]))
+                    tas
+            }
+            it
+        }
+
+        RoleAssignments assignments4 = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+
+        RoleAssignments assignments5 = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, ["*"]))
+                    tas
+            }
+            it
+        }
+
+        when: "assignment 0"
+        def getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments0, mediaType)
+        RoleAssignments retrievedEntity = getResponse.getEntity(RoleAssignments)
+
+        then:
+        getResponse.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+
+        when: "assignment 1"
+        getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments1, mediaType)
+        retrievedEntity = getResponse.getEntity(RoleAssignments)
+
+        then:
+        getResponse.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+        def rbac2Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == ROLE_RBAC2_ID}
+        rbac2Assignment == null
+
+        when: "assignment 2"
+        getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments2, mediaType)
+        retrievedEntity = getResponse.getEntity(RoleAssignments)
+
+        then:
+        getResponse.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, ["*"])
+
+        when: "assignment 3"
+        getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments3, mediaType)
+        retrievedEntity = getResponse.getEntity(RoleAssignments)
+
+        then:
+        getResponse.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, [cloudTenantId, filesTenantId])
+
+        when: "assignment 4"
+        getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments4, mediaType)
+        retrievedEntity = getResponse.getEntity(RoleAssignments)
+
+        then:
+        getResponse.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, [cloudTenantId])
+
+        when: "assignment 5"
+        getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments5, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
         then:

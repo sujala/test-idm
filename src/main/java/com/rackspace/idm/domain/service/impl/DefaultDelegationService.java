@@ -156,7 +156,7 @@ public class DefaultDelegationService implements DelegationService {
         Set<DN> existingDelegates = delegationAgreement.getDelegates();
 
         /*
-         Groups, provisioned users and federated users have a globally unique identifier (id). User groups and provisioned
+         Groups, provisioned users, and federated users have a globally unique identifier (id). User groups and provisioned
          users include this identifier as the final (leftmost) value for their DN composition and the DN can therefore be uniquely
          determined just by the id. However,
          federated users uses username rather than this id - which only needs to be unique within an IDP. This means
@@ -234,6 +234,35 @@ public class DefaultDelegationService implements DelegationService {
     @Override
     public DelegationDelegate getDelegateByDn(DN delegateDn) {
         return delegationAgreementDao.getDelegateByDn(delegateDn);
+    }
+
+    @Override
+    public void removeConsumerFromExplicitDelegationAgreementAssignments(DelegationConsumer consumer) {
+        // Delete all DA for which the DA consumer is the explicit principal
+        if (consumer instanceof DelegationPrincipal) {
+            DelegationPrincipal principal = (DelegationPrincipal) consumer;
+            List<DelegationAgreement> principalDelegationAgreements = findDelegationAgreements(new FindDelegationAgreementParams(null, principal));
+            if (CollectionUtils.isNotEmpty(principalDelegationAgreements)) {
+                for (DelegationAgreement da : principalDelegationAgreements) {
+                    if (da.isExplicitPrincipal((DelegationPrincipal) consumer)) {
+                        deleteDelegationAgreement(da);
+                    }
+                }
+            }
+        }
+
+        // Remove the DA consumer from all DAs for which the consumer is an explicit delegate
+        if (consumer instanceof DelegationDelegate) {
+            DelegationDelegate delegate = (DelegationDelegate) consumer;
+            List<DelegationAgreement> delegateDelegationAgreements = findDelegationAgreements(new FindDelegationAgreementParams(delegate, null));
+            if (CollectionUtils.isNotEmpty(delegateDelegationAgreements)) {
+                for (DelegationAgreement da : delegateDelegationAgreements) {
+                    if (da.isExplicitDelegate(delegate)) {
+                        deleteDelegate(da, delegate.getDelegateReference());
+                    }
+                }
+            }
+        }
     }
 
 }

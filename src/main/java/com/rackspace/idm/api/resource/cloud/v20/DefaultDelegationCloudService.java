@@ -349,7 +349,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             SimpleDelegateValidator delegateLookupValidator = new SimpleDelegateValidator(delegateReference);
             delegateLookupValidator.verifyDelegateCanBeAddedToAgreement(delegationAgreement);
 
-            if (delegationAgreement.isDelegate(delegateLookupValidator.delegate)) {
+            if (delegationAgreement.isExplicitDelegate(delegateLookupValidator.delegate)) {
                 throw new DuplicateException("Already a delegate", ErrorCodes.ERROR_CODE_DELEGATE_ALREADY_EXISTS);
             } else {
                 delegationService.addDelegate(delegationAgreement, delegateLookupValidator.delegate);

@@ -52,7 +52,7 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
     private UserGroupService userGroupService;
 
     @Autowired
-    private UserService userService;
+    private IdentityUserService identityUserService;
 
     @Autowired
     private DomainService domainService;
@@ -332,7 +332,7 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
 
         // Verify principal access
         if (delegationPrincipal.getPrincipalType() == PrincipalType.USER) {
-            User principalUser = userService.getUserById(delegationPrincipal.getId());
+            EndUser  principalUser = identityUserService.getEndUserById(delegationPrincipal.getId());
             principalUserType = authorizationService.getIdentityTypeRoleAsEnum(principalUser);
 
             if (principalUserType == null

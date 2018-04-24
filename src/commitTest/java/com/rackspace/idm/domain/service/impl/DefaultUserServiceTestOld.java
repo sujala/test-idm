@@ -122,14 +122,6 @@ public class DefaultUserServiceTestOld {
     }
 
     @Test
-    public void deleteUser_callsUserDao_deleteUser() throws Exception {
-        User user = new User();
-        user.setUsername("username");
-        defaultUserService.deleteUser(user);
-        verify(userDao).deleteUser(user);
-    }
-
-    @Test
     public void generateApiKey_generatesRandomApiKey() throws Exception {
         String randomKey = defaultUserService.generateApiKey();
         assertThat("random apikey", randomKey.length(), not(0));
