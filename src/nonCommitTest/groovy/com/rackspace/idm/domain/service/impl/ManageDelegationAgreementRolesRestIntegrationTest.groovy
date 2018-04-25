@@ -972,11 +972,9 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def userAdmin = utils.createCloudAccount()
         def domainId = userAdmin.domainId
         def cloudTenantId = domainId
-        def defaultUser = utils.createUser(utils.getToken(userAdmin.username))
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it
         }
         def createdDA = utils.createDelegationAgreement(utils.getToken(userAdmin.username), delegationAgreement)
