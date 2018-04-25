@@ -65,12 +65,13 @@ class TestManageDelegates(base.TestBaseV2):
         # as the delegate
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=self.sub_user_id)
+        da_req = requests.DelegationAgreements(da_name=da_name)
         da_resp = self.user_admin_client.create_delegation_agreement(
             request_object=da_req)
         self.assertEqual(da_resp.status_code, 201)
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+        self.user_admin_client.add_user_delegate_to_delegation_agreement(
+            da_id, self.sub_user_id)
 
         # add user delegate to DA
         add_user_delegate_resp = (
@@ -121,12 +122,13 @@ class TestManageDelegates(base.TestBaseV2):
 
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=self.sub_user_id)
+        da_req = requests.DelegationAgreements(da_name=da_name)
         da_resp = self.user_admin_client.create_delegation_agreement(
             request_object=da_req)
         self.assertEqual(da_resp.status_code, 201)
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+        self.user_admin_client.add_user_delegate_to_delegation_agreement(
+            da_id, self.sub_user_id)
 
         # add user group delegate to DA
         ua_client = self.user_admin_client

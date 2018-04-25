@@ -71,12 +71,12 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it.principalId = createUserGroup.id
             it.principalType = PrincipalType.USER_GROUP
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+        utils.addUserDelegate(userAdminToken, createdDA.id, defaultUser.id)
 
         RoleAssignments assignments0 = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments()
@@ -289,10 +289,10 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+        utils.addUserDelegate(userAdminToken, createdDA.id, defaultUser.id)
 
         RoleAssignments assignments0 = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments()
@@ -565,10 +565,10 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+        utils.addUserDelegate(userAdminToken, createdDA.id, defaultUser.id)
 
         RoleAssignments assignments = new RoleAssignments().with {
             TenantAssignments ta = new TenantAssignments()
@@ -600,10 +600,10 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = identityAdmin.domainId
-            it.delegateId = identityAdmin2.id
             it
         }
         def createdDA = utils.createDelegationAgreement(identityAdminToken, delegationAgreement)
+        utils.addUserDelegate(identityAdminToken, createdDA.id, identityAdmin2.id)
 
         RoleAssignments assignments = new RoleAssignments().with {
             TenantAssignments ta = new TenantAssignments()
@@ -632,22 +632,22 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreementWithUserPrincipal = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it
         }
         def createdDAWithUserPrincipal = utils.createDelegationAgreement(userAdminToken, delegationAgreementWithUserPrincipal)
+        utils.addUserDelegate(userAdminToken, createdDAWithUserPrincipal.id, defaultUser.id)
 
         def createUserGroup = utils.createUserGroup(userAdmin.domainId)
         utils.addUserToUserGroup(userAdmin.id, createUserGroup)
         def delegationAgreementWithUserGroupPrincipal = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it.principalId = createUserGroup.id
             it.principalType = PrincipalType.USER_GROUP
             it
         }
         def createdDAWithUserGroupPrincipal = utils.createDelegationAgreement(userAdminToken, delegationAgreementWithUserGroupPrincipal)
+        utils.addUserDelegate(userAdminToken, createdDAWithUserGroupPrincipal.id, defaultUser.id)
 
         RoleAssignments assignments = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments().with {
@@ -692,10 +692,10 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+        utils.addUserDelegate(userAdminToken, createdDA.id, defaultUser.id)
 
         RoleAssignments assignments = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments().with {
@@ -728,11 +728,11 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
         def tenant = utils.createTenant()
+        utils.addUserDelegate(userAdminToken, createdDA.id, defaultUser.id)
 
         RoleAssignments assignments = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments().with {
@@ -847,12 +847,12 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it.principalId = createUserGroup.id
             it.principalType = PrincipalType.USER_GROUP
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+        utils.addUserDelegate(userAdminToken, createdDA.id, defaultUser.id)
 
         RoleAssignments assignments1 = new RoleAssignments().with {
             TenantAssignments ta = new TenantAssignments()
@@ -988,10 +988,10 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+        utils.addUserDelegate(userAdminToken, createdDA.id, defaultUser.id)
 
         def cloudTenantId = userAdmin.domainId
 
@@ -1038,10 +1038,10 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+        utils.addUserDelegate(userAdminToken, createdDA.id, defaultUser.id)
 
         def cloudTenantId = userAdmin.domainId
 
@@ -1085,11 +1085,9 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def userAdmin = utils.createCloudAccount()
         def domainId = userAdmin.domainId
         def cloudTenantId = domainId
-        def defaultUser = utils.createUser(utils.getToken(userAdmin.username))
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = userAdmin.domainId
-            it.delegateId = defaultUser.id
             it
         }
         def createdDA = utils.createDelegationAgreement(utils.getToken(userAdmin.username), delegationAgreement)

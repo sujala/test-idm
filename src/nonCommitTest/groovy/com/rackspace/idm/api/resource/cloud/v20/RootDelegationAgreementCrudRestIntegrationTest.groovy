@@ -152,7 +152,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.delegateId = sharedSubUser.id
             it
         }
 
@@ -171,7 +170,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == sharedUserAdmin.id
         createdDa.principalType == PrincipalType.USER
-        createdDa.delegateId == sharedSubUser.id
         !createdDa.isAllowSubAgreements() // default when when not specified
 
         when:
@@ -189,7 +187,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == sharedUserAdmin.id
         getDa.principalType == PrincipalType.USER
-        getDa.delegateId == sharedSubUser.id
         !getDa.isAllowSubAgreements() // default when when not specified
 
         when:
@@ -215,7 +212,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.delegateId = sharedSubUser.id
             it.allowSubAgreements = true
             it
         }
@@ -235,7 +231,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == caller.id
         createdDa.principalType == PrincipalType.USER
-        createdDa.delegateId == sharedSubUser.id
         createdDa.isAllowSubAgreements()
 
         when:
@@ -253,7 +248,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == caller.id
         getDa.principalType == PrincipalType.USER
-        getDa.delegateId == sharedSubUser.id
         getDa.isAllowSubAgreements()
 
         when:
@@ -280,7 +274,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.delegateId = sharedSubUser.id
             it
         }
 
@@ -299,7 +292,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == fedAuthResponse.user.id
         createdDa.principalType == PrincipalType.USER
-        createdDa.delegateId == sharedSubUser.id
 
         when:
         def getResponse = cloud20.getDelegationAgreement(token, createdDa.id)
@@ -316,7 +308,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == fedAuthResponse.user.id
         getDa.principalType == PrincipalType.USER
-        getDa.delegateId == sharedSubUser.id
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(token, createdDa.id)
@@ -342,7 +333,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
             it.description = RandomStringUtils.randomAlphabetic(255)
             it.principalType = PrincipalType.USER_GROUP
             it.principalId = userGroup.id
-            it.delegateId = sharedSubUser.id
             it
         }
 
@@ -361,7 +351,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == userGroup.id
         createdDa.principalType == PrincipalType.USER_GROUP
-        createdDa.delegateId == sharedSubUser.id
 
         when:
         def getResponse = cloud20.getDelegationAgreement(groupSubUserToken, createdDa.id)
@@ -378,7 +367,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == userGroup.id
         getDa.principalType == PrincipalType.USER_GROUP
-        getDa.delegateId == sharedSubUser.id
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(groupSubUserToken, createdDa.id)

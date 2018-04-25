@@ -95,12 +95,12 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedUserAdmin2.id
             it
         }
         def principalToken = utils.getToken(sharedUserAdmin.username)
         def callerToken = utils.getToken(caller.username)
         def createdDA = utils.createDelegationAgreement(principalToken, delegationAgreement)
+        utils.addUserDelegate(principalToken, createdDA.id, sharedUserAdmin2.id)
 
         when: "list DA roles - no roles"
         def response = cloud20.listRolesOnDelegationAgreement(callerToken, createdDA, null, mediaType)
@@ -133,11 +133,11 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedUserAdmin2.id
             it
         }
         def principalToken = utils.getToken(sharedUserAdmin.username)
         def createdDA = utils.createDelegationAgreement(principalToken, delegationAgreement)
+        utils.addUserDelegate(principalToken, createdDA.id, sharedUserAdmin2.id)
 
         utils.grantRoleAssignmentsOnDelegationAgreement(createdDA, assignments, principalToken)
 
@@ -152,7 +152,6 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
             it.id = "invalid"
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedUserAdmin2.id
             it
         }
         response = cloud20.listRolesOnDelegationAgreement(principalToken, invalidDA, null, mediaType)
@@ -197,10 +196,10 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
             it.domainId = sharedUserAdmin.domainId
             it.principalId = createUserGroup.id
             it.principalType = PrincipalType.USER_GROUP
-            it.delegateId = sharedUserAdmin2.id
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+        utils.addUserDelegate(userAdminToken, createdDA.id, sharedUserAdmin2.id)
 
         when: "list DA roles - no roles"
         def response = cloud20.listRolesOnDelegationAgreement(userAdminToken, createdDA, null, mediaType)
@@ -260,10 +259,10 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
             it.domainId = sharedUserAdmin.domainId
             it.principalId = createUserGroup.id
             it.principalType = PrincipalType.USER_GROUP
-            it.delegateId = sharedUserAdmin.id
             it
         }
         def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+        utils.addUserDelegate(userAdminToken, createdDA.id, sharedUserAdmin.id)
 
         utils.grantRoleAssignmentsOnDelegationAgreement(createdDA, assignments, userAdminToken)
 
@@ -278,7 +277,6 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
             it.id = "invalid"
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedUserAdmin2.id
             it
         }
         response = cloud20.listRolesOnDelegationAgreement(userAdminToken, invalidDA, null, mediaType)
@@ -310,11 +308,11 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedUserAdmin2.id
             it
         }
         def principalToken = utils.getToken(sharedUserAdmin.username)
         def createdDA = utils.createDelegationAgreement(principalToken, delegationAgreement)
+        utils.addUserDelegate(principalToken, createdDA.id, sharedUserAdmin2.id)
 
         utils.grantRoleAssignmentsOnDelegationAgreement(createdDA, assignments, principalToken)
 

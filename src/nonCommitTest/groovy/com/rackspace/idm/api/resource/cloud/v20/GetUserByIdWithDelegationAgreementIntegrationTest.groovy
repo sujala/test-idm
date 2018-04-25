@@ -108,12 +108,12 @@ class GetUserByIdWithDelegationAgreementIntegrationTest extends RootIntegrationT
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedSubUser2.id
             it
         }
 
         // Give subuser2 access to same domain as subuser
         def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        utils.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser2.id)
 
         // Auth as regular subuser under the domain
         AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
@@ -165,23 +165,23 @@ class GetUserByIdWithDelegationAgreementIntegrationTest extends RootIntegrationT
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = sharedUserAdmin.domainId
-            it.delegateId = sharedSubUser2.id
             it
         }
 
         // Give subuser2 access to same domain as subuser
         def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        utils.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser2.id)
 
         when: "But, that principal is a delegate for some other DA."
         
         def daToCreate2 = new DelegationAgreement().with {
             it.name = "some name"
             it.domainId = sharedUserAdmin2.domainId
-            it.delegateId = sharedUserAdmin.id
             it
         }
 
         def da2 = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate2)
+        utils.addUserDelegate(sharedUserAdminToken, da2.id, sharedUserAdmin.id)
 
         then:
         da2 != null

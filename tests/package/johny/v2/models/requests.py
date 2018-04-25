@@ -1175,11 +1175,10 @@ class TenantRoleAssignments(base.AutoMarshallingModel):
 
 
 class DelegationAgreements(base.AutoMarshallingModel):
-    def __init__(self, da_name, delegate_id=None, principal_id=None,
+    def __init__(self, da_name, principal_id=None,
                  principal_type=None, description=None,
                  allow_sub_agreements=None):
         self.da_name = da_name
-        self.delegate_id = delegate_id
         self.description = description
         self.principal_id = principal_id
         self.principal_type = principal_type
@@ -1189,7 +1188,6 @@ class DelegationAgreements(base.AutoMarshallingModel):
         delegation_agreement_request = {
             const.RAX_AUTH_DELEGATION_AGREEMENT: {
                 const.NAME: self.da_name,
-                const.DELEGATE_ID: self.delegate_id,
                 const.DESCRIPTION: self.description
             }
         }

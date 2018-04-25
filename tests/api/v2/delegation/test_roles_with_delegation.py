@@ -69,12 +69,14 @@ class TestRoleAssignmentsWithDelegation(base.TestBaseV2):
 
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=user_id)
+        da_req = requests.DelegationAgreements(da_name=da_name)
         da_resp = client.create_delegation_agreement(
             request_object=da_req)
-        return da_resp.json()[
+        da_id = da_resp.json()[
             const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+        client.add_user_delegate_to_delegation_agreement(
+            da_id, user_id)
+        return da_id
 
     def generate_tenants_assignment_dict(self, on_role, *for_tenants):
 

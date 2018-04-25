@@ -144,12 +144,14 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         # create DA
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, delegate_id=fed_user_id)
+        da_req = requests.DelegationAgreements(da_name=da_name)
         da_resp = fed_client.create_delegation_agreement(request_object=da_req)
         self.assertEqual(da_resp.status_code, 201)
         da = Munch.fromDict(da_resp.json())
         da_id = da[const.RAX_AUTH_DELEGATION_AGREEMENT].id
+
+        fed_client.add_user_delegate_to_delegation_agreement(
+            da_id, fed_user_id)
 
         # DA auth using fed user's token
         delegation_auth_req = requests.AuthenticateWithDelegationAgreement(
