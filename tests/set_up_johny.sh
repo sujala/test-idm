@@ -3,6 +3,7 @@
 build_identity() {
     pushd ..
     ./gradlew clean build -x nonCommitTest -x commitTest -x commonTest -x test
+    mv build/libs/*war build/libs/idm.war
     popd
 }
 
@@ -26,7 +27,7 @@ setup_test_configs() {
     mkdir -p $TESTS_CONFIG_DIR
     mkdir -p $TESTS_LOG_DIR
     # get service token and put it into api.conf
-    TOKEN=$(docker run -ti --rm --network tests_default dadean/curl-jq sh -c "curl -s -X POST http://tests_repose_1:8080/idm/cloud/v2.0/tokens -H 'cache-control: no-cache' -H 'content-type: application/json' -d '{ \"auth\": { \"passwordCredentials\":{ \"username\":\"AuthQE\", \"password\": \"Auth1234\" }}}' | jq -r .access.token.id")
+    TOKEN=$(docker run -ti --rm --network host dadean/curl-jq sh -c "curl -s -X POST http://localhost:8080/idm/cloud/v2.0/tokens -H 'cache-control: no-cache' -H 'content-type: application/json' -d '{ \"auth\": { \"passwordCredentials\":{ \"username\":\"AuthQE\", \"password\": \"Auth1234\" }}}' | jq -r .access.token.id")
     echo ${TOKEN}
     # copy api.conf over to ~/.identity/api.conf
     cp etc/api.conf $TESTS_CONFIG_DIR/api.conf
