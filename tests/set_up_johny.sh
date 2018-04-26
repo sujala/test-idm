@@ -19,8 +19,8 @@ setup_docker_configs() {
 
 start_docker() {
     docker-compose -p tests up -d
-    # sleep for repose & edir time to spin up!
-    sleep 60
+    echo "sleep time for repose & idm to spin up!"
+    sleep 30
 }
 
 setup_test_configs() {
@@ -29,6 +29,14 @@ setup_test_configs() {
     # get service token and put it into api.conf
     TOKEN=$(docker run -ti --rm --network host dadean/curl-jq sh -c "curl -s -X POST http://localhost:8080/idm/cloud/v2.0/tokens -H 'cache-control: no-cache' -H 'content-type: application/json' -d '{ \"auth\": { \"passwordCredentials\":{ \"username\":\"AuthQE\", \"password\": \"Auth1234\" }}}' | jq -r .access.token.id")
     echo ${TOKEN}
+
+    if [ -z "${TOKEN}" ]
+    then
+        echo "Cluster is unavailable.  Let's wait another 15 seconds"
+        sleep 15
+        setup_test_configs
+    fi
+
     # copy api.conf over to ~/.identity/api.conf
     cp etc/api.conf $TESTS_CONFIG_DIR/api.conf
     sed -i -e "s|service_admin_auth_token=.*|service_admin_auth_token=${TOKEN}|g" $TESTS_CONFIG_DIR/api.conf

@@ -89,4 +89,4 @@ clean:
 	# remove identity directory
 	@rm -rf /tmp/.identity
 	# clean up docker containers
-	docker-compose down
+	docker-compose down --remove-orphans
