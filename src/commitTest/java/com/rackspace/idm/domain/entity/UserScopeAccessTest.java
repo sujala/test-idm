@@ -41,22 +41,6 @@ public class UserScopeAccessTest {
     }
 
     @Test
-    public void isRefreshTokenExpired_accessTokenExpIsNull_returnsTrue() throws Exception {
-        userScopeAccess.setRefreshTokenString("expired");
-        userScopeAccess.setRefreshTokenExp(null);
-        boolean result = userScopeAccess.isRefreshTokenExpired(new DateTime(1));
-        assertThat("boolean", result, equalTo(true));
-    }
-
-    @Test
-    public void isRefreshTokenExpired_accessTokenExpNotNull_returnsFalse() throws Exception {
-        userScopeAccess.setRefreshTokenString("notExpired");
-        userScopeAccess.setRefreshTokenExp(new Date(3000, 1, 1));
-        boolean result = userScopeAccess.isRefreshTokenExpired(new DateTime(1));
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test
     public void getAuditContext_returnsStringFormatContext() throws Exception {
         userScopeAccess.setUserRsId("userRsId");
         String result = userScopeAccess.getAuditContext();
