@@ -3,12 +3,14 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.modules.usergroups.Constants
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.http.HttpStatus
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
@@ -19,6 +21,7 @@ import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
 
 import javax.ws.rs.core.MediaType
 
@@ -151,6 +154,116 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "modify roles on DA with federated user; mediaType = #mediaType"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+
+        // Create faws tenants
+        def fawsTenant = utils.createTenantWithTypes(testUtils.getRandomUUID("tenant"), ["faws"])
+        def fawsTenant2 = utils.createTenantWithTypes(testUtils.getRandomUUID("tenant"), ["faws"])
+        utils.addTenantToDomain(userAdmin.domainId, fawsTenant.id)
+        utils.addTenantToDomain(userAdmin.domainId, fawsTenant2.id)
+
+        // Create user group
+        def createdUserGroup = utils.createUserGroup(userAdmin.domainId)
+
+        // Create new federated user with roles and user group
+        def tenantRole = String.format("%s/%s", ROLE_RBAC2_NAME, fawsTenant2.name)
+        def samlRequest = new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = userAdmin.domainId
+            it.validitySeconds = 100
+            it.brokerIssuer = DEFAULT_BROKER_IDP_URI
+            it.originIssuer = IDP_V2_DOMAIN_URI
+            it.email = DEFAULT_FED_EMAIL
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = UUID.randomUUID().toString()
+            it.roleNames = [ROLE_RBAC1_NAME, tenantRole] as Set
+            it.groupNames = [createdUserGroup.name] as Set
+            it
+        }
+        AuthenticateResponse authResponse = utils.authenticateV2FederatedUser(samlRequest)
+        def fedUserToken = authResponse.token.id
+
+        def principalId
+        if (principalType == PrincipalType.USER) {
+            principalId = authResponse.user.id
+        } else {
+            principalId = createdUserGroup.id
+        }
+
+        // Create delegation agreement
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it.principalId = principalId
+            it.principalType = principalType
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(fedUserToken, delegationAgreement)
+
+        RoleAssignments assignments1 = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [fawsTenant.id]))
+            it.tenantAssignments = ta
+            it
+        }
+
+        RoleAssignments assignments2 = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, [fawsTenant2.id]))
+                    tas
+            }
+            it
+        }
+
+        RoleAssignments invalidAssignment = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, ["*"]))
+                    tas
+            }
+            it
+        }
+
+        // Grant the roles on userGroup
+        utils.grantRoleAssignmentsOnUserGroup(createdUserGroup, assignments1)
+        utils.grantRoleAssignmentsOnUserGroup(createdUserGroup, assignments2)
+
+        when: "assignment 1"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments1, mediaType)
+        RoleAssignments retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [fawsTenant.id])
+
+        when: "assignment 2"
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments2, mediaType)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments != null
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, [fawsTenant2.id])
+
+        when: "invalid assignment"
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, invalidAssignment, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ERROR_CODE_INVALID_ATTRIBUTE, String.format(ERROR_CODE_ROLE_ASSIGNMENT_WRONG_TENANTS_MSG_PATTERN, ROLE_RBAC2_ID))
+
+        where:
+        principalType            | mediaType
+        PrincipalType.USER       | MediaType.APPLICATION_XML_TYPE
+        PrincipalType.USER       | MediaType.APPLICATION_JSON_TYPE
+        PrincipalType.USER_GROUP | MediaType.APPLICATION_XML_TYPE
+        PrincipalType.USER_GROUP | MediaType.APPLICATION_JSON_TYPE
     }
 
     /**
