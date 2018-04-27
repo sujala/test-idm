@@ -412,6 +412,12 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP = "feature.enable.user.admin.look.up.by.domain";
     public static final boolean FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_DEFAULT = false;
 
+    public static final String ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP = "role.assignments.max.tenant.assignments.per.request";
+    public static final int ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_DEFAULT = 10;
+
+    public static final String FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP = "feature.enable.delegation.authentication";
+    public static final boolean FEATURE_ENABLE_DELEGATION_AUTHENTICATION_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -568,15 +574,6 @@ public class IdentityConfig {
 
     public static final String EDIR_LDAP_SERVER_TRUSTED_PROP = "ldap.server.trusted";
     public static final boolean EDIR_LDAP_SERVER_TRUSED_DEFAULT = false;
-
-    public static final String EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP = "edir.ldap.connection.connect.timeout.ms";
-    public static final int EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT = 10000;
-
-    public static final String EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP = "edir.ldap.connection.bind.timeout.ms";
-    public static final int EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_DEFAULT = 30000;
-
-    public static final String EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP = "edir.ldap.connection.search.timeout.ms";
-    public static final int EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT = 300000;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -809,11 +806,10 @@ public class IdentityConfig {
         defaults.put(USER_PHONE_PIN_SIZE_PROP, USER_PHONE_PIN_SIZE_DEFAULT);
 
         defaults.put(EDIR_LDAP_SERVER_TRUSTED_PROP, EDIR_LDAP_SERVER_TRUSED_DEFAULT);
-        defaults.put(EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_DEFAULT);
-        defaults.put(EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_DEFAULT);
-        defaults.put(EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_DEFAULT);
+        defaults.put(ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_DEFAULT);
+        defaults.put(FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP, FEATURE_ENABLE_DELEGATION_AUTHENTICATION_DEFAULT);
 
         return defaults;
     }
@@ -1538,21 +1534,6 @@ public class IdentityConfig {
         public boolean getEDirServerTrusted() {
             return getBooleanSafely(staticConfiguration, EDIR_LDAP_SERVER_TRUSTED_PROP);
         }
-
-        @IdmProp(key = EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default connect timeout, in milliseconds.")
-        public int getEDirConnectionConnectTimeout() {
-            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_CONNECT_TIMEOUT_MS_PROP);
-        }
-
-        @IdmProp(key = EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default value for response timeouts, in milliseconds, for bind operations.")
-        public int getEDirConnectionBindTimeout() {
-            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_BIND_TIMEOUT_MS_PROP);
-        }
-
-        @IdmProp(key = EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP, versionAdded = "3.21.0", description = "Specifies the initial default value for response timeouts, in milliseconds, for search operations.")
-        public int getEDirConnectionSearchTimeout() {
-            return getIntSafely(staticConfiguration, EDIR_LDAP_CONNECTION_SEARCH_TIMEOUT_MS_PROP);
-        }
     }
 
     /**
@@ -2222,6 +2203,17 @@ public class IdentityConfig {
         public boolean isUserAdminLookUpByDomain() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP);
         }
+
+        @IdmProp(key = ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, versionAdded = "3.21.1", description = "Maximum number tenant assignment in request that grant roles.")
+        public int getRoleAssignmentsMaxTenantAssignmentsPerRequest() {
+            return getIntSafely(reloadableConfiguration, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP, versionAdded = "3.21.1", description = "Whether to allow authentication with a delegation agreement.")
+        public boolean isDelegationAuthenticationEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP);
+        }
+
     }
 
     public class RepositoryConfig {

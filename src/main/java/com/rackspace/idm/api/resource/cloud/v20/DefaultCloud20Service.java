@@ -99,6 +99,9 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
+
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
@@ -362,6 +365,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private PhonePinService phonePinService;
+
+    @Autowired
+    private DelegationService delegationService;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -1184,7 +1190,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 authResponseTuple = authWithToken.authenticate(authenticationRequest);
             } else if (authenticationRequest.getCredential().getValue() instanceof DelegationCredentials) {
                 NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthWithTokenDelegation.getTransactionName());
-                if (!identityConfig.getReloadableConfig().areDelegationAgreementServicesEnabled()) {
+                if (!identityConfig.getReloadableConfig().isDelegationAuthenticationEnabled()) {
                     throw new ServiceUnavailableException(GlobalConstants.ERROR_MSG_SERVICE_NOT_FOUND);
                 }
 
@@ -3886,6 +3892,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         userDO.setDomainId(domain.getDomainId());
+
+        delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(userDO);
+
         this.userService.updateUser(userDO);
 
         if (isUserAdmin && !isSameDomain) {
@@ -3909,14 +3918,35 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addTenantToDomain(String authToken, String domainId, String tenantId) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        tenantService.checkAndGetTenant(tenantId);
-        domainService.addTenantToDomain(tenantId, domainId);
+        Tenant tenant = tenantService.checkAndGetTenant(tenantId);
+        Domain domain = domainService.checkAndGetDomain(domainId);
+         if ((tenant.getDomainId() == null || !tenant.getDomainId().equalsIgnoreCase(domainId)) &&
+                (domain.getTenantIds() == null || domain.getTenantIds().length == 0 || !Arrays.asList(domain.getTenantIds()).contains(tenant.getTenantId()))) {
+            // Roles need to be removed if the tenant was part of a domain other than the one it is being added to.
+            // For this service, that means that the tenant either has a domain ID that does not match the domain ID
+            // used in the request or is null AND the the domain specified in the request does not contain the tenant.
+            Iterable<TenantRole> daRoles = delegationService.getTenantRolesForDelegationAgreementsForTenant(tenantId);
+            if (daRoles != null && daRoles.iterator().hasNext()) {
+                for (TenantRole role : daRoles) {
+                    tenantService.deleteTenantFromTenantRole(role, tenantId);
+                }
+            }
+        }
+        domainService.addTenantToDomain(tenant, domain);
         return Response.noContent();
     }
 
     @Override
     public ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        if (StringUtils.isNotBlank(tenantId)) {
+            Iterable<TenantRole> daRoles = delegationService.getTenantRolesForDelegationAgreementsForTenant(tenantId);
+            if (daRoles != null && daRoles.iterator().hasNext()) {
+                for (TenantRole role : daRoles) {
+                    tenantService.deleteTenantFromTenantRole(role, tenantId);
+                }
+            }
+        }
         domainService.removeTenantFromDomain(tenantId, domainId);
         return Response.noContent();
     }

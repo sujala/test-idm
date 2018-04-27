@@ -1,10 +1,7 @@
 package com.rackspace.idm.domain.service.rolecalculator;
 
 import com.rackspace.idm.api.security.ImmutableClientRole;
-import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.*;
 
 import java.util.List;
 import java.util.Map;
@@ -61,4 +58,9 @@ public interface UserRoleLookupService {
      * @return
      */
     Map<String, List<TenantRole>> getSystemSourcedRoles();
+
+    /**
+     * Retrieves the set of other source roles the user receives
+     */
+    Map<TenantRole, SourcedRoleAssignments.Source> getOtherSourcedRoles();
 }

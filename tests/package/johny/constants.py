@@ -15,6 +15,8 @@ ADD_OTP_DEVICE_URL = '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices'
 ADD_ROLE_TO_USER_FOR_TENANT_URL = DEL_ROLE_FROM_USER_FOR_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/{role_id}')
 ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
+ADD_TENANT_ROLE_ASSIGNMENTS_TO_DELEGATION_AGREEMENT_URL = (
+    '/RAX-AUTH/delegation-agreements/{da_id}/roles')
 ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL = (
     '/RAX-AUTH/domains/{domain_id}/groups/{group_id}/roles')
 ADD_ROLE_TO_USER_GROUP_ON_TENANT_URL = (
@@ -44,6 +46,7 @@ CHANGE_PASSWORD_URL = '/users/RAX-AUTH/change-pwd'
 DELETE_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}'
 DELEGATION_AGREEMENTS_URL = '/RAX-AUTH/delegation-agreements'
 DELEGATION_AGREEMENTS_RD_URL = '/RAX-AUTH/delegation-agreements/{da_id}'
+DA_DELEGATES_URL = '/RAX-AUTH/delegation-agreements/{da_id}/delegates'
 GET_DOMAIN_URL = DELETE_DOMAIN_URL
 DELETE_ENDPOINT_FROM_TENANT_URL = (
     '/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}')
@@ -52,6 +55,8 @@ DELETE_OTP_DEVICE_URL = (
 DELETE_ROLE_FR_USER_URL = ADD_ROLE_TO_USER_URL
 DELETE_ROLE_FROM_USER_GROUP_ON_TENANT_URL = (
     ADD_ROLE_TO_USER_GROUP_ON_TENANT_URL)
+DELETE_ROLE_ON_DELEGATION_AGREEMENT_URL = (
+    ADD_TENANT_ROLE_ASSIGNMENTS_TO_DELEGATION_AGREEMENT_URL + '/{role_id}')
 DELETE_SERVICE_URL = GET_SERVICE_URL = '/OS-KSADM/services/{service_id}'
 DELETE_TENANT_ROLE_ASSIGNMENTS_FROM_USER_GROUP_URL = (
     ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL + '/{role_id}')
@@ -87,6 +92,7 @@ IDP_METADATA_RUD_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
 IMPERSONATION_URL = '/RAX-AUTH/impersonation-tokens'
 LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
+LIST_DELEGATION_AGREEMENTS_URL = DELEGATION_AGREEMENTS_URL
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
 LIST_GROUPS_URL = '/users/{user_id}/RAX-KSGRP'
 LIST_EFFECTIVE_ROLES_FOR_USER_URL = '/users/{user_id}/RAX-AUTH/roles'
@@ -94,6 +100,8 @@ LIST_ROLES_FOR_USER_ON_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles')
 LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
 LIST_USERS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/users'
+LIST_TENANT_ROLE_ASSIGNMENTS_FOR_DELEGATION_AGREEMENT_URL = (
+    ADD_TENANT_ROLE_ASSIGNMENTS_TO_DELEGATION_AGREEMENT_URL)
 LIST_TENANT_ROLE_ASSIGNMENTS_FOR_USER_GROUP_URL = (
     ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL)
 LIST_USER_ROLES_URL = '/users/{user_id}/roles'
@@ -164,7 +172,6 @@ MOSSO_TENANT_ID_PATTERN = '[\d]{7}'
 NAST_TENANT_ID_PATTERN = 'NAST[\d]{6}'
 NUMBERS_PATTERN = '[1-9]{1}[0-9]{8}'
 NUMERIC_DOMAIN_ID_PATTERN = '[\-][1-9]{1}[0-9]{6}'
-MAX_SIZE_IN_KILOBYTES = 2
 OTP_NAME_PATTERN = 'otp[\-][\d]{8}'
 PASSWORD_PATTERN = 'Password1[\d\w]{10}'
 RCN_PATTERN = 'RCN[\-][\d]{6}'
@@ -230,6 +237,7 @@ ADMIN_URL = 'adminURL'
 ADDRESS = 'address'
 ACTION = 'action'
 AGENT = 'agent'
+ALLOW_SUB_AGREEMENTS = 'allowSubAgreements'
 APPROVED_DOMAIN_GROUP_GLOBAL = 'GLOBAL'
 ASSIGNMENT_TYPE = 'assignmentType'
 ASSIGNMENT_TYPE_MOSSO = 'MOSSO'
@@ -263,6 +271,8 @@ DEMOTE_USER_ID = 'demoteUserId'
 DESCRIPTION = 'description'
 DEFAULT_VALUE = 'defaultValue'
 DELEGATE_ID = 'delegateId'
+DELEGATE_REFERENCES = 'RAX-AUTH:delegateReferences'
+DELEGATE_TYPE = 'delegateType'
 DISPLAY_NAME = 'display-name'
 DOMAIN = 'domain'
 DOMAIN_ENABLED = 'domainEnabled'
@@ -289,6 +299,7 @@ GROUPS = 'groups'
 HREF = 'href'
 ID = 'id'
 IMPERSONATED_USER = 'impersonatedUser'
+IMPERSONATE = 'IMPERSONATE'
 IMPERSONATION = 'IMPERSONATION'
 IDENTITY_FAULT = 'identityFault'
 INITIATOR = 'initiator'
@@ -406,6 +417,7 @@ CADF_INITIATOR = 'cadf:initiator'
 CADF_HOST = 'cadf:host'
 CADF_REASON = 'cadf:reason'
 DELEGATION_AGREEMENT = 'delegationAgreement'
+DELEGATION_AGREEMENTS = 'delegationAgreements'
 DELEGATION_AGREEMENT_ID = 'delegationAgreementId'
 ENDPOINT_ASSIGNMENT_RULES = 'endpointAssignmentRules'
 EMAIL_DOMAIN = 'emailDomain'
@@ -434,6 +446,8 @@ NS_TYPES = 'RAX-AUTH:types'
 RAX_AUTH_ASSIGNMENT_TYPE = 'RAX-AUTH:assignmentType'
 RAX_AUTH_CHANGE_PASSWORD_CREDENTIALS = 'RAX-AUTH:changePasswordCredentials'
 RAX_AUTH_DELEGATION_AGREEMENT = 'RAX-AUTH:' + DELEGATION_AGREEMENT
+RAX_AUTH_DELEGATION_AGREEMENTS = 'RAX-AUTH:' + DELEGATION_AGREEMENTS
+RAX_AUTH_DELEGATION_AGREEMENT_ID = 'RAX-AUTH:' + DELEGATION_AGREEMENT_ID
 RAX_AUTH_DELEGATION_CREDENTIALS = 'RAX-AUTH:delegationCredentials'
 RAX_AUTH_DOMAIN = 'RAX-AUTH:domain'
 RAX_AUTH_DOMAIN_ID = 'RAX-AUTH:domainId'
@@ -478,6 +492,9 @@ RESPONSE_DETAIL = 'responseDetail'
 NS_PASSCODE_CREDENTIALS = RAX_AUTH + ':passcodeCredentials'
 NS_OTP_DEVICE = RAX_AUTH + ':otpDevice'
 NS_VERIFICATION_CODE = RAX_AUTH + ':verificationCode'
+QUERY_PARAM_DELEGATE = 'delegate'
+QUERY_PARAM_PRINCIPAL = 'principal'
+RELATIONSHIP = 'relationship'
 USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = 'userMultiFactorEnforcementLevel'
 UA_AUDIT_DATA = 'ua:auditData'
 UA_USER_NAME = 'ua:userName'
@@ -499,6 +516,7 @@ UA = 'http://feeds.api.rackspacecloud.com/cadf/user-access-event'
 '''CONSTANTS'''
 AUTH_BY_LIST = ['APIKEY', 'PASSWORD', 'FEDERATED']
 AUTH_BY_DELEGATION = 'DELEGATE'
+AUTH_BY_FEDERATED = 'FEDERATED'
 AUTH_BY_PWD = 'PASSWORD'
 AUTH_BY_OTPPASSCODE = 'OTPPASSCODE'
 DC_LIST = ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']

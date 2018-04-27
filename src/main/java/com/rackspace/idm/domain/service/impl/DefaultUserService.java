@@ -8,6 +8,7 @@ import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.Domain;
@@ -499,6 +500,7 @@ public class DefaultUserService implements UserService {
         if(StringUtils.isNotBlank(user.getExternalMultiFactorUserId())) {
             multiFactorService.removeMultiFactorForUser(user.getId());
         }
+        delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(user);
         this.userDao.deleteUser(user);
         deleteUserLogger.warn(DELETE_USER_FORMAT,
                 new Object[] {user.getUsername(), user.getDomainId(), roles.toString()});
@@ -672,9 +674,10 @@ public class DefaultUserService implements UserService {
         //TODO This should be a Set or should use logic to not add same user twice
         List<String> idList = new ArrayList<String>();
         for(TenantRole t : tenantRoles){
-            // Determine if user group tenant role cause this service must ignore them
+            // Ignore user group or delegation agreement tenant roles
             String path = t.getUniqueId();
-            if (!StringUtils.endsWithIgnoreCase(path, Constants.USER_GROUP_BASE_DN)) {
+            if (!(StringUtils.endsWithIgnoreCase(path, Constants.USER_GROUP_BASE_DN)
+                    || StringUtils.endsWithIgnoreCase(path, LdapRepository.DELEGATION_AGREEMENT_BASE_DN))) {
                 if(t.getUserId() == null) {
                     tenantService.addUserIdToTenantRole(t);
                 }
@@ -1245,16 +1248,16 @@ public class DefaultUserService implements UserService {
             }
         } else if (scopeAccess instanceof UserScopeAccess) {
             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
-            if (CollectionUtils.isNotEmpty(userScopeAccess.getAuthenticatedBy()) && userScopeAccess.getAuthenticatedBy().contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)) {
-                //will be a federated user  (FederatedUser)
-                user = federatedUserDao.getUserByToken(userScopeAccess);
-            } else if (userScopeAccess.isDelegationToken()) {
+            if (userScopeAccess.isDelegationToken()) {
                 EndUser realUser = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
                 DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(userScopeAccess.getDelegationAgreementId());
                 if (realUser != null && delegationAgreement != null) {
                     DomainSubUserDefaults domainSubUserDefaults = createSubUserService.calculateDomainSubUserDefaults(delegationAgreement.getDomainId());
                     user = new ProvisionedUserDelegate(domainSubUserDefaults, delegationAgreement, realUser);
                 }
+            } else if (CollectionUtils.isNotEmpty(userScopeAccess.getAuthenticatedBy()) && userScopeAccess.getAuthenticatedBy().contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)) {
+                //will be a federated user  (FederatedUser)
+                user = federatedUserDao.getUserByToken(userScopeAccess);
             } else {
                 //will be a "provisioned" user (User)
                 user = identityUserService.getEndUserById(userScopeAccess.getUserRsId());

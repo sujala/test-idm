@@ -152,6 +152,7 @@ class RootServiceTest extends Specification {
     @Shared CryptHelper cryptHelper
     @Shared DefaultFederatedIdentityService defaultFederatedIdentityService;
     @Shared IdentityUserService  identityUserService
+    @Shared CreateSubUserService createSubUserService
     @Shared FederatedUserDao federatedUserDao
     @Shared MultiFactorCloud20Service multiFactorCloud20Service
     @Shared MultiFactorService multiFactorService;
@@ -163,6 +164,7 @@ class RootServiceTest extends Specification {
     @Shared AETokenService aeTokenService
     @Shared AETokenRevocationService aeTokenRevocationService
     @Shared PhonePinService  phonePinService
+    @Shared TenantAssignmentService tenantAssignmentService
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -177,6 +179,7 @@ class RootServiceTest extends Specification {
     @Shared DomainDao domainDao
     @Shared MobilePhoneDao mobilePhoneDao
     @Shared IdentityUserDao identityUserDao
+    @Shared DelegationAgreementDao delegationAgreementDao
 
     @Shared HttpHeaders headers
     @Shared AuthHeaderHelper authHeaderHelper
@@ -402,6 +405,11 @@ class RootServiceTest extends Specification {
     def mockIdentityUserService(service) {
         identityUserService = Mock()
         service.identityUserService = identityUserService
+    }
+
+    def mockCreateSubUserService(service) {
+        createSubUserService = Mock()
+        service.createSubUserService = createSubUserService
     }
 
     def mockFederatedUserDao(service) {
@@ -640,6 +648,11 @@ class RootServiceTest extends Specification {
         service.roleService = roleService
     }
 
+    def mockTenantAssignmentService(service) {
+        tenantAssignmentService = Mock()
+        service.tenantAssignmentService = tenantAssignmentService
+    }
+
     def mockIdmPathUtils(service) {
         idmPathUtils = Mock()
         service.idmPathUtils = idmPathUtils
@@ -747,6 +760,11 @@ class RootServiceTest extends Specification {
     def mockIdentityUserDao(service) {
         identityUserDao = Mock()
         service.identityUserDao = identityUserDao
+    }
+
+    def mockDelegationAgreementDao(service) {
+        delegationAgreementDao = Mock()
+        service.delegationAgreementDao = delegationAgreementDao
     }
 
     /*

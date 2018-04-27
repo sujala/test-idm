@@ -2,7 +2,10 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.resource.cloud.v20.EndUserDelegateReference;
+import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
@@ -57,6 +60,9 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
     @Autowired
     private CreateSubUserService createSubUserService;
+
+    @Autowired
+    private DelegationService delegationService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
@@ -260,6 +266,10 @@ public class DefaultIdentityUserService implements IdentityUserService {
                     new Object[] {user.getUsername(), user.getDomainId(), roles.toString()});
         }
 
+        if (user instanceof DelegationConsumer) {
+            delegationService.removeConsumerFromExplicitDelegationAgreementAssignments((DelegationConsumer) user);
+        }
+
         identityUserRepository.deleteIdentityUser(user);
     }
 
@@ -302,7 +312,6 @@ public class DefaultIdentityUserService implements IdentityUserService {
     public void updateFederatedUser(FederatedUser user) {
         identityUserRepository.updateIdentityUser(user);
     }
-
 
     private ServiceCatalogInfo getServiceCatalogInfoInternal(BaseUser baseUser, boolean applyRcnRoles) {
         if (baseUser == null || !(baseUser instanceof EndUser)) {

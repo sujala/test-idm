@@ -93,4 +93,50 @@ public interface TenantRoleDao {
      * @return
      */
     PaginatorContext<TenantRole> getRoleAssignmentsOnUser(User user, PaginationParams paginationParams);
+
+    /**
+     * Assign the new tenant role to the delegation agreement.
+     *
+     * @param delegationAgreement
+     * @param tenantRole
+     */
+    void addRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, TenantRole tenantRole);
+
+    /**
+     * Retrieve the specified tenant role associated with the specified delegation agreement. Returns null if doesn't
+     * exist.
+     *
+     * @param delegationAgreement
+     * @param roleId
+     * @return
+     */
+    TenantRole getRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId);
+
+    /**
+     * Retrieve the tenant roles associated with the specified delegation agreement in pagination form.
+     *
+     * @param delegationAgreement
+     * @param paginationParams
+     * @return
+     */
+    PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, PaginationParams paginationParams);
+
+    /**
+     * Retrieves all the role assignments associated with a delegation agreement. This should only be used by internal
+     * services to prevent abuse.
+     *
+     * @param delegationAgreement
+     * @return
+     */
+    Iterable<TenantRole> getAllRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement);
+
+    /**
+     * Returns all the tenant roles explicitly assigned to the given tenant ID on a delegation agreement.
+     * Note: This does not return tenant roles assigned to the delegation agreement at the domain level.
+     *
+     * @param tenantId
+     * @return
+     */
+    Iterable<TenantRole> getTenantRolesForDelegationAgreementsForTenant(String tenantId);
+
 }

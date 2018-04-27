@@ -192,7 +192,7 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
         MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_JSON_TYPE | "abcd"    |  DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_PHONE_NUMBER
         MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE | "abcd"    |  DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_PHONE_NUMBER
         MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_XML_TYPE | null    |  DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_MISSING_PHONE_NUMBER
-        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_JSON_TYPE | null    |  "Invalid json request body"
+        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_JSON_TYPE | null    | DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_MISSING_PHONE_NUMBER
         MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_JSON_TYPE | null    | DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_MISSING_PHONE_NUMBER
     }
 
@@ -210,14 +210,14 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
         def response = cloud20.addPhoneToUser(userAdminToken, userAdmin.id, requestMobilePhone, requestContentMediaType, acceptMediaType)
 
         then:
-        assertRackspaceCommonFaultResponse(response, com.rackspace.api.common.fault.v1.BadRequestFault, HttpStatus.SC_BAD_REQUEST, expectedMessage)
+        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, expectedMessage)
 
         cleanup:
         deleteUserQuietly(userAdmin)
 
         where:
         requestContentMediaType | acceptMediaType   | testPhoneNumber | expectedMessage
-        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE | null    | "Invalid json request body"
+        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE | null    | "Must provide a telephone number"
     }
 
     @Unroll("Fails when do not provide a mobile phone object in request: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType ; expectedMessage=#expectedMessage")

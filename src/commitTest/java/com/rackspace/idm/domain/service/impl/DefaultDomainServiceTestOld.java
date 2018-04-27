@@ -99,11 +99,6 @@ public class DefaultDomainServiceTestOld {
         defaultDomainService.updateDomain(domain);
     }
 
-    @Test(expected = NotFoundException.class)
-    public void addTenantsToDomain_nullDomainId_throwsNotFoundException() throws Exception{
-        defaultDomainService.addTenantToDomain(null,null);
-    }
-
     @Test
     public void addTenantsToDomain_validTenant_returns() throws Exception {
         Domain domain = new Domain();

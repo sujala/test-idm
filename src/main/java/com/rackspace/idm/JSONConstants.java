@@ -243,6 +243,13 @@ public final class JSONConstants {
     public static final String DELEGATION_AGREEMENT = "delegationAgreement";
     public static final String RAX_AUTH_DELEGATION_AGREEMENT = "RAX-AUTH:" + DELEGATION_AGREEMENT;
 
+    public static final String DELEGATION_AGREEMENTS = "delegationAgreements";
+    public static final String RAX_AUTH_DELEGATION_AGREEMENTS = "RAX-AUTH:" + DELEGATION_AGREEMENTS;
+
+    public static final String DELEGATE_REFERENCE = "delegateReference";
+    public static final String DELEGATE_REFERENCES = "delegateReferences";
+    public static final String RAX_AUTH_DELEGATE_REFERENCES = "RAX-AUTH:" + DELEGATE_REFERENCES;
+
     public static final String DELEGATION_AGREEMENT_ID = "delegationAgreementId";
     public static final String DELEGATION_AGREEMENT_ID_PATH = "user." + DELEGATION_AGREEMENT_ID;
     public static final String RAX_AUTH_DELEGATION_AGREEMENT_ID = "RAX-AUTH:" + DELEGATION_AGREEMENT_ID;

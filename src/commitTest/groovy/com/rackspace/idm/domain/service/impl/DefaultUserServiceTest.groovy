@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -127,6 +129,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockFederatedUserDao(service)
         mockIdentityUserService(service)
         mockIdentityConfig(service)
+        mockTenantAssignmentService(service)
         service.authenticationContext = Mock(AuthenticationContext)
     }
 
@@ -1094,7 +1097,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         prefix << [RandomStringUtils.randomAscii(10), RandomStringUtils.randomAscii(10), ""]
     }
 
-    def "getUsersByTenantId: Does not update or return user group tenant roles"() {
+    @Unroll
+    def "getUsersByTenantId: Does not update or return non end users tenant roles - baseDN = #baseDN"() {
         def tenantId = "tenantId"
         TenantRole u1 = new TenantRole().with {
             it.roleRsId = "u1"
@@ -1109,7 +1113,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         TenantRole ug1 = new TenantRole().with {
             it.roleRsId = "ug1"
-            it.uniqueId = "rsid=somewhere" + com.rackspace.idm.modules.usergroups.Constants.USER_GROUP_BASE_DN
+            it.uniqueId = "rsid=somewhere" + baseDN
             it
         }
         def tenantRoleList = [u1,ug1,f1]
@@ -1130,13 +1134,16 @@ class DefaultUserServiceTest extends RootServiceTest {
         0 * tenantService.addUserIdToTenantRole(u1)
         0 * tenantService.addUserIdToTenantRole(ug1)
 
-        // Verify the get users call does NOT include the user group, but does include both end users
+        // Verify the get users call does NOT include non end users, but does include both end users
         1 * userDao.getUsers(_) >> {args ->
             List<String> userIds = args[0]
             assert userIds.size() == 2
             assert userIds.find {it == u1.userId} != null
             assert userIds.find {it == f1UpdatedId} != null
         }
+
+        where:
+        baseDN << [com.rackspace.idm.modules.usergroups.Constants.USER_GROUP_BASE_DN, LdapRepository.DELEGATION_AGREEMENT_BASE_DN]
     }
 
     def "getEnabledUsersByContactId: calls correct dao method"() {
@@ -1276,6 +1283,29 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         !isPasswordExpired
+    }
+
+    def "replaceRoleAssignmentsOnUser: calls correct service"() {
+        given:
+        def user = entityFactory.createUser()
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(new TenantAssignment().with {
+                it.onRole = "roleId"
+                it.forTenants.addAll("tenantId")
+                it
+            })
+            it.tenantAssignments = ta
+            it
+        }
+
+        def allowedRoleAccess = IdentityUserTypeEnum.USER_ADMIN.levelAsInt
+
+        when:
+        service.replaceRoleAssignmentsOnUser(user, assignments, allowedRoleAccess)
+
+        then:
+        1 * tenantAssignmentService.replaceTenantAssignmentsOnUser(user, assignments.tenantAssignments.tenantAssignment, allowedRoleAccess)
     }
 
     def "replaceRoleAssignmentsOnUser: Throws IllegalArgumentException if supplied user is invalid"() {

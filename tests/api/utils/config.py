@@ -130,3 +130,8 @@ class TestConfig(data_interfaces.ConfigSectionInterface):
     def da_rcn(self):
         """approved RCN for delegation agreements"""
         return self.get('da_rcn')
+
+    @property
+    def max_mapping_policy_size_in_kb(self):
+        """maximum size in kb for mapping policy"""
+        return self.get('max_mapping_policy_size_in_kb')

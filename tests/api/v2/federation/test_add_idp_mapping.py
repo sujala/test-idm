@@ -2,6 +2,7 @@
 import copy
 import json
 import os
+import sys
 
 import ddt
 from nose.plugins.attrib import attr
@@ -449,13 +450,21 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.assertEquals(resp_get_ro.status_code, 200)
             self.assertEquals(resp_get_ro.json(), mapping)
 
+    @attr(type='regression')
     def test_idp_mapping_max_size(self):
-        max_size_in_kilo = const.MAX_SIZE_IN_KILOBYTES
+        max_size_in_kilo = self.test_config.max_mapping_policy_size_in_kb
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
         mapping = self.get_valid_mapping_policy()
+        # get current size of the mapping policy, so that we can add more
+        # characters to cross max size
+        current_size = sys.getsizeof(mapping)
+
+        # this size will make it larger than the max limit
         mapping['mapping']['rules'][0]['remote'][0]['path'] = (
-            self.generate_random_string(const.IDP_MAPPING_PATTERN.format(
-                mapping_size=5000)))
+            self.generate_random_string(
+                const.IDP_MAPPING_PATTERN.format(
+                    mapping_size=(int(
+                        max_size_in_kilo) * 1025 - current_size + 2))))
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
             request_data=mapping)
@@ -464,6 +473,24 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             const.MESSAGE], u"Max size exceed. Policy file must be less tha"
                             "n {max_size}"
                             " Kilobytes.".format(max_size=max_size_in_kilo))
+
+    @attr(type='regression')
+    def test_idp_mapping_upto_max_size(self):
+        max_size_in_kilo = self.test_config.max_mapping_policy_size_in_kb
+        provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
+        mapping = self.get_valid_mapping_policy()
+        # get current size of the mapping policy, so that we can add more
+        # characters to reach max size
+        current_size = sys.getsizeof(mapping)
+
+        # this size will pad it up to the max limit
+        mapping['mapping']['rules'][0]['remote'][0]['path'] = (
+            self.generate_random_string(const.IDP_MAPPING_PATTERN.format(
+                mapping_size=(int(max_size_in_kilo) * 1025 - current_size))))
+        resp_put_manager = self.identity_admin_client.add_idp_mapping(
+            idp_id=provider_id,
+            request_data=mapping)
+        self.assertEquals(resp_put_manager.status_code, 204)
 
     @base.base.log_tearDown_error
     def tearDown(self):

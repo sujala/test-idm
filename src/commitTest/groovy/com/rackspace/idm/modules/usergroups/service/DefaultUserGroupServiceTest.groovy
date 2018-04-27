@@ -1,7 +1,13 @@
 package com.rackspace.idm.modules.usergroups.service
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
+import com.rackspace.idm.api.resource.cloud.v20.UserGroupDelegateReference
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.DelegationAgreement
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
@@ -31,6 +37,10 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
 
         mockValidator20(service)
         mockIdentityConfig(service)
+        mockTenantAssignmentService(service)
+        mockDelegationService(service)
+        mockIdentityUserService(service)
+
         dao = Mock()
         service.userGroupDao = dao
     }
@@ -910,6 +920,98 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * tenantService.checkAndGetTenant(tenantId)
         1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
         thrown(NotFoundException)
+    }
+
+    def "replaceRoleAssignmentsOnGroup: calls correct service"() {
+        given:
+        def groupName = "groupName"
+        def domainId = "domainId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = "id"
+            it.uniqueId = "groupDN=groupId"
+            it
+        }
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(new TenantAssignment().with {
+                it.onRole = "roleId"
+                it.forTenants.addAll("tenantId")
+                it
+            })
+            it.tenantAssignments = ta
+            it
+        }
+
+        when:
+        service.replaceRoleAssignmentsOnGroup(group, assignments)
+
+        then:
+        1 * tenantAssignmentService.replaceTenantAssignmentsOnUserGroup(group, assignments.tenantAssignments.tenantAssignment)
+    }
+
+    def "replaceRoleAssignmentsOnGroup: error check and invalid cases"() {
+        given:
+        def groupName = "groupName"
+        def domainId = "domainId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = "id"
+            it.uniqueId = "groupDN=groupId"
+            it
+        }
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(new TenantAssignment().with {
+                it.onRole = "roleId"
+                it.forTenants.addAll("tenantId")
+                it
+            })
+            it.tenantAssignments = ta
+            it
+        }
+
+        when: "group is null"
+        service.replaceRoleAssignmentsOnGroup(null, assignments)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "group's uniqueId is null"
+        UserGroup invalidGroup = new UserGroup()
+        service.replaceRoleAssignmentsOnGroup(invalidGroup, assignments)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "assignments are null"
+        service.replaceRoleAssignmentsOnGroup(group, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "tenant assignments are null"
+        RoleAssignments invalidAssignments = new RoleAssignments()
+        List<TenantRole> tenantRoles = service.replaceRoleAssignmentsOnGroup(group, invalidAssignments)
+
+        then:
+        tenantRoles.isEmpty()
+    }
+
+    def "deleteGroup removes the user group from explicit DA assignments"() {
+        given:
+        def userGroup = new UserGroup()
+
+        when:
+        service.deleteGroup(userGroup)
+
+        then:
+        1 * identityUserService.getEndUsersInUserGroup(userGroup) >> []
+        1 * delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(userGroup)
     }
 
 }

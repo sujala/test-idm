@@ -32,7 +32,7 @@
       <service name="dist-datastore" />
     </services>
     <destinations>
-      <endpoint default="true" hostname="172.17.0.1" id="identity" port="8083" protocol="http" root-path="" />
+      <endpoint default="true" hostname="localhost" id="identity" port="8083" protocol="http" root-path="" />
     </destinations>
   </repose-cluster>
   <tracing-header secondary-plain-text="true"/>

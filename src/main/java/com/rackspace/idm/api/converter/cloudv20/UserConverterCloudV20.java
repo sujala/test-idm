@@ -84,9 +84,8 @@ public class UserConverterCloudV20 {
         jaxbUser.setId(user.getId());
         jaxbUser.setName(user.getUsername());
         jaxbUser.setDomainId(user.getDomainId());
-        if(user instanceof com.rackspace.idm.domain.entity.User) {
-            jaxbUser.setContactId(((com.rackspace.idm.domain.entity.User) user).getContactId());
-        }
+        jaxbUser.setContactId(user.getContactId());
+
         String region = user.getRegion();
         if(org.apache.commons.lang.StringUtils.isBlank(region)) {
             region = "";
@@ -97,8 +96,20 @@ public class UserConverterCloudV20 {
             jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
 
-        if (user instanceof FederatedUser) {
-            toUserForAuthenticateResponseFederated(jaxbUser, (FederatedUser) user);
+        // Federated specific information
+        if (user instanceof FederatedBaseUser) {
+            String idp = ((FederatedBaseUser)user).getFederatedIdpUri();
+            if (StringUtils.isNotBlank(idp)) {
+                jaxbUser.setFederatedIdp(idp);
+            }
+        }
+
+        // Delegate specific information
+        if (user instanceof EndUserDelegate) {
+            EndUserDelegate endUserDelegate = (EndUserDelegate) user;
+            if (endUserDelegate.getDelegationAgreement() != null) {
+                jaxbUser.setDelegationAgreementId(endUserDelegate.getDelegationAgreement().getId());
+            }
         }
 
         if (authenticationContext.getDomain() != null) {
@@ -114,16 +125,6 @@ public class UserConverterCloudV20 {
         }
 
         return jaxbUser;
-    }
-
-    private void toUserForAuthenticateResponseFederated(UserForAuthenticateResponse jaxbUser, FederatedUser user) {
-        if(StringUtils.isNotBlank(user.getFederatedIdpUri())){
-            jaxbUser.setFederatedIdp(user.getFederatedIdpUri());
-        }
-
-        if(StringUtils.isNotBlank(user.getContactId())) {
-            jaxbUser.setContactId(user.getContactId());
-        }
     }
 
     public UserForAuthenticateResponse toRackerForAuthenticateResponse(Racker racker, List<TenantRole> roles) {

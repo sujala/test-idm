@@ -18,7 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Component
@@ -135,7 +138,8 @@ public class DefaultDomainService implements DomainService {
         addTenantToDomain(tenant, domain);
     }
 
-    private void addTenantToDomain(Tenant tenant, Domain newDomain) {
+    @Override
+    public void addTenantToDomain(Tenant tenant, Domain newDomain) {
         Assert.notNull(tenant);
         Assert.notNull(newDomain);
 
@@ -309,7 +313,7 @@ public class DefaultDomainService implements DomainService {
             Domain domain = getDomain(domainId);
             if (domain != null) {
                 User userAdmin = userService.getUserAdminByDomain(domain);
-                if (userAdmin != null) {
+                if (userAdmin != null && domainId.equalsIgnoreCase(userAdmin.getDomainId())) {
                     userAdmins.add(userAdmin);
                 }
             }
@@ -449,6 +453,26 @@ public class DefaultDomainService implements DomainService {
         if (!alphaNumericColonHyphenSpace.matcher(domain.getName()).matches()) {
             throw new BadRequestException("Domain name has invalid characters.");
         }
+    }
+
+    @Override
+    public boolean doDomainsShareRcn(String domainId1, String domainId2) {
+        boolean sameRcn = false;
+        if (StringUtils.isBlank(domainId1) || StringUtils.isBlank(domainId2)) {
+            sameRcn = false;
+        } else if (domainId1.equalsIgnoreCase(domainId2)) {
+            sameRcn = true;
+        } else {
+            // If domains are not the same, must compare RCNs
+            Domain domain1 = getDomain(domainId1);
+            if (domain1 != null && StringUtils.isNotBlank(domain1.getRackspaceCustomerNumber())) {
+                Domain domain2 = getDomain(domainId2);
+                if (domain2 != null && StringUtils.isNotBlank(domain2.getRackspaceCustomerNumber())) {
+                    sameRcn = domain1.getRackspaceCustomerNumber().equalsIgnoreCase(domain2.getRackspaceCustomerNumber());
+                }
+            }
+        }
+        return sameRcn;
     }
 
     public void setTenantService(TenantService tenantService) {

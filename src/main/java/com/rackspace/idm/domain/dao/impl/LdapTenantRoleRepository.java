@@ -102,7 +102,8 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         //get the userIds
         for (TenantRole tenantRole : roles) {
             try {
-                if(!StringUtils.containsIgnoreCase(tenantRole.getUniqueId(), USER_GROUP_BASE_DN)) {
+                if(!(StringUtils.containsIgnoreCase(tenantRole.getUniqueId(), USER_GROUP_BASE_DN)
+                        || StringUtils.containsIgnoreCase(tenantRole.getUniqueId(), DELEGATION_AGREEMENT_BASE_DN))) {
                     userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
                 }
             } catch (LDAPException e) {
@@ -274,6 +275,48 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
             context = getObjectsPaged(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
         }
         return context;
+    }
+
+    @Override
+    public void addRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, TenantRole tenantRole) {
+        addObject(getTenantRoleDn(delegationAgreement.getUniqueId()), tenantRole);
+    }
+
+    @Override
+    public TenantRole getRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId) {
+        SearchResultEntry entry = getLdapContainer(delegationAgreement.getUniqueId(), CONTAINER_ROLES);
+        if (entry == null) {
+            return null;
+        } else {
+            return getTenantRole(entry.getDN(), roleId);
+        }
+    }
+
+    @Override
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, PaginationParams paginationParams) {
+        SearchResultEntry entry = getLdapContainer(delegationAgreement.getUniqueId(), CONTAINER_ROLES);
+
+        PaginatorContext<TenantRole> context = new PaginatorContext<>();
+        if (entry == null) {
+            context.update(Collections.EMPTY_LIST, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
+        } else {
+            context = getObjectsPaged(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
+        }
+        return context;
+    }
+
+    @Override
+    public Iterable<TenantRole> getAllRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement) {
+        SearchResultEntry entry = getLdapContainer(delegationAgreement.getUniqueId(), CONTAINER_ROLES);
+        if (entry == null) {
+            return Collections.emptyList();
+        }
+        return getObjects(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB);
+    }
+
+    @Override
+    public Iterable<TenantRole> getTenantRolesForDelegationAgreementsForTenant(String tenantId) {
+        return getObjects(searchFilterGetTenantRolesByTenantId(tenantId), DELEGATION_AGREEMENT_BASE_DN, SearchScope.SUB);
     }
 
     private TenantRole getTenantRole(String dn, String roleId) {

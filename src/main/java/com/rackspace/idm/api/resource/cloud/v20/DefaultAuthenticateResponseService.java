@@ -158,6 +158,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
             //tenant was specified
             org.openstack.docs.identity.api.v2.Token convertedToken;
             if (authResponseTuple.isImpersonation()) {
+                authenticationContext.setIncludeImpersonateInAuthByList(true);
                 convertedToken = tokenConverterCloudV20.toToken(authResponseTuple.getImpersonatedScopeAccess(), null);
             } else {
                 convertedToken = tokenConverterCloudV20.toToken(authResponseTuple.getUserScopeAccess(), null);

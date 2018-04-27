@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.DelegationAgreementConverter;
@@ -10,10 +11,8 @@ import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ExceptionHandler;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.*;
+import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.validation.Validator20;
@@ -23,11 +22,13 @@ import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.List;
 
 /**
  * Implementation of the delegation API services. Implementation is greatly simplified and standardized by combining
@@ -72,6 +73,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     @Autowired
     private Validator20 validator20;
+
+    @Autowired
+    private RoleAssignmentConverter roleAssignmentConverter;
 
     @Override
     public Response addAgreement(UriInfo uriInfo, String authToken, DelegationAgreement agreementWeb) {
@@ -119,25 +123,10 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException("This domain is not allowed to create delegation agreements", ErrorCodes.ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN);
             }
 
-            /*
-             Temp hack to avoid altering this contract and having to fix lots of things as part of initial PR. Will
-             remove this and update other tests later.
-              */
-            DelegationDelegate delegate = null;
-            if (StringUtils.isNotBlank(agreementWeb.getDelegateId())) {
-                SimpleDelegateValidator delegateValidator = new SimpleDelegateValidator(new EndUserDelegateReference(agreementWeb.getDelegateId()));
-                delegateValidator.verifyDelegateCanBeAddedToAgreementInDomain(callerDomain.getDomainId());
-                delegate = delegateValidator.getDelegate();
-            }
-
             // Convert to entity object
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationAgreementConverter.fromDelegationAgreementWeb(agreementWeb);
             delegationAgreement.setPrincipal(principal);
             delegationAgreement.setDomainId(principal.getDomainId());
-
-            if (delegate != null) {
-                delegationAgreement.getDelegates().add(delegate.getDn());
-            }
 
             // Add the agreement
             delegationService.addDelegationAgreement(delegationAgreement);
@@ -153,16 +142,70 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     }
 
     @Override
-    public Response getAgreement(String authToken, String agreementId) {
+    public Response updateAgreement(String authToken, DelegationAgreement agreement) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             // Verify caller is enabled
             BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal to update DA.
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreement.getId());
+            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            // Copy over only the attributes that are provided in the request and allowed to be updated.
+            if (agreement.getName() != null) {
+                validator20.validateStringNotNullWithMaxLength("name", agreement.getName(), Validator20.MAX_LENGTH_32);
+                delegationAgreement.setName(agreement.getName());
+            }
+
+            if (agreement.getDescription() != null) {
+                validator20.validateStringMaxLength("description", agreement.getDescription(), Validator20.MAX_LENGTH_255);
+                delegationAgreement.setDescription(agreement.getDescription());
+            }
+
+            if (agreement.isAllowSubAgreements() != null) {
+                delegationAgreement.setAllowSubAgreements(agreement.isAllowSubAgreements());
+            }
+
+            delegationService.updateDelegationAgreement(delegationAgreement);
+
+            return Response.ok(delegationAgreementConverter.toDelegationAgreementWeb(delegationAgreement)).build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error updating delegation agreement '%s'", agreement.getId()), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response getAgreement(String authToken, String agreementId) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
 
@@ -181,16 +224,85 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     }
 
     @Override
-    public Response deleteAgreement(String authToken, String agreementId) {
+    public Response listAgreements(String authToken, String relationshipType) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             // Verify caller is enabled
             BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            /*
+            To search for DAs by principal and/or delegate must provide the delegate and/or principal to search on. This
+            is done by providing a DelegationDelegate or DelegationPrincipal. Currently this call is limited to solely
+            search for DAs for which the *caller* is an (effective) principal or (effective) delegate. All Federated
+            users and provisioned users
+            can potentially be a delegate or principal. However, not all implementations of EndUser can currently be
+            a delegate or principal. In particular, EndUserDelegates can not be principals until Derived DAs are allowed.
+             */
+            DelegationDelegate delegationDelegateSearchReference = caller instanceof DelegationDelegate ? (DelegationDelegate) caller : null;
+            DelegationPrincipal delegationPrincipalSearchReference = caller instanceof DelegationPrincipal ? (DelegationPrincipal) caller : null;
+
+            /*
+            The exact search params depend on the relationship requested.
+            - When no relationship is specified, search for all DAs for which caller is either an effective principal
+            or effective delegate.
+            - When delegate is specified, only find those DAs for which caller is an effective delegate
+            - When principal is specified, only find those DAs for which caller is an effective principal
+             */
+            FindDelegationAgreementParams findDelegationAgreementParams = null;
+            try {
+                if (StringUtils.isBlank(relationshipType)) {
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegateSearchReference, delegationPrincipalSearchReference);
+                } else if (StringUtils.equalsIgnoreCase("delegate", relationshipType)) {
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegateSearchReference, null);
+                } else if (StringUtils.equalsIgnoreCase("principal", relationshipType)) {
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(null, delegationPrincipalSearchReference);
+                } else {
+                    throw new BadRequestException("The specified relationship is invalid", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+                }
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Invalid caller for relationship", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            List<com.rackspace.idm.domain.entity.DelegationAgreement> delegationAgreements = delegationService.findDelegationAgreements(findDelegationAgreementParams);
+
+            return Response.ok().entity(delegationAgreementConverter.toDelegationAgreementsWeb(delegationAgreements)).build();
+        } catch (SizeLimitExceededException ex) {
+            // For consistency, always go through the standard exceptionHandler method to process exceptions.
+            return exceptionHandler.exceptionResponse(new ForbiddenException("The search resulted in too many results. Please apply filters to reduce the number of results.")).build();
+        } catch (Exception ex) {
+            LOG.debug("Error finding delegation agreements", ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response deleteAgreement(String authToken, String agreementId) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
@@ -212,19 +324,24 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     public Response addDelegate(String authToken, String agreementId, DelegateReference delegateReference) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
-            // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
 
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
             // Caller must be the DA principal to modify delegates
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
+            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -232,8 +349,13 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             SimpleDelegateValidator delegateLookupValidator = new SimpleDelegateValidator(delegateReference);
             delegateLookupValidator.verifyDelegateCanBeAddedToAgreement(delegationAgreement);
 
-            delegationService.addDelegate(delegationAgreement, delegateLookupValidator.delegate);
-            return Response.noContent().build();
+            if (delegationAgreement.isExplicitDelegate(delegateLookupValidator.delegate)) {
+                throw new DuplicateException("Already a delegate", ErrorCodes.ERROR_CODE_DELEGATE_ALREADY_EXISTS);
+            } else {
+                delegationService.addDelegate(delegationAgreement, delegateLookupValidator.delegate);
+                return Response.noContent().build();
+            }
+
         } catch (Exception ex) {
             LOG.debug(String.format("Error deleting delegation agreement '%s'", agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
@@ -244,13 +366,18 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     public Response deleteDelegate(String authToken, String agreementId, DelegateReference delegateReference) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
-            // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
 
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
@@ -269,6 +396,161 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             return Response.noContent().build();
         } catch (Exception ex) {
             LOG.debug(String.format("Error deleting delegation agreement '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response listDelegates(String authToken, String agreementId) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal or delegate to list delegates
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null || (!delegationAgreement.isEffectivePrincipal(caller) && !delegationAgreement.isEffectiveDelegate(caller))) {
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            /*
+            Retrieve the delegates. This is inefficient as it looks up each delegate, but must at least look up fed
+            users to retrieve the id associated with user. Expect limitations to be placed on how many delegates can
+            be associated with a DA to limit impact of this. Expect to want to retrieve more information
+            per user (e.g. like a name) to provide more context in response.
+             */
+            List<DelegationDelegate> delegates = delegationService.getDelegates(delegationAgreement);
+
+            return Response.ok().entity(delegationAgreementConverter.toDelegatesWeb(delegates)).build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error listing delegates for daId '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response grantRolesToAgreement(String authToken, String agreementId, RoleAssignments roleAssignments) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal to modify roles
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            if (roleAssignments == null) {
+                throw new BadRequestException("Must supply a set of assignments", ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
+            }
+
+            delegationService.replaceRoleAssignmentsOnDelegationAgreement(delegationAgreement, roleAssignments);
+
+            // Retrieve the first 1000 assigned roles on the user
+            PaginatorContext<TenantRole> tenantRolePage = delegationService.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, new DelegationAgreementRoleSearchParams(new PaginationParams(0, 1000)));
+
+            return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error granting roles to delegation agreement '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response listRoleAssignmentsOnAgreement(UriInfo uriInfo, String authToken, String agreementId, DelegationAgreementRoleSearchParams searchParams) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal or a delegate to list DA roles
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null
+                    || !(delegationAgreement.isEffectivePrincipal(caller)
+                    || delegationAgreement.isEffectiveDelegate(caller))) {
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            PaginatorContext<TenantRole> tenantRolePage = delegationService.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, searchParams);
+
+            String linkHeader = idmPathUtils.createLinkHeader(uriInfo, tenantRolePage);
+
+            return Response.status(200)
+                    .header(HttpHeaders.LINK, linkHeader)
+                    .entity(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error retrieving roles from delegation agreement '%s'", agreementId), ex);
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    @Override
+    public Response revokeRoleFromAgreement(String authToken, String agreementId, String roleId) {
+        try {
+            // Verify token exists and valid
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+            // Verify token is not a scoped token or delegation token
+            if (!StringUtils.isBlank(token.getScope()) || token.isDelegationToken()) {
+                throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Verify caller is enabled
+            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller has appropriate access
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
+
+            // Caller must be the DA principal to modify delegates
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
+            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+                throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            delegationService.revokeRoleAssignmentOnDelegationAgreement(delegationAgreement, roleId);
+
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error revoking role '%s' from delegation agreement '%s'", roleId, agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
     }
@@ -450,23 +732,8 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
         public void verifyDelegateCanBeAddedToAgreementInDomain(String domainId) {
             // Delegate must be within same domain as agreement or same RCN
-            if (delegate == null || StringUtils.isBlank(domainId)) {
+            if (delegate == null || !domainService.doDomainsShareRcn(delegate.getDomainId(), domainId)) {
                 throw new NotFoundException(ERROR_MSG_DELEGATE_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND);
-            }
-
-            // Verify the delegate is within same RCN as specified domain. If in same domain, allow even if
-            // no RCN set
-            boolean sameDomain = domainId.equalsIgnoreCase(delegate.getDomainId());
-            if (!sameDomain) {
-                // Must compare RCNs if not in same domain
-                Domain delegateDomain = domainService.getDomain(delegate.getDomainId());
-                Domain daDomain = domainService.getDomain(domainId);
-
-                boolean missingRcns = delegateDomain == null || daDomain == null || StringUtils.isBlank(daDomain.getRackspaceCustomerNumber()) || StringUtils.isBlank(delegateDomain.getRackspaceCustomerNumber());
-
-                if (missingRcns || !daDomain.getRackspaceCustomerNumber().equalsIgnoreCase(delegateDomain.getRackspaceCustomerNumber())) {
-                    throw new NotFoundException(ERROR_MSG_DELEGATE_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND);
-                }
             }
         }
     }

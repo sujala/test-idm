@@ -1,17 +1,22 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
+import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams;
+import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
+import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.entity.DelegateType;
-import com.rackspace.idm.domain.entity.DelegationAgreement;
-import com.rackspace.idm.domain.entity.DelegationDelegate;
-import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.DelegationService;
 import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.TenantAssignmentService;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.unboundid.ldap.sdk.DN;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.Validate;
 import org.eclipse.persistence.jpa.jpql.Assert;
 import org.slf4j.Logger;
@@ -19,6 +24,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -34,6 +43,12 @@ public class DefaultDelegationService implements DelegationService {
     @Autowired
     private IdentityUserService identityUserService;
 
+    @Autowired
+    private TenantAssignmentService tenantAssignmentService;
+
+    @Autowired
+    private TenantRoleDao tenantRoleDao;
+
     @Override
     public DelegationAgreement addDelegationAgreement(DelegationAgreement delegationAgreement) {
         Assert.isNotNull(delegationAgreement, "Delegation agreement must be provided");
@@ -43,8 +58,77 @@ public class DefaultDelegationService implements DelegationService {
     }
 
     @Override
+    public void updateDelegationAgreement(DelegationAgreement delegationAgreement) {
+        Validate.notNull(delegationAgreement);
+
+        delegationAgreementDao.updateAgreement(delegationAgreement);
+    }
+
+    @Override
     public DelegationAgreement getDelegationAgreementById(String delegationAgreementId) {
         return delegationAgreementDao.getAgreementById(delegationAgreementId);
+    }
+
+    @Override
+    public TenantRole getRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId) {
+        Validate.notNull(delegationAgreement);
+        Validate.notNull(roleId);
+
+        return tenantRoleDao.getRoleAssignmentOnDelegationAgreement(delegationAgreement, roleId);
+    }
+
+    @Override
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, DelegationAgreementRoleSearchParams searchParams) {
+        Validate.notNull(delegationAgreement);
+        Validate.notNull(searchParams);
+
+        return tenantRoleDao.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, searchParams.getPaginationRequest());
+    }
+
+    @Override
+    public Iterable<TenantRole> getAllRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement) {
+        Validate.notNull(delegationAgreement);
+
+        return tenantRoleDao.getAllRoleAssignmentsOnDelegationAgreement(delegationAgreement);
+    }
+
+    @Override
+    public Iterable<TenantRole> getTenantRolesForDelegationAgreementsForTenant(String tenantId) {
+        Validate.notNull(tenantId);
+
+        return tenantRoleDao.getTenantRolesForDelegationAgreementsForTenant(tenantId);
+    }
+
+    @Override
+    public List<TenantRole> replaceRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, RoleAssignments roleAssignments) {
+        Validate.notNull(delegationAgreement);
+        Validate.notNull(delegationAgreement.getUniqueId());
+        Validate.notNull(roleAssignments);
+
+        if (roleAssignments.getTenantAssignments() == null || CollectionUtils.isEmpty(roleAssignments.getTenantAssignments().getTenantAssignment())) {
+            return Collections.emptyList();
+        }
+
+        return tenantAssignmentService.replaceTenantAssignmentsOnDelegationAgreement(
+                delegationAgreement, roleAssignments.getTenantAssignments().getTenantAssignment());
+    }
+
+    @Override
+    public void revokeRoleAssignmentOnDelegationAgreement(DelegationAgreement delegationAgreement, String roleId) {
+        Validate.notNull(delegationAgreement);
+        Validate.notNull(roleId);
+
+        TenantRole assignedRole = getRoleAssignmentOnDelegationAgreement(delegationAgreement, roleId);
+        if (assignedRole == null) {
+            throw new NotFoundException("The specified role does not exist for agreement", ErrorCodes.ERROR_CODE_NOT_FOUND);
+        }
+
+        tenantRoleDao.deleteTenantRole(assignedRole);
+    }
+
+    @Override
+    public List<DelegationAgreement> findDelegationAgreements(FindDelegationAgreementParams listDelegationAgreementParams) {
+        return delegationAgreementDao.findDelegationAgreements(listDelegationAgreementParams);
     }
 
     @Override
@@ -72,7 +156,7 @@ public class DefaultDelegationService implements DelegationService {
         Set<DN> existingDelegates = delegationAgreement.getDelegates();
 
         /*
-         Groups, provisioned users and federated users have a globally unique identifier (id). User groups and provisioned
+         Groups, provisioned users, and federated users have a globally unique identifier (id). User groups and provisioned
          users include this identifier as the final (leftmost) value for their DN composition and the DN can therefore be uniquely
          determined just by the id. However,
          federated users uses username rather than this id - which only needs to be unique within an IDP. This means
@@ -141,4 +225,44 @@ public class DefaultDelegationService implements DelegationService {
         }
         return delegate;
     }
+
+    @Override
+    public List<DelegationDelegate> getDelegates(DelegationAgreement da) {
+        return delegationAgreementDao.getDelegationAgreementDelegates(da);
+    }
+
+    @Override
+    public DelegationDelegate getDelegateByDn(DN delegateDn) {
+        return delegationAgreementDao.getDelegateByDn(delegateDn);
+    }
+
+    @Override
+    public void removeConsumerFromExplicitDelegationAgreementAssignments(DelegationConsumer consumer) {
+        // Delete all DA for which the DA consumer is the explicit principal
+        if (consumer instanceof DelegationPrincipal) {
+            DelegationPrincipal principal = (DelegationPrincipal) consumer;
+            List<DelegationAgreement> principalDelegationAgreements = findDelegationAgreements(new FindDelegationAgreementParams(null, principal));
+            if (CollectionUtils.isNotEmpty(principalDelegationAgreements)) {
+                for (DelegationAgreement da : principalDelegationAgreements) {
+                    if (da.isExplicitPrincipal((DelegationPrincipal) consumer)) {
+                        deleteDelegationAgreement(da);
+                    }
+                }
+            }
+        }
+
+        // Remove the DA consumer from all DAs for which the consumer is an explicit delegate
+        if (consumer instanceof DelegationDelegate) {
+            DelegationDelegate delegate = (DelegationDelegate) consumer;
+            List<DelegationAgreement> delegateDelegationAgreements = findDelegationAgreements(new FindDelegationAgreementParams(delegate, null));
+            if (CollectionUtils.isNotEmpty(delegateDelegationAgreements)) {
+                for (DelegationAgreement da : delegateDelegationAgreements) {
+                    if (da.isExplicitDelegate(delegate)) {
+                        deleteDelegate(da, delegate.getDelegateReference());
+                    }
+                }
+            }
+        }
+    }
+
 }

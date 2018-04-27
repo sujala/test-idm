@@ -7,6 +7,8 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
@@ -39,14 +41,17 @@ import testHelpers.Cloud20Methods
 import testHelpers.DevOpsMethods
 import testHelpers.V1Factory
 import testHelpers.V2Factory
+import testHelpers.saml.SamlAttributeFactory
 import testHelpers.saml.SamlFactory
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
+import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
+import static com.rackspace.idm.SAMLConstants.*
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
@@ -87,6 +92,8 @@ class Cloud20Utils {
     @Autowired
     TenantRoleDao tenantRoleDao
 
+    FederatedDomainAuthRequestGenerator federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(DEFAULT_BROKER_IDP_PUBLIC_KEY, DEFAULT_BROKER_IDP_PRIVATE_KEY, IDP_V2_DOMAIN_PUBLIC_KEY, IDP_V2_DOMAIN_PRIVATE_KEY)
+
     @PostConstruct
     def init() {
         methods.init()
@@ -100,13 +107,17 @@ class Cloud20Utils {
         entity.token.id
     }
 
-    def getMFAToken(username, passcode, password=DEFAULT_PASSWORD) {
+    AuthenticateResponse authenticateMfa(username, passcode, password=DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(username, password)
         assert (response.status == SC_UNAUTHORIZED)
         def sessionId = extractSessionIdFromWwwAuthenticateHeader(response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE))
         response = methods.authenticateMFAWithSessionIdAndPasscode(sessionId, passcode)
         assert (response.status == SC_OK)
-        def entity = response.getEntity(AuthenticateResponse).value
+        return response.getEntity(AuthenticateResponse).value
+    }
+
+    def getMFAToken(username, passcode, password=DEFAULT_PASSWORD) {
+        def entity = authenticateMfa(username, passcode, password)
         assert (entity != null)
         entity.token.id
     }
@@ -167,6 +178,12 @@ class Cloud20Utils {
         return delegateSubUserAuthResponse
     }
 
+    RoleAssignments listRolesOnDelegationAgreement(token, delegationAgreement) {
+        def response = methods.listRolesOnDelegationAgreement(token, delegationAgreement)
+        assert response.status == 200
+        return response.getEntity(RoleAssignments)
+    }
+
     def getTokenFromApiKeyAuth(String username, String apikey = DEFAULT_API_KEY) {
         def response = methods.authenticateApiKey(username, apikey)
         assert (response.status == SC_OK)
@@ -199,6 +216,21 @@ class Cloud20Utils {
         def entity = response.getEntity(User).value
         assert (entity != null)
         return entity
+    }
+
+    def createUserWithOtpMfa(token, username=testUtils.getRandomUUID(), domainId=null) {
+        def user = createUser(token, username, domainId)
+        def otpDevice = new OTPDevice()
+        otpDevice.name = RandomStringUtils.randomAlphanumeric(8)
+        def device = addOTPDevice(getToken(user.username), user.id, otpDevice)
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(device.getKeyUri()), "UTF-8").find { it.name == 'secret' }.value)
+        def code = new VerificationCode()
+        code.setCode(otpHelper.TOTP(secret))
+        verifyOTPDevice(getToken(user.username), user.id, device.id, code)
+        def settings = new MultiFactor().with { it.enabled = true; it }
+        updateMultiFactor(getToken(user.username), user.id, settings)
+        user = getUserById(user.id)
+        return [user, secret]
     }
 
     def createUserWithUser(user, username=testUtils.getRandomUUID(), domainId=null) {
@@ -1245,12 +1277,16 @@ class Cloud20Utils {
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
             it.domainId = domainId
-            it.delegateId = delegateUserId
             it
         }
         def response = methods.createDelegationAgreement(token, daToCreate)
         assert (response.status == SC_CREATED)
-        response.getEntity(DelegationAgreement)
+        def delegationAgreement = response.getEntity(DelegationAgreement)
+
+        def addUserDelegateResponse = methods.addUserDelegate(token, delegationAgreement.id, delegateUserId)
+        assert (addUserDelegateResponse.status == SC_NO_CONTENT)
+
+        return delegationAgreement
     }
 
     DelegationAgreement createDelegationAgreement(String token, DelegationAgreement delegationAgreement) {
@@ -1262,7 +1298,35 @@ class Cloud20Utils {
     def getDelegationAgreement(String token, String delegationAgreementId) {
         def response = methods.getDelegationAgreement(token, delegationAgreementId)
         assert (response.status == SC_OK)
-        response.getEntity(DelegationAgreement).value
+        response.getEntity(DelegationAgreement)
+    }
+
+    DelegateReferences listDelegatesForDelegationAgreement(String token, String delegationAgreementId) {
+        def response = methods.listDelegates(token, delegationAgreementId)
+        assert response.status == 200
+        return response.getEntity(DelegateReferences)
+    }
+
+    def grantRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, RoleAssignments roleAssignments, token = getIdentityAdminToken()) {
+        def response = methods.grantRoleAssignmentsOnDelegationAgreement(token, delegationAgreement, roleAssignments)
+        assert response.status == SC_OK
+        return response.getEntity(RoleAssignments)
+    }
+
+    def addUserDelegate(String token, String delegationAgreementId, String userId) {
+        def response = methods.addUserDelegate(token, delegationAgreementId, userId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def addUserGroupDelegate(String token, String delegationAgreementId, String userGroupId) {
+        def response = methods.addUserGroupDelegate(token, delegationAgreementId, userGroupId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def listDelegationAgreements(token, relationship = null) {
+        def response = methods.listDelegationAgreements(token, relationship)
+        assert (response.status == SC_OK)
+        response.getEntity(DelegationAgreements)
     }
 
     def extractSessionIdFromFirstWwwAuthenticateHeader(MultivaluedMap<String, String> headers) {
@@ -1429,6 +1493,42 @@ class Cloud20Utils {
         def username = testUtils.getRandomUUID("samlUser")
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
         def samlResponse = methods.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
+    }
+
+    def authenticateV1FederatedUser(HashMap<String, List<String>> attributes, boolean apply_rcn_roles = true, mediaType = APPLICATION_XML_TYPE) {
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+
+        // Uses the v1 way of creating a SAML Response to auth with
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, attributes)
+        def samlResponse = methods.federatedAuthenticate(samlAssertion, apply_rcn_roles, GlobalConstants.FEDERATION_API_V1_0, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
+    }
+
+    AuthenticateResponse authenticateFederatedUser(String domainId, groupNames = [], roleNames = []) {
+        def samlRequest = new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = domainId
+            it.validitySeconds = 1000
+            it.brokerIssuer = Constants.DEFAULT_BROKER_IDP_URI
+            it.originIssuer = Constants.IDP_V2_DOMAIN_URI
+            it.email = Constants.DEFAULT_FED_EMAIL
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = "fedUser${RandomStringUtils.randomAlphanumeric(8)}"
+            it.roleNames = roleNames
+            it.groupNames = groupNames
+            it
+        }
+        authenticateV2FederatedUser(samlRequest)
+    }
+
+    def authenticateV2FederatedUser(FederatedDomainAuthGenerationRequest federatedDomainAuthGenerationRequest, boolean apply_rcn_roles = true, mediaType = APPLICATION_XML_TYPE) {
+        def inputSamlResponseStr = federatedDomainAuthRequestGenerator.convertResponseToString(federatedDomainAuthRequestGenerator.createSignedSAMLResponse(federatedDomainAuthGenerationRequest))
+        def samlResponse = methods.authenticateV2FederatedUser(inputSamlResponseStr, apply_rcn_roles, mediaType)
+        assert samlResponse.status == SC_OK
         def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
         return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
     }

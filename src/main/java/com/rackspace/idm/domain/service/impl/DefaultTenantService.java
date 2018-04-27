@@ -103,7 +103,10 @@ public class DefaultTenantService implements TenantService {
     private UserGroupAuthorizationService userGroupAuthorizationService;
 
     @Autowired
-    FederatedUserDao federatedUserDao;
+    private FederatedUserDao federatedUserDao;
+
+    @Autowired
+    private DelegationService delegationService;
 
     // Not using component w/ Autowiring because want just a dumb a utility class
     private RoleUtil roleUtil = new RoleUtil();
@@ -849,7 +852,7 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
-        deleteTenantFromTenantRole(role, tenant);
+        deleteTenantFromTenantRole(role, tenant.getTenantId());
 
         if (endUser instanceof User) {
             //this only applies for users, not federatedusers for now...
@@ -862,7 +865,7 @@ public class DefaultTenantService implements TenantService {
                     try {
                         TenantRole subUserTenantRole = tenantRoleDao.getTenantRoleForUser(subUser, role.getRoleRsId());
                         if (subUserTenantRole != null) {
-                            deleteTenantFromTenantRole(subUserTenantRole, tenant);
+                            deleteTenantFromTenantRole(subUserTenantRole, tenant.getTenantId());
                             atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
                         }
                     } catch (NotFoundException ex) {
@@ -875,7 +878,7 @@ public class DefaultTenantService implements TenantService {
                 for(FederatedUser subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
                     try {
                         TenantRole subUserTenantRole = tenantRoleDao.getTenantRoleForUser(subUser, role.getRoleRsId());
-                        deleteTenantFromTenantRole(subUserTenantRole, tenant);
+                        deleteTenantFromTenantRole(subUserTenantRole, tenant.getTenantId());
                     } catch (NotFoundException ex) {
                         String msg = String.format("Federated user %s does not have tenantRole %s", user.getId(), role.getName());
                         logger.warn(msg);
@@ -887,12 +890,16 @@ public class DefaultTenantService implements TenantService {
 
     }
 
-    private void deleteTenantFromTenantRole(TenantRole role, Tenant tenant) {
-        role.getTenantIds().remove(tenant.getTenantId());
-        if(role.getTenantIds().size() == 0) {
-            tenantRoleDao.deleteTenantRole(role);
-        } else {
-            tenantRoleDao.updateTenantRole(role);
+    @Override
+    public void deleteTenantFromTenantRole(TenantRole role, String tenantId) {
+        boolean roleContainedTenant = role.getTenantIds().remove(tenantId);
+
+        if (roleContainedTenant) {
+            if(role.getTenantIds().size() == 0) {
+                tenantRoleDao.deleteTenantRole(role);
+            } else {
+                tenantRoleDao.updateTenantRole(role);
+            }
         }
     }
 
@@ -1780,6 +1787,11 @@ public class DefaultTenantService implements TenantService {
         }
 
         @Override
+        public Map<TenantRole, SourcedRoleAssignments.Source> getOtherSourcedRoles() {
+            return Collections.emptyMap();
+        }
+
+        @Override
         public List<Tenant> calculateRcnTenants() {
             if (domainRcnTenants == null) {
                 domainRcnTenants = calculateRcnTenantsForRoleMatching(userDomain);
@@ -1885,6 +1897,28 @@ public class DefaultTenantService implements TenantService {
                 }
                 systemSourcedRoles = systemRoleMap;
             }
-            return systemSourcedRoles;        }
+            return systemSourcedRoles;
+        }
+
+        @Override
+        public Map<TenantRole, SourcedRoleAssignments.Source> getOtherSourcedRoles() {
+            return getDelegationAgreementSourcedRoles();
+        }
+
+        // TODO: Need to refactor these searches into a single call that retrieves all sources
+        private Map<TenantRole, SourcedRoleAssignments.Source> getDelegationAgreementSourcedRoles() {
+            Map<TenantRole, SourcedRoleAssignments.Source> daSourcedRoles = new LinkedHashMap<>();
+
+            Iterable<TenantRole> tenantRoles = delegationService.getAllRoleAssignmentsOnDelegationAgreement(provisionedUserDelegate.getDelegationAgreement());
+
+            if (tenantRoles != null) {
+                for (TenantRole tenantRole : tenantRoles) {
+                    SourcedRoleAssignments.Source source = new SourcedRoleAssignments.Source(SourcedRoleAssignments.SourceType.DA, provisionedUserDelegate.getDelegationAgreement().getId(), null, tenantRole.getTenantIds());
+                    daSourcedRoles.put(tenantRole, source);
+                }
+            }
+
+            return daSourcedRoles;
+        }
     }
 }

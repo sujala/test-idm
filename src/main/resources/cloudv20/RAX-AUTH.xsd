@@ -202,7 +202,16 @@
     <element name="tenantAssignments" type="RAX-AUTH:TenantAssignments" />
     <element name="roleAssignments" type="RAX-AUTH:RoleAssignments" />
     <element name="delegationAgreement" type="RAX-AUTH:DelegationAgreement" />
-    
+    <element name="delegationAgreements" type="RAX-AUTH:DelegationAgreements" />
+    <element name="delegateReference" type="RAX-AUTH:DelegateReference" />
+    <element name="delegateReferences" type="RAX-AUTH:DelegateReferences" >
+        <annotation>
+            <xsd:documentation>
+                <p>A list of delegates.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
+
     <!-- Complex Types -->
     <complexType name="Types">
         <sequence>
@@ -687,6 +696,7 @@
 
     <simpleType name="SourceTypeEnum">
         <restriction base="xsd:string">
+            <enumeration value="DA"/>
             <enumeration value="USER"/>
             <enumeration value="USERGROUP"/>
             <enumeration value="SYSTEM"/>
@@ -700,10 +710,10 @@
         </restriction>
     </simpleType>
 
-    <simpleType name="RolespaceType">
+    <simpleType name="DelegateType">
         <restriction base="xsd:string">
-            <enumeration value="DOMAIN"/>
-            <enumeration value="DELEGATION_AGREEMENT"/>
+            <enumeration value="USER_GROUP"/>
+            <enumeration value="USER"/>
         </restriction>
     </simpleType>
 
@@ -1232,6 +1242,25 @@
         <attribute name="demoteUserId" type="xsd:string" use="optional" />
     </complexType>
 
+    <complexType name="DelegateReference">
+        <attribute name="delegateType" type="RAX-AUTH:DelegateType"/>
+        <attribute name="delegateId" type="xsd:string">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The id of a delegate associated with this delegation agreement
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="DelegateReferences">
+        <sequence>
+            <element ref="RAX-AUTH:delegateReference" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
     <complexType name="DelegationAgreement">
         <attribute name="id" type="xsd:string" use="optional">
             <annotation>
@@ -1260,6 +1289,15 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="allowSubAgreements" type="xsd:boolean" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Whether this DA can be used by the delegates as the basis for creating another DA
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
         <attribute name="principalType" type="RAX-AUTH:PrincipalType" use="optional"/>
         <attribute name="principalId" type="xsd:string" use="optional">
             <annotation>
@@ -1279,16 +1317,13 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="delegateId" type="xsd:string" use="optional">
-            <annotation>
-                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        The provisioned user assigned to this delegation agreement
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
+    </complexType>
 
+    <complexType name="DelegationAgreements">
+        <sequence>
+            <element name="delegationAgreement" type="RAX-AUTH:DelegationAgreement" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
 
     <complexType name="UserGroup">

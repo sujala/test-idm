@@ -32,11 +32,14 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val V20_AUTHENTICATE_SAML_REPL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_saml_repl.users_per_sec")
   val V20_AUTHENTICATE_SAML_INTERNAL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_saml_internal.users_per_sec")
   val V20_AUTHENTICATE_SAML_INTERNAL_REPL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_saml_internal_repl.users_per_sec")
+  val V20_SAME_USER_SAML_AUTH_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_same_user_authenticate_saml.users_per_sec")
 
   val v20_saml_auth_scn = Identity.v20_saml_auth
   val v20_saml_auth_scn_repl = Identity.v20_saml_auth_repl
   val v20_saml_auth_scn_internal = Identity.v20_saml_auth_internal
   val v20_saml_auth_scn_internal_repl = Identity.v20_saml_auth_internal_repl
+  val v20_saml_auth_same_user_scn = Identity.v20_saml_auth_same_user
+  val v20_saml_auth_same_user_old_endpoint_scn = Identity.v20_saml_auth_same_user_old_endpoint
 
   // V20 Impersonate
   val V20_IMPERSONATE_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_impersonate.users_per_sec")
@@ -127,6 +130,9 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val v20_list_groups_for_user_id_repl_scn = Identity.v20_list_groups_for_user_id_repl
   val v20_list_groups_for_user_id_internal_scn = Identity.v20_list_groups_for_user_id_internal
   val v20_list_groups_for_user_id_internal_repl_scn = Identity.v20_list_groups_for_user_id_internal_repl
+
+  val V20_LIST_ROLES_FOR_IDENTITY_ADMIN_USERS_PER_SEC : Double = conf.getDouble("soa.v20_list_all_roles.users_per_sec")
+  val v20_list_all_roles_scn = Identity.v20_list_all_roles
 
 
  // V20 Get User Credentials for User Id
@@ -240,6 +246,8 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     scn_wrapper(v20_saml_auth_scn_repl, V20_AUTHENTICATE_SAML_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
     scn_wrapper(v20_saml_auth_scn_internal, V20_AUTHENTICATE_SAML_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainInternalConf),
     scn_wrapper(v20_saml_auth_scn_internal_repl, V20_AUTHENTICATE_SAML_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
+    scn_wrapper(v20_saml_auth_same_user_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+    scn_wrapper(v20_saml_auth_same_user_old_endpoint_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 
     // V20 Impersonate
     scn_wrapper(v20_impersonate_scn, V20_IMPERSONATE_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
@@ -300,11 +308,12 @@ class IdentityConstantTputUsersRampUp extends Simulation {
 
     scn_wrapper(v20_crud_user_scn, V20_CRUD_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 
-    scn_wrapper(v20_create_user_scn, V20_CREATE_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf)
+    scn_wrapper(v20_create_user_scn, V20_CREATE_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+
+    scn_wrapper(v20_list_all_roles_scn, V20_LIST_ROLES_FOR_IDENTITY_ADMIN_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf)
 //    scn_wrapper(v20_create_user_repl_scn, V20_CREATE_USER_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 //    scn_wrapper(v20_create_user_internal_scn, V20_CREATE_USER_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
 //    scn_wrapper(v20_create_user_internal_repl_scn, V20_CREATE_USER_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf)
-
 
 )
 

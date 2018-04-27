@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.ApplicationService
@@ -32,11 +33,17 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
     @Shared def sharedIdentityAdminToken
 
     void doSetupSpec() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, true)
-
         def authResponse = cloud20.authenticatePassword(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD)
         assert authResponse.status == HttpStatus.SC_OK
         sharedIdentityAdminToken = authResponse.getEntity(AuthenticateResponse).value.token.id
+    }
+
+    def setup() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, true)
+    }
+
+    def cleanup() {
+        reloadableConfiguration.reset()
     }
 
     /**
@@ -178,6 +185,39 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Error: Do not allow more than the max tenant assignments when granting roles to user - maxTenantAssignments = #maxTa"(){
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, maxTa)
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        // Create tenants that belong in target user's domain
+        def tenant = utils.createTenant()
+        utils.addTenantToDomain(domainId, tenant.id)
+        def tenant2 = utils.createTenant()
+        utils.addTenantToDomain(domainId, tenant2.id)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [tenant.id]))
+            ta.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, [tenant2.id]))
+            it.tenantAssignments = ta
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnUser(sharedIdentityAdminToken, userAdmin, assignments)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST,
+                ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE,
+                String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_MAX_TENANT_ASSIGNMENT_MSG_PATTERN, maxTa))
+
+        where:
+        maxTa << [0, 1]
     }
 
     @Unroll

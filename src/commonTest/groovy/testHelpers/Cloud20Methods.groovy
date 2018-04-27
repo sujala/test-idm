@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.IdentityProviderSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.ListEffectiveRolesForUserParams
 import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams
@@ -487,8 +488,21 @@ class Cloud20Methods {
         builder.post(ClientResponse)
     }
 
+    /**
+     * Federate using the V2 Fed API flow.
+     *
+     * @deprecated - Use authenticateV2FederatedUser(...) instead
+     * @param request
+     * @param accept
+     * @return
+     */
+    @Deprecated
     def federatedAuthenticateV2(request, accept = APPLICATION_XML) {
-        federatedAuthenticate(request, false, GlobalConstants.FEDERATION_API_V2_0, accept)
+        authenticateV2FederatedUser(request, false, accept)
+    }
+
+    def authenticateV2FederatedUser(request, applyRcnRoles = false, accept = APPLICATION_XML) {
+        federatedAuthenticate(request, applyRcnRoles, GlobalConstants.FEDERATION_API_V2_0, accept)
     }
 
     def federatedLogout(request, accept = APPLICATION_XML) {
@@ -1353,9 +1367,28 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).entity(delegationAgreement).post(ClientResponse)
     }
 
+    def updateDelegationAgreement(token, delegationAgreementId, delegationAgreement, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).entity(delegationAgreement).put(ClientResponse)
+    }
+
     def getDelegationAgreement(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).get(ClientResponse)
+    }
+
+    def listDelegationAgreements(token, relationship = null, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+
+        WebResource resource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA)
+        if (StringUtils.isNotBlank(relationship)) {
+            MultivaluedMapImpl map = new MultivaluedMapImpl().with {
+                it.add("relationship", relationship)
+                return it
+            }
+            resource = resource.queryParams(map)
+        }
+        resource.header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
     }
 
     def deleteDelegationAgreement(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
@@ -1383,6 +1416,30 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).path(SERVICE_PATH_DELEGATES).path(SERVICE_PATH_USER_GROUPS).path(userGroupId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).delete(ClientResponse)
     }
 
+    def listDelegates(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreementId).path(SERVICE_PATH_DELEGATES).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).get(ClientResponse)
+    }
+
+    def grantRoleAssignmentsOnDelegationAgreement(String token, DelegationAgreement delegationAgreement, RoleAssignments roleAssignments, MediaType media=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreement.id).path(SERVICE_PATH_ROLES).type(media).accept(media).header(X_AUTH_TOKEN, token).entity(roleAssignments).put(ClientResponse)
+    }
+
+    def listRolesOnDelegationAgreement(String token, DelegationAgreement delegationAgreement, DelegationAgreementRoleSearchParams searchParams = null, MediaType media=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        WebResource resource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreement.id).path(SERVICE_PATH_ROLES)
+
+        if (searchParams != null && searchParams.paginationRequest != null) {
+            resource = resource.queryParams(pageParams(String.valueOf(searchParams.getPaginationRequest().marker), String.valueOf(searchParams.getPaginationRequest().limit)))
+        }
+        resource.accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def revokeRoleAssignmentFromDelegationAgreement(String token, DelegationAgreement delegationAgreement, String roleId) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DA).path(delegationAgreement.id).path(SERVICE_PATH_ROLES).path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
     /**
      * Creates a new IDP, verifying the IDP was created successfully, and return the IDP rather than the raw response
      * @param type

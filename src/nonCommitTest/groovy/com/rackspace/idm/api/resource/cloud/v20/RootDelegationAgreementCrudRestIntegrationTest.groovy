@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.service.DelegationService
 import com.rackspace.idm.domain.service.IdentityUserService
-import com.sun.jersey.api.client.ClientResponse
 import org.apache.commons.lang3.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
@@ -112,9 +111,10 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
                 , ["getDelegationAgreement", {cloud20.getDelegationAgreement(it, "id")}]
                 , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement(it, "id")}]
                 , ["addUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["addUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["addUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
                 , ["deleteUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["deleteUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["deleteUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
+                , ["listDelegationAgreements", {cloud20.listDelegationAgreements(it, null)}]
         ]
     }
 
@@ -135,9 +135,10 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
                 , ["getDelegationAgreement", {cloud20.getDelegationAgreement(it, "id")}]
                 , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement(it, "id")}]
                 , ["addUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["addUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["addUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
                 , ["deleteUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["deleteUserGroupDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
+                , ["deleteUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
+                , ["listDelegationAgreements", {cloud20.listDelegationAgreements(it, null)}]
         ]
     }
 
@@ -151,7 +152,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.delegateId = sharedSubUser.id
             it
         }
 
@@ -170,7 +170,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == sharedUserAdmin.id
         createdDa.principalType == PrincipalType.USER
-        createdDa.delegateId == sharedSubUser.id
+        !createdDa.isAllowSubAgreements() // default when when not specified
 
         when:
         def getResponse = cloud20.getDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)
@@ -187,7 +187,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == sharedUserAdmin.id
         getDa.principalType == PrincipalType.USER
-        getDa.delegateId == sharedSubUser.id
+        !getDa.isAllowSubAgreements() // default when when not specified
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)
@@ -212,7 +212,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.delegateId = sharedSubUser.id
+            it.allowSubAgreements = true
             it
         }
 
@@ -231,7 +231,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == caller.id
         createdDa.principalType == PrincipalType.USER
-        createdDa.delegateId == sharedSubUser.id
+        createdDa.isAllowSubAgreements()
 
         when:
         def getResponse = cloud20.getDelegationAgreement(token, createdDa.id)
@@ -248,7 +248,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == caller.id
         getDa.principalType == PrincipalType.USER
-        getDa.delegateId == sharedSubUser.id
+        getDa.isAllowSubAgreements()
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(token, createdDa.id)
@@ -274,7 +274,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.delegateId = sharedSubUser.id
             it
         }
 
@@ -293,7 +292,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == fedAuthResponse.user.id
         createdDa.principalType == PrincipalType.USER
-        createdDa.delegateId == sharedSubUser.id
 
         when:
         def getResponse = cloud20.getDelegationAgreement(token, createdDa.id)
@@ -310,7 +308,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == fedAuthResponse.user.id
         getDa.principalType == PrincipalType.USER
-        getDa.delegateId == sharedSubUser.id
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(token, createdDa.id)
@@ -336,7 +333,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
             it.description = RandomStringUtils.randomAlphabetic(255)
             it.principalType = PrincipalType.USER_GROUP
             it.principalId = userGroup.id
-            it.delegateId = sharedSubUser.id
             it
         }
 
@@ -355,7 +351,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == userGroup.id
         createdDa.principalType == PrincipalType.USER_GROUP
-        createdDa.delegateId == sharedSubUser.id
 
         when:
         def getResponse = cloud20.getDelegationAgreement(groupSubUserToken, createdDa.id)
@@ -372,7 +367,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == userGroup.id
         getDa.principalType == PrincipalType.USER_GROUP
-        getDa.delegateId == sharedSubUser.id
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(groupSubUserToken, createdDa.id)
@@ -406,7 +400,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         addResponse.status == SC_NO_CONTENT
 
         and: "backend lists user as delegate"
-        daEntity.isAuthorizedDelegate(delegateEntity)
+        daEntity.isEffectiveDelegate(delegateEntity)
 
         when: "Delete delegate"
         def deleteResponse = cloud20.deleteUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
@@ -416,7 +410,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         deleteResponse.status == SC_NO_CONTENT
 
         and: "backend no longer lists user as delegate"
-        !daEntity.isAuthorizedDelegate(delegateEntity)
+        !daEntity.isEffectiveDelegate(delegateEntity)
 
         when: "Delete delegate again"
         def deleteResponse2 = cloud20.deleteUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
@@ -452,14 +446,14 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         addResponse.status == SC_NO_CONTENT
 
         and: "Backend does not list non-group member as delegate"
-        !daEntity.isAuthorizedDelegate(groupUserEntity)
+        !daEntity.isEffectiveDelegate(groupUserEntity)
 
         when: "When user added to group"
         utils.addUserToUserGroup(groupUserEntity.id, userGroup)
         groupUserEntity = identityUserService.getEndUserById(groupSubUser.id) // Reload as user's group membership changed
 
         then: "User is now a delegate"
-        daEntity.isAuthorizedDelegate(groupUserEntity)
+        daEntity.isEffectiveDelegate(groupUserEntity)
 
         when: "Delete user group delegate"
         def deleteResponse = cloud20.deleteUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
@@ -469,7 +463,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         deleteResponse.status == SC_NO_CONTENT
 
         and: "User no longer a delegate"
-        !daEntity.isAuthorizedDelegate(groupUserEntity)
+        !daEntity.isEffectiveDelegate(groupUserEntity)
     }
 
     /**
@@ -494,8 +488,8 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
 
         // Verify start state. Neither are delegates
         com.rackspace.idm.domain.entity.DelegationAgreement daEntity = delegationService.getDelegationAgreementById(da.getId())
-        assert !daEntity.isAuthorizedDelegate(groupUserEntity)
-        assert !daEntity.isAuthorizedDelegate(userDelegateEntity)
+        assert !daEntity.isEffectiveDelegate(groupUserEntity)
+        assert !daEntity.isEffectiveDelegate(userDelegateEntity)
 
         when: "Add user group delegate"
         def addResponse = cloud20.addUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
@@ -505,10 +499,10 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         addResponse.status == SC_NO_CONTENT
 
         and: "Group member is now a delegate"
-        daEntity.isAuthorizedDelegate(groupUserEntity)
+        daEntity.isEffectiveDelegate(groupUserEntity)
 
         and: "User is still not a delegate"
-        !daEntity.isAuthorizedDelegate(userDelegateEntity)
+        !daEntity.isEffectiveDelegate(userDelegateEntity)
 
         when: "Add user delegate"
         addResponse = cloud20.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
@@ -518,10 +512,10 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         addResponse.status == SC_NO_CONTENT
 
         and: "User is now a delegate"
-        daEntity.isAuthorizedDelegate(userDelegateEntity)
+        daEntity.isEffectiveDelegate(userDelegateEntity)
 
         and: "Group member is still a delegate"
-        daEntity.isAuthorizedDelegate(groupUserEntity)
+        daEntity.isEffectiveDelegate(groupUserEntity)
 
         when: "Remove group delegate"
         def response = cloud20.deleteUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
@@ -531,9 +525,9 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         response.status == SC_NO_CONTENT
 
         and: "User is still a delegate"
-        daEntity.isAuthorizedDelegate(userDelegateEntity)
+        daEntity.isEffectiveDelegate(userDelegateEntity)
 
         and: "Group member is no longer a delegate"
-        !daEntity.isAuthorizedDelegate(groupUserEntity)
+        !daEntity.isEffectiveDelegate(groupUserEntity)
     }
 }

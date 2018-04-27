@@ -63,14 +63,38 @@ class TestUserGroups(base.TestBaseV2):
         self.role_ids.append(role.id)
         return role
 
-    def create_tenant(self):
-        tenant_req = factory.get_add_tenant_object(domain_id=self.domain_id)
+    def create_tenant(self, domain=None):
+        if domain:
+            tenant_req = factory.get_add_tenant_object(domain_id=domain)
+        else:
+            tenant_req = factory.get_add_tenant_object(
+                domain_id=self.domain_id)
         add_tenant_resp = self.identity_admin_client.add_tenant(
             tenant=tenant_req)
         self.assertEqual(add_tenant_resp.status_code, 201)
         tenant = responses.Tenant(add_tenant_resp.json())
         self.tenant_ids.append(tenant.id)
         return tenant
+
+    def create_and_add_user_group_to_domain(self, client,
+                                            domain_id=None,
+                                            status_code=201):
+        if domain_id is None:
+            domain_id = self.domain_id
+        group_req = factory.get_add_user_group_request(domain_id)
+        # set the serialize format to json since that's what we support
+        # for user groups
+        client_default_serialize_format = client.serialize_format
+        client.serialize_format = const.JSON
+        resp = client.add_user_group_to_domain(
+            domain_id=domain_id, request_object=group_req)
+        self.assertEqual(resp.status_code, status_code)
+        client.serialize_format = client_default_serialize_format
+
+        if status_code != 201:
+            return None
+        else:
+            return responses.UserGroup(resp.json())
 
     @base.base.log_tearDown_error
     def tearDown(self):

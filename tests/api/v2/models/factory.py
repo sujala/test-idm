@@ -137,7 +137,7 @@ def get_add_endpoint_template_object(template_id=None, name=None,
 def get_add_tenant_object(tenant_name=None, tenant_id=None, enabled=True,
                           description='Describing API Test Tenant',
                           display_name='API Test Displayed Name',
-                          domain_id=None):
+                          domain_id=None, tenant_types=None):
     if not tenant_name:
         tenant_name = TestBase.generate_random_string(
             pattern=const.TENANT_NAME_PATTERN)
@@ -147,7 +147,8 @@ def get_add_tenant_object(tenant_name=None, tenant_id=None, enabled=True,
 
     return requests.Tenant(
         tenant_name=tenant_name, tenant_id=tenant_id, description=description,
-        enabled=enabled, display_name=display_name, domain_id=domain_id)
+        enabled=enabled, display_name=display_name, domain_id=domain_id,
+        tenant_types=tenant_types)
 
 
 def get_add_group_request_object(group_name=None, group_desc=None):

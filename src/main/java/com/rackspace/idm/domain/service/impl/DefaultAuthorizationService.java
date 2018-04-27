@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
@@ -46,6 +47,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private DelegationService delegationService;
+
+    @Autowired
+    private UserGroupService userGroupService;
 
     @Autowired
     private RequestContextHolder requestContextHolder;
@@ -550,11 +557,11 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return null;
         } else if (baseUser instanceof FederatedUser) {
             return IdentityUserTypeEnum.DEFAULT_USER; //efficiency. Fed users are hardcoded to be default users
-        } else if (!(baseUser instanceof User)) {
+        } else if (!(baseUser instanceof EndUser)) {
             throw new IllegalStateException(String.format("Unknown user type '%s'", baseUser.getClass().getName()));
         }
 
-        User user = (User) baseUser;
+        EndUser user = (EndUser) baseUser;
 
         ClientRole identityRole = applicationService.getUserIdentityRole(user);
 

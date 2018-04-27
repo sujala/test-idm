@@ -2,6 +2,8 @@ package com.rackspace.idm.modules.usergroups.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
+import com.rackspace.idm.api.resource.cloud.v20.UserGroupDelegateReference;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
@@ -74,6 +76,9 @@ public class DefaultUserGroupService implements UserGroupService {
     @Autowired
     private TenantAssignmentService tenantAssignmentService;
 
+    @Autowired
+    private DelegationService delegationService;
+
     @Override
     public UserGroup addGroup(UserGroup group) {
         Validate.notNull(group);
@@ -139,6 +144,9 @@ public class DefaultUserGroupService implements UserGroupService {
 
     @Override
     public void deleteGroup(UserGroup group) {
+
+        delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(group);
+
         // Remove user group membership from users
         for (EndUser user : getUsersInGroup(group)) {
             // TODO: Remove user group from user should be changed to support removing EndUser(provision and federated)
@@ -311,7 +319,7 @@ public class DefaultUserGroupService implements UserGroupService {
         if (tenantRole == null ||
                 tenantRole.getTenantIds().isEmpty() ||
                 !tenantRole.getTenantIds().contains(tenantId) && !tenantRole.getTenantIds().contains(USER_GROUP_ROLE_ASSIGNMENT_FOR_ALL_TENANTS)) {
-            String errMsg = String.format("Role assignemnt does not exist.", roleId);
+            String errMsg = String.format("Role assignment does not exist.", roleId);
             throw new NotFoundException(errMsg);
         } else if (tenantRole.getTenantIds().contains(USER_GROUP_ROLE_ASSIGNMENT_FOR_ALL_TENANTS)) {
             String errMsg = "Role assignment exist as global role.";

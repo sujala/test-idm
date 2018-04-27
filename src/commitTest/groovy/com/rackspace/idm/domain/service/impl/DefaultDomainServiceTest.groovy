@@ -4,6 +4,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
 import com.unboundid.ldap.sdk.DN
+import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -397,7 +398,7 @@ class DefaultDomainServiceTest extends RootServiceTest {
      * This method will make extra calls when 'feature.enable.user.admin.look.up.by.domain' is enabled for domains that
      * have not had their user-admin migrated, or if the user or domain do not exist.
      */
-    def "getDomainAdmins:  test 'feature.enable.user.admin.look.up.by.domain' set to true"() {
+    def "getDomainAdmins: test 'feature.enable.user.admin.look.up.by.domain' set to true"() {
         def domain = entityFactory.createDomain()
 
         identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> true
@@ -422,4 +423,120 @@ class DefaultDomainServiceTest extends RootServiceTest {
 
         userAdminList.size() == 0
     }
+
+    /**
+     * This test will verify a possible state when running an older version of identity which does not have the logic
+     * to remove or update the userAdminDN on a domain. This state can happen if the a user-admin was created using idm
+     * artifact 3.21.0, and then the user was deleted or was moved from a domain using an older version. This will
+     * cause the userAdminDN reference on domain to point to a user that does not exist or no longer belong to the
+     * specified domain.
+     */
+    def "getDomainAdmins: verify that if user retrieve no longer belong to the domainId specified fallback to the old logic"() {
+        def domainId = "someDomainId"
+        def domain = entityFactory.createDomain(domainId)
+        def user = entityFactory.createUser().with {
+            it.domainId = "otherDomainId"
+            it
+        }
+
+        when:
+        def userAdminList = service.getDomainAdmins(domain.domainId)
+
+        then:
+        1 * identityConfig.getReloadableConfig().isUserAdminLookUpByDomain() >> true
+        1 * domainDao.getDomain(domain.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> user
+        1 * userService.getUsersWithDomain(domain.domainId) >> []
+
+        userAdminList.size() == 0
+    }
+
+    @Unroll
+    def "doDomainsShareRcn: a null or blank value for either domain will result in false: d1: '#d1'; d2: '#d2'"() {
+        when:
+        def result = service.doDomainsShareRcn(d1, d2)
+
+        then:
+        !result
+        0 * domainDao.getDomain(d1)
+        0 * domainDao.getDomain(d2)
+
+        where:
+        d1 | d2
+        null | null
+        "d1" | null
+        null | "d2"
+        "" | "d2"
+        "d1" | "   "
+    }
+
+    @Unroll
+    def "doDomainsShareRcn: equal domains (case insensitive), will result in true: d1: '#d1'; d2: '#d2'"() {
+        when:
+        def result = service.doDomainsShareRcn(d1, d2)
+
+        then:
+        result
+        0 * domainDao.getDomain(d1)
+        0 * domainDao.getDomain(d2)
+
+        where:
+        d1 | d2
+        "value" | "VaLuE"
+        "123" | "123"
+        "value" | "value"
+    }
+
+    @Unroll
+    def "doDomainsShareRcn: distinct domains with missing RCNs or unequal RCNs (case insensitive), will result in false: d1 RCN: '#d1Rcn'; d2 RCN: '#d2Rcn'"() {
+        Domain d1 = new Domain().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.rackspaceCustomerNumber = d1Rcn
+            it
+        }
+        Domain d2 = new Domain().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.rackspaceCustomerNumber = d2Rcn
+            it
+        }
+        domainDao.getDomain(d1.getDomainId()) >> d1
+        domainDao.getDomain(d2.getDomainId()) >> d2
+
+        expect:
+        !service.doDomainsShareRcn(d1.domainId, d2.domainId)
+
+        where:
+        d1Rcn | d2Rcn
+        "" | ""
+        " " | "r2"
+        null | null
+        "r1" | "r2"
+        "r1" | null
+        null | "r2"
+    }
+
+    @Unroll
+    def "doDomainsShareRcn: distinct domains with equal RCNs (case insensitive), will result in true: d1 RCN: '#d1Rcn'; d2 RCN: '#d2Rcn'"() {
+        Domain d1 = new Domain().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.rackspaceCustomerNumber = d1Rcn
+            it
+        }
+        Domain d2 = new Domain().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.rackspaceCustomerNumber = d2Rcn
+            it
+        }
+        domainDao.getDomain(d1.getDomainId()) >> d1
+        domainDao.getDomain(d2.getDomainId()) >> d2
+
+        expect:
+        service.doDomainsShareRcn(d1.domainId, d2.domainId)
+
+        where:
+        d1Rcn | d2Rcn
+        "r1" | "r1"
+        "r1" | "R1"
+    }
+
 }

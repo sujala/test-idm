@@ -3,6 +3,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -38,6 +39,9 @@ public class TokenConverterCloudV20 {
     @Autowired
     private IdentityConfig config;
 
+    @Autowired
+    private AuthenticationContext authenticationContext;
+
     private Logger logger = LoggerFactory.getLogger(TokenConverterCloudV20.class);
 
     private Token toTokenInternal(ScopeAccess scopeAccess, String tokenTenantId) {
@@ -67,6 +71,12 @@ public class TokenConverterCloudV20 {
                 }
 
                 token.setAuthenticatedBy(authenticatedByEntity);
+            }
+            if (authenticationContext.isIncludeImpersonateInAuthByList() && scopeAccess instanceof ImpersonatedScopeAccess) {
+                if (token.getAuthenticatedBy() == null) {
+                    token.setAuthenticatedBy(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAuthenticatedBy());
+                }
+                token.getAuthenticatedBy().getCredential().add(AuthenticatedByMethodEnum.IMPERSONATE.getValue());
             }
         }
 

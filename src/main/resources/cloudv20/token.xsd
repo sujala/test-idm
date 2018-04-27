@@ -89,6 +89,7 @@
         <attribute ref="RAX-AUTH:federatedIdp" use="optional"/>
         <attribute ref="RAX-AUTH:contactId" use="optional"/>
         <attribute ref="RAX-AUTH:sessionInactivityTimeout" use="optional" />
+        <attribute ref="RAX-AUTH:delegationAgreementId" use="optional" />
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
     

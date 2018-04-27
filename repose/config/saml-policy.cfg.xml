@@ -6,10 +6,10 @@
         <issuer>http://racker.rackspace.com</issuer>
     </policy-bypass-issuers>
     <policy-acquisition>
-        <keystone-credentials uri="http://172.17.0.1:8083/idm/cloud"
+        <keystone-credentials uri="http://localhost:8083/idm/cloud"
                               username="authQE2"
                               password="Auth1234"/>
-        <policy-endpoint uri="http://172.17.0.1:8083/idm/cloud" />
+        <policy-endpoint uri="http://localhost:8083/idm/cloud" />
         <cache ttl="0" />
     </policy-acquisition>
     <signature-credentials keystore-filename="federation-keystore.jks"
