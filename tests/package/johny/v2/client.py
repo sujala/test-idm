@@ -1767,11 +1767,22 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return self.request('POST', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
 
+    def update_delegation_agreement(
+            self, da_id, request_object, requestslib_kwargs=None):
+        """
+        PUT RAX-AUTH/delegation-agreements/{da_id}
+        """
+        url = self.url + const.DELEGATION_AGREEMENTS_RD_URL.format(
+            da_id=da_id)
+        return self.request('PUT', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
     def get_delegation_agreement(self, da_id, requestslib_kwargs=None):
         """
         GET RAX-AUTH/delegation-agreements/{da_id}
         """
-        url = self.url + const.DELEGATION_AGREEMENTS_RD_URL.format(da_id=da_id)
+        url = self.url + const.DELEGATION_AGREEMENTS_RD_URL.format(
+            da_id=da_id)
         return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
 
     def delete_delegation_agreement(self, da_id, requestslib_kwargs=None):

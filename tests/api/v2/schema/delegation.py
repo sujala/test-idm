@@ -29,3 +29,34 @@ tenants_role_assignments = {
     },
     'required': [const.RAX_AUTH_ROLE_ASSIGNMENTS]
 }
+
+da_item = {
+        'type': 'object', 'properties': {
+            const.ID: {'type': 'string'},
+            const.NAME: {'type': 'string'},
+            const.DOMAIN_ID: {'type': 'string'},
+            const.PRINCIPAL_ID: {'type': 'string'},
+            const.PRINCIPAL_TYPE: {'type': 'string'},
+            const.ALLOW_SUB_AGREEMENTS: {'type': 'boolean'}
+            },
+        'required': [
+            const.ID, const.NAME, const.DOMAIN_ID, const.PRINCIPAL_ID,
+            const.PRINCIPAL_TYPE, const.ALLOW_SUB_AGREEMENTS],
+        # This is to verify that delegateId is not returned
+        'additionalProperties': False
+}
+
+add_da = {
+    'type': 'object', 'properties': {
+        const.RAX_AUTH_DELEGATION_AGREEMENT: da_item
+    },
+    'required': [const.RAX_AUTH_DELEGATION_AGREEMENT]
+}
+
+list_da = {
+    'type': 'object', 'properties': {
+        const.RAX_AUTH_DELEGATION_AGREEMENTS: {
+            'type': 'array', 'items': da_item, "uniqueItems": True}
+    },
+    'required': [const.RAX_AUTH_DELEGATION_AGREEMENTS]
+}

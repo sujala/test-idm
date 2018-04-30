@@ -1197,7 +1197,7 @@ class DelegationAgreements(base.AutoMarshallingModel):
         if self.principal_type:
             delegation_agreement_request[const.RAX_AUTH_DELEGATION_AGREEMENT][
                 const.PRINCIPAL_TYPE] = self.principal_type
-        if self.allow_sub_agreements:
+        if self.allow_sub_agreements is not None:
             delegation_agreement_request[const.RAX_AUTH_DELEGATION_AGREEMENT][
                 const.ALLOW_SUB_AGREEMENTS] = self.allow_sub_agreements
         return json.dumps(delegation_agreement_request)

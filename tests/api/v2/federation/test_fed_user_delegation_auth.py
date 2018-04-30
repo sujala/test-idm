@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*
+from collections import defaultdict
 import ddt
 from munch import Munch
-
-from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2.schema import tokens as tokens_json
@@ -10,6 +9,7 @@ from tests.api.v2.federation import federation
 
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.utils import saml_helper
+from tests.api.v2.models import factory, responses
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
@@ -46,6 +46,8 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             additional_input_data=additional_input_data)
         cls.user_admin_2 = cls.user_admin_client_2.default_headers[
             const.X_USER_ID]
+        cls.role_ids = []
+        cls.tenant_ids = []
 
     def setUp(self):
         super(TestDelegationWithFederation, self).setUp()
@@ -122,7 +124,43 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             const.RAX_AUTH_DOMAIN_ID]
         self.assertEqual(delegation_domain, self.domain_id)
 
-    @attr(type='regression')
+    def generate_tenants_assignment_dict(self, on_role, *for_tenants):
+
+        tenant_assignment_request = {
+            const.ON_ROLE: on_role,
+            const.FOR_TENANTS: list(for_tenants)
+        }
+        return tenant_assignment_request
+
+    def create_role(self):
+
+        role_req = factory.get_add_role_request_object(
+            administrator_role=const.USER_MANAGE_ROLE_NAME)
+        add_role_resp = self.identity_admin_client.add_role(
+            request_object=role_req)
+        self.assertEqual(add_role_resp.status_code, 201)
+        role = responses.Role(add_role_resp.json())
+        self.role_ids.append(role.id)
+        return role
+
+    def create_tenant(self, domain=None, faws=False):
+        if not domain:
+            domain = self.domain_id
+        if faws:
+            tenant_name = self.generate_random_string(
+                pattern=('faws:' + const.TENANT_NAME_PATTERN))
+            tenant_req = factory.get_add_tenant_object(
+                tenant_name=tenant_name, domain_id=domain,
+                tenant_types=['faws'])
+        else:
+            tenant_req = factory.get_add_tenant_object(domain_id=domain)
+        add_tenant_resp = self.identity_admin_client.add_tenant(
+            tenant=tenant_req)
+        self.assertEqual(add_tenant_resp.status_code, 201)
+        tenant = responses.Tenant(add_tenant_resp.json())
+        self.tenant_ids.append(tenant.id)
+        return tenant
+
     def test_d_auth_with_fed_users_as_principal_and_delegate(self):
 
         # Creating fed user principal
@@ -170,7 +208,6 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             response=resp, json_schema=tokens_json.validate_token)
         self.validate_response(resp)
 
-    @attr(type='regression')
     def test_d_auth_fed_user_with_user_group_as_delegate(self):
 
         # create user group for domain 2
@@ -219,6 +256,76 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             response=resp, json_schema=tokens_json.validate_token)
         self.validate_response(resp)
 
+        # Validate DA roles after tenant update
+        self.validate_da_roles_on_tenant_update(
+            da_id=da_id, fed_user_token=fed_user_token)
+
+    def validate_da_roles_on_tenant_update(self, da_id, fed_user_token):
+
+        role_1 = self.create_role()
+        role_2 = self.create_role()
+        # create tenants, 1 of them is faws
+        tenant_1 = self.create_tenant(faws=True)
+        tenant_2 = self.create_tenant()
+
+        tenant_assignment_req_1 = self.generate_tenants_assignment_dict(
+            role_1.id, tenant_1.id, tenant_2.id)
+        tenant_assignment_req_2 = self.generate_tenants_assignment_dict(
+            role_2.id, "*")
+        tenants_role_assignment_req = requests.TenantRoleAssignments(
+            tenant_assignment_req_1, tenant_assignment_req_2)
+
+        ua_client = self.user_admin_client
+        assignment_resp = (
+            ua_client.add_tenant_role_assignments_to_delegation_agreement(
+                da_id=da_id, request_object=tenants_role_assignment_req))
+        self.assertEqual(assignment_resp.status_code, 200)
+
+        # check delegation auth after granting roles to DA
+        delegation_auth_req = requests.AuthenticateWithDelegationAgreement(
+            token=fed_user_token, delegation_agreement_id=da_id)
+        resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
+        self.assertEqual(resp.status_code, 200)
+        resp_parsed = Munch.fromDict(resp.json())
+
+        role_to_tenant_map = defaultdict(list)
+        for role_ in resp_parsed.access.user.roles:
+            role_to_tenant_map[role_.id].append(role_[const.TENANT_ID])
+        self.assertIn(tenant_1.id, role_to_tenant_map[role_1.id])
+        self.assertIn(tenant_2.id, role_to_tenant_map[role_1.id])
+        self.assertIn(tenant_1.id, role_to_tenant_map[role_2.id])
+        self.assertIn(tenant_2.id, role_to_tenant_map[role_2.id])
+
+        # remove tenant 1 from domain
+        self.identity_admin_client.delete_tenant_from_domain(
+            domain_id=self.domain_id, tenant_id=tenant_1.id)
+        # check roles on DA after tenant removal from domain
+        list_resp = (
+            ua_client.list_tenant_role_assignments_for_delegation_agreement(
+                da_id=da_id))
+        self.assertEqual(list_resp.status_code, 200)
+        list_resp_parsed = Munch.fromDict(list_resp.json())
+        for role_assignment_ in list_resp_parsed[
+              const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]:
+            if role_assignment_.onRole == role_1.id:
+                self.assertEqual(role_assignment_.forTenants, [tenant_2.id])
+            if role_assignment_.onRole == role_2.id:
+                self.assertEqual(role_assignment_.forTenants, ['*'])
+
+        # check delegation auth after a tenant removal from domain
+        delegation_auth_req = requests.AuthenticateWithDelegationAgreement(
+            token=fed_user_token, delegation_agreement_id=da_id)
+        resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
+        self.assertEqual(resp.status_code, 200)
+        resp_parsed = Munch.fromDict(resp.json())
+        role_to_tenant_map = defaultdict(list)
+        for role_ in resp_parsed.access.user.roles:
+            role_to_tenant_map[role_.id].append(role_[const.TENANT_ID])
+        self.assertNotIn(tenant_1.id, role_to_tenant_map[role_1.id])
+        self.assertIn(tenant_2.id, role_to_tenant_map[role_1.id])
+        self.assertNotIn(tenant_1.id, role_to_tenant_map[role_2.id])
+        self.assertIn(tenant_2.id, role_to_tenant_map[role_2.id])
+
     @federation.base.base.log_tearDown_error
     def tearDown(self):
         for group_id, domain_id in self.group_ids:
@@ -247,3 +354,13 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         assert resp.status_code == 204, (
             'Domain with ID {0} failed to delete'.format(cls.domain_id_2))
         super(TestDelegationWithFederation, cls).tearDownClass()
+
+        for role_id in cls.role_ids:
+            resp = cls.identity_admin_client.delete_role(role_id=role_id)
+            assert resp.status_code == 204, (
+                'Role with ID {0} failed to delete'.format(role_id))
+        for tenant_id in cls.tenant_ids:
+            resp = cls.identity_admin_client.delete_tenant(
+                tenant_id=tenant_id)
+            assert resp.status_code in [204, 404], (
+                'Tenant with ID {0} failed to delete'.format(tenant_id))

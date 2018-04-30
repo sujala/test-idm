@@ -1,79 +1,30 @@
 # -*- coding: utf-8 -*
 from munch import Munch
-
 from nose.plugins.attrib import attr
 
-from tests.api.utils import func_helper
-from tests.api.v2 import base
+from tests.api.v2.delegation import delegation
+from tests.api.v2.schema import delegation as da_schema
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-class DelegationAgreementsCrdTests(base.TestBaseV2):
+class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
     """
     Create/Read/Delete tests for Delegation Agreements
     """
-
     @classmethod
     def setUpClass(cls):
-        super(DelegationAgreementsCrdTests, cls).setUpClass()
-        cls.rcn = cls.test_config.da_rcn
-        cls.domain_ids = []
-        domain_id = cls.create_domain_with_rcn()
-        additional_input_data = {
-            'domain_id': domain_id
-        }
-        cls.user_admin_client = cls.generate_client(
-            parent_client=cls.identity_admin_client,
-            additional_input_data=additional_input_data)
-
-        domain_id_2 = cls.create_domain_with_rcn()
-        additional_input_data = {'domain_id': domain_id_2}
-        cls.user_admin_client_2 = cls.generate_client(
-            parent_client=cls.identity_admin_client,
-            additional_input_data=additional_input_data)
+        super(DelegationAgreementsCrudTests, cls).setUpClass()
         cls.user_admin_2_id = cls.user_admin_client_2.default_headers[
             const.X_USER_ID]
 
-    @classmethod
-    def create_domain_with_rcn(cls):
+    def test_delegation_agreement_crud(self):
+        # assert that the subAgreements attribute is false
+        self.validate_delegation_agreements_crud(False)
 
-        domain_id = func_helper.generate_randomized_domain_id(
-            client=cls.identity_admin_client)
-        dom_req = requests.Domain(
-            domain_name=domain_id, domain_id=domain_id, rcn=cls.rcn)
-        add_dom_resp = cls.identity_admin_client.add_domain(dom_req)
-        assert add_dom_resp.status_code == 201, (
-            'domain was not created successfully')
-        cls.domain_ids.append(domain_id)
-        return domain_id
-
-    def test_delegation_agreement_crd(self):
-        da_name = self.generate_random_string(
-            pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_resp = self.call_create_delegation_agreement(
-            client=self.user_admin_client, delegate_id=self.user_admin_2_id,
-            da_name=da_name)
-        self.assertEqual(da_resp.status_code, 201)
-        # TODO: Add schema validations once contracts are finalized for
-        # Delegation agreements
-        da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
-
-        self.user_admin_client.add_user_delegate_to_delegation_agreement(
-            da_id, self.user_admin_2_id)
-
-        get_resp = self.user_admin_client.get_delegation_agreement(
-            da_id=da_id)
-        self.assertEqual(get_resp.status_code, 200)
-        self.assertEqual(
-            get_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.NAME],
-            da_name)
-        get_resp = self.user_admin_client.delete_delegation_agreement(
-            da_id=da_id)
-        self.assertEqual(get_resp.status_code, 204)
-        get_resp = self.user_admin_client.get_delegation_agreement(
-            da_id=da_id)
-        self.assertEqual(get_resp.status_code, 404)
+    def test_delegation_agreement_crud_with_sub_agreements(self):
+        # assert that the subAgreements attribute is true
+        self.validate_delegation_agreements_crud(True)
 
     @attr(type='regression')
     def test_list_delegation_agreements(self):
@@ -136,6 +87,10 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
         # TODO: Add schema validations once contracts are finalized for
         # Delegation agreements
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+
+        self.user_admin_client.add_user_delegate_to_delegation_agreement(
+            da_id, self.user_admin_2_id)
+
         get_resp = self.user_admin_client.get_delegation_agreement(
             da_id=da_id)
         self.assertEqual(get_resp.status_code, 200)
@@ -145,6 +100,25 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
 
         self.assertEqual(
             get_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][
+                const.ALLOW_SUB_AGREEMENTS],
+            allow_sub_agreements
+        )
+
+        # Update DA
+        allow_sub_agreements = not allow_sub_agreements
+        da_req = requests.DelegationAgreements(
+            da_name=da_name, allow_sub_agreements=allow_sub_agreements)
+        update_resp = self.user_admin_client.update_delegation_agreement(
+            da_id=da_id, request_object=da_req
+        )
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(
+            update_resp.json()[
+                const.RAX_AUTH_DELEGATION_AGREEMENT][const.NAME],
+            da_name)
+
+        self.assertEqual(
+            update_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][
                 const.ALLOW_SUB_AGREEMENTS],
             allow_sub_agreements
         )
@@ -160,6 +134,7 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
             self, list_da_resp, da_1_id, da_2_id):
 
         self.assertEqual(list_da_resp.status_code, 200)
+        self.assertSchema(list_da_resp, json_schema=da_schema.list_da)
         da_ids_from_resp = [da[const.ID] for da in list_da_resp.json()[
             const.RAX_AUTH_DELEGATION_AGREEMENTS]]
         self.assertIn(da_1_id, da_ids_from_resp)
@@ -171,7 +146,8 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
         if not da_name:
             da_name = self.generate_random_string(
                 pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(da_name=da_name)
+        da_req = requests.DelegationAgreements(
+            da_name=da_name, allow_sub_agreements=allow_sub_agreements)
         da_resp = client.create_delegation_agreement(request_object=da_req)
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
 
@@ -181,9 +157,8 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
         return da_resp
 
     @classmethod
-    @base.base.log_tearDown_error
+    @delegation.base.base.log_tearDown_error
     def tearDownClass(cls):
-        super(DelegationAgreementsCrdTests, cls).tearDownClass()
         resp = cls.identity_admin_client.delete_user(
             user_id=cls.user_admin_client.default_headers[const.X_USER_ID])
         assert resp.status_code == 204, (
@@ -193,13 +168,4 @@ class DelegationAgreementsCrdTests(base.TestBaseV2):
             user_id=cls.user_admin_2_id)
         assert resp.status_code == 204, (
             'User with ID {0} failed to delete'.format(cls.user_admin_2_id))
-
-        disable_domain_req = requests.Domain(enabled=False)
-        for domain_id in cls.domain_ids:
-            cls.identity_admin_client.update_domain(
-                domain_id=domain_id, request_object=disable_domain_req)
-
-            resp = cls.identity_admin_client.delete_domain(
-                domain_id=domain_id)
-            assert resp.status_code == 204, (
-                'Domain with ID {0} failed to delete'.format(domain_id))
+        super(DelegationAgreementsCrudTests, cls).tearDownClass()
