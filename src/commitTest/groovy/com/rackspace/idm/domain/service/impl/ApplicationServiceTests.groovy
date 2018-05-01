@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientSecret;
 
