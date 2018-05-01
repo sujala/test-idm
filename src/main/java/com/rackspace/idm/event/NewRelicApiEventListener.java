@@ -128,6 +128,7 @@ public class NewRelicApiEventListener implements ApplicationListener<ApiEventSpr
     private void postCommonAttributes(ApiEvent ev, ReportableAttributeSupport reportableAttributeSupport, SecuredAttributeSupport securedAttributeSupport) {
         addAttributeIfEnabled(REQUEST_ID, ev.getRequestId(), reportableAttributeSupport, securedAttributeSupport);
         addAttributeIfEnabled(RESOURCE_TYPE, ev.getResourceType().getReportValue(), reportableAttributeSupport, securedAttributeSupport);
+        addAttributeIfEnabled(RESOURCE_NAME, ev.getResourceContext().getIdentityApiAnnotation().name(), reportableAttributeSupport, securedAttributeSupport);
         addAttributeIfEnabled(NODE_NAME, ev.getNodeName(), reportableAttributeSupport, securedAttributeSupport);
         addAttributeIfEnabled(REMOTE_IP, ev.getRemoteIp(), reportableAttributeSupport, securedAttributeSupport);
         addAttributeIfEnabled(FORWARDED_IP, ev.getForwardedForIp(), reportableAttributeSupport, securedAttributeSupport);

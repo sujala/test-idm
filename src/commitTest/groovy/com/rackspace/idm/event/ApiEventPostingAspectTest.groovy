@@ -479,13 +479,13 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         static String PRIVATE_METHOD = "privateApiMethod"
         static String PUBLIC_METHOD = "publicApiMethod"
 
-        @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+        @IdentityApi(apiResourceType = ApiResourceType.AUTH, name = "Test Call")
         void authApiMethod() {}
 
-        @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+        @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "Test Call")
         void privateApiMethod() {}
 
-        @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+        @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "Test Call")
         void publicApiMethod() {}
     }
 }

@@ -38,13 +38,13 @@ public class Cloud11VersionResource {
     @Context
     private UriInfo uriInfo;
 
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "v1.1 Get version")
     @GET
     public Response getCloud11VersionInfo() throws JAXBException {
         return cloud11Service.getVersion(uriInfo).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name = "v1.1 Authenticate")
     @POST
     @Path("auth")
     public Response authenticate(@Context HttpServletRequest request, @Context UriInfo uriInfo, @Context HttpHeaders httpHeaders, String body)
@@ -53,14 +53,15 @@ public class Cloud11VersionResource {
     }
 
     // this is not my fault, I promise
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name = "v1.1 hack")
+    @Deprecated
     @GET
     @Path("cloud/auth")
     public Response hack() throws IOException {
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name = "v1.1 Auth-admin")
     @POST
     @Path("auth-admin")
     public Response adminAuthenticate(@Context HttpServletRequest request, @Context UriInfo uriInfo, @Context HttpHeaders httpHeaders, String body)
@@ -68,7 +69,7 @@ public class Cloud11VersionResource {
         return cloud11Service.adminAuthenticate(request, uriInfo, httpHeaders, body).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Validate token")
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11TokenValidationAbsolutePathPatternRegex)
     @GET
     @Path("token/{tokenId}")
@@ -81,7 +82,7 @@ public class Cloud11VersionResource {
         return cloud11Service.validateToken(request, tokenId, belongsTo, type, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Revoke token")
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11TokenValidationAbsolutePathPatternRegex)
     @DELETE
     @Path("token/{tokenId}")
@@ -92,21 +93,21 @@ public class Cloud11VersionResource {
         return cloud11Service.revokeToken(request, tokenId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "v1.1 List extensions")
     @GET
     @Path("extensions")
     public Response extensions(@Context HttpHeaders httpHeaders) throws IOException {
         return cloud11Service.extensions(httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "v1.1 Get extension")
     @GET
     @Path("extensions/{alias}")
     public Response extensions(@PathParam("alias") String alias,@Context HttpHeaders httpHeaders) throws IOException {
         return cloud11Service.getExtension(httpHeaders, alias).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user-admin for tenant")
     @GET
     @Path("nast/{nastId}")
     public Response getUserFromNastId(@Context HttpServletRequest request,
@@ -116,7 +117,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getUserFromNastId(request, nastId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user-admin for cloud tenant")
     @GET
     @Path("mosso/{mossoId}")
     public Response getUserFromMossoId(@Context HttpServletRequest request,
@@ -126,7 +127,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getUserFromMossoId(request, mossoId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List endpoint templates")
     @GET
     @Path("baseURLs")
     public Response getBaseURLs(@Context HttpServletRequest request,
@@ -136,7 +137,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getBaseURLs(request, serviceName, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Add endpoint template")
     @POST
     @Path("baseURLs")
     public Response addBaseURL(@Context HttpServletRequest request, @Context HttpHeaders httpHeaders, BaseURL baseUrl)
@@ -148,7 +149,7 @@ public class Cloud11VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get endpoint template")
     @GET
     @Path("baseURLs/{baseURLId}")
     public Response getBaseURLById(@Context HttpServletRequest request,
@@ -159,7 +160,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getBaseURLById(request, String.valueOf(baseURLId), serviceName, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List enabled endpoints")
     @GET
     @Path("baseURLs/enabled")
     public Response getEnabledBaseURLs(@Context HttpServletRequest request,
@@ -169,7 +170,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getEnabledBaseURL(request, serviceName, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Add user")
     @POST
     @Path("users")
     public Response createUser(@Context HttpServletRequest request,
@@ -179,7 +180,7 @@ public class Cloud11VersionResource {
         return cloud11Service.createUser(request, httpHeaders, uriInfo, user).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user")
     @GET
     @Path("users/{userId}")
     public Response getUser(@Context HttpServletRequest request,
@@ -189,7 +190,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getUser(request, userId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Delete user")
     @DELETE
     @Path("users/{userId}")
     public Response deleteUser(@Context HttpServletRequest request,
@@ -199,7 +200,7 @@ public class Cloud11VersionResource {
         return cloud11Service.deleteUser(request, userId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user")
     @PUT
     @Path("users/{userId}")
     public Response updateUser(@Context HttpServletRequest request,
@@ -209,7 +210,7 @@ public class Cloud11VersionResource {
         return cloud11Service.updateUser(request, userId, httpHeaders, user).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user enabled")
     @GET
     @Path("users/{userId}/enabled")
     public Response getUserEnabled(@Context HttpServletRequest request, @PathParam("userId") String userId,
@@ -217,7 +218,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getUserEnabled(request, userId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user enabled status")
     @PUT
     @Path("users/{userId}/enabled")
     public Response setUserEnabled(@Context HttpServletRequest request, @PathParam("userId") String userId,
@@ -225,7 +226,7 @@ public class Cloud11VersionResource {
         return cloud11Service.setUserEnabled(request, userId, user, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user api key")
     @GET
     @Path("users/{userId}/key")
     public Response getUserKey(@Context HttpServletRequest request,
@@ -235,7 +236,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getUserKey(request, userId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user api key")
     @PUT
     @Path("users/{userId}/key")
     public Response setUserKey(@Context HttpServletRequest request,
@@ -246,7 +247,7 @@ public class Cloud11VersionResource {
         return cloud11Service.setUserKey(request, userId, httpHeaders, user).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user service catalog")
     @GET
     @Path("users/{userId}/serviceCatalog")
     public Response getServiceCatalog(@Context HttpServletRequest request,
@@ -256,7 +257,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getServiceCatalog(request, userId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List user endpoints")
     @GET
     @Path("users/{userId}/baseURLRefs")
     public Response getBaseURLRefs(@Context HttpServletRequest request,
@@ -266,7 +267,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getBaseURLRefs(request, userId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Add endpoint to user cloud or files tenant")
     @POST
     @Path("users/{userId}/baseURLRefs")
     public Response addBaseURLRef(@Context HttpServletRequest request,
@@ -278,7 +279,7 @@ public class Cloud11VersionResource {
         return cloud11Service.addBaseURLRef(request, userId, httpHeaders, uriInfo, baseUrlRef).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get endpoint for user")
     @GET
     @Path("users/{userId}/baseURLRefs/{baseURLId}")
     public Response getBaseURLRef(@Context HttpServletRequest request,
@@ -289,7 +290,7 @@ public class Cloud11VersionResource {
         return cloud11Service.getBaseURLRef(request, userId, baseURLId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Delete endpoint from user cloud and files tenants")
     @DELETE
     @Path("users/{userId}/baseURLRefs/{baseURLId}")
     public Response deleteBaseURLRef(@Context HttpServletRequest request,
@@ -300,7 +301,7 @@ public class Cloud11VersionResource {
         return cloud11Service.deleteBaseURLRef(request, userId, baseURLId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List user legacy groups")
     @GET
     @Path("users/{userId}/groups")
     public Response getUserGroups(@Context HttpServletRequest request, @PathParam("userId") String userId,

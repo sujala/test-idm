@@ -62,7 +62,7 @@ public class CloudVersionsResource {
         this.identityConfig = identityConfig;
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "Cloud Get internal versions xml")
     @Produces({MediaType.APPLICATION_XML})
     @GET
     public Response getInternalCloudVersionsInfo() throws JAXBException {
@@ -78,7 +78,7 @@ public class CloudVersionsResource {
         return Response.ok(versionChoice.getValue()).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "Cloud get internal versions json")
     @Produces({MediaType.APPLICATION_JSON})
     @GET
     public Response getInternalCloudVersionsInfoJson() throws JAXBException {

@@ -30,7 +30,7 @@ public class DelegationAgreementResource {
     @Autowired
     private ExceptionHandler exceptionHandler;
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add delegation agreement")
     @POST
     public Response addDelegationAgreement (
             @Context HttpHeaders httpHeaders,
@@ -45,7 +45,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update delegation agreement")
     @PUT
     @Path("/{agreementId}")
     public Response updateDelegationAgreement (
@@ -63,7 +63,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List delegation agreements")
     @GET
     public Response listDelegationAgreements (
             @Context HttpHeaders httpHeaders,
@@ -78,7 +78,7 @@ public class DelegationAgreementResource {
     }
 
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get delegation agreement")
     @GET
     @Path("/{agreementId}")
     public Response getDelegationAgreement (
@@ -94,7 +94,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete delegation agreement")
     @DELETE
     @Path("/{agreementId}")
     public Response deleteDelegationAgreement (
@@ -110,7 +110,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add user delegate to delegation agreement")
     @PUT
     @Path("/{agreementId}/delegates/users/{userId}")
     public Response addUserDelegate (
@@ -127,7 +127,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete user delegate from delegation agreement")
     @DELETE
     @Path("/{agreementId}/delegates/users/{userId}")
     public Response deleteUserDelegate (
@@ -144,7 +144,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add user group delegate to delegation agreement")
     @PUT
     @Path("/{agreementId}/delegates/groups/{groupId}")
     public Response addUserGroupDelegate (
@@ -161,7 +161,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete user group delegate from delegation agreement")
     @DELETE
     @Path("/{agreementId}/delegates/groups/{groupId}")
     public Response deleteUserGroupDelegate (
@@ -178,7 +178,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get delegates for delegation agreement")
     @GET
     @Path("/{agreementId}/delegates")
     public Response listDelegates (
@@ -194,7 +194,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Grant roles for delegation agreement")
     @PUT
     @Path("/{agreementId}/roles")
     public Response grantRolesToDelegationAgreement (
@@ -210,7 +210,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List roles for delegation agreement")
     @GET
     @Path("/{agreementId}/roles")
     public Response getRolesOnDelegationAgreement (
@@ -232,7 +232,7 @@ public class DelegationAgreementResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Revoke role from delegation agreement")
     @DELETE
     @Path("/{agreementId}/roles/{roleId}")
     public Response revokeRoleFromDelegationAgreement (

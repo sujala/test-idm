@@ -26,7 +26,7 @@ public class CloudMultifactorResource {
     @Autowired
     private IdentityConfig config;
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA List devices")
     @GET
     @Path("devices")
     public Response listMultiFactorDevicesForUser(
@@ -45,7 +45,7 @@ public class CloudMultifactorResource {
      * @param userId
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA List phone devices for user")
     @GET
     @Path("devices/mobile-phones")
     public Response listMobilePhoneDevicesForUserAlternative(
@@ -63,7 +63,7 @@ public class CloudMultifactorResource {
      * @param userId
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA List phone devices for user (alias)")
     @GET
     @Path("mobile-phones")
     public Response listMobilePhoneDevicesForUser(
@@ -82,7 +82,7 @@ public class CloudMultifactorResource {
      * @param mobilePhone
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Add phone for user")
     @POST
     @Path("mobile-phones")
     public Response addMultiFactorMobilePhone(
@@ -93,7 +93,7 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.addPhoneToUser(uriInfo, authToken, userId, mobilePhone).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Get phone for user")
     @GET
     @Path("mobile-phones/{mobilePhoneId}")
     public Response getMultiFactorMobilePhoneFromUser(
@@ -104,7 +104,7 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.getPhoneFromUser(uriInfo, authToken, userId, mobilePhoneId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Delete phone from user")
     @DELETE
     @Path("mobile-phones/{mobilePhoneId}")
     public Response deleteMultiFactorMobilePhoneFromUser(
@@ -124,7 +124,7 @@ public class CloudMultifactorResource {
      * @param deviceId
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Send phone verification code")
     @POST
     @Path("mobile-phones/{deviceId}/verificationcode")
     public Response sendVerificationCode(
@@ -135,7 +135,7 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.sendVerificationCode(uriInfo, authToken, userId, deviceId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Verify phone")
     @POST
     @Path("mobile-phones/{deviceId}/verify")
     public Response verifyVerificationCode(
@@ -147,7 +147,7 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.verifyVerificationCode(uriInfo, authToken, userId, deviceId, verificationCode).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Update user settings")
     @PUT
     public Response updateMultiFactorSettings(
             @Context UriInfo uriInfo,
@@ -157,7 +157,7 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.updateMultiFactorSettings(uriInfo, authToken, userId, multiFactor).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Remove from user")
     @DELETE
     public Response deleteMultiFactor(
             @Context UriInfo uriInfo,
@@ -166,7 +166,7 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.deleteMultiFactor(uriInfo, authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Create bypass codes for user")
     @POST
     @Path("bypass-codes")
     public Response generateBypassCodes(
@@ -177,7 +177,7 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.generateBypassCodes(uriInfo, authToken, userId, bypassCodes).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Add OTP device for user")
     @POST
     @Path("otp-devices")
     public Response addOTPDeviceToUser(
@@ -196,7 +196,7 @@ public class CloudMultifactorResource {
      * @param userId
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA List OTP devices for user")
     @GET
     @Path("otp-devices")
     public Response listOTPDevicesForUser(
@@ -215,7 +215,7 @@ public class CloudMultifactorResource {
      * @param userId
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA List OTP devices for user (alias)")
     @GET
     @Path("devices/otp-devices")
     public Response listOTPDevicesForUserAlternative(
@@ -225,7 +225,7 @@ public class CloudMultifactorResource {
         return listOTPDevicesForUser(uriInfo, authToken, userId);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Get OTP device for user")
     @GET
     @Path("otp-devices/{deviceId}")
     public Response getOTPDeviceFromUser(
@@ -236,7 +236,7 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.getOTPDeviceFromUser(uriInfo, authToken, userId, deviceId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Delete OTP device from user")
     @DELETE
     @Path("otp-devices/{deviceId}")
     public Response deleteOTPDeviceFromUser(
@@ -247,7 +247,7 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.deleteOTPDeviceFromUser(uriInfo, authToken, userId, deviceId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 MFA Verity OTP for user")
     @POST
     @Path("otp-devices/{deviceId}/verify")
     public Response verifyOTPCode(

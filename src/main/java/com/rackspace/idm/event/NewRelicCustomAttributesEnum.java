@@ -10,6 +10,7 @@ public enum NewRelicCustomAttributesEnum {
     //COMMON
     REQUEST_ID("requestId")
     , RESOURCE_TYPE("resourceType")
+    , RESOURCE_NAME("resourceName")
     , RESOURCE_PATH("resourcePath")
     , KEYWORDS("keyWords")
     , NODE_NAME("nodeName")
