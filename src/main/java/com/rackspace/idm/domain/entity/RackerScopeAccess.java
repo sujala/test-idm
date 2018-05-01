@@ -1,19 +1,20 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.persist.*;
+import com.unboundid.ldap.sdk.persist.FilterUsage;
+import com.unboundid.ldap.sdk.persist.LDAPDNField;
+import com.unboundid.ldap.sdk.persist.LDAPField;
+import com.unboundid.ldap.sdk.persist.LDAPGetter;
+import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.joda.time.DateTime;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.Date;
-import java.util.regex.Matcher;
 
 @Data
 @EqualsAndHashCode(callSuper=false)
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS,requestAllAttributes=true)
-public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserToken {
+public class RackerScopeAccess extends ScopeAccess implements BaseUserToken {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField
@@ -32,18 +33,6 @@ public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken, B
     @LDAPGetter(attribute=LdapRepository.ATTR_ACCESS_TOKEN, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     public String getAccessTokenString() {
         return super.getAccessTokenString();
-    }
-
-    @Override
-    public void setRefreshTokenExpired() {
-        this.refreshTokenExp = new DateTime().minusDays(1).toDate();
-    }
-
-    @Override
-    public boolean isRefreshTokenExpired(DateTime time) {
-        return StringUtils.isBlank(this.refreshTokenString)
-        || this.refreshTokenExp == null
-        || new DateTime(this.refreshTokenExp).isBefore(time);
     }
 
     @Override

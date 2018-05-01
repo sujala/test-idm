@@ -176,19 +176,6 @@ public class ApplicationServiceTests {
         return client;
     }
 
-    private List<ClientGroup> getFakeClientGroupList() {
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-        groups.add(getFakeClientGroup());
-        return groups;
-    }
-
-    private ClientGroup getFakeClientGroup() {
-        ClientGroup group = new ClientGroup(clientId, customerId, groupName,
-            groupType);
-        group.setUniqueId(groupDN);
-        return group;
-    }
-
     private User getFakeUser() {
         User user = new User();
         user.setUsername(username);
