@@ -12,7 +12,7 @@ import java.util.Date;
 @Getter
 @Setter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS,requestAllAttributes=true)
-public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserToken {
+public class UserScopeAccess extends ScopeAccess implements BaseUserToken {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField
@@ -35,23 +35,11 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, Bas
 
     private String delegationAgreementId;
 
-    @Override
-    public void setRefreshTokenExpired() {
-        this.refreshTokenExp = new DateTime().minusDays(1).toDate();
-    }
-
     public boolean isAccessTokenWithinRefreshWindow(int refreshTokenWindow){
         DateTime accessToken = new DateTime(this.getAccessTokenExp());
         Date refreshWindowStart = accessToken.minusHours(refreshTokenWindow).toDate();
         Date now = new DateTime().toDate();
         return now.after(refreshWindowStart);
-    }
-
-    @Override
-    public boolean isRefreshTokenExpired(DateTime time) {
-        return StringUtils.isBlank(this.refreshTokenString)
-        || this.refreshTokenExp == null
-        || new DateTime(this.refreshTokenExp).isBefore(time);
     }
 
     @Override
