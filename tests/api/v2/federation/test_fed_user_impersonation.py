@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
+
 from tests.api.v2 import base
 from tests.api.v2.federation import federation
 from tests.api.v2.schema import tokens as tokens_json
@@ -101,6 +103,7 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         self.assertIn(const.IMPERSONATE, auth_by_list)
         self.assertIn(const.PASSWORD.upper(), auth_by_list)
 
+    @attr('skip_at_gate')
     def test_analyze_fed_user_tokens(self):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
@@ -179,12 +182,6 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
     @base.base.log_tearDown_error
     def tearDown(self):
         super(TestFedUserImpersonation, self).tearDown()
-        for idp_id in self.provider_ids:
-            # Fails with HTTP 403 - https://jira.rax.io/browse/CID-943
-            resp = self.user_admin_client.delete_idp(idp_id=idp_id)
-            self.assertEqual(
-                resp.status_code, 204,
-                msg='IDP with ID {0} failed to delete'.format(idp_id))
 
     @classmethod
     @base.base.log_tearDown_error

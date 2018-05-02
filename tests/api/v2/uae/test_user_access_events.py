@@ -61,33 +61,6 @@ class TestUserAccessEvents(base.TestBaseV2):
         self.device_ids.append(device_id)
         return device_id, resp
 
-    def auth_with_pwd_cred(self):
-        user_id, resp = self.create_user()
-        username = resp.json()[const.USER][const.USERNAME]
-        password = resp.json()[const.USER][const.NS_PASSWORD]
-        req_obj = requests.AuthenticateWithPassword(
-            user_name=username, password=password
-        )
-        auth_resp = self.identity_admin_client.get_auth_token(
-            request_object=req_obj)
-        self.assertEqual(auth_resp.status_code, 200)
-        token_id = auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
-        return token_id, user_id, username
-
-    def auth_with_apikey_cred(self):
-        user_id, resp = self.create_user()
-        # get user apikey
-        resp = self.identity_admin_client.get_api_key(user_id=user_id)
-        username = resp.json()[const.NS_API_KEY_CREDENTIALS][const.USERNAME]
-        apikey = resp.json()[const.NS_API_KEY_CREDENTIALS][const.API_KEY]
-        req_obj = requests.AuthenticateWithApiKey(user_name=username,
-                                                  api_key=apikey)
-        auth_resp = self.identity_admin_client.get_auth_token(
-            request_object=req_obj)
-        self.assertEqual(auth_resp.status_code, 200)
-        token_id = auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
-        return token_id, user_id, username
-
     def verify_event(self, xml_str, username=None, reason_code=None,
                      request_url=None):
         '''

@@ -23,7 +23,7 @@ class AddOtpDeviceForUser(base.TestBaseV2):
             additional_input_data={'domain_id': cls.domain_id})
 
     @ddt.data("", "  ", None)
-    @attr(type='smoke_alpha')
+    @attr('skip_at_gate')
     def test_add_otp_device_with_invalid_name(self, device_name):
 
         otp_req = requests.OTPDeviceAdd(device_name=device_name)

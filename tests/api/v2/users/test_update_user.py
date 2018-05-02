@@ -2,6 +2,7 @@ import copy
 from random import randrange
 
 import ddt
+from nose.plugins.attrib import attr
 
 from tests.api.v2 import base
 from tests.api.v2.schema import users as users_json
@@ -165,6 +166,7 @@ class TestUpdateUser(base.TestBaseV2):
         self.assertSchema(response=resp, json_schema=updated_json_schema)
 
     @ddt.file_data('data_update_user_info.json')
+    @attr('skip_at_gate')
     def test_update_identity_admin_with_its_token(self, test_data):
         """
         Test update user admin with its own token
@@ -209,6 +211,7 @@ class TestUpdateUser(base.TestBaseV2):
                 self.assertEqual(resp.status_code, 200)
 
     @ddt.file_data('data_update_user_info.json')
+    @attr('skip_at_gate')
     def test_update_sub_user_with_its_token(self, test_data):
         """
         Test update sub user with its own token
@@ -231,6 +234,7 @@ class TestUpdateUser(base.TestBaseV2):
                 self.assertEqual(resp.status_code, 200)
 
     @ddt.file_data('data_update_user_multi_attrs.json')
+    @attr('skip_at_gate')
     def test_update_identity_admin_user_multi_info_mfa_attrs(self, test_data):
         """Update identity admin user
 
@@ -308,6 +312,7 @@ class TestUpdateUser(base.TestBaseV2):
             self.assertSchema(response=resp, json_schema=updated_json_schema)
 
     @ddt.file_data('data_update_user_multi_attrs.json')
+    @attr('skip_at_gate')
     def test_update_default_user_multi_info_n_mfa_attrs(self, test_data):
         """Update identity admin user
 
@@ -339,6 +344,7 @@ class TestUpdateUser(base.TestBaseV2):
             self.assertSchema(response=resp, json_schema=updated_json_schema)
 
     @ddt.file_data('data_update_user_info_neg.json')
+    @attr('skip_at_gate')
     def test_update_identity_admin_user_neg(self, test_data):
         """
         Test with invalid data form json data file
@@ -369,6 +375,7 @@ class TestUpdateUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, test_data['response_status'])
 
     @ddt.file_data('data_update_user_info_neg.json')
+    @attr('skip_at_gate')
     def test_update_default_user_neg(self, test_data):
         """
         Test with invalid data form json data file

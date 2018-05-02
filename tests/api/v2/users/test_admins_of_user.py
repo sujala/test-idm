@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 import ddt
 import time
 
@@ -42,8 +43,7 @@ class TestAdminsOfUser(base.TestBaseV2):
 
     def setUp(self):
         super(TestAdminsOfUser, self).setUp()
-        self.user_ids = []
-        self.clients = []
+        self.domain_ids = []
         self.update_mapping_policy_for_idp()
 
     @ddt.file_data('data_get_admins_for_fed_user.json')
@@ -58,7 +58,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(user_id)
+        self.domain_ids.append(domain_id)
 
         password = resp.json()[const.USER][const.OS_KSADM_PASSWORD]
         auth_obj = requests.AuthenticateWithPassword(
@@ -149,6 +149,7 @@ class TestAdminsOfUser(base.TestBaseV2):
                              'message'], 'Not Authorized')
 
     @ddt.file_data('data_get_admins_for_fed_user.json')
+    @attr('skip_at_gate')
     def test_admins_of_fed_user_using_another_fed_user(self, test_data):
 
         user_name = self.generate_random_string()
@@ -160,8 +161,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         resp = self.identity_admin_client.add_user(user_object)
         self.assertEqual(resp.status_code, 201)
         domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
-        user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(user_id)
+        self.domain_ids.append(domain_id)
 
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
@@ -217,6 +217,7 @@ class TestAdminsOfUser(base.TestBaseV2):
                              'message'], 'Not Authorized')
 
     @ddt.file_data('data_get_admins_for_fed_user.json')
+    @attr(type='skip_at_gate')
     def test_disabled_admin_of_fed_user(self, test_data):
 
         user_name = self.generate_random_string()
@@ -229,7 +230,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(user_id)
+        self.domain_ids.append(domain_id)
 
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
@@ -283,7 +284,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(user_id)
+        self.domain_ids.append(domain_id)
 
         password = resp.json()[const.USER][const.OS_KSADM_PASSWORD]
         auth_obj = requests.AuthenticateWithPassword(
@@ -305,8 +306,6 @@ class TestAdminsOfUser(base.TestBaseV2):
         option = {
             'name': sub_user_name
         }
-        self.clients.append(sub_user_client)
-
         list_resp = self.identity_admin_client.list_users(option=option)
         sub_user_id = list_resp.json()[const.USER][const.ID]
 
@@ -356,6 +355,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(admin_user_id, user_id)
 
     @ddt.file_data('data_get_admins_for_fed_user.json')
+    @attr(type='skip_at_gate')
     def test_admin_of_fed_user_using_user_manager(self, test_data):
 
         user_name = self.generate_random_string()
@@ -368,7 +368,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(user_id)
+        self.domain_ids.append(domain_id)
 
         password = resp.json()[const.USER][const.OS_KSADM_PASSWORD]
         auth_obj = requests.AuthenticateWithPassword(
@@ -391,7 +391,6 @@ class TestAdminsOfUser(base.TestBaseV2):
         option = {
             'name': user_manager_name
         }
-        self.clients.append(user_manager_client)
         list_resp = self.identity_admin_client.list_users(option=option)
         user_manager_id = list_resp.json()[const.USER][const.ID]
 
@@ -455,7 +454,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(user_id)
+        self.domain_ids.append(domain_id)
 
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
@@ -513,6 +512,7 @@ class TestAdminsOfUser(base.TestBaseV2):
                          ERROR_MESSAGE_USER_NOT_FOUND.format(fed_user_id))
 
     @ddt.file_data('data_get_admins_for_fed_user.json')
+    @attr(type='skip_at_gate')
     def test_deleted_admin_of_fed_user(self, test_data):
 
         user_name = self.generate_random_string()
@@ -525,7 +525,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(user_id)
+        self.domain_ids.append(domain_id)
 
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
@@ -568,6 +568,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(validate_resp.status_code, 200)
 
     @ddt.file_data('data_get_admins_for_fed_user.json')
+    @attr(type='skip_at_gate')
     def test_admin_of_fed_user_with_disabled_domain(self, test_data):
 
         user_name = self.generate_random_string()
@@ -580,7 +581,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(user_id)
+        self.domain_ids.append(domain_id)
 
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
@@ -626,10 +627,12 @@ class TestAdminsOfUser(base.TestBaseV2):
 
     def tearDown(self):
         # Delete all users created in the tests
-        for id_ in self.user_ids:
-            self.identity_admin_client.delete_user(user_id=id_)
-        for client in self.clients:
-            self.delete_client(client=client)
+        for dom in self.domain_ids:
+            users = self.identity_admin_client.list_users_in_domain(
+                domain_id=dom)
+            user_ids_ = [user[const.ID] for user in users.json()[const.USERS]]
+            for id_ in user_ids_:
+                self.identity_admin_client.delete_user(user_id=id_)
         super(TestAdminsOfUser, self).tearDown()
 
     @classmethod

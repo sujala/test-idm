@@ -78,6 +78,7 @@ class TestListUsers(base.TestBaseV2):
         self.assertSchema(response=resp,
                           json_schema=users_json.list_users)
 
+    @attr('skip_at_gate')
     def test_list_user_email_by_service_admin(self):
         """List by admin user filter by email
         """

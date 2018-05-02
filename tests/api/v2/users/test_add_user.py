@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*
 import copy
 
-import ddt
 from hypothesis import given, strategies
+from nose.plugins.attrib import attr
+import ddt
 
 from tests.api.utils import header_validation
 from tests.api.v2 import base
@@ -185,6 +186,7 @@ class TestAddUser(base.TestBaseV2):
     @ddt.data(['  ', 'me@mail.com', True], ['വളം', 'me@mail.com', True],
               ['first last', 'valid@email.com', ''])
     @ddt.unpack
+    @attr('skip_at_gate')
     def test_add_user_ddt(self, user_name, email_id, enabled):
         """Add user_admin type users
 
@@ -504,6 +506,7 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
             resp, *self.header_validation_functions_HTTP_201)
 
     @ddt.file_data('data_add_user_w_mfa_attrs.json')
+    @attr(type='skip_at_gate')
     def test_add_user_identity_admin_w_mfa_attrs(self, test_data):
         '''Add identity_admin type users'''
         mfa_input = test_data['mfa_input']

@@ -140,7 +140,7 @@ class TestListEffectiveRolesWithDA(base.TestBaseV2):
         resp = self.identity_admin_client.add_role(request_object=role_object)
         self.assertEqual(resp.status_code, 201)
         role_id = resp.json()[const.ROLE][const.ID]
-        self.role_ids.append((role_id, role_name))
+        self.role_ids.append(role_id)
         return role_id, role_name
 
     def create_tenant(self):
