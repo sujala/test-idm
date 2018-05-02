@@ -740,34 +740,6 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public Applications getUserApplications(User user) {
-        if (user == null || user.getUniqueId() == null) {
-            String errmsg = "Null User instance or is lacking uniqueID";
-            logger.debug(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-
-        List<Application> clientList = new ArrayList<Application>();
-
-        for (ScopeAccess service : scopeAccessService.getScopeAccessesForUser(user)) {
-            if (service instanceof UserScopeAccess) {
-                clientList
-                        .add(this.applicationService.getById(service.getClientId()));
-            }
-        }
-
-        Applications clients = new Applications();
-        clients.setClients(clientList);
-        clients.setOffset(0);
-        clients.setLimit(clientList.size());
-        clients.setTotalRecords(clientList.size());
-        logger.debug("Found Clients: {}.", clients);
-
-        return clients;
-    }
-
-
-    @Override
     public boolean isUsernameUnique(String username) {
         return userDao.isUsernameUnique(username);
     }

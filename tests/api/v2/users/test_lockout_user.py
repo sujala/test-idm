@@ -64,7 +64,6 @@ class TestLockoutUser(base.TestBaseV2):
     def test_almost_lock_out_user(self):
         """Lock out user
         """
-
         # authenticate n-1 times incorrectly
         for count in range(0, self.lockout_count - 1):
             # Authenticate with invalid creds

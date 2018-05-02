@@ -60,7 +60,7 @@ public class RootResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "Root Get internal service profile")
     @GET
     public Response getInternalServiceProfile() {
     	final String responseXml = serviceProfileDescriptionBuilder.buildInternalServiceProfile(uriInfo);
@@ -78,7 +78,7 @@ public class RootResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "Root Get public profile")
     @GET
     @Path("public")
     public Response getPublicServiceProfile() {
@@ -96,7 +96,7 @@ public class RootResource {
         return devOpsResource;
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "Root Get build info")
     @Path("buildInfo")
     @GET
     @Produces(MediaType.APPLICATION_JSON)

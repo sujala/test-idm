@@ -20,8 +20,6 @@ class TestAdministratorChange(base.TestBaseV2):
         """
         super(TestAdministratorChange, cls).setUpClass()
 
-        # cls.test_domain_id = cls.generate_random_string(
-        #     pattern='[\d]{7}')
         cls.test_domain_id = func_helper.generate_randomized_domain_id(
             client=cls.identity_admin_client)
         cls.test_user_admin_name = cls.generate_random_string(

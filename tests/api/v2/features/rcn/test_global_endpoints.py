@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 from urlparse import urljoin
 
 from tests.api.v2 import base
@@ -133,6 +134,7 @@ class TestGlobalEndpoints(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         return resp.json()[const.ROLES][0][const.ID]
 
+    @attr('skip_at_gate')
     def test_assign_global_endpoints_on_tenant(self):
         """Tests that a user receives MOSSO global endpoints when granted
         the compute:default role and NAST global endpoints when granted

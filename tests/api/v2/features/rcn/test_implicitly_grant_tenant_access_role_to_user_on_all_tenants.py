@@ -27,6 +27,7 @@
     disabled, the default, users are NOT implicitly granted the
     identity:tenant-access roles on all tenants within the user's domain
 """
+from nose.plugins.attrib import attr
 import collections
 
 from tests.api.v2 import base
@@ -190,7 +191,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             tenant_id=tenant_id)
         self.assertEqual(users_resp.status_code, 200)
 
-        # verify user not list
+        # verify user not in the list
         self.assertNotIn(pick_user_id, str(users_resp.json()[const.USERS]))
 
         # list role for user in tenant
@@ -887,6 +888,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         self.verify_endpoint_present_in_service_catalog(
             user_name=user_name, password=password, tenant=tenant_id)
 
+    @attr('skip_at_gate')
     def test_implicit_tenant_access_role_on_user_when_user_or_tenant_disabled(
             self):
         """

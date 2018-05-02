@@ -60,31 +60,28 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
         self.auth_resp = responses.Access(saml_resp.json())
 
     @attr(type='regression')
-    def test_delete_federated_user(self):
-        resp = self.user_admin_client.delete_user(
-            user_id=self.auth_resp.access.user.id)
-        self.assertEquals(resp.status_code, 204)
-
-        saml_resp = self.identity_admin_client.auth_with_saml(
-            saml=self.assertion, content_type=const.XML,
-            base64_url_encode=False,
-            new_url=False)
-        self.assertEquals(saml_resp.status_code, 200)
-
-    @attr(type='regression')
-    def test_validate_token_for_deleted_federated_user(self):
+    def test_delete_federated_user_and_validate_token(self):
         resp = self.user_admin_client.delete_user(
             user_id=self.auth_resp.access.user.id)
         self.assertEquals(resp.status_code, 204)
 
         validate_token_resp = self.user_admin_client.validate_token(
             token_id=self.auth_resp.access.token.id)
-        # TODO: Need to confirm if the expected response is 403 or 404
         self.assertEquals(validate_token_resp.status_code, 403)
 
         validate_token_resp = self.identity_admin_client.validate_token(
             token_id=self.auth_resp.access.token.id)
         self.assertEquals(validate_token_resp.status_code, 404)
+
+        # checking if can re-auth
+        saml_resp = self.identity_admin_client.auth_with_saml(
+            saml=self.assertion, content_type=const.XML,
+            base64_url_encode=False,
+            new_url=False)
+        self.assertEquals(saml_resp.status_code, 200)
+        resp = self.user_admin_client.delete_user(
+            user_id=saml_resp.json()[const.ACCESS][const.USER][const.ID])
+        self.assertEquals(resp.status_code, 204)
 
     def tearDown(self):
         super(TestDeleteFederatedUser, self).tearDown()
@@ -92,3 +89,4 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
     @classmethod
     def tearDownClass(cls):
         super(TestDeleteFederatedUser, cls).tearDownClass()
+        cls.delete_client(cls.user_admin_client)

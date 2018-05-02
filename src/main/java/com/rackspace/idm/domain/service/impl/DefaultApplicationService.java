@@ -150,31 +150,6 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public Applications getClientServices(Application client) {
-        logger.debug("Finding Client Services for Client: {}", client.getClientId());
-        if (client == null || client.getUniqueId() == null) {
-            throw new IllegalArgumentException("Client cannot be null and must have uniqueID");
-        }
-
-        List<Application> clientList = new ArrayList<Application>();
-
-        for (ScopeAccess service : scopeAccessService.getScopeAccessesForApplication(client)) {
-            if (service != null) {
-                clientList.add(this.getById(service.getClientId()));
-            }
-        }
-
-        Applications clients = new Applications();
-        clients.setClients(clientList);
-        clients.setOffset(0);
-        clients.setLimit(clientList.size());
-        clients.setTotalRecords(clientList.size());
-
-        logger.debug("Found {} Client Service(s) for Client: {}", clientList.size(), client.getClientId());
-        return clients;
-    }
-
-    @Override
     public Application getApplicationByScopeAccess(ScopeAccess scopeAccess) {
         if(scopeAccess == null) {
             throw new IllegalArgumentException("ScopeAccess cannot be null");

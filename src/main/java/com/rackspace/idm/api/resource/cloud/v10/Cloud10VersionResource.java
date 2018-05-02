@@ -92,7 +92,7 @@ public class Cloud10VersionResource {
         this.authorizationService = authorizationService;
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name="v1.0 Authenticate")
     @GET
     public Response getCloud10VersionInfo(@Context HttpHeaders httpHeaders,
         @HeaderParam(HEADER_AUTH_USER) String username,

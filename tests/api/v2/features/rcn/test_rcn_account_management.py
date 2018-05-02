@@ -33,21 +33,20 @@ class TestRCNAccountManagement(base.TestBaseV2):
     @classmethod
     def setUpClass(cls):
         super(TestRCNAccountManagement, cls).setUpClass()
+        if not cls.test_config.run_service_admin_tests:
+            cls.skipTest('Skipping Service Admin Tests per config value')
+        if not cls.test_config.run_local_and_jenkins_only:
+            cls.skipTest('Skipping local and jenkins run tests')
         # These are preset role names to ldif to follow alphabetical order
         cls.ROLE_NAME1 = 'testRole1'
-        cls.ROLE_NAME2 = 'testRole2'
         cls.ROLE_NAME3 = 'testRole3'
+        # hard code to get specific service for compute
+        cls.SERVICE_NAME = 'cloudServers'
+        cls.service_id = cls.get_service_id_by_name(
+            service_name=cls.SERVICE_NAME)
 
     def setUp(self):
         super(TestRCNAccountManagement, self).setUp()
-        if not self.test_config.run_service_admin_tests:
-            self.skipTest('Skipping Service Admin Tests per config value')
-        if not self.test_config.run_local_and_jenkins_only:
-            self.skipTest('Skipping local and jenkins run tests')
-        # hard code to get specific service for compute
-        self.SERVICE_NAME = 'cloudServers'
-        self.service_id = self.get_service_id_by_name(
-            service_name=self.SERVICE_NAME)
         self.user_ids = []
         self.tenant_ids = []
         self.domain_ids = []
@@ -99,10 +98,11 @@ class TestRCNAccountManagement(base.TestBaseV2):
         service_name = resp.json()[const.NS_SERVICE][const.NAME]
         return service_id, service_name
 
-    def get_service_id_by_name(self, service_name):
+    @classmethod
+    def get_service_id_by_name(cls, service_name):
         option = {'name': service_name}
-        resp = self.service_admin_client.list_services(option=option)
-        self.assertEqual(resp.status_code, 200)
+        resp = cls.service_admin_client.list_services(option=option)
+        assert resp.status_code == 200
         service_id = resp.json()[const.NS_SERVICES][0][const.ID]
         return service_id
 

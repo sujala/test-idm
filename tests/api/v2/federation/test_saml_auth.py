@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 import ddt
 
 from tests.api.utils import saml_helper
@@ -30,6 +31,7 @@ class TestSAMLAuth(federation.TestBaseFederation):
 
         self.idp = self.add_and_check_broker_idp(certs=[self.pem_encoded_cert])
 
+    @attr('skip_at_gate')
     def test_cant_auth_with_broker_idp(self):
         """ Note: will fail once broker auth is enabled. """
         test_data = {"fed_input": {

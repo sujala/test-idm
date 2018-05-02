@@ -22,7 +22,7 @@ public class CloudMultifactorDomainResource {
     @Autowired
     private MultiFactorCloud20Service multiFactorCloud20Service;
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Update domain mfa configuration")
     @PUT
     public Response updateMultiFactorDomainSettings(
             @Context UriInfo uriInfo,

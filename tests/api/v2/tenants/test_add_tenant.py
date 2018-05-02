@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 import copy
 import ddt
 
@@ -154,6 +155,7 @@ class TestAddTenant(base.TestBaseV2):
             self.assertEqual(tenant.description, tenant_object.description)
         self.assertHeaders(response=resp)
 
+    @attr('skip_at_gate')
     def test_add_tenant_with_non_existing_tenant_type(self):
 
         # Randomness is making sure it does not exist before. This avoids

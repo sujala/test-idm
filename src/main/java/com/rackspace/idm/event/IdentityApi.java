@@ -19,4 +19,11 @@ public @interface IdentityApi {
      * @return
      */
     ApiKeyword[] keywords() default {};
+
+    /**
+     * The name of the API for easier reference. A required attribute.
+     *
+     * @return
+     */
+    String name();
 }

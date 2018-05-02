@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 import copy
 import ddt
 
@@ -363,6 +364,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
 
     @ddt.file_data(
         'data_create_mapping_rule_with_different_descriptions.json')
+    @attr('skip_at_gate')
     def test_create_mapping_rules_with_different_descriptions(
             self, test_data):
         """
@@ -625,6 +627,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_400)
 
+    @attr('skip_at_gate')
     def verify_get_and_delete_given_rule(self, rule_id):
         """
         Make a GET mapping rule call and then make a DELETE mapping rule call

@@ -48,22 +48,11 @@ class TestUpdateIDP(federation.TestBaseFederation):
             const.ACCEPT] = 'application/json'
         self.user_clients["user:admin"] = idp_user_admin_client
 
-        # user manage client
-        idp_user_manage_client = self.generate_client(
-            parent_client=idp_user_admin_client,
-            additional_input_data={'domain_id': self.domain_id,
-                                   'is_user_manager': True})
-        idp_user_manage_client.serialize_format = 'xml'
-        idp_user_manage_client.default_headers[
-            const.CONTENT_TYPE] = 'application/xml'
-        idp_user_admin_client.default_headers[
-            const.ACCEPT] = 'application/json'
-        self.user_clients["user:manage"] = idp_user_manage_client
-
         self.provider_ids = []
         self.domains = []
         self.clients = []
         self.users = []
+        self.fed_users = []
         self.role_ids = []
 
     def add_idp_user(self):
@@ -90,6 +79,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
                          idp_name)
 
+    @attr('skip_at_gate')
     def test_update_idp_name_with_empty_string(self):
         """Update with empty string"""
         provider_id, _ = self.add_idp_user()
@@ -111,11 +101,11 @@ class TestUpdateIDP(federation.TestBaseFederation):
             idp_id=provider_id, request_object=update_idp_obj)
         self.assertEqual(resp.status_code, 200)
 
-    @attr(type='regression')
+    @attr(type='skip_at_gate')
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_approved_domain_ids_with_spaces(self, test_data):
 
-        domain_id = self.create_one_user_and_get_domain(users=self.users)
+        domain_id = self.create_user_and_get_domain(users=self.users)
         self.domains.append(domain_id)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
@@ -126,7 +116,8 @@ class TestUpdateIDP(federation.TestBaseFederation):
             test_data=test_data, domain_id=domain_id, private_key=key_path,
             public_key=cert_path, issuer=issuer)
         self.assertEqual(fed_auth.status_code, 200)
-        fed_token, _, _ = self.parse_auth_response(fed_auth)
+        fed_token, fed_user_id, _ = self.parse_auth_response(fed_auth)
+        self.fed_users.append(fed_user_id)
 
         # update the approved domains list
         new_list_of_domains = [domain_id + ' ']
@@ -147,7 +138,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_enable_disable_idp(self, test_data):
 
-        domain_id = self.create_one_user_and_get_domain(users=self.users)
+        domain_id = self.create_user_and_get_domain(users=self.users)
         self.domains.append(domain_id)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
@@ -160,7 +151,8 @@ class TestUpdateIDP(federation.TestBaseFederation):
             public_key=cert_path, issuer=issuer)
         self.assertEqual(fed_auth.status_code, 200)
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
-        fed_token, _, _ = self.parse_auth_response(fed_auth)
+        fed_token, fed_user_id, _ = self.parse_auth_response(fed_auth)
+        self.fed_users.append(fed_user_id)
 
         # Disable IDP
         update_req = requests.IDP(enabled=False)
@@ -218,9 +210,9 @@ class TestUpdateIDP(federation.TestBaseFederation):
 
     @attr(type='regression')
     @ddt.file_data('data_update_idp_fed_user.json')
-    def test_update_idp_verify_delete_logs_and_re_auth(self, test_data):
+    def test_update_idp_domain_and_re_auth(self, test_data):
 
-        domain_id = self.create_one_user_and_get_domain(users=self.users)
+        domain_id = self.create_user_and_get_domain(users=self.users)
         self.domains.append(domain_id)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
@@ -235,7 +227,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             fed_auth)
 
         # update the approved domains list with the new domain
-        domain_id_2 = self.create_one_user_and_get_domain(users=self.users)
+        domain_id_2 = self.create_user_and_get_domain(users=self.users)
         self.domains.append(domain_id_2)
         self.update_approved_domain_ids_for_idp(
             provider_id=provider_id, new_list_of_domains=[domain_id_2])
@@ -359,12 +351,25 @@ class TestUpdateIDP(federation.TestBaseFederation):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
 
+        if client_key == "user:manage":
+            # user manage client
+            idp_user_manage_client = self.generate_client(
+                parent_client=self.user_clients["user:admin"],
+                additional_input_data={'domain_id': self.domain_id,
+                                       'is_user_manager': True})
+            idp_user_manage_client.serialize_format = 'xml'
+            idp_user_manage_client.default_headers[
+                const.CONTENT_TYPE] = 'application/xml'
+            self.user_clients["user:admin"].default_headers[
+                const.ACCEPT] = 'application/json'
+            self.user_clients["user:manage"] = idp_user_manage_client
+
         client_instance = self.user_clients[client_key]
 
         provider_id = self.add_idp_with_metadata_return_id(
             cert_path=cert_path, api_client=client_instance)
-        self.provider_ids.append(provider_id)
-        self.clients.append(client_instance)
+        if client_key == "user:admin":
+            self.clients.append(client_instance)
         self.assert_update_idp(provider_id, client_instance)
 
     def create_role(self):
@@ -382,7 +387,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
     @ddt.file_data('modified_saml_fed_auth.json')
     def test_fed_auth_with_modified_saml(self, test_data):
 
-        domain_id = self.create_one_user_and_get_domain(users=self.users)
+        domain_id = self.create_user_and_get_domain(users=self.users)
         self.domains.append(domain_id)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
@@ -420,6 +425,8 @@ class TestUpdateIDP(federation.TestBaseFederation):
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
             base64_url_encode=base64_url_encode, new_url=new_url)
+        fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
+        self.fed_users.append(fed_user_id)
         roles_list = [role_[const.NAME] for role_ in (
             auth.json()['access']['user']['roles'])]
         self.assertIn(role.name, roles_list)
@@ -448,14 +455,15 @@ class TestUpdateIDP(federation.TestBaseFederation):
 
     @base.base.log_tearDown_error
     def tearDown(self):
-        self.identity_admin_client.delete_user(
-            self.user_clients["user:manage"].default_headers[const.X_USER_ID])
-        # Delete all providers created in the tests
-        for id_ in self.provider_ids:
-            resp = self.identity_admin_client.delete_idp(idp_id=id_)
+        if "user:manage" in self.user_clients:
+            self.identity_admin_client.delete_user(
+                self.user_clients["user:manage"].default_headers[
+                    const.X_USER_ID])
+        for id_ in self.fed_users:
+            resp = self.identity_admin_client.delete_user(user_id=id_)
             self.assertEqual(
                 resp.status_code, 204,
-                msg='IDP with ID {0} failed to delete'.format(id_))
+                msg='Fed user with ID {0} failed to delete'.format(id_))
         for id_ in self.users:
             resp = self.identity_admin_client.delete_user(user_id=id_)
             self.assertEqual(

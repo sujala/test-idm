@@ -72,6 +72,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    @attr('skip_at_gate')
     def test_auth_with_invalid_key(self):
         username = self.user_info['id']
         key = "invalid"
@@ -105,6 +106,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    @attr('skip_at_gate')
     def test_auth_with_invalid_key_and_mosso(self):
         key = 'invalid'
         mosso_id = self.user_info['mosso_id']
@@ -137,6 +139,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    @attr('skip_at_gate')
     def test_auth_with_invalid_key_and_nast(self):
         key = 'invalid'
         nast_id = self.user_info['nast_id']
@@ -172,6 +175,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    @attr('skip_at_gate')
     def test_auth_with_username_and_invalid_password(self):
         admin_password = 'invalid'
         admin_username = self.identity_config.identity_admin_user_name

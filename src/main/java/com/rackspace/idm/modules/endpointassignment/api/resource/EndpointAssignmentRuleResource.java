@@ -76,7 +76,7 @@ public class EndpointAssignmentRuleResource {
      * @param endpointAssignmentRule
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Add endpoint assignment rule")
     @POST
     public Response addRule(
             @Context UriInfo uriInfo,
@@ -109,7 +109,7 @@ public class EndpointAssignmentRuleResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 List endpoint assignment rules")
     @GET
     public Response getRules(
             @Context UriInfo uriInfo,
@@ -142,7 +142,7 @@ public class EndpointAssignmentRuleResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Get endpoint assignment rule")
     @GET
     @Path("{ruleId}")
     public Response getRule(
@@ -172,7 +172,7 @@ public class EndpointAssignmentRuleResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Delete endpoint assignment rule")
     @DELETE
     @Path("{ruleId}")
     public Response deleteEndpointAssignmentRule(

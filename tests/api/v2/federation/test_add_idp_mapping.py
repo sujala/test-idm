@@ -134,7 +134,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         "yaml/blacklist_mapping_policy.yaml",
     ))
     def test_add_mapping_blacklisted_yaml_with_auth(self, mapping):
-        domain_id = self.create_one_user_and_get_domain(
+        domain_id = self.create_user_and_get_domain(
             auth_client=self.identity_admin_client)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
@@ -210,7 +210,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         "yaml/default_mapping_policy.yaml",
     ))
     def test_add_mapping_valid_yaml_with_auth(self, mapping):
-        domain_id = self.create_one_user_and_get_domain(
+        domain_id = self.create_user_and_get_domain(
             auth_client=self.identity_admin_client)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
@@ -389,6 +389,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
 
     # idp missing causes 404
     @ddt.file_data('data_update_idp_mapping_policy.json')
+    @attr('skip_at_gate')
     def test_add_mapping_missing_idp(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
         idp_id = "xxx{0}xxx".format(provider_id)
@@ -400,6 +401,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                             " not found.".format(idp_id))
 
     @ddt.data("xml", "xhtml_xml")
+    @attr('skip_at_gate')
     def test_idp_mapping_content_type_xml(self, content_type):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
 
@@ -494,13 +496,6 @@ class TestAddMappingIDP(federation.TestBaseFederation):
 
     @base.base.log_tearDown_error
     def tearDown(self):
-        # Delete all providers created in the tests
-        for id_ in self.provider_ids:
-            resp = self.identity_admin_client.delete_idp(idp_id=id_)
-            self.assertEqual(
-                resp.status_code, 204,
-                msg='IDP with ID {0} failed to delete'.format(id_))
-        self.idp_user_admin_client.delete_idp(self.provider_ids)
         super(TestAddMappingIDP, self).tearDown()
 
     @classmethod

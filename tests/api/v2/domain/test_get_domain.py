@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
+
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 from tests.package.johny import constants as const
@@ -32,6 +34,7 @@ class TestGetDomain(base.TestBaseV2):
         self.domain_ids.append(domain_id)
         return domain_id
 
+    @attr('skip_at_gate')
     def test_get_domain(self):
         domain_id = self.create_domain()
         resp = self.identity_admin_client.get_domain(domain_id=domain_id)

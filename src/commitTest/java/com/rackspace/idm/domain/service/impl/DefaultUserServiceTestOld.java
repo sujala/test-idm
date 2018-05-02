@@ -171,16 +171,6 @@ public class DefaultUserServiceTestOld {
         assertThat("user", result, equalTo(null));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUserApplications_userIsNull_throwsIllegalArgument() throws Exception {
-        defaultUserService.getUserApplications(null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void getUserApplications_userUniqueIdIsNull_throwsIllegalArgument() throws Exception {
-        defaultUserService.getUserApplications(new User());
-    }
-
     @Test
     public void isUsernameUnique_callsUserDao_isUsernameUnique() throws Exception {
         defaultUserService.isUsernameUnique("username");

@@ -33,7 +33,7 @@ class TestAddIDP(federation.TestBaseFederation):
         email_domains = []
         email_domains.append(self.generate_random_string(const.EMAIL_PATTERN))
 
-        domain_id = self.create_one_user_and_get_domain(
+        domain_id = self.create_user_and_get_domain(
             auth_client=self.identity_admin_client)
 
         # Add IDP with email domain.
@@ -103,6 +103,7 @@ class TestAddIDP(federation.TestBaseFederation):
                           "Error code: 'GEN-001'; 'name' is a required"
                           " attribute")
 
+    @attr('skip_at_gate')
     def test_add_idp_with_empty_name(self):
         '''Add with empty name.'''
         request_object = factory.get_add_idp_request_object()
@@ -151,17 +152,20 @@ class TestAddIDP(federation.TestBaseFederation):
                           "Error code: 'GEN-002'; name length cannot exceed "
                           "255 characters")
 
+    @attr('skip_at_gate')
     def test_add_idp_with_bad_char(self):
         '''Add with bad characters in name
         '''
         self.check_bad_name(name="DSAFDSFA#@$@$#@$AFAS")
 
+    @attr('skip_at_gate')
     def test_add_idp_with_spaces_at_end(self):
         '''Add with spaces at the end of the name.
         '''
         self.check_bad_name(
             name=self.generate_random_string(const.IDP_NAME_PATTERN) + "  ")
 
+    @attr('skip_at_gate')
     def test_add_idp_with_spaces_at_the_beginning(self):
         '''Add with spaces at the beginning of the name.
         '''
@@ -171,6 +175,7 @@ class TestAddIDP(federation.TestBaseFederation):
     def test_add_broker_idp(self):
         self.add_and_check_broker_idp()
 
+    @attr('skip_at_gate')
     def test_adg_with_broker_idp(self):
         fed_type = const.BROKER
         dom_group = "BADVALUE"
