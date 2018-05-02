@@ -2,11 +2,8 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDevices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevices;
-import com.rackspace.idm.domain.entity.MultiFactorDevice;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.util.OTPHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,12 +33,8 @@ public class MultiFactorDeviceConverterCloudV20 {
             }
         }
 
-        if (otpDevices.getOtpDevice().size() > 0) {
-            devices.setOtpDevices(otpDevices);
-        }
-        if (mobilePhones.getMobilePhone().size() > 0) {
-            devices.setMobilePhones(mobilePhones);
-        }
+        devices.setOtpDevices(otpDevices);
+        devices.setMobilePhones(mobilePhones);
 
         return devices;
     }
