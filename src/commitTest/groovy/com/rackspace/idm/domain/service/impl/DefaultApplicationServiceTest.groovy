@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -90,27 +89,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
 
         then:
         1 * applicationDao.deleteApplication(_)
-    }
-
-    def "getClientService gets list of ScopeAccess for application from ScopeAccessService"() {
-        given:
-        def application = entityFactory.createApplication()
-        def scopeAccess = createScopeAccess().with {
-            it.clientId = "clientId"
-            return it
-        }
-
-        when:
-        def result = service.getClientServices(application)
-
-        then:
-        0 * scopeAccessDao.getScopeAccesses(_)
-        1 * scopeAccessService.getScopeAccessesForApplication(_) >> [ scopeAccess ].asList()
-
-        then:
-        1 * applicationDao.getApplicationByClientId(_) >> application
-        result.getClients().size() == 1
-        result.getClients().get(0).name.equals(application.getName())
     }
 
     def "deleteClientRole gets associated tenantRoles via TenantService"() {

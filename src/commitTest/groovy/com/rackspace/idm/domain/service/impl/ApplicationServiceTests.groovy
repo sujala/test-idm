@@ -1,15 +1,22 @@
-package com.rackspace.idm.domain.service.impl
+package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.ApplicationDao
-import com.rackspace.idm.domain.dao.ApplicationRoleDao
-import com.rackspace.idm.domain.entity.*
-import com.rackspace.idm.domain.service.ScopeAccessService
-import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.exception.NotFoundException
-import junit.framework.Assert
-import org.easymock.EasyMock
-import org.junit.Before
-import org.junit.Test
+import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.ApplicationRoleDao;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
+
+import junit.framework.Assert;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.ClientSecret;
+
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.exception.NotFoundException;
 
 public class ApplicationServiceTests {
 
