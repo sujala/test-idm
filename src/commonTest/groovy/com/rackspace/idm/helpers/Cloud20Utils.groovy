@@ -19,6 +19,7 @@ import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.util.OTPHelper
 import com.rackspace.idm.util.SamlUnmarshaller
 import com.sun.jersey.api.client.ClientResponse
@@ -1077,6 +1078,13 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
+    Groups listGroupsForUser(User user, String token=getServiceAdminToken()) {
+        def response = methods.listGroupsForUser(token, user.id)
+        assert (response.status == SC_OK)
+        Groups groups = response.getEntity(Groups).value
+        return groups
+    }
+
     def removeUserFromGroup(Group group, User user, String token=getServiceAdminToken()) {
         def response = methods.removeUserFromGroup(token, group.id, user.id)
         assert (response.status == SC_NO_CONTENT)
@@ -1554,6 +1562,13 @@ class Cloud20Utils {
         def response = methods.getUserGroup(token, userGroup)
         assert response.status == 200
         return response.getEntity(UserGroup)
+    }
+
+
+    UserGroups listUserGroupsForDomain(String domainId, UserGroupSearchParams userGroupSearchParams = null, String token = getIdentityAdminToken()) {
+        def response = methods.listUserGroupsForDomain(token, domainId, userGroupSearchParams)
+        assert response.status == SC_OK
+        response.getEntity(UserGroups)
     }
 
     RoleAssignments listRoleAssignmentsOnUserGroup(UserGroup group, String token = getServiceAdminToken()) {

@@ -767,7 +767,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             //update user call can not be used to update the domainId. Use addUserToDomain calls
             user.setDomainId(null);
 
-            BaseUser retrievedUser = identityUserService.getEndUserById(userId);
+            EndUser retrievedUser = identityUserService.getEndUserById(userId);
 
             if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
                 user.setContactId(null);
@@ -793,15 +793,15 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (retrievedUser instanceof FederatedUser) {
-                FederatedUser federatedUserDO = new FederatedUser();
-                federatedUserDO.setUniqueId(retrievedUser.getUniqueId());
+                FederatedUser fedUser = (FederatedUser) retrievedUser;
 
-                // Allowed attributes for update
+                // Copy over the attributes allowed to be updated and only update if one is changed.
                 if (StringUtils.isNotBlank(user.getContactId())) {
-                    federatedUserDO.setContactId(user.getContactId());
+                    if (!user.getContactId().equalsIgnoreCase(fedUser.getContactId())) {
+                        fedUser.setContactId(user.getContactId());
+                        identityUserService.updateFederatedUser(fedUser);
+                    }
                 }
-
-                identityUserService.updateFederatedUser(federatedUserDO);
             } else {
                 // Update provisioned user
                 BaseUser caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);

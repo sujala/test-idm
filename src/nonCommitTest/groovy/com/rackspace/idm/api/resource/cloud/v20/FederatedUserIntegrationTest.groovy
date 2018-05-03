@@ -23,7 +23,7 @@ import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler
-
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.util.SamlUnmarshaller
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.codec.binary.StringUtils
@@ -1886,6 +1886,50 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         where:
         mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
+    }
+
+    def "Updating federated user's contactId does not erase legacy groups or user groups"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        // Assign user-admin to 2 legacy groups
+        utils.addUserToGroupWithId("0", userAdmin)
+        utils.addUserToGroupWithId(Constants.RAX_STATUS_RESTRICTED_GROUP_ID, userAdmin)
+
+        def userGroup = utils.createUserGroup(userAdmin.domainId)
+
+        AuthenticateResponse fedAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId, [userGroup.name] as Set)
+
+        def federatedUserId = fedAuthResponse.user.id
+        def federatedUser = utils.getUserById(federatedUserId)
+
+        // Fed user has groups
+        assert utils.listGroupsForUser(federatedUser).group.size() == 2
+        assert utils.listUserGroupsForDomain(federatedUser.getDomainId(), new UserGroupSearchParams(null, federatedUserId)).userGroup.size() == 1
+
+        // Contact id is null
+        def user = utils.getUserById(federatedUserId)
+        assert user.contactId == null
+
+        when: "update federated user using service admin"
+        def contactId = testUtils.getRandomUUID("contactId")
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = federatedUserId
+            it.contactId = contactId
+            it
+        }
+        utils.updateUser(userForCreate)
+
+        then: "contact id updated"
+        utils.getUserById(federatedUserId).contactId == contactId
+
+        and: "legacy groups remain"
+        utils.listGroupsForUser(federatedUser).group.size() == 2
+
+        and: "user groups remain"
+        utils.listUserGroupsForDomain(federatedUser.getDomainId(), new UserGroupSearchParams(null, federatedUserId)).userGroup.size() == 1
     }
 
     @Unroll
