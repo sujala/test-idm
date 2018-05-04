@@ -112,7 +112,12 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             saml=assertion, base64_url_encode=True,
             new_url=True)
         self.assertEqual(fed_auth_resp.status_code, 200)
-        return fed_auth_resp
+
+        fed_auth_resp_parsed = Munch.fromDict(fed_auth_resp.json())
+        fed_user_id = fed_auth_resp_parsed.access.user.id
+        fed_user_token = fed_auth_resp_parsed.access.token.id
+
+        return fed_user_id, fed_user_token
 
     def validate_response(self, resp):
         # Verifying that all auth methods are returned, ignoring the order
@@ -162,38 +167,42 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         return tenant
 
     def test_d_auth_with_fed_users_as_principal_and_delegate(self):
+        '''
+        Tests with federated User as Principal & Delegate.
+
+        This test covers the followng scenarios,
+        1. Auth as federated user delegate.
+        2. Delete federated user delegate.
+        3. Delete federated user principal.
+
+        '''
 
         # Creating fed user principal
-        fed_auth_resp = self.create_fed_user_for_da(
+        principal_id, principal_token = self.create_fed_user_for_da(
             client=self.user_admin_client, domain=self.domain_id, issuer=None)
-        fed_user_token = fed_auth_resp.json()[const.ACCESS][const.TOKEN][
-            const.ID]
-        fed_client = self.generate_client(token=fed_user_token)
+        fed_prinicipal_client = self.generate_client(token=principal_token)
 
         # Creating fed user delegate
-        issuer_2 = self.generate_random_string(pattern=const.ISSUER_PATTERN)
-        fed_auth_resp = self.create_fed_user_for_da(
+        delegate_id, delegate_token = self.create_fed_user_for_da(
             client=self.user_admin_client_2, domain=self.domain_id_2,
-            issuer=issuer_2)
-        fed_auth_resp_parsed = Munch.fromDict(fed_auth_resp.json())
-        fed_user_id = fed_auth_resp_parsed.access.user.id
-        fed_user_token = fed_auth_resp_parsed.access.token.id
+            issuer=self.generate_random_string(pattern=const.ISSUER_PATTERN))
 
         # create DA
-        da_name = self.generate_random_string(
-            pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(da_name=da_name)
-        da_resp = fed_client.create_delegation_agreement(request_object=da_req)
+        da_req = requests.DelegationAgreements(
+            da_name=self.generate_random_string(
+                pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN))
+        da_resp = fed_prinicipal_client.create_delegation_agreement(
+            request_object=da_req)
         self.assertEqual(da_resp.status_code, 201)
         da = Munch.fromDict(da_resp.json())
         da_id = da[const.RAX_AUTH_DELEGATION_AGREEMENT].id
 
-        fed_client.add_user_delegate_to_delegation_agreement(
-            da_id, fed_user_id)
+        fed_prinicipal_client.add_user_delegate_to_delegation_agreement(
+            da_id=da_id, user_id=delegate_id)
 
-        # DA auth using fed user's token
+        # DA auth using delegate federated user's token
         delegation_auth_req = requests.AuthenticateWithDelegationAgreement(
-            token=fed_user_token, delegation_agreement_id=da_id)
+            token=delegate_token, delegation_agreement_id=da_id)
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp, json_schema=tokens_json.auth)
@@ -208,6 +217,40 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             response=resp, json_schema=tokens_json.validate_token)
         self.validate_response(resp)
 
+        # Delete Federated User Delegate
+        resp = self.identity_admin_client.delete_user(user_id=delegate_id)
+        self.assertEqual(resp.status_code, 204)
+
+        # Validate the previously issued delegation token is invalid, after
+        # the federated user is deleted.
+        resp = self.identity_admin_client.validate_token(token_id=da_token)
+        self.assertEqual(resp.status_code, 404)
+
+        # Add a federated user as delegate
+        delegate2_id, delegate2_token = self.create_fed_user_for_da(
+            client=self.user_admin_client_2, domain=self.domain_id_2,
+            issuer=self.generate_random_string(pattern=const.ISSUER_PATTERN))
+        fed_prinicipal_client.add_user_delegate_to_delegation_agreement(
+            da_id=da_id, user_id=delegate2_id)
+
+        # Verify Delegate 2 is listed as a delegate in the DA
+        delegate2_client = self.generate_client(token=delegate2_token)
+        resp = delegate2_client.list_delegates_for_delegation_agreement(
+            da_id=da_id)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.json()[const.DELEGATE_REFERENCES][0][const.DELEGATE_ID],
+            delegate2_id)
+
+        # Delete Federated User Principal - this will trigger the DA delete.
+        resp = self.identity_admin_client.delete_user(user_id=principal_id)
+        self.assertEqual(resp.status_code, 204)
+
+        # Verify Delegae 2 can no longer retrieve the DA
+        resp = delegate2_client.list_delegates_for_delegation_agreement(
+            da_id=da_id)
+        self.assertEqual(resp.status_code, 404)
+
     def test_d_auth_fed_user_with_user_group_as_delegate(self):
 
         # create user group for domain 2
@@ -217,11 +260,11 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
 
         # creating idp, updating idp's policy before creating fed user so that
         # fed user can specify group membership
-        fed_auth_resp = self.create_fed_user_for_da(
+        fed_user_id, fed_user_token = self.create_fed_user_for_da(
             client=self.user_admin_client_2, domain=self.domain_id_2,
             update_policy=True, group=group_two)
-        fed_auth_resp_parsed = Munch.fromDict(fed_auth_resp.json())
-        fed_user_token = fed_auth_resp_parsed.access.token.id
+        # fed_auth_resp_parsed = Munch.fromDict(fed_auth_resp.json())
+        # fed_user_token = fed_auth_resp_parsed.access.token.id
 
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
@@ -306,7 +349,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         self.assertEqual(list_resp.status_code, 200)
         list_resp_parsed = Munch.fromDict(list_resp.json())
         for role_assignment_ in list_resp_parsed[
-              const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]:
+                const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]:
             if role_assignment_.onRole == role_1.id:
                 self.assertEqual(role_assignment_.forTenants, [tenant_2.id])
             if role_assignment_.onRole == role_2.id:

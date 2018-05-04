@@ -88,6 +88,24 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
             da_id)
 
     @attr(type='regression')
+    def test_reconcile_DA_delegate_user_delete(self):
+
+        # create DA, with sub user as the delegate
+        da_id = self.create_delegation_agreement(user_id=self.sub_user_id)
+
+        delegation_auth_req = requests.AuthenticateWithDelegationAgreement(
+            token=self.sub_user_token,
+            delegation_agreement_id=da_id)
+
+        resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
+        self.assertEqual(resp.status_code, 200)
+
+        # Delete Delegate User
+        self.user_admin_client_2.delete_user(user_id=self.sub_user_id)
+        resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
+        self.assertEqual(resp.status_code, 401)
+
+    @attr(type='regression')
     def test_mfa_auth_followed_by_delegation(self):
         sub_user_name_2 = self.generate_random_string(
             pattern=const.SUB_USER_PATTERN)
