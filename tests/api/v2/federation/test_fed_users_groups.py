@@ -184,9 +184,15 @@ class TestFedUserGroups(federation.TestBaseFederation):
         # check users in group
         fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
 
-        self.identity_admin_client.list_users_in_user_group_for_domain(
-            domain_id=self.domain_id, group_id=group_two.id
-        )
+        # Check for the defect CID-1521 that update to fed user does not
+        # remove group membership
+        contact_id = self.generate_random_string(
+            pattern='fed[\-]user[\-]contact[\-][\d]{12}')
+        update_user_object = requests.UserUpdate(contact_id=contact_id)
+        add_contact_resp = self.identity_admin_client.update_user(
+            user_id=fed_user_id,
+            request_object=update_user_object)
+        self.assertEqual(add_contact_resp.status_code, 200)
 
         # check group one has fed user id
         resp = self.identity_admin_client.list_users_in_user_group_for_domain(
