@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
+import static com.rackspace.idm.event.ApiEventPostingAdvice.DATA_UNAVAILABLE;
 
 public class SecuredAttributeSupport {
     private final Logger logger = LoggerFactory.getLogger(NewRelicApiEventListener.class);
@@ -35,7 +36,7 @@ public class SecuredAttributeSupport {
         String finalValue;
         if (shouldAttributeValueBeSecured(nrAttribute, value) || ((nrAttribute == NewRelicCustomAttributesEnum.CALLER_TOKEN
                 || nrAttribute == NewRelicCustomAttributesEnum.EFFECTIVE_CALLER_TOKEN)
-                && !ApiEventPostingAspect.DATA_UNAVAILABLE.equalsIgnoreCase(value))) {
+                && !DATA_UNAVAILABLE.equalsIgnoreCase(value))) {
             finalValue = secureAttributeValue(value);
         } else {
             finalValue = value;
@@ -45,7 +46,7 @@ public class SecuredAttributeSupport {
 
     private boolean shouldAttributeValueBeSecured(NewRelicCustomAttributesEnum nrAttribute, String value) {
         return nrAttribute.amIInListWithWildcardSupport(securedAttributeList)
-                && (value == null || !value.equals(ApiEventPostingAspect.DATA_UNAVAILABLE));
+                && (value == null || !value.equals(DATA_UNAVAILABLE));
     }
 
     public String secureAttributeValue(String value) {

@@ -2,7 +2,6 @@ package com.rackspace.idm.event;
 
 import com.google.common.collect.ImmutableMap;
 import com.newrelic.api.agent.NewRelic;
-import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.IdmVersion;
 import org.apache.commons.collections4.CollectionUtils;
@@ -27,6 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.rackspace.idm.event.NewRelicCustomAttributesEnum.*;
+import static com.rackspace.idm.event.ApiEventPostingAdvice.DATA_UNAVAILABLE;
 
 /**
  * A listener on API events that will augment the new relic transaction with additional data. This listener MUST process
@@ -109,11 +109,11 @@ public class NewRelicApiEventListener implements ApplicationListener<ApiEventSpr
         addAttributeIfEnabled(CALLER_TOKEN, ev.getCallerToken(), reportableAttributeSupport, securedAttributeSupport);
         addAttributeIfEnabled(CALLER_ID, ev.getCaller().getId(), reportableAttributeSupport, securedAttributeSupport);
         addAttributeIfEnabled(CALLER_USERNAME, ev.getCaller().getUsername(), reportableAttributeSupport, securedAttributeSupport);
-        addAttributeIfEnabled(CALLER_USER_TYPE, ev.getCaller().getUserType() != null ? ev.getCaller().getUserType().getRoleName() : ApiEventPostingAspect.DATA_UNAVAILABLE, reportableAttributeSupport, securedAttributeSupport);
+        addAttributeIfEnabled(CALLER_USER_TYPE, ev.getCaller().getUserType() != null ? ev.getCaller().getUserType().getRoleName() : DATA_UNAVAILABLE, reportableAttributeSupport, securedAttributeSupport);
         addAttributeIfEnabled(EFFECTIVE_CALLER_TOKEN, ev.getEffectiveCallerToken(), reportableAttributeSupport, securedAttributeSupport);
         addAttributeIfEnabled(EFFECTIVE_CALLER_ID, ev.getEffectiveCaller().getId(), reportableAttributeSupport, securedAttributeSupport);
         addAttributeIfEnabled(EFFECTIVE_CALLER_USERNAME, ev.getEffectiveCaller().getUsername(), reportableAttributeSupport, securedAttributeSupport);
-        addAttributeIfEnabled(EFFECTIVE_CALLER_USER_TYPE, ev.getEffectiveCaller().getUserType() != null ? ev.getEffectiveCaller().getUserType().getRoleName() : ApiEventPostingAspect.DATA_UNAVAILABLE, reportableAttributeSupport, securedAttributeSupport);
+        addAttributeIfEnabled(EFFECTIVE_CALLER_USER_TYPE, ev.getEffectiveCaller().getUserType() != null ? ev.getEffectiveCaller().getUserType().getRoleName() : DATA_UNAVAILABLE, reportableAttributeSupport, securedAttributeSupport);
     }
 
     private void postPublicEvent(PublicApiEvent ev) {
@@ -161,7 +161,7 @@ public class NewRelicApiEventListener implements ApplicationListener<ApiEventSpr
         }
 
         if (reportableAttributeSupport.shouldReportAttribute(IDM_VERSION)) {
-            String reportedVersion = ApiEventPostingAspect.DATA_UNAVAILABLE;
+            String reportedVersion = DATA_UNAVAILABLE;
             if (idmVersion != null && idmVersion.getVersion() != null) {
                 reportedVersion = idmVersion.getVersion().getValue();
             }

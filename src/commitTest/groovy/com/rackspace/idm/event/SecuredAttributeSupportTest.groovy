@@ -11,7 +11,7 @@ import java.security.InvalidKeyException
 import java.security.NoSuchAlgorithmException
 import java.security.SignatureException
 
-import static com.rackspace.idm.event.ApiEventPostingAspect.DATA_UNAVAILABLE
+import static com.rackspace.idm.event.ApiEventPostingAdvice.DATA_UNAVAILABLE
 
 class SecuredAttributeSupportTest extends Specification {
     private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1"
