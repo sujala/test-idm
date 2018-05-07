@@ -295,6 +295,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
+
     @Test
     public void listEndpointsForToken_withInvalidToken_returns404() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/tokens/" + "someBadToken" + "/endpoints");

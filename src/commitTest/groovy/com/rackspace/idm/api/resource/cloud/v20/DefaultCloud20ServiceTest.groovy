@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
-import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.*
@@ -4149,6 +4148,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
         mockJAXBObjectFactories(service)
         jaxbObjectFactories.getOpenStackIdentityV2Factory().createEndpoints(_) >> Mock(JAXBElement)
+        requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() >> impersonatedTokenEntity
 
         when:
         service.listEndpointsForToken(null, authToken, token, false)
@@ -4182,6 +4182,36 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         featureEnabled << [true, false]
+    }
+
+    def "listEndpointsForToken: Skip authorization checks if the token being used is the same token to list endpoints for token"() {
+        given:
+        def authToken = "authToken"
+        def token = "token"
+        def impersonatedTokenEntity = new UserScopeAccess()
+        impersonatedTokenEntity.setAccessTokenString(token)
+        requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() >> impersonatedTokenEntity
+
+        when: "token passed in url and impersonated token are same"
+        service.listEndpointsForToken(null, authToken, token, false)
+
+        then: "authorization service should skip the check for caller identity"
+        0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName());
+    }
+
+    def "listEndpointsForToken: Do not skip authorization checks if the token being used is not same token to list endpoints for token"() {
+        given:
+        def authToken = "authToken"
+        def token = "token"
+        def impersonatedTokenEntity = new UserScopeAccess()
+        impersonatedTokenEntity.setAccessTokenString("differentToken")
+        requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() >> impersonatedTokenEntity
+
+        when: "token passed in url and impersonated token are not same"
+        service.listEndpointsForToken(null, authToken, token, false)
+
+        then: "authorization service should not skip the check for caller identity"
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName());
     }
 
     def "getIdentityProviders: list provider using emailDomain query param"() {

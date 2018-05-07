@@ -3025,7 +3025,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
-            boolean sameToken = StringUtils.equals(authToken, tokenId);
+            // Impersonated tokens are replaced with a user token. grabbing the original caller Token for comparision
+            String callerToken = requestContextHolder.getRequestContext().getSecurityContext().getCallerToken().getAccessTokenString();
+
+            // Comparing caller Token (caller auth token) with tokenId passed in url
+            boolean sameToken = StringUtils.equals(callerToken, tokenId);
 
             // Skip authorization checks if the token being used is the same token to list endpoints for token.
             if (!sameToken) {
@@ -3069,6 +3073,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.exceptionResponse(ex);
         }
     }
+
 
 
     @Override
