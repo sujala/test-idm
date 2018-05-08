@@ -891,6 +891,44 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         0 * validator20.validateStringMaxLength("description", invalidDescription, 255)
         0 * delegationService.updateDelegationAgreement(_)
     }
+
+    def "Verify the maximum allowed number of delegates for the DA to not be exceeded"() {
+        given:
+        reloadableConfig.getDelegationMaxNumberOfDelegatesPerDa(_) >> 1
+        def domainId = RandomStringUtils.randomAlphabetic(10)
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = "rsId=" + it.id
+            it.domainId = domainId
+            it
+        }
+
+        def baseToken = Mock(BaseUserToken)
+        def tokenStr = "callerTokenStr"
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.id = "id"
+            it.domainId = domainId
+            it.principal = Mock(DelegationPrincipal)
+            it.principalDN = new DN(caller.uniqueId)
+            it.delegates = [new DN("rsId=1"), new DN("rsId=2")]
+            it
+        }
+
+        DelegateReference delegateReference = new EndUserDelegateReference("user")
+        def capturedException
+
+        when:
+        service.addDelegate(tokenStr, daEntity.id, delegateReference)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> baseToken
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegateByReference(_) >> caller
+        1 * domainService.doDomainsShareRcn(_, _) >> true
+        1 * exceptionHandler.exceptionResponse(_) >> { args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_BAD_REQUEST) }
+        IdmExceptionAssert.assertException(capturedException, BadRequestException, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED, IdmExceptionAssert.PATTERN_ALL)
+    }
 }
 
 
