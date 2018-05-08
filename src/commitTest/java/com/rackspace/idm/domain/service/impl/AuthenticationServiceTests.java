@@ -1,21 +1,27 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.AuthCredentials;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
+import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.Racker;
+import com.rackspace.idm.domain.entity.RackerCredentials;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
-import org.powermock.api.mockito.PowerMockito;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -78,34 +84,11 @@ public class AuthenticationServiceTests {
         authenticationService.setInputValidator(inputValidator);
     }
 
-    private UserScopeAccess getFakeUserScopeAccess() {
-        final UserScopeAccess usa = new UserScopeAccess();
-        usa.setAccessTokenString(tokenVal);
-        usa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        usa.setRefreshTokenString(refreshTokenVal);
-        usa.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        usa.setClientId(clientId);
-        usa.setUserRsId(uniqueId);
-        usa.setUniqueId("accessToken=12345,cn=TOKENS,o=org");
-        return usa;
-    }
-
     private ClientScopeAccess getFakeClientScopeAccess() {
         final ClientScopeAccess csa = new ClientScopeAccess();
         csa.setAccessTokenString(tokenVal);
         csa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         csa.setClientId(clientId);
-        return csa;
-    }
-
-    private RackerScopeAccess getFakeRackerScopeAcces() {
-        final RackerScopeAccess csa = new RackerScopeAccess();
-        csa.setAccessTokenString(tokenVal);
-        csa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        csa.setRefreshTokenString(refreshTokenVal);
-        csa.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        csa.setClientId(clientId);
-        csa.setRackerId(rackerId);
         return csa;
     }
 

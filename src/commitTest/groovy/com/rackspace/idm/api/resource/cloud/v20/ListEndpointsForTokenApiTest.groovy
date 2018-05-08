@@ -57,7 +57,7 @@ class ListEndpointsForTokenApiTest extends RootServiceTest {
         User user = entityFactory.createUser()
         userService.getUserByScopeAccess(_, _) >> user
         authorizationService.restrictTokenEndpoints(_) >> true
-
+        requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() >> entityFactory.createUserToken()
         when:
         service.listEndpointsForToken(headers, tokenId, tokenId, false)
 
@@ -74,7 +74,8 @@ class ListEndpointsForTokenApiTest extends RootServiceTest {
         def subjectUser = Mock(ProvisionedUserDelegate)
         scopeAccessService.getScopeAccessByAccessToken(subjectToken) >> sa
         userService.getUserByScopeAccess(_, false) >> subjectUser
-        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(callerToken) >> entityFactory.createUserToken()
+        requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() >> sa
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(callerToken) >> sa
 
         when:
         service.listEndpointsForToken(headers, callerToken, subjectToken, applyRcnRoles)

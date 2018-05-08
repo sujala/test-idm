@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2.delegation import delegation
@@ -68,7 +67,6 @@ class TestListEndpointsForDelegationToken(delegation.TestBaseDelegation):
         self.assertEqual(add_tenant_resp.status_code, 201)
         return responses.Tenant(add_tenant_resp.json())
 
-    @attr(type='regression')
     def test_list_endpoints_for_delegation_token(self):
 
         # Commented till CID-1439 is fixed...will need to add more checks once

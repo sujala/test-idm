@@ -168,6 +168,22 @@ class TestBaseFederation(base.TestBaseV2):
             users.append(user_resp.json()[const.USER][const.ID])
         return user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
 
+    def create_user_and_get_domain(self, auth_client=None, users=None):
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
+        input_data = {
+            'domain_id': domain_id
+        }
+        request_object = factory.get_add_user_request_object(
+            input_data=input_data)
+        if auth_client is None:
+            auth_client = self.identity_admin_client
+
+        user_resp = auth_client.add_user(request_object)
+        if users is not None:
+            users.append(user_resp.json()[const.USER][const.ID])
+        return user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
+
     def create_idp_with_certs(self, domain_id, issuer, auth_client=None):
 
         (pem_encoded_cert, cert_path, _, key_path,

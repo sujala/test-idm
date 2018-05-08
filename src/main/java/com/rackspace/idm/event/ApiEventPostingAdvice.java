@@ -17,7 +17,6 @@ import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +29,8 @@ import java.lang.reflect.Method;
 
 @Aspect
 @Component
-public class ApiEventPostingAspect {
-    private final Logger logger = LoggerFactory.getLogger(ApiEventPostingAspect.class);
+public class ApiEventPostingAdvice {
+    private final Logger logger = LoggerFactory.getLogger(ApiEventPostingAdvice.class);
 
     public static final String DATA_UNAVAILABLE = "<NotAvailable>";
 
@@ -44,26 +43,7 @@ public class ApiEventPostingAspect {
     @Autowired
     protected ApplicationEventPublisher applicationEventPublisher;
 
-    @Pointcut("execution(public * *(..))")
-    private void anyPublicOperation() {
-    }
-
-    /**
-     * Pointcut on all method calls on a Spring bean name ending in "Resource" - the IDM standard for classes that define
-     * API endpoints.
-     */
-    @Pointcut("anyPublicOperation() && bean(*Resource)")
-    private void webResourceMethod() {
-    }
-
-    /**
-     * Limits to Identity API calls identified by annotation
-     */
-    @Pointcut("webResourceMethod() && @annotation(com.rackspace.idm.event.IdentityApi)")
-    private void identityApiResourceMethod() {
-    }
-
-    @After("identityApiResourceMethod()")
+    @After("com.rackspace.idm.event.IdentityPointcuts.identityApiResourceMethod()")
     public void postEvent(JoinPoint joinPoint) {
         // Short circuit via flag
         if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled()) {
@@ -83,7 +63,7 @@ public class ApiEventPostingAspect {
      * @param joinPoint
      * @param ex
      */
-    @AfterThrowing(pointcut = "identityApiResourceMethod()", throwing = "ex")
+    @AfterThrowing(pointcut = "com.rackspace.idm.event.IdentityPointcuts.identityApiResourceMethod()", throwing = "ex")
     public void postEventWithException(JoinPoint joinPoint, Throwable ex) {
         // Short circuit via flag
         if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled()) {
@@ -304,4 +284,5 @@ public class ApiEventPostingAspect {
         }
         return new Caller(effectiveCallerUserId, effectiveCallerUserName, effectiveCallerUserType);
     }
+
 }

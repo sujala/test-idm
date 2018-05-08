@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 import copy
-
 import ddt
 
 from tests.api.v2 import base
@@ -129,6 +129,7 @@ class TestUpdateTenant(base.TestBaseV2):
                           msg="Not found {0}".format(tenant_type.lower()))
 
     @ddt.file_data('data_invalid_tenant_types.json')
+    @attr('skip_at_gate')
     def test_update_invalid_tenant_types(self, test_data):
         tenant_types = test_data.get('tenant_types')
         error_message = test_data.get('error_message')
@@ -380,6 +381,7 @@ class TestUpdateTenant(base.TestBaseV2):
             auth_one_call_user_with_password.access.token.tenant.name,
             one_call_tenant.name)
 
+    @attr('skip_at_gate')
     def test_update_tenant_with_non_existing_tenant_type(self):
 
         tenant_name = tenant_id = self.generate_random_string(

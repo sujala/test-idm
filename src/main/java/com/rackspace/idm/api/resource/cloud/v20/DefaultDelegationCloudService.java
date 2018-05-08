@@ -40,6 +40,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     public static final String ERROR_MSG_PRINCIPAL_NOT_FOUND = "The specified principal was not found or you are not authorized to use this principal";
     public static final String ERROR_MSG_DELEGATE_NOT_FOUND = "The specified delegate was not found or you are not authorized to use this delegate";
+    public static final String ERROR_MSG_DELEGATE_MAX_EXCEEDED = "The maximum number of delegates was exceeded or you are not authorized to use this delegate";
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -348,6 +349,10 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             // Verify delegate is valid for the specified agreement
             SimpleDelegateValidator delegateLookupValidator = new SimpleDelegateValidator(delegateReference);
             delegateLookupValidator.verifyDelegateCanBeAddedToAgreement(delegationAgreement);
+
+            // Verify max number of delegates has not been exceeded
+            NumberOfDelegatesValidator numberOfDelegatesValidator = new NumberOfDelegatesValidator(identityConfig);
+            numberOfDelegatesValidator.verifyMaxNumberOfDelegatesIsNotExceeded(delegationAgreement);
 
             if (delegationAgreement.isExplicitDelegate(delegateLookupValidator.delegate)) {
                 throw new DuplicateException("Already a delegate", ErrorCodes.ERROR_CODE_DELEGATE_ALREADY_EXISTS);
@@ -734,6 +739,20 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             // Delegate must be within same domain as agreement or same RCN
             if (delegate == null || !domainService.doDomainsShareRcn(delegate.getDomainId(), domainId)) {
                 throw new NotFoundException(ERROR_MSG_DELEGATE_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+        }
+    }
+
+    private class NumberOfDelegatesValidator {
+        IdentityConfig identityConfig;
+
+        public NumberOfDelegatesValidator(IdentityConfig identityConfig) {
+            this.identityConfig = identityConfig;
+        }
+
+        public void verifyMaxNumberOfDelegatesIsNotExceeded(com.rackspace.idm.domain.entity.DelegationAgreement da) {
+            if (da != null && da.getDelegates() != null && da.getDelegates().size() >= identityConfig.getReloadableConfig().getDelegationMaxNumberOfDelegatesPerDa()) {
+                throw new BadRequestException(ERROR_MSG_DELEGATE_MAX_EXCEEDED, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED);
             }
         }
     }

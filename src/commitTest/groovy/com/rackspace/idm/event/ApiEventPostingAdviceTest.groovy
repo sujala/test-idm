@@ -13,20 +13,20 @@ import org.slf4j.MDC
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
-import static com.rackspace.idm.event.ApiEventPostingAspect.DATA_UNAVAILABLE
+import static com.rackspace.idm.event.ApiEventPostingAdvice.DATA_UNAVAILABLE
 
-class ApiEventPostingAspectTest extends RootServiceTest {
-    ApiEventPostingAspect aspect
+class ApiEventPostingAdviceTest extends RootServiceTest {
+    ApiEventPostingAdvice advice
     JoinPoint joinPoint
     MethodSignature signature
     ContainerRequest containerRequest = Mock(ContainerRequest)
 
     def setup() {
-        aspect = new ApiEventPostingAspect()
+        advice = new ApiEventPostingAdvice()
 
-        mockIdentityConfig(aspect)
-        mockRequestContextHolder(aspect)
-        mockApplicationEventPublisher(aspect)
+        mockIdentityConfig(advice)
+        mockRequestContextHolder(advice)
+        mockApplicationEventPublisher(advice)
 
         joinPoint = Mock(JoinPoint)
         signature = Mock(MethodSignature)
@@ -37,7 +37,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
 
     def "Does not publish if disabled"() {
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         0 * signature.getMethod()
@@ -54,7 +54,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         signature.getMethod() >> TestClass.getMethod(TestClass.AUTH_METHOD)
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * reloadableConfig.isFeatureSendNewRelicCustomDataEnabled() >> true
@@ -70,7 +70,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         prepCommonEventData()
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -88,7 +88,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         authenticationContext.getUsername() >> userName
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -112,7 +112,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         containerRequest.getPath() >> new URI("http://request")
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -126,7 +126,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         prepCommonEventData(TestClass.PRIVATE_METHOD)
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -152,7 +152,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         prepCommonEventData(TestClass.PRIVATE_METHOD, eventId, remoteIp, forwardedForIp, nodeName)
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -182,7 +182,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
             it
         }
 
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then: "Populated data from effective caller as-is"
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -213,7 +213,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         }
 
         when: "SecContext effectiveCaller is populated"
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then: "Populated with effective caller data"
         securityContext.getEffectiveCaller() >> new User().with {
@@ -230,7 +230,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         }
 
         when: "SecContext effectiveCaller is not populated"
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then: "Falls back to sec context effectiveCallerToken"
         securityContext.getEffectiveCaller() >> null
@@ -257,7 +257,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         }
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -294,7 +294,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
 
         when: "caller token matches effective caller"
         securityContext.getCallerToken() >> securityContext.getEffectiveCallerToken()
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then: "Caller data populated with effectiveCaller"
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -336,7 +336,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         }
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then: "only userId populated"
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -364,7 +364,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
             it
         }
 
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -389,7 +389,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         securityContext.getCallerToken() >> null
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * containerRequest.getHeaderValue(Constants.X_AUTH_TOKEN) >> rawToken
@@ -415,7 +415,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         containerRequest.getPath() >> new URI("http://request")
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * applicationEventPublisher.publishEvent(_) >> { args ->
@@ -430,7 +430,7 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         prepCommonEventData(TestClass.PUBLIC_METHOD, eventId, remoteIp, forwardedForIp, nodeName)
 
         when:
-        aspect.postEvent(joinPoint)
+        advice.postEvent(joinPoint)
 
         then:
         1 * reloadableConfig.isFeatureSendNewRelicCustomDataEnabled() >> true
@@ -479,13 +479,13 @@ class ApiEventPostingAspectTest extends RootServiceTest {
         static String PRIVATE_METHOD = "privateApiMethod"
         static String PUBLIC_METHOD = "publicApiMethod"
 
-        @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+        @IdentityApi(apiResourceType = ApiResourceType.AUTH, name = "Test Call")
         void authApiMethod() {}
 
-        @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+        @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "Test Call")
         void privateApiMethod() {}
 
-        @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+        @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "Test Call")
         void publicApiMethod() {}
     }
 }

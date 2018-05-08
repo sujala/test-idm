@@ -98,6 +98,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
         self.assertSchema(response=get_role_resp, json_schema=cp_role_schema)
 
     @ddt.file_data('data_add_role_with_type_neg.json')
+    @attr('skip_at_gate')
     def test_add_role_w_type_neg_cases(self, test_data):
         add_input = test_data['additional_input']
         add_role_obj = factory.get_add_role_request_object(**add_input)

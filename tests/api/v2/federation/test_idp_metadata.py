@@ -36,22 +36,15 @@ class TestIDPMetadata(federation.TestBaseFederation):
         cls.user_admin_client.default_headers[
             const.CONTENT_TYPE] = 'application/xml'
 
-        # user manage client
-        cls.idp_user_manage_client = cls.generate_client(
-            parent_client=cls.user_admin_client,
-            additional_input_data={'domain_id': cls.domain_id,
-                                   'is_user_manager': True})
-
         # user default client
         cls.idp_user_default_client = cls.generate_client(
-            parent_client=cls.idp_user_manage_client,
+            parent_client=cls.user_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
         cls.idp_user_default_client.serialize_format = 'xml'
         cls.idp_user_default_client.default_headers[
             const.CONTENT_TYPE] = 'application/xml'
 
         cls.domain_ids = []
-
         cls.domain_ids.append(cls.domain_id)
 
     def setUp(self):
@@ -235,12 +228,19 @@ class TestIDPMetadata(federation.TestBaseFederation):
         super(TestIDPMetadata, cls).tearDownClass()
         resp = cls.user_admin_client.list_users()
         users = resp.json()[const.USERS]
-        user_ids = [user[const.ID] for user in users]
+        # Listing all users except user-admin
+        user_ids = [user[const.ID] for user in users if user[
+            const.ID] != cls.user_admin_client.default_headers[
+            const.X_USER_ID]]
 
         for user_id in user_ids:
             resp = cls.identity_admin_client.delete_user(user_id=user_id)
             assert resp.status_code == 204, \
                 'User with ID {0} failed to delete'.format(user_id)
+        resp = cls.identity_admin_client.delete_user(
+            user_id=cls.user_admin_client.default_headers[const.X_USER_ID])
+        assert resp.status_code == 204, \
+            'User with ID {0} failed to delete'.format(user_id)
 
         for domain_id in cls.domain_ids:
             disable_domain_req = requests.Domain(enabled=False)

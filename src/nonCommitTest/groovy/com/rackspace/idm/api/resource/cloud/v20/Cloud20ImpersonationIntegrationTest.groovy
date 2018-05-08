@@ -29,6 +29,7 @@ import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.EndpointList
 import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -1284,6 +1285,95 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         where:
         preventAccess << [true, false]
+    }
+
+
+    def "impersonation token should be able to list exact same endpoints as original / impersonated user would expect"() {
+        given:
+        def domainId = utils.createDomain()
+        def nastTenantId = utils.getNastTenant(domainId)
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute", testUtils.getRandomUUID("http://public/"), "cloudServers", true, "ORD").with {
+            it.global = true
+            it
+        }
+        endpointTemplate = utils.createAndUpdateEndpointTemplate(endpointTemplate, endpointTemplateId)
+        cloud20.addEndpoint(utils.getServiceAdminToken(), nastTenantId, endpointTemplate, MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_JSON_TYPE)
+
+        // Generate Impersonation token for Racker and identity admin
+        def userToken = utils.getToken(userAdmin.username)
+        def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
+        def rackerImpersonationToken = utils.impersonateWithToken(rackerToken, userAdmin).token.id
+        def identityAdminImpersonationToken = utils.impersonateWithToken(utils.getIdentityAdminToken(), userAdmin).token.id
+
+        when: "token in url and auth token are same (valid tokens)"
+        def userResponse = cloud20.listEndpointsForToken(userToken, userToken)
+        def rackerResponse = cloud20.listEndpointsForToken(rackerImpersonationToken, rackerImpersonationToken)
+        def identityAdminResponse = cloud20.listEndpointsForToken(identityAdminImpersonationToken, identityAdminImpersonationToken)
+
+        then: "200 status code should be returned"
+        userResponse.status == HttpStatus.SC_OK
+        rackerResponse.status == HttpStatus.SC_OK
+        identityAdminResponse.status == HttpStatus.SC_OK
+
+        // Retrieving response body as entity
+        def originalUserEndpoints  = userResponse.getEntity(EndpointList).value.endpoint
+        def rackerImpersonationEndpoints = rackerResponse.getEntity(EndpointList).value.endpoint
+        def idmAdminImpersonationEndpoints = identityAdminResponse.getEntity(EndpointList).value.endpoint
+
+        and: "response body for impersonator token should have same number of endpoints as original user"
+        rackerImpersonationEndpoints.size == originalUserEndpoints.size
+        idmAdminImpersonationEndpoints.size == originalUserEndpoints.size
+
+        and: "Response body for impersonator token should have exact same endpoints as original user"
+        def originalUserEndpointList =[]
+        for( endpoint in originalUserEndpoints){
+            originalUserEndpointList.add(endpoint.id)
+        }
+
+        def rackerImpersonationEndpointsList =[]
+        for( endpoint in rackerImpersonationEndpoints){
+            rackerImpersonationEndpointsList.add(endpoint.id)
+        }
+
+        def adminImpersonationEndpointsList =[]
+        for( endpoint in rackerImpersonationEndpoints){
+            adminImpersonationEndpointsList.add(endpoint.id)
+        }
+
+        def intersectionWithRackerImpersonator = originalUserEndpointList.intersect(rackerImpersonationEndpointsList)
+        def intersectionWithIdentityAdminImpersonator = originalUserEndpointList.intersect(adminImpersonationEndpointsList)
+
+        // Everything in original user Endpoints should intersect with impersonated user
+        intersectionWithRackerImpersonator.size() == originalUserEndpointList.size()
+        intersectionWithIdentityAdminImpersonator.size() == originalUserEndpointList.size()
+
+        and: "There should be zero difference / delta between response in impersonation and original user endpoints"
+        def deltaWithRackerImpersonator = originalUserEndpointList.plus(rackerImpersonationEndpointsList)
+        deltaWithRackerImpersonator.removeAll(intersectionWithRackerImpersonator)
+        deltaWithRackerImpersonator.size() == 0 // zero difference is expected if lists are same
+
+        def deltaWithAdminImpersonator = originalUserEndpointList.plus(adminImpersonationEndpointsList)
+        deltaWithAdminImpersonator.removeAll(intersectionWithIdentityAdminImpersonator)
+        deltaWithAdminImpersonator.size() == 0 // zero difference is expected if lists are same
+
+        when: "token in url and auth token are not same (but valid)"
+        userResponse = cloud20.listEndpointsForToken(identityAdminImpersonationToken, userToken)
+        rackerResponse = cloud20.listEndpointsForToken(rackerImpersonationToken, identityAdminImpersonationToken)
+        identityAdminResponse = cloud20.listEndpointsForToken(identityAdminImpersonationToken, rackerImpersonationToken)
+
+        then: "403 status code should be returned"
+        userResponse.status == HttpStatus.SC_FORBIDDEN
+        rackerResponse.status == HttpStatus.SC_FORBIDDEN
+        identityAdminResponse.status == HttpStatus.SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenant(nastTenantId)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
     }
 
     /**

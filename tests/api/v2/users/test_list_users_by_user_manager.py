@@ -45,62 +45,43 @@ class TestListUsersByUserManager(base.TestBaseV2):
         cls.domain_ids.append(domain_id)
         cls.user_admin_clients.append(cls.user_admin_client2)
 
-        sub_user_name = cls.generate_random_string(
-            pattern=const.SUB_USER_PATTERN)
-        cls.user_client = cls.generate_client(
-            parent_client=cls.user_admin_client,
-            additional_input_data={
-                'domain_id': cls.DOMAIN_ID_TEST,
-                'user_name': sub_user_name})
-        cls.domain_ids.append(cls.DOMAIN_ID_TEST)
-
         # create user manage client these can move to helper func
         cls.user_manager_name = cls.generate_random_string(
             pattern=const.USER_MANAGER_NAME_PATTERN)
-        domain_id = cls.generate_random_string(pattern=const.NUMBERS_PATTERN)
         cls.email = 'test@test.com'
         cls.user_manager_client = cls.generate_client(
             parent_client=cls.user_admin_client,
             additional_input_data={
-                'domain_id': domain_id,
                 'user_name': cls.user_manager_name,
                 'email': cls.email,
                 'is_user_manager': True})
-        cls.domain_ids.append(domain_id)
         cls.user_manager_clients.append(cls.user_manager_client)
 
         # create user manage client these can move to helper func
         cls.user_manager_name2 = cls.generate_random_string(
             pattern=const.USER_MANAGER_NAME_PATTERN)
-        domain_id = cls.generate_random_string(pattern=const.NUMBERS_PATTERN)
         cls.user_manager_client2 = cls.generate_client(
             parent_client=cls.user_admin_client,
             additional_input_data={
-                'domain_id': domain_id,
                 'user_name': cls.user_manager_name2,
                 'email': cls.email,
                 'is_user_manager': True})
-        cls.domain_ids.append(domain_id)
         cls.user_manager_clients.append(cls.user_manager_client2)
 
         # create user manage client these can move to helper func
         cls.user_manager_name3 = cls.generate_random_string(
             pattern=const.USER_MANAGER_NAME_PATTERN)
-        domain_id = cls.generate_random_string(pattern=const.NUMBERS_PATTERN)
         cls.email3 = 'test3@test.com'
         cls.user_manager_client3 = cls.generate_client(
             parent_client=cls.user_admin_client2,
             additional_input_data={
-                'domain_id': domain_id,
                 'user_name': cls.user_manager_name3,
                 'email': cls.email3,
                 'is_user_manager': True})
-        cls.domain_ids.append(domain_id)
         cls.user_manager_clients.append(cls.user_manager_client3)
 
     def setUp(self):
         super(TestListUsersByUserManager, self).setUp()
-        self.user_id = []
 
     def test_list_users_by_user_manager(self):
         """List users must not return any user-managers except the caller """
@@ -187,20 +168,14 @@ class TestListUsersByUserManager(base.TestBaseV2):
                          str(resp3.json()[const.USERS]))
 
     def tearDown(self):
-        for id_ in self.domain_ids:
-            self.identity_admin_client.delete_tenant(tenant_id=id_)
         super(TestListUsersByUserManager, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
-        cls.identity_admin_client.delete_user(
-            cls.user_client.default_headers[const.X_USER_ID])
         for client in cls.user_manager_clients:
             cls.identity_admin_client.delete_user(
                 client.default_headers[const.X_USER_ID])
         for client in cls.user_admin_clients:
             cls.delete_client(client=client,
                               parent_client=cls.identity_admin_client)
-        # TODO: need to add delete_domain call available in other PR
-        # update when it's merged
         super(TestListUsersByUserManager, cls).tearDownClass()

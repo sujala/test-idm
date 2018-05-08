@@ -98,6 +98,7 @@ class TestRoleApiCalls(base.TestBaseV2):
 
     @ddt.file_data('data_add_role.json')
     @api_base.skip_if_no_service_admin_available
+    @attr('skip_at_gate')
     def test_add_role_w_new_service_by_identity_admin(self, test_data):
         """Add Role with new service, Get Role
         Using data read from json file
@@ -139,6 +140,7 @@ class TestRoleApiCalls(base.TestBaseV2):
     @ddt.data('{}', '{"limit": 5}', '{"marker": 10}',
               '{"limit": 10, "marker": 5}')
     @api_base.skip_if_no_service_admin_available
+    @attr('skip_at_gate')
     def test_list_roles_api_w_service_admin(self, test_data):
         """List Roles with service admin"""
         option = json.loads(test_data)
@@ -226,6 +228,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         for user in new_user_ids:
             self.assertIn(user, str(resp.json()[const.USERS]))
 
+    @attr('skip_at_gate')
     def test_delete_identity_classification_role_from_user(self):
 
         user_id = self.create_admin_user()
@@ -236,6 +239,7 @@ class TestRoleApiCalls(base.TestBaseV2):
             delete_role_resp.json()[const.FORBIDDEN][const.MESSAGE],
             "Cannot delete identity user-type roles from a user.")
 
+    @attr('skip_at_gate')
     def test_delete_identity_classification_role(self):
 
         delete_role_resp = self.identity_admin_client.delete_role(

@@ -25,11 +25,6 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestTenantLevelRolesForFederation, cls).setUpClass()
-        dom_id = func_helper.generate_randomized_domain_id(
-            client=cls.identity_admin_client)
-        cls.idp_ua_client = cls.generate_client(
-            parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': dom_id})
         cls.test_email = 'random@rackspace.com'
 
     def setUp(self):
@@ -173,16 +168,10 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
 
     @base.base.log_tearDown_error
     def tearDown(self):
-        # Delete all providers created in the tests
-        for id_ in self.provider_ids:
-            resp = self.idp_ua_client.delete_idp(idp_id=id_)
-            self.assertEqual(
-                resp.status_code, 204,
-                msg='IDP with ID {0} failed to delete'.format(id_))
         for user_id in self.users:
             resp = self.identity_admin_client.delete_user(user_id=user_id)
-            self.assertEqual(
-                resp.status_code, 204,
+            self.assertIn(
+                resp.status_code, [204, 404],
                 msg='User with ID {0} failed to delete'.format(user_id))
         for role_id in self.roles:
             resp = self.identity_admin_client.delete_role(role_id=role_id)
@@ -194,7 +183,4 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
 
     @classmethod
     def tearDownClass(cls):
-        # Delete all users created in the setUpClass
-        cls.delete_client(client=cls.idp_ua_client,
-                          parent_client=cls.identity_admin_client)
         super(TestTenantLevelRolesForFederation, cls).tearDownClass()

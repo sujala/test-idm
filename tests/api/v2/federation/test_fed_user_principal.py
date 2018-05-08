@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 from munch import Munch
+from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2.federation import federation
@@ -63,6 +64,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             'domain was not created successfully')
         return domain_id
 
+    @attr(type='regression')
     @ddt.data(['xml', False, False], ['formEncode', True, False],
               ['xml', False, True], ['formEncode', True, True])
     @ddt.unpack
@@ -100,6 +102,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
 
         self.validate_da_crd(client=fed_client, da_req=da_req)
 
+    @attr(type='regression')
     @ddt.data(['xml', False, False], ['formEncode', True, False],
               ['xml', False, True], ['formEncode', True, True])
     @ddt.unpack

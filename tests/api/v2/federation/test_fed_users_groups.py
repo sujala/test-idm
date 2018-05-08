@@ -34,10 +34,6 @@ class TestFedUserGroups(federation.TestBaseFederation):
         cls.user_admin_client.default_headers[
             const.CONTENT_TYPE] = 'application/xml'
 
-        cls.domain_ids = []
-
-        cls.domain_ids.append(cls.domain_id)
-
     def setUp(self):
         super(TestFedUserGroups, self).setUp()
         # get tenant access role id
@@ -45,7 +41,6 @@ class TestFedUserGroups(federation.TestBaseFederation):
             role_name=const.TENANT_ACCESS_ROLE_NAME)
         self.tenant_access_role_id = get_role_resp.json()[const.ROLES][0][
             const.ID]
-        self.users = []
         self.role_ids = []
         self.tenant_ids = []
         self.group_ids = []
@@ -349,9 +344,20 @@ class TestFedUserGroups(federation.TestBaseFederation):
 
     @base.base.log_tearDown_error
     def tearDown(self):
-        for user_id in self.users:
-            self.identity_admin_client.delete_user(user_id=user_id)
-        self.delete_client(self.user_admin_client)
+        resp = self.identity_admin_client.list_users_in_domain(
+            domain_id=self.domain_id)
+        users = resp.json()[const.USERS]
+        # listing only non user-admin users, to delete those before
+        # user-admin is deleted
+        user_ids = [user[const.ID] for user in users if user[
+            const.ID] != self.user_admin_client.default_headers[
+            const.X_USER_ID]]
+
+        for user_id in user_ids:
+            resp = self.identity_admin_client.delete_user(user_id=user_id)
+            assert resp.status_code == 204, \
+                'User with ID {0} failed to delete'.format(user_id)
+
         for group_id, domain_id in self.group_ids:
             resp = self.identity_admin_client.delete_user_group_from_domain(
                 group_id=group_id, domain_id=domain_id)
@@ -359,6 +365,7 @@ class TestFedUserGroups(federation.TestBaseFederation):
                 resp.status_code, 204,
                 msg='User group with ID {0} failed to delete'.format(
                     group_id))
+        self.delete_client(self.user_admin_client)
         for role_id in self.role_ids:
             resp = self.identity_admin_client.delete_role(role_id=role_id)
             self.assertEqual(
@@ -377,23 +384,5 @@ class TestFedUserGroups(federation.TestBaseFederation):
         super(TestFedUserGroups, self).tearDown()
 
     @classmethod
-    @base.base.log_tearDown_error
     def tearDownClass(cls):
-        resp = cls.identity_admin_client.list_users_in_domain(
-            domain_id=cls.domain_id)
-        users = resp.json()[const.USERS]
-        user_ids = [user[const.ID] for user in users]
-
-        for user_id in user_ids:
-            resp = cls.identity_admin_client.delete_user(user_id=user_id)
-            assert resp.status_code == 204, \
-                'User with ID {0} failed to delete'.format(user_id)
-
-        disable_domain_req = requests.Domain(enabled=False)
-        cls.identity_admin_client.update_domain(
-            domain_id=cls.domain_id, request_object=disable_domain_req)
-        resp = cls.identity_admin_client.delete_domain(cls.domain_id)
-        assert resp.status_code == 204, \
-            'Domain with ID {0} failed to delete'.format(cls.domain_id)
-
         super(TestFedUserGroups, cls).tearDownClass()

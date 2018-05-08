@@ -44,7 +44,6 @@ public class TokenServiceTests {
     String useremail = "someuser@example.com";
     String tokenVal = "asdf1234";
     String requestorToken = "requestortoken5678";
-    String refreshTokenVal = "somerefreshtoken1234";
     int expireInSeconds = 3600;
     String rackerId = "rackerId";
     String uniqueId = "uniqueId";
@@ -192,8 +191,6 @@ public class TokenServiceTests {
         final UserScopeAccess usa = new UserScopeAccess();
         usa.setAccessTokenString(tokenVal);
         usa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        usa.setRefreshTokenString(refreshTokenVal);
-        usa.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
         usa.setClientId(clientId);
         usa.setClientRCN(customerId);
         return usa;

@@ -11,8 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Applications;
-import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientSecret;
 
@@ -175,19 +173,6 @@ public class ApplicationServiceTests {
     private Application getFakeClient() {
         Application client = new Application(clientId, name);
         return client;
-    }
-
-    private List<ClientGroup> getFakeClientGroupList() {
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-        groups.add(getFakeClientGroup());
-        return groups;
-    }
-
-    private ClientGroup getFakeClientGroup() {
-        ClientGroup group = new ClientGroup(clientId, customerId, groupName,
-            groupType);
-        group.setUniqueId(groupDN);
-        return group;
     }
 
     private User getFakeUser() {

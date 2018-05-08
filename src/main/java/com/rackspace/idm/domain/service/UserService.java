@@ -86,8 +86,6 @@ public interface UserService {
      */
     User getUserByTenantId(String tenantId);
 
-    Applications getUserApplications(User user);
-    
     User loadUser(String userId);
 
     BaseUser getUserByScopeAccess(ScopeAccess scopeAccess, boolean checkUserDisabled);

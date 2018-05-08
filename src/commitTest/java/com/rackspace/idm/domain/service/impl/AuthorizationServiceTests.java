@@ -4,22 +4,18 @@ import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import junit.framework.Assert;
 import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
 
-import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
 public class AuthorizationServiceTests {
@@ -42,10 +38,6 @@ public class AuthorizationServiceTests {
     String username = "username";
 
     String permissionId = "Permission";
-
-    ClientGroup admin;
-
-    String adminGroupName = "Idm Admin";
 
     RackerScopeAccess trustedToken;
     ClientScopeAccess authorizedClientToken;
@@ -111,12 +103,6 @@ public class AuthorizationServiceTests {
 
     private void setUpObjects() {
         
-        admin = new ClientGroup();
-        admin.setUniqueId(uniqueId);
-        admin.setName(adminGroupName);
-        admin.setClientId(idmClientId);
-        admin.setCustomerId(customerId);
-
         trustedToken = new RackerScopeAccess();
         trustedToken.setRackerId(rackerId);
 

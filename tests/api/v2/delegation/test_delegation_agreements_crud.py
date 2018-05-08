@@ -18,10 +18,12 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
         cls.user_admin_2_id = cls.user_admin_client_2.default_headers[
             const.X_USER_ID]
 
+    @attr(type='regression')
     def test_delegation_agreement_crud(self):
         # assert that the subAgreements attribute is false
         self.validate_delegation_agreements_crud(False)
 
+    @attr(type='regression')
     def test_delegation_agreement_crud_with_sub_agreements(self):
         # assert that the subAgreements attribute is true
         self.validate_delegation_agreements_crud(True)

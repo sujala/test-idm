@@ -1,26 +1,20 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.EndPoints;
-import com.unboundid.ldap.sdk.*;
-import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
+import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPInterface;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * * These tests should be migrated to LdapRepositoryTest and LdapEndpointRepositoryTest depending on whether the test
@@ -38,7 +32,6 @@ public class LdapEndpointRepositoryDepTest extends InMemoryLdapIntegrationTest {
     @InjectMocks
     LdapEndpointRepository ldapEndpointRepository = new LdapEndpointRepository();
     LDAPInterface ldapInterface;
-    EndPoints endPoints;
     @Mock
     LdapConnectionPools connPools = mock(LdapConnectionPools.class);
     @Mock
@@ -47,16 +40,6 @@ public class LdapEndpointRepositoryDepTest extends InMemoryLdapIntegrationTest {
     @Before
     public void setUp() throws Exception {
         ldapInterface = mock(LDAPInterface.class);
-
-        //setup fields
-        endPoints = new EndPoints();
-        endPoints.setMossoId(1);
-        endPoints.setNastId("nastId");
-        endPoints.setUserDN("userDn");
-        endPoints.setUsername("username");
-        int i = endPoints.hashCode();
-        boolean equals = endPoints.equals(endPoints);
-        String s = endPoints.toString();
     }
 
     @Test

@@ -34,7 +34,7 @@ public class CloudUserGroupResource {
     @Autowired
     private UserGroupCloudService userGroupCloudService;
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Add user group")
     @POST
     public Response addGroup(
             @Context HttpHeaders httpHeaders,
@@ -47,7 +47,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.addGroup(uriInfo, authToken, group);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 List user groups")
     @GET
     public Response getGroups(
             @Context HttpHeaders httpHeaders,
@@ -58,7 +58,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.listGroupsForDomain(authToken, domainId, new UserGroupSearchParams(name, userId));
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Get user group")
     @GET
     @Path("/{groupId}")
     public Response getGroupById(
@@ -69,7 +69,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.getGroupByIdForDomain(authToken, groupId, domainId);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Update user group")
     @PUT
     @Path("/{groupId}")
     public Response updateGroup(
@@ -83,7 +83,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.updateGroup(authToken, group);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Delete user group")
     @DELETE
     @Path("/{groupId}")
     public Response deleteGroupById(
@@ -94,7 +94,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.deleteGroup(authToken, domainId, groupId);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 List users in user group")
     @GET
     @Path("/{groupId}/users")
     public Response getUsersInGroup(
@@ -108,7 +108,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.getUsersInGroup(uriInfo, authToken, domainId, groupId, new UserSearchCriteria(new PaginationParams(validateMarker(marker), validateLimit(limit))));
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Add user to user group")
     @PUT
     @Path("/{groupId}/users/{userId}")
     public Response addUserToGroup(
@@ -120,7 +120,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.addUserToGroup(authToken, domainId, groupId, userId);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Remove user from user group")
     @DELETE
     @Path("/{groupId}/users/{userId}")
     public Response removeUserFromGroup(
@@ -132,7 +132,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.removeUserFromGroup(authToken, domainId, groupId, userId);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Grant domain role to user group")
     @PUT
     @Path("/{groupId}/roles/{roleId}")
     public Response grantRoleToGroup(
@@ -150,7 +150,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.grantRoleToGroup(authToken, domainId, groupId, roleAssignment);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Grant roles to user group")
     @PUT
     @Path("/{groupId}/roles")
     public Response grantRolesToGroup(
@@ -162,7 +162,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.grantRolesToGroup(authToken, domainId, groupId, roleAssignments);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Grant role on tenant to user group")
     @PUT
     @Path("/{groupId}/roles/{roleId}/tenants/{tenantId}")
     public Response grantRoleOnTenantOnGroup(
@@ -175,7 +175,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.grantRoleOnTenantToGroup(authToken, domainId, groupId, roleId, tenantId);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Remove role on tenant from user group")
     @DELETE
     @Path("/{groupId}/roles/{roleId}/tenants/{tenantId}")
     public Response revokeRoleFromTenantOnGroup(
@@ -188,7 +188,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.revokeRoleOnTenantToGroup(authToken, domainId, groupId, roleId, tenantId);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Remove role from user group")
     @DELETE
     @Path("/{groupId}/roles/{roleId}")
     public Response revokeRoleFromGroup(
@@ -200,7 +200,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.revokeRoleFromGroup(authToken, domainId, groupId, roleId);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 List roles on user group")
     @GET
     @Path("/{groupId}/roles")
     public Response getRolesOnGroup(
@@ -214,7 +214,7 @@ public class CloudUserGroupResource {
         return userGroupCloudService.listRoleAssignmentsOnGroup(uriInfo, authToken, domainId, groupId, new UserGroupRoleSearchParams(new PaginationParams(validateMarker(marker), validateLimit(limit))));
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Get role on user group")
     @GET
     @Path("/{groupId}/roles/{roleId}")
     public Response getRoleOnGroup(

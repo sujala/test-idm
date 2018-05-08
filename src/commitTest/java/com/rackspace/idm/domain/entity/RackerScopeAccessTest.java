@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,50 +53,10 @@ public class RackerScopeAccessTest {
         assertThat("boolean", result, equalTo(false));
     }
 
-
-    @Test
-    public void isRefreshTokenExpired_RefreshTokenStringIsBlank_returnsTrue() throws Exception {
-        rackerScopeAccess.setRefreshTokenString("");
-        boolean result = rackerScopeAccess.isRefreshTokenExpired(new DateTime());
-        assertThat("boolean", result, equalTo(true));
-    }
-
-    @Test
-    public void isRefreshTokenExpired_RefreshTokenExpIsNull_returnsTrue() throws Exception {
-        rackerScopeAccess.setRefreshTokenString("notBlank");
-        rackerScopeAccess.setRefreshTokenExp(null);
-        boolean result = rackerScopeAccess.isRefreshTokenExpired(new DateTime());
-        assertThat("boolean", result, equalTo(true));
-    }
-
-    @Test
-    public void isRefreshTokenExpired_RefreshTokenExpIsBeforeTime_returnsTrue() throws Exception {
-        rackerScopeAccess.setRefreshTokenString("notBlank");
-        rackerScopeAccess.setRefreshTokenExp(new DateTime().minusDays(1).toDate());
-        boolean result = rackerScopeAccess.isRefreshTokenExpired(new DateTime());
-        assertThat("boolean", result, equalTo(true));
-    }
-
-    @Test
-    public void isRefreshTokenExpired_RefreshTokenExpIsNotBeforeTime_returnsFalse() throws Exception {
-        rackerScopeAccess.setRefreshTokenString("notBlank");
-        rackerScopeAccess.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        boolean result = rackerScopeAccess.isRefreshTokenExpired(new DateTime());
-        assertThat("boolean", result, equalTo(false));
-    }
-
     @Test
     public void getAuditContext_returnsAuditString() throws Exception {
         rackerScopeAccess.setRackerId("rackerId");
         String result = rackerScopeAccess.getAuditContext();
         assertThat("audit string", result, equalTo("Racker(rackerId=rackerId)"));
-    }
-
-    @Test
-    public void setRefreshTokenExpired_expiresRefreshToken() throws Exception {
-        rackerScopeAccess.setRefreshTokenString("refreshToken");
-        rackerScopeAccess.setRefreshTokenExpired();
-        boolean result = rackerScopeAccess.isRefreshTokenExpired(new DateTime());
-        assertThat("boolean", result, equalTo(true));
     }
 }

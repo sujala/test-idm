@@ -103,7 +103,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name="v2.0 Get version")
     @GET
     public Response getCloud20VersionInfo() throws JAXBException {
         JAXBContext context = JAXBCONTEXT_VERSION_CHOICE;
@@ -118,7 +118,7 @@ public class Cloud20VersionResource {
         return Response.ok(versionChoice.getValue()).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name="v2.0 Authenticate")
     @ReportableQueryParams(unsecuredQueryParams = {"apply_rcn_roles"})
     @POST
     @Path("tokens")
@@ -131,14 +131,14 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name="v2.0 Authenticate forgot password")
     @POST
     @Path("/users/RAX-AUTH/forgot-pwd")
     public Response authenticateForForgotPassword(@Context HttpHeaders httpHeaders, ForgotPasswordCredentials forgotPasswordCredentials) {
         return cloud20Service.authenticateForForgotPassword(httpHeaders, forgotPasswordCredentials).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Reset password")
     @POST
     @Path("/users/RAX-AUTH/pwd-reset")
     public Response passwordReset(
@@ -155,7 +155,7 @@ public class Cloud20VersionResource {
      *
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List effective roles for user")
     @GET
     @Path("/users/{userId}/RAX-AUTH/roles")
     public Response listEffectiveRolesForUser(@Context HttpHeaders httpHeaders,
@@ -165,14 +165,14 @@ public class Cloud20VersionResource {
         return cloud20Service.listEffectiveRolesForUser(httpHeaders, authToken, userId, new ListEffectiveRolesForUserParams(onTenantId)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Revoke token")
     @DELETE
     @Path("tokens")
     public Response revokeToken(@Context HttpHeaders httpHeaders, @HeaderParam(X_AUTH_TOKEN) String authToken) throws IOException, JAXBException {
         return cloud20Service.revokeToken(httpHeaders, authToken).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Revoke token")
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v2TokenValidationAbsolutePathPatternRegex)
     @DELETE
     @Path("tokens/{tokenId}")
@@ -190,7 +190,7 @@ public class Cloud20VersionResource {
      * @deprecated Consumers should use {@link #federationSamlAuthenticationFormEncoded} version and provide the base64
      * encoded payload rather than pass in raw XML to avoid potential encoding issues.
      */
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name="v2.0 Federated authenticate legacy xml")
     @Deprecated
     @POST
     @Path("RAX-AUTH/saml-tokens")
@@ -199,7 +199,7 @@ public class Cloud20VersionResource {
         return federationSamlAuthenticationRawXML(httpHeaders, samlResponse, false);
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name="v2.0 Federated authenticate legacy encoded")
     @Deprecated
     @POST
     @Path("RAX-AUTH/saml-tokens")
@@ -217,7 +217,7 @@ public class Cloud20VersionResource {
      * @param samlResponse
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name="v2.0 Federated authenticate encoded")
     @ReportableQueryParams(unsecuredQueryParams = {"apply_rcn_roles"})
     @POST
     @Path("RAX-AUTH/federation/saml/auth")
@@ -249,8 +249,9 @@ public class Cloud20VersionResource {
      * @return
      *
      */
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH)
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name="v2.0 Federated authenticate xml")
     @ReportableQueryParams(unsecuredQueryParams = {"apply_rcn_roles"})
+    @Deprecated
     @POST
     @Path("RAX-AUTH/federation/saml/auth")
     @Consumes({MediaType.APPLICATION_XML})
@@ -272,7 +273,7 @@ public class Cloud20VersionResource {
         return response;
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Federated logout")
     @POST
     @Path("RAX-AUTH/federation/saml/logout")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -295,7 +296,7 @@ public class Cloud20VersionResource {
         return response;
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Create IDP")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("RAX-AUTH/federation/identity-providers")
@@ -307,7 +308,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addIdentityProvider(httpHeaders, uriInfo, authToken, identityProvider).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Create IDP with metadata")
     @POST
     @Consumes(MediaType.APPLICATION_XML)
     @Path("RAX-AUTH/federation/identity-providers")
@@ -331,7 +332,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update IDP")
     @PUT
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}")
     public Response updateIdentityProvider(
@@ -343,7 +344,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateIdentityProvider(httpHeaders, uriInfo, authToken, identityProviderId, identityProvider).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get IDP")
     @GET
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}")
     public Response getIdentityProvider(
@@ -354,7 +355,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getIdentityProvider(httpHeaders, authToken, identityProviderId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List IDP")
     @ReportableQueryParams(unsecuredQueryParams = {"name","issuer","idpType","approvedDomainId","approvedTenantId"}, securedQueryParams = {"emailDomain"})
     @GET
     @Path("RAX-AUTH/federation/identity-providers")
@@ -371,7 +372,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getIdentityProviders(httpHeaders, authToken, new IdentityProviderSearchParams(name, issuer, approvedDomainId, approvedTenantId, idpType, emailDomain)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete IDP")
     @DELETE
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}")
     public Response deleteIdentityProvider(
@@ -382,7 +383,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteIdentityProvider(httpHeaders, authToken, identityProviderId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get IDP metadata")
     @GET
     @Produces(MediaType.APPLICATION_XML)
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/metadata")
@@ -394,7 +395,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getIdentityProvidersMetadata(httpHeaders, authToken, identityProviderId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update IDP with metadata")
     @PUT
     @Consumes(MediaType.APPLICATION_XML)
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/metadata")
@@ -408,7 +409,7 @@ public class Cloud20VersionResource {
                 identityProviderId, org.apache.commons.codec.binary.StringUtils.getBytesUtf8(requestBody)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add IDP certificate")
     @PUT
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/certificates")
     public Response addCertToIdp(@Context HttpHeaders httpHeaders,
@@ -418,7 +419,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addIdentityProviderCert(httpHeaders, authToken, identityProviderId, publicCertificate).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete IDP certificate")
     @DELETE
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/certificates/{certificateId}")
     public Response deleteCertFromIdp(@Context HttpHeaders httpHeaders,
@@ -428,6 +429,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteIdentityProviderCert(httpHeaders, authToken, identityProviderId, certificateId).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update IDP mapping policy")
     @PUT
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/mapping")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, GlobalConstants.TEXT_YAML})
@@ -444,7 +446,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateIdentityProviderPolicy(httpHeaders, authToken, identityProviderId, policy).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get IDP mapping policy")
     @GET
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/mapping")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, GlobalConstants.TEXT_YAML})
@@ -455,7 +457,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getIdentityProviderPolicy(httpHeaders, authToken, identityProviderId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Validate token")
     @ReportableQueryParams(unsecuredQueryParams = {"belongsTo","apply_rcn_roles"})
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v2TokenValidationAbsolutePathPatternRegex)
     @GET
@@ -473,7 +475,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Check token")
     @ReportableQueryParams(unsecuredQueryParams = {"belongsTo","apply_rcn_roles"})
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v2TokenValidationAbsolutePathPatternRegex)
     @HEAD
@@ -491,7 +493,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List token endpoints")
     @ReportableQueryParams(unsecuredQueryParams = {"apply_rcn_roles"})
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v2TokenEndpointAbsolutePathPatternRegex)
     @GET
@@ -504,7 +506,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listEndpointsForToken(httpHeaders, authToken, tokenId, applyRcnRoles).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List default region services")
     @GET
     @Path("RAX-AUTH/default-region/services")
     public Response listDefaultRegionServices(
@@ -512,7 +514,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listDefaultRegionServices(authToken).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Set default region services")
     @PUT
     @Path("RAX-AUTH/default-region/services")
     public Response setDefaultRegionServices(@HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -520,7 +522,7 @@ public class Cloud20VersionResource {
         return cloud20Service.setDefaultRegionServices(authToken, defaultRegionServices).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Impersonate")
     @POST
     @Path("RAX-AUTH/impersonation-tokens")
     public Response impersonate(
@@ -531,7 +533,7 @@ public class Cloud20VersionResource {
     }
 
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add domain")
     @POST
     @Path("RAX-AUTH/domains")
     public Response addDomain(
@@ -541,7 +543,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addDomain(authToken, uriInfo, domain).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get domain")
     @GET
     @Path("RAX-AUTH/domains/{domainId}")
     public Response getDomainById(
@@ -550,7 +552,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getDomain(authToken, domainId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update domain")
     @PUT
     @Path("RAX-AUTH/domains/{domainId}")
     public Response updateDomain(
@@ -560,7 +562,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateDomain(authToken, domainId, domain).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete domain")
     @DELETE
     @Path("RAX-AUTH/domains/{domainId}")
     public Response deleteDomainById(
@@ -569,7 +571,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteDomain(authToken, domainId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update domain password policy")
     @PUT
     @Path("RAX-AUTH/domains/{domainId}/password-policy")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -585,7 +587,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateDomainPasswordPolicy(httpHeaders, authToken, domainId, policy).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get domain password policy")
     @GET
     @Path("RAX-AUTH/domains/{domainId}/password-policy")
     @Produces(MediaType.APPLICATION_JSON)
@@ -599,7 +601,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getDomainPasswordPolicy(httpHeaders, authToken, domainId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete domain password policy")
     @DELETE
     @Path("RAX-AUTH/domains/{domainId}/password-policy")
     @Produces(MediaType.APPLICATION_JSON)
@@ -613,7 +615,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteDomainPasswordPolicy(httpHeaders, authToken, domainId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Change user password")
     @POST
     @Path("/users/RAX-AUTH/change-pwd")
     public Response changeUserPassword(
@@ -625,7 +627,7 @@ public class Cloud20VersionResource {
         return cloud20Service.changeUserPassword(httpHeaders, changePasswordCredentials).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List tenants for domain")
     @ReportableQueryParams(unsecuredQueryParams = {"enabled"})
     @GET
     @Path("RAX-AUTH/domains/{domainId}/tenants")
@@ -636,7 +638,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getDomainTenants(authToken, domainId, enabled).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add tenant to domain")
     @PUT
     @Path("RAX-AUTH/domains/{domainId}/tenants/{tenantId}")
     public Response addTenantToDomain(
@@ -646,7 +648,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addTenantToDomain(authToken, domainId, tenantId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Remove tenant from domain")
     @DELETE
     @Path("RAX-AUTH/domains/{domainId}/tenants/{tenantId}")
     public Response removeTenantFromDomain(
@@ -656,7 +658,7 @@ public class Cloud20VersionResource {
         return cloud20Service.removeTenantFromDomain(authToken, domainId, tenantId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List users by domain")
     @ReportableQueryParams(unsecuredQueryParams = {"enabled"})
     @GET
     @Path("RAX-AUTH/domains/{domainId}/users")
@@ -667,7 +669,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getUsersByDomainIdAndEnabledFlag(authToken, domainId, enabled).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add user to domain")
     @PUT
     @Path("RAX-AUTH/domains/{domainId}/users/{userId}")
     public Response addUserToDomain(
@@ -677,7 +679,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addUserToDomain(authToken, domainId, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Change domain administrator")
     @PUT
     @Path("RAX-AUTH/domains/{domainId}/domainAdministratorChange")
     public Response modifyDomainAdministrator(
@@ -687,7 +689,7 @@ public class Cloud20VersionResource {
         return cloud20Service.modifyDomainAdministrator(authToken, domainId, domainAdministratorChange).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add domain to RCN")
     @PUT
     @Path("RAX-AUTH/domains/{domainId}/rcn/{destinationRcn}")
     public Response switchRcnOnDomain(
@@ -697,7 +699,7 @@ public class Cloud20VersionResource {
         return cloud20Service.switchDomainRcn(authToken, domainId, destinationRcn).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List endpoints for domain")
     @GET
     @Path("RAX-AUTH/domains/{domainId}/endpoints")
     public Response getEndpointsByDomain(
@@ -706,7 +708,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getEndpointsByDomainId(authToken, domainId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List domains")
     @ReportableQueryParams(unsecuredQueryParams = {"marker","limit","rcn"})
     @GET
     @Path("RAX-AUTH/domains")
@@ -719,21 +721,21 @@ public class Cloud20VersionResource {
         return cloud20Service.getAccessibleDomains(uriInfo, authToken, validateMarker(marker), validateLimit(limit), rcn).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC)
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name="v2.0 List extensions")
     @GET
     @Path("extensions")
     public Response listExtensions(@Context HttpHeaders httpHeaders) {
         return cloud20Service.listExtensions(httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get extension")
     @GET
     @Path("extensions/{alias}")
     public Response getExtension(@Context HttpHeaders httpHeaders, @PathParam("alias") String alias) {
         return cloud20Service.getExtension(httpHeaders, alias).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, keywords = ApiKeyword.COSTLY)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, keywords = ApiKeyword.COSTLY, name="v2.0 Get user by name")
     @ReportableQueryParams(unsecuredQueryParams = {"marker","limit"}, securedQueryParams = {"email","name"})
     @GET
     @Path("users")
@@ -754,7 +756,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get user by id")
     @GET
     @Path("users/{userId}")
     public Response getUserById(
@@ -764,7 +766,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getUserById(httpHeaders, authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List user domain roles")
     @ReportableQueryParams(unsecuredQueryParams = {"serviceId","apply_rcn_roles"})
     @GET
     @Path("users/{userId}/roles")
@@ -781,7 +783,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete user roles of type")
     @ReportableQueryParams(unsecuredQueryParams = {"type"})
     @DELETE
     @Path("users/{userId}/roles")
@@ -793,7 +795,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteUserRoles(httpHeaders, authToken, userId, roleType).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List user accessible domains")
     @GET
     @Path("users/{userId}/RAX-AUTH/domains")
     public Response getAccessibleDomainsForUser(
@@ -802,7 +804,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getAccessibleDomainsForUser(authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List endpoints on domain for user")
     @GET
     @Path("users/{userId}/RAX-AUTH/domains/{domainId}/endpoints")
     public Response getAccessibleDomainsEndpointsForUser(
@@ -812,7 +814,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getAccessibleDomainsEndpointsForUser(authToken, userId, domainId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List admins for user")
     @GET
     @Path("users/{userId}/RAX-AUTH/admins")
     public Response getUserAdminsForUser(
@@ -821,7 +823,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getUserAdminsForUser(authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List tenants")
     @ReportableQueryParams(unsecuredQueryParams = {"name","marker","limit","apply_rcn_roles"})
     @GET
     @Path("tenants")
@@ -840,7 +842,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get tenant")
     @GET
     @Path("tenants/{tenantId}")
     public Response getTenantById(
@@ -850,7 +852,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getTenantById(httpHeaders, authToken, tenantsId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List tenant user admin")
     @GET
     @Path("tenants/{tenantId}/RAX-AUTH/admins")
     public Response listUserAdminsOnTenant(
@@ -860,7 +862,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getUserByTenantId(httpHeaders, authToken, tenantId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List user roles on tenant")
     @ReportableQueryParams(unsecuredQueryParams = {"apply_rcn_roles"})
     @GET
     @Path("tenants/{tenantId}/users/{userId}/roles")
@@ -873,7 +875,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId, applyRcnRoles).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add user")
     @POST
     @Path("users")
     public Response addUser(
@@ -883,7 +885,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addUser(httpHeaders, uriInfo, authToken, user).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update user")
     @POST
     @Path("users/{userId}")
     public Response updateUser(
@@ -893,7 +895,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateUser(httpHeaders, authToken, userId, user).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete user")
     @DELETE
     @Path("users/{userId}")
     public Response deleteUser(
@@ -903,7 +905,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteUser(httpHeaders, authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Enable or disable user")
     @PUT
     @Path("users/{userId}/OS-KSADM/enabled")
     public Response setUserEnabled(
@@ -913,7 +915,7 @@ public class Cloud20VersionResource {
         return cloud20Service.setUserEnabled(httpHeaders, authToken, userId, user).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List user legacy groups")
     @GET
     @Path("users/{userId}/RAX-KSGRP")
     public Response listUserGroups(
@@ -923,7 +925,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listUserGroups(httpHeaders, authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Grant roles to user")
     @PUT
     @Path("users/{userId}/RAX-AUTH/roles")
     public Response grantRolesToUser(
@@ -937,7 +939,7 @@ public class Cloud20VersionResource {
         return cloud20Service.grantRolesToUser(httpHeaders, authToken, userId, roleAssignments).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Grant domain role to user")
     @PUT
     @Path("users/{userId}/roles/OS-KSADM/{roleId}")
     public Response addUserRole(
@@ -948,7 +950,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addUserRole(httpHeaders, authToken, userId, roleId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get domain role on user")
     @GET
     @Path("users/{userId}/roles/OS-KSADM/{roleId}")
     public Response getUserRole(
@@ -959,7 +961,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getUserRole(httpHeaders, authToken, userId, roleId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Revoke domain role from user")
     @DELETE
     @Path("users/{userId}/roles/OS-KSADM/{roleId}")
     public Response deleteUserRole(
@@ -970,7 +972,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteUserRole(httpHeaders, authToken, userId, roleId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add user credential")
     @POST
     @Path("users/{userId}/OS-KSADM/credentials")
     public Response addUserCredential(
@@ -981,7 +983,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addUserCredential(httpHeaders, uriInfo, authToken, userId, body).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List user credentials")
     @ReportableQueryParams(unsecuredQueryParams = {"userId","marker","limit"})
     @GET
     @Path("users/{userId}/OS-KSADM/credentials")
@@ -994,7 +996,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listCredentials(httpHeaders, authToken, userId, validateMarker(marker), validateLimit(limit)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update user password credentials")
     @POST
     @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.PASSWORD_CREDENTIALS)
     public Response updateUserPasswordCredentials(
@@ -1005,7 +1007,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateUserPasswordCredentials(httpHeaders, authToken, userId, JSONConstants.PASSWORD_CREDENTIALS, creds).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update user api key credentials")
     @POST
     @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
     public Response updateUserApiKeyCredentials(
@@ -1015,7 +1017,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateUserApiKeyCredentials(httpHeaders, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS, creds).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Reset user api key credentials")
     @POST
     @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS + "/RAX-AUTH/reset")
     public Response resetUserApiKeyCredentials(
@@ -1025,7 +1027,7 @@ public class Cloud20VersionResource {
         return cloud20Service.resetUserApiKeyCredentials(httpHeaders, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get user api key credential")
     @GET
     @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
     public Response getUserCredentialKey(
@@ -1035,7 +1037,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getUserApiKeyCredentials(httpHeaders, authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get user password credential")
     @GET
     @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.PASSWORD_CREDENTIALS)
     public Response getUserCredential(
@@ -1045,7 +1047,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getUserPasswordCredentials(httpHeaders, authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete user api key credential")
     @DELETE
     @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
     public Response deleteUserKeyCredential(
@@ -1055,7 +1057,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteUserCredential(httpHeaders, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete user password credential")
     @DELETE
     @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.PASSWORD_CREDENTIALS)
     public Response deleteUserCredential(
@@ -1065,7 +1067,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteUserCredential(httpHeaders, authToken, userId, JSONConstants.PASSWORD_CREDENTIALS).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add tenant")
     @POST
     @Path("tenants")
     public Response addTenant(
@@ -1075,7 +1077,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addTenant(httpHeaders, uriInfo, authToken, tenant).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update tenant")
     @POST
     @Path("tenants/{tenantId}")
     public Response updateTenant(
@@ -1085,7 +1087,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateTenant(httpHeaders, authToken, tenantId, tenant).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete tenant")
     @DELETE
     @Path("tenants/{tenantId}")
     public Response deleteTenant(
@@ -1095,7 +1097,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteTenant(httpHeaders, authToken, tenantId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List roles explicitly assigned on tenant")
     @ReportableQueryParams(unsecuredQueryParams = {"marker","limit"})
     @GET
     @Path("tenants/{tenantId}/OS-KSADM/roles")
@@ -1108,7 +1110,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listRolesForTenant(httpHeaders, authToken, tenantId, validateMarker(marker), validateLimit(limit)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List users for tenant")
     @ReportableQueryParams(unsecuredQueryParams = {"tenantId","roleId","contactId","marker","limit"})
     @GET
     @Path("tenants/{tenantId}/users")
@@ -1125,7 +1127,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listUsersForTenant(httpHeaders, uriInfo, authToken, tenantId, params).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Grant role on tenant to user")
     @PUT
     @Path("tenants/{tenantId}/users/{userId}/roles/OS-KSADM/{roleId}")
     public Response addRolesToUserOnTenant(
@@ -1137,7 +1139,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addRolesToUserOnTenant(httpHeaders, authToken, tenantId, userId, roleId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Revoke role on tenant from user")
     @DELETE
     @Path("tenants/{tenantId}/users/{userId}/roles/OS-KSADM/{roleId}")
     public Response deleteRoleFromUserOnTenant(
@@ -1149,7 +1151,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteRoleFromUserOnTenant(httpHeaders, authToken, tenantId, userId, roleId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List my assignable roles")
     @ReportableQueryParams(unsecuredQueryParams = {"serviceId","roleName","marker","limit"})
     @GET
     @Path("OS-KSADM/roles")
@@ -1164,7 +1166,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listRoles(httpHeaders, uriInfo, authToken, serviceId, roleName, validateMarker(marker), validateLimit(limit)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add role")
     @POST
     @Path("OS-KSADM/roles")
     public Response addRole(
@@ -1175,7 +1177,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addRole(httpHeaders, uriInfo, authToken, role).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get role")
     @GET
     @Path("OS-KSADM/roles/{roleId}")
     public Response getRole(
@@ -1185,7 +1187,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getRole(httpHeaders, authToken, roleId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete role")
     @DELETE
     @Path("OS-KSADM/roles/{roleId}")
     public Response deleteRole(
@@ -1195,7 +1197,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteRole(httpHeaders, authToken, roleId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List users assigned role")
     @ReportableQueryParams(unsecuredQueryParams = {"roleId","marker","limit"})
     @GET
     @Path("OS-KSADM/roles/{roleId}/RAX-AUTH/users")
@@ -1209,7 +1211,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listUsersWithRole(httpHeaders, uriInfo, authToken, roleId, validateMarker(marker), validateLimit(limit)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List services")
     @ReportableQueryParams(unsecuredQueryParams = {"name","marker","limit"})
     @GET
     @Path("OS-KSADM/services")
@@ -1224,7 +1226,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listServices(httpHeaders, uriInfo, authToken, name, validateMarker(marker), validateLimit(limit)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add service")
     @POST
     @Path("OS-KSADM/services")
     public Response addService(
@@ -1234,7 +1236,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addService(httpHeaders, uriInfo, authToken, service).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get service")
     @GET
     @Path("OS-KSADM/services/{serviceId}")
     public Response getService(
@@ -1244,7 +1246,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getService(httpHeaders, authToken, serviceId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete service")
     @DELETE
     @Path("OS-KSADM/services/{serviceId}")
     public Response deleteService(
@@ -1254,7 +1256,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteService(httpHeaders, authToken, serviceId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List endpoint templates")
     @ReportableQueryParams(unsecuredQueryParams = {"serviceId"})
     @GET
     @Path("OS-KSCATALOG/endpointTemplates")
@@ -1265,7 +1267,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listEndpointTemplates(httpHeaders, authToken, serviceId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add endpoint template")
     @POST
     @Path("OS-KSCATALOG/endpointTemplates")
     public Response addEndpointTemplate(
@@ -1275,7 +1277,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update endpoint template")
     @PUT
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
     public Response updateEndpointTemplate(
@@ -1286,7 +1288,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplateId, endpoint).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get endpoint template")
     @GET
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
     public Response getEndpointTemplate(
@@ -1296,7 +1298,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getEndpointTemplate(httpHeaders, authToken, endpointTemplateId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete endpoint template")
     @DELETE
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
     public Response deleteEndpointTemplate(
@@ -1306,7 +1308,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteEndpointTemplate(httpHeaders, authToken, enpdointTemplateId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List endpoints for tenant")
     @GET
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response listEndpoints(
@@ -1316,7 +1318,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listEndpoints(httpHeaders, authToken, tenantId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add endpoint to tenant")
     @POST
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response addEndpoint(
@@ -1326,7 +1328,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addEndpoint(httpHeaders, authToken, tenantId, endpoint).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get endpoint on tenant")
     @GET
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints/{endpointId}")
     public Response getEndpoint(
@@ -1337,7 +1339,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getEndpoint(httpHeaders, authToken, tenantId, endpointId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete endpoint from tenant")
     @DELETE
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints/{endpointId}")
     public Response deleteEndpoint(
@@ -1348,7 +1350,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteEndpoint(httpHeaders, authToken, tenantId, endpointId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get user secret qa")
     @GET
     @Path("/users/{userId}/RAX-KSQA/secretqa")
     public Response getSecretQA(
@@ -1358,7 +1360,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getSecretQA(httpHeaders, authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update user secret qa")
     @PUT
     @Path("/users/{userId}/RAX-KSQA/secretqa")
     public Response updateSecretQA(
@@ -1368,7 +1370,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateSecretQA(httpHeaders, authToken, userId, secrets).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List user secret qa")
     @GET
     @Path("users/{userId}/RAX-AUTH/secretqas")
     public Response getSecretQAs(
@@ -1377,7 +1379,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getSecretQAs(authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add user secret qa")
     @POST
     @Path("users/{userId}/RAX-AUTH/secretqas")
     public Response createSecretQA(
@@ -1387,7 +1389,7 @@ public class Cloud20VersionResource {
         return cloud20Service.createSecretQA(authToken, userId, secretQA).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get user phone pin")
     @GET
     @Path("users/{userId}/RAX-AUTH/phone-pin")
     public Response getPhonePin(
@@ -1399,7 +1401,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getPhonePin(authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Verify user phone pin")
     @POST
     @Path("users/{userId}/RAX-AUTH/phone-pin/verify")
     public Response verifyPhonePin(
@@ -1412,7 +1414,7 @@ public class Cloud20VersionResource {
         return cloud20Service.verifyPhonePin(authToken, userId, phonePin).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Reset user phone pin")
     @POST
     @Path("users/{userId}/RAX-AUTH/phone-pin/reset")
     public Response resetPhonePin(
@@ -1428,6 +1430,7 @@ public class Cloud20VersionResource {
     // RAX-GRPADM Extension //
     // ******************************************************* //
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add legacy group")
     @POST
     @Path("/RAX-GRPADM/groups")
     public Response addGroup(
@@ -1438,7 +1441,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addGroup(httpHeaders, uriInfo, authToken, group).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List legacy groups")
     @ReportableQueryParams(unsecuredQueryParams = {"name","marker","limit"})
     @GET
     @Path("/RAX-GRPADM/groups")
@@ -1454,7 +1457,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listGroups(httpHeaders, authToken, groupName, validateMarker(marker), validateLimit(limit)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get legacy group")
     @GET
     @Path("/RAX-GRPADM/groups/{groupId}")
     public Response getGroupById(
@@ -1464,7 +1467,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getGroupById(httpHeaders, authToken, groupId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update legacy group")
     @PUT
     @Path("/RAX-GRPADM/groups/{groupId}")
     public Response updateGroup(
@@ -1475,7 +1478,7 @@ public class Cloud20VersionResource {
         return cloud20Service.updateGroup(httpHeaders, authToken, groupId, group).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete legacy group")
     @DELETE
     @Path("/RAX-GRPADM/groups/{groupId}")
     public Response deleteGroupById(
@@ -1485,7 +1488,7 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteGroup(httpHeaders, authToken, groupId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List legacy group members")
     @ReportableQueryParams(unsecuredQueryParams = {"groupId","marker","limit"})
     @GET
     @Path("/RAX-GRPADM/groups/{groupId}/users")
@@ -1498,7 +1501,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getUsersForGroup(httpHeaders, authToken, groupId, validateMarker(marker), validateLimit(limit)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add user to legacy group")
     @PUT
     @Path("/RAX-GRPADM/groups/{groupId}/users/{userId}")
     public Response putUserGroups(
@@ -1509,7 +1512,7 @@ public class Cloud20VersionResource {
         return cloud20Service.addUserToGroup(httpHeaders, authToken, groupId, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Remove user from legacy group")
     @DELETE
     @Path("/RAX-GRPADM/groups/{groupId}/users/{userId}")
     public Response deleteUserGroups(
@@ -1520,84 +1523,84 @@ public class Cloud20VersionResource {
         return cloud20Service.removeUserFromGroup(httpHeaders, authToken, groupId, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add region")
     @POST
     @Path("RAX-AUTH/regions")
     public Response createRegion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Region region) {
         return cloud20Service.addRegion(uriInfo, authToken, region).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get region")
     @GET
     @Path("RAX-AUTH/regions/{name}")
     public Response getRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name) {
         return cloud20Service.getRegion(authToken, name).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List regions")
     @GET
     @Path("RAX-AUTH/regions")
     public Response getRegions(@HeaderParam(X_AUTH_TOKEN) String authToken) {
         return cloud20Service.getRegions(authToken).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update region")
     @PUT
     @Path("RAX-AUTH/regions/{name}")
     public Response updateRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Region region) {
         return cloud20Service.updateRegion(authToken, name, region).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete region")
     @DELETE
     @Path("RAX-AUTH/regions/{name}")
     public Response deleteRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name) {
         return cloud20Service.deleteRegion(authToken, name).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add secret qa")
     @POST
     @Path("RAX-AUTH/secretqa/questions")
     public Response createQuestion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Question question) {
         return cloud20Service.addQuestion(uriInfo, authToken, question).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get secret qa")
     @GET
     @Path("RAX-AUTH/secretqa/questions/{questionId}")
     public Response getQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
         return cloud20Service.getQuestion(authToken, questionId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List secret qas")
     @GET
     @Path("RAX-AUTH/secretqa/questions")
     public Response getQuestions(@HeaderParam(X_AUTH_TOKEN) String authToken) {
         return cloud20Service.getQuestions(authToken).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update secret qa")
     @PUT
     @Path("RAX-AUTH/secretqa/questions/{name}")
     public Response updateQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Question question) {
         return cloud20Service.updateQuestion(authToken, name, question).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete secret qa")
     @DELETE
     @Path("RAX-AUTH/secretqa/questions/{questionId}")
     public Response deleteQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
         return cloud20Service.deleteQuestion(authToken, questionId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add tenant type")
     @POST
     @Path("RAX-AUTH/tenant-types")
     public Response createTenantType(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, TenantType tenantType) {
         return cloud20Service.addTenantType(uriInfo, authToken, tenantType).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List tenant types")
     @ReportableQueryParams(unsecuredQueryParams = {"marker","limit"})
     @GET
     @Path("RAX-AUTH/tenant-types")
@@ -1608,7 +1611,7 @@ public class Cloud20VersionResource {
         return cloud20Service.listTenantTypes(uriInfo, authToken, validateMarker(marker), validateLimit(limit)).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get tenant type")
     @GET
     @Path("RAX-AUTH/tenant-types/{tenantTypeName}")
     public Response getTenantTypes(@Context UriInfo uriInfo,
@@ -1616,7 +1619,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getTenantType(uriInfo, authToken, tenantTypeName).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE)
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Delete tenant type")
     @DELETE
     @Path("RAX-AUTH/tenant-types/{tenantTypeName}")
     public Response deleteTenantType(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("tenantTypeName") String tenantTypeName) {

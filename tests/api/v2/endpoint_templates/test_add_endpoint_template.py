@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from hypothesis import given, strategies
+from nose.plugins.attrib import attr
 import ast
 import copy
 import ddt
@@ -356,6 +357,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                     template_id=template_id, public_url=public_url,
                     expected_endpoint_in_catalog=expected_endpoint_in_catalog)
 
+    @attr('skip_at_gate')
     @ddt.file_data('data_add_endpoint_template_negative_cases.json')
     def test_add_endpoint_template_negative(self, test_data):
         """

@@ -57,6 +57,7 @@ class TestAuthentication(base.TestBaseV10):
         self.verify_expect_headers(resp=auth_resp)
         header_validation.validate_username_header_not_present(auth_resp)
 
+    @attr('skip_at_gate')
     def test_authentication_username_and_key_invalid_creds(self):
         normal_response_codes = [401]
         unexpected_headers = [const.X_USER_NAME, const.X_TENANT_ID]

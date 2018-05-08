@@ -4,13 +4,11 @@ import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -22,8 +20,10 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by IntelliJ IDEA.
@@ -143,17 +143,6 @@ public class DefaultApplicationServiceTestOld {
         when(tenantService.getTenantRolesForClientRole(role)).thenReturn(tenantRoles);
         defaultApplicationService.deleteClientRole(role);
         verify(applicationRoleDao).deleteClientRole(role);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void getClientServices_clientIsNull_throwsIllegalArgumentException() throws Exception {
-        Application client = mock(Application.class);
-        defaultApplicationService.getClientServices(client);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void getClientServices_clientUniqueIdIsNull_throwsIllegalArgumentException() throws Exception {
-        defaultApplicationService.getClientServices(new Application());
     }
 
     @Test (expected = NotFoundException.class)

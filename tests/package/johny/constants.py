@@ -152,7 +152,7 @@ DOMAIN_API_TEST = 'api-test'
 DOMAIN_PATTERN = '[a-z]{8}'
 DESC_PATTERN = '[a-zA-Z ,.]{10:200}'
 DOMAIN_TEST = 'meow'
-DELEGATION_AGREEMENT_NAME_PATTERN = 'delegation[\-]agreement[\-][0-9]{7}'
+DELEGATION_AGREEMENT_NAME_PATTERN = 'DA[0-9]{7}'
 EMAIL_RANDOM = 'randome@rackspace.com'
 FED_USER_PATTERN = 'fed[\-]user[\d\w]{12}'
 
