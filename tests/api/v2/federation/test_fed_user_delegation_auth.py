@@ -263,8 +263,6 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         fed_user_id, fed_user_token = self.create_fed_user_for_da(
             client=self.user_admin_client_2, domain=self.domain_id_2,
             update_policy=True, group=group_two)
-        # fed_auth_resp_parsed = Munch.fromDict(fed_auth_resp.json())
-        # fed_user_token = fed_auth_resp_parsed.access.token.id
 
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)

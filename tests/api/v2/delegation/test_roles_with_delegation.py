@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*
 from munch import Munch
-from nose.plugins.attrib import attr
 
 from tests.api.v2.delegation import delegation
 from tests.package.johny import constants as const
@@ -79,7 +78,6 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         tenant_1 = self.create_tenant()
         return role_1, role_2, tenant_1, da_id
 
-    @attr(type='regression')
     def test_grant_and_delete_roles_to_da_when_user_manager_principal(self):
         """
         Tests for when user manager is a principal for a DA.
@@ -124,7 +122,6 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         self.validate_delegation_auth_after_role_deletion(
             da_id=da_id, role=role_2)
 
-    @attr(type='regression')
     def test_grant_roles_to_da_when_default_user_principal(self):
         """
         Tests for when default user is a principal for a DA. Various

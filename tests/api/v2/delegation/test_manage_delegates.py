@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
 
 from tests.api.v2.delegation import delegation
 from tests.api.v2.models import factory, responses
@@ -25,6 +26,7 @@ class TestManageDelegates(delegation.TestBaseDelegation):
             const.X_AUTH_TOKEN]
         cls.group_ids = []
 
+    @attr(type='regression')
     def test_add_and_remove_user_delegate(self):
 
         # Create a Delegation Agreement for Domain 1, with sub user in Domain 2

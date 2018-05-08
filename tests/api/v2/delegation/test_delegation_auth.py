@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper
 from tests.api.v2.delegation import delegation
@@ -44,7 +43,6 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
             da_id, user_id)
         return da_id
 
-    @attr(type='smoke_alpha')
     def test_auth_validate_delegation_token(self):
 
         # create DA with sub user
@@ -87,7 +85,6 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
             resp.json()[const.USER][const.RAX_AUTH_DELEGATION_AGREEMENT_ID],
             da_id)
 
-    @attr(type='regression')
     def test_reconcile_DA_delegate_user_delete(self):
 
         # create DA, with sub user as the delegate
@@ -105,7 +102,6 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 401)
 
-    @attr(type='regression')
     def test_mfa_auth_followed_by_delegation(self):
         sub_user_name_2 = self.generate_random_string(
             pattern=const.SUB_USER_PATTERN)
