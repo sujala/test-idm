@@ -6,6 +6,7 @@ from tests.api.v2.models import factory, responses
 from tests.api.v2.schema import users, user_groups
 from tests.api.v2.user_groups import usergroups
 from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt
@@ -66,9 +67,84 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
             self.user_manager_client.default_headers[const.X_USER_ID],
             user_id_list)
 
+        # Updating user by adding contact id for it. Verifying that the user
+        # stays in the user group after update.
+        self.verify_user_group_membership_after_user_update(
+            user_type=user_type, group=group,
+            user_id=self.user_manager_client.default_headers[const.X_USER_ID])
+
         # Verify user removal
         self.verify_user_removal_from_user_group(
             group=group, user_type=user_type)
+
+        # Verifying that once user is removed from group, updating that user
+        # won't add it to user group. Passing in user-admin user as that is
+        # the user being removed from user group in the last step
+        self.verify_user_group_membership_after_user_update(
+            user_type=user_type, group=group,
+            user_id=self.user_admin_client.default_headers[const.X_USER_ID],
+            negative=True)
+
+    @attr(type='regression')
+    def test_users_in_user_group_after_user_update(self):
+
+        group_req = factory.get_add_user_group_request(self.domain_id)
+        create_group_resp = self.user_admin_client.add_user_group_to_domain(
+            domain_id=self.domain_id, request_object=group_req)
+        self.assertEqual(create_group_resp.status_code, 201)
+        group = responses.UserGroup(create_group_resp.json())
+
+        # adding a user to the user group
+        add_user_to_grp_resp = self.user_admin_client.add_user_to_user_group(
+            user_id=self.user_manager_client.default_headers[const.X_USER_ID],
+            group_id=group.id, domain_id=self.domain_id
+        )
+        self.assertEqual(add_user_to_grp_resp.status_code, 204)
+
+        # disable one of the user and verify that the user stays in the group
+        update_user_object = requests.UserUpdate(enabled=False)
+        update_user_resp = self.identity_admin_client.update_user(
+            user_id=self.user_manager_client.default_headers[const.X_USER_ID],
+            request_object=update_user_object)
+        self.assertEqual(update_user_resp.status_code, 200)
+
+        # List users in user group
+        list_users_resp = (
+            self.user_admin_client.list_users_in_user_group_for_domain(
+                domain_id=self.domain_id, group_id=group.id))
+        self.assertEqual(list_users_resp.status_code, 200)
+        self.assertSchema(list_users_resp, json_schema=users.list_users)
+
+        user_id_list = [user[const.ID] for user in list_users_resp.json()[
+            const.USERS]]
+        self.assertIn(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            user_id_list)
+
+    def verify_user_group_membership_after_user_update(
+            self, user_type, group, user_id, negative=False):
+
+        contact_id = self.generate_random_string(
+            pattern='fed[\-]user[\-]contact[\-][\d]{12}')
+        update_user_object = requests.UserUpdate(contact_id=contact_id)
+        add_contact_resp = self.identity_admin_client.update_user(
+            user_id=user_id,
+            request_object=update_user_object)
+        self.assertEqual(add_contact_resp.status_code, 200)
+
+        # List users in user group
+        list_users_resp = (
+            self.clients[user_type].list_users_in_user_group_for_domain(
+                domain_id=self.domain_id, group_id=group.id))
+        self.assertEqual(list_users_resp.status_code, 200)
+        self.assertSchema(list_users_resp, json_schema=users.list_users)
+
+        user_id_list = [user[const.ID] for user in list_users_resp.json()[
+            const.USERS]]
+        if negative:
+            self.assertNotIn(user_id, user_id_list)
+        else:
+            self.assertIn(user_id, user_id_list)
 
     def verify_user_removal_from_user_group(self, group, user_type):
 
