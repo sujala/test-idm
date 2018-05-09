@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
@@ -306,6 +307,47 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def "Update user maintains existing groups"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        // Add user to 2 legacy groups
+        utils.addUserToGroupWithId("0", userAdmin)
+        utils.addUserToGroupWithId(Constants.RAX_STATUS_RESTRICTED_GROUP_ID, userAdmin)
+
+        // Add user to a user group
+        def userGroup = utils.createUserGroup(userAdmin.domainId)
+        utils.addUserToUserGroup(userAdmin.id, userGroup)
+
+        // Fed user has groups
+        assert utils.listGroupsForUser(userAdmin).group.size() == 2
+        assert utils.listUserGroupsForDomain(userAdmin.getDomainId(), new UserGroupSearchParams(null, userAdmin.id)).userGroup.size() == 1
+
+        // Contact id is null
+        def user = utils.getUserById(userAdmin.id)
+        assert user.contactId == null
+
+        when: "update user using service admin"
+        def contactId = testUtils.getRandomUUID("contactId")
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = userAdmin.id
+            it.contactId = contactId
+            it
+        }
+        utils.updateUser(userForCreate)
+
+        then: "contact id updated"
+        utils.getUserById(userAdmin.id).contactId == contactId
+
+        and: "legacy groups remain"
+        utils.listGroupsForUser(userAdmin).group.size() == 2
+
+        and: "user groups remain"
+        utils.listUserGroupsForDomain(userAdmin.getDomainId(), new UserGroupSearchParams(null, userAdmin.id)).userGroup.size() == 1
     }
 
     @Unroll

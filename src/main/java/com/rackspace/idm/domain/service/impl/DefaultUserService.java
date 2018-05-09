@@ -939,6 +939,7 @@ public class DefaultUserService implements UserService {
 
         user.setUniqueId(currentUser.getUniqueId());
         user.setRsGroupId(currentUser.getRsGroupId());
+        user.setUserGroupDNs(currentUser.getUserGroupDNs());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());
 
