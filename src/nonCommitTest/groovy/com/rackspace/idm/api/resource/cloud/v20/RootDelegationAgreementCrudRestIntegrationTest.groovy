@@ -3,16 +3,19 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.service.DelegationService
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.apache.commons.lang3.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
@@ -530,4 +533,154 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         and: "Group member is no longer a delegate"
         !daEntity.isEffectiveDelegate(groupUserEntity)
     }
+
+    @Unroll
+    def "Error on DA creation when maximum number of DAs for principal are exceeded - mediaType = #mediaType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, 1)
+
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def userManage = cloud20.createSubUser(userAdminToken)
+        utils.addRoleToUser(userManage, Constants.USER_MANAGE_ROLE_ID)
+        def userManageToken = utils.getToken(userManage.username)
+
+        def fedUserResponse = utils.createFederatedUserForAuthResponse(userAdmin.domainId)
+        def fedUserToken = fedUserResponse.token.id
+
+        def userGroup = utils.createUserGroup(userAdmin.domainId)
+
+        // Add users to group
+        utils.addUserToUserGroup(userAdmin.id, userGroup)
+
+        DelegationAgreement webDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it
+        }
+
+        when: "create first DA with user-Admin principal"
+        webDa.principalId = userAdmin.id
+        webDa.principalType = PrincipalType.USER
+        def createResponse = cloud20.createDelegationAgreement(userAdminToken, webDa)
+
+        then: "was successful"
+        createResponse.status == SC_CREATED
+
+        when: "create second DA with user-Admin principal"
+        createResponse = cloud20.createDelegationAgreement(userAdminToken, webDa)
+
+        then: "error"
+        IdmAssert.assertOpenStackV2FaultResponse(createResponse
+                , BadRequestFault
+                , SC_BAD_REQUEST
+                , ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED
+                , "Maximum number of delegation agreements was exceeded for principal")
+
+        when: "create first DA with user-manage principal"
+        webDa.principalId = userManage.id
+        webDa.principalType = PrincipalType.USER
+        createResponse = cloud20.createDelegationAgreement(userManageToken, webDa)
+
+        then: "was successful"
+        createResponse.status == SC_CREATED
+
+        when: "create second DA with user-manage principal"
+        createResponse = cloud20.createDelegationAgreement(userManageToken, webDa)
+
+        then: "error"
+        IdmAssert.assertOpenStackV2FaultResponse(createResponse
+                , BadRequestFault
+                , SC_BAD_REQUEST
+                , ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED
+                , "Maximum number of delegation agreements was exceeded for principal")
+
+        when: "create first DA with federated user principal"
+        webDa.principalId = fedUserResponse.user.id
+        webDa.principalType = PrincipalType.USER
+        createResponse = cloud20.createDelegationAgreement(fedUserToken, webDa)
+
+        then: "was successful"
+        createResponse.status == SC_CREATED
+
+        when: "create second DA with federated user principal"
+        createResponse = cloud20.createDelegationAgreement(fedUserToken, webDa)
+
+        then: "error"
+        IdmAssert.assertOpenStackV2FaultResponse(createResponse
+                , BadRequestFault
+                , SC_BAD_REQUEST
+                , ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED
+                , "Maximum number of delegation agreements was exceeded for principal")
+
+        when: "create first DA with user-group principal"
+        webDa.principalId = userGroup.id
+        webDa.principalType = PrincipalType.USER_GROUP
+        createResponse = cloud20.createDelegationAgreement(userAdminToken, webDa)
+
+        then: "was successful"
+        createResponse.status == SC_CREATED
+
+        when: "create second DA with user-group principal"
+        createResponse = cloud20.createDelegationAgreement(userAdminToken, webDa)
+
+        then: "error"
+        IdmAssert.assertOpenStackV2FaultResponse(createResponse
+                , BadRequestFault
+                , SC_BAD_REQUEST
+                , ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED
+                , "Maximum number of delegation agreements was exceeded for principal")
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Verify maximum number of DAs per principal does not affect member of a user group - mediaType = #mediaType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, 1)
+
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def userGroup1 = utils.createUserGroup(userAdmin.domainId)
+        def userGroup2 = utils.createUserGroup(userAdmin.domainId)
+
+        // Add user to groups
+        utils.addUserToUserGroup(userAdmin.id, userGroup1)
+        utils.addUserToUserGroup(userAdmin.id, userGroup2)
+
+        DelegationAgreement webDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.principalType = PrincipalType.USER_GROUP
+            it
+        }
+        utils.createDelegationAgreement(userAdminToken, webDa)
+
+        when: "create first DA with userGroup1 principal"
+        webDa.principalId = userGroup1.id
+        def createResponse = cloud20.createDelegationAgreement(userAdminToken, webDa)
+
+        then: "was successful"
+        createResponse.status == SC_CREATED
+
+        when: "create second DA with userGroup2 principal"
+        webDa.principalId = userGroup2.id
+        createResponse = cloud20.createDelegationAgreement(userAdminToken, webDa)
+
+        then: "error"
+        createResponse.status == SC_CREATED
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
 }
