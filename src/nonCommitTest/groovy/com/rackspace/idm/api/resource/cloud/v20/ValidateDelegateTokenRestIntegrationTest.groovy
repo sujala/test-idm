@@ -6,11 +6,9 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.service.IdentityUserService
-import org.apache.commons.lang3.RandomStringUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -248,6 +246,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         delegateValidateResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == nastTenantId} == null
 
         cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
         reloadableConfiguration.reset()
 
         where:

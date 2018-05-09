@@ -2228,7 +2228,7 @@ public class IdentityConfig {
         }
 
         @IdmProp(key = FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, versionAdded = "3.22.0", description = "The maximum number of delegation agreements per principal.")
-        public int getDelegationMaxNumberOfDaPerPincipal() {
+        public int getDelegationMaxNumberOfDaPerPrincipal() {
             return getIntSafely(reloadableConfiguration, FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP);
         }
     }

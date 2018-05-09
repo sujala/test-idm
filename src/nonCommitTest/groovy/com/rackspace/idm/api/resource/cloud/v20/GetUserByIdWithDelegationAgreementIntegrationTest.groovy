@@ -1,35 +1,22 @@
-package com.rackspace.idm.api.resource.cloud.v20;
+package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationCredentials
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
 import com.rackspace.idm.Constants
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.service.IdentityUserService
-import org.apache.commons.lang3.RandomStringUtils
-import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.EndpointForService
-import org.openstack.docs.identity.api.v2.ForbiddenFault
-import org.openstack.docs.identity.api.v2.ServiceForCatalog
-import org.openstack.docs.identity.api.v2.UnauthorizedFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
-import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-import static org.apache.http.HttpStatus.*
+import static org.apache.http.HttpStatus.SC_NO_CONTENT
+import static org.apache.http.HttpStatus.SC_OK
 
 class GetUserByIdWithDelegationAgreementIntegrationTest extends RootIntegrationTest {
 
@@ -156,6 +143,9 @@ class GetUserByIdWithDelegationAgreementIntegrationTest extends RootIntegrationT
         and: "The user information returned must include the additional attribute 'delegationAgreementId'"
         user.delegationAgreementId == da.id
 
+        cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
+
         where:
         mediaType << [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]
     }
@@ -201,6 +191,10 @@ class GetUserByIdWithDelegationAgreementIntegrationTest extends RootIntegrationT
 
         then: "Expect a 404 response code"
         response.status == 404
+
+        cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da2)
 
         where:
         mediaType << [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]

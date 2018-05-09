@@ -8,7 +8,6 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
@@ -41,7 +40,6 @@ import testHelpers.Cloud20Methods
 import testHelpers.DevOpsMethods
 import testHelpers.V1Factory
 import testHelpers.V2Factory
-import testHelpers.saml.SamlAttributeFactory
 import testHelpers.saml.SamlFactory
 import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
 import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
@@ -51,7 +49,7 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
-import static com.rackspace.idm.SAMLConstants.*
+import static com.rackspace.idm.SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
@@ -1287,6 +1285,11 @@ class Cloud20Utils {
         assert (addUserDelegateResponse.status == SC_NO_CONTENT)
 
         return delegationAgreement
+    }
+
+    def deleteDelegationAgreement(String token, DelegationAgreement delegationAgreement) {
+        def response = methods.deleteDelegationAgreement(token, delegationAgreement.id)
+        assert (response.status == SC_NO_CONTENT)
     }
 
     DelegationAgreement createDelegationAgreement(String token, DelegationAgreement delegationAgreement) {

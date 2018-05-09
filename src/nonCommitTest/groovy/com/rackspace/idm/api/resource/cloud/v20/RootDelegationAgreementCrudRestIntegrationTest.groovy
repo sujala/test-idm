@@ -575,8 +575,8 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         IdmAssert.assertOpenStackV2FaultResponse(createResponse
                 , BadRequestFault
                 , SC_BAD_REQUEST
-                , ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED
-                , "Maximum number of delegation agreements was exceeded for principal")
+                , ErrorCodes.ERROR_CODE_THRESHOLD_REACHED
+                , "Maximum number of delegation agreements has been reached for principal")
 
         when: "create first DA with user-manage principal"
         webDa.principalId = userManage.id
@@ -593,8 +593,8 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         IdmAssert.assertOpenStackV2FaultResponse(createResponse
                 , BadRequestFault
                 , SC_BAD_REQUEST
-                , ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED
-                , "Maximum number of delegation agreements was exceeded for principal")
+                , ErrorCodes.ERROR_CODE_THRESHOLD_REACHED
+                , "Maximum number of delegation agreements has been reached for principal")
 
         when: "create first DA with federated user principal"
         webDa.principalId = fedUserResponse.user.id
@@ -611,8 +611,8 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         IdmAssert.assertOpenStackV2FaultResponse(createResponse
                 , BadRequestFault
                 , SC_BAD_REQUEST
-                , ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED
-                , "Maximum number of delegation agreements was exceeded for principal")
+                , ErrorCodes.ERROR_CODE_THRESHOLD_REACHED
+                , "Maximum number of delegation agreements has been reached for principal")
 
         when: "create first DA with user-group principal"
         webDa.principalId = userGroup.id
@@ -629,8 +629,8 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         IdmAssert.assertOpenStackV2FaultResponse(createResponse
                 , BadRequestFault
                 , SC_BAD_REQUEST
-                , ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED
-                , "Maximum number of delegation agreements was exceeded for principal")
+                , ErrorCodes.ERROR_CODE_THRESHOLD_REACHED
+                , "Maximum number of delegation agreements has been reached for principal")
 
         cleanup:
         reloadableConfiguration.reset()
@@ -660,7 +660,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
             it.principalType = PrincipalType.USER_GROUP
             it
         }
-        utils.createDelegationAgreement(userAdminToken, webDa)
 
         when: "create first DA with userGroup1 principal"
         webDa.principalId = userGroup1.id
@@ -673,7 +672,15 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         webDa.principalId = userGroup2.id
         createResponse = cloud20.createDelegationAgreement(userAdminToken, webDa)
 
-        then: "error"
+        then: "was successful"
+        createResponse.status == SC_CREATED
+
+        when: "create DA with user principal"
+        webDa.principalId = userAdmin.id
+        webDa.principalType = PrincipalType.USER
+        createResponse = cloud20.createDelegationAgreement(userAdminToken, webDa)
+
+        then: "was successful"
         createResponse.status == SC_CREATED
 
         cleanup:

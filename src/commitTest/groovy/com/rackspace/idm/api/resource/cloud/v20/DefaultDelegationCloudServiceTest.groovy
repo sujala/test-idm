@@ -206,7 +206,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
 
         reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
-        reloadableConfig.getDelegationMaxNumberOfDaPerPincipal() >> 5
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 5
         User caller = new User().with {
             it.id = RandomStringUtils.randomAlphabetic(10)
             it.domainId = RandomStringUtils.randomAlphabetic(10)
@@ -344,7 +344,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
 
         reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
-        reloadableConfig.getDelegationMaxNumberOfDaPerPincipal() >> 5
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 5
 
         UserGroup ug = new UserGroup().with {
             it.id = RandomStringUtils.randomAlphabetic(10)
@@ -489,7 +489,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
         reloadableConfig.areDelegationAgreementsEnabledForRcn(callerDomain.rackspaceCustomerNumber) >> true
-        reloadableConfig.getDelegationMaxNumberOfDaPerPincipal() >> 5
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 5
         delegationService.getDelegateByReference(_) >> delegate
 
         when: "Delegate belongs to same RCN"
@@ -526,7 +526,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
         reloadableConfig.areDelegationAgreementsEnabledForRcn(callerDomain.rackspaceCustomerNumber) >> true
-        reloadableConfig.getDelegationMaxNumberOfDaPerPincipal() >> 1
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 1
 
         when:
         service.addAgreement(uriInfo, token, daWeb)
@@ -536,8 +536,8 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             IdmExceptionAssert.assertException(args[0]
                     , BadRequestException
-                    , ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED
-                    , "Maximum number of delegation agreements was exceeded for principal")
+                    , ErrorCodes.ERROR_CODE_THRESHOLD_REACHED
+                    , "Maximum number of delegation agreements has been reached for principal")
             return Response.status(SC_BAD_REQUEST)
         }
     }

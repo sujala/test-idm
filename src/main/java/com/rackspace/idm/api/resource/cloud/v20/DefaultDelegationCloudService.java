@@ -118,9 +118,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             principalValidator.verifyCallerAuthorizedOnPrincipal(caller);
             DelegationPrincipal principal = principalValidator.getPrincipal();
 
-            // Verify the max allowed DAs per principal is not exceeded.
-            if (delegationService.countNumberOfDelegationAgreementsByPrincipal(principal) >= identityConfig.getReloadableConfig().getDelegationMaxNumberOfDaPerPincipal()) {
-                throw new BadRequestException("Maximum number of delegation agreements was exceeded for principal", ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED);
+            // Verify the max allowed DAs per principal has not been reached.
+            if (delegationService.countNumberOfDelegationAgreementsByPrincipal(principal) >= identityConfig.getReloadableConfig().getDelegationMaxNumberOfDaPerPrincipal()) {
+                throw new BadRequestException("Maximum number of delegation agreements has been reached for principal", ErrorCodes.ERROR_CODE_THRESHOLD_REACHED);
             }
 
             // Verify RCN is supported for DAs. Blank RCNs only supported if feature is globally enabled for all RCNs
