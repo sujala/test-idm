@@ -3936,24 +3936,24 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.authenticateFederated(headers, new byte[0], false)
 
         then: "Sent to v1.0"
-        1 * defaultFederatedIdentityService.processSamlResponse(_)
-        0 * defaultFederatedIdentityService.processV2SamlResponse(_, _)
+        1 * federatedIdentityService.processSamlResponse(_)
+        0 * federatedIdentityService.processV2SamlResponse(_, _)
 
         when: "Set 1.0 API header"
         headers.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION) >> [GlobalConstants.FEDERATION_API_V1_0]
         service.authenticateFederated(headers, new byte[0], false)
 
         then: "Sent to v1.0"
-        1 * defaultFederatedIdentityService.processSamlResponse(_)
-        0 * defaultFederatedIdentityService.processV2SamlResponse(_, _)
+        1 * federatedIdentityService.processSamlResponse(_)
+        0 * federatedIdentityService.processV2SamlResponse(_, _)
 
         when: "Set 2.0 API header"
         headers.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION) >> [GlobalConstants.FEDERATION_API_V2_0]
         service.authenticateFederated(headers, new byte[0], false)
 
         then: "Sent to v2.0"
-        0 * defaultFederatedIdentityService.processSamlResponse(_)
-        1 * defaultFederatedIdentityService.processV2SamlResponse(_, _)
+        0 * federatedIdentityService.processSamlResponse(_)
+        1 * federatedIdentityService.processV2SamlResponse(_, _)
     }
 
     def "Update identity provider with approvedDomainIds"() {
@@ -4128,8 +4128,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.updateIdentityProvider(headers, uriInfo(), authToken, "id", identityProvider)
 
         then:
-        1 * defaultFederatedIdentityService.checkAndGetIdentityProviderWithMetadataById("id") >> new IdentityProvider()
-        1 * defaultFederatedIdentityService.updateIdentityProvider(_ as IdentityProvider) >> { args ->
+        1 * federatedIdentityService.checkAndGetIdentityProviderWithMetadataById("id") >> new IdentityProvider()
+        1 * federatedIdentityService.updateIdentityProvider(_ as IdentityProvider) >> { args ->
             IdentityProvider provider = args[0]
             assert provider.emailDomains.size() == 1
             null
@@ -4214,6 +4214,62 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName());
     }
 
+    @Unroll
+    def "getIdentityProviders: list providers using no query params: userType = #userType"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser()
+        def rcn = RandomStringUtils.randomAlphanumeric(8)
+        def domain = entityFactory.createDomain().with {
+            it.domainId = caller.domainId
+            it.rackspaceCustomerNumber = rcn
+            it
+        }
+        def otherDomainInRcn = entityFactory.createDomain().with {
+            it.domainId = RandomStringUtils.randomAlphanumeric(8)
+            it.rackspaceCustomerNumber = rcn
+            it
+        }
+        def idpWithOneDomain = entityFactory.createIdentityProviderWithoutCertificate().with {
+            it.approvedDomainIds = [caller.domainId]
+            it
+        }
+        def idpWithTwoDomains = entityFactory.createIdentityProviderWithoutCertificate().with {
+            it.approvedDomainIds = [caller.domainId, "domainNotInRcn"]
+            it
+        }
+        if (userType == IdentityRole.RCN_ADMIN.roleName) {
+            1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.RCN_ADMIN.roleName) >> true
+            0 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.roleName,
+                    IdentityUserTypeEnum.USER_MANAGER.roleName) >> false
+            1 * domainService.getDomain(caller.domainId) >> domain
+            1 * domainService.getDomainsByRCN(domain.rackspaceCustomerNumber) >> [domain, otherDomainInRcn]
+            1 * federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomains([caller.domainId, otherDomainInRcn.domainId]) >> [idpWithOneDomain, idpWithTwoDomains]
+        } else {
+            1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.roleName,
+                                                                                                IdentityUserTypeEnum.USER_MANAGER.roleName) >> true
+            1 * federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomain(caller.domainId) >> [idpWithOneDomain, idpWithTwoDomains]
+            0 * domainService.getDomainsByRCN(domain.rackspaceCustomerNumber)
+        }
+
+        when:
+        service.getIdentityProviders(headers, authToken, new IdentityProviderSearchParams())
+
+        then:
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.getGroupsForUser(_) >> []
+        1 * identityProviderConverterCloudV20.toIdentityProviderList(_) >> { args ->
+            def idps = args[0]
+            assert idps.size() == 1
+            assert idps[0] == idpWithOneDomain
+        }
+
+        where:
+        userType << [IdentityUserTypeEnum.USER_ADMIN.roleName,
+                     IdentityUserTypeEnum.USER_MANAGER.roleName,
+                     IdentityRole.RCN_ADMIN.roleName]
+    }
+
     def "getIdentityProviders: list provider using emailDomain query param"() {
         given:
         allowUserAccess()
@@ -4230,7 +4286,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * requestContext.getEffectiveCaller() >> caller
         1 * userService.getGroupsForUser(_) >> []
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
     }
 
     def "getIdentityProviders: ignore empty/blank query params when used with emailDomain query param"() {
@@ -4254,7 +4310,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * requestContext.getEffectiveCaller() >> caller
         1 * userService.getGroupsForUser(_) >> []
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
 
         where:
         name   | domainId | tenantId | issuer | idpType
@@ -4751,6 +4807,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockRuleService(service)
         mockPhonePinService(service)
         mockDelegationService(service)
+        mockFederatedIdentityService(service)
+        mockIdentityProviderConverterCloudV20(service)
     }
 
     def mockMisc() {

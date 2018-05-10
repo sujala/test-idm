@@ -66,22 +66,22 @@ class Validator20Test extends RootServiceTest {
             }
             it
         }
-        defaultFederatedIdentityService.getIdentityProviderByName(identityProvider.name)
-        defaultFederatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) >> null
+        federatedIdentityService.getIdentityProviderByName(identityProvider.name)
+        federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) >> null
 
         when: "Only one email domain"
         service.validateIdentityProviderForCreation(identityProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(identityProvider.emailDomains.emailDomain.get(0))
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(identityProvider.emailDomains.emailDomain.get(0))
 
         when: "Two email domains"
         identityProvider.emailDomains.emailDomain.add("emailDomain2")
         service.validateIdentityProviderForCreation(identityProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain("emailDomain")
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain("emailDomain2")
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain("emailDomain")
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain("emailDomain2")
 
         when: "Duplicate email domains"
         identityProvider.emailDomains.emailDomain.clear()
@@ -91,7 +91,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForCreation(identityProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain("emailDomain2")
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain("emailDomain2")
     }
 
     def "validateIdentityProviderForCreation: emailDomains error check"() {
@@ -109,8 +109,8 @@ class Validator20Test extends RootServiceTest {
             }
             it
         }
-        defaultFederatedIdentityService.getIdentityProviderByName(identityProvider.name)
-        defaultFederatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) >> null
+        federatedIdentityService.getIdentityProviderByName(identityProvider.name)
+        federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) >> null
 
         when: "Max size exceeded"
         identityProvider.emailDomains.emailDomain.add(testUtils.getRandomUUIDOfLength("emailDomain", 256))
@@ -164,7 +164,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForCreation(identityProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_) >> new com.rackspace.idm.domain.entity.IdentityProvider()
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(_) >> new com.rackspace.idm.domain.entity.IdentityProvider()
         thrown(DuplicateException)
     }
 
@@ -196,7 +196,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain) >> null
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain) >> null
 
         when: "Manager: existing IDP with same emailDomain"
         identityProvider.emailDomains.emailDomain.clear()
@@ -205,7 +205,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
 
         then:
-        0 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+        0 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
 
         when: "Manager: replace IDP's emailDomains"
         identityProvider.emailDomains.emailDomain.clear()
@@ -216,7 +216,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
 
         then: "Assert newly added emailDomain does not belong to another IDP"
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
 
         when: "Manager: duplicate emailDomains (case insensitive)"
         identityProvider.emailDomains.emailDomain.clear()
@@ -229,7 +229,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
 
         then: "Assert duplicates are ignored"
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
 
         when: "Manager: ignore null values for emailDomains"
         identityProvider.emailDomains.emailDomain.clear()
@@ -239,7 +239,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
 
         then:
-        0 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+        0 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
 
         when: "RcnAdmin: one email domain"
         identityProvider.emailDomains.emailDomain.clear()
@@ -248,7 +248,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain) >> null
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain) >> null
 
         when: "RcnAdmin: existing IDP with same emailDomain"
         identityProvider.emailDomains.emailDomain.clear()
@@ -257,7 +257,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
 
         then:
-        0 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+        0 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
 
         when: "RcnAdmin: replace IDP's emailDomains"
         identityProvider.emailDomains.emailDomain.clear()
@@ -268,7 +268,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
 
         then: "Assert newly added emailDomain does not belong to another IDP"
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
 
         when: "RcnAdmin: duplicate emailDomains (case insensitive)"
         identityProvider.emailDomains.emailDomain.clear()
@@ -281,7 +281,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
 
         then: "Assert duplicates are ignored"
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
 
         when: "RcnAdmin: ignore null values for emailDomains"
         identityProvider.emailDomains.emailDomain.clear()
@@ -291,7 +291,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
 
         then:
-        0 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+        0 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
 
         when: "UserAdminOrUserManage: one email domain"
         identityProvider.emailDomains.emailDomain.clear()
@@ -300,7 +300,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain) >> null
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain) >> null
 
         when: "UserAdminOrUserManage: existing IDP with same emailDomain"
         identityProvider.emailDomains.emailDomain.clear()
@@ -309,7 +309,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
 
         then:
-        0 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+        0 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
 
         when: "UserAdminOrUserManage: replace IDP's emailDomains"
         identityProvider.emailDomains.emailDomain.clear()
@@ -320,7 +320,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
 
         then: "Assert newly added emailDomain does not belong to another IDP"
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
 
         when: "UserAdminOrUserManage: duplicate emailDomains (case insensitive)"
         identityProvider.emailDomains.emailDomain.clear()
@@ -333,7 +333,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
 
         then: "Assert duplicates are ignored"
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> null
 
         when: "UserAdminOrUserManager: ignore null values for emailDomains"
         identityProvider.emailDomains.emailDomain.clear()
@@ -343,7 +343,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
 
         then:
-        0 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(_)
+        0 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
     }
 
     def "ValidateIdentityProviderForUpdate: emailDomains error check"() {
@@ -408,7 +408,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForIdentityProviderManager(identityProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> new com.rackspace.idm.domain.entity.IdentityProvider()
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> new com.rackspace.idm.domain.entity.IdentityProvider()
         thrown(DuplicateException)
 
         when: "RcnAdmin: exceeded max size"
@@ -453,7 +453,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForRcnAdmin(identityProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> new com.rackspace.idm.domain.entity.IdentityProvider()
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> new com.rackspace.idm.domain.entity.IdentityProvider()
         thrown(DuplicateException)
 
         when: "UserAdminOrUserManage: exceeded max size"
@@ -498,7 +498,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForUserAdminOrUserManage(identityProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> new com.rackspace.idm.domain.entity.IdentityProvider()
+        1 * federatedIdentityService.getIdentityProviderByEmailDomain(emailDomain2) >> new com.rackspace.idm.domain.entity.IdentityProvider()
         thrown(DuplicateException)
     }
 
@@ -512,7 +512,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderIssuerWithDupCheck(webProvider)
 
         then: "calls to check dup"
-        1 * defaultFederatedIdentityService.getIdentityProviderByIssuer(webProvider.issuer) >> new com.rackspace.idm.domain.entity.IdentityProvider()
+        1 * federatedIdentityService.getIdentityProviderByIssuer(webProvider.issuer) >> new com.rackspace.idm.domain.entity.IdentityProvider()
 
         and: "throws dup exception when IDP already exists with that issuer"
         Exception ex = thrown()
@@ -529,7 +529,7 @@ class Validator20Test extends RootServiceTest {
         service.validateIdentityProviderIssuerWithDupCheck(webProvider)
 
         then: "calls to check dup"
-        1 * defaultFederatedIdentityService.getIdentityProviderByIssuer(webProvider.issuer) >> null
+        1 * federatedIdentityService.getIdentityProviderByIssuer(webProvider.issuer) >> null
 
         and: "no error is thrown if dup check doesn't return an IDP"
         notThrown()

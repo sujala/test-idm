@@ -124,7 +124,7 @@ class IdentityProviderValidator20Test extends RootServiceTest {
             it
         }
 
-        defaultFederatedIdentityService.getIdentityProviderByName(provider.name) >> differentProvider
+        federatedIdentityService.getIdentityProviderByName(provider.name) >> differentProvider
 
         when:
         service.validateIdentityProviderForUpdateForIdentityProviderManager(provider, existingProvider)
@@ -205,21 +205,21 @@ class IdentityProviderValidator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForIdentityProviderManager(updateProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByName(updateProvider.name) >> null
+        1 * federatedIdentityService.getIdentityProviderByName(updateProvider.name) >> null
         notThrown()
 
         when:
         service.validateIdentityProviderForUpdateForUserAdminOrUserManage(updateProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByName(updateProvider.name) >> null
+        1 * federatedIdentityService.getIdentityProviderByName(updateProvider.name) >> null
         notThrown()
 
         when:
         service.validateIdentityProviderForUpdateForRcnAdmin(updateProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByName(updateProvider.name) >> null
+        1 * federatedIdentityService.getIdentityProviderByName(updateProvider.name) >> null
         notThrown()
     }
 
@@ -242,21 +242,21 @@ class IdentityProviderValidator20Test extends RootServiceTest {
         service.validateIdentityProviderForUpdateForIdentityProviderManager(updateProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByName(newName) >> existingProvider
+        1 * federatedIdentityService.getIdentityProviderByName(newName) >> existingProvider
         notThrown()
 
         when:
         service.validateIdentityProviderForUpdateForUserAdminOrUserManage(updateProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByName(newName) >> existingProvider
+        1 * federatedIdentityService.getIdentityProviderByName(newName) >> existingProvider
         notThrown()
 
         when:
         service.validateIdentityProviderForUpdateForRcnAdmin(updateProvider, existingProvider)
 
         then:
-        1 * defaultFederatedIdentityService.getIdentityProviderByName(newName) >> existingProvider
+        1 * federatedIdentityService.getIdentityProviderByName(newName) >> existingProvider
         notThrown()
 
         where:

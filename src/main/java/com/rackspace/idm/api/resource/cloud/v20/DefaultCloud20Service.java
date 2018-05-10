@@ -54,6 +54,7 @@ import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
@@ -1757,6 +1758,27 @@ public class DefaultCloud20Service implements Cloud20Service {
                 providerEntities = federatedIdentityService.findIdentityProvidersApprovedForDomain(identityProviderSearchParams.approvedDomainId);
             } else if (IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
                 providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForAnyDomain();
+            }  else if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.RCN_ADMIN.getRoleName())) {
+                if (StringUtils.isNotBlank(caller.getDomainId())) {
+                    // RCN admins only have access to IDPs within their RCN
+                    Domain domain = domainService.getDomain(caller.getDomainId());
+                    Iterable<Domain> domains = domainService.getDomainsByRCN(domain.getRackspaceCustomerNumber());
+                    Collection<String> domainIds = CollectionUtils.collect(domains, new Transformer<Domain, String>() {
+                        @Override
+                        public String transform(Domain domain) {
+                            return domain.getDomainId();
+                        }
+                    });
+                    providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomains(domainIds);
+                    filterIdpListForIdpsWithASignleApprovedDomain(providerEntities);
+                }
+            }  else if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName())) {
+                // User-admin/managers only have access to IDPs within their domain
+                if (StringUtils.isNotBlank(caller.getDomainId())) {
+                    providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomain(caller.getDomainId());
+                    filterIdpListForIdpsWithASignleApprovedDomain(providerEntities);
+                }
             } else {
                 providerEntities = federatedIdentityService.findAllIdentityProviders();
             }
@@ -1799,6 +1821,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.exceptionResponse(new ForbiddenException(ex.getMessage())); //translate size limit to forbidden
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void filterIdpListForIdpsWithASignleApprovedDomain(Collection<com.rackspace.idm.domain.entity.IdentityProvider> identityProviders) {
+        if (CollectionUtils.isNotEmpty(identityProviders)) {
+            CollectionUtils.filter(identityProviders, new Predicate<com.rackspace.idm.domain.entity.IdentityProvider>() {
+                @Override
+                public boolean evaluate(com.rackspace.idm.domain.entity.IdentityProvider idp) {
+                    return CollectionUtils.isNotEmpty(idp.getApprovedDomainIds()) && idp.getApprovedDomainIds().size() == 1;
+                }
+            });
         }
     }
 

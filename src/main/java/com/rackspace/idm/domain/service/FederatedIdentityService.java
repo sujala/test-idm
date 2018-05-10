@@ -1,13 +1,11 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.entity.IdentityProperty;
-import com.rackspace.idm.domain.entity.IdentityProvider;
-import com.rackspace.idm.domain.entity.SamlAuthResponse;
-import com.rackspace.idm.domain.entity.SamlLogoutResponse;
+import com.rackspace.idm.domain.entity.*;
 import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.opensaml.saml.saml2.core.Response;
 
 import javax.naming.ServiceUnavailableException;
+import java.util.Collection;
 import java.util.List;
 
 public interface FederatedIdentityService {
@@ -168,6 +166,15 @@ public interface FederatedIdentityService {
      * @throws com.rackspace.idm.exception.SizeLimitExceededException
      */
     List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId);
+
+    /**
+     * Return the identity providers that have an EXPLICIT domain restriction for the given domainIds.
+     *
+     * @param domainIds
+     * @return
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException
+     */
+    List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForDomains(Collection<String> domainIds);
 
     /**
      * Return the identity providers that have an EXPLICIT domain restriction for the given domainId.

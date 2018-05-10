@@ -98,6 +98,11 @@ public class DefaultDomainService implements DomainService {
     }
 
     @Override
+    public Iterable<Domain> getDomainsByRCN(String rcn) {
+        return domainDao.getRCNDomains(rcn);
+    }
+
+    @Override
     public PaginatorContext<Domain> getDomainsByRCN(String rcn, Integer marker, Integer limit) {
         return domainDao.getRCNDomainsPaged(rcn, marker, limit);
     }

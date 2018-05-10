@@ -2,15 +2,12 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
-import com.rackspace.idm.domain.entity.IdentityProperty;
-import com.rackspace.idm.domain.entity.IdentityProvider;
-import com.rackspace.idm.domain.entity.SamlAuthResponse;
-import com.rackspace.idm.domain.entity.SamlLogoutResponse;
-import com.rackspace.idm.domain.service.FederatedIdentityService;
-import com.rackspace.idm.domain.service.IdpPolicyFormatEnum;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.federation.v2.FederatedAuthHandlerV2;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -19,6 +16,10 @@ import com.rackspace.idm.exception.UnrecoverableIdmException;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import com.rackspace.idm.validation.Validator20;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
+import org.apache.commons.collections4.Transformer;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.opensaml.saml.saml2.core.LogoutRequest;
@@ -33,6 +34,8 @@ import org.springframework.util.Assert;
 
 import javax.naming.ServiceUnavailableException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,6 +70,12 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
     @Autowired
     private Validator20 validator20;
+
+    @Autowired
+    AuthorizationService authorizationService;
+
+    @Autowired
+    DomainService domainService;
 
     public static final String ERROR_SERVICE_UNAVAILABLE = "Service Unavailable";
 
@@ -240,6 +249,11 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Override
     public List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId) {
         return identityProviderDao.findIdentityProvidersApprovedForDomain(domainId);
+    }
+
+    @Override
+    public List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForDomains(Collection<String> domainIds) {
+        return identityProviderDao.findIdentityProvidersExplicitlyApprovedForDomains(domainIds);
     }
 
     @Override
