@@ -12,6 +12,7 @@ public interface DomainService {
     void addDomain(Domain domain);
     Domain getDomain(String domainId);
     PaginatorContext<Domain> getDomains(int offset, int limit);
+    Iterable<Domain> getDomainsByRCN(String rcn);
     PaginatorContext<Domain> getDomainsByRCN(String rcn, Integer marker, Integer limit);
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);

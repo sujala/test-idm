@@ -102,6 +102,7 @@ class RootServiceTest extends Specification {
     @Shared RoleAssignmentConverter roleAssignmentConverter
     @Shared SamlUnmarshaller samlUnmarshaller
     @Shared DelegationAgreementConverter delegationAgreementConverter
+    @Shared IdentityProviderConverterCloudV20 identityProviderConverterCloudV20
 
     //services
     @Shared ApplicationService applicationService
@@ -150,7 +151,7 @@ class RootServiceTest extends Specification {
     @Shared DefaultCloud20Service defaultCloud20Service
     @Shared PropertiesService propertiesService
     @Shared CryptHelper cryptHelper
-    @Shared DefaultFederatedIdentityService defaultFederatedIdentityService;
+    @Shared FederatedIdentityService federatedIdentityService
     @Shared IdentityUserService  identityUserService
     @Shared CreateSubUserService createSubUserService
     @Shared FederatedUserDao federatedUserDao
@@ -398,8 +399,8 @@ class RootServiceTest extends Specification {
     }
 
     def mockFederatedIdentityService(service) {
-        defaultFederatedIdentityService = Mock()
-        service.federatedIdentityService = defaultFederatedIdentityService
+        federatedIdentityService = Mock()
+        service.federatedIdentityService = federatedIdentityService
     }
 
     def mockIdentityUserService(service) {
@@ -686,6 +687,11 @@ class RootServiceTest extends Specification {
     def mockDelegationAgreementConverter(service) {
         delegationAgreementConverter = Mock()
         service.delegationAgreementConverter = delegationAgreementConverter
+    }
+
+    def mockIdentityProviderConverterCloudV20(service) {
+        identityProviderConverterCloudV20 = Mock()
+        service.identityProviderConverterCloudV20 = identityProviderConverterCloudV20
     }
 
     def mockTokenRevocationService(service) {

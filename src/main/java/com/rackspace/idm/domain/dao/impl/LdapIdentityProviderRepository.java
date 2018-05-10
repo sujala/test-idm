@@ -14,7 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 @LDAPComponent
@@ -94,6 +96,23 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
         List<IdentityProvider> providers;
         try {
             providers = getUnpagedUnsortedObjects(searchFilterGetIdentityProvidersApprovedForDomain(domainId), getBaseDn(), SearchScope.SUB, maxAllowed);
+            return providers;
+        } catch (LDAPSearchException ldapEx) {
+            if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
+                logger.debug(String.format("Aborting loading identity providers. Result size exceeded limit of %d", maxAllowed), ldapEx);
+                throw new SizeLimitExceededException(String.format("Result size exceeded. Results limited to " + maxAllowed + " providers."), ldapEx);
+            } else {
+                throw new IllegalStateException(ldapEx);
+            }
+        }
+    }
+
+    @Override
+    public List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForDomains(Collection<String> domainIds) {
+        int maxAllowed = identityConfig.getReloadableConfig().getMaxListIdentityProviderSize();
+        List<IdentityProvider> providers;
+        try {
+            providers = getUnpagedUnsortedObjects(searchFilterGetIdentityProvidersExplicitlyApprovedForDomains(domainIds), getBaseDn(), SearchScope.SUB, maxAllowed);
             return providers;
         } catch (LDAPSearchException ldapEx) {
             if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
@@ -275,6 +294,23 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER)
                 .addOrAttributes(Arrays.asList(Filter.createEqualityFilter(ATTR_APPROVED_DOMAIN_IDS, domainId)
                         , Filter.createEqualityFilter(ATTR_APPROVED_DOMAIN_GROUP, ApprovedDomainGroupEnum.GLOBAL.getStoredVal())))
+                .build();
+    }
+
+    /**
+     * Search filter for IDPs where rsApprovedDomainIds contains domainId
+     *
+     * @param domainIds
+     * @return
+     */
+    Filter searchFilterGetIdentityProvidersExplicitlyApprovedForDomains(Collection<String> domainIds) {
+        List<Filter> domainFilters = new ArrayList<>(domainIds.size());
+        for (String domainId : domainIds) {
+            domainFilters.add(Filter.createEqualityFilter(ATTR_APPROVED_DOMAIN_IDS, domainId));
+        }
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER)
+                .addOrAttributes(domainFilters)
                 .build();
     }
 

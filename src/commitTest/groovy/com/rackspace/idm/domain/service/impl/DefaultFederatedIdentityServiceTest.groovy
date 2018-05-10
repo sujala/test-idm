@@ -3,18 +3,23 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.SamlAuthResponse
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.util.SamlSignatureValidator
+import org.apache.commons.lang3.RandomStringUtils
+import org.opensaml.core.config.InitializationService
 import spock.lang.Specification
 import testHelpers.IdmAssert
+import testHelpers.RootServiceTest
 import testHelpers.saml.SamlFactory
 
-class DefaultFederatedIdentityServiceTest extends Specification {
+class DefaultFederatedIdentityServiceTest extends RootServiceTest {
     DefaultFederatedIdentityService service
     FederatedAuthHandlerV1 federatedAuthHandlerV1 = new FederatedAuthHandlerV1()
 
@@ -62,6 +67,8 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         federatedAuthHandlerV1.rackerSourceFederationHandler = rackerSourceFederationHandler
         federatedAuthHandlerV1.identityProviderDao = identityProviderDao
         federatedAuthHandlerV1.identityConfig = service.identityConfig
+        mockAuthorizationService(service)
+        mockDomainService(service)
     }
 
     def "Error thrown when saml missing issuer"() {

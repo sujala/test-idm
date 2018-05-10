@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.IdentityProvider;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface IdentityProviderDao {
@@ -93,6 +94,15 @@ public interface IdentityProviderDao {
      * @return
      */
     List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId);
+
+    /**
+     * Return the identity providers that have an EXPLICIT domain restriction for the given domainIds.
+     *
+     * @param domainIds
+     * @return
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException
+     */
+    List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForDomains(Collection<String> domainIds);
 
     /**
      * Return the identity providers that have an EXPLICIT domain restriction for the given domainId.

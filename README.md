@@ -11,6 +11,7 @@ Team
 * Jorge Munoz
 * Timothy Cline
 * Robert Jacoby
+* Aseem Jain
 
 Documentation
 --------------
@@ -59,6 +60,9 @@ Contributing
 3. Commit your changes (`git commit -am "Added Stuffs"`)
 4. Push to the branch (`git push origin mybranch`)
 5. Open a Pull Request
-6. Enjoy a refreshing Diet Coke and wait
+6. Enjoy a refreshing Diet Coke and wait to get PR comments / approvals.
+7. PR can be merged once it gets 1 QE's approval and 2 DEV's approval.
+8. PR with single commit can be merged with "Rebase and merge" option, however PR with multiple commits can be merged with "Squash and Merge" option.
+
 
 
