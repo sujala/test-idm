@@ -19,6 +19,7 @@ import com.rackspace.idm.validation.Validator20;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
+import org.apache.commons.lang.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.List;
 
@@ -41,6 +43,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     public static final String ERROR_MSG_PRINCIPAL_NOT_FOUND = "The specified principal was not found or you are not authorized to use this principal";
     public static final String ERROR_MSG_DELEGATE_NOT_FOUND = "The specified delegate was not found or you are not authorized to use this delegate";
     public static final String ERROR_MSG_DELEGATE_MAX_EXCEEDED = "The maximum number of delegates was exceeded or you are not authorized to use this delegate";
+    public static final String ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION = "allowSubAgreements and subAgreementNestLevel are mutually exclusive";
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -111,6 +114,26 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 agreementWeb.setPrincipalType(PrincipalType.USER);
             } else if (agreementWeb.getPrincipalType() == null) {
                 throw new BadRequestException("Must specify the principal type", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            }
+
+            boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
+            boolean isSubAgreementSpecified = agreementWeb.isAllowSubAgreements() != null;
+
+            if (isNestLevelSpecified && isSubAgreementSpecified) {
+                throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            } else if (isSubAgreementSpecified) {
+                if (agreementWeb.isAllowSubAgreements()) {
+                    agreementWeb.setSubAgreementNestLevel(BigInteger.valueOf(identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel()));
+                } else {
+                    agreementWeb.setSubAgreementNestLevel(BigInteger.ZERO);
+                }
+            } else if (isNestLevelSpecified) {
+                validator20.validateIntegerMinMax("subAgreementNestLevel", agreementWeb.getSubAgreementNestLevel().intValue(), 0, identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel());
+                agreementWeb.setAllowSubAgreements(agreementWeb.getSubAgreementNestLevel().intValue() > 0);
+            } else {
+                // Default to false/0
+                agreementWeb.setAllowSubAgreements(false);
+                agreementWeb.setSubAgreementNestLevel(BigInteger.ZERO);
             }
 
             // The principal must exist and caller must be authorized to create a DA for the principal

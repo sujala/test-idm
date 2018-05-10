@@ -128,6 +128,7 @@ public class Validator20 {
     public static final String BLANK_ERROR_MSG = "%s cannot be empty or blank.";
     public static final String WHITESPACE_CHARACTERS_ERROR_MSG = "%s cannot contain whitespace characters.";
     public static final String LENGTH_EXCEEDED_ERROR_MSG = "%s length cannot exceed %s characters";
+    public static final String VALUE_EXCEEDED_ERROR_MSG = "%s value must be between %s and %s";
 
     public static final String ERROR_APPROVED_DOMAIN_GROUP_NAME_SHOULD_BE_GLOBAL = "When BROKER IDP is specified, the approvedDomainGroup must be set, and specified as GLOBAL";
     public static final String FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE = "Policy contains invalid json.";
@@ -1004,6 +1005,12 @@ public class Validator20 {
         }
     }
 
+    public void validateIntegerMinMax(String propertyName, int value, int min, int max) {
+        if (value < min || value > max) {
+            throw new BadRequestException(generateValueExceededMsg(propertyName, min, max), ErrorCodes.ERROR_CODE_INVALID_VALUE);
+        }
+    }
+
     private void validateStringNonWhitespace(String propertyName, String value) {
         if (StringUtils.isNotBlank(value) && value.matches(".*[\\s].*")) {
             String errMsg = String.format(WHITESPACE_CHARACTERS_ERROR_MSG, propertyName);
@@ -1020,6 +1027,10 @@ public class Validator20 {
 
     private String generateLengthExceededMsg(String propertyName, int maxLength) {
         return String.format(LENGTH_EXCEEDED_ERROR_MSG, propertyName, maxLength);
+    }
+
+    private String generateValueExceededMsg(String propertyName, int min, int max) {
+        return String.format(VALUE_EXCEEDED_ERROR_MSG, propertyName, min, max);
     }
 
     public void setTenantService(TenantService tenantService) {

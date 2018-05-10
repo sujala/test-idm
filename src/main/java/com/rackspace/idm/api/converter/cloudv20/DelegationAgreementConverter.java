@@ -49,11 +49,7 @@ public class DelegationAgreementConverter {
 
     public DelegationAgreement toDelegationAgreementWeb(com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreementEntity) {
         DelegationAgreement delegationAgreement = mapper.map(delegationAgreementEntity, DelegationAgreement.class);
-
         delegationAgreement.setAllowSubAgreements(delegationAgreementEntity.getAllowSubAgreements());
-        delegationAgreement.setPrincipalType(delegationAgreementEntity.getPrincipalType());
-        delegationAgreement.setPrincipalId(delegationAgreementEntity.getPrincipalId());
-
         return delegationAgreement;
     }
 
