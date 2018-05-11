@@ -1,21 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.SAMLConstants
-import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.service.IdentityUserService
-import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -31,9 +25,7 @@ import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.Constants.DEFAULT_OBJECT_STORE_ROLE
-import static com.rackspace.idm.Constants.ROLE_RBAC1_ID
-import static com.rackspace.idm.Constants.ROLE_RBAC2_ID
+import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.*
 
 class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
@@ -245,6 +237,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2AuthResponse.user, da)
 
         cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
         reloadableConfiguration.reset()
 
         where:
@@ -334,6 +327,9 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == mossoTenantId} != null
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == nastTenantId} == null
 
+        cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
+
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
@@ -379,6 +375,9 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         and: "user received DA role 2 on all tenants"
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == mossoTenantId} != null
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == nastTenantId} != null
+
+        cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -433,6 +432,9 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == faws1.id} == null
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == faws2.id} != null
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == faws3.id} != null
+
+        cleanup:
+        utils.deleteDelegationAgreement(ua1Token, da)
     }
 
     @Unroll
@@ -479,6 +481,9 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
             assert delegateAuthResponse.user.roles == null
         }
 
+        cleanup:
+        utils.deleteDelegationAgreement(ua1Token, da)
+
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
@@ -507,6 +512,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, sharedSubUser2AuthResponse.user, da)
 
         cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
         reloadableConfiguration.reset()
     }
 
@@ -534,6 +540,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, fedUserAuthResponse.user, da)
 
         cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
         reloadableConfiguration.reset()
     }
 
@@ -564,6 +571,9 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
 
         then: "resultant info is appropriate"
         IdmAssert.assertOpenStackV2FaultResponse(delegateAuthResponse, ItemNotFoundFault, SC_NOT_FOUND, null, AuthWithDelegationCredentials.ERROR_MSG_MISSING_AGREEMENT)
+
+        cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
     }
 
     def "v2.0 API Fed user that is member of delegate user group can auth under DA"() {
@@ -590,6 +600,9 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
 
         then: "resultant info is appropriate"
         assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, fedUserAuthResponse.user, da)
+
+        cleanup:
+        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
     }
 
     void assertDelegateAuthSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser, DelegationAgreement da) {

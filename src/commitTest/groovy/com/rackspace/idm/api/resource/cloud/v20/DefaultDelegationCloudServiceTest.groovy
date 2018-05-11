@@ -206,6 +206,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
 
         reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 5
         User caller = new User().with {
             it.id = RandomStringUtils.randomAlphabetic(10)
             it.domainId = RandomStringUtils.randomAlphabetic(10)
@@ -343,6 +344,8 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
 
         reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 5
+
         UserGroup ug = new UserGroup().with {
             it.id = RandomStringUtils.randomAlphabetic(10)
             it.domainId = RandomStringUtils.randomAlphabetic(10)
@@ -486,6 +489,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
         reloadableConfig.areDelegationAgreementsEnabledForRcn(callerDomain.rackspaceCustomerNumber) >> true
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 5
         delegationService.getDelegateByReference(_) >> delegate
 
         when: "Delegate belongs to same RCN"
@@ -496,6 +500,46 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(daWeb) >> daEntity
         1 * delegationService.addDelegationAgreement(daEntity)
         1 * delegationAgreementConverter.toDelegationAgreementWeb(daEntity) >> daWeb
+    }
+
+    def "addDelegationAgreement: Error when maximum number of DAs are created for principal"() {
+        UriInfo uriInfo = Mock()
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        DelegationAgreement daWeb = new DelegationAgreement().with {
+            it
+        }
+        def token = "token"
+        User caller = new User().with {
+            it.id = "callerId"
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it
+        }
+        identityUserService.getEndUserById(caller.id) >> caller
+
+        def callerDomain = new Domain().with {
+            it.domainId = caller.domainId
+            it
+        }
+
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
+        reloadableConfig.areDelegationAgreementsEnabledForRcn(callerDomain.rackspaceCustomerNumber) >> true
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 1
+
+        when:
+        service.addAgreement(uriInfo, token, daWeb)
+
+        then:
+        1 * delegationService.countNumberOfDelegationAgreementsByPrincipal(_) >> 1
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0]
+                    , BadRequestException
+                    , ErrorCodes.ERROR_CODE_THRESHOLD_REACHED
+                    , "Maximum number of delegation agreements has been reached for principal")
+            return Response.status(SC_BAD_REQUEST)
+        }
     }
 
     def "grantRolesToAgreement: calls appropriate services"() {

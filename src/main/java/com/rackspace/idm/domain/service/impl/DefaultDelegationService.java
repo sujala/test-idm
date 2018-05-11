@@ -8,7 +8,14 @@ import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.DelegateType;
+import com.rackspace.idm.domain.entity.DelegationAgreement;
+import com.rackspace.idm.domain.entity.DelegationConsumer;
+import com.rackspace.idm.domain.entity.DelegationDelegate;
+import com.rackspace.idm.domain.entity.DelegationPrincipal;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.DelegationService;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.TenantAssignmentService;
@@ -24,9 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -263,6 +268,14 @@ public class DefaultDelegationService implements DelegationService {
                 }
             }
         }
+    }
+
+    @Override
+    public int countNumberOfDelegationAgreementsByPrincipal(DelegationPrincipal delegationPrincipal) {
+        Validate.notNull(delegationPrincipal);
+        Validate.notNull(delegationPrincipal.getDn());
+
+        return delegationAgreementDao.countNumberOfDelegationAgreementsByPrincipal(delegationPrincipal);
     }
 
 }

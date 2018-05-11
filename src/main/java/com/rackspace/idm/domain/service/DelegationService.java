@@ -3,13 +3,17 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
+import com.rackspace.idm.domain.entity.DelegationAgreement;
+import com.rackspace.idm.domain.entity.DelegationConsumer;
+import com.rackspace.idm.domain.entity.DelegationDelegate;
+import com.rackspace.idm.domain.entity.DelegationPrincipal;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.exception.SizeLimitExceededException;
 import com.unboundid.ldap.sdk.DN;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface DelegationService {
@@ -191,4 +195,11 @@ public interface DelegationService {
      */
     void removeConsumerFromExplicitDelegationAgreementAssignments(DelegationConsumer user);
 
+    /**
+     * Count the number of DAs under the specified principal.
+     *
+     * @param delegationPrincipal
+     * @throws IllegalArgumentException If the delegationPrincipal or the delegationPrincipal's dn is null.
+     */
+    int countNumberOfDelegationAgreementsByPrincipal(DelegationPrincipal delegationPrincipal);
 }

@@ -421,6 +421,9 @@ public class IdentityConfig {
     public static final String FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_PROP = "delegation.max.number.of.delegates.per.da";
     public static final int FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_DEFAULT = 5;
 
+    public static final String FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP = "delegation.max.number.of.da.per.principal";
+    public static final int FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_DEFAULT = 5;
+
     /**
      * Required static prop
      */
@@ -814,6 +817,7 @@ public class IdentityConfig {
         defaults.put(ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_DEFAULT);
         defaults.put(FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP, FEATURE_ENABLE_DELEGATION_AUTHENTICATION_DEFAULT);
         defaults.put(FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_PROP, FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_DEFAULT);
+        defaults.put(FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_DEFAULT);
 
         return defaults;
     }
@@ -2221,6 +2225,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_PROP, versionAdded = "3.22.0", description = "The maximum number of delegates allowed on a delegation agreement.")
         public int getDelegationMaxNumberOfDelegatesPerDa() {
             return getIntSafely(reloadableConfiguration, FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_PROP);
+        }
+
+        @IdmProp(key = FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, versionAdded = "3.22.0", description = "The maximum number of delegation agreements per principal.")
+        public int getDelegationMaxNumberOfDaPerPrincipal() {
+            return getIntSafely(reloadableConfiguration, FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP);
         }
     }
 

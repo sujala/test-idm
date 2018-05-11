@@ -2,16 +2,23 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.annotation.LDAPComponent;
-import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.DelegateType;
+import com.rackspace.idm.domain.entity.DelegationAgreement;
+import com.rackspace.idm.domain.entity.DelegationDelegate;
+import com.rackspace.idm.domain.entity.DelegationPrincipal;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.exception.SizeLimitExceededException;
-import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao;
-import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPSearchException;
+import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 @LDAPComponent
 public class LdapDelegationAgreementRepository extends LdapGenericRepository<DelegationAgreement> implements DelegationAgreementDao {
@@ -196,9 +202,20 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
         return (DelegationDelegate) rawObject;
     }
 
+    @Override
+    public int countNumberOfDelegationAgreementsByPrincipal(DelegationPrincipal delegationPrincipal) {
+        return countObjects(searchDelegationAgreementsByPrincipal(delegationPrincipal));
+    }
+
     Filter searchByIdFilter(String id) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DELEGATION_AGREEMENT).build();
+    }
+
+    private Filter searchDelegationAgreementsByPrincipal(DelegationPrincipal delegationPrincipal) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_RS_PRINCIPAL_DN, delegationPrincipal.getDn().toString())
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DELEGATION_AGREEMENT).build();
     }
 

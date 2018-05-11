@@ -5,9 +5,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams
-import com.rackspace.idm.api.resource.cloud.v20.EndUserDelegateReference
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.entity.DelegationAgreement
+import com.rackspace.idm.domain.entity.DelegationPrincipal
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
@@ -284,6 +284,34 @@ class DefaultDelegationServiceTest extends RootServiceTest {
 
         when: "DA is null"
         service.updateDelegationAgreement(null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "countNumberOfDelegationAgreementsByPrincipal: calls correct daos"() {
+        DelegationPrincipal delegationPrincipal = Mock(DelegationPrincipal)
+        delegationPrincipal.getDn() >> new DN("rsId=1")
+
+        when:
+        service.countNumberOfDelegationAgreementsByPrincipal(delegationPrincipal)
+
+        then:
+        1 * delegationAgreementDao.countNumberOfDelegationAgreementsByPrincipal(delegationPrincipal)
+    }
+
+    def "countNumberOfDelegationAgreementsByPrincipal: error check"() {
+        given:
+        DelegationPrincipal delegationPrincipal = Mock(DelegationPrincipal)
+
+        when: "principal is null"
+        service.countNumberOfDelegationAgreementsByPrincipal(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "principal's DN is null"
+        service.countNumberOfDelegationAgreementsByPrincipal(delegationPrincipal)
 
         then:
         thrown(IllegalArgumentException)

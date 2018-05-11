@@ -119,6 +119,9 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
         response.status == SC_OK
         verifyRetrievedRoleAssignments(retrievedEntity)
 
+        cleanup:
+        utils.deleteDelegationAgreement(principalToken, createdDA)
+
         where:
         caller           | mediaType
         sharedUserAdmin  | MediaType.APPLICATION_XML_TYPE
@@ -172,6 +175,9 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
+
+        cleanup:
+        utils.deleteDelegationAgreement(principalToken, createdDA)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -236,6 +242,9 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
         response.status == SC_OK
         verifyRetrievedRoleAssignments(retrievedEntity)
 
+        cleanup:
+        utils.deleteDelegationAgreement(userAdminToken, createdDA)
+
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
@@ -298,6 +307,9 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
 
+        cleanup:
+        utils.deleteDelegationAgreement(userAdminToken, createdDA)
+
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
@@ -357,6 +369,9 @@ class ListDelegationAgreementRolesRestIntegrationTest extends RootIntegrationTes
         rbac2Assignment != null
         rbac2Assignment.forTenants.size() == 1
         rbac2Assignment.forTenants[0] == sharedUserAdminCloudTenant.id
+
+        cleanup:
+        utils.deleteDelegationAgreement(principalToken, createdDA)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]

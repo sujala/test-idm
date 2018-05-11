@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.DelegationDelegate;
+import com.rackspace.idm.domain.entity.DelegationPrincipal;
 import com.unboundid.ldap.sdk.DN;
 
 import java.util.List;
@@ -55,4 +56,12 @@ public interface DelegationAgreementDao {
      * @throws IllegalStateException If the DN resolves to an object that can not be a delegate.
      */
     DelegationDelegate getDelegateByDn(DN dn);
+
+    /**
+     * Count the number of DAs for specified principal.
+     *
+     * @return
+     * @param delegationPrincipal
+     */
+    int countNumberOfDelegationAgreementsByPrincipal(DelegationPrincipal delegationPrincipal);
 }
