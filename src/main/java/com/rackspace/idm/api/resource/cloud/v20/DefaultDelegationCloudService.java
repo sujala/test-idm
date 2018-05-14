@@ -171,7 +171,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     }
 
     @Override
-    public Response updateAgreement(String authToken, DelegationAgreement agreement) {
+    public Response updateAgreement(String authToken, DelegationAgreement agreementWeb) {
         try {
             // Verify token exists and valid
             BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
@@ -190,31 +190,44 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
             // Caller must be the DA principal to update DA.
-            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreement.getId());
+            com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementWeb.getId());
             if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
             // Copy over only the attributes that are provided in the request and allowed to be updated.
-            if (agreement.getName() != null) {
-                validator20.validateStringNotNullWithMaxLength("name", agreement.getName(), Validator20.MAX_LENGTH_32);
-                delegationAgreement.setName(agreement.getName());
+            if (agreementWeb.getName() != null) {
+                validator20.validateStringNotNullWithMaxLength("name", agreementWeb.getName(), Validator20.MAX_LENGTH_32);
+                delegationAgreement.setName(agreementWeb.getName());
             }
 
-            if (agreement.getDescription() != null) {
-                validator20.validateStringMaxLength("description", agreement.getDescription(), Validator20.MAX_LENGTH_255);
-                delegationAgreement.setDescription(agreement.getDescription());
+            if (agreementWeb.getDescription() != null) {
+                validator20.validateStringMaxLength("description", agreementWeb.getDescription(), Validator20.MAX_LENGTH_255);
+                delegationAgreement.setDescription(agreementWeb.getDescription());
             }
 
-            if (agreement.isAllowSubAgreements() != null) {
-                delegationAgreement.setAllowSubAgreements(agreement.isAllowSubAgreements());
+            boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
+            boolean isSubAgreementSpecified = agreementWeb.isAllowSubAgreements() != null;
+
+            // Reconcile subagreementallowed to nesting level migration. When neither specified, no update
+            if (isNestLevelSpecified && isSubAgreementSpecified) {
+                throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            } else if (isSubAgreementSpecified) {
+                if (agreementWeb.isAllowSubAgreements() && delegationAgreement.getSubAgreementNestLevel() != null && delegationAgreement.getSubAgreementNestLevel() <= 0) {
+                    delegationAgreement.setSubAgreementNestLevel(identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel());
+                } else {
+                    delegationAgreement.setSubAgreementNestLevel(0);
+                }
+            } else if (isNestLevelSpecified) {
+                validator20.validateIntegerMinMax("subAgreementNestLevel", agreementWeb.getSubAgreementNestLevel().intValue(), 0, 3);
+                agreementWeb.setAllowSubAgreements(agreementWeb.getSubAgreementNestLevel().intValue() > 0);
             }
 
             delegationService.updateDelegationAgreement(delegationAgreement);
 
             return Response.ok(delegationAgreementConverter.toDelegationAgreementWeb(delegationAgreement)).build();
         } catch (Exception ex) {
-            LOG.debug(String.format("Error updating delegation agreement '%s'", agreement.getId()), ex);
+            LOG.debug(String.format("Error updating delegation agreement '%s'", agreementWeb.getId()), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
     }
