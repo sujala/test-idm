@@ -589,6 +589,54 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * roleAssignmentConverter.toRoleAssignmentsWeb(_)
     }
 
+    def "grantRolesToAgreement: authorized caller is not an effective principal on the DA"() {
+        def domainId = "domainId"
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = "rsId=" + it.id
+            it.domainId = domainId
+            it
+        }
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+                ta.tenantAssignment.add(new TenantAssignment().with {
+                    it.onRole = "roleId"
+                    it.forTenants.addAll("tenantId")
+                    it
+                })
+            it.tenantAssignments = ta
+            it
+        }
+        def tokenStr = "callerTokenStr"
+        def token = Mock(BaseUserToken)
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.id = "id"
+            it.domainId = domainId
+            it.principal = Mock(DelegationPrincipal)
+            it.principalDN = new DN("rsId=otherDn")
+            it
+        }
+        daEntity.principal.getId() >> "otherId"
+        daEntity.principal.principalType >> PrincipalType.USER
+
+        when:
+        def response = service.grantRolesToAgreement(tokenStr, daEntity.id, assignments)
+
+        then:
+        response.status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(daEntity) >> true
+        1 * delegationService.replaceRoleAssignmentsOnDelegationAgreement(daEntity, assignments)
+        1 * delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, _) >> []
+        1 * roleAssignmentConverter.toRoleAssignmentsWeb(_)
+    }
+
     def "grantRolesToAgreement: error check"() {
         def domainId = "domainId"
         User caller = new User().with {

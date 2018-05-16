@@ -1,13 +1,38 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
+import com.rackspace.idm.domain.entity.DelegationAgreement;
+import com.rackspace.idm.domain.entity.DelegationPrincipal;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.Racker;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.DelegationService;
+import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+import com.rackspace.idm.domain.service.RoleService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.ServiceCatalogInfo;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
@@ -23,7 +48,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public class DefaultAuthorizationService implements AuthorizationService {
@@ -59,6 +92,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Autowired
     private PrecedenceValidator precedenceValidator;
+
+    @Autowired
+    private IdentityUserService identityUserService;
 
     //TODO: Remove these constants and lookup via map cache rather than these individual variables serving as a cache
     private ClientRole idmSuperAdminRole = null;
@@ -834,6 +870,37 @@ public class DefaultAuthorizationService implements AuthorizationService {
                 throw new ForbiddenException(NOT_AUTHORIZED_MSG);
             }
         }
+    }
+
+    @Override
+    public boolean isCallerAuthorizedToManageDelegationAgreement(DelegationAgreement delegationAgreement) {
+        Validate.notNull(delegationAgreement);
+        Validate.notNull(delegationAgreement.getPrincipal());
+
+        boolean isAuthorized = false;
+        BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+        DelegationPrincipal principal = delegationAgreement.getPrincipal();
+
+        if (authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                Collections.singletonList(IdentityRole.RCN_ADMIN.getRoleName()))
+                && domainService.doDomainsShareRcn(caller.getDomainId(), principal.getDomainId())) {
+            isAuthorized = true;
+        } else if (authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                Collections.singletonList(IdentityUserTypeEnum.USER_ADMIN.getRoleName()))
+                && caller.getDomainId().equalsIgnoreCase(principal.getDomainId())) {
+            isAuthorized = true;
+        } else if (authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                Collections.singletonList(IdentityUserTypeEnum.USER_MANAGER.getRoleName()))
+                && caller.getDomainId().equalsIgnoreCase(principal.getDomainId())) {
+            if (principal.getPrincipalType().equals(PrincipalType.USER)) {
+                EndUser principalUser = identityUserService.getEndUserById(principal.getId());
+                isAuthorized = !hasUserAdminRole(principalUser);
+            } else {
+                isAuthorized = true;
+            }
+        }
+
+        return isAuthorized;
     }
 
     private String getRoleString(List<ClientRole> clientRoles) {
