@@ -241,6 +241,7 @@ public abstract class LdapRepository {
     // Delegation Agreement attributes
     public static final String ATTR_RS_PRINCIPAL_DN = "rsPrincipalDN";
     public static final String ATTR_RS_ALLOW_SUB_AGREEMENTS = "rsAllowSubAgreements";
+    public static final String ATTR_RS_NEST_LEVEL = "rsNestLevel";
 
     // Definitions for LDAP DNs
     public static final String EXTERNAL_PROVIDERS_BASE_DN = "o=externalProviders,dc=rackspace,dc=com";

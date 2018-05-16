@@ -40,12 +40,21 @@ public class DelegationAgreement implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
 
+    /**
+     * This attribute is being retired in favor of subAgreementNestLevel
+     * @deprecated
+     */
     @LDAPField(attribute=LdapRepository.ATTR_RS_ALLOW_SUB_AGREEMENTS,
             objectClass=LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT,
             filterUsage=FilterUsage.ALWAYS_ALLOWED,
             defaultEncodeValue = "false",
             defaultDecodeValue = "false")
     private Boolean allowSubAgreements;
+
+    @LDAPField(attribute=LdapRepository.ATTR_RS_NEST_LEVEL,
+            objectClass=LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    private Integer subAgreementNestLevel;
 
     @LDAPField(attribute = LdapRepository.ATTR_RS_PRINCIPAL_DN, objectClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private DN principalDN;
@@ -59,6 +68,18 @@ public class DelegationAgreement implements Auditable, UniqueId {
     @DeleteNullValues
     @LDAPField(attribute = LdapRepository.ATTR_MEMBER, objectClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private Set<DN> delegates;
+
+    /**
+     * Default to based on value of nest level if set
+     * @return
+     */
+    public Boolean getAllowSubAgreements() {
+        if (subAgreementNestLevel != null) {
+            return subAgreementNestLevel.intValue() > 0;
+        } else {
+            return allowSubAgreements;
+        }
+    }
 
     @Override
     public String getAuditContext() {

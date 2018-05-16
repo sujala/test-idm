@@ -420,6 +420,8 @@ public class IdentityConfig {
 
     public static final String FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_PROP = "delegation.max.number.of.delegates.per.da";
     public static final int FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_DEFAULT = 5;
+    public static final String DELEGATION_MAX_NEST_LEVEL_PROP = "delegation.max.nest.level";
+    public static final int DELEGATION_MAX_NEST_LEVEL_DEFAULT = 3;
 
     public static final String FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP = "delegation.max.number.of.da.per.principal";
     public static final int FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_DEFAULT = 5;
@@ -780,6 +782,7 @@ public class IdentityConfig {
         defaults.put(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT);
         defaults.put(ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP, ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT);
         defaults.put(FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_DEFAULT);
+        defaults.put(DELEGATION_MAX_NEST_LEVEL_PROP, DELEGATION_MAX_NEST_LEVEL_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
@@ -1823,6 +1826,12 @@ public class IdentityConfig {
             return reloadableConfig.areDelegationAgreementsEnabledForAllRcns()
                     || (!StringUtils.isBlank(rcn) && repositoryConfig.getRCNsExplicitlyEnabledForDelegationAgreements().contains(rcn.toLowerCase()));
         }
+
+        @IdmProp(key = DELEGATION_MAX_NEST_LEVEL_PROP, versionAdded = "3.22.0", description = "The maximum allowed level of delegation agreement nesting allowed by the system.")
+        public int getMaxDelegationAgreementNestingLevel() {
+            return getIntSafely(reloadableConfiguration, DELEGATION_MAX_NEST_LEVEL_PROP);
+        }
+
 
         @IdmProp(key = FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, versionAdded = "3.17.0", description = "The list of tenant prefixes to exclude the auto-assigned (identity:tenant-access) role from.")
         public List<String> getTenantPrefixesToExcludeAutoAssignRoleFrom() {
