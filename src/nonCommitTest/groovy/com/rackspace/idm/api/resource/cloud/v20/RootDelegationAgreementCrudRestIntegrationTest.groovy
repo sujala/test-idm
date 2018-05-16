@@ -18,6 +18,7 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.apache.commons.lang3.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -438,6 +439,105 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         5 | false | null | false | 0
         5 | true | null | true | 5
         3 | true | null | true | 3
+    }
+
+    @Unroll
+    def "addAgreement: creating subagreement with different nest levels: parentNest: #parentNest; childNest: #childNest"() {
+        reloadableConfiguration.setProperty(IdentityConfig.DELEGATION_MAX_NEST_LEVEL_PROP, 5)
+
+        // Create a root da w/ self as delegate
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.subAgreementNestLevel = parentNest
+            it
+        }
+        parentDa = utils.createDelegationAgreement(sharedUserAdminToken, parentDa)
+        utils.addUserDelegate(sharedUserAdminToken, parentDa.id, sharedUserAdmin.id)
+
+        when:
+        DelegationAgreement subAgreement = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.parentDelegationAgreementId = parentDa.id
+            it.subAgreementNestLevel = childNest
+            it
+        }
+        subAgreement = utils.createDelegationAgreement(sharedUserAdminToken, subAgreement)
+
+        then: "was successful"
+        subAgreement != null
+        subAgreement.getSubAgreementNestLevel() == childNest
+        subAgreement.parentDelegationAgreementId == parentDa.id
+
+        cleanup:
+        cloud20.deleteDelegationAgreement(sharedUserAdminToken, parentDa.id)
+        cloud20.deleteDelegationAgreement(sharedUserAdminToken, subAgreement.id)
+
+        where:
+        parentNest | childNest
+        3 | 1
+        2 | 0
+    }
+
+    def "addAgreement: Can't create nested agreement when parent doesn't allow"() {
+        reloadableConfiguration.setProperty(IdentityConfig.DELEGATION_MAX_NEST_LEVEL_PROP, 5)
+
+        // Create a root da w/ self as delegate
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.subAgreementNestLevel = 0
+            it
+        }
+        parentDa = utils.createDelegationAgreement(sharedUserAdminToken, parentDa)
+        utils.addUserDelegate(sharedUserAdminToken, parentDa.id, sharedUserAdmin.id)
+
+        when:
+        DelegationAgreement subAgreement = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.parentDelegationAgreementId = parentDa.id
+            it.subAgreementNestLevel = 0
+            it
+        }
+        def subAgreementResponse = cloud20.createDelegationAgreement(sharedUserAdminToken, subAgreement)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(subAgreementResponse, ForbiddenFault, SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION)
+
+        cleanup:
+        cloud20.deleteDelegationAgreement(sharedUserAdminToken, parentDa.id)
+    }
+
+    def "addAgreement: Can't create nested agreement that matches or exceeds parent nest level"() {
+        reloadableConfiguration.setProperty(IdentityConfig.DELEGATION_MAX_NEST_LEVEL_PROP, 5)
+
+        // Create a root da w/ self as delegate
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.subAgreementNestLevel = 1
+            it
+        }
+        parentDa = utils.createDelegationAgreement(sharedUserAdminToken, parentDa)
+        utils.addUserDelegate(sharedUserAdminToken, parentDa.id, sharedUserAdmin.id)
+
+        when:
+        DelegationAgreement subAgreement = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.parentDelegationAgreementId = parentDa.id
+            it.subAgreementNestLevel = 1
+            it
+        }
+        def subAgreementResponse = cloud20.createDelegationAgreement(sharedUserAdminToken, subAgreement)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(subAgreementResponse, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_VALUE)
+
+        cleanup:
+        cloud20.deleteDelegationAgreement(sharedUserAdminToken, parentDa.id)
     }
 
     @Unroll
