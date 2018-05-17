@@ -13,7 +13,6 @@ import testHelpers.RootServiceTest
 class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
 
     @Shared SimpleAETokenRevocationService service = new SimpleAETokenRevocationService()
-    @Shared TokenRevocationRecordPersistenceStrategy tokenRevocationRecordPersistenceStrategy;
 
     @Shared def expiredDate
     @Shared def futureDate
@@ -30,9 +29,7 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
         mockTokenFormatSelector(service)
         mockIdentityUserService(service)
         mockAeTokenService(service)
-
-        tokenRevocationRecordPersistenceStrategy = Mock()
-        service.tokenRevocationRecordPersistenceStrategy = tokenRevocationRecordPersistenceStrategy
+        mockTokenRevocationRecordPersistenceStrategy(service)
 
         tokenFormatSelector.formatForExistingToken(_) >> TokenFormat.AE
     }

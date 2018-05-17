@@ -253,6 +253,351 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         [mediaType, userAdminLookupByDomain] << [[MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE], [true,false]].combinations()
     }
 
+    def "DA tokens are revoked when the DA is deleted"() {
+        given:
+        def userAdmin = utils.createCloudAccountWithRcn()
+        def domain = utils.getDomain(userAdmin.domainId)
+        def otherUserAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(otherUserAdmin.domainId, domain.rackspaceCustomerNumber)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
+        utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
+        def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
+        def federatedUserAuthResponse = utils.createFederatedUserForAuthResponse(otherUserAdmin.domainId)
+        utils.addUserDelegate(userAdminToken, da.id, federatedUserAuthResponse.user.id)
+        def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
+
+        when: "validate the DA token for the provisioned user"
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "validate the DA token for the federated user"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "delete the DA and validate the provisioned user DA token again"
+        utils.deleteDelegationAgreement(utils.getToken(userAdmin.username), da)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "token has been revoked"
+        response.status == 404
+
+        when: "validate the federated user DA token again"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then: "token has been revoked"
+        response.status == 404
+    }
+
+    def "DA tokens are revoked for a user when the user is disabled"() {
+        given:
+        def userAdmin = utils.createCloudAccountWithRcn()
+        def domain = utils.getDomain(userAdmin.domainId)
+        def otherUserAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(otherUserAdmin.domainId, domain.rackspaceCustomerNumber)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
+        utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
+        def daToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
+
+        when: "validate the DA token"
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), daToken)
+
+        then:
+        response.status == 200
+
+        when: "disable the user"
+        utils.disableUser(otherUserAdmin)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), daToken)
+
+        then: "token has been revoked"
+        response.status == 404
+
+        when: "enable the user and validate the token again"
+        otherUserAdmin.enabled = true
+        utils.updateUser(otherUserAdmin)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), daToken)
+
+        then: "the token is still revoked"
+        response.status == 404
+    }
+
+    def "DA tokens are revoked when a delegate's domain is disabled"() {
+        given:
+        def userAdmin = utils.createCloudAccountWithRcn()
+        def domain = utils.getDomain(userAdmin.domainId)
+        def otherUserAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(otherUserAdmin.domainId, domain.rackspaceCustomerNumber)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
+        utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
+        def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
+        def federatedUserAuthResponse = utils.createFederatedUserForAuthResponse(otherUserAdmin.domainId)
+        utils.addUserDelegate(userAdminToken, da.id, federatedUserAuthResponse.user.id)
+        def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
+
+        when: "validate the DA token for the provisioned user"
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "validate the DA token for the federated user"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "disable the delegate's domain and validate the provisioned user's token"
+        utils.disableDomain(otherUserAdmin.domainId)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "token has been revoked"
+        response.status == 404
+
+        when: "validate the federated user's token"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then: "token has been revoked"
+        response.status == 404
+
+        when: "enable the domain and validate the provisioned user's token again"
+        utils.updateDomain(otherUserAdmin.domainId, new Domain().with { it.enabled = true; it})
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "the token is still revoked"
+        response.status == 404
+
+        when: "enable the domain and validate the federated user's token again"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then: "the token is still revoked"
+        response.status == 404
+    }
+
+    def "DA tokens are revoked when the domain for the DA is disabled"() {
+        given:
+        def userAdmin = utils.createCloudAccountWithRcn()
+        def domain = utils.getDomain(userAdmin.domainId)
+        def otherUserAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(otherUserAdmin.domainId, domain.rackspaceCustomerNumber)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
+        utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
+        def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
+        def federatedUserAuthResponse = utils.createFederatedUserForAuthResponse(otherUserAdmin.domainId)
+        utils.addUserDelegate(userAdminToken, da.id, federatedUserAuthResponse.user.id)
+        def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
+
+        when: "validate the DA provisioned user DA token"
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "validate the DA federated user DA token"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "disable the DA's domain and validate the provisioned user DA token"
+        utils.disableDomain(userAdmin.domainId)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "token has been invalidated"
+        response.status == 404
+
+        when: "validate the federated user DA token"
+        utils.disableDomain(userAdmin.domainId)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "token has been invalidated"
+        response.status == 404
+
+        when: "enable the domain and validate provisioned user DA token again"
+        utils.updateDomain(userAdmin.domainId, new Domain().with { it.enabled = true; it})
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "the token is valid again"
+        response.status == 200
+
+        when: "enable the domain and validate federated user DA token again"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then: "the token is valid again"
+        response.status == 200
+    }
+
+    def "DA tokens are revoked when the user is removed as an explicit delegate"() {
+        given:
+        def userAdmin = utils.createCloudAccountWithRcn()
+        def domain = utils.getDomain(userAdmin.domainId)
+        def otherUserAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(otherUserAdmin.domainId, domain.rackspaceCustomerNumber)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
+        utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
+        def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
+        def federatedUserAuthResponse = utils.createFederatedUserForAuthResponse(otherUserAdmin.domainId)
+        utils.addUserDelegate(userAdminToken, da.id, federatedUserAuthResponse.user.id)
+        def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
+
+        when: "validate the provisioned user DA token"
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "validate the federated user DA token"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "remove the provisioned user as an explicit delegate and validate again"
+        utils.deleteUserDelegate(utils.getToken(userAdmin.username), da.id, otherUserAdmin.id)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "token has been invalidated"
+        response.status == 404
+
+        when: "remove the federated user as an explicit delegate and validate again"
+        utils.deleteUserDelegate(utils.getToken(userAdmin.username), da.id, federatedUserAuthResponse.user.id)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then: "token has been invalidated"
+        response.status == 404
+
+        when: "add the provisioned user back as an explicit delegate and validate again"
+        utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "the token is valid again"
+        response.status == 200
+
+        when: "add the federated user back as an explicit delegate and validate again"
+        utils.addUserDelegate(userAdminToken, da.id, federatedUserAuthResponse.user.id)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then: "the token is valid again"
+        response.status == 200
+    }
+
+    def "DA tokens for a user through user group membership are revoked when the user group is removed from the DA"() {
+        given:
+        def userAdmin = utils.createCloudAccountWithRcn()
+        def domain = utils.getDomain(userAdmin.domainId)
+        def otherUserAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(otherUserAdmin.domainId, domain.rackspaceCustomerNumber)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
+        def userGroup = utils.createUserGroup(otherUserAdmin.domainId)
+        utils.addUserToUserGroup(otherUserAdmin.id, userGroup)
+        utils.addUserGroupDelegate(utils.getToken(userAdmin.username), da.id, userGroup.id)
+        def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
+        def federatedUserAuthResponse = utils.authenticateFederatedUser(otherUserAdmin.domainId, [userGroup.name] as Set)
+        def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
+
+        when: "validate the provisioned user DA token"
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "validate the federated user DA token"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "remove the user group as a delegate and validate the provisioned user DA token again"
+        utils.deleteUserGroupDelegate(utils.getToken(userAdmin.username), da.id, userGroup.id)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "token has been invalidated"
+        response.status == 404
+
+        when: "validate the federated user DA token again"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then: "token has been invalidated"
+        response.status == 404
+
+        when: "add the user group back as a delegate and validate the provisioned user DA token again"
+        utils.addUserGroupDelegate(utils.getToken(userAdmin.username), da.id, userGroup.id)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "the token is valid again"
+        response.status == 200
+
+        when: "validate the federated user DA token"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then:
+        response.status == 200
+    }
+
+    def "DA tokens for a user with access through user group membership are revoked when the user is removed from the user group"() {
+        given:
+        def userAdmin = utils.createCloudAccountWithRcn()
+        def domain = utils.getDomain(userAdmin.domainId)
+        def otherUserAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(otherUserAdmin.domainId, domain.rackspaceCustomerNumber)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
+        def userGroup = utils.createUserGroup(otherUserAdmin.domainId)
+        utils.addUserToUserGroup(otherUserAdmin.id, userGroup)
+        utils.addUserGroupDelegate(utils.getToken(userAdmin.username), da.id, userGroup.id)
+        def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
+        def federatedUserAuthResponse = utils.authenticateFederatedUser(otherUserAdmin.domainId, [userGroup.name] as Set)
+        def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
+
+        when: "validate the provisioned user DA token"
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "validate the federated user DA token"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then:
+        response.status == 200
+
+        when: "remove the provisioned user from the user group"
+        utils.removeUserFromUserGroup(otherUserAdmin.id, userGroup)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "token has been invalidated"
+        response.status == 404
+
+        when: "remove the federated user from the user group"
+        utils.authenticateFederatedUser(otherUserAdmin.domainId, [] as Set, [] as Set, federatedUserAuthResponse.user.name)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then: "token has been invalidated"
+        response.status == 404
+
+        when: "add the provisioned user back to the user group and validate again"
+        utils.addUserToUserGroup(otherUserAdmin.id, userGroup)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), provisionedUserDaToken)
+
+        then: "the token is valid again"
+        response.status == 200
+
+        when: "add the federated user back to the user group and validate again"
+        utils.authenticateFederatedUser(otherUserAdmin.domainId, [userGroup.name] as Set, [] as Set, federatedUserAuthResponse.user.name)
+        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserDaToken)
+
+        then: "the token is valid again"
+        response.status == 200
+    }
+
     void assertDelegateValidateSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser, DelegationAgreement da) {
         // Token info same (though not id..)
         assert delegateAuthResponse.token.tenant.name == realSubUserAuthResponse.token.tenant.name

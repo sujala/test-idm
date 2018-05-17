@@ -9,7 +9,7 @@ import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.collections.CollectionUtils
-import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.joda.time.DateTime
 import org.opensaml.security.x509.X509Credential
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -182,6 +182,14 @@ class EntityFactory extends Specification {
         new Domains().with {
             it.getDomain().addAll(list)
             return it
+        }
+    }
+
+    def createDelegationAgreement(String domainId = RandomStringUtils.randomAlphanumeric(8)) {
+        new DelegationAgreement().with {
+            it.domainId = domainId
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it
         }
     }
 
