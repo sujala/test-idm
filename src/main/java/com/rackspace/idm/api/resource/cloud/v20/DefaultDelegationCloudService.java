@@ -35,7 +35,6 @@ import com.rackspace.idm.validation.Validator20;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
-import org.apache.commons.lang.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -514,18 +513,15 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
-
             // Caller must be authorized to modify roles on DA
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
             if (delegationAgreement == null
-                    || !(delegationAgreement.isEffectivePrincipal(caller)
-                    || authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement))) {
+                    || !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -596,19 +592,15 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
-            // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
-
             // Caller must be authorized to revoke roles on DA
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
             if (delegationAgreement == null
-                    || !(delegationAgreement.isEffectivePrincipal(caller)
-                    || authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement))) {
+                    || !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 

@@ -5,13 +5,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.api.security.AuthorizationContext
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.api.security.ImmutableTenantRole
-import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.DelegationAgreement
-import com.rackspace.idm.domain.entity.DelegationPrincipal
-import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
+import com.unboundid.ldap.sdk.DN
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -536,6 +533,61 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         (1.._) * requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
         1 * requestContext.getEffectiveCallersUserType() >>  IdentityUserTypeEnum.USER_MANAGER
+    }
+
+    def "isCallerAuthorizedToManageDelegationAgreement: verify authorization for DA's effective principal"() {
+        given:
+        def domainId = "domainId"
+        def groupId = "groupId"
+        def caller = new User().with {
+            it.id = "callerId"
+            it.uniqueId = "rsId=callerId"
+            it.enabled = true
+            it.domainId = domainId
+            it.userGroupDNs = [new DN(String.format("rsId=%s", groupId))]
+            it
+        }
+        def daEntity = new DelegationAgreement().with {
+            it.principal =  Mock(DelegationPrincipal)
+            it
+        }
+        daEntity.setPrincipalDN(caller.dn)
+
+        daEntity.principal.getId() >> caller.id
+        daEntity.principal.principalType >> PrincipalType.USER
+        daEntity.principal.domainId >> caller.domainId
+
+        def userGroup = new UserGroup().with {
+            it.domainId = caller.domainId
+            it.id = groupId
+            it
+        }
+
+        requestContext.getEffectiveCaller() >> caller
+
+        when: "principal is a effective caller"
+        boolean isAuthorized = service.isCallerAuthorizedToManageDelegationAgreement(daEntity)
+
+        then:
+        isAuthorized
+
+        0 * identityUserService.getEndUserById(_)
+        0 * domainService.doDomainsShareRcn(_, _)
+        0 * requestContext.getEffectiveCallerAuthorizationContext()
+
+        when: "principal is a user group"
+        daEntity.principal.getId() >> userGroup.id
+        daEntity.principal.principalType >> PrincipalType.USER_GROUP
+        daEntity.principal.domainId >> userGroup.domainId
+
+        isAuthorized = service.isCallerAuthorizedToManageDelegationAgreement(daEntity)
+
+        then:
+        isAuthorized
+
+        0 * identityUserService.getEndUserById(_)
+        0 * domainService.doDomainsShareRcn(_, _)
+        0 * requestContext.getEffectiveCallerAuthorizationContext()
     }
 
     def "isCallerAuthorizedToManageDelegationAgreement: verify authorization for a rcn:admin caller"() {

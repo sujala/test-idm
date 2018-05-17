@@ -881,7 +881,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
         BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
         DelegationPrincipal principal = delegationAgreement.getPrincipal();
 
-        if (authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+        if (delegationAgreement.isEffectivePrincipal((EndUser) caller)) {
+           isAuthorized = true;
+        } else if (authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
                 Collections.singletonList(IdentityRole.RCN_ADMIN.getRoleName()))
                 && domainService.doDomainsShareRcn(caller.getDomainId(), principal.getDomainId())) {
             isAuthorized = true;

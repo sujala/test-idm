@@ -7,18 +7,11 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.entity.BaseUserToken
-import com.rackspace.idm.domain.entity.DelegationPrincipal
-import com.rackspace.idm.domain.entity.PaginatorContext
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
-import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.unboundid.ldap.sdk.DN
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
@@ -193,53 +186,6 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
-        1 * delegationService.replaceRoleAssignmentsOnDelegationAgreement(daEntity, assignments)
-        1 * delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, _) >> []
-        1 * roleAssignmentConverter.toRoleAssignmentsWeb(_)
-    }
-
-    def "grantRolesToAgreement: authorized caller is not an effective principal on the DA"() {
-        def domainId = "domainId"
-        User caller = new User().with {
-            it.id = RandomStringUtils.randomAlphabetic(10)
-            it.uniqueId = "rsId=" + it.id
-            it.domainId = domainId
-            it
-        }
-
-        RoleAssignments assignments = new RoleAssignments().with {
-            TenantAssignments ta = new TenantAssignments()
-                ta.tenantAssignment.add(new TenantAssignment().with {
-                    it.onRole = "roleId"
-                    it.forTenants.addAll("tenantId")
-                    it
-                })
-            it.tenantAssignments = ta
-            it
-        }
-        def tokenStr = "callerTokenStr"
-        def token = Mock(BaseUserToken)
-
-        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
-            it.id = "id"
-            it.domainId = domainId
-            it.principal = Mock(DelegationPrincipal)
-            it.principalDN = new DN("rsId=otherDn")
-            it
-        }
-        daEntity.principal.getId() >> "otherId"
-        daEntity.principal.principalType >> PrincipalType.USER
-
-        when:
-        def response = service.grantRolesToAgreement(tokenStr, daEntity.id, assignments)
-
-        then:
-        response.status == SC_OK
-
-        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
         1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(daEntity) >> true
         1 * delegationService.replaceRoleAssignmentsOnDelegationAgreement(daEntity, assignments)
         1 * delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, _) >> []
@@ -312,6 +258,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(daEntity) >> true
         1 * exceptionHandler.exceptionResponse(_ as BadRequestException) >> {args ->
             def exception = args[0]
             IdmExceptionAssert.assertException(exception, BadRequestException, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE, "Must supply a set of assignments")
@@ -352,6 +299,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(daEntity) >> true
         1 * delegationService.revokeRoleAssignmentOnDelegationAgreement(daEntity, roleId)
     }
 
