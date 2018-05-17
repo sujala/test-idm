@@ -1293,7 +1293,19 @@
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
-                        Whether this DA can be used by the delegates as the basis for creating another DA
+                        Deprecated. Use subagreementnestlevel instead. Whether this DA can be used by the delegates as
+                        the basis for creating another DA
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="subAgreementNestLevel" type="xsd:nonNegativeInteger" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        How many levels of nested subagreements can be created underneath this one. A value of 0
+                        disallows any subagreements. The maximum value is application, and environment,
+                        specific.
                     </p>
                 </xsd:documentation>
             </annotation>

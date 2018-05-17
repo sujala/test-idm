@@ -20,6 +20,7 @@ import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.ResultCode;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -247,5 +248,16 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
                 logger.error(String.format("Delegation agreement '%s' contains invalid principal. Ignoring principal.", object.getId()));
             }
         }
+
+        // If nest level is specified it overrides allowSubAgreements
+        if (object.getSubAgreementNestLevel() != null) {
+            object.setAllowSubAgreements(object.getSubAgreementNestLevel() > 0);
+        } else if (BooleanUtils.isTrue(object.getAllowSubAgreements())) {
+            object.setSubAgreementNestLevel(identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel());
+        } else {
+            object.setSubAgreementNestLevel(0);
+        }
     }
+
+
 }
