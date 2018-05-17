@@ -42,7 +42,8 @@ da_item = {
             },
         'required': [
             const.ID, const.NAME, const.DOMAIN_ID, const.PRINCIPAL_ID,
-            const.PRINCIPAL_TYPE, const.ALLOW_SUB_AGREEMENTS, const.SUBAGREEMENT_NEST_LEVEL],
+            const.PRINCIPAL_TYPE, const.ALLOW_SUB_AGREEMENTS,
+            const.SUBAGREEMENT_NEST_LEVEL],
         # This is to verify that delegateId is not returned
         'additionalProperties': False
 }
