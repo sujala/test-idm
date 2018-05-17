@@ -1,8 +1,8 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
@@ -11,15 +11,11 @@ import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
-import com.rackspace.idm.domain.service.AETokenRevocationService;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.TokenRevocationService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
-import org.opensaml.soap.wssecurity.impl.IterationUnmarshaller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -58,6 +54,12 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
 
     @Autowired
     private TokenFormatSelector tokenFormatSelector;
+
+    @Autowired
+    private DelegationService delegationService;
+
+    @Autowired
+    private DomainService domainService;
 
     @Override
     public boolean supportsRevokingFor(Token token) {
@@ -191,7 +193,37 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
         if (!supportsRevokingFor(token)) {
             throw new UnsupportedOperationException(String.format("Revocation service does not support revoking tokens of type '%s'", token.getClass().getSimpleName()));
         }
-        return tokenRevocationRecordPersistenceStrategy.doesActiveTokenRevocationRecordExistMatchingToken(token);
+
+        boolean tokenIsRevoked = tokenRevocationRecordPersistenceStrategy.doesActiveTokenRevocationRecordExistMatchingToken(token);
+
+        if (token instanceof UserScopeAccess && ((UserScopeAccess) token).isDelegationToken()) {
+            UserScopeAccess userScopeAccess =  (UserScopeAccess) token;
+            ProvisionedUserDelegate user = (ProvisionedUserDelegate) userService.getUserByScopeAccess(userScopeAccess, false);
+
+            if (user.isDisabled()) {
+                return true;
+            }
+
+            DelegationAgreement da = delegationService.getDelegationAgreementById(userScopeAccess.getDelegationAgreementId());
+
+            if (da == null || !da.isEffectiveDelegate(user.getOriginalEndUser())) {
+                return true;
+            }
+
+            Domain daDomain = domainService.getDomain(da.getDomainId());
+            Domain delegateDomain;
+            if (user.getOriginalEndUser().getDomainId().equalsIgnoreCase(da.getDomainId())) {
+                delegateDomain = daDomain;
+            } else {
+                delegateDomain = domainService.getDomain(user.getOriginalEndUser().getDomainId());
+            }
+
+            if (daDomain == null || delegateDomain == null || !daDomain.getEnabled() || !delegateDomain.getEnabled()) {
+                return true;
+            }
+
+        }
+        return tokenIsRevoked;
     }
 
     @Override

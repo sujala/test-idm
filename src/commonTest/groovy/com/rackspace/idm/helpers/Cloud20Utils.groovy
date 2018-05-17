@@ -165,7 +165,7 @@ class Cloud20Utils {
         return authenticateTokenAndDelegationAgreement(getToken(username), delegationAgreementId).token.id
     }
 
-    AuthenticateResponse authenticateTokenAndDelegationAgreement(token, delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_JSON_TYPE) {
+    AuthenticateResponse authenticateTokenAndDelegationAgreement(String token, String delegationAgreementId, MediaType mediaType = MediaType.APPLICATION_JSON_TYPE) {
         def response = methods.authenticateTokenAndDelegationAgreement(token, delegationAgreementId, mediaType)
         assert(response.status == 200)
         AuthenticateResponse delegateSubUserAuthResponse
@@ -656,13 +656,13 @@ class Cloud20Utils {
         impersonate(token, user).token.id
     }
 
-    def updateUser(user, userId = user.id, MediaType requestMediaType = APPLICATION_XML_TYPE) {
+    User updateUser(user, userId = user.id, MediaType requestMediaType = APPLICATION_XML_TYPE) {
         def response = methods.updateUser(getServiceAdminToken(), userId, user, APPLICATION_XML_TYPE, requestMediaType)
         assert (response.status == SC_OK)
         response.getEntity(User).value
     }
 
-    def disableUser(user) {
+    User disableUser(User user) {
         user.enabled = false
         updateUser(user)
     }
@@ -1306,6 +1306,17 @@ class Cloud20Utils {
         response.getEntity(DelegationAgreement)
     }
 
+    DelegationAgreement createDelegationAgreementInDomain(String token, String domainId) {
+        def da = new DelegationAgreement().with {
+            it.name = "Test DA name"
+            it.domainId = domainId
+            it
+        }
+        def response = methods.createDelegationAgreement(token, da)
+        assert (response.status == SC_CREATED)
+        response.getEntity(DelegationAgreement)
+    }
+
     def getDelegationAgreement(String token, String delegationAgreementId) {
         def response = methods.getDelegationAgreement(token, delegationAgreementId)
         assert (response.status == SC_OK)
@@ -1329,8 +1340,18 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
+    def deleteUserDelegate(String token, String delegationAgreementId, String userId) {
+        def response = methods.deleteUserDelegate(token, delegationAgreementId, userId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
     def addUserGroupDelegate(String token, String delegationAgreementId, String userGroupId) {
         def response = methods.addUserGroupDelegate(token, delegationAgreementId, userGroupId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def deleteUserGroupDelegate(String token, String delegationAgreementId, String userGroupId) {
+        def response = methods.deleteUserGroupDelegate(token, delegationAgreementId, userGroupId)
         assert (response.status == SC_NO_CONTENT)
     }
 
@@ -1519,7 +1540,7 @@ class Cloud20Utils {
         return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
     }
 
-    AuthenticateResponse authenticateFederatedUser(String domainId, groupNames = [], roleNames = []) {
+    AuthenticateResponse authenticateFederatedUser(String domainId, Set<String> groupNames = [], Set<String> roleNames = [], String username = "fedUser${RandomStringUtils.randomAlphanumeric(8)}") {
         def samlRequest = new FederatedDomainAuthGenerationRequest().with {
             it.domainId = domainId
             it.validitySeconds = 1000
@@ -1528,7 +1549,7 @@ class Cloud20Utils {
             it.email = Constants.DEFAULT_FED_EMAIL
             it.responseIssueInstant = new DateTime()
             it.authContextRefClass = PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
-            it.username = "fedUser${RandomStringUtils.randomAlphanumeric(8)}"
+            it.username = username
             it.roleNames = roleNames
             it.groupNames = groupNames
             it
