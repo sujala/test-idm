@@ -69,6 +69,11 @@ public class DelegationAgreement implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_MEMBER, objectClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private Set<DN> delegates;
 
+    @LDAPField(attribute=LdapRepository.ATTR_RS_DELEGATION_AGREEMENT_ID,
+            objectClass=LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    private String parentDelegationAgreementId;
+
     /**
      * Default to based on value of nest level if set
      * @return
@@ -79,6 +84,10 @@ public class DelegationAgreement implements Auditable, UniqueId {
         } else {
             return allowSubAgreements;
         }
+    }
+
+    public int getSubAgreementNestLevelNullSafe() {
+        return subAgreementNestLevel != null ? subAgreementNestLevel : 0;
     }
 
     @Override

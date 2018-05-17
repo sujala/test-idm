@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.entity.BaseUserToken
 import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -347,7 +348,6 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
         ]
     }
 
-    @Unroll
     def "addAgreement: SubAgreementsAllowed and nest level are mutually exclusive"() {
         UriInfo uriInfo = Mock()
         ScopeAccess tokenScopeAccess = new UserScopeAccess()
@@ -378,7 +378,7 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
     }
 
     @Unroll
-    def "addAgreement: Nest level is validated against max allowed: max: #maxTestLevel; tested: #daNestLevel"() {
+    def "addAgreement: Nest level is validated against max allowed: max: #maxNestLevel; tested: #daNestLevel"() {
         reloadableConfig.getMaxDelegationAgreementNestingLevel() >> maxNestLevel
 
         UriInfo uriInfo = Mock()
@@ -394,6 +394,9 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
         }
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+
+        identityUserService.getEndUserById(caller.id) >> caller
+        identityUserService.getProvisionedUserById(caller.id) >> caller // Delegate call
 
         DelegationAgreement daInvalidWeb = new DelegationAgreement()
 
@@ -426,6 +429,7 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
         }
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        identityUserService.getEndUserById(caller.id) >> caller
 
         DelegationAgreement daInvalidWeb = new DelegationAgreement()
 
@@ -463,6 +467,7 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
         }
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        identityUserService.getEndUserById(caller.id) >> caller
 
         DelegationAgreement daInvalidWeb = new DelegationAgreement()
 
@@ -517,6 +522,156 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
                     , "Maximum number of delegation agreements has been reached for principal")
             return Response.status(SC_BAD_REQUEST)
         }
+    }
+
+    def "addAgreement: Returns error when parent agreement does not exist"() {
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 5
+
+        UriInfo uriInfo = Mock()
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        def token = "token"
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+
+        reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it
+        }
+        identityUserService.getEndUserById(caller.id) >> caller
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        requestContext.getEffectiveCallerDomain() >> new Domain()
+
+        DelegationAgreement daInvalidWeb = new DelegationAgreement().with {
+            it.setSubAgreementNestLevel(BigInteger.ONE)
+            it.parentDelegationAgreementId = "nonexistant"
+            it
+        }
+
+        when:
+        service.addAgreement(uriInfo, token, daInvalidWeb)
+
+        then:
+        1 * delegationService.getDelegationAgreementById(daInvalidWeb.getParentDelegationAgreementId()) >> null
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified parent agreement does not exist for the requested principal")
+            Response.status(SC_BAD_REQUEST)
+        }
+    }
+
+    @Unroll
+    def "addAgreement: Returns error when subagreement principal not a delegate of parent agreement"() {
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 5
+
+        UriInfo uriInfo = Mock()
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        def token = "token"
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+
+        reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it
+        }
+        identityUserService.getEndUserById(caller.id) >> caller
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        requestContext.getEffectiveCallerDomain() >> new Domain()
+
+        DelegationAgreement daInvalidWeb = new DelegationAgreement().with {
+            it.setSubAgreementNestLevel(BigInteger.ONE)
+            it.parentDelegationAgreementId = "nonexistant"
+            it
+        }
+
+        com.rackspace.idm.domain.entity.DelegationAgreement parentAgreement = Mock()
+
+        when:
+        service.addAgreement(uriInfo, token, daInvalidWeb)
+
+        then:
+        1 * delegationService.getDelegationAgreementById(daInvalidWeb.getParentDelegationAgreementId()) >> parentAgreement
+        1 * parentAgreement.isExplicitDelegate(_) >> {args ->
+            EndUser user = (EndUser) args[0]
+            assert user.id == caller.id
+            false
+        }
+        1 * parentAgreement.isEffectiveDelegate(caller) >> false
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, "The specified parent agreement does not exist for the requested principal")
+            Response.status(SC_BAD_REQUEST)
+        }
+    }
+
+    @Unroll
+    def "addAgreement: When creating subagreement parent is accepted if subagreement principal is effective delegate"() {
+        reloadableConfig.getDelegationMaxNumberOfDaPerPrincipal() >> 5
+
+        UriInfo uriInfo = Mock()
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        def token = "token"
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+
+        reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it
+        }
+        Domain callerDomain = new Domain().with {
+            it.domainId = caller.getDomainId()
+            it.rackspaceCustomerNumber = "myRcn"
+            it
+        }
+
+        identityUserService.getEndUserById(caller.id) >> caller
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        requestContext.getEffectiveCallerDomain() >> callerDomain
+
+        com.rackspace.idm.domain.entity.DelegationAgreement parentAgreement = Mock()
+
+        DelegationAgreement daExplicitDelegate = new DelegationAgreement().with {
+            it.setSubAgreementNestLevel(BigInteger.ONE)
+            it.parentDelegationAgreementId = "exists"
+            it
+        }
+
+        DelegationAgreement daEffectiveDelegate = new DelegationAgreement().with {
+            it.setSubAgreementNestLevel(BigInteger.ONE)
+            it.parentDelegationAgreementId = "exists"
+            it
+        }
+
+        when: "Is explicit delegate"
+        service.addAgreement(uriInfo, token, daExplicitDelegate)
+
+        then: "Parent is accepted and DA is created"
+        1 * delegationService.getDelegationAgreementById(daExplicitDelegate.getParentDelegationAgreementId()) >> parentAgreement
+        1 * parentAgreement.isExplicitDelegate(_) >> true
+        0 * parentAgreement.isEffectiveDelegate(caller)
+        1 * parentAgreement.getDomainId() >> callerDomain.getDomainId()
+        (1.._) * parentAgreement.getSubAgreementNestLevelNullSafe() >> 2 // sub agreement setting to 1, so this must be >1
+        1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
+        1 * delegationService.addDelegationAgreement(_)
+
+        and: "Principal defaults to caller when not specified"
+        daExplicitDelegate.principalType == PrincipalType.USER
+        daExplicitDelegate.principalId == caller.id
+
+        when: "Is effective delegate"
+        service.addAgreement(uriInfo, token, daEffectiveDelegate)
+
+        then: "Parent is accepted and DA is created"
+        1 * delegationService.getDelegationAgreementById(daEffectiveDelegate.getParentDelegationAgreementId()) >> parentAgreement
+        1 * parentAgreement.isExplicitDelegate(_) >> false
+        1 * parentAgreement.isEffectiveDelegate(caller) >> true
+        1 * parentAgreement.getDomainId() >> callerDomain.getDomainId()
+        (1.._) * parentAgreement.getSubAgreementNestLevelNullSafe() >> 2 // sub agreement setting to 1, so this must be >1
+        1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
+        1 * delegationService.addDelegationAgreement(_)
     }
 }
 
