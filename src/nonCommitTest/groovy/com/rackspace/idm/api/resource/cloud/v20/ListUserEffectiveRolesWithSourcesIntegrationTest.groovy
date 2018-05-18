@@ -3,6 +3,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SourceTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -11,10 +13,11 @@ import com.sun.jersey.api.client.ClientResponse
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.Tenants
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-
 import javax.ws.rs.core.MediaType
 
 class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTest {
@@ -266,9 +269,9 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
 
         // Figure out the tenants
         Tenants tenants = utils.listDomainTenants(userAdmin.domainId)
-        def mossoTenant = tenants.tenant.find {it.id == userAdmin.domainId}
+        def mossoTenant = tenants.tenant.find { it.id == userAdmin.domainId }
         assert mossoTenant != null
-        def nastTenant = tenants.tenant.find {it.id != userAdmin.domainId}
+        def nastTenant = tenants.tenant.find { it.id != userAdmin.domainId }
         assert nastTenant != null
 
         // Create user group
@@ -291,7 +294,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         tenantAssignments.size() == 4
 
         and: "Has user-admin role on mosso tenant"
-        def userAdminAssignment = tenantAssignments.find {it.onRoleName == IdentityUserTypeEnum.USER_ADMIN.roleName}
+        def userAdminAssignment = tenantAssignments.find { it.onRoleName == IdentityUserTypeEnum.USER_ADMIN.roleName }
         userAdminAssignment != null
         userAdminAssignment.onRole == Constants.USER_ADMIN_ROLE_ID
         userAdminAssignment.forTenants.size() == 1
@@ -307,7 +310,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         CollectionUtils.isEqualCollection(userAdminSource.forTenants, [mossoTenant.id])
 
         and: "Has compute:default role on mosso tenant"
-        def computeAssignment = tenantAssignments.find {it.onRoleName == Constants.DEFAULT_COMPUTE_ROLE}
+        def computeAssignment = tenantAssignments.find { it.onRoleName == Constants.DEFAULT_COMPUTE_ROLE }
         computeAssignment != null
         computeAssignment.onRole == Constants.DEFAULT_COMPUTE_ROLE_ID
         computeAssignment.forTenants.size() == 1
@@ -323,11 +326,11 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         CollectionUtils.isEqualCollection(computeSource.forTenants, [mossoTenant.id])
 
         and: "Does not have object-store:default role on nast tenant"
-        def filesAssignment = tenantAssignments.find {it.onRoleName == Constants.DEFAULT_OBJECT_STORE_ROLE}
+        def filesAssignment = tenantAssignments.find { it.onRoleName == Constants.DEFAULT_OBJECT_STORE_ROLE }
         filesAssignment == null
 
         and: "Has identity:tenant-access role on mosso"
-        def taAssignment = tenantAssignments.find {it.onRoleName == Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME}
+        def taAssignment = tenantAssignments.find { it.onRoleName == Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME }
         taAssignment != null
         taAssignment.onRole == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID
         taAssignment.forTenants.size() == 1
@@ -343,7 +346,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         CollectionUtils.isEqualCollection(taSource.forTenants, [mossoTenant.id])
 
         and: "Has RBAC role on mosso from user group"
-        def groupAssignment = tenantAssignments.find {it.onRoleName == Constants.ROLE_RBAC1_NAME}
+        def groupAssignment = tenantAssignments.find { it.onRoleName == Constants.ROLE_RBAC1_NAME }
         groupAssignment != null
         groupAssignment.onRole == Constants.ROLE_RBAC1_ID
         groupAssignment.forTenants.size() == 1
@@ -379,7 +382,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
 
         // Figure out mosso tenant
         Tenants tenants = utils.listDomainTenants(userAdmin.domainId)
-        def mossoTenant = tenants.tenant.find {it.id == userAdmin.domainId}
+        def mossoTenant = tenants.tenant.find { it.id == userAdmin.domainId }
         assert mossoTenant != null
 
         // Assign the user the identity:rcn-cloud role
@@ -397,7 +400,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         tenantAssignments.size() == 4
 
         and: "Has rcn role on cloud tenant"
-        def rcnAssignment = tenantAssignments.find {it.onRole == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID}
+        def rcnAssignment = tenantAssignments.find { it.onRole == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID }
         rcnAssignment != null
         rcnAssignment.onRole == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID
         rcnAssignment.onRoleName == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_NAME
@@ -434,7 +437,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         def userAdmin = utils.createCloudAccount(iaToken)
         // Figure out mosso tenant
         Tenants tenants = utils.listDomainTenants(userAdmin.domainId)
-        def mossoTenant = tenants.tenant.find {it.id == userAdmin.domainId}
+        def mossoTenant = tenants.tenant.find { it.id == userAdmin.domainId }
 
         utils.addRoleToUserOnTenant(userAdmin, mossoTenant, Constants.ROLE_RBAC1_ID)
         // Create user group
@@ -456,7 +459,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         tenantAssignments.size() == 4
 
         and: "Has rbac role"
-        def rbacAssignment = tenantAssignments.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        def rbacAssignment = tenantAssignments.find { it.onRole == Constants.ROLE_RBAC1_ID }
         rbacAssignment != null
         rbacAssignment.onRole == Constants.ROLE_RBAC1_ID
         rbacAssignment.onRoleName == Constants.ROLE_RBAC1_NAME
@@ -467,7 +470,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         and: "Source lists rbac role appropriately"
         rbacAssignment.sources.source.size() == 2
 
-        def userSourceType = rbacAssignment.sources.source.find {it.sourceId == userAdmin.id}
+        def userSourceType = rbacAssignment.sources.source.find { it.sourceId == userAdmin.id }
         userSourceType.sourceType == SourceTypeEnum.USER
         userSourceType.sourceId == userAdmin.id
         userSourceType.assignmentType == AssignmentTypeEnum.TENANT
@@ -475,7 +478,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         userSourceType.forTenants.size() == 1
         userSourceType.forTenants[0] == mossoTenant.id
 
-        def groupSourceType = rbacAssignment.sources.source.find {it.sourceId == group.id}
+        def groupSourceType = rbacAssignment.sources.source.find { it.sourceId == group.id }
         groupSourceType.sourceType == SourceTypeEnum.USERGROUP
         groupSourceType.sourceId == group.id
         groupSourceType.assignmentType == AssignmentTypeEnum.TENANT
@@ -519,7 +522,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         tenantAssignments.size() == 1
 
         and: "Has rbac role"
-        def rbacAssignment = tenantAssignments.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        def rbacAssignment = tenantAssignments.find { it.onRole == Constants.ROLE_RBAC1_ID }
         rbacAssignment != null
         rbacAssignment.onRole == Constants.ROLE_RBAC1_ID
         rbacAssignment.onRoleName == Constants.ROLE_RBAC1_NAME
@@ -639,6 +642,47 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         def daTokenDomain1UserAdmin2 = utils.getDelegationAgreementToken(userAdmin2.username, delegationAgreement.id)
         def daTokenDomain1DefaultUser = utils.getDelegationAgreementToken(defaultUserDomain2.username, delegationAgreementDomain1DefaultUser.id)
         def daTokenDomain2DefaultUser = utils.getDelegationAgreementToken(defaultUserDomain2.username, delegationAgreementDomain2DefaultUser.id)
+
+        // Create Fed User
+        AuthenticateResponse fedUser2AuthResponse = utils.createFederatedUserForAuthResponse(userAdmin2.domainId)
+        def fedUser2Id = fedUser2AuthResponse.user.id
+        def fedUser2Token = fedUser2AuthResponse.token.id
+
+        // Create delegation agreement for Federated user
+        def delegationAgreementDomain2FedUserForDiffDomain = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin1.username), userAdmin1.domainId, fedUser2Id)
+        def delegationAgreementDomain2FedUser = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin2.username), userAdmin2.domainId, fedUser2Id)
+
+        // Create role assignment
+        def assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = Constants.ROLE_RBAC1_ID
+                            ta.forTenants.add("*")
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        // create principal tokens
+        def principalToken1 = utils.getToken(userAdmin1.username)
+        def principalToken2 = utils.getToken(userAdmin2.username)
+
+        // assign roles to Delegation Agreement
+        utils.grantRoleAssignmentsOnDelegationAgreement(delegationAgreementDomain2FedUserForDiffDomain, assignments, principalToken1)
+        utils.grantRoleAssignmentsOnDelegationAgreement(delegationAgreementDomain2FedUser, assignments, principalToken2)
+
+        // Generate Federated user's Da token for same domain
+        AuthenticateResponse daAuthResponseSameDomain = utils.authenticateTokenAndDelegationAgreement(fedUser2Token, delegationAgreementDomain2FedUser.id)
+        def daTokenForFederatedUser = daAuthResponseSameDomain.token.id
+
+        // Generate Federated user's Da token for different domain
+        AuthenticateResponse daAuthResponseDiffDomain = utils.authenticateTokenAndDelegationAgreement(fedUser2Token, delegationAgreementDomain2FedUserForDiffDomain.id)
+        def daTokenForFederatedUserDiffDomain = daAuthResponseDiffDomain.token.id
+
         def tenantDomain1 = utils.createTenant()
         utils.addTenantToDomain(domain1.id, tenantDomain1.id)
 
@@ -700,12 +744,126 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         roles = utils.listEffectiveRolesForUser(defaultUserDomain2.id, utils.getToken(userAdmin2.username))
 
         then:
-        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId)} != null
-        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId)} == null
-        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id)} == null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId) } != null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId) } == null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id) } == null
+
+        when: "Federated user listing roles for their own DA token in same domain"
+        roles = utils.listEffectiveRolesForUser(fedUser2Id, daTokenForFederatedUser)
+
+        then:
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId) } != null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId) } == null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id) } == null
+
+        when: "Federated user listing roles for their own DA token in different domain"
+        roles = utils.listEffectiveRolesForUser(fedUser2Id, daTokenForFederatedUserDiffDomain)
+
+        then:
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId) } == null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId) } != null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id) } != null
+
+        when: "user admin in same domain list roles for Federated user"
+        roles = utils.listEffectiveRolesForUser(fedUser2Id, utils.getToken(userAdmin2.username))
+
+        then:
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin2.domainId) } != null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(userAdmin1.domainId) } == null
+        roles.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantDomain1.id) } == null
+
+        when: "list effective roles call is made using da token for in and different domains for Fed user"
+        def fedRoles1 = utils.listEffectiveRolesForUser(fedUser2Id,daTokenForFederatedUser)
+        def fedRoles2 = utils.listEffectiveRolesForUser(fedUser2Id,daTokenForFederatedUserDiffDomain)
+
+        then: "effective roles should be listed for the Fed user"
+        fedRoles1.tenantAssignments.tenantAssignment.find { ta -> ta.onRole.contains(Constants.ROLE_RBAC1_ID)} != null
+        fedRoles2.tenantAssignments.tenantAssignment.find { ta -> ta.onRole.contains(Constants.ROLE_RBAC1_ID)} != null
 
         cleanup:
         utils.deleteUsers(userAdmin1, defaultUserDomain2, userAdmin2)
+    }
+
+    /**
+    Test added as part of CID-1522 Add fed user support to list effective roles for user service
+     */
+    @Unroll
+    def "FedUserEffectiveRoles: List effective roles for Federated user: #media"() {
+
+        def userAdmin = utils.createCloudAccount()
+
+        // Create federated user
+        def fedUser = utils.createFederatedUser(userAdmin.domainId)
+
+        // grab token
+        def iaToken = utils.getIdentityAdminToken()
+
+        Tenants tenants = utils.listDomainTenants(userAdmin.domainId)
+        def mossoTenant = tenants.tenant.find {it.id == userAdmin.domainId}
+
+        utils.addRoleToUserOnTenant(userAdmin, mossoTenant, Constants.ROLE_RBAC1_ID)
+
+        when: "Get Federated user's effective roles"
+        def response = cloud20.listUserEffectiveRolesWithSources(iaToken, fedUser.id, new ListEffectiveRolesForUserParams(mossoTenant.id), media)
+
+        then: "Status is 200"
+        response.status == HttpStatus.SC_OK
+
+        and: "Role assignments is not null"
+        RoleAssignments assignments = response.getEntity(RoleAssignments)
+        assignments != null
+
+        and: "Effective roles assigned to fed users with source should be listed"
+        def tenantAssignments = assignments.tenantAssignments.tenantAssignment
+        tenantAssignments.size() == 3
+
+        where:
+        media << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+
+    @Unroll
+    def "FedUserEffectiveRoles: Propagating roles should be listed for Fed Users media: #media"() {
+
+        // Create domain
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        // grab token
+        def iaToken = utils.getIdentityAdminToken()
+        def serviceAdminToken = utils.getServiceAdminToken()
+
+        // Create federated user
+        def fedUser = utils.createFederatedUser(userAdmin.domainId)
+
+        // create multiple tenants
+        def tenant1 = utils.createTenantInDomain(domainId)
+        def tenant2 = utils.createTenantInDomain(domainId)
+
+        // create propagating role
+        def role = utils.createPropagatingRole()
+
+        when: "Propagating role is assigned to a user admin on specific tenant"
+        // assign propagating role to user admin on tenant1
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant1.id, userAdmin.id, role.id)
+
+        then: "Effective roles for Fed users should list the propagating role"
+        def response = cloud20.listUserEffectiveRolesWithSources(iaToken, fedUser.id, new ListEffectiveRolesForUserParams(tenant1.id), media)
+        response.status == HttpStatus.SC_OK
+        RoleAssignments assignments = response.getEntity(RoleAssignments)
+        assignments != null
+        assignments.tenantAssignments.tenantAssignment.find { ta -> ta.onRole.contains(role.id)} != null
+        assignments.tenantAssignments.tenantAssignment.find { ta -> ta.onRoleName.contains(role.name)} != null
+
+        and: "Roles should be list on specific tenant on which role is given"
+        assignments.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenant1.id)} != null
+
+        and: "Roles should be not list on specific tenant on which role is not given"
+        assignments.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenant2.id)} == null
+
+        where:
+        media << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
 }
