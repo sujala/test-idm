@@ -1184,6 +1184,15 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.151) = {
     description = "The level of nesting allowed"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.152) = {
+    name = rsDelegationAgreementId
+    ldap-names = rsDelegationAgreementId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The Delegation Agreement ID"
+};
+
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1909,5 +1918,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.45) = {
         rsPrincipalDN,
         rsDelegateDNs,
         rsAllowSubAgreements,
-        rsNestLevel
+        rsNestLevel,
+        rsDelegationAgreementId
 };

@@ -4,6 +4,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperHelper
+import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.domain.config.IdentityConfig
 
 import com.rackspace.idm.domain.dao.UserDao
@@ -11,6 +12,8 @@ import com.rackspace.idm.domain.dao.impl.MemoryTokenRevocationRecordPersistenceS
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.service.DelegationService
+import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.IdentityPropertyService
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -234,5 +237,16 @@ class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
         MemoryTokenRevocationRecordPersistenceStrategy tokenRevocationRecordPersistenceStrategy() {
             return new MemoryTokenRevocationRecordPersistenceStrategy()
         }
+
+        @Bean
+        DelegationService delegationService() {
+            mockFactory.Mock(DelegationService)
+        }
+
+        @Bean
+        DomainService domainService() {
+            mockFactory.Mock(DomainService)
+        }
+        
     }
 }

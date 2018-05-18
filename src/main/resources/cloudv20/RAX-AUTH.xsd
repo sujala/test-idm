@@ -1310,6 +1310,15 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="parentDelegationAgreementId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        If this DA is a nested DA, the parent of this DA.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
         <attribute name="principalType" type="RAX-AUTH:PrincipalType" use="optional"/>
         <attribute name="principalId" type="xsd:string" use="optional">
             <annotation>

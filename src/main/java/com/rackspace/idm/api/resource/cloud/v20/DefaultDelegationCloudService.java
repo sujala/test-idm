@@ -119,9 +119,17 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
             EndUser caller = (EndUser) callerBu;
 
-            // Verify field lengths
+            boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
+            boolean isSubAgreementSpecified = agreementWeb.isAllowSubAgreements() != null;
+            boolean isNestedAgreement = StringUtils.isNotBlank(agreementWeb.getParentDelegationAgreementId());
+
+            // Verify overall request
             validator20.validateStringNotNullWithMaxLength("name", agreementWeb.getName(), Validator20.MAX_LENGTH_32);
             validator20.validateStringMaxLength("description", agreementWeb.getDescription(), Validator20.MAX_LENGTH_255);
+
+            if (isNestLevelSpecified && isSubAgreementSpecified) {
+                throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            }
 
             // If a principal is not specified, default to the caller
             if (StringUtils.isBlank(agreementWeb.getPrincipalId())) {
@@ -131,46 +139,82 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new BadRequestException("Must specify the principal type", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
 
-            boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
-            boolean isSubAgreementSpecified = agreementWeb.isAllowSubAgreements() != null;
+            // The principal must exist and caller must be authorized to create a DA for the principal
+            SimplePrincipalValidator principalValidator = new SimplePrincipalValidator(agreementWeb.getPrincipalType(), agreementWeb.getPrincipalId());
+            principalValidator.verifyCallerAuthorizedOnPrincipal(caller);
+            DelegationPrincipal principal = principalValidator.getPrincipal();
 
-            if (isNestLevelSpecified && isSubAgreementSpecified) {
-                throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
-            } else if (isSubAgreementSpecified) {
+            // If nested agreement, the parent must exist and the nested DA principal must be an effective delegate on parent DA
+            com.rackspace.idm.domain.entity.DelegationAgreement parentDelegationAgreement = null;
+            if (isNestedAgreement) {
+                parentDelegationAgreement = delegationService.getDelegationAgreementById(agreementWeb.getParentDelegationAgreementId());
+                boolean isValid = false;
+                if (parentDelegationAgreement != null) {
+                    if (principal instanceof DelegationDelegate) {
+                        DelegationDelegate delegate = (DelegationDelegate) principal;
+                        isValid = parentDelegationAgreement.isExplicitDelegate(delegate);
+                    }
+                    if (!isValid && principal instanceof EndUser) {
+                        // If principal is an enduser, may be an effective delegate due to user group membership
+                        isValid = parentDelegationAgreement.isEffectiveDelegate((EndUser) principal);
+                    }
+                }
+                if (!isValid) {
+                    throw new NotFoundException("The specified parent agreement does not exist for the requested principal", ErrorCodes.ERROR_CODE_NOT_FOUND);
+                }
+
+                // Verify parent DA allows nested DA
+                if (!(parentDelegationAgreement.getSubAgreementNestLevelNullSafe() > 0)) {
+                    throw new ForbiddenException("The parent agreement does not allow nested agreements", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+                }
+            }
+
+            // Validate and set defaults for the nesting attributes. The max nest level varies based on whether or not a nested agreement
+            int maxNestLevel = isNestedAgreement ? Math.max(0, parentDelegationAgreement.getSubAgreementNestLevelNullSafe() - 1) : identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel();
+            if (isSubAgreementSpecified) {
                 if (agreementWeb.isAllowSubAgreements()) {
-                    agreementWeb.setSubAgreementNestLevel(BigInteger.valueOf(identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel()));
+                    // Default to the maximum nest level when old way used
+                    agreementWeb.setSubAgreementNestLevel(BigInteger.valueOf(maxNestLevel));
                 } else {
                     agreementWeb.setSubAgreementNestLevel(BigInteger.ZERO);
                 }
             } else if (isNestLevelSpecified) {
-                validator20.validateIntegerMinMax("subAgreementNestLevel", agreementWeb.getSubAgreementNestLevel().intValue(), 0, identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel());
                 agreementWeb.setAllowSubAgreements(agreementWeb.getSubAgreementNestLevel().intValue() > 0);
             } else {
                 // Default to false/0
                 agreementWeb.setAllowSubAgreements(false);
                 agreementWeb.setSubAgreementNestLevel(BigInteger.ZERO);
             }
+            validator20.validateIntegerMinMax("subAgreementNestLevel", agreementWeb.getSubAgreementNestLevel().intValue(), 0, maxNestLevel);
 
-            // The principal must exist and caller must be authorized to create a DA for the principal
-            SimplePrincipalValidator principalValidator = new SimplePrincipalValidator(agreementWeb.getPrincipalType(), agreementWeb.getPrincipalId());
-            principalValidator.verifyCallerAuthorizedOnPrincipal(caller);
-            DelegationPrincipal principal = principalValidator.getPrincipal();
+            // Verify da domain's RCN supports DAs. Blank RCNs only supported if feature is globally enabled for all RCNs
+            // The DA's domain is the domain being delegated into. Nested agreements inherit the domainId of its
+            // parent; non-nested inherit the domainId of the principal
+            if (isNestedAgreement) {
+                agreementWeb.setDomainId(parentDelegationAgreement.getDomainId());
+            } else {
+                agreementWeb.setDomainId(principal.getDomainId());
+            }
+            Domain daDomain = null;
+            if (agreementWeb.getDomainId().equalsIgnoreCase(caller.getDomainId())) {
+                daDomain = requestContextHolder.getRequestContext().getEffectiveCallerDomain();
+            }
+            if (daDomain == null) {
+                daDomain = domainService.getDomain(agreementWeb.getDomainId());
+            }
+
+            if (daDomain == null || !identityConfig.getReloadableConfig().areDelegationAgreementsEnabledForRcn(daDomain.getRackspaceCustomerNumber())) {
+                throw new ForbiddenException("This domain is not allowed to create delegation agreements", ErrorCodes.ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN);
+            }
 
             // Verify the max allowed DAs per principal has not been reached.
             if (delegationService.countNumberOfDelegationAgreementsByPrincipal(principal) >= identityConfig.getReloadableConfig().getDelegationMaxNumberOfDaPerPrincipal()) {
                 throw new BadRequestException("Maximum number of delegation agreements has been reached for principal", ErrorCodes.ERROR_CODE_THRESHOLD_REACHED);
             }
 
-            // Verify RCN is supported for DAs. Blank RCNs only supported if feature is globally enabled for all RCNs
-            Domain callerDomain = requestContextHolder.getRequestContext().getEffectiveCallerDomain();
-            if (callerDomain == null || !identityConfig.getReloadableConfig().areDelegationAgreementsEnabledForRcn(callerDomain.getRackspaceCustomerNumber())) {
-                throw new ForbiddenException("This domain is not allowed to create delegation agreements", ErrorCodes.ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN);
-            }
-
             // Convert to entity object
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationAgreementConverter.fromDelegationAgreementWeb(agreementWeb);
             delegationAgreement.setPrincipal(principal);
-            delegationAgreement.setDomainId(principal.getDomainId());
 
             // Add the agreement
             delegationService.addDelegationAgreement(delegationAgreement);
@@ -223,19 +267,53 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
             boolean isSubAgreementSpecified = agreementWeb.isAllowSubAgreements() != null;
+            boolean isNestedAgreement = StringUtils.isNotBlank(delegationAgreement.getParentDelegationAgreementId());
 
-            // Reconcile subagreementallowed to nesting level migration. When neither specified, no update
-            if (isNestLevelSpecified && isSubAgreementSpecified) {
-                throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
-            } else if (isSubAgreementSpecified) {
-                if (agreementWeb.isAllowSubAgreements() && delegationAgreement.getSubAgreementNestLevel() != null && delegationAgreement.getSubAgreementNestLevel() <= 0) {
-                    delegationAgreement.setSubAgreementNestLevel(identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel());
-                } else {
-                    delegationAgreement.setSubAgreementNestLevel(0);
+            // Reconcile allowSubAgreements to nesting level. When neither specified, no update
+            if (isNestLevelSpecified || isSubAgreementSpecified) {
+                com.rackspace.idm.domain.entity.DelegationAgreement parentDelegationAgreement = null;
+
+                // The only thing we require to retrieve from parent is when updating nest levels to ensure they are valid per the parent.
+                if (isNestedAgreement) {
+                    parentDelegationAgreement = delegationService.getDelegationAgreementById(agreementWeb.getParentDelegationAgreementId());
+                    if (parentDelegationAgreement == null) {
+                        throw new NotFoundException("The agreement's nest levels can not be updated. The parent agreement does not exist.", ErrorCodes.ERROR_CODE_NOT_FOUND);
+                    }
+
+                    // Verify parent DA allows nested DA. TODO: Other code should reconcile subagreements when parent nest level is changed so subagreements don't exist
+                    // under parents that do not allow subagreements.
+                    if (!(parentDelegationAgreement.getSubAgreementNestLevelNullSafe() > 0)) {
+                        throw new ForbiddenException("This nested agreement nest levels can not be updated. The parent agreement does not allow nested agreements.", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+                    }
                 }
-            } else if (isNestLevelSpecified) {
-                validator20.validateIntegerMinMax("subAgreementNestLevel", agreementWeb.getSubAgreementNestLevel().intValue(), 0, 3);
-                agreementWeb.setAllowSubAgreements(agreementWeb.getSubAgreementNestLevel().intValue() > 0);
+
+                int maxNestLevel = isNestedAgreement ? Math.max(0, parentDelegationAgreement.getSubAgreementNestLevelNullSafe() - 1) : identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel();
+                if (isNestLevelSpecified && isSubAgreementSpecified) {
+                    throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+                } else if (isSubAgreementSpecified) {
+                    if (agreementWeb.isAllowSubAgreements() && !delegationAgreement.getAllowSubAgreements()) {
+                        // Turning on
+                        delegationAgreement.setAllowSubAgreements(true);
+                        delegationAgreement.setSubAgreementNestLevel(maxNestLevel);
+                    } else if (!agreementWeb.isAllowSubAgreements() && delegationAgreement.getAllowSubAgreements()) {
+                        // Turning off
+                        delegationAgreement.setAllowSubAgreements(false);
+                        delegationAgreement.setSubAgreementNestLevel(0);
+                    }
+                } else {
+                    // Nest level is specified
+                    if (agreementWeb.getSubAgreementNestLevel().intValue() > 0) {
+                        // Turning on or changing nest level
+                        delegationAgreement.setAllowSubAgreements(true);
+                        delegationAgreement.setSubAgreementNestLevel(agreementWeb.getSubAgreementNestLevel().intValue());
+                        validator20.validateIntegerMinMax("subAgreementNestLevel", agreementWeb.getSubAgreementNestLevel().intValue(), 0, 3);
+                    } else if (agreementWeb.getSubAgreementNestLevel().intValue() <= 0) {
+                        // Turning off or keeping off
+                        delegationAgreement.setAllowSubAgreements(false);
+                        delegationAgreement.setSubAgreementNestLevel(0);
+                    }
+                    agreementWeb.setAllowSubAgreements(agreementWeb.getSubAgreementNestLevel().intValue() > 0);
+                }
             }
 
             delegationService.updateDelegationAgreement(delegationAgreement);

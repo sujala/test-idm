@@ -343,9 +343,13 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(USERS).queryParam("enabled", "" + enabled).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def updateUser(String token, String userId, user, MediaType acceptMediaType = APPLICATION_XML_TYPE, MediaType requestMediaType = APPLICATION_XML_TYPE) {
+    def updateUser(String token, String userId, user, MediaType acceptMediaType = APPLICATION_XML_TYPE, MediaType requestMediaType = APPLICATION_XML_TYPE, String requestId = null) {
         initOnUse()
-        resource.path(path20).path(USERS).path(userId).header(X_AUTH_TOKEN, token).accept(acceptMediaType).type(requestMediaType).entity(user).post(ClientResponse)
+        def request = resource.path(path20).path(USERS).path(userId).header(X_AUTH_TOKEN, token).accept(acceptMediaType).type(requestMediaType).entity(user)
+        if (requestId) {
+            request.header(GlobalConstants.X_REQUEST_ID, requestId)
+        }
+        request.post(ClientResponse)
     }
 
     def addCredential(String token, String userId, credential) {
@@ -1130,7 +1134,7 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSADM).path(ROLES).queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
-    def updateCredentials(String token, String userId, creds) {
+    def updateCredentials(String token, String userId, CredentialType creds) {
         initOnUse()
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(creds).post(ClientResponse)
     }

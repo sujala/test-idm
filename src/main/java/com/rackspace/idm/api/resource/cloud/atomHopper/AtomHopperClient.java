@@ -11,7 +11,6 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -88,7 +87,14 @@ public class AtomHopperClient {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final Class[] JAXB_CONTEXT_FEED_ENTRY_CONTEXT_PATH = new Class[] {UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class, com.rackspace.docs.event.identity.trr.user.CloudIdentityType.class, com.rackspace.docs.event.identity.idp.CloudIdentityType.class};
+    private static final Class[] JAXB_CONTEXT_FEED_ENTRY_CONTEXT_PATH = new Class[] {
+            UsageEntry.class,
+            CloudIdentityType.class,
+            com.rackspace.docs.event.identity.token.CloudIdentityType.class,
+            com.rackspace.docs.event.identity.trr.user.CloudIdentityType.class,
+            com.rackspace.docs.event.identity.idp.CloudIdentityType.class,
+            com.rackspace.docs.event.identity.user.credential.CloudIdentityType.class
+    };
     private static final JAXBContext JAXB_CONTEXT_FEED_ENTRY;
 
     static {
@@ -212,6 +218,15 @@ public class AtomHopperClient {
     }
 
     @Async
+    public void asyncPostCredentialChangeEvent(CredentialChangeEventData credentialChangeEventData) {
+        try {
+            postUsageEntryToCloudFeeds(createUsageEntry(credentialChangeEventData));
+        } catch (Exception e) {
+            logger.warn("AtomHopperClient Exception posting user credential change: ", e);
+        }
+    }
+
+    @Async
     public void asyncPost(EndUser user, String userStatus) {
         try {
             postUser(user, userStatus);
@@ -318,6 +333,31 @@ public class AtomHopperClient {
             if (response != null) {
                 //always close the stream to release connection back to pool
                 logger.debug("Consuming entity to release connection back to pool");
+                atomHopperHelper.entityConsume(response.getEntity());
+            }
+        }
+    }
+
+    private void postUsageEntryToCloudFeeds(UsageEntry usageEntry) throws IOException {
+        HttpResponse response = null;
+        try {
+            HttpPost httpPost = generatePostRequest(marshalEntry(usageEntry));
+            response = httpClient.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpServletResponse.SC_CREATED) {
+                final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+                logger.error(String.format("Failed to post usage entry with title '%s' and resource ID '%s' to cloud feeds." +
+                                "Returned status code: %s; responseBody: %s",
+                        usageEntry.getTitle().getValue(), usageEntry.getContent().getEvent().getResourceId(),
+                        statusCode, errorMsg));
+            }
+        } catch (Exception e) {
+            logger.error(String.format("Failed to post usage entry to cloud feeds for event with title '%s' and resource ID '%s'.",
+                    usageEntry.getTitle().getValue(), usageEntry.getContent().getEvent().getResourceId()), e);
+        } finally {
+            if (response != null) {
+                // Always close the stream to release connection back to pool
+                logger.debug("Consuming entity to release connection back to pool.");
                 atomHopperHelper.entityConsume(response.getEntity());
             }
         }
@@ -474,6 +514,17 @@ public class AtomHopperClient {
         final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, EventType.DELETE, id, token, null, AtomHopperConstants.IDENTITY_TOKEN_EVENT, null);
         logger.debug("Created Identity token entry with id: " + id);
         return usageEntry;
+    }
+
+    private UsageEntry createUsageEntry(CredentialChangeEventData credentialChangeEventData) {
+        logger.debug("Creating credential change event entry.");
+
+        return UsageEntryBuilder.builder(identityConfig)
+                .eventData(credentialChangeEventData.toCloudIdentityType())
+                .eventTitle(AtomHopperConstants.IDENTITY_CREDENTIAL_CHANGE_EVENT_TITLE)
+                .resourceId(credentialChangeEventData.getUserId())
+                .eventType(EventType.UPDATE)
+                .buildUsageEntry();
     }
 
     private UsageEntry createEntryForIdp(IdentityProvider idp, EventType eventType) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
