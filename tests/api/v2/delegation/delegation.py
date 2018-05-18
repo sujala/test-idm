@@ -95,6 +95,26 @@ class TestBaseDelegation(base.TestBaseV2):
         }
         return tenant_assignment_request
 
+    def create_and_add_user_group_to_domain(self, client,
+                                            domain_id=None,
+                                            status_code=201):
+        if domain_id is None:
+            domain_id = self.domain_id
+        group_req = factory.get_add_user_group_request(domain_id)
+        # set the serialize format to json since that's what we support
+        # for user groups
+        client_default_serialize_format = client.serialize_format
+        client.serialize_format = const.JSON
+        resp = client.add_user_group_to_domain(
+            domain_id=domain_id, request_object=group_req)
+        self.assertEqual(resp.status_code, status_code)
+        client.serialize_format = client_default_serialize_format
+
+        if status_code != 201:
+            return None
+        else:
+            return responses.UserGroup(resp.json())
+
     @base.base.log_tearDown_error
     def tearDown(self):
         super(TestBaseDelegation, self).tearDown()
