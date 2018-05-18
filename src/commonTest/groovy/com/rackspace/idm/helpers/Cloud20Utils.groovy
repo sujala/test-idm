@@ -405,6 +405,16 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
+    def updateUserPasswordCredentials(User user, String newPassword, String token = getServiceAdminToken()) {
+        PasswordCredentialsBase creds = new PasswordCredentialsBase().with {
+            it.username = user.username
+            it.password = newPassword
+            it
+        }
+        def response = methods.updateCredentials(token, user.id, creds)
+        assert (response.status == SC_OK)
+    }
+
     def changeUserPassword(String username, String currentPassword, String newPassword) {
         def response = methods.changeUserPassword(username, currentPassword, newPassword)
         assert (response.status == SC_NO_CONTENT)

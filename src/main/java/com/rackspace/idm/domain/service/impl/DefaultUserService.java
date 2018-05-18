@@ -1,18 +1,22 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.collect.Iterables;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.event.identity.user.credential.CredentialTypeEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.AuthenticationContext;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.DelegationAgreement;
-import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.entity.Region;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.modules.usergroups.Constants;
@@ -29,6 +33,7 @@ import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -140,6 +145,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private TenantAssignmentService tenantAssignmentService;
+
+    @Autowired
+    private AtomHopperClient atomHopperClient;
 
     @Override
     public void addUserv11(User user) {
@@ -949,8 +957,21 @@ public class DefaultUserService implements UserService {
 
         userDao.updateUser(user);
 
-        if(passwordChange){
+        if(passwordChange) {
             scopeAccessService.expireAllTokensForUser(user.getUsername());
+            if (identityConfig.getReloadableConfig().isPostCredentialChangeFeedEventsEnabled()) {
+                // Copy over the values needed to populate the credential change feed event.
+                // We have to check the user provided in the method params first and if not provided pull it from the existing user.
+                CredentialChangeEventData credentialChangeEventData = new CredentialChangeEventData();
+                credentialChangeEventData.setUserId(StringUtils.isNotBlank(user.getId()) ? user.getId() : currentUser.getId());
+                credentialChangeEventData.setUsername(StringUtils.isNotBlank(user.getUsername()) ? user.getUsername() : currentUser.getUsername());
+                credentialChangeEventData.setEmail(StringUtils.isNotBlank(user.getEmail()) ? user.getEmail() : currentUser.getEmail());
+                credentialChangeEventData.setDomainId(StringUtils.isNotBlank(user.getDomainId()) ? user.getDomainId() : currentUser.getDomainId());
+                credentialChangeEventData.setCredentialUpdateDateTime(new DateTime());
+                credentialChangeEventData.setCredentialType(CredentialTypeEnum.PASSWORD);
+                credentialChangeEventData.setRequestId(MDC.get(Audit.GUUID));
+                atomHopperClient.asyncPostCredentialChangeEvent(credentialChangeEventData);
+            }
         }
 
         if (userIsBeingDisabled) {

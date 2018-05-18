@@ -1,9 +1,12 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.event.identity.user.credential.CredentialTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -19,6 +22,7 @@ import com.rackspace.idm.validation.Validator
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
+import org.slf4j.MDC
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -130,6 +134,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockIdentityUserService(service)
         mockIdentityConfig(service)
         mockTenantAssignmentService(service)
+        mockAtomHopperClient(service)
         service.authenticationContext = Mock(AuthenticationContext)
     }
 
@@ -1501,6 +1506,44 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * userDao.getUserAdminByDomain(domain) >> null
 
         userAdmin == null
+    }
+
+    @Unroll
+    def "calling updateUser to change a user's password calls the atom hopper client to post the cred change event, featureEnabled = #featureEnabled"() {
+        given:
+        identityConfig.reloadableConfig.isPostCredentialChangeFeedEventsEnabled() >> featureEnabled
+        def user = entityFactory.createUser().with {
+            it.password = "myNewPassword"
+            it
+        }
+        def currentUser = entityFactory.createUser().with {
+            it.password = "myOldPassword"
+            it
+        }
+        if (featureEnabled) {
+            1 * atomHopperClient.asyncPostCredentialChangeEvent(_) >> { args ->
+                CredentialChangeEventData eventData = args[0]
+                assert eventData.username == user.username
+                assert eventData.userId == user.id
+                assert eventData.email == user.email
+                assert eventData.domainId == user.domainId
+                assert eventData.credentialUpdateDateTime != null
+                assert eventData.credentialUpdateDateTime.isBeforeNow()
+                assert eventData.credentialType == CredentialTypeEnum.PASSWORD
+            }
+        } else {
+            0 * atomHopperClient.asyncPostCredentialChangeEvent(_)
+        }
+
+        when:
+        service.updateUser(user)
+
+        then:
+        1 * identityUserService.getProvisionedUserByIdWithPwdHis(user.id) >> currentUser
+        1 * userDao.updateUser(user)
+
+        where:
+        featureEnabled << [true, false]
     }
 
     def createStringPaginatorContext() {

@@ -242,7 +242,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         def response = methods.forgotPassword(creds)
 
         then: "the email contains an AE token"
-        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
         def tokenEntity = aeTokenService.unmarshallToken(tokenStr)
         tokenEntity != null
 
@@ -262,7 +262,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         def expirationSeconds = 10 * 60
         reloadableConfiguration.setProperty(IdentityConfig.FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, expirationSeconds)
         def response = methods.forgotPassword(creds)
-        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
         def tokenEntity = aeTokenService.unmarshallToken(tokenStr)
         DateTime expectedTokenExpireOnOrBefore = new DateTime().plusSeconds(expirationSeconds)
         DateTime expectedTokenExpireAfter = new DateTime().plusSeconds(expirationSeconds).minusSeconds(20) //20 seconds of padding in case method takes a while
@@ -276,7 +276,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         expirationSeconds = 100 * 60
         reloadableConfiguration.setProperty(IdentityConfig.FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, expirationSeconds)
         methods.forgotPassword(creds)
-        tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(1).getMimeMessage()) //get the second email
+        tokenStr = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(1).getMimeMessage()) //get the second email
         tokenEntity = aeTokenService.unmarshallToken(tokenStr)
         expectedTokenExpireOnOrBefore = new DateTime().plusSeconds(expirationSeconds)
         expectedTokenExpireAfter = new DateTime().plusSeconds(expirationSeconds).minusSeconds(20) //20 seconds of padding in case method takes a while
@@ -292,7 +292,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
         when: "get reset token"
         methods.forgotPassword(creds)
-        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         then: "the token can not be validated as self token"
         cloud20.validateToken(tokenStr, tokenStr).status == SC_FORBIDDEN
@@ -305,10 +305,10 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
         def pwdToken = utils.getToken(userAdmin.username)
         methods.forgotPassword(creds)
-        def fpToken = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def fpToken = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         methods.forgotPassword(creds)
-        def fpToken2 = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(1).getMimeMessage())
+        def fpToken2 = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(1).getMimeMessage())
 
         when: "try to revoke pwd token"
         def response = cloud20.revokeUserToken(fpToken, pwdToken)
@@ -334,7 +334,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
         when: "get reset token"
         methods.forgotPassword(creds)
-        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         then: "the token can not be validated"
         cloud11.validateToken(tokenStr).status == SC_NOT_FOUND
@@ -343,7 +343,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
     def "Reset token can not be used to get user"() {
         ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
         methods.forgotPassword(creds)
-        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         expect: "try to get my user using tokens results in 403"
         cloud20.getUserById(tokenStr, userAdmin.id).status == SC_FORBIDDEN
@@ -357,7 +357,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
         ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
         methods.forgotPassword(creds)
-        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         when: "try to auth w/ token using restricted token session id"
         def authResponse = cloud20.authenticateTokenAndTenant(tokenStr, userAdmin.domainId)
@@ -421,18 +421,13 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         given:
         def creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
         methods.forgotPassword(creds)
-        def fpToken = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def fpToken = testUtils.extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         when:
         def response = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), fpToken)
 
         then:
         response.status == 404
-    }
-
-    def extractTokenFromDefaultEmail(MimeMessage message) {
-        def map = EmailUtils.extractDynamicPropsFromDefaultEmail(message)
-        return StringUtils.trim(map.get(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_STRING_PROP));
     }
 
     def void assertDateOnOrBefore(DateTime date1, DateTime date2) {
