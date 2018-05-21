@@ -43,7 +43,6 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.validate_nested_da_response(nested_da_resp)
         self.assertEqual(nest_level, 1)
 
-    @attr(type='regression')
     def validate_nested_da_response(self, nested_da_resp):
 
         self.assertEqual(nested_da_resp.status_code, 201)
@@ -72,6 +71,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             )
         return da_id
 
+    @attr(type='regression')
     def test_nested_da_when_principal_is_user_group(self):
 
         # create user groups for domain
