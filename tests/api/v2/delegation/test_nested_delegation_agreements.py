@@ -24,11 +24,16 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.group_ids = []
 
     @attr(type='regression')
-    def test_create_nested_da(self):
+    def test_create_and_get_nested_da(self):
 
         parent_da_id = self.call_create_delegation_agreement(
             client=self.user_admin_client, delegate_id=self.user_admin_2_id,
             sub_agreement_nest_level=2)
+        get_parent_da_resp = self.user_admin_client.get_delegation_agreement(
+            da_id=parent_da_id)
+        # Checking that 'parent da id' attribute is not returned for the
+        # first DA
+        self.assertSchema(get_parent_da_resp, da_schema.add_da)
 
         # create nested da with level - 1
         nested_da_name = self.generate_random_string(
@@ -38,14 +43,37 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             parent_da_id=parent_da_id)
         nested_da_resp = self.user_admin_client_2.create_delegation_agreement(
             request_object=da_req)
+        self.validate_nested_da_response(nested_da_resp)
         nest_level = nested_da_resp.json()[
             const.RAX_AUTH_DELEGATION_AGREEMENT][const.SUBAGREEMENT_NEST_LEVEL]
-        self.validate_nested_da_response(nested_da_resp)
         self.assertEqual(nest_level, 1)
 
-    def validate_nested_da_response(self, nested_da_resp):
+        # Validate get da response
+        nested_da_id = nested_da_resp.json()[
+            const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+        get_nested_da_resp = self.user_admin_client_2.get_delegation_agreement(
+            da_id=nested_da_id)
+        self.validate_nested_da_response(get_nested_da_resp, resp_code=200)
+        nest_level = get_nested_da_resp.json()[
+            const.RAX_AUTH_DELEGATION_AGREEMENT][const.SUBAGREEMENT_NEST_LEVEL]
+        self.assertEqual(nest_level, 1)
 
-        self.assertEqual(nested_da_resp.status_code, 201)
+        # list da's
+        list_da_resp = self.user_admin_client_2.list_delegation_agreements()
+        self.assertEqual(list_da_resp.status_code, 200)
+        self.assertSchema(list_da_resp, da_schema.list_da)
+        das = [da for da in list_da_resp.json()[
+            const.RAX_AUTH_DELEGATION_AGREEMENTS]]
+        for da in das:
+            if da[const.ID] == nested_da_id:
+                self.assertIn(const.PARENT_DELEGATION_AGREEMENT_ID, da)
+                self.assertEqual(
+                    da[const.PARENT_DELEGATION_AGREEMENT_ID], parent_da_id)
+                break
+
+    def validate_nested_da_response(self, nested_da_resp, resp_code=201):
+
+        self.assertEqual(nested_da_resp.status_code, resp_code)
         modified_schema = copy.deepcopy(da_schema.add_da)
         modified_schema['properties'][const.RAX_AUTH_DELEGATION_AGREEMENT][
             'required'] += [const.PARENT_DELEGATION_AGREEMENT_ID]
