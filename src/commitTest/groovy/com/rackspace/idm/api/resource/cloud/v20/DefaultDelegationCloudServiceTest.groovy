@@ -388,6 +388,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(daEntity) >> true
         1 * delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, _) >> new PaginatorContext<>()
         1 * roleAssignmentConverter.toRoleAssignmentsWeb(_)
     }

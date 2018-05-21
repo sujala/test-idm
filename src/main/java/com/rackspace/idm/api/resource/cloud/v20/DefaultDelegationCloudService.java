@@ -641,9 +641,8 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             // Caller must be the DA principal or a delegate to list DA roles
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null
-                    || !(delegationAgreement.isEffectivePrincipal(caller)
-                    || delegationAgreement.isEffectiveDelegate(caller))) {
+            if (delegationAgreement == null || (!authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)
+                    && !delegationAgreement.isEffectiveDelegate(caller))) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
