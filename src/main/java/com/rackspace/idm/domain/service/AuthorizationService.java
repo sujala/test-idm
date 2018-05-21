@@ -269,4 +269,12 @@ public interface AuthorizationService {
      */
     void verifyEffectiveCallerHasManagementAccessToUser(String userId);
 
+    /**
+     * Check whether or not the caller is authorized to modify a delegation agreement.
+     *
+     * @param delegationAgreement
+     * @throws IllegalArgumentException if the delegationAgreement, or delegationAgreement's principal is null.
+     */
+    boolean isCallerAuthorizedToManageDelegationAgreement(DelegationAgreement delegationAgreement);
+
 }

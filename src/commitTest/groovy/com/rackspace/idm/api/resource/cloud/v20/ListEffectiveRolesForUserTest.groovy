@@ -34,7 +34,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         service = new DefaultCloud20Service()
 
         mockRequestContextHolder(service)
-        mockUserService(service)
+        mockIdentityUserService(service)
         mockAuthorizationService(service)
         mockPrecedenceValidator(service)
         mockTenantService(service)
@@ -72,7 +72,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * precedenceValidator.verifyCallerCanListRolesForUser(caller, user) >> { args -> throw new ForbiddenException() }
-        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * identityUserService.checkAndGetUserById(user.id) >> user
         1 * requestContext.getEffectiveCaller() >> caller
         1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
     }
@@ -94,7 +94,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
         requestContext.getAndVerifyEffectiveCallerIsEnabled()
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
-        userService.checkAndGetUserById(user.id) >> user
+        identityUserService.checkAndGetUserById(user.id) >> user
         requestContext.getEffectiveCaller() >> user
 
         when:
@@ -140,7 +140,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
         requestContext.getAndVerifyEffectiveCallerIsEnabled()
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
-        userService.checkAndGetUserById(user.id) >> user
+        identityUserService.checkAndGetUserById(user.id) >> user
         requestContext.getEffectiveCaller() >> user
 
         when: "valid tenantId"
@@ -274,8 +274,8 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
             it
         }
         def headers = Mock(HttpHeaders)
-        userService.checkAndGetUserById(targetUser.id) >> targetUser
-        userService.checkAndGetUserById(otherUser.id) >> otherUser
+        identityUserService.checkAndGetUserById(targetUser.id) >> targetUser
+        identityUserService.checkAndGetUserById(otherUser.id) >> otherUser
         requestContextHolder.getRequestContext().getEffectiveCaller() >> delegate
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(daTokenString) >> delegateToken
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenString) >> token
@@ -309,4 +309,62 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         1 * tenantService.getSourcedRoleAssignmentsForUser(otherUser)
     }
 
+    /**
+     Test added as part of CID-1522 Add fed user support to list effective roles for user service
+     */
+    def "list effective roles for Federated user"() {
+
+        given: "A fed user with roles assigned to him"
+        def federatedUser = entityFactory.createFederatedUser("federatedUsername", "idpName").with {
+            it.id = "targetId"
+
+            it
+        }
+
+        def token = "token"
+        def headers = Mock(HttpHeaders)
+        def tenantId = "tenantId"
+        def params = new ListEffectiveRolesForUserParams(tenantId.toUpperCase())
+
+        // Create roles
+        ClientRole clientRole1 = entityFactory.createClientRole().with {
+            it.name = "role1"
+            it.id = "id1"
+            it
+        }
+
+        ClientRole clientRole2 = entityFactory.createClientRole().with {
+            it.name = "role2"
+            it.id = "id2"
+            it
+        }
+        ImmutableClientRole immutableClientRole1 = new ImmutableClientRole(clientRole1)
+        ImmutableClientRole immutableClientRole2 = new ImmutableClientRole(clientRole2)
+
+        // Add user source Assignment
+        SourcedRoleAssignments assignments = new SourcedRoleAssignments(federatedUser)
+        assignments.addUserSourcedAssignment(immutableClientRole1, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
+        assignments.addUserSourcedAssignment(immutableClientRole2, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
+
+        // Standard mocks to get past authorization
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
+        requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        identityUserService.checkAndGetUserById(federatedUser.id) >> federatedUser
+        requestContext.getEffectiveCaller() >> federatedUser
+
+        when: "list effective role endpoint is invoked for fed user"
+        def response = service.listEffectiveRolesForUser(headers, token, federatedUser.id, params).build()
+
+        then: "OK response with status code 200 should be returned"
+        response.status == 200
+
+        and: "Effective roles should get listed for fed user"
+        1 * tenantService.getSourcedRoleAssignmentsForUser(federatedUser) >> assignments
+        1 * roleAssignmentConverter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(_) >> { SourcedRoleAssignments sra ->
+            Set<SourcedRoleAssignments.SourcedRoleAssignment> sraSet = sra.getSourcedRoleAssignments()
+            assert sraSet.size() == 2
+            new RoleAssignments()
+        }
+    }
 }

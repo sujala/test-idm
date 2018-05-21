@@ -426,6 +426,9 @@ public class IdentityConfig {
     public static final String FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP = "delegation.max.number.of.da.per.principal";
     public static final int FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_DEFAULT = 5;
 
+    public static final String FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_PROP = "feature.enable.authorization.advice.aspect";
+    public static final boolean FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_DEFAULT  = true;
+
     /**
      * Required static prop
      */
@@ -562,7 +565,10 @@ public class IdentityConfig {
 
     public static final String FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_PROP = "feature.enable.include.password.expiration.date";
     public static final boolean FEATURE_ENABLE_INCLUDE_PASSWORD_EXPIRATION_DATE_DEFAULT = false;
-  
+
+    public static final String FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_PROP = "feature.enable.post.credential.feed.events";
+    public static final boolean FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_DEFAULT = false;
+
     /**
      * Identity Repository Properties
      */
@@ -821,6 +827,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP, FEATURE_ENABLE_DELEGATION_AUTHENTICATION_DEFAULT);
         defaults.put(FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_PROP, FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_DEFAULT);
         defaults.put(FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_DEFAULT);
+        defaults.put(FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_PROP, FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_DEFAULT);
+        defaults.put(FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_PROP, FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_DEFAULT);
 
         return defaults;
     }
@@ -2239,6 +2247,16 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, versionAdded = "3.22.0", description = "The maximum number of delegation agreements per principal.")
         public int getDelegationMaxNumberOfDaPerPrincipal() {
             return getIntSafely(reloadableConfiguration, FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_PROP, versionAdded = "3.22.0", description = "Whether to enable authorization advice aspect")
+        public boolean getAuthorizationAdviceAspectEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_PROP);
+        }
+
+        @IdmProp(key = FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_PROP, versionAdded = "3.22.0", description = "Whether to post credential change events when a user's credentials are changed.")
+        public boolean isPostCredentialChangeFeedEventsEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_PROP);
         }
     }
 

@@ -2,6 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.identity.multifactor.util.HttpStatus
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.SAMLConstants
@@ -25,6 +27,8 @@ import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
 import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 import testHelpers.saml.v2.FederatedRackerAuthGenerationRequest
 import testHelpers.saml.v2.FederatedRackerAuthRequestGenerator
+
+import javax.ws.rs.core.MediaType
 
 class FederatedGroupsIntegrationTest extends RootIntegrationTest {
 
@@ -261,6 +265,57 @@ class FederatedGroupsIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteIdentityProvider(rackerIdp)
+    }
+
+    def "FedUserEffectiveRoles: a federated user gets the roles assigned to user group and given roles are listed in fed uses effective roles"() {
+        given:
+        def federatedUserUsername = RandomStringUtils.randomAlphanumeric(8)
+
+        // Create user group
+        def userGroup = utils.createUserGroup(userAdminDomainId)
+        def tenantId = RandomStringUtils.randomAlphanumeric(8)
+        def tenant = utils.createTenant(tenantId, true, RandomStringUtils.randomAlphanumeric(8), userAdminDomainId)
+
+        // Create a role
+        def role = utils.createRole()
+        // Grant role to user group
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, v2Factory.createSingleRoleAssignment(Constants.ROLE_RBAC1_ID, [tenant.id]))
+
+        def v2AuthRequest = new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = userAdminDomainId
+            it.validitySeconds = 1000
+            it.brokerIssuer = sharedBrokerIdp.issuer
+            it.originIssuer = sharedOriginIdp.issuer
+            it.email = "${RandomStringUtils.randomAlphanumeric(8)}@example.com"
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass =  SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = federatedUserUsername
+            it.groupNames = [userGroup.name]
+            it.roleNames = [role.name]
+            it
+        }
+        def samlResponse = v2authRequestGenerator.createSignedSAMLResponse(v2AuthRequest)
+        def federationResponse = cloud20.federatedAuthenticateV2(v2authRequestGenerator.convertResponseToString(samlResponse))
+        AuthenticateResponse authResp = federationResponse.getEntity(AuthenticateResponse).value
+
+        when: "List Effective roles call is made for Federated user"
+        def response = cloud20.listUserEffectiveRolesWithSources(utils.getServiceAdminToken(), authResp.user.id, new ListEffectiveRolesForUserParams(tenant.id), MediaType.APPLICATION_XML_TYPE)
+
+        then: "Roles assigned to user group in which Federated user belongs, must be listed in his effective roles "
+        response.status == HttpStatus.SC_OK
+        RoleAssignments assignments = response.getEntity(RoleAssignments)
+        assignments.tenantAssignments.tenantAssignment.find { ta -> ta.onRole.contains(Constants.ROLE_RBAC1_ID)} != null
+        assignments.tenantAssignments.tenantAssignment.find { ta -> ta.onRoleName.contains(Constants.ROLE_RBAC1_NAME)} != null
+
+        and: "Effective roles should have tenantId listed"
+        assignments.tenantAssignments.tenantAssignment.find { ta -> ta.forTenants.contains(tenantId)} != null
+
+        and: "Effective roles for Fed users should show roles assigned by saml assersion"
+        assignments.tenantAssignments.tenantAssignment.find { ta -> ta.onRoleName.contains(role.name)} != null
+
+        cleanup:
+        utils.deleteUserGroup(userGroup)
+        utils.deleteTenant(tenant)
     }
 
 }

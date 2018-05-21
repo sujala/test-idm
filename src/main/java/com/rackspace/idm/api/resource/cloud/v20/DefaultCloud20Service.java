@@ -3248,7 +3248,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-            User targetUser = userService.checkAndGetUserById(userId);
+            EndUser targetUser = identityUserService.checkAndGetUserById(userId);
             BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             precedenceValidator.verifyCallerCanListRolesForUser(caller, targetUser);

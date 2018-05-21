@@ -1,6 +1,8 @@
 package com.rackspace.idm.helpers
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.email.EmailTemplateConstants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.IdentityProvider
@@ -13,10 +15,13 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.mockserver.model.Header
 import org.mockserver.model.HttpRequest
 import org.mockserver.model.XPathBody
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import testHelpers.EmailUtils
 
 import javax.annotation.PostConstruct
+import javax.mail.internet.MimeMessage
 import javax.ws.rs.core.MediaType
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
@@ -120,6 +125,20 @@ class CloudTestUtils {
         return "//event[@id and @resourceId='$idp.providerId' and @type='$eventType']/product[@resourceType='IDP' and @serviceCode='CloudIdentity' and @issuer='$idp.uri']"
     }
 
+    String getFeedsXPathForPasswordCredentialChange(User user, EventType eventType) {
+        return "//event[@id and @resourceId='${user.id}' and @type='${eventType.name()}']/" +
+                "product[@resourceType='USER' and @serviceCode='CloudIdentity' and @userId='${user.id}' and @username='${user.username}' and " +
+                         "@email='${user.email}' and @domainId='${user.domainId}' and @credentialType='PASSWORD' and @credentialUpdateDateTime and " +
+                         "@requestId]"
+    }
+
+    String getFeedsXPathForPasswordCredentialChangeWithRequestId(User user, EventType eventType, String requestId) {
+        return "//event[@id and @resourceId='${user.id}' and @type='${eventType.name()}']/" +
+                "product[@resourceType='USER' and @serviceCode='CloudIdentity' and @userId='${user.id}' and @username='${user.username}' and " +
+                "@email='${user.email}' and @domainId='${user.domainId}' and @credentialType='PASSWORD' and @credentialUpdateDateTime and " +
+                "@requestId='${requestId}']"
+    }
+
     HttpRequest createFeedsRequest() {
         return new HttpRequest()
                 .withMethod(Constants.POST)
@@ -153,6 +172,14 @@ class CloudTestUtils {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForTokenTRR(token)))
     }
 
+    HttpRequest createUpdateUserPasswordRequest(User user, EventType eventType) {
+        return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForPasswordCredentialChange(user, eventType)))
+    }
+
+    HttpRequest createUpdateUserPasswordRequestWithRequestId(User user, EventType eventType, String requestId) {
+        return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForPasswordCredentialChangeWithRequestId(user, eventType, requestId)))
+    }
+
     def getEntity(response, type) {
         def entity = response.getEntity(type)
 
@@ -160,6 +187,11 @@ class CloudTestUtils {
             entity = entity.value
         }
         return entity
+    }
+
+    def extractTokenFromDefaultEmail(MimeMessage message) {
+        def map = EmailUtils.extractDynamicPropsFromDefaultEmail(message)
+        return StringUtils.trim(map.get(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_STRING_PROP));
     }
 
 }

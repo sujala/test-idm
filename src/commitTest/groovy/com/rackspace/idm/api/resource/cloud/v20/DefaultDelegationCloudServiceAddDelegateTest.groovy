@@ -56,6 +56,7 @@ class DefaultDelegationCloudServiceAddDelegateTest extends RootServiceTest {
         // Authorization mocks
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        authorizationService.isCallerAuthorizedToManageDelegationAgreement(_) >> true
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         domainService.doDomainsShareRcn(_, _) >> true
         delegationService.getDelegateByReference(_) >> delegate
@@ -108,6 +109,7 @@ class DefaultDelegationCloudServiceAddDelegateTest extends RootServiceTest {
         // Authorization mocks
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        authorizationService.isCallerAuthorizedToManageDelegationAgreement(_) >> true
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         domainService.doDomainsShareRcn(_, _) >> true
         delegationService.getDelegateByReference(_) >> delegate

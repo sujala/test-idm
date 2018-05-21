@@ -117,4 +117,10 @@ public final class GlobalConstants {
 
     public static final String TEXT_YAML = "text/yaml";
     public static final MediaType TEXT_YAML_TYPE = new MediaType("text", "yaml");
+
+    public static final String V2_VALIDATE_TOKEN = "v2.0 Validate token";
+    public static final String V2_GET_USER_BY_ID = "v2.0 Get user by id";
+    public static final String V2_LIST_EFFECTIVE_ROLES_FOR_USER = "v2.0 List effective roles for user";
+    public static final String V2_LIST_TOKEN_ENDPOINTS = "v2.0 List token endpoints";
+    public static final String V2_AUTHENTICATE = "v2.0 Authenticate";
 }

@@ -57,6 +57,7 @@ class DefaultDelegationCloudServiceUpdateDaTest extends RootServiceTest {
             it
         }
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        authorizationService.isCallerAuthorizedToManageDelegationAgreement(_) >> true
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
             it.principalDN = new DN(caller.uniqueId)
@@ -103,6 +104,8 @@ class DefaultDelegationCloudServiceUpdateDaTest extends RootServiceTest {
         0 * delegationService.updateDelegationAgreement(_)
 
         when: "caller is a delegate"
+        mockAuthorizationService(service)
+        authorizationService.isCallerAuthorizedToManageDelegationAgreement(_) >> false
         daEntity.setPrincipalDN(new DN("rsId=other"))
         service.updateAgreement(token, new DelegationAgreement())
 

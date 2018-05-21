@@ -9,9 +9,25 @@ import com.rackspace.idm.api.converter.cloudv20.DelegationAgreementConverter;
 import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.*;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.BaseUserToken;
+import com.rackspace.idm.domain.entity.DelegationDelegate;
+import com.rackspace.idm.domain.entity.DelegationPrincipal;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.DelegationService;
+import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.ExceptionHandler;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.SizeLimitExceededException;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
@@ -19,7 +35,6 @@ import com.rackspace.idm.validation.Validator20;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
-import org.apache.commons.lang.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,14 +120,14 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             EndUser caller = (EndUser) callerBu;
 
             boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
-            boolean isSubAgreementSpecified = agreementWeb.isAllowSubAgreements() != null;
+            boolean isAllowSubAgreementsSpecified = agreementWeb.isAllowSubAgreements() != null;
             boolean isNestedAgreement = StringUtils.isNotBlank(agreementWeb.getParentDelegationAgreementId());
 
             // Verify overall request
             validator20.validateStringNotNullWithMaxLength("name", agreementWeb.getName(), Validator20.MAX_LENGTH_32);
             validator20.validateStringMaxLength("description", agreementWeb.getDescription(), Validator20.MAX_LENGTH_255);
 
-            if (isNestLevelSpecified && isSubAgreementSpecified) {
+            if (isNestLevelSpecified && isAllowSubAgreementsSpecified) {
                 throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
 
@@ -156,7 +171,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             // Validate and set defaults for the nesting attributes. The max nest level varies based on whether or not a nested agreement
             int maxNestLevel = isNestedAgreement ? Math.max(0, parentDelegationAgreement.getSubAgreementNestLevelNullSafe() - 1) : identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel();
-            if (isSubAgreementSpecified) {
+            if (isAllowSubAgreementsSpecified) {
                 if (agreementWeb.isAllowSubAgreements()) {
                     // Default to the maximum nest level when old way used
                     agreementWeb.setSubAgreementNestLevel(BigInteger.valueOf(maxNestLevel));
@@ -251,11 +266,11 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
-            boolean isSubAgreementSpecified = agreementWeb.isAllowSubAgreements() != null;
+            boolean isAllowSubAgreementsSpecified = agreementWeb.isAllowSubAgreements() != null;
             boolean isNestedAgreement = StringUtils.isNotBlank(delegationAgreement.getParentDelegationAgreementId());
 
             // Reconcile allowSubAgreements to nesting level. When neither specified, no update
-            if (isNestLevelSpecified || isSubAgreementSpecified) {
+            if (isNestLevelSpecified || isAllowSubAgreementsSpecified) {
                 com.rackspace.idm.domain.entity.DelegationAgreement parentDelegationAgreement = null;
 
                 // The only thing we require to retrieve from parent is when updating nest levels to ensure they are valid per the parent.
@@ -273,9 +288,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 }
 
                 int maxNestLevel = isNestedAgreement ? Math.max(0, parentDelegationAgreement.getSubAgreementNestLevelNullSafe() - 1) : identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel();
-                if (isNestLevelSpecified && isSubAgreementSpecified) {
+                if (isNestLevelSpecified && isAllowSubAgreementsSpecified) {
                     throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
-                } else if (isSubAgreementSpecified) {
+                } else if (isAllowSubAgreementsSpecified) {
                     if (agreementWeb.isAllowSubAgreements() && !delegationAgreement.getAllowSubAgreements()) {
                         // Turning on
                         delegationAgreement.setAllowSubAgreements(true);
@@ -459,9 +474,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            // Caller must be the DA principal to modify delegates
+            // Caller must have access to manage the DA in order to modify delegates
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+            if (delegationAgreement == null ||  !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -505,9 +520,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            // Caller must be the DA principal to modify delegates
+            // Caller must have access to manage the DA in order to modify delegates
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
+            if (delegationAgreement == null || !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -543,9 +558,10 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            // Caller must be the DA principal or delegate to list delegates
+            // Caller must have access to manage the DA or be a delegate to list delegates
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || (!delegationAgreement.isEffectivePrincipal(caller) && !delegationAgreement.isEffectiveDelegate(caller))) {
+            if (delegationAgreement == null || (!authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement) &&
+                            !delegationAgreement.isEffectiveDelegate(caller))) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -576,16 +592,15 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
-
-            // Caller must be the DA principal to modify roles
+            // Caller must be authorized to modify roles on DA
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+            if (delegationAgreement == null
+                    || !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -626,9 +641,8 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             // Caller must be the DA principal or a delegate to list DA roles
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null
-                    || !(delegationAgreement.isEffectivePrincipal(caller)
-                    || delegationAgreement.isEffectiveDelegate(caller))) {
+            if (delegationAgreement == null || (!authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)
+                    && !delegationAgreement.isEffectiveDelegate(caller))) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -656,17 +670,15 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
-            // Verify caller is enabled
-            BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-            EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
-
-            // Caller must be the DA principal to modify delegates
+            // Caller must be authorized to revoke roles on DA
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+            if (delegationAgreement == null
+                    || !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
