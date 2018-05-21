@@ -118,7 +118,7 @@ public class Cloud20VersionResource {
         return Response.ok(versionChoice.getValue()).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name="v2.0 Authenticate")
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name=GlobalConstants.V2_AUTHENTICATE)
     @ReportableQueryParams(unsecuredQueryParams = {"apply_rcn_roles"})
     @POST
     @Path("tokens")
@@ -155,7 +155,7 @@ public class Cloud20VersionResource {
      *
      * @return
      */
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List effective roles for user")
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name=GlobalConstants.V2_LIST_EFFECTIVE_ROLES_FOR_USER)
     @GET
     @Path("/users/{userId}/RAX-AUTH/roles")
     public Response listEffectiveRolesForUser(@Context HttpHeaders httpHeaders,
@@ -457,7 +457,7 @@ public class Cloud20VersionResource {
         return cloud20Service.getIdentityProviderPolicy(httpHeaders, authToken, identityProviderId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Validate token")
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name=GlobalConstants.V2_VALIDATE_TOKEN)
     @ReportableQueryParams(unsecuredQueryParams = {"belongsTo","apply_rcn_roles"})
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v2TokenValidationAbsolutePathPatternRegex)
     @GET
@@ -493,7 +493,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List token endpoints")
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name=GlobalConstants.V2_LIST_TOKEN_ENDPOINTS)
     @ReportableQueryParams(unsecuredQueryParams = {"apply_rcn_roles"})
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v2TokenEndpointAbsolutePathPatternRegex)
     @GET
@@ -756,7 +756,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get user by id")
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name=GlobalConstants.V2_GET_USER_BY_ID)
     @GET
     @Path("users/{userId}")
     public Response getUserById(

@@ -1,4 +1,4 @@
-package com.rackspace.idm.event;
+package com.rackspace.idm.aspect;
 
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
@@ -24,4 +24,11 @@ public class IdentityPointcuts {
      */
     @Pointcut("webResourceMethod() && @annotation(com.rackspace.idm.event.IdentityApi)")
     public void identityApiResourceMethod() { }
+
+    /**
+     * Limits to Identity API calls in v20
+     */
+    @Pointcut("identityApiResourceMethod() && (execution(* com.rackspace.idm.api.resource.cloud.v20..*.*(..)) || execution(* com.rackspace.idm.modules.*.api.resource..*.*(..)))")
+    public void identityApiResourceMethodV20() {
+    }
 }

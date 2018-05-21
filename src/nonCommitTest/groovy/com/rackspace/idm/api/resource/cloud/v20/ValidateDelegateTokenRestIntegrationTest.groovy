@@ -253,6 +253,41 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         [mediaType, userAdminLookupByDomain] << [[MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE], [true,false]].combinations()
     }
 
+    def "Delegate Token returns 403 non approved services"() {
+        // Must allow services in order to get token
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
+
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+        def sharedDaResponse = cloud20.createDelegationAgreement(sharedUserAdminToken, daToCreate)
+        assert sharedDaResponse.status == SC_CREATED
+        def sharedDa = sharedDaResponse.getEntity(DelegationAgreement)
+        utils.addUserDelegate(sharedUserAdminToken, sharedDa.id, sharedSubUser2.id)
+
+        def token = utils.authenticateTokenAndDelegationAgreement(sharedSubUser2Token, sharedDa.id).token.id
+
+        when: "list tenants"
+        def response = cloud20.listTenants(token)
+
+        then:
+        assert response.status == SC_FORBIDDEN
+
+        when: "list user groups"
+        response = cloud20.listUserGroupsForDomain(token, sharedUserAdmin.domainId)
+
+        then:
+        assert response.status == SC_FORBIDDEN
+
+        when: "list endpoint assignment rules"
+        response = cloud20.listEndpointAssignmentRules(token)
+
+        then:
+        assert response.status == SC_FORBIDDEN
+    }
+    
     def "DA tokens are revoked when the DA is deleted"() {
         given:
         def userAdmin = utils.createCloudAccountWithRcn()

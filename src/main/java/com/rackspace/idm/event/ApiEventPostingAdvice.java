@@ -43,7 +43,7 @@ public class ApiEventPostingAdvice {
     @Autowired
     protected ApplicationEventPublisher applicationEventPublisher;
 
-    @After("com.rackspace.idm.event.IdentityPointcuts.identityApiResourceMethod()")
+    @After("com.rackspace.idm.aspect.IdentityPointcuts.identityApiResourceMethod()")
     public void postEvent(JoinPoint joinPoint) {
         // Short circuit via flag
         if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled()) {
@@ -63,7 +63,7 @@ public class ApiEventPostingAdvice {
      * @param joinPoint
      * @param ex
      */
-    @AfterThrowing(pointcut = "com.rackspace.idm.event.IdentityPointcuts.identityApiResourceMethod()", throwing = "ex")
+    @AfterThrowing(pointcut = "com.rackspace.idm.aspect.IdentityPointcuts.identityApiResourceMethod()", throwing = "ex")
     public void postEventWithException(JoinPoint joinPoint, Throwable ex) {
         // Short circuit via flag
         if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled()) {
