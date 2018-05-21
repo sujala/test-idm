@@ -1524,7 +1524,7 @@ class Cloud20Utils {
         getPropsResponse.getEntity(IdmPropertyList).properties.first()
     }
 
-    def createFederatedUser(String domainId, mediaType = APPLICATION_XML_TYPE) {
+    UserForAuthenticateResponse createFederatedUser(String domainId, mediaType = APPLICATION_XML_TYPE) {
         AuthenticateResponse samlAuthResponse = createFederatedUserForAuthResponse(domainId, mediaType)
         def user = samlAuthResponse.user
         return user

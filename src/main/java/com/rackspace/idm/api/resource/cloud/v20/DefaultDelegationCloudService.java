@@ -474,9 +474,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            // Caller must be the DA principal to modify delegates
+            // Caller must have access to manage the DA in order to modify delegates
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+            if (delegationAgreement == null ||  !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -520,9 +520,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            // Caller must be the DA principal to modify delegates
+            // Caller must have access to manage the DA in order to modify delegates
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
+            if (delegationAgreement == null || !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -558,9 +558,10 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            // Caller must be the DA principal or delegate to list delegates
+            // Caller must have access to manage the DA or be a delegate to list delegates
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || (!delegationAgreement.isEffectivePrincipal(caller) && !delegationAgreement.isEffectiveDelegate(caller))) {
+            if (delegationAgreement == null || (!authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement) &&
+                            !delegationAgreement.isEffectiveDelegate(caller))) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 

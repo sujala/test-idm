@@ -76,7 +76,7 @@ class DefaultDelegationCloudServiceListDelegatesTest extends RootServiceTest {
         }
     }
 
-    def "Throws NotFoundException when caller is not an effective principal or delegate on da"() {
+    def "Throws NotFoundException when caller is not an effective principal, delegate on the da, or has management access over the DA"() {
         setup:
         def daId = "daId"
         DelegationAgreement da = Mock(DelegationAgreement)
@@ -98,8 +98,8 @@ class DefaultDelegationCloudServiceListDelegatesTest extends RootServiceTest {
         service.listDelegates(tokenStr, daId)
 
         then:
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(da) >> false
         1 * delegationService.getDelegationAgreementById(daId) >> da
-        1 * da.isEffectivePrincipal(caller) >> false
         1 * da.isEffectiveDelegate(caller) >> false
 
         and:
@@ -135,7 +135,7 @@ class DefaultDelegationCloudServiceListDelegatesTest extends RootServiceTest {
 
         then:
         1 * delegationService.getDelegationAgreementById(daId) >> da
-        1 * da.isEffectivePrincipal(caller) >> true
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(da) >> true
         1 * delegationService.getDelegates(da) >> []
         1 * delegationAgreementConverter.toDelegatesWeb(_) >> new DelegateReferences()
 
@@ -166,7 +166,7 @@ class DefaultDelegationCloudServiceListDelegatesTest extends RootServiceTest {
 
         then:
         1 * delegationService.getDelegationAgreementById(daId) >> da
-        1 * da.isEffectivePrincipal(caller) >> false
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(da) >> false
         1 * da.isEffectiveDelegate(caller) >> true
         1 * delegationService.getDelegates(da) >> []
         1 * delegationAgreementConverter.toDelegatesWeb(_) >> new DelegateReferences()
