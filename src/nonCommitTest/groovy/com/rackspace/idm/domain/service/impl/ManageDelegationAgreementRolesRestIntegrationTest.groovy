@@ -1419,7 +1419,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         utils.addRoleToUser(userManager, USER_MANAGE_ROLE_ID)
         def userManagerToken = utils.getToken(userManager.username)
 
-        def fedAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId, [], [ROLE_RBAC1_NAME])
+        def fedAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId, [] as Set, [ROLE_RBAC1_NAME] as Set)
         def federatedUserToken = fedAuthResponse.token.id
 
         // Create DA with user principal
@@ -1630,7 +1630,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def defaultUser = utils.createUser(userAdminToken)
         def defaultUserToken = utils.getToken(defaultUser.username)
 
-        def fedAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId, [], [ROLE_RBAC1_NAME])
+        def fedAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId, [] as Set, [ROLE_RBAC1_NAME] as Set)
         def federatedUserToken = fedAuthResponse.token.id
 
         // Create DA with user principal
