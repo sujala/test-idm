@@ -120,14 +120,14 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             EndUser caller = (EndUser) callerBu;
 
             boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
-            boolean isSubAgreementSpecified = agreementWeb.isAllowSubAgreements() != null;
+            boolean isAllowSubAgreementsSpecified = agreementWeb.isAllowSubAgreements() != null;
             boolean isNestedAgreement = StringUtils.isNotBlank(agreementWeb.getParentDelegationAgreementId());
 
             // Verify overall request
             validator20.validateStringNotNullWithMaxLength("name", agreementWeb.getName(), Validator20.MAX_LENGTH_32);
             validator20.validateStringMaxLength("description", agreementWeb.getDescription(), Validator20.MAX_LENGTH_255);
 
-            if (isNestLevelSpecified && isSubAgreementSpecified) {
+            if (isNestLevelSpecified && isAllowSubAgreementsSpecified) {
                 throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
 
@@ -171,7 +171,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             // Validate and set defaults for the nesting attributes. The max nest level varies based on whether or not a nested agreement
             int maxNestLevel = isNestedAgreement ? Math.max(0, parentDelegationAgreement.getSubAgreementNestLevelNullSafe() - 1) : identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel();
-            if (isSubAgreementSpecified) {
+            if (isAllowSubAgreementsSpecified) {
                 if (agreementWeb.isAllowSubAgreements()) {
                     // Default to the maximum nest level when old way used
                     agreementWeb.setSubAgreementNestLevel(BigInteger.valueOf(maxNestLevel));
@@ -266,11 +266,11 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
-            boolean isSubAgreementSpecified = agreementWeb.isAllowSubAgreements() != null;
+            boolean isAllowSubAgreementsSpecified = agreementWeb.isAllowSubAgreements() != null;
             boolean isNestedAgreement = StringUtils.isNotBlank(delegationAgreement.getParentDelegationAgreementId());
 
             // Reconcile allowSubAgreements to nesting level. When neither specified, no update
-            if (isNestLevelSpecified || isSubAgreementSpecified) {
+            if (isNestLevelSpecified || isAllowSubAgreementsSpecified) {
                 com.rackspace.idm.domain.entity.DelegationAgreement parentDelegationAgreement = null;
 
                 // The only thing we require to retrieve from parent is when updating nest levels to ensure they are valid per the parent.
@@ -288,9 +288,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 }
 
                 int maxNestLevel = isNestedAgreement ? Math.max(0, parentDelegationAgreement.getSubAgreementNestLevelNullSafe() - 1) : identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel();
-                if (isNestLevelSpecified && isSubAgreementSpecified) {
+                if (isNestLevelSpecified && isAllowSubAgreementsSpecified) {
                     throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
-                } else if (isSubAgreementSpecified) {
+                } else if (isAllowSubAgreementsSpecified) {
                     if (agreementWeb.isAllowSubAgreements() && !delegationAgreement.getAllowSubAgreements()) {
                         // Turning on
                         delegationAgreement.setAllowSubAgreements(true);
