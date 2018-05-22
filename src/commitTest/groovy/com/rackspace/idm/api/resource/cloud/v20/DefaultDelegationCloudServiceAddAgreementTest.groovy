@@ -14,6 +14,7 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
+import com.unboundid.ldap.sdk.DN
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -378,7 +379,7 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
     }
 
     @Unroll
-    def "addAgreement: Nest level is validated against max allowed: max: #maxNestLevel; tested: #daNestLevel"() {
+    def "addAgreement: Root agreement nest level is validated against max allowed: max: #maxNestLevel; tested: #daNestLevel"() {
         reloadableConfig.getMaxDelegationAgreementNestingLevel() >> maxNestLevel
 
         UriInfo uriInfo = Mock()
@@ -410,6 +411,59 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
 
         where:
         [maxNestLevel, daNestLevel] << [[1, -1], [1,2], [5,6], [0, 1]]
+    }
+
+    @Unroll
+    def "addAgreement: Nested agreement nest level is validated against parents nest level: parentNestLevel: #parentNestLevel; tested: #daNestLevel"() {
+        reloadableConfig.getMaxDelegationAgreementNestingLevel() >> parentNestLevel + 1 // make property 1 higher than parent
+
+        UriInfo uriInfo = Mock()
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        def token = "token"
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+
+        reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
+        DN callerDN = new DN("com=rax")
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = callerDN.toString()
+            it
+        }
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+
+        identityUserService.getEndUserById(caller.id) >> caller
+        identityUserService.getProvisionedUserById(caller.id) >> caller // Delegate call
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daParent = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.name = "parent"
+            it.id = "id"
+            it.subAgreementNestLevel = parentNestLevel
+            it.domainId = caller.domainId
+            it.delegates.add(callerDN)
+            it
+        }
+        delegationService.getDelegationAgreementById(daParent.id) >> daParent
+
+        DelegationAgreement daInvalidWeb = new DelegationAgreement().with {
+            it.name = "nested"
+            it.parentDelegationAgreementId = daParent.id
+            it.subAgreementNestLevel = daNestLevel
+            it
+        }
+
+        when:
+        service.addAgreement(uriInfo, token, daInvalidWeb)
+
+        then: "nest level validated to be no more than 1 less than parent nest level"
+        1 * validator20.validateIntegerMinMax("subAgreementNestLevel", daNestLevel, 0, parentNestLevel-1) >> {throw new BadRequestException("asd")}
+
+        // Test is that the validator will be called appropriately. Once that tested, we just force exception to be thrown
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST)
+
+        where:
+        [parentNestLevel, daNestLevel] << [[1, -1], [1,2], [5,6], [6,6]]
     }
 
     @Unroll
@@ -451,7 +505,7 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
     }
 
     @Unroll
-    def "addAgreement: Sets nest level to max when allowSubAgreements true, 0 if false: subAgreement: #subagreement; maxNestLevel: #maxNestLevel"() {
+    def "addAgreement: Sets root agreement nest level to max when allowSubAgreements true, 0 if false: subAgreement: #subagreement; maxNestLevel: #maxNestLevel"() {
         reloadableConfig.getMaxDelegationAgreementNestingLevel() >> maxNestLevel
 
         UriInfo uriInfo = Mock()
@@ -471,7 +525,7 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
 
         DelegationAgreement daInvalidWeb = new DelegationAgreement()
 
-        when: "nest level negative"
+        when:
         daInvalidWeb.setAllowSubAgreements(subAgreement)
         service.addAgreement(uriInfo, token, daInvalidWeb)
 
@@ -482,6 +536,63 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
 
         where:
         [subAgreement, maxNestLevel] << [[true, 5], [false, 5], [true, 2], [true, 0]]
+    }
+
+    @Unroll
+    def "addAgreement: Sets nested agreement nest level to parent's nest level - 1 when allowSubAgreements true, 0 if false: nestedAllowSubAgreement: #nestedAllowSubAgreement; parentNestLevel: #parentNestLevel"() {
+        reloadableConfig.getMaxDelegationAgreementNestingLevel() >> parentNestLevel
+
+        UriInfo uriInfo = Mock()
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        def token = "token"
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+
+        reloadableConfig.areDelegationAgreementsEnabledForRcn(_) >> true
+        DN callerDN = new DN("com=rax")
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = callerDN.toString()
+            it
+        }
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+
+        identityUserService.getEndUserById(caller.id) >> caller
+        identityUserService.getProvisionedUserById(caller.id) >> caller // Delegate call
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daParent = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.name = "parent"
+            it.id = "id"
+            it.subAgreementNestLevel = parentNestLevel
+            it.domainId = caller.domainId
+            it.delegates.add(callerDN)
+            it
+        }
+        delegationService.getDelegationAgreementById(daParent.id) >> daParent
+
+        DelegationAgreement daNestedAgreement = new DelegationAgreement().with {
+            it.name = "nested"
+            it.parentDelegationAgreementId = daParent.id
+            it.allowSubAgreements = nestedAllowSubAgreement
+            it
+        }
+
+        when:
+        service.addAgreement(uriInfo, token, daNestedAgreement)
+
+        then: "nest level of subagreement defaults to 1 less than parent"
+        if (nestedAllowSubAgreement) {
+            1 * validator20.validateIntegerMinMax("subAgreementNestLevel", parentNestLevel-1, 0, parentNestLevel-1) >> {throw new BadRequestException("asd")}
+        } else {
+            1 * validator20.validateIntegerMinMax("subAgreementNestLevel", 0, 0, parentNestLevel-1) >> {throw new BadRequestException("asd")}
+        }
+
+        // Test is that the validator will be called appropriately. Once that tested, we just force exception to be thrown
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST)
+
+        where:
+        [nestedAllowSubAgreement, parentNestLevel] << [[true, 5], [false, 5], [true, 2], [true, 1]]
     }
 
     def "addDelegationAgreement: Error when maximum number of DAs are created for principal"() {

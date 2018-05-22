@@ -38,7 +38,8 @@ da_item = {
             const.PRINCIPAL_ID: {'type': 'string'},
             const.PRINCIPAL_TYPE: {'type': 'string'},
             const.ALLOW_SUB_AGREEMENTS: {'type': 'boolean'},
-            const.SUBAGREEMENT_NEST_LEVEL: {'type': 'integer'}
+            const.SUBAGREEMENT_NEST_LEVEL: {'type': 'integer'},
+            const.PARENT_DELEGATION_AGREEMENT_ID: {'type': 'string'}
             },
         'required': [
             const.ID, const.NAME, const.DOMAIN_ID, const.PRINCIPAL_ID,

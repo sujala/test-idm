@@ -182,4 +182,86 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
+
+    @Unroll
+    def "List DAs returns nested agreement attributes; mediaType = #mediaType"() {
+        reloadableConfiguration.setProperty(IdentityConfig.DELEGATION_MAX_NEST_LEVEL_PROP, 5)
+
+        def commonRcn = "RCN-123-098-234"
+        def userAdminD1 = utils.createCloudAccount()
+        def userAdminD1Token = utils.getToken(userAdminD1.username)
+
+        def userAdminD2 = utils.createCloudAccount()
+        def userAdminD2Token = utils.getToken(userAdminD2.username)
+        def d2SubUser = cloud20.createSubUser(userAdminD2Token)
+
+        // Update domains to have same ID
+        def rcnSwitchResponse = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), userAdminD1.domainId, commonRcn)
+        assert (rcnSwitchResponse.status == SC_NO_CONTENT)
+        rcnSwitchResponse = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), userAdminD2.domainId, commonRcn)
+        assert (rcnSwitchResponse.status == SC_NO_CONTENT)
+
+        // Create DA to give user in D2 delegate access to D1
+        def daToD1ToCreate = new DelegationAgreement().with {
+            it.name = "parent"
+            it.subAgreementNestLevel = BigInteger.valueOf(4)
+            it
+        }
+        def daToD1Parent = utils.createDelegationAgreement(userAdminD1Token, daToD1ToCreate)
+        utils.addUserDelegate(userAdminD1Token, daToD1Parent.id, userAdminD2.id)
+
+        // Create nested agreement w/ d2 useradmin as the principal
+        def daToD1Nested2ToCreate = new DelegationAgreement().with {
+            it.name = "nested2"
+            it.subAgreementNestLevel = BigInteger.valueOf(2)
+            it.parentDelegationAgreementId = daToD1Parent.id
+            it
+        }
+        def daToD1Nested2 = utils.createDelegationAgreement(userAdminD2Token, daToD1Nested2ToCreate)
+        utils.addUserDelegate(userAdminD2Token, daToD1Nested2.id, d2SubUser.id)
+
+        // Create nested agreement w/ d2 useradmin as the principal
+        def daToD1Nested3ToCreate = new DelegationAgreement().with {
+            it.name = "nested3"
+            it.subAgreementNestLevel = BigInteger.valueOf(3)
+            it.parentDelegationAgreementId = daToD1Parent.id
+            it
+        }
+        def daToD1Nested3 = utils.createDelegationAgreement(userAdminD2Token, daToD1Nested3ToCreate)
+        utils.addUserDelegate(userAdminD2Token, daToD1Nested3.id, d2SubUser.id)
+
+
+        when: "List DAs for user-admin in d2"
+        def response2 = cloud20.listDelegationAgreements(userAdminD2Token, null, mediaType)
+
+        then: "Returns ok"
+        response2.status == SC_OK
+        DelegationAgreements entity2 = response2.getEntity(DelegationAgreements)
+        entity2 != null
+        entity2.delegationAgreement.size() == 3 // parent as delegate, nested as principal
+
+        and: "parent da returned w/ nest fields"
+        def parentDa = entity2.delegationAgreement.find { it.name == daToD1Parent.name}
+        parentDa.subAgreementNestLevel == daToD1Parent.subAgreementNestLevel
+        parentDa.allowSubAgreements
+        parentDa.parentDelegationAgreementId == null
+
+        and: "nested2 da returned w/ nest fields"
+        def nestedDa2 = entity2.delegationAgreement.find { it.name == daToD1Nested2.name}
+        nestedDa2.subAgreementNestLevel == daToD1Nested2.subAgreementNestLevel
+        nestedDa2.allowSubAgreements
+        nestedDa2.parentDelegationAgreementId == parentDa.id
+
+        and: "nested32 da returned w/ nest fields"
+        def nestedDa3 = entity2.delegationAgreement.find { it.name == daToD1Nested3.name}
+        nestedDa3.subAgreementNestLevel == daToD1Nested3.subAgreementNestLevel
+        nestedDa3.allowSubAgreements
+        nestedDa3.parentDelegationAgreementId == parentDa.id
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
 }

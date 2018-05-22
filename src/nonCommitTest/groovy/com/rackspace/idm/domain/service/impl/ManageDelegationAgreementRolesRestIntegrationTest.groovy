@@ -1146,6 +1146,531 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         roleAssignments.getTenantAssignments().tenantAssignment.forTenants.flatten().contains(otherTenant.id)
     }
 
+    def "test authorized RCN admin is allowed to manage roles on DA"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def rcnAdmin = utils.createCloudAccount()
+
+        // Update both domains to same RCN
+        def rcn = testUtils.getRandomRCN()
+        utils.domainRcnSwitch(userAdmin.domainId, rcn)
+        utils.domainRcnSwitch(rcnAdmin.domainId, rcn)
+
+        // Add rcn:admin role
+        utils.addRoleToUser(rcnAdmin, RCN_ADMIN_ROLE_ID)
+
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def rcnAdminToken = utils.getToken(rcnAdmin.username)
+
+        // Create DA with user principal
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+
+        // Create DA with user-group principal
+        def userGroup = utils.createUserGroup(userAdmin.domainId)
+        utils.addUserToUserGroup(userAdmin.id, userGroup)
+        delegationAgreement.principalType = PrincipalType.USER_GROUP
+        delegationAgreement.principalId = userGroup.id
+
+        def createdDAUG = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+
+        // Create role assignments
+        def cloudTenantId = userAdmin.domainId
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+
+        // Add role assignment to userGroup
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, assignments)
+
+        when: "grant role to DA with user principal"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(rcnAdminToken, createdDA, assignments)
+        def retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(rcnAdminToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(rcnAdminToken, createdDA)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+
+        when: "grant role to DA with user group"
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(rcnAdminToken, createdDAUG, assignments)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(rcnAdminToken, createdDAUG, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(rcnAdminToken, createdDAUG)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+    }
+
+    def "test authorized user admin is allowed to manage roles on DA"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def userManager = utils.createUser(userAdminToken)
+        utils.addRoleToUser(userManager, USER_MANAGE_ROLE_ID)
+        def userManagerToken = utils.getToken(userManager.username)
+
+        // Create DA with user principal
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(userManagerToken, delegationAgreement)
+
+        // Create DA with user-group principal
+        def userGroup = utils.createUserGroup(userManager.domainId)
+        utils.addUserToUserGroup(userManager.id, userGroup)
+        delegationAgreement.principalType = PrincipalType.USER_GROUP
+        delegationAgreement.principalId = userGroup.id
+
+        def createdDAUG = utils.createDelegationAgreement(userManagerToken, delegationAgreement)
+
+        // Create role assignments
+        def cloudTenantId = userAdmin.domainId
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+
+        // Add role assignment to userGroup
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, assignments)
+
+        when: "grant role to DA with user principal"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments)
+        def retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userAdminToken, createdDA)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+
+        when: "grant role to DA with user group principal"
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDAUG, assignments)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDAUG, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userAdminToken, createdDAUG)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+    }
+
+    def "test authorized user is allowed to manage roles on DA where principal is a user manager"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def userManager = utils.createUser(userAdminToken)
+        utils.addRoleToUser(userManager, USER_MANAGE_ROLE_ID)
+        def userManagerToken = utils.getToken(userManager.username)
+
+        def userManager2 = utils.createUser(userAdminToken)
+        utils.addRoleToUser(userManager2, USER_MANAGE_ROLE_ID)
+        def userManager2Token = utils.getToken(userManager2.username)
+
+        // Create DA with user principal
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(userManager2Token, delegationAgreement)
+
+        // Create role assignments
+        def cloudTenantId = userAdmin.domainId
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+
+        when: "grant role to DA with user admin token"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments)
+        def retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role to DA with user admin token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userManagerToken, createdDA)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+
+        when: "grant role to DA with user manager token"
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userManagerToken, createdDA, assignments)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role from DA with user manager token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userManagerToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userManagerToken, createdDA)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+    }
+
+    def "test authorized user is allowed to manage roles on DA where principal is a federated user"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def userManager = utils.createUser(userAdminToken)
+        utils.addRoleToUser(userManager, USER_MANAGE_ROLE_ID)
+        def userManagerToken = utils.getToken(userManager.username)
+
+        def fedAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId, [] as Set, [ROLE_RBAC1_NAME] as Set)
+        def federatedUserToken = fedAuthResponse.token.id
+
+        // Create DA with user principal
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(federatedUserToken, delegationAgreement)
+
+        // Create role assignments
+        def cloudTenantId = userAdmin.domainId
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+
+        when: "grant role to DA with user admin token"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments)
+        def retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role to DA with user admin token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userManagerToken, createdDA)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+
+        when: "grant role to DA with user manager token"
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userManagerToken, createdDA, assignments)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role from DA with user manager token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userManagerToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userManagerToken, createdDA)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+    }
+
+    def "test authorized user is allowed to manage roles on DA where principal is a user group"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def userManager = utils.createUser(userAdminToken)
+        utils.addRoleToUser(userManager, USER_MANAGE_ROLE_ID)
+        def userManagerToken = utils.getToken(userManager.username)
+
+        def userGroup = utils.createUserGroup(userManager.domainId)
+        utils.addUserToUserGroup(userAdmin.id, userGroup)
+
+        // Create DA with user-group principal
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.principalId = userGroup.id
+            it.principalType = PrincipalType.USER_GROUP
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+
+        // Create role assignments
+        def cloudTenantId = userAdmin.domainId
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+
+        // Add role assignment to userGroup
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, assignments)
+
+        when: "grant role to DA with user admin token"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments)
+        def retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role with user admin token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userAdminToken, createdDA)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+
+        when: "grant role to DA with user manager token"
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userManagerToken, createdDA, assignments)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+
+        when: "revoke role with user mananger token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userManagerToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userManagerToken, createdDA)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+    }
+
+    def "error: verify user manager is not allowed to manage roles on DA where principal is a user admin"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def userManager = utils.createUser(userAdminToken)
+        utils.addRoleToUser(userManager, USER_MANAGE_ROLE_ID)
+        def userManagerToken = utils.getToken(userManager.username)
+
+        // Create DA with user principal
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(userAdminToken, delegationAgreement)
+
+        // Create role assignments
+        def cloudTenantId = userAdmin.domainId
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+
+        when: "grant role to DA with user admin token"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userManagerToken, createdDA, assignments)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "revoke role to DA with user admin token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userManagerToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(userManagerToken, createdDA)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+    }
+
+    def "error: verify default user is not allowed to manage roles on DA where principal is a federated user"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def defaultUser = utils.createUser(userAdminToken)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+
+        def fedAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId, [] as Set, [ROLE_RBAC1_NAME] as Set)
+        def federatedUserToken = fedAuthResponse.token.id
+
+        // Create DA with user principal
+        def delegationAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def createdDA = utils.createDelegationAgreement(federatedUserToken, delegationAgreement)
+
+        // Create role assignments
+        def cloudTenantId = userAdmin.domainId
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas
+            }
+            it
+        }
+
+        when: "grant role to DA with default user token"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(defaultUserToken, createdDA, assignments)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "revoke role to DA with default user token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(defaultUserToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "list roles for DA"
+        response = cloud20.listRolesOnDelegationAgreement(defaultUserToken, createdDA)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+    }
+
     void verifyContainsAssignment(RoleAssignments roleAssignments, String roleId, List<String> tenantIds) {
         ImmutableClientRole imr = applicationService.getCachedClientRoleById(roleId)
 

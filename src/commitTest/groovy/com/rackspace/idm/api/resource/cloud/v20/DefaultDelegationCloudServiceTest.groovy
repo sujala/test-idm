@@ -388,6 +388,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(daEntity) >> true
         1 * delegationService.getRoleAssignmentsOnDelegationAgreement(daEntity, _) >> new PaginatorContext<>()
         1 * roleAssignmentConverter.toRoleAssignmentsWeb(_)
     }
@@ -475,6 +476,7 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> baseToken
         1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(_) >> true
         1 * delegationService.getDelegateByReference(_) >> caller
         1 * domainService.doDomainsShareRcn(_, _) >> true
         1 * exceptionHandler.exceptionResponse(_) >> { args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_BAD_REQUEST) }

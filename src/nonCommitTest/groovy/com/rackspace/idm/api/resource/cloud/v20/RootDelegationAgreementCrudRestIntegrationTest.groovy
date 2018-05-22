@@ -428,7 +428,11 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.getSubAgreementNestLevel() == expectedNextLevel
 
         cleanup:
-        cloud20.deleteDelegationAgreement(sharedUserAdminToken, createdDa.id)
+        try {
+            cloud20.deleteDelegationAgreement(sharedUserAdminToken, createdDa.id)
+        } catch (Exception ex) {
+            //eat
+        }
 
         where:
         maxNest | allowSubAgreement | nestLevel | expectedAllowSubAgreement | expectedNextLevel
@@ -517,24 +521,32 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement parentDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.subAgreementNestLevel = 1
+            it.subAgreementNestLevel = 3
             it
         }
         parentDa = utils.createDelegationAgreement(sharedUserAdminToken, parentDa)
         utils.addUserDelegate(sharedUserAdminToken, parentDa.id, sharedUserAdmin.id)
 
-        when:
         DelegationAgreement subAgreement = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
             it.parentDelegationAgreementId = parentDa.id
-            it.subAgreementNestLevel = 1
             it
         }
+
+        when: "Matches parent nest level"
+        subAgreement.setSubAgreementNestLevel(parentDa.subAgreementNestLevel)
         def subAgreementResponse = cloud20.createDelegationAgreement(sharedUserAdminToken, subAgreement)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(subAgreementResponse, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_VALUE)
+
+        when: "Exceeds parent nest level"
+        subAgreement.setSubAgreementNestLevel(parentDa.subAgreementNestLevel.add(BigInteger.ONE))
+        def subAgreementResponse2 = cloud20.createDelegationAgreement(sharedUserAdminToken, subAgreement)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(subAgreementResponse2, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_VALUE)
 
         cleanup:
         cloud20.deleteDelegationAgreement(sharedUserAdminToken, parentDa.id)
