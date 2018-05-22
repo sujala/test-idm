@@ -262,6 +262,276 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
         }
     }
 
+    def "RCN admins can perform CRUD operations on DAs within their RCN"() {
+        given:
+        def entitiesWithManagementAccessOver = [[userAdmin, PrincipalType.USER],
+                                                [userManager, PrincipalType.USER],
+                                                [otherUserAdmin, PrincipalType.USER],
+                                                [otherUserManager, PrincipalType.USER],
+                                                [userGroupUserAdminDomain, PrincipalType.USER_GROUP],
+                                                [userGroupOtherUserAdminDomain, PrincipalType.USER_GROUP]]
+        when: "create DAs for all entities"
+        def delegationAgreements = []
+        def createResponses = []
+        for (entityData in entitiesWithManagementAccessOver) {
+            def da = new DelegationAgreement().with {
+                it.name = "Test DA name"
+                it.domainId = domainId
+                it.principalType = entityData[1]
+                it.principalId = entityData[0].id
+                it
+            }
+            createResponses << cloud20.createDelegationAgreement(rcnAdminToken, da)
+        }
+
+        then:
+        for (response in createResponses) {
+            assert response.status == 201
+            delegationAgreements << response.getEntity(DelegationAgreement)
+        }
+
+        when: "get DAs"
+        def getResponses = []
+        for (da in delegationAgreements) {
+            getResponses << cloud20.getDelegationAgreement(rcnAdminToken, da.id)
+        }
+
+        then:
+        for (response in getResponses) {
+            assert response.status == 200
+        }
+
+        when: "update the DAs"
+        def updateResponses = []
+        for (da in delegationAgreements) {
+            da.name = RandomStringUtils.randomAlphanumeric(8)
+            da.subAgreementNestLevel = null
+            updateResponses << cloud20.updateDelegationAgreement(rcnAdminToken, da.id, da)
+        }
+
+        then:
+        for (response in updateResponses) {
+            assert response.status == 200
+        }
+
+        when: "delete the DAs"
+        def deleteResponses = []
+        for (da in delegationAgreements) {
+            deleteResponses << cloud20.deleteDelegationAgreement(rcnAdminToken, da.id)
+        }
+
+        then:
+        for (response in deleteResponses) {
+            assert response.status == 204
+        }
+    }
+
+    def "user admins can perform CRUD operations on DAs within their domain"() {
+        given:
+        def entitiesWithManagementAccessOver = [[userAdmin, PrincipalType.USER],
+                                                [userManager, PrincipalType.USER],
+                                                [userGroupUserAdminDomain, PrincipalType.USER_GROUP]]
+        def entitiesWithoutManagementAccessOver = [[otherUserAdmin, PrincipalType.USER],
+                                                   [otherUserManager, PrincipalType.USER],
+                                                   [userGroupOtherUserAdminDomain, PrincipalType.USER_GROUP]]
+        def delegationAgreementsWithoutAccess = [otherUserAdminDa, otherUserManagerDa, userGroupOtherUserAdminDomainDa]
+
+        when: "create DAs for all entities"
+        def delegationAgreements = []
+        def createResponsesWithManagementAccessOver = []
+        def createResponsesWithoutManagementAccessOver = []
+        for (entityData in entitiesWithManagementAccessOver) {
+            def da = new DelegationAgreement().with {
+                it.name = "Test DA name"
+                it.domainId = domainId
+                it.principalType = entityData[1]
+                it.principalId = entityData[0].id
+                it
+            }
+            createResponsesWithManagementAccessOver << cloud20.createDelegationAgreement(userAdminToken, da)
+        }
+        for (entityData in entitiesWithoutManagementAccessOver) {
+            def da = new DelegationAgreement().with {
+                it.name = "Test DA name"
+                it.domainId = domainId
+                it.principalType = entityData[1]
+                it.principalId = entityData[0].id
+                it
+            }
+            createResponsesWithoutManagementAccessOver << cloud20.createDelegationAgreement(userAdminToken, da)
+        }
+
+        then:
+        for (response in createResponsesWithManagementAccessOver) {
+            assert response.status == 201
+            delegationAgreements << response.getEntity(DelegationAgreement)
+        }
+        for (response in createResponsesWithoutManagementAccessOver) {
+            assert response.status == 404
+        }
+
+        when: "get DAs"
+        def getResponses = []
+        def getResponsesWithoutAccess = []
+        for (da in delegationAgreements) {
+            getResponses << cloud20.getDelegationAgreement(userAdminToken, da.id)
+        }
+        for (da in delegationAgreementsWithoutAccess) {
+            getResponsesWithoutAccess << cloud20.getDelegationAgreement(userAdminToken, da.id)
+        }
+
+        then:
+        for (response in getResponses) {
+            assert response.status == 200
+        }
+        for (response in getResponsesWithoutAccess) {
+            assert response.status == 404
+        }
+
+        when: "update the DAs"
+        def updateResponses = []
+        def updateResponsesWithoutAccess = []
+        for (da in delegationAgreements) {
+            da.name = RandomStringUtils.randomAlphanumeric(8)
+            da.subAgreementNestLevel = null
+            updateResponses << cloud20.updateDelegationAgreement(userAdminToken, da.id, da)
+        }
+        for (da in delegationAgreementsWithoutAccess) {
+            da.name = RandomStringUtils.randomAlphanumeric(8)
+            da.subAgreementNestLevel = null
+            updateResponsesWithoutAccess << cloud20.updateDelegationAgreement(userAdminToken, da.id, da)
+        }
+
+        then:
+        for (response in updateResponses) {
+            assert response.status == 200
+        }
+        for (response in updateResponsesWithoutAccess) {
+            assert response.status == 404
+        }
+
+        when: "delete the DAs"
+        def deleteResponses = []
+        def deleteResponsesWithoutAccess = []
+        for (da in delegationAgreements) {
+            deleteResponses << cloud20.deleteDelegationAgreement(userAdminToken, da.id)
+        }
+        for (da in delegationAgreementsWithoutAccess) {
+            deleteResponsesWithoutAccess << cloud20.deleteDelegationAgreement(userAdminToken, da.id)
+        }
+
+        then:
+        for (response in deleteResponses) {
+            assert response.status == 204
+        }
+        for (response in deleteResponsesWithoutAccess) {
+            assert response.status == 404
+        }
+    }
+
+    def "user managers can perform CRUD operations on DAs within their domain that do not have a user admin as the principal"() {
+        given:
+        def entitiesWithManagementAccessOver = [[userManager, PrincipalType.USER],
+                                                [userGroupUserAdminDomain, PrincipalType.USER_GROUP]]
+        def entitiesWithoutManagementAccessOver = [[userAdmin, PrincipalType.USER],
+                                                   [otherUserAdmin, PrincipalType.USER],
+                                                   [otherUserManager, PrincipalType.USER],
+                                                   [userGroupOtherUserAdminDomain, PrincipalType.USER_GROUP]]
+        def delegationAgreementsWithoutAccess = [userAdminDa, otherUserAdminDa, otherUserManagerDa, userGroupOtherUserAdminDomainDa]
+
+        when: "create DAs for all entities"
+        def delegationAgreements = []
+        def createResponsesWithManagementAccessOver = []
+        def createResponsesWithoutManagementAccessOver = []
+        for (entityData in entitiesWithManagementAccessOver) {
+            def da = new DelegationAgreement().with {
+                it.name = "Test DA name"
+                it.domainId = domainId
+                it.principalType = entityData[1]
+                it.principalId = entityData[0].id
+                it
+            }
+            createResponsesWithManagementAccessOver << cloud20.createDelegationAgreement(userManagerToken, da)
+        }
+        for (entityData in entitiesWithoutManagementAccessOver) {
+            def da = new DelegationAgreement().with {
+                it.name = "Test DA name"
+                it.domainId = domainId
+                it.principalType = entityData[1]
+                it.principalId = entityData[0].id
+                it
+            }
+            createResponsesWithoutManagementAccessOver << cloud20.createDelegationAgreement(userManagerToken, da)
+        }
+
+        then:
+        for (response in createResponsesWithManagementAccessOver) {
+            assert response.status == 201
+            delegationAgreements << response.getEntity(DelegationAgreement)
+        }
+        for (response in createResponsesWithoutManagementAccessOver) {
+            assert response.status == 404
+        }
+
+        when: "get DAs"
+        def getResponses = []
+        def getResponsesWithoutAccess = []
+        for (da in delegationAgreements) {
+            getResponses << cloud20.getDelegationAgreement(userManagerToken, da.id)
+        }
+        for (da in delegationAgreementsWithoutAccess) {
+            getResponsesWithoutAccess << cloud20.getDelegationAgreement(userManagerToken, da.id)
+        }
+
+        then:
+        for (response in getResponses) {
+            assert response.status == 200
+        }
+        for (response in getResponsesWithoutAccess) {
+            assert response.status == 404
+        }
+
+        when: "update the DAs"
+        def updateResponses = []
+        def updateResponsesWithoutAccess = []
+        for (da in delegationAgreements) {
+            da.name = RandomStringUtils.randomAlphanumeric(8)
+            da.subAgreementNestLevel = null
+            updateResponses << cloud20.updateDelegationAgreement(userManagerToken, da.id, da)
+        }
+        for (da in delegationAgreementsWithoutAccess) {
+            da.name = RandomStringUtils.randomAlphanumeric(8)
+            da.subAgreementNestLevel = null
+            updateResponsesWithoutAccess << cloud20.updateDelegationAgreement(userManagerToken, da.id, da)
+        }
+
+        then:
+        for (response in updateResponses) {
+            assert response.status == 200
+        }
+        for (response in updateResponsesWithoutAccess) {
+            assert response.status == 404
+        }
+
+        when: "delete the DAs"
+        def deleteResponses = []
+        def deleteResponsesWithoutAccess = []
+        for (da in delegationAgreements) {
+            deleteResponses << cloud20.deleteDelegationAgreement(userManagerToken, da.id)
+        }
+        for (da in delegationAgreementsWithoutAccess) {
+            deleteResponsesWithoutAccess << cloud20.deleteDelegationAgreement(userManagerToken, da.id)
+        }
+
+        then:
+        for (response in deleteResponses) {
+            assert response.status == 204
+        }
+        for (response in deleteResponsesWithoutAccess) {
+            assert response.status == 404
+        }
+    }
+
     def createDelegationAgreementInDomain(String token, String domainId) {
         def da = new DelegationAgreement().with {
             it.name = "Test DA name"

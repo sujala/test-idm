@@ -7,6 +7,7 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.DelegationAgreementConverter;
 import com.rackspace.idm.api.resource.IdmPathUtils;
+import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.BaseUser;
@@ -45,6 +46,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.math.BigInteger;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -141,7 +143,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             // The principal must exist and caller must be authorized to create a DA for the principal
             SimplePrincipalValidator principalValidator = new SimplePrincipalValidator(agreementWeb.getPrincipalType(), agreementWeb.getPrincipalId());
-            principalValidator.verifyCallerAuthorizedOnPrincipal(caller);
+            principalValidator.verifyCallerAuthorizedOnPrincipal();
             DelegationPrincipal principal = principalValidator.getPrincipal();
 
             // If nested agreement, the parent must exist and the nested DA principal must be an effective delegate on parent DA
@@ -248,9 +250,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            // Caller must be the DA principal to update DA.
+            // The caller must be authorized to manage the DA in order to update the DA.
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementWeb.getId());
-            if (delegationAgreement == null || !delegationAgreement.isEffectivePrincipal(caller)) {
+            if (delegationAgreement == null || !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -346,8 +348,8 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            // Currently only principals can retrieve DA
-            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
+            // The caller must be authorized to manage the DA in order to get the DA.
+            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal())) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -441,9 +443,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             EndUser caller = (EndUser) callerBu; // To get this far requires user to be EU
 
-            // Caller must be the DA principal to delete it
+            // The caller must be authorized to manage the DA in order to delete it.
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationService.getDelegationAgreementById(agreementId);
-            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal(caller))) {
+            if (delegationAgreement == null || !(new SimplePrincipalValidator(delegationAgreement.getPrincipal()).isCallerAuthorizedOnPrincipal())) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
@@ -734,15 +736,21 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
         }
 
-        public boolean isCallerAuthorizedOnPrincipal(EndUser caller) {
-            if (principal == null || !validator.isCallerAuthorizedOnPrincipal(caller)) {
+        /**
+         * This method validates if the effective caller is authorized to create delegation agreements
+         * with the specified user or user group as the principal.
+         *
+         * @return
+         */
+        public boolean isCallerAuthorizedOnPrincipal() {
+            if (principal == null || !validator.isCallerAuthorizedOnPrincipal()) {
                 return false;
             }
             return true;
         }
 
-        public void verifyCallerAuthorizedOnPrincipal(EndUser caller) {
-            if (!isCallerAuthorizedOnPrincipal(caller)) {
+        public void verifyCallerAuthorizedOnPrincipal() {
+            if (!isCallerAuthorizedOnPrincipal()) {
                 throw new NotFoundException(ERROR_MSG_PRINCIPAL_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
         }
@@ -754,7 +762,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     }
 
     private interface PrincipalValidator {
-        boolean isCallerAuthorizedOnPrincipal(EndUser caller);
+        boolean isCallerAuthorizedOnPrincipal();
     }
 
     private class UserGroupPrincipalLookupValidator implements PrincipalLookup, PrincipalValidator {
@@ -787,19 +795,36 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
         }
 
         @Override
-        public boolean isCallerAuthorizedOnPrincipal(EndUser caller) {
-            Validate.notNull(caller);
-
-            if (getPrincipal() != null) {
-                /*
-                 Caller is only valid for a user group principal if the caller is a member of the user group and
-                 the user group domain is the same as the callers. Technically, should always be the case as members
-                 of a user group must belong to the same domain as the user group, but provide extra check here
-                 as delegation provides great power
-                 */
-                return caller.getDomainId().equalsIgnoreCase(getPrincipal().getDomainId())
-                        && caller.getUserGroupDNs().contains(getPrincipal().getDn());
+        public boolean isCallerAuthorizedOnPrincipal() {
+            if (getPrincipal() == null) {
+                return false;
             }
+
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            if (!(caller instanceof EndUser)) {
+                return false;
+            }
+
+            EndUser callerEndUser = (EndUser) caller;
+
+            if (caller.getDomainId().equalsIgnoreCase(getPrincipal().getDomainId())
+                    && callerEndUser.getUserGroupDNs().contains(getPrincipal().getDn())) {
+                // The caller can create a DA with the specified user group principal if the user
+                // is a member of the user group and within the same domain as the user group.
+                return true;
+            } else if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    Collections.singletonList(IdentityRole.RCN_ADMIN.getRoleName()))
+                    && domainService.doDomainsShareRcn(caller.getDomainId(), getPrincipal().getDomainId())) {
+                // RCN admins can create DAs for any user group principal within their RCN
+                return true;
+            } else if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(), IdentityUserTypeEnum.USER_MANAGER.getRoleName())
+                    && caller.getDomainId().equalsIgnoreCase(getPrincipal().getDomainId())) {
+                // User Admins and user managers can create DAs for any user group principal for any user group in their domain
+                return true;
+            }
+
             return false;
         }
     }
@@ -834,13 +859,33 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
         }
 
         @Override
-        public boolean isCallerAuthorizedOnPrincipal(EndUser caller) {
-            Validate.notNull(caller);
-
-            if (getPrincipal() != null) {
-                // Caller is only valid for a user principal if the caller is the same user
-                return caller.getId().equalsIgnoreCase(getPrincipal().getId());
+        public boolean isCallerAuthorizedOnPrincipal() {
+            if (getPrincipal() == null) {
+                return false;
             }
+
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            if (caller.getId().equalsIgnoreCase(getPrincipal().getId())) {
+                // Users can always specify themselves as the user principal.
+                return true;
+            } else if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    Collections.singletonList(IdentityRole.RCN_ADMIN.getRoleName()))
+                    && domainService.doDomainsShareRcn(caller.getDomainId(), getPrincipal().getDomainId())) {
+                // RCN admins can create DAs with any user principal within their RCN
+                return true;
+            } else if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    Collections.singletonList(IdentityUserTypeEnum.USER_ADMIN.getRoleName()))
+                    && caller.getDomainId().equalsIgnoreCase(getPrincipal().getDomainId())) {
+                // User admins can create a DA for any user principal within their domain.
+                return true;
+            } else if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    Collections.singletonList(IdentityUserTypeEnum.USER_MANAGER.getRoleName()))
+                    && caller.getDomainId().equalsIgnoreCase(getPrincipal().getDomainId())) {
+                // User managers can create a DA for any non user admin user principal within their domain.
+                return !authorizationService.hasUserAdminRole(endUser);
+            }
+
             return false;
         }
 
