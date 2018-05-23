@@ -719,7 +719,14 @@ class Cloud20Methods {
 
     def deleteUserProductRoles(String token, String userId, String roleType) {
         initOnUse()
-        resource.path(path20).path("users").path(userId).path("roles").queryParam("type", roleType).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
+
+        WebResource webResource = resource.path(path20).path("users").path(userId).path("roles")
+
+        if (StringUtils.isNotBlank(roleType)) {
+            webResource = webResource.queryParam("type", roleType)
+        }
+
+        webResource.header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
     def deleteApplicationRoleFromUser(String token, String roleId, String userId) {

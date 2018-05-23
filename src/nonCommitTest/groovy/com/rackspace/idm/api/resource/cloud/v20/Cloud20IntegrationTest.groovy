@@ -4344,6 +4344,36 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
     }
 
+    def "delete user product role with empty type should return bad request response" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def role = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = getRandomUUID("role")
+            it
+        }
+
+        when: "Create cloud account user, role and assign role to user"
+        def createdUser = utils.createCloudAccount()
+        def createdRole = cloud20.createRole(identityAdminToken, role).getEntity(Role).value
+        def addRoleResponse = cloud20.addUserRole(identityAdminToken, createdUser.id, createdRole.id)
+
+        then: "Expected response '200' for add user role"
+        createdRole != null
+        createdUser != null
+        addRoleResponse.status == 200
+
+        when: "delete product role with null roleType"
+        def response = cloud20.deleteUserProductRoles(serviceAdminToken, createdUser.id, null)
+
+        then: "response status is bad request"
+        response.status == HttpStatus.SC_BAD_REQUEST
+
+        cleanup:
+        cloud20.destroyUser(serviceAdminToken, createdUser.id)
+        cloud20.deleteRole(serviceAdminToken, createdRole.id)
+    }
+
     def getEntity(response, type) {
         if (type == RoleList && response.getType() == MediaType.APPLICATION_JSON_TYPE) {
             InputStream inputStream = IOUtils.toInputStream(response.getEntity(String))

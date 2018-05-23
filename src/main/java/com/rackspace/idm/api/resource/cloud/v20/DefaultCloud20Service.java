@@ -3369,7 +3369,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
 
             // Currently only roleType=rbac is supported
-            if (!roleType.equals(RBAC)) {
+            if (roleType == null || !roleType.equals(RBAC)) {
                 throw new BadRequestException(String.format("type '%s' not supported", roleType));
             }
 
