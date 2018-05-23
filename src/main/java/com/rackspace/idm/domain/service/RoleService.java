@@ -25,4 +25,14 @@ public interface RoleService {
      * @return
      */
     List<ClientRole> getAllIdentityRoles();
+
+    /**
+     * Returns true if role is assigned to users, user group, delegation agreements or anything else.
+     *
+     * @param roleId
+     * @throws IllegalArgumentException if roleId is null
+     * @return boolean
+     */
+    boolean isRoleAssigned (String roleId);
+
 }

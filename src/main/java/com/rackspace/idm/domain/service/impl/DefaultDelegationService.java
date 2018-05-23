@@ -82,6 +82,7 @@ public class DefaultDelegationService implements DelegationService {
         return tenantRoleDao.getRoleAssignmentOnDelegationAgreement(delegationAgreement, roleId);
     }
 
+
     @Override
     public PaginatorContext<TenantRole> getRoleAssignmentsOnDelegationAgreement(DelegationAgreement delegationAgreement, DelegationAgreementRoleSearchParams searchParams) {
         Validate.notNull(delegationAgreement);
@@ -277,5 +278,6 @@ public class DefaultDelegationService implements DelegationService {
 
         return delegationAgreementDao.countNumberOfDelegationAgreementsByPrincipal(delegationPrincipal);
     }
+
 
 }

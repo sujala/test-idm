@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
+import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.service.ApplicationService;
@@ -10,6 +11,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class DefaultRoleService implements RoleService {
 
     @Autowired
     IdentityConfig identityConfig;
+
+    @Autowired
+    TenantRoleDao tenantRoleDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -112,5 +117,11 @@ public class DefaultRoleService implements RoleService {
     @Override
     public List<ClientRole> getAllIdentityRoles() {
         return IteratorUtils.toList(applicationRoleDao.getAllIdentityRoles().iterator());
+    }
+
+    @Override
+    public boolean isRoleAssigned (String roleId) {
+        Validate.notNull(roleId);
+        return tenantRoleDao.getCountOfTenantRoleAssignmentsByRoleId(roleId) > 0;
     }
 }

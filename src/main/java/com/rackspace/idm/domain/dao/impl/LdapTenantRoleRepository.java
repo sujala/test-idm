@@ -11,6 +11,7 @@ import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchPara
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -317,6 +318,12 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public Iterable<TenantRole> getTenantRolesForDelegationAgreementsForTenant(String tenantId) {
         return getObjects(searchFilterGetTenantRolesByTenantId(tenantId), DELEGATION_AGREEMENT_BASE_DN, SearchScope.SUB);
+    }
+
+    @Override
+    public int getCountOfTenantRoleAssignmentsByRoleId(String roleId) {
+        Validate.notNull(roleId);
+        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), BASE_DN);
     }
 
     private TenantRole getTenantRole(String dn, String roleId) {

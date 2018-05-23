@@ -7,7 +7,8 @@ import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
-import spock.lang.Specification
+import testHelpers.RootServiceTest
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -15,7 +16,7 @@ import spock.lang.Specification
  * Time: 1:21 PM
  * To change this template use File | Settings | File Templates.
  */
-class DefaultRoleServiceTest extends Specification {
+class DefaultRoleServiceTest extends RootServiceTest {
 
     @Shared DefaultRoleService service
 
@@ -24,8 +25,6 @@ class DefaultRoleServiceTest extends Specification {
     @Shared ClientRole mockClientRole
     @Shared Application mockApplication
     @Shared Configuration mockConfig
-    @Shared def staticConfig
-    @Shared def identityConfig
 
     def setupSpec() {
         service = new DefaultRoleService()
@@ -142,6 +141,25 @@ class DefaultRoleServiceTest extends Specification {
 
         then:
         result == mockClientRole
+    }
+
+    def "check if role is assigned: #numberOfRoleAssociation" () {
+        given:
+        def roleId = "roleId"
+        mockTenantRoleDao(service)
+        tenantRoleDao.getCountOfTenantRoleAssignmentsByRoleId(roleId) >> numberOfRoleAssociation
+
+        when:
+        def result = service.isRoleAssigned(roleId)
+
+        then:
+        result == expectedResult
+
+        where:
+        numberOfRoleAssociation | expectedResult
+        2                       |    true
+        0                       |    false
+        5                       |    true
     }
 
     def mockApplicationService() {

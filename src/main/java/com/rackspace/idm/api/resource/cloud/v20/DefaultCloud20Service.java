@@ -100,9 +100,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
@@ -154,8 +151,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ERROR_SWITCH_RCN_ON_DOMAIN_CONTAINING_RCN_TENANT ="The domain cannot contain an RCN tenant. Remove the RCN tenant from the domain first.";
     public static final String ERROR_SWITCH_RCN_ON_DOMAIN_MISSING_RCN = "Destination RCN required.";
 
-    public static final String ERROR_DELETE_ROLE_WITH_USERS_ASSIGNED = "Deleting the role associated with one or more users is not allowed";
-    public static final String ERROR_DELETE_ROLE_WITH_GROUPS_ASSIGNED = "Deleting the role associated with one or more groups is not allowed";
+    public static final String ERROR_DELETE_ASSIGNED_ROLE = "Deleting the role associated with one or more users, user groups or delegation agreements is not allowed";
 
     public static final String GRANTING_ROLES_TO_USER_ERROR_MESSAGE = "Error granting roles to user with ID %s.";
 
@@ -2163,11 +2159,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (IdentityUserTypeEnum.isIdentityUserTypeRoleName(role.getName())) {
                 throw new ForbiddenException(IDENTITY_USER_TYPE_ROLE_ERROR_MESSAGE);
             }
-            if (tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(roleId) > 0 || tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(roleId) > 0) {
-                throw new ForbiddenException(ERROR_DELETE_ROLE_WITH_USERS_ASSIGNED);
-            }
-            if (userGroupService.countGroupsWithRoleAssignment(roleId) > 0) {
-                throw new ForbiddenException(ERROR_DELETE_ROLE_WITH_GROUPS_ASSIGNED);
+
+            /* when role is assigned to one or more user, user group or delegate agreement, then role cannot be deleted
+            and error 403 should be thrown. */
+            if (roleService.isRoleAssigned(roleId)){
+                throw new ForbiddenException(ERROR_DELETE_ASSIGNED_ROLE);
             }
 
             User caller = userService.getUserByAuthToken(authToken);

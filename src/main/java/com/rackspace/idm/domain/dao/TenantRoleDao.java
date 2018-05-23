@@ -139,4 +139,14 @@ public interface TenantRoleDao {
      */
     Iterable<TenantRole> getTenantRolesForDelegationAgreementsForTenant(String tenantId);
 
+    /**
+     * Returns the count of tenant role assigned by Role id. This include role association with users, user groups
+     * and delegation agreements.
+     *
+     * @param roleId
+     * @throws IllegalArgumentException if roleId is null
+     * @return int
+     */
+    int getCountOfTenantRoleAssignmentsByRoleId(String roleId);
 }
+

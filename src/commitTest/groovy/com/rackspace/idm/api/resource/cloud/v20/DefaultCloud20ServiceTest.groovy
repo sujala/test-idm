@@ -1090,8 +1090,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "deleteRole verifies callers precedence over role to be deleted"() {
         given:
         reloadableConfig.getDeleteRoleAssignedToUser() >> true
-        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(_) >> 0
-        tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(_) >> 0
+        roleService.isRoleAssigned(_) >> false
         allowUserAccess()
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
 
@@ -1129,7 +1128,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.verifyIdentityAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
 
         applicationService.getClientRoleById("unique") >> role
-        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(role.id) >> 1
+        roleService.isRoleAssigned(role.id) >> true
 
         when:
         def response1 = service.deleteRole(headers, authToken, roleId).build()
@@ -1150,23 +1149,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         reloadableConfig.getDeleteRoleAssignedToUser() >> true
         allowUserAccess()
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+        roleService.isRoleAssigned(_) >> true
 
         when:
-        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(_) >> 2
-        tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(_) >> 0
         def response1 = service.deleteRole(headers, authToken, roleId).build()
 
         then:
         response1.status == 403
-
-        when:
-        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(_) >> 0
-        tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(_) >> 2
-        def response2 = service.deleteRole(headers, authToken, roleId).build()
-
-        then:
-        response2.status == 403
-
     }
 
     def "addRolesToUserOnTenant verifies user-admin level access"() {
@@ -4064,9 +4053,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * applicationService.getClientRoleById(roleId) >> role
-        1 * userGroupService.countGroupsWithRoleAssignment(roleId) >> 1
+        1 * roleService.isRoleAssigned(roleId) >> 1
         response.status == SC_FORBIDDEN
-        response.getEntity().message == DefaultCloud20Service.ERROR_DELETE_ROLE_WITH_GROUPS_ASSIGNED
+        response.getEntity().message == DefaultCloud20Service.ERROR_DELETE_ASSIGNED_ROLE
     }
 
     def "Deleting a domain must also delete associated user groups"() {
