@@ -127,6 +127,8 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             // Verify overall request
             validator20.validateStringNotNullWithMaxLength("name", agreementWeb.getName(), Validator20.MAX_LENGTH_32);
+            validator20.validateAttributeIsNotEmpty("description", agreementWeb.getDescription());
+            validator20.validateAttributeIsNotEmpty("parentDelegationAgreementId", agreementWeb.getParentDelegationAgreementId());
             validator20.validateStringMaxLength("description", agreementWeb.getDescription(), Validator20.MAX_LENGTH_255);
 
             if (isNestLevelSpecified && isAllowSubAgreementsSpecified) {
@@ -263,6 +265,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             if (agreementWeb.getDescription() != null) {
+                validator20.validateAttributeIsNotEmpty("description", agreementWeb.getDescription());
                 validator20.validateStringMaxLength("description", agreementWeb.getDescription(), Validator20.MAX_LENGTH_255);
                 delegationAgreement.setDescription(agreementWeb.getDescription());
             }
@@ -275,7 +278,8 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             if (isNestLevelSpecified || isAllowSubAgreementsSpecified) {
                 com.rackspace.idm.domain.entity.DelegationAgreement parentDelegationAgreement = null;
 
-                // The only thing we require to retrieve from parent is when updating nest levels to ensure they are valid per the parent.
+                // The only time we pull parent is when updating a nested agreement's nest levels
+                // to ensure they are valid per the parent.
                 if (isNestedAgreement) {
                     parentDelegationAgreement = delegationService.getDelegationAgreementById(agreementWeb.getParentDelegationAgreementId());
                     if (parentDelegationAgreement == null) {
@@ -293,29 +297,24 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 if (isNestLevelSpecified && isAllowSubAgreementsSpecified) {
                     throw new BadRequestException(ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
                 } else if (isAllowSubAgreementsSpecified) {
-                    if (agreementWeb.isAllowSubAgreements() && !delegationAgreement.getAllowSubAgreements()) {
-                        // Turning on
-                        delegationAgreement.setAllowSubAgreements(true);
+                    // TODO: This whole section will be removed in 3.23 or later as specifying AllowSubAgreements attribute is deprecated
+                    if (agreementWeb.isAllowSubAgreements() && maxNestLevel <= 0) {
+                        throw new BadRequestException("Agreement can not be updated to support subagreements.", ErrorCodes.ERROR_CODE_INVALID_VALUE);
+                    }
+                    if (agreementWeb.isAllowSubAgreements() && (!delegationAgreement.getAllowSubAgreements() || delegationAgreement.getSubAgreementNestLevel() == null)) {
+                        // Turning on. If already on but the nest level is not set, want to update nest level setting
                         delegationAgreement.setSubAgreementNestLevel(maxNestLevel);
-                    } else if (!agreementWeb.isAllowSubAgreements() && delegationAgreement.getAllowSubAgreements()) {
-                        // Turning off
-                        delegationAgreement.setAllowSubAgreements(false);
+                    } else if (!agreementWeb.isAllowSubAgreements() && (delegationAgreement.getAllowSubAgreements() || delegationAgreement.getSubAgreementNestLevel() == null)) {
+                        // Turning off. If already off but the nest level is not set, want to update nest level setting
                         delegationAgreement.setSubAgreementNestLevel(0);
                     }
+                    delegationAgreement.setAllowSubAgreements(agreementWeb.isAllowSubAgreements());
                 } else {
-                    // Nest level is specified
-                    if (agreementWeb.getSubAgreementNestLevel().intValue() > 0) {
-                        // Turning on or changing nest level
-                        delegationAgreement.setAllowSubAgreements(true);
-                        delegationAgreement.setSubAgreementNestLevel(agreementWeb.getSubAgreementNestLevel().intValue());
-                        validator20.validateIntegerMinMax("subAgreementNestLevel", agreementWeb.getSubAgreementNestLevel().intValue(), 0, 3);
-                    } else if (agreementWeb.getSubAgreementNestLevel().intValue() <= 0) {
-                        // Turning off or keeping off
-                        delegationAgreement.setAllowSubAgreements(false);
-                        delegationAgreement.setSubAgreementNestLevel(0);
-                    }
-                    agreementWeb.setAllowSubAgreements(agreementWeb.getSubAgreementNestLevel().intValue() > 0);
+                    // Nest level is specified so just need to update the allow subagreement appropriately
+                    delegationAgreement.setSubAgreementNestLevel(agreementWeb.getSubAgreementNestLevel().intValue());
+                    delegationAgreement.setAllowSubAgreements(agreementWeb.getSubAgreementNestLevel().intValue() > 0);
                 }
+                validator20.validateIntegerMinMax("subAgreementNestLevel", delegationAgreement.getSubAgreementNestLevel().intValue(), 0, maxNestLevel);
             }
 
             delegationService.updateDelegationAgreement(delegationAgreement);

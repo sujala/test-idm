@@ -85,6 +85,16 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
         1 * validator20.validateStringNotNullWithMaxLength("name", invalidName, 32) >> {throw new BadRequestException("asd")}
         1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
 
+        when: "Provide empty string description"
+        daInvalidWeb.setName(validName)
+        daInvalidWeb.setDescription("")
+        service.addAgreement(uriInfo, token, daInvalidWeb)
+
+        then:
+        1 * validator20.validateStringNotNullWithMaxLength("name", validName, 32)
+        1 * validator20.validateAttributeIsNotEmpty("description", "") >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
+
         when: "Provide description exceeding 255"
         daInvalidWeb.setName(validName)
         daInvalidWeb.setDescription(invalidDescription)
@@ -94,6 +104,17 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
         1 * validator20.validateStringNotNullWithMaxLength("name", validName, 32)
         1 * validator20.validateStringMaxLength("description", invalidDescription, 255) >> {throw new BadRequestException()}
         1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
+
+        when: "Provide empty string parentDelegationAgreementId"
+        daInvalidWeb.setName(validName)
+        daInvalidWeb.setParentDelegationAgreementId("")
+        service.addAgreement(uriInfo, token, daInvalidWeb)
+
+        then:
+        1 * validator20.validateStringNotNullWithMaxLength("name", validName, 32)
+        1 * validator20.validateAttributeIsNotEmpty("parentDelegationAgreementId", "") >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_) >> Response.status(SC_BAD_REQUEST) // Just need to return something
+
     }
 
     def "addAgreement: Success when set the USER principal to be the same user as the caller"() {

@@ -246,13 +246,13 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         parentDa.allowSubAgreements
         parentDa.parentDelegationAgreementId == null
 
-        and: "nested2 da returned w/ nest fields"
+        and: "first nested da returned w/ nest fields"
         def nestedDa2 = entity2.delegationAgreement.find { it.name == daToD1Nested2.name}
         nestedDa2.subAgreementNestLevel == daToD1Nested2.subAgreementNestLevel
         nestedDa2.allowSubAgreements
         nestedDa2.parentDelegationAgreementId == parentDa.id
 
-        and: "nested32 da returned w/ nest fields"
+        and: "other nested da returned w/ nest fields"
         def nestedDa3 = entity2.delegationAgreement.find { it.name == daToD1Nested3.name}
         nestedDa3.subAgreementNestLevel == daToD1Nested3.subAgreementNestLevel
         nestedDa3.allowSubAgreements

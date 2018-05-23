@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -123,7 +122,7 @@ public class Validator20 {
 
     public static final String REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
     private static final String INVALID_ATTR_MESSAGE = "'%s' is not a valid attribute for this service";
-    public static final String EMPTY_ATTR_MESSAGE = "'%s' attribute cannot be empty for this service";
+    public static final String EMPTY_ATTR_MESSAGE = "If provided, '%s' attribute cannot be empty";
 
     public static final String BLANK_ERROR_MSG = "%s cannot be empty or blank.";
     public static final String WHITESPACE_CHARACTERS_ERROR_MSG = "%s cannot contain whitespace characters.";
@@ -661,8 +660,8 @@ public class Validator20 {
         validateAttributeisNull("approvedDomainGroup", identityProvider.getApprovedDomainGroup());
 
         // Allowed attributes for update
-        validateAttributeForUpdate("name", identityProvider.getName());
-        validateAttributeForUpdate("authenticationUrl", identityProvider.getAuthenticationUrl());
+        validateAttributeIsNotEmpty("name", identityProvider.getName());
+        validateAttributeIsNotEmpty("authenticationUrl", identityProvider.getAuthenticationUrl());
 
         if(identityProvider.getApprovedDomainIds() != null) {
 
@@ -706,8 +705,8 @@ public class Validator20 {
     }
 
     public void validateIdentityProviderForUpdateForRcnAdmin(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
-        validateAttributeForUpdate("name", identityProvider.getName());
-        validateAttributeForUpdate("description", identityProvider.getDescription());
+        validateAttributeIsNotEmpty("name", identityProvider.getName());
+        validateAttributeIsNotEmpty("description", identityProvider.getDescription());
 
         if (identityProvider.getName() != null) {
             validateIdentityProviderNameChangeWithDupCheck(identityProvider.getName(), existingProvider);
@@ -993,7 +992,7 @@ public class Validator20 {
         }
     }
 
-    public void validateAttributeForUpdate(String propertyName, String value) {
+    public void validateAttributeIsNotEmpty(String propertyName, String value) {
         if (value != null && value.isEmpty()) {
             throwBadRequestForEmptyAttribute(propertyName);
         }
