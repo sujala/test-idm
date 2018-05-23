@@ -134,6 +134,21 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
 
         self.validate_role_present(auth_resp=fed_auth, role=role_0)
         fed_user_id = fed_auth.json()[const.ACCESS][const.USER][const.ID]
+
+        # Testing list effective roles for fed user, CID-1522
+        eff_roles = self.user_admin_client.list_effective_roles_for_user(
+            user_id=fed_user_id)
+        roles_assignments = eff_roles.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+            const.TENANT_ASSIGNMENTS]
+        for assignment in roles_assignments:
+            if assignment[const.ON_ROLE_NAME] == role_0.name:
+                self.assertEqual(
+                    assignment[const.SOURCES][0][const.ASSIGNMENT_TYPE],
+                    const.TENANT_ASSIGNMENT_TYPE)
+                self.assertEqual(
+                    assignment[const.SOURCES][0][const.SOURCE_TYPE],
+                    const.USER_SOURCE_TYPE)
+
         # IdP deletion will automatically delete the fed users. But, we are
         # still explicitly delete fed users, for safer side. This will assure
         # successful cleanup of the domain in the teardown.
