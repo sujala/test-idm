@@ -28,43 +28,51 @@ class TestManageDelegates(delegation.TestBaseDelegation):
 
     @attr(type='regression')
     def test_add_and_remove_user_delegate(self):
+        self.verify_add_and_remove_user_delegate(
+            client=self.user_admin_client)
+
+    @attr(type='regression')
+    def test_add_and_remove_user_delegate_rcn_admin(self):
+        self.verify_add_and_remove_user_delegate(
+            client=self.rcn_admin_client)
+
+    def verify_add_and_remove_user_delegate(self, client):
 
         # Create a Delegation Agreement for Domain 1, with sub user in Domain 2
         # as the delegate
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
         da_req = requests.DelegationAgreements(da_name=da_name)
-        da_resp = self.user_admin_client.create_delegation_agreement(
+        da_resp = client.create_delegation_agreement(
             request_object=da_req)
         self.assertEqual(da_resp.status_code, 201)
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
-        self.user_admin_client.add_user_delegate_to_delegation_agreement(
+        client.add_user_delegate_to_delegation_agreement(
             da_id, self.sub_user_id)
 
-        # add user delegate to DA
+        # add duplicate user delegate to DA
         add_user_delegate_resp = (
-            self.user_admin_client.add_user_delegate_to_delegation_agreement(
-              da_id=da_id, user_id=self.sub_user_id))
+            client.add_user_delegate_to_delegation_agreement(
+                da_id=da_id, user_id=self.sub_user_id))
         self.assertEqual(add_user_delegate_resp.status_code, 409)
 
         # add user delegate to DA
         add_user_delegate_resp = (
-            self.user_admin_client.add_user_delegate_to_delegation_agreement(
-              da_id=da_id, user_id=self.user_admin_client_2.default_headers[
+            client.add_user_delegate_to_delegation_agreement(
+                da_id=da_id, user_id=self.user_admin_client_2.default_headers[
                     const.X_USER_ID]))
         self.assertEqual(add_user_delegate_resp.status_code, 204)
 
-        ua_client = self.user_admin_client
         # delete user delegate from DA
-        delete_resp = ua_client.delete_user_delegate_from_delegation_agreement(
-            da_id=da_id, user_id=self.user_admin_client_2.default_headers[
-                const.X_USER_ID])
+        delete_resp = client.delete_user_delegate_from_delegation_agreement(
+            da_id=da_id,
+            user_id=self.user_admin_client_2.default_headers[const.X_USER_ID])
         self.assertEqual(delete_resp.status_code, 204)
 
         # repeat of the call results in 404
-        delete_resp = ua_client.delete_user_delegate_from_delegation_agreement(
-            da_id=da_id, user_id=self.user_admin_client_2.default_headers[
-                const.X_USER_ID])
+        delete_resp = client.delete_user_delegate_from_delegation_agreement(
+            da_id=da_id,
+            user_id=self.user_admin_client_2.default_headers[const.X_USER_ID])
         self.assertEqual(delete_resp.status_code, 404)
 
     def create_and_add_user_group_to_domain(self, client,
@@ -82,7 +90,7 @@ class TestManageDelegates(delegation.TestBaseDelegation):
         else:
             return responses.UserGroup(resp.json())
 
-    def test_add_and_remove_user_group_delegate(self):
+    def verify_add_and_remove_user_group_delegate(self, client):
 
         group_one = self.create_and_add_user_group_to_domain(
             self.user_admin_client_2, domain_id=self.domain_id_2)
@@ -99,29 +107,36 @@ class TestManageDelegates(delegation.TestBaseDelegation):
             da_id, self.sub_user_id)
 
         # add user group delegate to DA
-        ua_client = self.user_admin_client
         add_user_group_delegate_resp = (
-            ua_client.add_user_group_delegate_to_delegation_agreement(
-              da_id=da_id, user_group_id=group_one.id))
+            client.add_user_group_delegate_to_delegation_agreement(
+                da_id=da_id, user_group_id=group_one.id))
         self.assertEqual(add_user_group_delegate_resp.status_code, 204)
 
         # repeat of the call
         add_user_group_delegate_resp = (
-            ua_client.add_user_group_delegate_to_delegation_agreement(
-              da_id=da_id, user_group_id=group_one.id))
+            client.add_user_group_delegate_to_delegation_agreement(
+                da_id=da_id, user_group_id=group_one.id))
         self.assertEqual(add_user_group_delegate_resp.status_code, 409)
 
         # delete user group delegate from DA
         delete_resp = (
-            ua_client.delete_user_group_delegate_from_delegation_agreement(
-              da_id=da_id, user_group_id=group_one.id))
+            client.delete_user_group_delegate_from_delegation_agreement(
+                da_id=da_id, user_group_id=group_one.id))
         self.assertEqual(delete_resp.status_code, 204)
 
         # repeat of the call results in 404
         delete_resp = (
-            ua_client.delete_user_group_delegate_from_delegation_agreement(
-              da_id=da_id, user_group_id=group_one.id))
+            client.delete_user_group_delegate_from_delegation_agreement(
+                da_id=da_id, user_group_id=group_one.id))
         self.assertEqual(delete_resp.status_code, 404)
+
+    def test_add_and_remove_user_group_delegate(self):
+        self.verify_add_and_remove_user_group_delegate(
+            client=self.user_admin_client)
+
+    def test_add_and_remove_user_group_delegate_rcn_admin(self):
+        self.verify_add_and_remove_user_group_delegate(
+            client=self.rcn_admin_client)
 
     @classmethod
     @delegation.base.base.log_tearDown_error

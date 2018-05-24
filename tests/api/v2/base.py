@@ -126,7 +126,8 @@ class TestBaseV2(base.TestBase):
                     'email': additional_input_data.get('email', None),
                     'contact_id': additional_input_data.get(
                         'contact_id', None),
-                    'password': password
+                    'password': password,
+                    'roles': additional_input_data.get('roles', None)
                 }
 
                 if one_call:

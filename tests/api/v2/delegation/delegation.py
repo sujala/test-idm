@@ -12,6 +12,7 @@ class TestBaseDelegation(base.TestBaseV2):
 
         super(TestBaseDelegation, cls).setUpClass()
         cls.domain_ids = []
+        cls.user_ids = []
         cls.rcn = cls.test_config.da_rcn
 
         # Add Domain 1
@@ -22,11 +23,14 @@ class TestBaseDelegation(base.TestBaseV2):
         add_dom_resp = cls.identity_admin_client.add_domain(dom_req)
         assert add_dom_resp.status_code == 201, (
             'domain was not created successfully')
+        cls.domain_ids.append(cls.domain_id)
 
         additional_input_data = {'domain_id': cls.domain_id}
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data=additional_input_data)
+        cls.user_ids.append(
+            cls.user_admin_client.default_headers[const.X_USER_ID])
 
         # Add Domain 2
         cls.domain_id_2 = func_helper.generate_randomized_domain_id(
@@ -38,12 +42,36 @@ class TestBaseDelegation(base.TestBaseV2):
         add_dom_resp = cls.identity_admin_client.add_domain(dom_req)
         assert add_dom_resp.status_code == 201, (
             'domain was not created successfully')
+        cls.domain_ids.append(cls.domain_id_2)
 
         # Create User Admin 2 in Domain 2
         additional_input_data = {'domain_id': cls.domain_id_2}
         cls.user_admin_client_2 = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data=additional_input_data)
+        cls.user_ids.append(
+            cls.user_admin_client_2.default_headers[const.X_USER_ID])
+
+        # Create RCN admin
+        cls.domain_id_3 = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
+        dom_req = requests.Domain(
+            domain_name=cls.domain_id_3,
+            domain_id=cls.domain_id_3,
+            rcn=cls.rcn)
+        add_dom_resp = cls.identity_admin_client.add_domain(dom_req)
+        assert add_dom_resp.status_code == 201, (
+            'domain was not created successfully')
+        cls.domain_ids.append(cls.domain_id_3)
+
+        additional_input_data = {
+            'domain_id': cls.domain_id_3,
+            'roles': [{'name': const.RCN_ADMIN_ROLE_NAME}]}
+        cls.rcn_admin_client = cls.generate_client(
+            parent_client=cls.identity_admin_client,
+            additional_input_data=additional_input_data)
+        cls.user_ids.append(
+            cls.rcn_admin_client.default_headers[const.X_USER_ID])
 
         cls.role_ids = []
         cls.tenant_ids = []
@@ -123,6 +151,11 @@ class TestBaseDelegation(base.TestBaseV2):
     @base.base.log_tearDown_error
     def tearDownClass(cls):
 
+        for user_id in cls.user_ids:
+            resp = cls.identity_admin_client.delete_user(user_id=user_id)
+            assert resp.status_code in [204, 404], (
+                'User with ID {0} failed to delete'.format(user_id))
+
         disable_domain_req = requests.Domain(enabled=False)
         for domain_id in cls.domain_ids:
             cls.identity_admin_client.update_domain(
@@ -138,6 +171,7 @@ class TestBaseDelegation(base.TestBaseV2):
             assert resp.status_code == 204, (
                 'Role with ID {0} failed to delete'.format(
                     role_id))
+
         for tenant_id in cls.tenant_ids:
             resp = cls.identity_admin_client.delete_tenant(
                 tenant_id=tenant_id)
