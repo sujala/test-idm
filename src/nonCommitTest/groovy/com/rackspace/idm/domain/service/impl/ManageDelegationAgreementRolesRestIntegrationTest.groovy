@@ -1514,7 +1514,17 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         // Create role assignments
         def cloudTenantId = userAdmin.domainId
-        RoleAssignments assignments = new RoleAssignments().with {
+        RoleAssignments assignments_0 = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, ["*"]))
+                    tas
+            }
+            it
+        }
+
+        RoleAssignments assignments_1 = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments().with {
                 tas ->
                     tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [cloudTenantId]))
@@ -1524,20 +1534,27 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         }
 
         // Add role assignment to userGroup
-        utils.grantRoleAssignmentsOnUserGroup(userGroup, assignments)
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, assignments_0)
 
         when: "grant role to DA with user admin token"
-        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments)
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments_0)
         def retrievedEntity = response.getEntity(RoleAssignments)
 
         then:
         response.status == HttpStatus.SC_OK
 
-        retrievedEntity.tenantAssignments.tenantAssignment.size() == 1
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 2
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, ["*"])
 
         when: "revoke role with user admin token"
         response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, ROLE_RBAC1_ID)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "revoke role with user manager token"
+        response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userManagerToken, createdDA, ROLE_RBAC2_ID)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT
@@ -1551,7 +1568,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
 
         when: "grant role to DA with user manager token"
-        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userManagerToken, createdDA, assignments)
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userManagerToken, createdDA, assignments_1)
         retrievedEntity = response.getEntity(RoleAssignments)
 
         then:

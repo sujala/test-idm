@@ -106,13 +106,20 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         self.assertEqual(assignment_resp.status_code, 200)
 
         # list tenant assignments for da
-        list_resp_parsed = self.call_list_da_roles_and_parse_the_response(
-            client=um_client, da_id=da_id)
-        tas = list_resp_parsed[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-            const.TENANT_ASSIGNMENTS]
-        self.validate_list_da_roles_response(
-            tenant_assignments=tas, role_1=role_1, role_2=role_2,
-            tenant_1=tenant_1)
+        self.call_validate_list_da_roles_response(
+            client=um_client, da_id=da_id, role_1=role_1, role_2=role_2,
+            tenant=tenant_1)
+
+        # verifying other user manager can list DA roles
+        user_manager_client_2 = self.generate_client(
+            parent_client=self.user_admin_client,
+            additional_input_data={'is_user_manager': True})
+        um_client_2 = user_manager_client_2
+        self.users.append(um_client_2.default_headers[const.X_USER_ID])
+
+        self.call_validate_list_da_roles_response(
+            client=um_client_2, da_id=da_id, role_1=role_1, role_2=role_2,
+            tenant=tenant_1)
 
         # Checking if delete role on DA removes the global role on DA, by
         # list call
@@ -121,6 +128,17 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
 
         self.validate_delegation_auth_after_role_deletion(
             da_id=da_id, role=role_2)
+
+    def call_validate_list_da_roles_response(
+            self, client, da_id, role_1, role_2, tenant):
+
+        list_resp_parsed = self.call_list_da_roles_and_parse_the_response(
+            client=client, da_id=da_id)
+        tas = list_resp_parsed[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+            const.TENANT_ASSIGNMENTS]
+        self.validate_list_da_roles_response(
+            tenant_assignments=tas, role_1=role_1, role_2=role_2,
+            tenant_1=tenant)
 
     def test_grant_roles_to_da_when_default_user_principal(self):
         """
