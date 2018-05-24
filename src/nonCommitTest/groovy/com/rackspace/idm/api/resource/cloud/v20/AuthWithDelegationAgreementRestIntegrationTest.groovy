@@ -605,6 +605,146 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         utils.deleteDelegationAgreement(sharedUserAdminToken, da)
     }
 
+    def "auth with nested DA is allowed for enabled users"() {
+        given:
+        def daData = new DelegationAgreement().with {
+            it.subAgreementNestLevel = 1
+            it.name = "DA for domain ${sharedUserAdmin.domainId}"
+            it
+        }
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daData)
+        utils.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
+        def nestedDaData = new DelegationAgreement().with {
+            it.parentDelegationAgreementId = da.id
+            it.name = "Nested DA for domain ${sharedUserAdmin.domainId}"
+            it
+        }
+        def nestedDa = utils.createDelegationAgreement(sharedSubUserToken, nestedDaData)
+        def defaultUser = utils.createUser(sharedUserAdminToken)
+        utils.addUserDelegate(sharedUserAdminToken, nestedDa.id, defaultUser.id)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        def userManager = utils.createUser(sharedUserAdminToken)
+        utils.addRoleToUser(userManager, Constants.USER_MANAGE_ROLE_ID)
+        utils.addUserDelegate(sharedUserAdminToken, nestedDa.id, userManager.id)
+        def userManagerToken = utils.getToken(userManager.username)
+        def fedUserAuthResponse = utils.authenticateFederatedUser(sharedUserAdmin.domainId)
+        def fedUser = fedUserAuthResponse.user
+        utils.addUserDelegate(sharedUserAdminToken, nestedDa.id, fedUser.id)
+        def fedUserToken = fedUserAuthResponse.token.id
+        def userGroup = utils.createUserGroup(sharedUserAdmin.domainId)
+        def userInUserGroup = utils.createUser(sharedUserAdminToken)
+        utils.addUserToUserGroup(userInUserGroup.id, userGroup)
+        utils.addUserGroupDelegate(sharedUserAdminToken, nestedDa.id, userGroup.id)
+        def userInUserGroupToken = utils.getToken(userInUserGroup.username)
+        def tokensInDa = [defaultUserToken, userManagerToken, fedUserToken, userInUserGroupToken]
+
+        when: "auth with DA"
+        def authResponses = []
+        tokensInDa.each { token ->
+            authResponses << cloud20.authenticateTokenAndDelegationAgreement(token, nestedDa.id)
+        }
+
+        then:
+        authResponses.each { authResponse ->
+            assert authResponse.status == 200
+        }
+    }
+
+    def "auth with nested DA is rejected for disabled users"() {
+        given:
+        def daData = new DelegationAgreement().with {
+            it.subAgreementNestLevel = 1
+            it.name = "DA for domain ${sharedUserAdmin.domainId}"
+            it
+        }
+        def da = utils.createDelegationAgreement(sharedUserAdminToken, daData)
+        utils.addUserDelegate(sharedUserAdminToken, da.id, sharedSubUser.id)
+        def nestedDaData = new DelegationAgreement().with {
+            it.parentDelegationAgreementId = da.id
+            it.name = "Nested DA for domain ${sharedUserAdmin.domainId}"
+            it
+        }
+        def nestedDa = utils.createDelegationAgreement(sharedSubUserToken, nestedDaData)
+        def defaultUser = utils.createUser(sharedUserAdminToken)
+        utils.addUserDelegate(sharedUserAdminToken, nestedDa.id, defaultUser.id)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        def userManager = utils.createUser(sharedUserAdminToken)
+        utils.addRoleToUser(userManager, Constants.USER_MANAGE_ROLE_ID)
+        utils.addUserDelegate(sharedUserAdminToken, nestedDa.id, userManager.id)
+        def userManagerToken = utils.getToken(userManager.username)
+        def userGroup = utils.createUserGroup(sharedUserAdmin.domainId)
+        def userInUserGroup = utils.createUser(sharedUserAdminToken)
+        utils.addUserToUserGroup(userInUserGroup.id, userGroup)
+        utils.addUserGroupDelegate(sharedUserAdminToken, nestedDa.id, userGroup.id)
+        def userInUserGroupToken = utils.getToken(userInUserGroup.username)
+        def usersAndTokensInDa = [[defaultUser, defaultUserToken], [userManager, userManagerToken], [userInUserGroup, userInUserGroupToken]]
+
+        when: "auth with DA"
+        def authResponses = []
+        usersAndTokensInDa.each { userAndToken ->
+            authResponses << cloud20.authenticateTokenAndDelegationAgreement(userAndToken[1], nestedDa.id)
+        }
+
+        then: "the users are able to auth with DA"
+        authResponses.each { authResponse ->
+            assert authResponse.status == 200
+        }
+
+        when: "disable the user and auth with DA again"
+        authResponses = []
+        usersAndTokensInDa.each { userAndToken ->
+            utils.disableUser(userAndToken[0])
+            authResponses << cloud20.authenticateTokenAndDelegationAgreement(userAndToken[1], nestedDa.id)
+        }
+
+        then: "the users are no longer able to auth with DA"
+        authResponses.each { authResponse ->
+            assert authResponse.status == 401
+        }
+    }
+
+    def "auth with nested DA is allowed for DAs when the parent DA principal is disabled"() {
+        given:
+        def rcn = "RCN-${RandomStringUtils.randomNumeric(3)}-${RandomStringUtils.randomNumeric(3)}-${RandomStringUtils.randomNumeric(3)}"
+        def userAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(userAdmin.domainId, rcn)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def rcnAdmin = utils.createUser(userAdminToken)
+        utils.addRoleToUser(rcnAdmin, Constants.RCN_ADMIN_ROLE_ID)
+        def rcnAdminToken = utils.getToken(rcnAdmin.username)
+        def subUser = utils.createUser(userAdminToken)
+        def subUserToken = utils.getToken(subUser.username)
+        def daData = new DelegationAgreement().with {
+            it.subAgreementNestLevel = 1
+            it.name = "DA for domain ${userAdmin.domainId}"
+            it
+        }
+        def da = utils.createDelegationAgreement(rcnAdminToken, daData)
+        utils.addUserDelegate(rcnAdminToken, da.id, subUser.id)
+        def nestedDaData = new DelegationAgreement().with {
+            it.parentDelegationAgreementId = da.id
+            it.name = "Nested DA for domain ${userAdmin.domainId}"
+            it
+        }
+        def nestedDa = utils.createDelegationAgreement(subUserToken, nestedDaData)
+        def otherSubUser = utils.createUser(userAdminToken)
+        def otherSubUserToken = utils.getToken(otherSubUser.username)
+        utils.addUserDelegate(userAdminToken, nestedDa.id, otherSubUser.id)
+
+        when: "auth with nested DA w/ enabled principal of parent DA"
+        def authResponse = cloud20.authenticateTokenAndDelegationAgreement(otherSubUserToken, nestedDa.id)
+
+        then:
+        authResponse.status == 200
+
+        when: "auth with nested DA w/ disabled principal of parent DA"
+        utils.disableUser(rcnAdmin)
+        authResponse = cloud20.authenticateTokenAndDelegationAgreement(otherSubUserToken, nestedDa.id)
+
+        then:
+        authResponse.status == 200
+    }
+
     void assertDelegateAuthSameAsSubuser(AuthenticateResponse delegateAuthResponse, AuthenticateResponse realSubUserAuthResponse, def delegateUser, DelegationAgreement da) {
         // Token info same (though not id..)
         assert delegateAuthResponse.token.tenant.name == realSubUserAuthResponse.token.tenant.name
