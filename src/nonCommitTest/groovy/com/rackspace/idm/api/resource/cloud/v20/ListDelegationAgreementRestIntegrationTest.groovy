@@ -2,27 +2,15 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreements
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.entity.EndUser
-import com.rackspace.idm.domain.security.AETokenService
-import com.rackspace.idm.domain.service.DelegationService
-import com.rackspace.idm.domain.service.IdentityUserService
-import org.apache.commons.lang3.RandomStringUtils
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.Tenant
-import org.openstack.docs.identity.api.v2.User
-import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
-import static org.apache.http.HttpStatus.*
+import static org.apache.http.HttpStatus.SC_NO_CONTENT
+import static org.apache.http.HttpStatus.SC_OK
 
 class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
     def setup() {
@@ -38,7 +26,7 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
 
         def userAdminD2 = utils.createCloudAccount()
 
-        // Update domains to have same ID
+        // Update domains to have same RCN
         def rcnSwitchResponse = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), userAdminD1.domainId, commonRcn)
         assert (rcnSwitchResponse.status == SC_NO_CONTENT)
         rcnSwitchResponse = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), userAdminD2.domainId, commonRcn)
@@ -115,7 +103,7 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         def subUserD2 = cloud20.createSubUser(userAdminD2Token)
         def subUserD2Token = utils.getToken(subUserD2.username)
 
-        // Update domains to have same ID
+        // Update domains to have same RCN
         def rcnSwitchResponse = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), userAdminD1.domainId, commonRcn)
         assert (rcnSwitchResponse.status == SC_NO_CONTENT)
         rcnSwitchResponse = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), userAdminD2.domainId, commonRcn)
@@ -257,6 +245,191 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         nestedDa3.subAgreementNestLevel == daToD1Nested3.subAgreementNestLevel
         nestedDa3.allowSubAgreements
         nestedDa3.parentDelegationAgreementId == parentDa.id
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "List DAs using authorized users; mediaType = #mediaType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.DELEGATION_MAX_NEST_LEVEL_PROP, 5)
+
+        def commonRcn = testUtils.getRandomRCN()
+
+        // Create users
+        def rcnAdmin = utils.createCloudAccount()
+        def userAdminD1 = utils.createCloudAccount()
+        def userAdminD1Token = utils.getToken(userAdminD1.username)
+        def fedUserResponse = utils.authenticateFederatedUser(userAdminD1.domainId)
+        def userAdminD2 = utils.createCloudAccount()
+        def userAdminD2Token = utils.getToken(userAdminD2.username)
+        def userManageD2 = cloud20.createSubUser(userAdminD2Token)
+        utils.addRoleToUser(userManageD2, Constants.USER_MANAGE_ROLE_ID)
+        def subUserD2 = cloud20.createSubUser(userAdminD2Token)
+        utils.addRoleToUser(subUserD2, Constants.ROLE_RBAC1_ID)
+
+        // Update domains to have same RCN
+        utils.domainRcnSwitch(userAdminD1.domainId, commonRcn)
+        utils.domainRcnSwitch(userAdminD2.domainId, commonRcn)
+        utils.domainRcnSwitch(rcnAdmin.domainId, commonRcn)
+
+        // Get tokens
+        def fedUserToken = fedUserResponse.token.id
+        def userManageD2Token = utils.getToken(userManageD2.username)
+        def subUserD2Token = utils.getToken(subUserD2.username)
+        utils.addRoleToUser(rcnAdmin, Constants.RCN_ADMIN_ROLE_ID)
+        def rcnAdminToken = utils.getToken(rcnAdmin.username)
+
+        // Create agreement using fed user token
+        def daD1FedUserCreate = new DelegationAgreement().with {
+            it.name = "fedUserDa"
+            it
+        }
+        def daD1FedUser = utils.createDelegationAgreement(fedUserToken, daD1FedUserCreate)
+
+        // Create DA to give user in D2 delegate access to D1
+        def daToD1ToCreate = new DelegationAgreement().with {
+            it.name = "parent"
+            it.subAgreementNestLevel = BigInteger.valueOf(4)
+            it
+        }
+        def daToD1Parent = utils.createDelegationAgreement(userAdminD1Token, daToD1ToCreate)
+        utils.addUserDelegate(userAdminD1Token, daToD1Parent.id, userAdminD2.id)
+
+        // Create nested agreement w/ d2 useradmin as the principal
+        def daToD1Nested2ToCreate = new DelegationAgreement().with {
+            it.name = "nested2"
+            it.subAgreementNestLevel = BigInteger.valueOf(2)
+            it.parentDelegationAgreementId = daToD1Parent.id
+            it
+        }
+        def daToD1Nested2 = utils.createDelegationAgreement(userAdminD2Token, daToD1Nested2ToCreate)
+        utils.addUserDelegate(userAdminD2Token, daToD1Nested2.id, subUserD2.id)
+
+        // Create agreement using sub user token
+        def daD2SubUserCreate = new DelegationAgreement().with {
+            it.name = "subUserDa"
+            it
+        }
+        def daSubUser = utils.createDelegationAgreement(subUserD2Token, daD2SubUserCreate)
+
+        when: "List DAs using rcnAdmin's token"
+        def response = cloud20.listDelegationAgreements(rcnAdminToken, null, mediaType)
+        DelegationAgreements entity = response.getEntity(DelegationAgreements)
+
+        then: "Returns ok"
+        response.status == SC_OK
+
+        entity != null
+        entity.delegationAgreement.size() == 4 // All DAs under RCN
+
+        when: "List DAs using userAdminD1's token"
+        response = cloud20.listDelegationAgreements(userAdminD1Token, null, mediaType)
+        entity = response.getEntity(DelegationAgreements)
+
+        then: "Returns ok"
+        response.status == SC_OK
+
+        entity != null
+        entity.delegationAgreement.size() == 2 // All DAs under principalDomainId matches the userAdminD1's domainId.
+        entity.delegationAgreement.find {it.id == daToD1Parent.id && it.principalDomainId == userAdminD1.domainId} != null
+        entity.delegationAgreement.find {it.id == daD1FedUser.id && it.principalDomainId == userAdminD1.domainId} != null
+
+        when: "List DAs using userAdminD2's token"
+        response = cloud20.listDelegationAgreements(userAdminD2Token, null, mediaType)
+        entity = response.getEntity(DelegationAgreements)
+
+        then: "Returns ok"
+        response.status == SC_OK
+
+        entity != null
+        entity.delegationAgreement.size() == 3 // All DAs userAdminD2 can list
+        entity.delegationAgreement.find {it.id == daToD1Parent.id && it.principalDomainId == userAdminD1.domainId} != null
+        entity.delegationAgreement.find {it.id == daToD1Nested2.id && it.principalDomainId == userAdminD2.domainId} != null
+        entity.delegationAgreement.find {it.id == daSubUser.id && it.principalDomainId == subUserD2.domainId} != null
+
+        when: "List DAs using userManageD2's token"
+        response = cloud20.listDelegationAgreements(userManageD2Token, null, mediaType)
+        entity = response.getEntity(DelegationAgreements)
+
+        then: "Returns ok"
+        response.status == SC_OK
+
+        entity != null
+        entity.delegationAgreement.size() == 1 // All DAs under userManageD2's domain except for those which principal is a user-admin.
+        entity.delegationAgreement.find {it.id == daSubUser.id && it.principalDomainId == subUserD2.domainId} != null
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "user delegate can list DA where principal is a user-admin; mediaType = #mediaType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.DELEGATION_MAX_NEST_LEVEL_PROP, 5)
+
+        // Create users and tokens
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def userManage = cloud20.createSubUser(userAdminToken)
+        utils.addRoleToUser(userManage, Constants.USER_MANAGE_ROLE_ID)
+        def userManageToken = utils.getToken(userManage.username)
+        def subUser = cloud20.createSubUser(userAdminToken)
+        def subUserToken = utils.getToken(subUser.username)
+        def fedUserResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        def fedUserToken = fedUserResponse.token.id
+
+        // Create DA to userAdmin token
+        def daUACreate = new DelegationAgreement().with {
+            it.name = "userAdminDA"
+            it
+        }
+        def daUA = utils.createDelegationAgreement(userAdminToken, daUACreate)
+
+        // Add delegates
+        utils.addUserDelegate(userAdminToken, daUA.id, userManage.id)
+        utils.addUserDelegate(userAdminToken, daUA.id, subUser.id)
+        utils.addUserDelegate(userAdminToken, daUA.id, fedUserResponse.user.id)
+
+        when: "List DAs using user manager's token"
+        def response = cloud20.listDelegationAgreements(userManageToken, null, mediaType)
+        DelegationAgreements entity = response.getEntity(DelegationAgreements)
+
+        then: "Returns ok"
+        response.status == SC_OK
+
+        entity != null
+        entity.delegationAgreement.size() == 1
+        entity.delegationAgreement.find {it.id == daUA.id && it.principalDomainId == userAdmin.domainId} != null
+
+        when: "List DAs using default user's token"
+        response = cloud20.listDelegationAgreements(userManageToken, null, mediaType)
+        entity = response.getEntity(DelegationAgreements)
+
+        then: "Returns ok"
+        response.status == SC_OK
+
+        entity != null
+        entity.delegationAgreement.size() == 1
+        entity.delegationAgreement.find {it.id == daUA.id && it.principalDomainId == userAdmin.domainId} != null
+
+        when: "List DAs using federated user's token"
+        response = cloud20.listDelegationAgreements(userManageToken, null, mediaType)
+        entity = response.getEntity(DelegationAgreements)
+
+        then: "Returns ok"
+        response.status == SC_OK
+
+        entity != null
+        entity.delegationAgreement.size() == 1
+        entity.delegationAgreement.find {it.id == daUA.id && it.principalDomainId == userAdmin.domainId} != null
 
         cleanup:
         reloadableConfiguration.reset()

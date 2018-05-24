@@ -6,11 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
-import com.rackspace.idm.domain.entity.DelegationAgreement
-import com.rackspace.idm.domain.entity.DelegationPrincipal
-import com.rackspace.idm.domain.entity.FederatedUser
-import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.DelegationService
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
@@ -316,5 +312,4 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         then:
         thrown(IllegalArgumentException)
     }
-
 }

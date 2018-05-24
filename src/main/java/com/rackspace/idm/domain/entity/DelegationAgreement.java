@@ -74,6 +74,11 @@ public class DelegationAgreement implements Auditable, UniqueId {
             filterUsage=FilterUsage.ALWAYS_ALLOWED)
     private String parentDelegationAgreementId;
 
+    @LDAPField(attribute=LdapRepository.ATTR_RS_PRINCIPAL_DOMAIN_ID,
+            objectClass=LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    private String principalDomainId;
+
     /**
      * Default to based on value of nest level if set
      * @return
@@ -231,5 +236,4 @@ public class DelegationAgreement implements Auditable, UniqueId {
     public boolean isExplicitDelegate(DelegationDelegate delegate) {
         return getDelegates().contains(delegate.getDn());
     }
-
 }

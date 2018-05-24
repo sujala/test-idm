@@ -37,6 +37,7 @@ da_item = {
             const.DOMAIN_ID: {'type': 'string'},
             const.PRINCIPAL_ID: {'type': 'string'},
             const.PRINCIPAL_TYPE: {'type': 'string'},
+            const.PRINCIPAL_DOMAIN_ID: {'type': 'string'},
             const.ALLOW_SUB_AGREEMENTS: {'type': 'boolean'},
             const.SUBAGREEMENT_NEST_LEVEL: {'type': 'integer'},
             const.PARENT_DELEGATION_AGREEMENT_ID: {'type': 'string'}

@@ -44,6 +44,7 @@
     <attribute name="issued" type="xsd:dateTime" />
     <attribute name="passwordExpiration" type="xsd:dateTime" />
     <attribute name="delegationAgreementId" type="xsd:string"/>
+    <attribute name="principalDomain" type="xsd:string"/>
 
     <attribute name="sessionInactivityTimeout" type="xsd:duration">
         <annotation>
@@ -1334,6 +1335,15 @@
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
                         The domain against which the delegation agreement grants access.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="principalDomainId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The Id of the principal's domain.
                     </p>
                 </xsd:documentation>
             </annotation>

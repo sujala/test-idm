@@ -2,7 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.domain.entity.DelegationDelegate;
 import com.rackspace.idm.domain.entity.DelegationPrincipal;
+import com.rackspace.idm.domain.entity.Domain;
 import lombok.Getter;
+
+import java.util.Set;
 
 /**
  * The various search params allowed for the list delegation agreements for user service. Either a delegate reference
@@ -24,11 +27,17 @@ public class FindDelegationAgreementParams {
      */
     private DelegationPrincipal principal;
 
-    public FindDelegationAgreementParams(DelegationDelegate delegate, DelegationPrincipal principal) {
+    /**
+     * If looking up agreements by principal domains.
+     */
+    private Set<Domain> principalDomains;
+
+    public FindDelegationAgreementParams(DelegationDelegate delegate, DelegationPrincipal principal, Set<Domain> principalDomains) {
         if (delegate == null && principal == null) {
             throw new IllegalArgumentException("A delegate or principal must be supplied");
         }
         this.delegate = delegate;
         this.principal = principal;
+        this.principalDomains = principalDomains;
     }
 }

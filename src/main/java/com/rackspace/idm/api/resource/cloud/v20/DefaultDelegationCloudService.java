@@ -33,9 +33,10 @@ import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmen
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.validation.Validator20;
+import com.unboundid.ldap.sdk.DN;
 import lombok.Getter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,8 +47,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.math.BigInteger;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Implementation of the delegation API services. Implementation is greatly simplified and standardized by combining
@@ -147,6 +152,9 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             SimplePrincipalValidator principalValidator = new SimplePrincipalValidator(agreementWeb.getPrincipalType(), agreementWeb.getPrincipalId());
             principalValidator.verifyCallerAuthorizedOnPrincipal();
             DelegationPrincipal principal = principalValidator.getPrincipal();
+
+            // Set the principal's domain
+            agreementWeb.setPrincipalDomainId(principal.getDomainId());
 
             // If nested agreement, the parent must exist and the nested DA principal must be an effective delegate on parent DA
             com.rackspace.idm.domain.entity.DelegationAgreement parentDelegationAgreement = null;
@@ -397,13 +405,31 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             - When principal is specified, only find those DAs for which caller is an effective principal
              */
             FindDelegationAgreementParams findDelegationAgreementParams = null;
+
+            // A set of principal Domain IDs used when `relationshipType` is not provided and the caller has role
+            // "rcn:admin", "identity:user-admin", or "identity:user-manage".
+            Set<Domain> principalDomains = new HashSet<>();
+
             try {
                 if (StringUtils.isBlank(relationshipType)) {
-                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegateSearchReference, delegationPrincipalSearchReference);
+
+                    if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Collections.singletonList(IdentityRole.RCN_ADMIN.getRoleName()))) {
+                        Domain callerDomain = requestContextHolder.getRequestContext().getEffectiveCallerDomain();
+                        for (Domain domain : domainService.getDomainsByRCN(callerDomain.getRackspaceCustomerNumber())) {
+                            principalDomains.add(domain);
+                        }
+                    } else if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                            IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                            IdentityUserTypeEnum.USER_MANAGER.getRoleName()))) {
+                        Domain callerDomain = requestContextHolder.getRequestContext().getEffectiveCallerDomain();
+                        principalDomains.add(callerDomain);
+                    }
+
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegateSearchReference, delegationPrincipalSearchReference, principalDomains);
                 } else if (StringUtils.equalsIgnoreCase("delegate", relationshipType)) {
-                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegateSearchReference, null);
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(delegationDelegateSearchReference, null, null);
                 } else if (StringUtils.equalsIgnoreCase("principal", relationshipType)) {
-                    findDelegationAgreementParams = new FindDelegationAgreementParams(null, delegationPrincipalSearchReference);
+                    findDelegationAgreementParams = new FindDelegationAgreementParams(null, delegationPrincipalSearchReference, null);
                 } else {
                     throw new BadRequestException("The specified relationship is invalid", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
                 }
@@ -412,6 +438,30 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             List<com.rackspace.idm.domain.entity.DelegationAgreement> delegationAgreements = delegationService.findDelegationAgreements(findDelegationAgreementParams);
+
+            // Filter DAs based on user-manager caller
+            if (CollectionUtils.isNotEmpty(principalDomains)
+                    && authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    Collections.singletonList(IdentityUserTypeEnum.USER_MANAGER.getRoleName()))) {
+                Set<DN> userAdminDNs = new HashSet<>();
+                // Find domain admin DNs
+                for (Domain domain : principalDomains) {
+                    if (domain.getUserAdminDN() != null) {
+                        userAdminDNs.add(domain.getUserAdminDN());
+                    }
+                }
+
+                Iterator<com.rackspace.idm.domain.entity.DelegationAgreement> iterator = delegationAgreements.iterator();
+                while (iterator.hasNext()) {
+                    com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = iterator.next();
+
+                    // Determine if caller has access to delegation agreement.
+                    if (!delegationAgreement.isEffectiveDelegate(caller) && userAdminDNs.contains(delegationAgreement.getPrincipalDN())) {
+                        iterator.remove();
+                    }
+
+                }
+            }
 
             return Response.ok().entity(delegationAgreementConverter.toDelegationAgreementsWeb(delegationAgreements)).build();
         } catch (SizeLimitExceededException ex) {

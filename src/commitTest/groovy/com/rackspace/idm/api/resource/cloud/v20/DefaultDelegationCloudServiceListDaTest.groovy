@@ -1,12 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.entity.BaseUserToken
+import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.idm.exception.DuplicateException
-import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -14,10 +14,6 @@ import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response
-
-import static org.apache.http.HttpStatus.SC_CONFLICT
-import static org.apache.http.HttpStatus.SC_NO_CONTENT
-
 /**
  * Tests the list delegation agreements service. High level authorization tests for service are located in DefaultDelegationCloudServiceTest
  * to allow for tests common to multiple delegation services.
@@ -185,6 +181,78 @@ class DefaultDelegationCloudServiceListDaTest extends RootServiceTest {
 
         where:
         relationship << ["a", "invalid", "both"]
+    }
+
+    def "Authorized users search DAs by principalDomains"() {
+        given:
+        def domainId = "domainId"
+        // Create the entities used for the test
+        Domain domain = entityFactory.createDomain(domainId).with {
+            it.rackspaceCustomerNumber = "RCN-123-123-123"
+            it
+        }
+        def otherDomainId = "domainId2"
+        Domain otherDomain = entityFactory.createDomain(otherDomainId).with {
+            it.rackspaceCustomerNumber = "RCN-123-123-123"
+            it
+        }
+        def da = entityFactory.createDelegationAgreement(otherDomainId)
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = domain.domainId
+            it
+        }
+
+        def tokenStr = "callerTokenStr"
+        def token = Mock(BaseUserToken)
+
+        // Authorization mocks
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+
+
+        when: "caller is an rcn-admin"
+        service.listAgreements(tokenStr, null)
+
+        then:
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                Collections.singletonList(IdentityRole.RCN_ADMIN.getRoleName())) >> true
+        1 * requestContext.getEffectiveCallerDomain() >> domain
+        1 * domainService.getDomainsByRCN(domain.getRackspaceCustomerNumber()) >> [domain, otherDomain]
+        1 * delegationService.findDelegationAgreements(_) >> { args ->
+            FindDelegationAgreementParams params = args[0]
+            assert params.principalDomains.size() == 2
+            assert params.principalDomains.contains(domain)
+            assert params.principalDomains.contains(otherDomain)
+            []
+        }
+
+        when: "caller is an user-admin"
+        service.listAgreements(tokenStr, null)
+
+        then:
+        3 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >>> [false, true, false]
+        1 * requestContext.getEffectiveCallerDomain() >> domain
+        0 * domainService.getDomainsByRCN(_)
+        1 * delegationService.findDelegationAgreements(_) >> { args ->
+            FindDelegationAgreementParams params = args[0]
+            assert params.principalDomains.contains(domain)
+            []
+        }
+
+        when: "caller is an user-manage"
+        service.listAgreements(tokenStr, null)
+
+        then:
+        3 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >>> [false, true, true]
+        1 * requestContext.getEffectiveCallerDomain() >> domain
+        0 * domainService.getDomainsByRCN(_)
+        1 * delegationService.findDelegationAgreements(_) >> { args ->
+            FindDelegationAgreementParams params = args[0]
+            assert params.principalDomains.contains(domain)
+            []
+        }
     }
 }
 

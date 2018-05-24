@@ -13,6 +13,9 @@ class LdapDelegationAgreementRepositoryTest extends RootServiceTest {
     def setup() {
         dao = new LdapDelegationAgreementRepository()
 
+        mockIdentityConfig(dao)
+        mockConfiguration(dao)
+
         ldapConnectionPools = Mock()
         dao.connPools = ldapConnectionPools
 

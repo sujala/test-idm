@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.DelegateType;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.DelegationDelegate;
 import com.rackspace.idm.domain.entity.DelegationPrincipal;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.exception.SizeLimitExceededException;
 import com.rackspace.idm.modules.usergroups.Constants;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @LDAPComponent
 public class LdapDelegationAgreementRepository extends LdapGenericRepository<DelegationAgreement> implements DelegationAgreementDao {
@@ -98,6 +100,7 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
 
         DN delegateDN = null;
         DN principalDN = null;
+        Set<Domain> principalDomains = null;
         if (findDelegationAgreementParams.getDelegate() != null) {
             delegateDN = findDelegationAgreementParams.getDelegate().getDn();
             delegateDnOptions.add(delegateDN);
@@ -113,6 +116,10 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
             if (findDelegationAgreementParams.getPrincipal().getPrincipalType() == PrincipalType.USER) {
                 principalDnOptions.addAll(((EndUser)findDelegationAgreementParams.getPrincipal()).getUserGroupDNs());
             }
+        }
+
+        if (findDelegationAgreementParams.getPrincipalDomains() != null) {
+            principalDomains = findDelegationAgreementParams.getPrincipalDomains();
         }
 
         if (delegateDN == null && principalDN == null) {
@@ -134,6 +141,13 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
         if (CollectionUtils.isNotEmpty(principalDnOptions)) {
             for (DN dn : principalDnOptions) {
                 orComponents.add(Filter.createEqualityFilter(ATTR_RS_PRINCIPAL_DN, dn.toString()));
+            }
+        }
+
+        // Add principal's domainId Filters
+        if (CollectionUtils.isNotEmpty(principalDomains)) {
+            for (Domain domain : principalDomains) {
+                orComponents.add(Filter.createEqualityFilter(ATTR_RS_PRINCIPAL_DOMAIN_ID, domain.getDomainId()));
             }
         }
 

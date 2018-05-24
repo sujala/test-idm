@@ -247,7 +247,7 @@ public class DefaultDelegationService implements DelegationService {
         // Delete all DA for which the DA consumer is the explicit principal
         if (consumer instanceof DelegationPrincipal) {
             DelegationPrincipal principal = (DelegationPrincipal) consumer;
-            List<DelegationAgreement> principalDelegationAgreements = findDelegationAgreements(new FindDelegationAgreementParams(null, principal));
+            List<DelegationAgreement> principalDelegationAgreements = findDelegationAgreements(new FindDelegationAgreementParams(null, principal, null));
             if (CollectionUtils.isNotEmpty(principalDelegationAgreements)) {
                 for (DelegationAgreement da : principalDelegationAgreements) {
                     if (da.isExplicitPrincipal((DelegationPrincipal) consumer)) {
@@ -260,7 +260,7 @@ public class DefaultDelegationService implements DelegationService {
         // Remove the DA consumer from all DAs for which the consumer is an explicit delegate
         if (consumer instanceof DelegationDelegate) {
             DelegationDelegate delegate = (DelegationDelegate) consumer;
-            List<DelegationAgreement> delegateDelegationAgreements = findDelegationAgreements(new FindDelegationAgreementParams(delegate, null));
+            List<DelegationAgreement> delegateDelegationAgreements = findDelegationAgreements(new FindDelegationAgreementParams(delegate, null, null));
             if (CollectionUtils.isNotEmpty(delegateDelegationAgreements)) {
                 for (DelegationAgreement da : delegateDelegationAgreements) {
                     if (da.isExplicitDelegate(delegate)) {
