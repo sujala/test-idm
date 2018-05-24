@@ -391,9 +391,9 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         utils.domainRcnSwitch(ua2.domainId, commonRcn)
 
         // Create 3 faws tenants in d1
-        def faws1 = createFawsTenant(ua1.domainId)
-        def faws2 = createFawsTenant(ua1.domainId)
-        def faws3 = createFawsTenant(ua1.domainId)
+        def faws1 = createProtectedTenant(ua1.domainId)
+        def faws2 = createProtectedTenant(ua1.domainId)
+        def faws3 = createProtectedTenant(ua1.domainId)
 
         def daToCreate = new DelegationAgreement().with {
             it.name = "a name"
@@ -820,10 +820,10 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         return utils.authenticateV2FederatedUser(samlRequest)
     }
 
-    // created "hidden" tenant in account (faws is configured as such)
-    Tenant createFawsTenant(String domainId) {
+    // created "hidden" tenant in account (TENANT_TYPE_PROTECTED_PREFIX is configured as such)
+    Tenant createProtectedTenant(String domainId) {
         def tenantResponse = cloud20.addTenant(sharedIdentityAdminToken, new Tenant().with {
-            it.name = Constants.TENANT_TYPE_FAWS + ":" + RandomStringUtils.randomAlphabetic(5)
+            it.name = Constants.TENANT_TYPE_PROTECTED_PREFIX + ":" + RandomStringUtils.randomAlphabetic(5)
             it.id = it.name
             it.domainId = domainId
             it

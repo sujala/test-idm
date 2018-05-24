@@ -161,7 +161,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
      */
     def "getServiceCatalogInfoApplyRcnRoles - Correctly applies domain roles to hidden tenants"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, Constants.TENANT_TYPE_FAWS)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, Constants.TENANT_TYPE_PROTECTED_PREFIX)
         org.openstack.docs.identity.api.v2.User userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
         def tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), userAdmin.domainId).getEntity(Tenants).value
         def cloudTenant = tenants.tenant.find {
@@ -175,8 +175,8 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         utils.addRoleToUser(userManage, USER_MANAGE_ROLE_ID)
         def defaultUser = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), userAdmin.domainId)
 
-        def tenantId = "faws:" + testUtils.getRandomUUID()
-        def fawsTenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, [Constants.TENANT_TYPE_FAWS]).with {it.domainId = userAdmin.domainId; it})
+        def tenantId = Constants.TENANT_TYPE_PROTECTED_PREFIX + ":" + testUtils.getRandomUUID()
+        def protectedTenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, [Constants.TENANT_TYPE_PROTECTED_PREFIX]).with {it.domainId = userAdmin.domainId; it})
 
         when: "retrieve roles for user-admin"
         def userEntity = userService.getUserById(userAdmin.id)
@@ -192,7 +192,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         def userAdminRoleAssignment = scInfo.userTenantRoles.find {it.roleRsId == Constants.USER_ADMIN_ROLE_ID}
         assert userAdminRoleAssignment != null
         assert userAdminRoleAssignment.getTenantIds().size() == 3
-        assert userAdminRoleAssignment.getTenantIds().find() {it == fawsTenant.id} != null
+        assert userAdminRoleAssignment.getTenantIds().find() {it == protectedTenant.id} != null
 
         when: "retrieve roles for user manager"
         userEntity = userService.getUserById(userManage.id)
@@ -208,12 +208,12 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         def userManageAssignment = scInfo.userTenantRoles.find {it.roleRsId == USER_MANAGE_ROLE_ID}
         assert userManageAssignment != null
         assert userManageAssignment.getTenantIds().size() == 3
-        assert userManageAssignment.getTenantIds().find() {it == fawsTenant.id} != null
+        assert userManageAssignment.getTenantIds().find() {it == protectedTenant.id} != null
 
         def userMgDefaultAssignment = scInfo.userTenantRoles.find {it.roleRsId == Constants.DEFAULT_USER_ROLE_ID}
         assert userMgDefaultAssignment != null
         assert userMgDefaultAssignment.getTenantIds().size() == 3
-        assert userMgDefaultAssignment.getTenantIds().find() {it == fawsTenant.id} != null
+        assert userMgDefaultAssignment.getTenantIds().find() {it == protectedTenant.id} != null
 
         when: "retrieve roles for regular subuser"
         userEntity = userService.getUserById(defaultUser.id)
@@ -229,7 +229,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         def userDefaultAssignment = scInfo.userTenantRoles.find {it.roleRsId == Constants.DEFAULT_USER_ROLE_ID}
         assert userDefaultAssignment != null
         assert userDefaultAssignment.getTenantIds().size() == 2
-        assert userDefaultAssignment.getTenantIds().find() {it == fawsTenant.id} == null
+        assert userDefaultAssignment.getTenantIds().find() {it == protectedTenant.id} == null
 
         cleanup:
         reloadableConfiguration.reset()

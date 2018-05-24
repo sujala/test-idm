@@ -44,7 +44,7 @@ class RolesOnHiddenTenantsTests(base.TestBaseV2):
 
         # Creating two tenants with excluded tenant type
         tenant_1_name = cls.generate_random_string(pattern=':'.join([
-            const.TENANT_TYPE_FAWS, const.TENANT_NAME_PATTERN]))
+            const.TENANT_TYPE_PROTECTED_PREFIX, const.TENANT_NAME_PATTERN]))
         tenant_1_req = factory.get_add_tenant_request_object(
             tenant_name=tenant_1_name, domain_id=cls.domain_id,
             tenant_types=const.EXCLUDED_TENANT_TYPES)
@@ -54,7 +54,7 @@ class RolesOnHiddenTenantsTests(base.TestBaseV2):
         cls.tenant_1 = responses.Tenant(cls.tenant_1_resp.json())
 
         tenant_2_name = cls.generate_random_string(pattern=':'.join([
-            const.TENANT_TYPE_FAWS, const.TENANT_NAME_PATTERN]))
+            const.TENANT_TYPE_PROTECTED_PREFIX, const.TENANT_NAME_PATTERN]))
         tenant_2_req = factory.get_add_tenant_request_object(
             tenant_name=tenant_2_name, domain_id=cls.domain_id,
             tenant_types=const.EXCLUDED_TENANT_TYPES)

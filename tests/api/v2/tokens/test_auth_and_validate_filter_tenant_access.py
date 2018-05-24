@@ -52,7 +52,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
     def create_tenant_with_faws_prefix(cls, domain_id=None):
         if domain_id is None:
             domain_id = cls.domain_id
-        tenant_name = 'faws:{}'.format(
+        tenant_name = const.TENANT_TYPE_PROTECTED_PREFIX + ':{}'.format(
             cls.generate_random_string(
                 pattern=const.TENANT_NAME_PATTERN))
         tenant_req = factory.get_add_tenant_object(tenant_name=tenant_name,
@@ -74,9 +74,9 @@ class AuthAndValidateTokens(base.TestBaseV2):
         roles = resp.json()[const.ACCESS][const.USER][const.ROLES]
         faws_tenant_access_role = next(
             (role for role in roles
-             if role[const.NAME] == "identity:tenant-access" and
-             str(role[const.TENANT_ID]).startswith("faws:")),
-            False)
+             if role[const.NAME] == const.TENANT_ACCESS_ROLE_NAME and
+             str(role[const.TENANT_ID]).startswith(
+                 const.TENANT_TYPE_PROTECTED_PREFIX + ":")), False)
         self.assertIsNotNone(faws_tenant_access_role)
 
     @attr(type='smoke_alpha')
@@ -91,9 +91,9 @@ class AuthAndValidateTokens(base.TestBaseV2):
         roles = resp.json()[const.ACCESS][const.USER][const.ROLES]
         faws_tenant_access_role = next(
             (role for role in roles
-             if role[const.NAME] == "identity:tenant-access" and
-             str(role[const.TENANT_ID]).startswith("faws:")),
-            False)
+             if role[const.NAME] == const.TENANT_ACCESS_ROLE_NAME and
+             str(role[const.TENANT_ID]).startswith(
+                 const.TENANT_TYPE_PROTECTED_PREFIX + ":")), False)
         self.assertIsNotNone(faws_tenant_access_role)
 
     @attr(type='smoke_alpha')
@@ -107,7 +107,8 @@ class AuthAndValidateTokens(base.TestBaseV2):
                               json_schema=tokens_json.validate_token)
         roles = resp.json()[const.ACCESS][const.USER][const.ROLES]
         tenant_access_role = any(
-            role[const.NAME] == "identity:tenant-access" for role in roles)
+            role[const.NAME] ==
+            const.TENANT_ACCESS_ROLE_NAME for role in roles)
         self.assertEqual(False, tenant_access_role,
                          "Tenant access role exists")
 

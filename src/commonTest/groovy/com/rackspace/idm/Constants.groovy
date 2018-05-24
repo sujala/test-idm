@@ -98,6 +98,7 @@ class Constants {
     static def TENANT_TYPE_MANAGED_HOSTING = 'managed_hosting'
     static def TENANT_TYPE_FAWS = 'faws'
     static def TENANT_TYPE_RCN = 'rcn'
+    static def TENANT_TYPE_PROTECTED_PREFIX = 'protectedprefix'
 
     static def IDENTITY_USER_ADMIN_ROLE = "identity:user-admin"
     static def DEFAULT_OBJECT_STORE_ROLE = "object-store:default"
