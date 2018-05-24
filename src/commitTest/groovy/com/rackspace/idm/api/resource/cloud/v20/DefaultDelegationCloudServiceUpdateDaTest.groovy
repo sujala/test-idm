@@ -260,7 +260,6 @@ class DefaultDelegationCloudServiceUpdateDaTest extends RootServiceTest {
 
         DelegationAgreement nestedWebDa = new DelegationAgreement().with {
             it.id = "daNestedId"
-            it.parentDelegationAgreementId = daParent.id
             it.subAgreementNestLevel = daNestLevel
             it
         }

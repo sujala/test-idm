@@ -281,7 +281,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 // The only time we pull parent is when updating a nested agreement's nest levels
                 // to ensure they are valid per the parent.
                 if (isNestedAgreement) {
-                    parentDelegationAgreement = delegationService.getDelegationAgreementById(agreementWeb.getParentDelegationAgreementId());
+                    parentDelegationAgreement = delegationService.getDelegationAgreementById(delegationAgreement.getParentDelegationAgreementId());
                     if (parentDelegationAgreement == null) {
                         throw new NotFoundException("The agreement's nest levels can not be updated. The parent agreement does not exist.", ErrorCodes.ERROR_CODE_NOT_FOUND);
                     }

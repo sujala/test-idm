@@ -121,6 +121,91 @@ class UpdateDelegationAgreementIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "test updating a delegation agreement's nested da level - original: originalNestLevel: #originalNestLevel ; newNestLevel: #newNestLevel"() {
+        given:
+        def user = utils.createCloudAccount()
+        def userToken = utils.getToken(user.username)
+        DelegationAgreement agreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("da", 32)
+            it.subAgreementNestLevel = originalNestLevel
+            it
+        }
+        def createDa = utils.createDelegationAgreement(userToken, agreement)
+
+        when: "update da nest level"
+        DelegationAgreement delegationAgreement = new DelegationAgreement().with {
+            it.subAgreementNestLevel = newNestLevel
+            it
+        }
+        def response = cloud20.updateDelegationAgreement(userToken, createDa.id, delegationAgreement)
+        def returnedEntity = response.getEntity(DelegationAgreement)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        returnedEntity.name == agreement.name
+        returnedEntity.id == createDa.id
+        returnedEntity.domainId == createDa.domainId
+        returnedEntity.description == null
+        returnedEntity.allowSubAgreements == (newNestLevel > 0)
+        returnedEntity.subAgreementNestLevel == newNestLevel
+
+        cleanup:
+        utils.deleteUserQuietly(user)
+
+        where:
+        [originalNestLevel, newNestLevel] << [[0,1], [2,3], [2,2], [2,0], [2,1]]
+    }
+
+    @Unroll
+    def "test updating a nested delegation agreement's nested da level -  originalNestLevel: originalNestLevel: #originalChildNestLevel ; newChildNestLevel: #newChildNestLevel"() {
+        given:
+        def user = utils.createCloudAccount()
+        def userToken = utils.getToken(user.username)
+        def subUser = cloud20.createSubUser(userToken)
+        def subUserToken = utils.getToken(subUser.username)
+
+        DelegationAgreement parentAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("parentda", 32)
+            it.subAgreementNestLevel = BigInteger.valueOf(3)
+            it
+        }
+        def parentDa = utils.createDelegationAgreement(userToken, parentAgreement)
+
+        utils.addUserDelegate(userToken, parentDa.id, subUser.id)
+
+        DelegationAgreement originalChildAgreement = new DelegationAgreement().with {
+            it.name = testUtils.getRandomUUIDOfLength("nestedda", 32)
+            it.parentDelegationAgreementId = parentDa.id
+            it.subAgreementNestLevel = originalChildNestLevel
+            it
+        }
+        def childDa = utils.createDelegationAgreement(subUserToken, originalChildAgreement)
+
+        when: "update da nest level"
+        DelegationAgreement updatedChildAgreement = new DelegationAgreement().with {
+            it.subAgreementNestLevel = newChildNestLevel
+            it
+        }
+        def response = cloud20.updateDelegationAgreement(userToken, childDa.id, updatedChildAgreement)
+        def returnedEntity = response.getEntity(DelegationAgreement)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        returnedEntity.name == childDa.name
+        returnedEntity.id == childDa.id
+        returnedEntity.domainId == childDa.domainId
+        returnedEntity.description == null
+        returnedEntity.allowSubAgreements == (newChildNestLevel > 0)
+        returnedEntity.subAgreementNestLevel == newChildNestLevel
+
+        cleanup:
+        utils.deleteUserQuietly(user)
+
+        where:
+        [originalChildNestLevel, newChildNestLevel] << [[0,1], [1,2], [2,2], [2,0], [2,1]]
+    }
+
+    @Unroll
     def "updateDelegationAgreement: error check - mediaType = #mediaType"() {
         given:
         def userAdmin = utils.createCloudAccount()
