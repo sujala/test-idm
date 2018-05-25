@@ -266,6 +266,55 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
         }
     }
 
+    @Unroll
+    def "grantRolesToAgreement: Can only assign roles to nested agreements when enabled: enabled: #flag "() {
+        reloadableConfig.canRolesBeAssignedToNestedDelegationAgreements() >> flag
+        def domainId = "domainId"
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.uniqueId = "rsId=" + it.id
+            it.domainId = domainId
+            it
+        }
+
+        def tokenStr = "callerTokenStr"
+        def token = Mock(BaseUserToken)
+
+        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = new com.rackspace.idm.domain.entity.DelegationAgreement().with {
+            it.id = "id"
+            it.parentDelegationAgreementId = "aParent"
+            it.domainId = domainId
+            it.principal = Mock(DelegationPrincipal)
+            it.principalDN = caller.dn
+            it
+        }
+        daEntity.principal.getId() >> caller.id
+        daEntity.principal.principalType >> PrincipalType.USER
+
+        when: "nested agreement"
+        service.grantRolesToAgreement(tokenStr, daEntity.id, null)
+
+        then: "not allowed to assign roles"
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(tokenStr) >> token
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daEntity.id) >> daEntity
+        1 * authorizationService.isCallerAuthorizedToManageDelegationAgreement(daEntity) >> true
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            def exception = args[0]
+            if (!flag) {
+                IdmExceptionAssert.assertException(exception, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, DefaultDelegationCloudService.ERROR_MSG_NESTED_ROLE_ASSIGNMENT_FORBIDDEN)
+            } else {
+                // Fails due to missing role assignments
+                IdmExceptionAssert.assertException(exception, BadRequestException, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE, "Must supply a set of assignments")
+            }
+            Response.status(SC_BAD_REQUEST)
+        }
+
+        where:
+        flag << [true, false]
+    }
+
     def "revokeRoleFromAgreement: calls appropriate services"() {
         def domainId = "domainId"
         User caller = new User().with {

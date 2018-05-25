@@ -418,6 +418,10 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP = "feature.enable.delegation.authentication";
     public static final boolean FEATURE_ENABLE_DELEGATION_AUTHENTICATION_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP = "feature.enable.delegation.grant.roles.to.nested.da";
+    public static final boolean FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_DEFAULT = false;
+
+
     public static final String FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_PROP = "delegation.max.number.of.delegates.per.da";
     public static final int FEATURE_DELEGATION_MAX_NUMBER_OF_DELEGATES_PER_DA_DEFAULT = 5;
     public static final String DELEGATION_MAX_NEST_LEVEL_PROP = "delegation.max.nest.level";
@@ -789,6 +793,7 @@ public class IdentityConfig {
         defaults.put(ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP, ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT);
         defaults.put(FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_DEFAULT);
         defaults.put(DELEGATION_MAX_NEST_LEVEL_PROP, DELEGATION_MAX_NEST_LEVEL_DEFAULT);
+        defaults.put(FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP, FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
@@ -1829,6 +1834,12 @@ public class IdentityConfig {
         public boolean areDelegationAgreementsEnabledForAllRcns() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP);
         }
+
+        @IdmProp(key = FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP, versionAdded = "3.22.0", description = "Whether or not to allow roles to be assigned to nested delegation agreements")
+        public boolean canRolesBeAssignedToNestedDelegationAgreements() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP);
+        }
+
 
         public boolean areDelegationAgreementsEnabledForRcn(String rcn) {
             return reloadableConfig.areDelegationAgreementsEnabledForAllRcns()

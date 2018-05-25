@@ -67,6 +67,8 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
     public static final String ERROR_MSG_DELEGATE_MAX_EXCEEDED = "The maximum number of delegates was exceeded or you are not authorized to use this delegate";
     public static final String ERROR_MSG_SUBAGREEMENT_MUTUAL_EXCLUSION = "allowSubAgreements and subAgreementNestLevel are mutually exclusive";
 
+    public static final String ERROR_MSG_NESTED_ROLE_ASSIGNMENT_FORBIDDEN = "Role assignments on subagreements is not currently supported.";
+
     @Autowired
     private IdentityConfig identityConfig;
 
@@ -653,6 +655,11 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             if (delegationAgreement == null
                     || !authorizationService.isCallerAuthorizedToManageDelegationAgreement(delegationAgreement)) {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            if (StringUtils.isNotBlank(delegationAgreement.getParentDelegationAgreementId())
+                    && !identityConfig.getReloadableConfig().canRolesBeAssignedToNestedDelegationAgreements()) {
+                throw new ForbiddenException(ERROR_MSG_NESTED_ROLE_ASSIGNMENT_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
             if (roleAssignments == null) {
