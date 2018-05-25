@@ -529,7 +529,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         def response = cloud20.deleteRole(sharedServiceAdminToken, role.id)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Deleting the role associated with one or more users is not allowed")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultCloud20Service.ERROR_DELETE_ASSIGNED_ROLE)
 
         cleanup:
         try {

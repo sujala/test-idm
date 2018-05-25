@@ -323,7 +323,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public int getCountOfTenantRoleAssignmentsByRoleId(String roleId) {
         Validate.notNull(roleId);
-        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), BASE_DN);
+        return  countObjects(searchFilterGetTenantRolesByRoleId(roleId), SCOPE_ACCESS_BASE_DN);
     }
 
     private TenantRole getTenantRole(String dn, String roleId) {

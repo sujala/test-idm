@@ -326,7 +326,7 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         def response = cloud20.deleteRole(serviceAdminToken, role.id)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Deleting the role associated with one or more users is not allowed")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultCloud20Service.ERROR_DELETE_ASSIGNED_ROLE)
 
         when: "delete role which is not assigned to any user"
         utils.deleteTenant(tenantA)

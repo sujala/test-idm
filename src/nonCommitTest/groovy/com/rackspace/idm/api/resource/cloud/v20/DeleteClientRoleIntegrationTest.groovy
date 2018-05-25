@@ -115,9 +115,7 @@ class DeleteClientRoleIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID("samlUser")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, [gRole.name])
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        utils.addRoleToUser(userAdmin, gRole.id)
+        utils.createUserAdminWithTenants(domainId)
 
         when: "creating a saml user under a user-admin with a non-propagating role"
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
