@@ -834,7 +834,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 if (StringUtils.isNotBlank(user.getUsername()) &&
                         !retrievedUser.getUsername().equals(user.getUsername()) &&
-                        !identityConfig.getReloadableConfig().isUsernameUpdateAllowed()) {
+                        !(identityConfig.getReloadableConfig().isUsernameUpdateAllowed()  &&
+                                authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_UPDATE_USERNAME.getRoleName()))) {
                     throw new ForbiddenException(USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE);
                 }
 

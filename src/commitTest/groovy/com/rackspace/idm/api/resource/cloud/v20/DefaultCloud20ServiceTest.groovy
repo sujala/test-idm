@@ -4502,6 +4502,41 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == SC_OK
     }
 
+    @Unroll
+    def "updateUser: in order to update a user's username the feature must be enabled and the user must have the required role: updateUsernameFeatureEnabled = #updateUsernameFeatureEnabled, userHasRole = #userHasRole"() {
+        given:
+        allowUserAccess()
+        def usernameCanBeUpdated = updateUsernameFeatureEnabled && userHasRole
+        def userId = "userId"
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser()
+        def userForCreate = new UserForCreate().with {
+            it.username = "newUsername"
+            it
+        }
+
+        when:
+        service.updateUser(headers, authToken, userId, userForCreate)
+
+        then:
+        // The caller is checked for the update username role only if the feature is enabled
+        (0..1) * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_UPDATE_USERNAME.getRoleName()) >> userHasRole
+        1 * identityConfig.getReloadableConfig().isUsernameUpdateAllowed() >> updateUsernameFeatureEnabled
+        1 * userService.isUsernameUnique(userForCreate.username) >> true
+        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.SERVICE_ADMIN
+        if (usernameCanBeUpdated) {
+            1 * userService.updateUser(_)
+            2 * identityUserService.getEndUserById(userId) >> user // this service is called a second time after the update to load the new values
+        } else {
+            0 * userService.updateUser(_)
+            1 * identityUserService.getEndUserById(userId) >> user
+        }
+
+        where:
+        [updateUsernameFeatureEnabled, userHasRole] << [[true, false], [true, false]].combinations()
+    }
+
     def "federated auth does not expose the core contactId"() {
         given:
         mockAuthConverterCloudV20(service)

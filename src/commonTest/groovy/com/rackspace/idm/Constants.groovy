@@ -57,6 +57,7 @@ class Constants {
     static def IDENTITY_CHANGE_DOMAIN_ADMIN_ROLE_NAME="identity:domain-admin-change"
     static def IDENTITY_SWITCH_DOMAIN_RCN_ROLE_ID="1f83e03681cc11e7a7e037b1affb8d28"
     static def IDENTITY_SWITCH_DOMAIN_RCN_ROLE_NAME="identity:domain-rcn-switch"
+    static def IDENTITY_UPDATE_USERNAME_ROLE_ID="055871b85f8911e89da027ba45309430"
 
     static def IDENTITY_ANALYZE_TOKEN_ROLE_ID = "2b4d276b677d47dd85d254168ed452d2"
     static def IDENTITY_PHONE_PIN_ADMIN_ROLE_ID = "fda6705a7ba640598f3eacd9884d8a0e"

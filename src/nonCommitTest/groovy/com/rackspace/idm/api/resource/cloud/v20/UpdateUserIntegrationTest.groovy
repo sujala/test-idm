@@ -6,7 +6,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcemen
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantService
@@ -33,6 +35,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
     @Autowired TenantService tenantService
     @Autowired TenantRoleDao tenantRoleDao
     @Autowired ApplicationService applicationService
+    @Autowired ApplicationRoleDao applicationRoleDao
 
     @Unroll
     def "update user v1.1 without enabled attribute does not enable user, accept = #acceptContentType, request = #requestContentType"() {
@@ -438,10 +441,11 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "test service admin username can be updated: featureEnabled = #featureEnabled"() {
+    def "test service admin username can be updated: featureEnabled = #featureEnabled, userHasUpdateUsernameRole = #userHasUpdateUsernameRole"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_USERNAME_UPDATE_PROP, featureEnabled)
         def serviceAdmin = utils.createServiceAdmin()
+        def identityAdmin = utils.createIdentityAdmin()
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
@@ -451,13 +455,20 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def defaultUser = utils.createUser(utils.getToken(userAdmin.username), RandomStringUtils.randomAlphabetic(8), domainId)
         users = [defaultUser, *users]
         def userUpdates = new UserForCreate()
+        def userIds = [serviceAdmin.id, identityAdmin.id, userAdmin.id, userManager.id, defaultUser.id]
+        if (userHasUpdateUsernameRole) {
+            userIds.each { userId ->
+                addUpdateUsernameRoleToUser(userId)
+            }
+        }
+        def userAllowedToUpdateUsername = featureEnabled && userHasUpdateUsernameRole
 
         when: "update w/ same service admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         def response = cloud20.updateUser(utils.getToken(serviceAdmin.username), serviceAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ different service admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -468,7 +479,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
         when: "update w/ identity admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
-        response = cloud20.updateUser(utils.getIdentityAdminToken(), serviceAdmin.id, userUpdates)
+        response = cloud20.updateUser(utils.getToken(identityAdmin.username), serviceAdmin.id, userUpdates)
 
         then:
         assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.NOT_AUTHORIZED)
@@ -501,13 +512,15 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteServiceAdmin(serviceAdmin)
 
         where:
-        featureEnabled << [true, false]
+        [featureEnabled, userHasUpdateUsernameRole] << [[true, false], [true, false]].combinations()
     }
 
     @Unroll
-    def "test identity admin username can be updated: featureEnabled = #featureEnabled"() {
+    def "test identity admin username can be updated: featureEnabled = #featureEnabled, userHasUpdateUsernameRole = #userHasUpdateUsernameRole"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_USERNAME_UPDATE_PROP, featureEnabled)
+        def serviceAdmin = utils.createServiceAdmin()
+        def otherIdentityAdmin = utils.createIdentityAdmin()
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
@@ -518,24 +531,31 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def defaultUser = utils.createUser(utils.getToken(userAdmin.username), RandomStringUtils.randomAlphabetic(8), domainId)
         users = [defaultUser, *users]
         def userUpdates = new UserForCreate()
+        def userIds = [serviceAdmin.id, identityAdmin.id, otherIdentityAdmin.id, userAdmin.id, userManager.id, defaultUser.id]
+        if (userHasUpdateUsernameRole) {
+            userIds.each { userId ->
+                addUpdateUsernameRoleToUser(userId)
+            }
+        }
+        def userAllowedToUpdateUsername = featureEnabled && userHasUpdateUsernameRole
 
         when: "update w/ same user token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         def response = cloud20.updateUser(utils.getToken(identityAdmin.username), identityAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ service admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
-        response = cloud20.updateUser(utils.getServiceAdminToken(), identityAdmin.id, userUpdates)
+        response = cloud20.updateUser(utils.getToken(serviceAdmin.username), identityAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ different identity admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
-        response = cloud20.updateUser(utils.getIdentityAdminToken(), identityAdmin.id, userUpdates)
+        response = cloud20.updateUser(utils.getToken(otherIdentityAdmin.username), identityAdmin.id, userUpdates)
 
         then:
         assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.NOT_AUTHORIZED)
@@ -567,13 +587,15 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
 
         where:
-        featureEnabled << [true, false]
+        [featureEnabled, userHasUpdateUsernameRole] << [[true, false], [true, false]].combinations()
     }
 
     @Unroll
-    def "test user admin's username can be updated: featureEnabled = #featureEnabled"() {
+    def "test user admin's username can be updated: featureEnabled = #featureEnabled, userHasUpdateUsernameRole = #userHasUpdateUsernameRole"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_USERNAME_UPDATE_PROP, featureEnabled)
+        def serviceAdmin = utils.createServiceAdmin()
+        def identityAdmin = utils.createIdentityAdmin()
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         def userAdmin, userAdmin2, users, users2
@@ -590,27 +612,35 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def defaultUserDifferentDomain = utils.createUser(utils.getToken(userAdmin2.username), RandomStringUtils.randomAlphabetic(8), domainId2)
         users2 = [defaultUserDifferentDomain, *users2]
         def userUpdates = new UserForCreate()
+        def userIds = [serviceAdmin.id, identityAdmin.id, userAdmin.id, userAdmin2.id, userManagerSameDomain.id, userManagerDifferentDomain.id,
+                       defaultUserSameDomain.id, defaultUserDifferentDomain.id]
+        if (userHasUpdateUsernameRole) {
+            userIds.each { userId ->
+                addUpdateUsernameRoleToUser(userId)
+           }
+        }
+        def userAllowedToUpdateUsername = featureEnabled && userHasUpdateUsernameRole
 
         when: "update w/ same user token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         def response = cloud20.updateUser(utils.getToken(userAdmin.username), userAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ service admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
-        response = cloud20.updateUser(utils.getServiceAdminToken(), userAdmin.id, userUpdates)
+        response = cloud20.updateUser(utils.getToken(serviceAdmin.username), userAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ identity admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
-        response = cloud20.updateUser(utils.getIdentityAdminToken(), userAdmin.id, userUpdates)
+        response = cloud20.updateUser(utils.getToken(identityAdmin.username), userAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ different user admin token (different domain)"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -655,13 +685,15 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId2)
 
         where:
-        featureEnabled << [true, false]
+        [featureEnabled, userHasUpdateUsernameRole] << [[true, false], [true, false]].combinations()
     }
 
     @Unroll
-    def "test user manager username can be updated: featureEnabled = #featureEnabled"() {
+    def "test user manager username can be updated: featureEnabled = #featureEnabled, userHasUpdateUsernameRole = #userHasUpdateUsernameRole"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_USERNAME_UPDATE_PROP, featureEnabled)
+        def serviceAdmin = utils.createServiceAdmin()
+        def identityAdmin = utils.createIdentityAdmin()
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         def userAdmin1, userAdmin2, users, users2
@@ -681,34 +713,42 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def defaultUserDifferentDomain = utils.createUser(utils.getToken(userAdmin2.username), RandomStringUtils.randomAlphabetic(8), domainId2)
         users2 = [defaultUserDifferentDomain, *users2]
         def userUpdates = new UserForCreate()
+        def userIds = [serviceAdmin.id, identityAdmin.id, userAdmin1.id, userAdmin2.id, userManager.id, userManagerSameDomain.id,
+                       userManagerDifferentDomain.id, defaultUserSameDomain.id, defaultUserDifferentDomain.id]
+        if (userHasUpdateUsernameRole) {
+            userIds.each { userId ->
+                addUpdateUsernameRoleToUser(userId)
+            }
+        }
+        def userAllowedToUpdateUsername = featureEnabled && userHasUpdateUsernameRole
 
         when: "update w/ same user token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         def response = cloud20.updateUser(utils.getToken(userManager.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ service admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
-        response = cloud20.updateUser(utils.getServiceAdminToken(), userManager.id, userUpdates)
+        response = cloud20.updateUser(utils.getToken(serviceAdmin.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ identity admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
-        response = cloud20.updateUser(utils.getIdentityAdminToken(), userManager.id, userUpdates)
+        response = cloud20.updateUser(utils.getToken(identityAdmin.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ user admin token from same domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(userAdmin1.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ user admin token from different domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -753,13 +793,15 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId2)
 
         where:
-        featureEnabled << [true, false]
+        [featureEnabled, userHasUpdateUsernameRole] << [[true, false], [true, false]].combinations()
     }
 
     @Unroll
-    def "test default user username can be updated: featureEnabled = #featureEnabled"() {
+    def "test default user username can be updated: featureEnabled = #featureEnabled, userHasUpdateUsernameRole = #userHasUpdateUsernameRole"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_USERNAME_UPDATE_PROP, featureEnabled)
+        def serviceAdmin = utils.createServiceAdmin()
+        def identityAdmin = utils.createIdentityAdmin()
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         def userAdmin1, userAdmin2, users, users2
@@ -778,34 +820,42 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def defaultUserDifferentDomain = utils.createUser(utils.getToken(userAdmin2.username), RandomStringUtils.randomAlphabetic(8), domainId2)
         users2 = [defaultUserDifferentDomain, *users2]
         def userUpdates = new UserForCreate()
+        def userIds = [serviceAdmin.id, identityAdmin.id, userAdmin1.id, userAdmin2.id, userManagerSameDomain.id, userManagerDifferentDomain.id,
+                       defaultUser.id, defaultUserSameDomain.id, defaultUserDifferentDomain.id]
+        if (userHasUpdateUsernameRole) {
+            userIds.each { userId ->
+                addUpdateUsernameRoleToUser(userId)
+            }
+        }
+        def userAllowedToUpdateUsername = featureEnabled && userHasUpdateUsernameRole
 
         when: "update w/ same user token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         def response = cloud20.updateUser(utils.getToken(defaultUser.username), defaultUser.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ service admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
-        response = cloud20.updateUser(utils.getServiceAdminToken(), defaultUser.id, userUpdates)
+        response = cloud20.updateUser(utils.getToken(serviceAdmin.username), defaultUser.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ identity admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
-        response = cloud20.updateUser(utils.getIdentityAdminToken(), defaultUser.id, userUpdates)
+        response = cloud20.updateUser(utils.getToken(identityAdmin.username), defaultUser.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ user admin token from same domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(userAdmin1.username), defaultUser.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ user admin token from different domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -819,7 +869,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userManagerSameDomain.username), defaultUser.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ user manager token from different domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -850,7 +900,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId2)
 
         where:
-        featureEnabled << [true, false]
+        [featureEnabled, userHasUpdateUsernameRole] << [[true, false], [true, false]].combinations()
     }
 
     void assertUsernameUpdated(response, userUpdates, usernameCanBeUpdated, errorMessage = DefaultCloud20Service.USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE) {
@@ -884,6 +934,18 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
             if(returnedUser.hasProperty('RAX-AUTH:contactId')) assert returnedUser['RAX-AUTH:contactId'] != null
             return returnedUser['RAX-AUTH:contactId']
         }
+    }
+
+    def addUpdateUsernameRoleToUser(String userId) {
+        def user = userService.getUserById(userId)
+        def updateUsernameRole = applicationRoleDao.getClientRole(Constants.IDENTITY_UPDATE_USERNAME_ROLE_ID)
+        def role = new TenantRole().with {
+            it.clientId = updateUsernameRole.clientId
+            it.name = updateUsernameRole.name
+            it.roleRsId = updateUsernameRole.id
+            it
+        }
+        tenantService.addTenantRoleToUser(user, role)
     }
 
 }
