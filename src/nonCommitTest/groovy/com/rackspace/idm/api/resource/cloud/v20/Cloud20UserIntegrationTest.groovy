@@ -436,7 +436,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         def identityAdminToken = utils.getIdentityAdminToken()
 
         when:
-        def userById = utils.getUserByIdReturnUser(defaultUser.id, identityAdminToken, acceptType)
+        def userById = utils.getUserById(defaultUser.id, identityAdminToken, acceptType)
         def userByUsername = utils.getUserByName(defaultUser.username, identityAdminToken, acceptType)
         def usersByEmail = utils.getUsersByEmail(defaultUser.email, identityAdminToken, acceptType)
         def usersByDomain = utils.getUsersByDomainId(domainId, identityAdminToken, acceptType)
@@ -470,7 +470,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         def identityAdminToken = utils.getIdentityAdminToken()
 
         when:
-        def userById = utils.getUserByIdReturnUser(defaultUser.id, identityAdminToken, acceptType)
+        def userById = utils.getUserById(defaultUser.id, identityAdminToken, acceptType)
         def userByUsername = utils.getUserByName(defaultUser.username, identityAdminToken, acceptType)
         def usersByEmail = utils.getUsersByEmail(defaultUser.email, identityAdminToken, acceptType)
         def usersByDomain = utils.getUsersByDomainId(domainId, identityAdminToken, acceptType)

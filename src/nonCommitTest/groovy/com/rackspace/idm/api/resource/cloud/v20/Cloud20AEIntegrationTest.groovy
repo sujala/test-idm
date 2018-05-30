@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
@@ -272,7 +273,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         then: "should default to UUID tokens"
         nullToken.token.id.length() == 32
-        retrievedUser.user['RAX-AUTH:tokenFormat'] == null
+        retrievedUser.tokenFormat == null
         userList.users[0]['RAX-AUTH:tokenFormat'] == null
 
         when: "retrieving an 'AE' tokenFormat"
@@ -283,7 +284,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         then: "should be bigger then 32 characters (UUID tokens)"
         aeToken.token.id.length() > 32
-        retrievedUser.user['RAX-AUTH:tokenFormat'] == 'AE'
+        retrievedUser.tokenFormat == TokenFormatEnum.AE
         userList.users[0]['RAX-AUTH:tokenFormat'] == 'AE'
 
         when: "retrieving an 'UUID' tokenFormat"
@@ -294,7 +295,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         then: "should return the same original 'null' token"
         uuidToken.token.id == nullToken.token.id
-        retrievedUser.user['RAX-AUTH:tokenFormat'] == 'UUID'
+        retrievedUser.tokenFormat == TokenFormatEnum.UUID
         userList.users[0]['RAX-AUTH:tokenFormat'] == 'UUID'
 
         when: "retrieving an 'DEFAULT' tokenFormat"
@@ -305,7 +306,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         then: "should return the same as the 'UUID' token"
         defaultToken.token.id == uuidToken.token.id
-        retrievedUser.user['RAX-AUTH:tokenFormat'] == 'DEFAULT'
+        retrievedUser.tokenFormat == TokenFormatEnum.DEFAULT
         userList.users[0]['RAX-AUTH:tokenFormat'] == 'DEFAULT'
 
         when: "validating an 'AE' token"

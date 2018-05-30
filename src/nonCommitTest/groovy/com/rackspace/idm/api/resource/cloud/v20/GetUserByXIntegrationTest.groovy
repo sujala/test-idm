@@ -305,7 +305,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         def expectedExpTime = userService.getPasswordExpiration(userEntity)
 
         when: "get user w/ pwd policy by ID"
-        def getUserByIdResponse = utils.getUserByIdReturnUser(userAdmin.id, utils.getServiceAdminToken(), accept)
+        def getUserByIdResponse = utils.getUserById(userAdmin.id, utils.getServiceAdminToken(), accept)
         def returnedExpTime = getUserByIdResponse.passwordExpiration != null ? new DateTime(((XMLGregorianCalendar) getUserByIdResponse.passwordExpiration).toGregorianCalendar().getTime()) : null
 
         then: "the returned expiration time matches the expiration time we expect from the pw policy"
@@ -317,7 +317,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         }
 
         when: "get user w/o pwd policy by ID"
-        getUserByIdResponse = utils.getUserByIdReturnUser(userAdminWithoutPwdPolicy.id, utils.getServiceAdminToken(), accept)
+        getUserByIdResponse = utils.getUserById(userAdminWithoutPwdPolicy.id, utils.getServiceAdminToken(), accept)
 
         then:
         getUserByIdResponse.passwordExpiration == null

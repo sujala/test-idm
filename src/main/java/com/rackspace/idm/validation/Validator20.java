@@ -206,6 +206,7 @@ public class Validator20 {
     }
 
     public void validatePasswordForCreateOrUpdate(String password) {
+        // TODO: we probably need to delete this method and use the password pattern validation in Validator.validatePasswordForCreateOrUpdate
         String errMsg = "Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character.";
         if (password.length() < PASSWORD_MIN_LENGTH) {
             logger.warn(errMsg);

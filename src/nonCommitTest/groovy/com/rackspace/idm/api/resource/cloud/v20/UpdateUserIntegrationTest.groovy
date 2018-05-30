@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.PatternErrorMessages
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
@@ -903,10 +904,30 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         [featureEnabled, userHasUpdateUsernameRole] << [[true, false], [true, false]].combinations()
     }
 
+    def "update username with correct access but invalid username returns correct error"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_USERNAME_UPDATE_PROP, true)
+        def user = utils.createCloudAccount()
+        def userUpdates = new UserForCreate()
+        userUpdates.username = ")*@&(@)"
+
+        when:
+        def response = cloud20.updateUser(utils.getServiceAdminToken(), user.id, userUpdates)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, 400, PatternErrorMessages.INVALID_PASSWORD_ERROR_MESSAGE)
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
     void assertUsernameUpdated(response, userUpdates, usernameCanBeUpdated, errorMessage = DefaultCloud20Service.USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE) {
         if (usernameCanBeUpdated) {
             assert response.status == 200
-            assert response.getEntity(UserForCreate).value.username == userUpdates.username
+            def userResponse = response.getEntity(User).value
+            assert userResponse.username == userUpdates.username
+            def userById = utils.getUserById(userResponse.id)
+            assert userById.username == userUpdates.username
         } else {
             assert response.status == 403
             assert response.getEntity(IdentityFault).value.message == errorMessage

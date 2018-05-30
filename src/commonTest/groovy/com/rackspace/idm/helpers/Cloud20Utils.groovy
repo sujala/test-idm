@@ -997,16 +997,6 @@ class Cloud20Utils {
     def getUserById(String id, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
         def response = methods.getUserById(token, id, mediaType)
         assert (response.status == SC_OK)
-        if (mediaType == APPLICATION_XML_TYPE) {
-            return response.getEntity(User).value
-        } else {
-            return new ObjectMapper().readValue(response.getEntity(String), Map)
-        }
-    }
-
-    User getUserByIdReturnUser(String id, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
-        def response = methods.getUserById(token, id, mediaType)
-        assert (response.status == SC_OK)
         def entity = response.getEntity(User)
         if (mediaType == APPLICATION_XML_TYPE) {
             return entity.value
