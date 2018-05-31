@@ -121,6 +121,10 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
             client=um_client_2, da_id=da_id, role_1=role_1, role_2=role_2,
             tenant=tenant_1)
 
+        # CID-1502
+        self.validate_role_deletion_is_forbidden(role=role_1)
+        self.validate_role_deletion_is_forbidden(role=role_2)
+
         # Checking if delete role on DA removes the global role on DA, by
         # list call
         self.validate_delete_role_from_DA(
@@ -128,6 +132,15 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
 
         self.validate_delegation_auth_after_role_deletion(
             da_id=da_id, role=role_2)
+
+    def validate_role_deletion_is_forbidden(self, role):
+
+        delete_resp = self.identity_admin_client.delete_role(role_id=role.id)
+        self.assertEqual(delete_resp.status_code, 403)
+        self.assertEqual(
+            delete_resp.json()[const.FORBIDDEN][const.MESSAGE], (
+                'Deleting the role associated with one or more users, user'
+                ' groups or delegation agreements is not allowed'))
 
     def call_validate_list_da_roles_response(
             self, client, da_id, role_1, role_2, tenant):
