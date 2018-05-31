@@ -915,7 +915,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def response = cloud20.updateUser(utils.getServiceAdminToken(), user.id, userUpdates)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, 400, PatternErrorMessages.INVALID_PASSWORD_ERROR_MESSAGE)
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, 400, PatternErrorMessages.INVALID_USERNAME_ERROR_MESSAGE)
 
         cleanup:
         reloadableConfiguration.reset()
