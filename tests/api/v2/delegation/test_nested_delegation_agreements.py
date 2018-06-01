@@ -22,12 +22,13 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
     def setUp(self):
         super(NestedDelegationAgreementsTests, self).setUp()
         self.group_ids = []
+        self.sub_users = []
 
     @attr(type='regression')
     def test_create_get_update_nested_da(self):
 
         parent_nest_level = 2
-        parent_da_id = self.call_create_delegation_agreement(
+        _, parent_da_id = self.call_create_delegation_agreement(
             client=self.user_admin_client, delegate_id=self.user_admin_2_id,
             sub_agreement_nest_level=parent_nest_level)
         get_parent_da_resp = self.user_admin_client.get_delegation_agreement(
@@ -91,7 +92,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.assertEqual(update_resp.json()[
                              const.BAD_REQUEST][const.MESSAGE], (
             "Error code: 'GEN-007'; subAgreementNestLevel value must"
-            " be between 0 and 1"))
+            " be between 0 and {0}".format(parent_nest_level - 1)))
 
         # update with a valid nest-level
         da_req = requests.DelegationAgreements(
@@ -127,25 +128,52 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             'required'] += [const.PARENT_DELEGATION_AGREEMENT_ID]
         self.assertSchema(nested_da_resp, modified_schema)
 
-    def call_create_delegation_agreement(self, client, delegate_id,
-                                         da_name=None, user_delegate=True,
-                                         sub_agreement_nest_level=None):
-        if not da_name:
-            da_name = self.generate_random_string(
-                pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, sub_agreement_nest_level=sub_agreement_nest_level)
-        da_resp = client.create_delegation_agreement(request_object=da_req)
-        da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+    @attr('skip_at_gate')
+    def test_auth_under_nested_da(self):
 
-        if user_delegate:
-            client.add_user_delegate_to_delegation_agreement(
-                da_id, delegate_id)
-        else:
-            client.add_user_group_delegate_to_delegation_agreement(
-                da_id, delegate_id
-            )
-        return da_id
+        parent_nest_level = 2
+        _, parent_da_id = self.call_create_delegation_agreement(
+            client=self.user_admin_client, delegate_id=self.user_admin_2_id,
+            sub_agreement_nest_level=parent_nest_level)
+
+        # create nested da with level - 1
+        nested_da_name = self.generate_random_string(
+            pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
+        da_req = requests.DelegationAgreements(
+            da_name=nested_da_name,
+            # sub_agreement_nest_level=(parent_nest_level - 1),
+            parent_da_id=parent_da_id)
+        nested_da_resp = self.user_admin_client_2.create_delegation_agreement(
+            request_object=da_req)
+        nested_da_id = nested_da_resp.json()[
+            const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+        self.validate_nested_da_response(nested_da_resp)
+
+        # Add a sub user in Domain 2
+        sub_user_name = self.generate_random_string(
+            pattern=const.SUB_USER_PATTERN)
+        additional_input_data = {
+            'user_name': sub_user_name}
+        sub_user_client = self.generate_client(
+            parent_client=self.user_admin_client_2,
+            additional_input_data=additional_input_data)
+        sub_user_id = sub_user_client.default_headers[const.X_USER_ID]
+        # for sub-user cleanup
+        self.sub_users.append(sub_user_id)
+
+        # add sub-user in domain 2 as delegate to nested DA
+        self.user_admin_client_2.add_user_delegate_to_delegation_agreement(
+            da_id=nested_da_id, user_id=sub_user_id)
+
+        delegation_auth_req = requests.AuthenticateWithDelegationAgreement(
+            token=sub_user_client.default_headers[const.X_AUTH_TOKEN],
+            delegation_agreement_id=nested_da_id)
+
+        resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.json()[const.ACCESS][const.USER][const.RAX_AUTH_DOMAIN_ID],
+            self.domain_id)
 
     @attr(type='regression')
     def test_nested_da_when_principal_is_user_group(self):
@@ -161,7 +189,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.assertEqual(resp.status_code, 204)
 
         # create parent DA when user group is a delegate
-        parent_da_id = self.call_create_delegation_agreement(
+        _, parent_da_id = self.call_create_delegation_agreement(
             client=self.user_admin_client, delegate_id=group_one.id,
             user_delegate=False, sub_agreement_nest_level=1)
 
@@ -210,6 +238,11 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
                 resp.status_code, 204,
                 msg='User group with ID {0} failed to delete'.format(
                     group_id))
+
+        for user_id in self.sub_users:
+            resp = self.identity_admin_client.delete_user(user_id=user_id)
+            assert resp.status_code == 204, (
+                'Subuser with ID {0} failed to delete'.format(user_id))
 
     @classmethod
     @delegation.base.base.log_tearDown_error

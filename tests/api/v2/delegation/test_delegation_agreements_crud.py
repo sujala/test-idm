@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*
-from munch import Munch
 from nose.plugins.attrib import attr
 
 from tests.api.v2.delegation import delegation
@@ -43,18 +42,14 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
     def test_list_delegation_agreements(self):
 
         # Create two DAs for same principal & see if list shows both
-        da_1_resp = self.call_create_delegation_agreement(
+        _, da_1_id = self.call_create_delegation_agreement(
             client=self.user_admin_client, delegate_id=self.user_admin_2_id)
-        da_1_resp_parsed = Munch.fromDict(da_1_resp.json())
-        da_1_id = da_1_resp_parsed[const.RAX_AUTH_DELEGATION_AGREEMENT].id
 
         self.user_admin_client.add_user_delegate_to_delegation_agreement(
             da_1_id, self.user_admin_2_id)
 
-        da_2_resp = self.call_create_delegation_agreement(
+        _, da_2_id = self.call_create_delegation_agreement(
             client=self.user_admin_client, delegate_id=self.user_admin_2_id)
-        da_2_resp_parsed = Munch.fromDict(da_2_resp.json())
-        da_2_id = da_2_resp_parsed[const.RAX_AUTH_DELEGATION_AGREEMENT].id
 
         self.user_admin_client.add_user_delegate_to_delegation_agreement(
             da_2_id, self.user_admin_2_id)
@@ -88,7 +83,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
         # Create DA
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_resp = self.call_create_delegation_agreement(
+        da_resp, da_id = self.call_create_delegation_agreement(
             client=client,
             delegate_id=self.user_admin_2_id,
             da_name=da_name,
@@ -101,9 +96,6 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
             allow_sub_agreements
         )
         # TODO: Add schema validations once contracts are finalized for
-        # Delegation agreements
-        da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
-
         # Add User to DA
         self.user_admin_client.add_user_delegate_to_delegation_agreement(
             da_id, self.user_admin_2_id)
@@ -158,22 +150,6 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
             const.RAX_AUTH_DELEGATION_AGREEMENTS]]
         self.assertIn(da_1_id, da_ids_from_resp)
         self.assertIn(da_2_id, da_ids_from_resp)
-
-    def call_create_delegation_agreement(self, client, delegate_id,
-                                         da_name=None,
-                                         allow_sub_agreements=None):
-        if not da_name:
-            da_name = self.generate_random_string(
-                pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(
-            da_name=da_name, allow_sub_agreements=allow_sub_agreements)
-        da_resp = client.create_delegation_agreement(request_object=da_req)
-        da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
-
-        client.add_user_delegate_to_delegation_agreement(
-            da_id, delegate_id)
-
-        return da_resp
 
     @classmethod
     @delegation.base.base.log_tearDown_error
