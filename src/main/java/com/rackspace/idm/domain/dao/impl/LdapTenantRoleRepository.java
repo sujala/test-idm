@@ -114,14 +114,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return userIds;
     }
 
-    public int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId) {
-        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), USERS_BASE_DN);
-    }
-
-    public int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId) {
-        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), EXTERNAL_PROVIDERS_BASE_DN);
-    }
-
     private void addOrUpdateTenantRole(String uniqueId, TenantRole tenantRole) {
         TenantRole currentTenantRole = getObject(searchFilterGetTenantRolesByRoleId(tenantRole.getRoleRsId()), uniqueId, SearchScope.SUB);
         if (currentTenantRole != null) {
@@ -239,10 +231,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return context;
     }
 
-    @Override
-    public int countGroupsWithRoleAssignment(String roleId) {
-        return countObjects(searchFilterGetTenantRoleByRoleId(roleId), USER_GROUP_BASE_DN);
-    }
 
     @Override
     public String getUserIdForParent(TenantRole tenantRole) {

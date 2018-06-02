@@ -264,13 +264,4 @@ public interface UserGroupService {
      */
     Iterable<EndUser> getUsersInGroup(UserGroup group);
 
-    /**
-     * Retrieves the count of groups with the role, specified by roleId, assigned to the group.
-     *
-     * @param roleId
-     * @throws IllegalArgumentException If supplied roleId is null or empty string
-     * @return
-     */
-    int countGroupsWithRoleAssignment(String roleId);
-
 }

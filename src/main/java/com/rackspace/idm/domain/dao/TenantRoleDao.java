@@ -20,8 +20,6 @@ public interface TenantRoleDao {
     void deleteTenantRoleForUser(EndUser user, TenantRole tenantRole);
     void deleteTenantRole(TenantRole tenantRole);
     List<String> getIdsForUsersWithTenantRole(String roleId, int maxResult);
-    int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId);
-    int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId);
     Iterable<TenantRole> getTenantRoleForUser(EndUser user, List<ClientRole> clientRoles);
     String getUserIdForParent(TenantRole tenantRole);
     Iterable<TenantRole> getTenantRolesForUserWithId(User user, Collection<String> roleIds);
@@ -77,14 +75,6 @@ public interface TenantRoleDao {
      * @return
      */
     PaginatorContext<TenantRole> getRoleAssignmentsOnGroup(UserGroup group, UserGroupRoleSearchParams searchParams);
-
-    /**
-     * Retrieve the count of groups with the role, specified by role id, assigned.
-     *
-     * @param roleId
-     * @return
-     */
-    int countGroupsWithRoleAssignment(String roleId);
 
     /**
      * Retrieve the tenant roles associated with the specified user in pagination form.

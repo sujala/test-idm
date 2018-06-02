@@ -471,12 +471,6 @@ public class DefaultUserGroupService implements UserGroupService {
         return identityUserService.getEndUsersInUserGroup(group);
     }
 
-    @Override
-    public int countGroupsWithRoleAssignment(String roleId) {
-        Validate.notEmpty(roleId);
-
-        return tenantRoleDao.countGroupsWithRoleAssignment(roleId);
-    }
 
     private User verifyAndGetUserForGroup(String userId) {
         com.rackspace.idm.domain.entity.EndUser user = identityUserService.checkAndGetUserById(userId);
