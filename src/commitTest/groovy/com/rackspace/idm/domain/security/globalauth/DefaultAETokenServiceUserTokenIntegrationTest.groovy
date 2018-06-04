@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit
  * see {@link DefaultAETokenServiceImpersonationIntegrationTest)
  */
 class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServiceBaseIntegrationTest {
-    @Shared User hardCodedProvisionedUser;
-    @Shared Racker hardCodedRackerUser;
+    @Shared User hardCodedProvisionedUser
+    @Shared Racker hardCodedRackerUser
 
     @Shared def sampleToken
 

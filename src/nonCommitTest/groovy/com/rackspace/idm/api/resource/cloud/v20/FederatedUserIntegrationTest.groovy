@@ -18,8 +18,6 @@ import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
-import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
@@ -82,9 +80,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     UserService userService
-
-    @Autowired
-    ConfigurableTokenFormatSelector configurableTokenFormatSelector
 
     @Autowired
     IdentityConfig identityConfig
@@ -474,57 +469,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         0             | 200
         60            | 400
     }
-
-    def "Token format based on property config"() {
-        given:
-        //ensure system will recognize AE tokens as AE tokens
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
-
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-
-        //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def userAdminEntity = userService.getUserById(userAdmin.id)
-
-        when: "auth - default token format set to UUID"
-        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, TokenFormat.UUID.name())
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        assert samlResponse.status == HttpServletResponse.SC_OK
-        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-
-        then: "Token is a UUID token"
-        configurableTokenFormatSelector.formatForExistingToken(authResponse.token.id) == TokenFormat.UUID
-
-        when: "auth - default token format set to AE"
-        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, TokenFormat.AE.name())
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        assert samlResponse.status == HttpServletResponse.SC_OK
-        authResponse = samlResponse.getEntity(AuthenticateResponse).value
-
-        then: "Token is a AE token"
-        configurableTokenFormatSelector.formatForExistingToken(authResponse.token.id) == TokenFormat.AE
-
-        when: "IDP override property sets idp token format to UUID when default is set to AE"
-        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, Constants.DEFAULT_IDP_URI), TokenFormat.UUID.name())
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        assert samlResponse.status == HttpServletResponse.SC_OK
-        authResponse = samlResponse.getEntity(AuthenticateResponse).value
-
-        then: "Token is a UUID token"
-        configurableTokenFormatSelector.formatForExistingToken(authResponse.token.id) == TokenFormat.UUID
-
-        cleanup:
-        staticIdmConfiguration.reset() //reset to default config since we messed with configuration in this test
-        reloadableConfiguration.reset()
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-    }
-
 
     def "initial user populated appropriately from saml - user admin group added to federated user"() {
         given:

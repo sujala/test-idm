@@ -153,7 +153,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
 
     def "identity and service admins are able to see federated users and provisioned users in the list user call"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, true)
 
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
@@ -167,8 +167,14 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def userAdminToken = utils.getToken(userAdmin.username)
         def disabledUser = utils.createUser(userAdminToken, testUtils.getRandomUUID(), userAdmin.domainId)
         utils.disableUser(disabledUser)
-        def identityAdminToken = utils.getIdentityAdminToken()
-        def serviceAdminToken = utils.getServiceAdminToken()
+
+        def serviceAdmin = utils.createServiceAdmin()
+        def serviceAdminToken = utils.getToken(serviceAdmin.username)
+        utils.addUserToDomain(serviceAdminToken, serviceAdmin.id, domainId)
+
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addUserToDomain(serviceAdminToken, identityAdmin.id, domainId)
+        def identityAdminToken = utils.getToken(identityAdmin.username)
 
         when: "list users with service admin token"
         def listUsersResponse = cloud20.listUsers(serviceAdminToken, "0", "100000000")
@@ -183,8 +189,8 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         and: "contains the user-admin"
         userList.user.id.contains(userAdmin.id)
 
-        and: "does not contain the disabled user"
-        !userList.user.id.contains(disabledUser.id)
+        and: "contain the disabled user"
+        userList.user.id.contains(disabledUser.id)
 
         when: "list users with identity admin token"
         listUsersResponse = cloud20.listUsers(identityAdminToken, "0", "100000000")
@@ -199,8 +205,8 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         and: "contains the user-admin"
         userList2.user.id.contains(userAdmin.id)
 
-        and: "does not contain the disabled user"
-        !userList2.user.id.contains(disabledUser.id)
+        and: "contains the disabled user"
+        userList2.user.id.contains(disabledUser.id)
 
         when: "list users in domain"
         def usersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, "VERIFIED").getEntity(UserList).value

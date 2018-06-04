@@ -75,7 +75,6 @@ public class IdentityConfig {
     public static final String IDENTITY_USER_ADMIN_ROLE_NAME_PROP = "cloudAuth.userAdminRole";
     public static final String IDENTITY_USER_MANAGE_ROLE_NAME_PROP = "cloudAuth.userManagedRole";
     public static final String IDENTITY_DEFAULT_USER_ROLE_NAME_PROP = "cloudAuth.userRole";
-    public static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
     public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
     public static final String GROUP_DOMAINID_DEFAULT = "group.domainId.default";
     public static final String TENANT_DOMAINID_DEFAULT = "tenant.domainId.default";
@@ -84,12 +83,6 @@ public class IdentityConfig {
 
     // left as static var to support external reference
     public static final int PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE = 30;
-
-    /**
-     * The property controlling the token format to use for IDPs that do not have an explicit format specified via the
-     * override property {@link #IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG}
-     */
-    public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP = "feature.federated.provider.defaultTokenFormat";
 
     public static final String FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME = "feature.federated.domain.tokenLifetime.max";
     public static final int FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT = 86400;
@@ -112,16 +105,7 @@ public class IdentityConfig {
     public static final String IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP = "feature.enable.external.user.idp.management";
     public static final boolean IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT = false;
 
-    /**
-     * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
-     * means that each IDP has a custom property. If no such property exists for the IDP, the value for {@link #IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP}
-     * is used.
-     */
-    public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX = "federated.provider.tokenFormat";
-    public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG = IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX + ".%s";
     private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
-    public static final String FEATURE_AE_TOKENS_ENCRYPT = "feature.ae.tokens.encrypt";
-    public static final String FEATURE_AE_TOKENS_DECRYPT = "feature.ae.tokens.decrypt";
 
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;
@@ -705,17 +689,13 @@ public class IdentityConfig {
         defaults.put(EMAIL_HOST, LOCALHOST);
         defaults.put(EMAIL_PORT, PORT_25);
         defaults.put(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
-        defaults.put(IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID");
         defaults.put(PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE);
-        defaults.put(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, "UUID");
         defaults.put(KEYCZAR_DN_CONFIG, "ou=keystore,o=configuration,dc=rackspace,dc=com");
         defaults.put(EXPOSE_V11_ADD_BASE_URL_PROP, true);
         defaults.put(FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, false);
         defaults.put(OTP_ISSUER, "Rackspace");
         defaults.put(OTP_ENTROPY, 25);
         defaults.put(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false);
-        defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
-        defaults.put(FEATURE_AE_TOKENS_DECRYPT, true);
         defaults.put(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, 60);
         defaults.put(BYPASS_DEFAULT_NUMBER, BigInteger.ONE);
         defaults.put(BYPASS_MAXIMUM_NUMBER, BigInteger.TEN);
@@ -988,9 +968,6 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(LDAP_SERVER_BIND_DN_PROP, REQUIRED);
         verifyRequiredStaticProperty(LDAP_SERVER_BIND_PASSWORD_PROP);
 
-
-        logFederatedTokenFormatOverrides();
-
         verifyAndLogReloadableProperty(GROUP_DOMAINID_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(TENANT_DOMAINID_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(AE_NODE_NAME_FOR_SIGNOFF_PROP, REQUIRED);
@@ -1041,16 +1018,6 @@ public class IdentityConfig {
             logger.error(String.format(PROPERTY_ERROR_MESSAGE, property, PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME));
         } else {
             logger.warn(String.format(PROPERTY_SET_MESSAGE, property, readProperty, PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME));
-        }
-    }
-
-    private void logFederatedTokenFormatOverrides() {
-        Iterator<String> fedOverrideUris = staticConfiguration.getKeys(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX);
-        while (fedOverrideUris.hasNext()) {
-            String fedOverrideProperty = fedOverrideUris.next();
-            String fedUri = fedOverrideProperty.substring(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX.length()+1); //add 1 to skip '.'
-            TokenFormat tf = getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(fedUri);
-            logger.warn(String.format("Federated Provider Token Format Override: Identity provider '%s' will receive '%s' formatted tokens",fedUri, tf.name()));
         }
     }
 
@@ -1289,12 +1256,7 @@ public class IdentityConfig {
     }
 
     private TokenFormat convertToTokenFormat(String strFormat) {
-        for (TokenFormat tokenFormat : TokenFormat.values()) {
-            if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
-                return tokenFormat;
-            }
-        }
-        return TokenFormat.UUID;
+        return TokenFormat.AE;
     }
 
     /**
@@ -1449,9 +1411,8 @@ public class IdentityConfig {
             return getStringSafely(staticConfiguration, IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
         }
 
-        @IdmProp(key = IDENTITY_PROVISIONED_TOKEN_FORMAT, description = "Defines the default token format for provisioned users tokens.", versionAdded = "2.12.0")
         public TokenFormat getIdentityProvisionedTokenFormat() {
-            return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_PROVISIONED_TOKEN_FORMAT));
+            return TokenFormat.AE;
         }
 
         @IdmProp(key = LDAP_PAGING_LIMIT_DEFAULT_PROP)
@@ -1868,13 +1829,23 @@ public class IdentityConfig {
             return getAENodeNameForSignoff();
         }
 
+        /**
+         * @deprecated
+         * @param idpLabeledUri
+         * @return
+         */
+        @Deprecated
         public TokenFormat getIdentityFederationRequestTokenFormatForIdp(String idpLabeledUri) {
-            return convertToTokenFormat(reloadableConfiguration.getString(String.format(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, idpLabeledUri), "${" + IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP + "}"));
+            return TokenFormat.AE;
         }
 
-        @IdmProp(key = IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, description = "When an override property does not exist for a given federated provider, this determines the token format to use for that provide's federated users. AE | UUID", versionAdded = "2.13.0")
+        /**
+         * @deprecated
+         * @return
+         */
+        @Deprecated
         public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
-            return convertToTokenFormat(getStringSafely(reloadableConfiguration, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP));
+            return TokenFormat.AE;
         }
 
         @IdmProp(key = GROUP_DOMAINID_DEFAULT, description = "Default domain_id when creating a group", versionAdded = "3.0.0")
@@ -2197,14 +2168,12 @@ public class IdentityConfig {
             return getIntSafely(reloadableConfiguration, SESSION_ID_LIFETIME_PROP);
         }
 
-        @IdmProp(key = FEATURE_AE_TOKENS_ENCRYPT, versionAdded = "3.4.0", description = "Whether or not new AE Tokens can be issued. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0")
         public boolean getFeatureAETokensEncrypt() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_AE_TOKENS_ENCRYPT);
+            return true;
         }
 
-        @IdmProp(key = FEATURE_AE_TOKENS_DECRYPT, versionAdded = "3.4.0", description = "Whether or not existing AE Tokens can be received. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0")
         public boolean getFeatureAETokensDecrypt() {
-            return getFeatureAETokensEncrypt() || reloadableConfiguration.getBoolean(FEATURE_AE_TOKENS_DECRYPT);
+            return true;
         }
 
         @IdmProp(key = FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, versionAdded = "3.3.1", description = "Whether or not to allow racker impersonation requests to see user's API key credentials.")

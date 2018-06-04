@@ -579,11 +579,6 @@ cn: Racker
 description: Defines a user as being a Racker
 rsWeight: 100
 
-dn: cn=TOKENS,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applicat
- ions,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: clientId=20f6cc8ab08c45e39ca153218f22280d,ou=applications,o=rackspace,d
  c=rackspace,dc=com
 objectClass: top
@@ -1527,11 +1522,6 @@ dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer
 cn: ROLES
-
-dn: cn=TOKENS,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicat
- ions,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
 
 dn: clientId=c47fbdd0032e465d8809aee5efe3724b,ou=applications,o=rackspace,d
  c=rackspace,dc=com
@@ -4795,10 +4785,6 @@ objectClass: tenantRole
 roleRsId: 2
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
-dn: cn=TOKENS,rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
@@ -4822,10 +4808,6 @@ dn: roleRsId=3,cn=ROLES,rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=
 objectClass: tenantRole
 roleRsId: 3
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-
-dn: cn=TOKENS,rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
 
 dn: rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
@@ -4851,10 +4833,6 @@ objectClass: tenantRole
 objectClass: top
 roleRsId: 4
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-
-dn: cn=TOKENS,rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
 
 dn: rsId=10043490,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
@@ -4905,10 +4883,6 @@ objectClass: tenantRole
 roleRsId: 1
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
-dn: cn=TOKENS,rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
@@ -4932,10 +4906,6 @@ dn: roleRsId=3,cn=ROLES,rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=
 objectClass: tenantRole
 roleRsId: 3
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-
-dn: cn=TOKENS,rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
 
 dn: rsId=10044551,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
@@ -4985,10 +4955,6 @@ objectClass: tenantRole
 roleRsId: 2
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
-dn: cn=TOKENS,rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
@@ -5029,10 +4995,6 @@ roleRsId: 6
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 tenantRsId: -543569094
 userRsId: 10071819
-
-dn: cn=TOKENS,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
 
 dn: rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -5098,10 +5060,6 @@ objectClass: tenantRole
 roleRsId: fda6705a7ba640598f3eacd9884d8a0e
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 173189
-
-dn: cn=TOKENS,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
 
 dn: rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -5213,10 +5171,6 @@ objectClass: tenantRole
 roleRsId: bfa826160e644c4fa48fd2da3f039153
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
-dn: cn=TOKENS,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
@@ -5263,10 +5217,6 @@ dn: roleRsId=33e5af5cbc1b45f897a09cf24fffcd74,cn=ROLES,rsId=173195,ou=users,o=ra
 objectClass: tenantRole
 objectClass: top
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-
-dn: cn=TOKENS,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
 
 dn: rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc=rackspace
  ,dc=com
@@ -5321,11 +5271,6 @@ clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 tenantRsId: 78543990
 userRsId: 1c5a89a8d99b4e34998f7143d76d99e2
 
-dn: cn=TOKENS,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rackspace,dc=rackspace
  ,dc=com
 objectClass: rsPerson
@@ -5377,23 +5322,6 @@ clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 tenantRsId: 983452
 userRsId: 3a4407a6b3e349998478409c5b7eda14
 
-dn: cn=TOKENS,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
-dn: accessToken=35b9cffd47d444a396d3d6b7ee7abe2b,cn=TOKENS,rsId=3a4407a6b3e
- 349998478409c5b7eda14,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: userScopeAccess
-objectClass: scopeAccess
-accessToken: 35b9cffd47d444a396d3d6b7ee7abe2b
-clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-userRsId: 3a4407a6b3e349998478409c5b7eda14
-accessTokenExp: 20131109035948.813Z
-clientRCN: RACKSPACE
-rsType: APIKEY
-uid: cloudCafeUserAdmin
-
 dn: rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc=rackspace
  ,dc=com
 objectClass: rsPerson
@@ -5442,11 +5370,6 @@ clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 tenantRsId: 78543988
 userRsId: 4e997592aad24e2183e51bd013f223c5
 
-dn: cn=TOKENS,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc=rackspace
  ,dc=com
 objectClass: rsPerson
@@ -5494,11 +5417,6 @@ roleRsId: 6
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 tenantRsId: 78543987
 userRsId: 6ffe3875d15b44d5b8b2d285790c89ec
-
-dn: cn=TOKENS,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
 
 dn: rsId=7fcb777308fa41219e300070a5ee4973,ou=users,o=rackspace,dc=rackspace
  ,dc=com
@@ -5628,11 +5546,6 @@ clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 tenantRsId: 78543988
 userRsId: 868dea5a32934749a3fb9a47e80f12a4
 
-dn: cn=TOKENS,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: rsId=af455d1387ab4281873ceae5bc400e50,ou=users,o=rackspace,dc=rackspace
  ,dc=com
 objectClass: rsPerson
@@ -5746,23 +5659,6 @@ objectClass: tenantRole
 roleRsId: 4
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
-dn: cn=TOKENS,rsId=d14b1195cbe045d9905c25317dd1f924,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
-dn: accessToken=62a97ef53dd44b4c9e7b5b9cfe8ef8ff,cn=TOKENS,rsId=d14b1195cbe
- 045d9905c25317dd1f924,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: userScopeAccess
-objectClass: scopeAccess
-accessToken: 62a97ef53dd44b4c9e7b5b9cfe8ef8ff
-clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-userRsId: d14b1195cbe045d9905c25317dd1f924
-accessTokenExp: 20131214200929.234Z
-clientRCN: RACKSPACE
-rsType: PASSWORD
-uid: cloudIdentitySA1
-
 dn: rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=rackspace
  ,dc=com
 objectClass: rsPerson
@@ -5819,11 +5715,6 @@ objectClass: tenantRole
 roleRsId: 7
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
-dn: cn=TOKENS,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=rackspace
  ,dc=com
 objectClass: rsPerson
@@ -5875,11 +5766,6 @@ clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 tenantRsId: 78543995
 userRsId: d8f1b8df14c844d9919aee4e19a2f6f9
 
-dn: cn=TOKENS,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
 dn: rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=rackspace,dc=rackspace
  ,dc=com
 objectClass: rsPerson
@@ -5910,23 +5796,6 @@ dn: roleRsId=4,cn=ROLES,rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=ra
 objectClass: tenantRole
 roleRsId: 4
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-
-dn: cn=TOKENS,rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
-
-dn: accessToken=bd837608d10f412296e3c954734764a4,cn=TOKENS,rsId=e2655b97cfe
- 848b796097c2073b174e7,ou=users,o=rackspace,dc=rackspace,dc=com
-objectClass: userScopeAccess
-objectClass: scopeAccess
-accessToken: bd837608d10f412296e3c954734764a4
-clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-userRsId: e2655b97cfe848b796097c2073b174e7
-accessTokenExp: 20131214200510.338Z
-clientRCN: RACKSPACE
-rsType: PASSWORD
-uid: cloudIdentitySA2
 
 dn: rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc=rackspace
  ,dc=com
@@ -5975,11 +5844,6 @@ roleRsId: 6
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 tenantRsId: 78543985
 userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
-
-dn: cn=TOKENS,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc
- =rackspace,dc=com
-objectClass: rsContainer
-cn: TOKENS
 
 dn: rsId=9b336a2ba2b14b098c1210aec5ae9616,ou=users,o=rackspace,dc=rackspace,
  dc=com

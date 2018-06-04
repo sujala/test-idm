@@ -110,46 +110,6 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.disableAndDeleteEndpointTemplate(endpointTemplate.id.toString())
     }
 
-    def "endpoints returned for disabled"() {
-        given:
-        // NOTE: This will fail with AE tokens. AE tokens are revoked when user is disabled.
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
-        def domainId = utils.createDomain()
-        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-
-        def tenant = utils.createTenant()
-        utils.addRoleToUserOnTenant(defaultUser, tenant, MOSSO_ROLE_ID)
-
-        defaultUser.defaultRegion = "ORD"
-        utils.updateUser(defaultUser)
-
-        def endpointTemplate = utils.createEndpointTemplate(true)
-
-        def defaultUserToken = utils.getToken(defaultUser.username, DEFAULT_PASSWORD)
-        defaultUser.enabled = false
-        utils.updateUser(defaultUser)
-
-        def foundEndpoint = false
-
-        when:
-        EndpointList response = utils.getEndpointsForToken(defaultUserToken)
-
-        then:
-        String tenantEndpoint = String.format("%s/%s", endpointTemplate.publicURL, tenant.id)
-        if (response.endpoint.publicURL.contains(tenantEndpoint)) {
-            foundEndpoint = true
-        }
-
-        assert foundEndpoint
-
-        cleanup:
-        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteTenant(tenant)
-        utils.deleteDomain(domainId)
-        utils.disableAndDeleteEndpointTemplate(endpointTemplate.id.toString())
-        staticIdmConfiguration.reset()
-    }
-
     def "disabled UK global endpoints are not displayed in created user's service catalog"() {
         given:
         staticIdmConfiguration.setProperty("cloud.region", "UK")

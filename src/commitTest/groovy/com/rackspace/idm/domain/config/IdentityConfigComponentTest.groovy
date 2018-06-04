@@ -159,41 +159,6 @@ class IdentityConfigComponentTest extends Specification {
         file.write(name + "=" + val)
     }
 
-    /**
-     * These tests expect the properties to exist in the idm property file
-     * <ul>
-     * <li>federated.provider.tokenFormat.http\://www.test.com/uuid=UUID</li>
-     * <li>federated.provider.tokenFormat.http\://www.test.com/ae=AE</li>
-     * </ul>
-     * @return
-     */
-    def verifyRetrievingFederatedTokenFormatForIdpProperty() {
-        //set default for when
-
-        when: "retrieving the override property that is set to use AE tokens"
-        def format = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriAe)
-
-        then: "get AE token format back"
-        format == TokenFormat.AE
-
-        when: "retrieving the override property that is set to use UUID tokens"
-        format = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriUUID)
-
-        then: "get UUID token format back"
-        assert format == TokenFormat.UUID
-
-        when: "override for that idp does not exist"
-        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, TokenFormat.UUID.name())
-        def formatDefUUID = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriNone)
-
-        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, TokenFormat.AE.name())
-        def formatDefAe = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriNone)
-
-        then: "the default property is used"
-        formatDefUUID == TokenFormat.UUID
-        formatDefAe == TokenFormat.AE
-    }
-
     @Unroll
     def "getExplicitUserGroupEnabledDomains properly parses value retrieved from repo: value: #repoValue"() {
         given:

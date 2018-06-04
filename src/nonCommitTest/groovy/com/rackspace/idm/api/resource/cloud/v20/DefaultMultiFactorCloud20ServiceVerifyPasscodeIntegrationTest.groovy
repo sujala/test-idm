@@ -200,13 +200,10 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     }
 
     @Unroll
-    def "Successful OTP passcode authentication when using encryptAEToken: #encryptAEToken; decryptAEToken:#decryptAEToken; issueRestrictedTokenSessionId:#issueRestrictedTokenSessionId"() {
+    def "Successful OTP passcode authentication when using issueRestrictedTokenSessionId:#issueRestrictedTokenSessionId"() {
         setup:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, issueRestrictedTokenSessionId)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, decryptAEToken)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, encryptAEToken)
 
-        //reauth so admin token is of right formart (e.g. don't want to have an AE token, when ae decryption is disabled...)
         userAdminToken = authenticate(userAdmin.username)
         setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
         def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
@@ -237,15 +234,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         reloadableConfiguration.reset()
 
         where:
-        encryptAEToken | decryptAEToken | issueRestrictedTokenSessionId
-        true           | true           | true
-        true           | true           | false
-        true           | false          | true
-        true           | false          | false
-        false          | false          | true
-        false          | false          | false
-        false          | true           | true
-        false          | true           | false
+        issueRestrictedTokenSessionId << [true, false]
     }
 
     @Unroll

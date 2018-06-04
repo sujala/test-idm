@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TokenScopeEnum;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
@@ -14,7 +13,6 @@ import java.util.List;
 
 public class RouterScopeAccessRepository implements ScopeAccessDao {
     private final AEScopeAccessDao aeScopeAccessDao;
-    private final UUIDScopeAccessDao uuidScopeAccessDao;
 
     @Autowired
     private UserDao ldapUserRepository;
@@ -22,16 +20,15 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     @Autowired
     private TokenFormatSelector tokenFormatSelector;
 
-    public RouterScopeAccessRepository(AEScopeAccessDao aeScopeAccessDao, UUIDScopeAccessDao uuidScopeAccessDao) {
+    public RouterScopeAccessRepository(AEScopeAccessDao aeScopeAccessDao) {
         this.aeScopeAccessDao = aeScopeAccessDao;
-        this.uuidScopeAccessDao = uuidScopeAccessDao;
     }
 
     private ScopeAccessDao getRouteByUniqueId(UniqueId object) {
         if (object instanceof BaseUser) {
             return getRouteByBaseUser((BaseUser) object);
         } else {
-            return uuidScopeAccessDao;
+            return aeScopeAccessDao;
         }
     }
 
@@ -58,23 +55,13 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
         if (tokenFormat == TokenFormat.AE) {
             return aeScopeAccessDao;
         } else {
-            return uuidScopeAccessDao;
+            throw new IllegalArgumentException("Unrecognized token format");
         }
     }
 
     @Override
     public void addScopeAccess(UniqueId object, ScopeAccess scopeAccess) {
-        ScopeAccessDao daoToUse;
-        if (TokenScopeEnum.fromScope(scopeAccess.getScope()) == TokenScopeEnum.MFA_SESSION_ID) {
-            //mfa sessionids ALWAYS use AE
-            daoToUse = aeScopeAccessDao;
-        } else if (aeScopeAccessDao.supportsCreatingTokenFor(object, scopeAccess)) {
-            //system supports ae tokens for specified types, but a user has overrides as to which type to use for that user
-            daoToUse = getRouteByUniqueId(object);
-        } else {
-            daoToUse = uuidScopeAccessDao;
-        }
-        daoToUse.addScopeAccess(object, scopeAccess);
+        aeScopeAccessDao.addScopeAccess(object, scopeAccess);
     }
 
     @Override
@@ -163,7 +150,7 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
      * Foundation code. Irrelevant/unused.
      */
     public ScopeAccess getScopeAccessByRefreshToken(String refreshToken) {
-        return uuidScopeAccessDao.getScopeAccessByRefreshToken(refreshToken);
+        throw new UnsupportedOperationException("Not supported");
     }
 
 }
