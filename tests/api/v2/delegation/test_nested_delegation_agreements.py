@@ -25,7 +25,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.sub_users = []
 
     @attr(type='regression')
-    def test_create_get_update_nested_da(self):
+    def test_cru_nested_da(self):
 
         parent_nest_level = 2
         _, parent_da_id = self.call_create_delegation_agreement(
@@ -51,9 +51,25 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             const.RAX_AUTH_DELEGATION_AGREEMENT][const.SUBAGREEMENT_NEST_LEVEL]
         self.assertEqual(nest_level, parent_nest_level - 1)
 
-        # Validate get da response
         nested_da_id = nested_da_resp.json()[
             const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+
+        # CID-1551: Verify that role assignment to nested DAs is forbidden
+        role = self.create_role()
+        tenant_1 = self.create_tenant()
+
+        tenant_assignment_req = self.generate_tenants_assignment_dict(
+            role.id, tenant_1.id)
+        tenants_role_assignment_req = requests.TenantRoleAssignments(
+            tenant_assignment_req)
+
+        resp = self.user_admin_client_2.\
+            add_tenant_role_assignments_to_delegation_agreement(
+                da_id=nested_da_id,
+                request_object=tenants_role_assignment_req)
+        self.assertEqual(resp.status_code, 403)
+
+        # Validate get da response
         get_nested_da_resp = self.user_admin_client_2.get_delegation_agreement(
             da_id=nested_da_id)
         self.validate_nested_da_response(get_nested_da_resp, resp_code=200)
@@ -89,10 +105,10 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             da_id=nested_da_id, request_object=da_req
         )
         self.assertEqual(update_resp.status_code, 400)
-        self.assertEqual(update_resp.json()[
-                             const.BAD_REQUEST][const.MESSAGE], (
-            "Error code: 'GEN-007'; subAgreementNestLevel value must"
-            " be between 0 and {0}".format(parent_nest_level - 1)))
+        self.assertEqual(
+          update_resp.json()[const.BAD_REQUEST][const.MESSAGE],
+          ("Error code: 'GEN-007'; subAgreementNestLevel value must "
+           "be between 0 and {0}".format(parent_nest_level - 1)))
 
         # update with a valid nest-level
         da_req = requests.DelegationAgreements(
@@ -105,14 +121,14 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.assertSchema(update_resp, da_schema.add_da)
         self.assertEqual(
             update_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][
-                             const.SUBAGREEMENT_NEST_LEVEL],
+                const.SUBAGREEMENT_NEST_LEVEL],
             (parent_nest_level - 1))
         get_nested_da_resp = self.user_admin_client_2.get_delegation_agreement(
             da_id=nested_da_id)
         self.assertEqual(get_nested_da_resp.status_code, 200)
         self.assertEqual(
             get_nested_da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][
-                             const.SUBAGREEMENT_NEST_LEVEL], 1)
+                const.SUBAGREEMENT_NEST_LEVEL], 1)
         self.assertSchema(get_nested_da_resp, da_schema.add_da)
         if parent_nest_level > 1:
             self.assertTrue(
@@ -208,8 +224,8 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
 
         # This is attempting to create a cyclic agreements as we are adding
         # principal of 1st DA as a delegate for the 3rd DA being created
-        ua_clien_2 = self.user_admin_client_2
-        resp = ua_clien_2.add_user_delegate_to_delegation_agreement(
+        ua_client_2 = self.user_admin_client_2
+        resp = ua_client_2.add_user_delegate_to_delegation_agreement(
             nested_da_id,
             self.user_admin_client.default_headers[const.X_USER_ID])
         self.assertEqual(resp.status_code, 204)
@@ -223,10 +239,10 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         nested_da_resp_2 = self.user_admin_client.create_delegation_agreement(
             request_object=da_req)
         self.assertEqual(nested_da_resp_2.status_code, 403)
-        self.assertEqual(nested_da_resp_2.json()[
-                             const.FORBIDDEN][const.MESSAGE],
-                         "Error code: 'GEN-006'; The parent agreement does not"
-                         " allow nested agreements")
+        self.assertEqual(
+            nested_da_resp_2.json()[const.FORBIDDEN][const.MESSAGE],
+            "Error code: 'GEN-006'; The parent agreement does not"
+            " allow nested agreements")
 
     @delegation.base.base.log_tearDown_error
     def tearDown(self):
@@ -251,7 +267,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             user_id=cls.user_admin_client.default_headers[const.X_USER_ID])
         assert resp.status_code == 204, (
             'User with ID {0} failed to delete'.format(
-              cls.user_admin_client.default_headers[const.X_USER_ID]))
+                cls.user_admin_client.default_headers[const.X_USER_ID]))
         resp = cls.identity_admin_client.delete_user(
             user_id=cls.user_admin_2_id)
         assert resp.status_code == 204, (
