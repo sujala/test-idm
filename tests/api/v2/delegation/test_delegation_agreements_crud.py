@@ -41,7 +41,40 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
     @attr(type='regression')
     def test_list_delegation_agreements(self):
 
-        # Create two DAs for same principal & see if list shows both
+        da_1_id, da_2_id = self.create_multiple_das_for_principal()
+
+        list_da_resp = self.user_admin_client.list_delegation_agreements()
+        self.validate_list_delegation_agreements_resp(
+            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
+
+        list_da_resp = self.rcn_admin_client.list_delegation_agreements()
+        self.validate_list_delegation_agreements_resp(
+            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
+
+        # Call list DAs as principal with query param 'delegate' & see both DAs
+        # are returned
+        option = {
+            const.RELATIONSHIP: const.QUERY_PARAM_PRINCIPAL
+        }
+        list_da_resp = self.user_admin_client.list_delegation_agreements(
+            option=option)
+        self.validate_list_delegation_agreements_resp(
+            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
+
+        # Call list DAs as delegate with query param 'delegate' & see both DAs
+        # are returned
+        da_1_id, da_2_id = self.create_multiple_das_for_principal()
+        option = {
+            const.RELATIONSHIP: const.QUERY_PARAM_DELEGATE
+        }
+        list_da_resp = self.user_admin_client_2.list_delegation_agreements(
+            option=option)
+        self.validate_list_delegation_agreements_resp(
+            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
+
+    def create_multiple_das_for_principal(self):
+
+        # Create two DAs for same principal
         _, da_1_id = self.call_create_delegation_agreement(
             client=self.user_admin_client, delegate_id=self.user_admin_2_id)
 
@@ -54,29 +87,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
         self.user_admin_client.add_user_delegate_to_delegation_agreement(
             da_2_id, self.user_admin_2_id)
 
-        list_da_resp = self.user_admin_client.list_delegation_agreements()
-        self.validate_list_delegation_agreements_resp(
-            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
-
-        # Call list DAs as principal with query param & see both DAs are
-        # returned
-        option = {
-            const.RELATIONSHIP: const.QUERY_PARAM_PRINCIPAL
-        }
-        list_da_resp = self.user_admin_client.list_delegation_agreements(
-            option=option)
-        self.validate_list_delegation_agreements_resp(
-            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
-
-        # Call list DAs as delegate with query param 'delegate' & see both DAs
-        # are returned
-        option = {
-            const.RELATIONSHIP: const.QUERY_PARAM_DELEGATE
-        }
-        list_da_resp = self.user_admin_client_2.list_delegation_agreements(
-            option=option)
-        self.validate_list_delegation_agreements_resp(
-            list_da_resp=list_da_resp, da_1_id=da_1_id, da_2_id=da_2_id)
+        return da_1_id, da_2_id
 
     def validate_delegation_agreements_crud(
             self, allow_sub_agreements, client):
