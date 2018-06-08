@@ -3,6 +3,7 @@ from random import randrange
 
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.schema import users as users_json
@@ -18,6 +19,7 @@ class TestUpdateUser(base.TestBaseV2):
     Update user_admin, sub_user, user_manage level users."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -61,6 +63,7 @@ class TestUpdateUser(base.TestBaseV2):
                 'domain_id': test_domain_id,
                 'user_name': sub_user_name})
 
+    @unless_coverage
     def setUp(self):
         super(TestUpdateUser, self).setUp()
         self.user_ids = []
@@ -102,6 +105,7 @@ class TestUpdateUser(base.TestBaseV2):
         self.sub_user_ids.append(test_sub_user_id)
         return test_sub_user_id
 
+    @unless_coverage
     @ddt.file_data('data_update_user_info.json')
     def test_update_identity_admin_user_info(self, test_data):
         """Update identity admin user
@@ -123,6 +127,7 @@ class TestUpdateUser(base.TestBaseV2):
                 const.REQUIRED] + test_data['update_schema_fields'])
         self.assertSchema(response=resp, json_schema=updated_json_schema)
 
+    @unless_coverage
     @ddt.file_data('data_update_user_info.json')
     def test_update_user_admin_user_set_mfa_attrs(self, test_data):
         """Update admin user
@@ -144,6 +149,7 @@ class TestUpdateUser(base.TestBaseV2):
                 const.REQUIRED] + test_data['update_schema_fields'])
         self.assertSchema(response=resp, json_schema=updated_json_schema)
 
+    @unless_coverage
     @ddt.file_data('data_update_user_info.json')
     def test_update_user_default_user_set_mfa_attrs(self, test_data):
         """Update sub user
@@ -165,6 +171,7 @@ class TestUpdateUser(base.TestBaseV2):
                 const.REQUIRED] + test_data['update_schema_fields'])
         self.assertSchema(response=resp, json_schema=updated_json_schema)
 
+    @unless_coverage
     @ddt.file_data('data_update_user_info.json')
     @attr('skip_at_gate')
     def test_update_identity_admin_with_its_token(self, test_data):
@@ -188,6 +195,7 @@ class TestUpdateUser(base.TestBaseV2):
             else:
                 self.assertEqual(resp.status_code, 200)
 
+    @unless_coverage
     @ddt.file_data('data_update_user_info.json')
     def test_update_user_admin_with_its_token(self, test_data):
         """
@@ -210,6 +218,7 @@ class TestUpdateUser(base.TestBaseV2):
             else:
                 self.assertEqual(resp.status_code, 200)
 
+    @unless_coverage
     @ddt.file_data('data_update_user_info.json')
     @attr('skip_at_gate')
     def test_update_sub_user_with_its_token(self, test_data):
@@ -233,6 +242,7 @@ class TestUpdateUser(base.TestBaseV2):
             else:
                 self.assertEqual(resp.status_code, 200)
 
+    @unless_coverage
     @ddt.file_data('data_update_user_multi_attrs.json')
     @attr('skip_at_gate')
     def test_update_identity_admin_user_multi_info_mfa_attrs(self, test_data):
@@ -275,6 +285,7 @@ class TestUpdateUser(base.TestBaseV2):
                 print(validate_resp)
             self.assertSchema(response=resp, json_schema=updated_json_schema)
 
+    @unless_coverage
     @ddt.file_data('data_update_user_multi_attrs.json')
     def test_update_admin_user_multi_info_n_mfa_attrs(self, test_data):
         """Update identity admin user
@@ -311,6 +322,7 @@ class TestUpdateUser(base.TestBaseV2):
                         const.REQUIRED] + ['RAX-AUTH:contactId'])
             self.assertSchema(response=resp, json_schema=updated_json_schema)
 
+    @unless_coverage
     @ddt.file_data('data_update_user_multi_attrs.json')
     @attr('skip_at_gate')
     def test_update_default_user_multi_info_n_mfa_attrs(self, test_data):
@@ -343,6 +355,7 @@ class TestUpdateUser(base.TestBaseV2):
                         const.REQUIRED] + ['email'])
             self.assertSchema(response=resp, json_schema=updated_json_schema)
 
+    @unless_coverage
     @ddt.file_data('data_update_user_info_neg.json')
     @attr('skip_at_gate')
     def test_update_identity_admin_user_neg(self, test_data):
@@ -359,6 +372,7 @@ class TestUpdateUser(base.TestBaseV2):
         )
         self.assertEqual(resp.status_code, test_data['response_status'])
 
+    @unless_coverage
     @ddt.file_data('data_update_user_info_neg.json')
     def test_update_user_admin_user_neg(self, test_data):
         """
@@ -374,6 +388,7 @@ class TestUpdateUser(base.TestBaseV2):
         )
         self.assertEqual(resp.status_code, test_data['response_status'])
 
+    @unless_coverage
     @ddt.file_data('data_update_user_info_neg.json')
     @attr('skip_at_gate')
     def test_update_default_user_neg(self, test_data):
@@ -390,6 +405,7 @@ class TestUpdateUser(base.TestBaseV2):
         )
         self.assertEqual(resp.status_code, test_data['response_status'])
 
+    @unless_coverage
     @ddt.data('identity_admin_client', 'user_admin_client', 'user_client')
     def test_identity_admin_update_permission(self, access_level):
         """
@@ -414,6 +430,7 @@ class TestUpdateUser(base.TestBaseV2):
             )
         self.assertEqual(resp.status_code, 403)
 
+    @unless_coverage
     @ddt.data('user_admin_client', 'user_client')
     def test_user_admin_update_permission(self, access_level):
         """
@@ -435,6 +452,7 @@ class TestUpdateUser(base.TestBaseV2):
             )
         self.assertEqual(resp.status_code, 403)
 
+    @tags('positive', 'p1', 'regression')
     def test_user_default_update_permission(self):
         """
         Test update user default without permission
@@ -449,6 +467,7 @@ class TestUpdateUser(base.TestBaseV2):
         )
         self.assertEqual(resp.status_code, 403)
 
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         for id in self.sub_user_ids:
@@ -458,6 +477,7 @@ class TestUpdateUser(base.TestBaseV2):
         super(TestUpdateUser, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         # Delete all users created in the setUpClass
         cls.identity_admin_client.delete_user(

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
-import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 
 from tests.api.v2 import base
@@ -11,18 +11,19 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-@ddt.ddt
 class TestRevokeToken(base.TestBaseV2):
 
     """ Validate Token test"""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
         Create users needed for the tests and generate clients for those users.
         """
         super(TestRevokeToken, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestRevokeToken, self).setUp()
         self.user_ids = []
@@ -57,6 +58,7 @@ class TestRevokeToken(base.TestBaseV2):
         return username, password
 
     @attr(type='smoke_alpha')
+    @tags('positive', 'p0', 'smoke')
     def test_revoke_own_token(self):
         """A user can revoke their own authentication token by submitting the
         DELETE request without specifying the tokenId parameter.
@@ -84,6 +86,7 @@ class TestRevokeToken(base.TestBaseV2):
             token_id=uac.default_headers[const.X_AUTH_TOKEN])
         self.assertEqual(val_resp.status_code, 404)
 
+    @tags('positive', 'p0', 'regression')
     def test_analyze_revoked_token(self):
         user_token = self.user_admin_client.default_headers[const.X_AUTH_TOKEN]
 
@@ -102,6 +105,7 @@ class TestRevokeToken(base.TestBaseV2):
                           json_schema=tokens_json.analyze_token_revoked)
 
     @attr(type='smoke_alpha')
+    @tags('positive', 'p0', 'smoke')
     def test_revoke_user_token(self):
         """
         Identity and User administrators can revoke the token for another
@@ -134,6 +138,7 @@ class TestRevokeToken(base.TestBaseV2):
         self.assertEqual(val_resp.status_code, 404)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         # Delete users & domains
         for _id in self.user_ids:
@@ -155,5 +160,6 @@ class TestRevokeToken(base.TestBaseV2):
         super(TestRevokeToken, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestRevokeToken, cls).tearDownClass()

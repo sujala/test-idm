@@ -12,14 +12,16 @@
 Notes: before change user manager able to list other user managers with the
     same domain
 """
-from tests.api.v2 import base
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
+from tests.api.v2 import base
 from tests.package.johny import constants as const
 
 
 class TestListUsersByUserManager(base.TestBaseV2):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """
         Create clients with specific info need for tests
@@ -80,9 +82,11 @@ class TestListUsersByUserManager(base.TestBaseV2):
                 'is_user_manager': True})
         cls.user_manager_clients.append(cls.user_manager_client3)
 
+    @unless_coverage
     def setUp(self):
         super(TestListUsersByUserManager, self).setUp()
 
+    @tags('positive', 'p0', 'smoke')
     def test_list_users_by_user_manager(self):
         """List users must not return any user-managers except the caller """
 
@@ -97,6 +101,7 @@ class TestListUsersByUserManager(base.TestBaseV2):
         self.assertNotIn(self.user_manager_name2,
                          str(resp.json()[const.USERS]))
 
+    @tags('positive', 'p0', 'smoke')
     def test_list_users_with_name_query_by_user_manager(self):
         """Return only for caller other 403"""
 
@@ -117,6 +122,7 @@ class TestListUsersByUserManager(base.TestBaseV2):
         self.assertEqual(resp2.status_code, 403)
         self.assertEqual(resp3.status_code, 403)
 
+    @tags('positive', 'p1', 'regression')
     def test_list_users_with_email_query_by_user_manager(self):
         """List users (w/ email queryParam) must not return any user-managers
         except the caller
@@ -167,10 +173,12 @@ class TestListUsersByUserManager(base.TestBaseV2):
         self.assertNotIn(self.user_manager_name3,
                          str(resp3.json()[const.USERS]))
 
+    @unless_coverage
     def tearDown(self):
         super(TestListUsersByUserManager, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         for client in cls.user_manager_clients:
             cls.identity_admin_client.delete_user(

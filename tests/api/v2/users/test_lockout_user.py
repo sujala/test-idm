@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
-import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -10,14 +10,13 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-@ddt.ddt
 class TestLockoutUser(base.TestBaseV2):
 
     """ Lockout user test
 
         This test will lock out a user and then test the lockout time
     """
-
+    @unless_coverage
     def setUp(self):
         super(TestLockoutUser, self).setUp()
 
@@ -37,6 +36,7 @@ class TestLockoutUser(base.TestBaseV2):
         self.password = resp.json()[const.USER][const.NS_PASSWORD]
         self.user_id = resp.json()[const.USER][const.ID]
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_lock_out_user(self):
         """Lock out user
@@ -60,6 +60,7 @@ class TestLockoutUser(base.TestBaseV2):
             request_object=auth_obj)
         self.assertEqual(resp.status_code, 401)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_almost_lock_out_user(self):
         """Lock out user
@@ -101,6 +102,7 @@ class TestLockoutUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 401)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         resp = self.identity_admin_client.list_users_in_domain(
             domain_id=self.domain_id)

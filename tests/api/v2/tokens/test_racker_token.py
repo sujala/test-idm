@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.schema import tokens as tokens_json
@@ -13,6 +14,7 @@ class TestRackerToken(base.TestBaseV2):
 
     """ Racker Token tests"""
 
+    @unless_coverage
     def setUp(self):
         super(TestRackerToken, self).setUp()
         self.racker_client = client.IdentityAPIClient(
@@ -29,6 +31,7 @@ class TestRackerToken(base.TestBaseV2):
             request_object=request_object)
 
     @attr(type='smoke_no_log_alpha')
+    @tags('positive', 'p0', 'smoke')
     def test_get_validate_racker_token(self):
         """
         Using a separate tag 'smoke_no_log_alpha' for this test, because
@@ -50,6 +53,7 @@ class TestRackerToken(base.TestBaseV2):
         resp = self.racker_client.validate_token(token_id=auth_token)
         self.assertEqual(resp.status_code, 200)
 
+    @tags('positive', 'p0', 'regression')
     def test_analyze_racker_token(self):
         token_id = self.racker_auth_resp.json()[
             const.ACCESS][const.TOKEN][const.ID]
@@ -63,5 +67,6 @@ class TestRackerToken(base.TestBaseV2):
             response=analyze_token_resp,
             json_schema=tokens_json.analyze_token)
 
+    @unless_coverage
     def tearDown(self):
         super(TestRackerToken, self).tearDown()

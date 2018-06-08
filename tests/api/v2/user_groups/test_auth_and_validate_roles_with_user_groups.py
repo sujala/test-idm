@@ -9,8 +9,8 @@
      identityAdmin validates the resulting token
 """
 
-import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.user_groups import usergroups
 from tests.api.v2.models import responses
@@ -21,19 +21,21 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-@ddt.ddt
 class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
     """
     Auth and validate roles with user groups
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(AuthAndValidateRolesWithUserGroups, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(AuthAndValidateRolesWithUserGroups, self).setUp()
         self.user_admin_wl_domain_client = None
 
+    @tags('positive', 'p0', 'regression')
     def test_auth_and_validate_no_groups(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -74,6 +76,7 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertEqual(access_resp.access.user.roles[0].name,
                          const.USER_ADMIN_ROLE_NAME)
 
+    @tags('positive', 'p0', 'regression')
     def test_auth_and_validate_group_no_roles(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -116,6 +119,7 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertEqual(access_resp.access.user.roles[0].name,
                          const.USER_ADMIN_ROLE_NAME)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_auth_and_validate_group_with_roles(self):
         self.user_admin_wl_domain_client = self.generate_client(
@@ -189,6 +193,7 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertIn(const.TENANT_ACCESS_ROLE_NAME, role_name_list)
         self.assertIn(const.USER_ADMIN_ROLE_NAME, role_name_list)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_auth_and_validate_group_domain_not_whitelisted(self):
         domain_id = self.generate_random_string(
@@ -204,6 +209,7 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
         self.create_and_add_user_group_to_user(
             self.user_admin_wl_domain_client, 404)
 
+    @unless_coverage
     def tearDown(self):
         # This deletes the domain which automatically deletes any user groups
         # in that domain. Hence, not explicitly deleting the user groups
@@ -212,5 +218,6 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
         super(AuthAndValidateRolesWithUserGroups, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(AuthAndValidateRolesWithUserGroups, cls).tearDownClass()

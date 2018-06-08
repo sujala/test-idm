@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.user_groups import usergroups
 from tests.api.v2.schema import user_groups
@@ -14,9 +15,11 @@ class TestListTenantRolesWithUserGroups(usergroups.TestUserGroups):
     List user roles with user groups
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestListTenantRolesWithUserGroups, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestListTenantRolesWithUserGroups, self).setUp()
         self.user_admin_wl_domain_client = None
@@ -26,6 +29,7 @@ class TestListTenantRolesWithUserGroups(usergroups.TestUserGroups):
         self.tenant_access_role_id = get_role_resp.json()[const.ROLES][0][
             const.ID]
 
+    @tags('positive', 'p0', 'regression')
     def test_list_tenant_roles_no_groups(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -48,6 +52,7 @@ class TestListTenantRolesWithUserGroups(usergroups.TestUserGroups):
         # only retrieve tenant access role
         self.assertIn(self.tenant_access_role_id, list_role_ids)
 
+    @tags('positive', 'p0', 'regression')
     def test_list_user_roles_with_user_group_without_roles(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -73,6 +78,7 @@ class TestListTenantRolesWithUserGroups(usergroups.TestUserGroups):
         # only retrieve tenant access role
         self.assertIn(self.tenant_access_role_id, list_role_ids)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_user_roles_with_user_group_with_roles(self):
         self.user_admin_wl_domain_client = self.generate_client(
@@ -126,6 +132,7 @@ class TestListTenantRolesWithUserGroups(usergroups.TestUserGroups):
         # role implicitly to user for all tenants within domain
         self.assertIn(self.tenant_access_role_id, list_role_ids)
 
+    @unless_coverage
     def tearDown(self):
         # This deletes the domain which automatically deletes any user groups
         # in that domain. Hence, not explicitly deleting the user groups
@@ -134,5 +141,6 @@ class TestListTenantRolesWithUserGroups(usergroups.TestUserGroups):
         super(TestListTenantRolesWithUserGroups, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestListTenantRolesWithUserGroups, cls).tearDownClass()

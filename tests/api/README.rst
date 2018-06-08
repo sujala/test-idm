@@ -54,6 +54,13 @@ Running the tests - without tox
     $ nosetests api (OR)
     $ nosetests --nologcapture api (to avoid the verbose requests log)
 
+    To calculate qe-coverage metrics, run the tests like the following command :
+
+    $ coverage-opencafe api project::identity nosetests tests/api/v2/tokens/test_auth_and_validate.py --dry-run
+
+    With dry-run option, it will give you info if any tags were missed or were out of order.
+    Without that option, the tagged tests' info will be sent to Splunk.
+
 Required Roles for running the tests
 =====================================
 

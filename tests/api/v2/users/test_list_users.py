@@ -2,7 +2,7 @@
 from nose.plugins.attrib import attr
 from random import randrange
 
-import ddt
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -13,13 +13,13 @@ from tests.package.johny.v2.models import requests
 # TODO: update user list schema validator when defect CID-408 is fixed
 
 
-@ddt.ddt
 class TestListUsers(base.TestBaseV2):
 
     """ List users test
     Adds identity_admin, user_admin, sub_user then test list user"""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -43,6 +43,7 @@ class TestListUsers(base.TestBaseV2):
                 'domain_id': cls.DOMAIN_ID_TEST,
                 'user_name': sub_user_name})
 
+    @unless_coverage
     def setUp(self):
         super(TestListUsers, self).setUp()
         self.user_ids = []
@@ -69,6 +70,7 @@ class TestListUsers(base.TestBaseV2):
                 request_object=request_input)
             self.sub_user_ids.append(resp.json()[const.USER][const.ID])
 
+    @tags('positive', 'p1', 'regression')
     def test_list_users_by_service_admin(self):
         """List by service admin user
         """
@@ -78,6 +80,7 @@ class TestListUsers(base.TestBaseV2):
         self.assertSchema(response=resp,
                           json_schema=users_json.list_users)
 
+    @tags('positive', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_list_user_email_by_service_admin(self):
         """List by admin user filter by email
@@ -93,6 +96,7 @@ class TestListUsers(base.TestBaseV2):
         for user in resp.json()[const.USERS]:
             self.assertEqual(user[const.EMAIL], self.EMAIL_TEST)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_users_by_identity_admin(self):
         """List by identity admin user
@@ -112,6 +116,7 @@ class TestListUsers(base.TestBaseV2):
         self.assertSchema(response=resp,
                           json_schema=users_json.list_users)
 
+    @tags('positive', 'p1', 'regression')
     def test_list_user_email_by_identity_admin(self):
         """List by admin user filter by email
         """
@@ -125,6 +130,7 @@ class TestListUsers(base.TestBaseV2):
         for user in resp.json()[const.USERS]:
             self.assertEqual(user[const.EMAIL], self.EMAIL_TEST)
 
+    @tags('positive', 'p1', 'regression')
     def test_list_users_by_user_admin(self):
         """List by admin user
         """
@@ -138,6 +144,7 @@ class TestListUsers(base.TestBaseV2):
             self.assertEqual(user[const.RAX_AUTH_DOMAIN_ID],
                              self.DOMAIN_ID_TEST)
 
+    @tags('positive', 'p1', 'regression')
     def test_list_user_email_by_user_admin(self):
         """List by admin user filter by email
         """
@@ -151,6 +158,7 @@ class TestListUsers(base.TestBaseV2):
         for user in resp.json()[const.USERS]:
             self.assertEqual(user[const.EMAIL], self.EMAIL_TEST)
 
+    @tags('positive', 'p1', 'regression')
     def test_list_users_by_user_default(self):
         """List by defaul user
         """
@@ -161,6 +169,7 @@ class TestListUsers(base.TestBaseV2):
                           json_schema=users_json.list_users)
         self.assertEqual(len(resp.json()[const.USERS]), 1)
 
+    @tags('negative', 'p1', 'regression')
     def test_list_user_email_by_user_default(self):
         """List by default user filter by email
         """
@@ -174,6 +183,7 @@ class TestListUsers(base.TestBaseV2):
         # for user in resp.json()[const.USERS]:
         #     self.assertEqual(user[const.EMAIL], self.EMAIL_TEST)
 
+    @unless_coverage
     @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all users created in the tests
@@ -184,6 +194,7 @@ class TestListUsers(base.TestBaseV2):
         super(TestListUsers, self).tearDown()
 
     @classmethod
+    @unless_coverage
     @base.base.log_tearDown_error
     def tearDownClass(cls):
         # Delete all users created in the setUpClass

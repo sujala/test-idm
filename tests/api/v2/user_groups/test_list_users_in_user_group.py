@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.models import factory, responses
 from tests.api.v2.schema import users, user_groups
@@ -14,6 +15,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
     """
     Tests for List users in user group for a domain service
     """
+    @unless_coverage
     def setUp(self):
         super(ListUsersInUserGroup, self).setUp()
         self.user_admin_client = self.generate_client(
@@ -85,6 +87,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
             user_id=self.user_admin_client.default_headers[const.X_USER_ID],
             negative=True)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_users_in_user_group_after_user_update(self):
 
@@ -241,6 +244,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
             group.id,
             user_group_id_list)
 
+    @unless_coverage
     def tearDown(self):
 
         # Not calling 'log_tearDown_error' as delete_client() method is

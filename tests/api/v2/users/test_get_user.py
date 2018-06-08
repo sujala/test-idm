@@ -2,6 +2,7 @@
 import copy
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import unless_coverage
 from random import randrange
 
 from tests.api.utils import func_helper
@@ -16,6 +17,7 @@ from tests.package.johny.v2.models import requests
 class GetUsersForTenantTests(base.TestBaseV2):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(GetUsersForTenantTests, cls).setUpClass()
         cls.updated_schema = copy.deepcopy(users_json.list_users)
@@ -25,6 +27,7 @@ class GetUsersForTenantTests(base.TestBaseV2):
         secret_a = 'test a'
         cls.secret_qa = {'question': secret_q, 'answer': secret_a}
 
+    @unless_coverage
     def setUp(self):
 
         super(GetUsersForTenantTests, self).setUp()
@@ -49,6 +52,7 @@ class GetUsersForTenantTests(base.TestBaseV2):
             'user_admin': self.user_admin_client
         }
 
+    @unless_coverage
     @ddt.data('identity_admin', 'user_admin')
     @attr(type='smoke_alpha')
     def test_get_users_for_tenant_by_contact_id(self, user_type):
@@ -67,6 +71,12 @@ class GetUsersForTenantTests(base.TestBaseV2):
             get_user_resp.json()[const.USERS])]
         self.assertIn(self.user_name, usernames)
 
+    @unless_coverage
     def tearDown(self):
         self.delete_client(self.user_admin_client)
         super(GetUsersForTenantTests, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(GetUsersForTenantTests, cls).tearDownClass()

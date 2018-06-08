@@ -1,4 +1,5 @@
-import ddt
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from tests.api.v2 import base
 from tests.api.v2.models import responses
 from tests.api.v2.models import factory
@@ -6,7 +7,6 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-@ddt.ddt
 class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
     """
     1.  A user assigned a role that exists under an application that does not
@@ -24,6 +24,7 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
         return (self.test_config.run_local_and_jenkins_only and
                 self.test_config.run_service_admin_tests)
 
+    @unless_coverage
     def setUp(self):
         super(AuthUserWithRoleMissingOpenstackType, self).setUp()
         if not self.service_admin():
@@ -145,6 +146,7 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         return resp.json()[const.ACCESS][const.SERVICE_CATALOG]
 
+    @tags('positive', 'p1', 'regression')
     def test_can_auth_user_with_role_missing_openstacktype(self):
         # Create Role with service missing openstacktype
         new_role_name, new_role_id = self.create_role(
@@ -160,6 +162,7 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
             request_object=req_obj)
         self.assertEqual(resp.status_code, 200)
 
+    @tags('positive', 'p1', 'regression')
     def test_no_endpoints_service_missing_openstacktype_but_still_allow_others(
       self):
         # Create Role with service missing openstacktype
@@ -210,6 +213,7 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
                 const.NAME] == service_name],
             msg="service name not found: {0}".format(service_name))
 
+    @unless_coverage
     def tearDown(self):
         if not self.test_config.run_service_admin_tests:
             return

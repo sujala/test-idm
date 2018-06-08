@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.models import factory
 from tests.api.v2.schema import user_groups
@@ -12,7 +13,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
     """
     Tests for user groups in a domain services.
     """
-
+    @unless_coverage
     def setUp(self):
         super(UserGroupsInDomain, self).setUp()
         self.user_admin_client = self.generate_client(
@@ -34,6 +35,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
         self.assertEqual(user_group_resp.status_code, 201)
         return user_group_resp.json()
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_user_groups_in_a_domain(self):
 
@@ -64,6 +66,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
             response=list_resp,
             json_schema=user_groups.list_user_groups_for_domain)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_update_user_group_in_a_domain(self):
 
@@ -88,6 +91,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
             get_resp.json()[const.RAX_AUTH_USER_GROUP][const.NAME],
             updated_group_name)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_delete_user_group_in_a_domain(self):
 
@@ -101,6 +105,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
             domain_id=self.domain_id, group_id=group_id)
         self.assertEqual(get_resp.status_code, 404)
 
+    @tags('positive', 'p1', 'regression')
     def test_failed_domain_deletion_does_not_remove_user_group(self):
 
         group_req = factory.get_add_user_group_request(self.domain_id)
@@ -117,6 +122,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
             domain_id=self.domain_id)
         self.assertEqual(len(list_resp.json()[const.RAX_AUTH_USER_GROUPS]), 1)
 
+    @unless_coverage
     def tearDown(self):
 
         # Not calling 'log_tearDown_error' as delete_client() method is

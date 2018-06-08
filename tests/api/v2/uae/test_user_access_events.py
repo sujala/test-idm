@@ -11,6 +11,7 @@ For now, it is highly discouraged to connect to docker
 containers for UAE testing.
 """
 
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 import time
 import xml.etree.ElementTree as ET
 
@@ -26,6 +27,7 @@ from tests.api.utils import header_validation
 class TestUserAccessEvents(base.TestBaseV2):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestUserAccessEvents, cls).setUpClass()
         cls.search_uae_log = 'org.openrepose.herp.post.filter - '
@@ -35,6 +37,7 @@ class TestUserAccessEvents(base.TestBaseV2):
         cls.au_requesturl_xpath = (
             ".//*[@name='auditData']/cadf:content/ua:auditData/ua:requestURL")
 
+    @unless_coverage
     def setUp(self):
         if not self.test_config.run_local_and_jenkins_only:
             self.skipTest('Skipping tests from staging and production')
@@ -145,6 +148,7 @@ class TestUserAccessEvents(base.TestBaseV2):
             nodes = root_elem.findall(self.au_requesturl_xpath, ns)
             self.assertEqual(nodes[0].text, request_url)
 
+    @tags('positive', 'p0', 'regression')
     def test_verify_uae_w_mfa_auth(self):
         """
         - create user
@@ -206,9 +210,15 @@ class TestUserAccessEvents(base.TestBaseV2):
                            validate_username_header_not_present)
         # TODO: verify UAE
 
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         for id in self.user_ids:
             resp = self.identity_admin_client.delete_user(user_id=id)
             self.assertEqual(resp.status_code, 204)
         super(TestUserAccessEvents, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestUserAccessEvents, cls).tearDownClass()

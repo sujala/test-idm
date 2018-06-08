@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
-import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 
 from tests.api.utils import func_helper
@@ -10,12 +10,12 @@ from tests.api.v2.schema import tokens as tokens_json
 from tests.package.johny import constants as const
 
 
-@ddt.ddt
 class TestValidateToken(base.TestBaseV2):
 
     """ Validate Token test"""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
         Create users needed for the tests and generate clients for those users.
@@ -30,10 +30,12 @@ class TestValidateToken(base.TestBaseV2):
             additional_input_data={'domain_id': domain_id,
                                    'contact_id': cls.contact_id})
 
+    @unless_coverage
     def setUp(self):
         super(TestValidateToken, self).setUp()
 
     @attr(type='smoke_alpha')
+    @tags('positive', 'p0', 'smoke')
     def test_validate_token_reports_contact_id(self):
         """Check for contact id in validate token response
         """
@@ -46,6 +48,7 @@ class TestValidateToken(base.TestBaseV2):
         self.assertEqual(resp.json()[const.ACCESS][
             const.USER][const.RAX_AUTH_CONTACTID], str(self.contact_id))
 
+    @tags('positive', 'p0', 'regression')
     def test_analyze_user_token(self):
         user_token = self.user_admin_client.default_headers[const.X_AUTH_TOKEN]
 
@@ -58,6 +61,7 @@ class TestValidateToken(base.TestBaseV2):
         self.assertSchema(response=analyze_token_resp,
                           json_schema=tokens_json.analyze_valid_token)
 
+    @tags('positive', 'p0', 'regression')
     def test_analyze_invalid_token(self):
         # The identity_admin used should have the 'analyze-token' role inorder
         # to use the analyze token endpoint.
@@ -68,7 +72,12 @@ class TestValidateToken(base.TestBaseV2):
         self.assertSchema(response=analyze_token_resp,
                           json_schema=tokens_json.analyze_token)
 
+    @unless_coverage
+    def tearDown(self):
+        super(TestValidateToken, self).tearDown()
+
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         # Delete all users created in the setUpClass
         cls.delete_client(client=cls.user_admin_client,

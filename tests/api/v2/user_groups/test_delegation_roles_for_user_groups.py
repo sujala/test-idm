@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
-import ddt
 from munch import Munch
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2.user_groups import usergroups
@@ -11,12 +11,12 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-@ddt.ddt
 class TestDelegationRolesWithUserGroups(usergroups.TestUserGroups):
 
     """
     Tests for Delegation agreements roles for user group as principal
     """
+    @unless_coverage
     def setUp(self):
         """
         Test level set up for the tests
@@ -79,6 +79,7 @@ class TestDelegationRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertTrue(role_1_present)
         self.assertTrue(role_2_present)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_da_roles_for_user_group_principal(self):
 
@@ -182,6 +183,7 @@ class TestDelegationRolesWithUserGroups(usergroups.TestUserGroups):
             tenant_assignments=tas, role_1=role_1, role_2=role_2,
             tenant_1=tenant_1, for_default_user=True)
 
+    @unless_coverage
     @usergroups.base.base.log_tearDown_error
     def tearDown(self):
         for group_id, domain_id in self.group_ids:

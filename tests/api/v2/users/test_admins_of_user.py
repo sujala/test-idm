@@ -2,6 +2,7 @@
 from nose.plugins.attrib import attr
 import ddt
 import time
+from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import data_file_iterator
 from tests.api.utils import saml_helper
@@ -19,6 +20,7 @@ ERROR_MESSAGE_USER_NOT_FOUND = 'User {0} not found'
 class TestAdminsOfUser(base.TestBaseV2):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
 
         super(TestAdminsOfUser, cls).setUpClass()
@@ -31,6 +33,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         cls.issuer = 'http://identityqe.rackspace.com'
         cls.idp_id = 'identityqe'
 
+    @unless_coverage
     @data_file_iterator.data_file_provider((
         "default_mapping_policy.yaml",
     ))
@@ -41,11 +44,13 @@ class TestAdminsOfUser(base.TestBaseV2):
                 content_type=const.YAML)
         assert resp_put_manager.status_code == 204
 
+    @unless_coverage
     def setUp(self):
         super(TestAdminsOfUser, self).setUp()
         self.domain_ids = []
         self.update_mapping_policy_for_idp()
 
+    @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
     def test_admins_of_fed_user(self, test_data):
 
@@ -148,6 +153,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(admins_using_fed_user.json()['forbidden'][
                              'message'], 'Not Authorized')
 
+    @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
     @attr('skip_at_gate')
     def test_admins_of_fed_user_using_another_fed_user(self, test_data):
@@ -216,6 +222,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(admins_using_fed_user.json()['forbidden'][
                              'message'], 'Not Authorized')
 
+    @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
     @attr(type='skip_at_gate')
     def test_disabled_admin_of_fed_user(self, test_data):
@@ -271,6 +278,7 @@ class TestAdminsOfUser(base.TestBaseV2):
             token_id=fed_user_auth_token)
         self.assertEqual(validate_resp.status_code, 404)
 
+    @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
     def test_admin_of_fed_user_using_default_user(self, test_data):
 
@@ -354,6 +362,7 @@ class TestAdminsOfUser(base.TestBaseV2):
                           json_schema=users_json.get_admins_of_user)
         self.assertEqual(admin_user_id, user_id)
 
+    @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
     @attr(type='skip_at_gate')
     def test_admin_of_fed_user_using_user_manager(self, test_data):
@@ -441,6 +450,7 @@ class TestAdminsOfUser(base.TestBaseV2):
                           json_schema=users_json.get_admins_of_user)
         self.assertEqual(admin_user_id, user_id)
 
+    @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
     def test_admins_of_expired_fed_user(self, test_data):
 
@@ -511,6 +521,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.assertEqual(admins_of_fed_user.json()['itemNotFound']['message'],
                          ERROR_MESSAGE_USER_NOT_FOUND.format(fed_user_id))
 
+    @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
     @attr(type='skip_at_gate')
     def test_deleted_admin_of_fed_user(self, test_data):
@@ -567,6 +578,7 @@ class TestAdminsOfUser(base.TestBaseV2):
             token_id=fed_user_auth_token)
         self.assertEqual(validate_resp.status_code, 200)
 
+    @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
     @attr(type='skip_at_gate')
     def test_admin_of_fed_user_with_disabled_domain(self, test_data):
@@ -625,6 +637,7 @@ class TestAdminsOfUser(base.TestBaseV2):
             token_id=fed_user_auth_token)
         self.assertEqual(validate_resp.status_code, 404)
 
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         for dom in self.domain_ids:
@@ -636,6 +649,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         super(TestAdminsOfUser, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         cls.delete_client(client=cls.common_user_admin_client,
                           parent_client=cls.service_admin_client)

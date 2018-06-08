@@ -4,8 +4,8 @@
   from roles list on validate call
 """
 
-import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -16,12 +16,12 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-@ddt.ddt
 class AuthAndValidateTokens(base.TestBaseV2):
     """
     AuthAndValidateTokens
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(AuthAndValidateTokens, cls).setUpClass()
         cls.domain_id = func_helper.generate_randomized_domain_id(
@@ -45,6 +45,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
         cls.tenant = cls.create_tenant_with_faws_prefix(
             cls.domain_id)
 
+    @unless_coverage
     def setUp(self):
         super(AuthAndValidateTokens, self).setUp()
 
@@ -62,6 +63,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
         assert add_tenant_resp.status_code == 201
         return responses.Tenant(add_tenant_resp.json())
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_auth_useradmin_token(self):
         resp = self.identity_admin_client.validate_token(
@@ -79,6 +81,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
                  const.TENANT_TYPE_PROTECTED_PREFIX + ":")), False)
         self.assertIsNotNone(faws_tenant_access_role)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_auth_usermanage_token(self):
         resp = self.identity_admin_client.validate_token(
@@ -96,6 +99,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
                  const.TENANT_TYPE_PROTECTED_PREFIX + ":")), False)
         self.assertIsNotNone(faws_tenant_access_role)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_auth_userdefault_token(self):
         resp = self.identity_admin_client.validate_token(
@@ -112,7 +116,12 @@ class AuthAndValidateTokens(base.TestBaseV2):
         self.assertEqual(False, tenant_access_role,
                          "Tenant access role exists")
 
+    @unless_coverage
+    def tearDown(self):
+        super(AuthAndValidateTokens, self).tearDown()
+
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(AuthAndValidateTokens, cls).tearDownClass()
         cls.identity_admin_client.delete_user(

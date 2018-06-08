@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -13,6 +14,7 @@ from tests.package.johny.v2.models import requests
 
 class TestImpersonateUser(base.TestBaseV2):
 
+    @unless_coverage
     def setUp(self):
         super(TestImpersonateUser, self).setUp()
         self.user_ids = []
@@ -35,6 +37,7 @@ class TestImpersonateUser(base.TestBaseV2):
 
         self.racker_client = self.generate_racker_client()
 
+    @tags('positive', 'p0', 'regression')
     @attr('skip_at_gate')
     def test_impersonate_user(self):
         '''Test for user impersonation.'''
@@ -58,6 +61,7 @@ class TestImpersonateUser(base.TestBaseV2):
         self.assertSchema(response=resp,
                           json_schema=tokens_json.validate_token)
 
+    @tags('positive', 'p1', 'regression')
     def test_analyze_impersonation_token(self):
         '''Test for analyze user impersonation token.'''
         impersonation_request_obj = requests.ImpersonateUser(
@@ -81,6 +85,7 @@ class TestImpersonateUser(base.TestBaseV2):
                           json_schema=tokens_json.analyze_token)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         for id_ in self.user_ids:

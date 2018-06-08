@@ -4,6 +4,7 @@ import copy
 from hypothesis import given, strategies
 from nose.plugins.attrib import attr
 import ddt
+from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import header_validation
 from tests.api.v2 import base
@@ -21,6 +22,7 @@ class TestAddUser(base.TestBaseV2):
     Adds user_admin, sub_user, user_manage level users."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -43,10 +45,12 @@ class TestAddUser(base.TestBaseV2):
         cls.add_input = {'domain_id': const.DOMAIN_TEST}
         cls.add_schema_fields = [const.NS_PASSWORD]
 
+    @unless_coverage
     def setUp(self):
         super(TestAddUser, self).setUp()
         self.user_ids = []
 
+    @unless_coverage
     @ddt.file_data('data_add_user_admin_user.json')
     def test_add_user_admin_user(self, test_data):
         '''Add user_admin type users
@@ -82,6 +86,7 @@ class TestAddUser(base.TestBaseV2):
 
         self.assertSchema(response=get_resp, json_schema=users_json.get_user)
 
+    @unless_coverage
     @ddt.file_data('data_add_user_w_mfa_attrs.json')
     def test_add_user_admin_user_w_mfa_attrs(self, test_data):
         '''Add user_admin type users
@@ -118,6 +123,7 @@ class TestAddUser(base.TestBaseV2):
             self.assertSchema(response=resp, json_schema=updated_json_schema)
             self.assertHeaders(response=resp)
 
+    @unless_coverage
     @ddt.file_data('data_add_user_w_mfa_attrs.json')
     def test_add_user_default_user_w_mfa_attrs(self, test_data):
         '''Add user_defaut type users
@@ -155,6 +161,7 @@ class TestAddUser(base.TestBaseV2):
             self.assertSchema(response=resp, json_schema=updated_json_schema)
             self.assertHeaders(response=resp)
 
+    @unless_coverage
     @ddt.data(True, False, '')
     def test_add_user(self, enabled):
         """Add user_admin type users
@@ -183,6 +190,7 @@ class TestAddUser(base.TestBaseV2):
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_201)
 
+    @unless_coverage
     @ddt.data(['  ', 'me@mail.com', True], ['വളം', 'me@mail.com', True],
               ['first last', 'valid@email.com', ''])
     @ddt.unpack
@@ -211,6 +219,7 @@ class TestAddUser(base.TestBaseV2):
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_400)
 
+    @unless_coverage
     @given(strategies.text(), strategies.booleans())
     def test_add_user_hypothesis(self, user_name, enabled):
         """Property Based Testing
@@ -230,6 +239,7 @@ class TestAddUser(base.TestBaseV2):
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_400)
 
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         for id in self.user_ids:
@@ -238,6 +248,7 @@ class TestAddUser(base.TestBaseV2):
         super(TestAddUser, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         # Delete all users created in the setUpClass
         cls.identity_admin_client.delete_user(
@@ -252,6 +263,7 @@ class TestAddUserExistingRolesTenants(base.TestBaseV2):
     """Add User With Existing Roles and Tenants Tests."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -259,6 +271,7 @@ class TestAddUserExistingRolesTenants(base.TestBaseV2):
         """
         super(TestAddUserExistingRolesTenants, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestAddUserExistingRolesTenants, self).setUp()
         self.user_ids = []
@@ -400,6 +413,7 @@ class TestAddUserExistingRolesTenants(base.TestBaseV2):
 
         return result
 
+    @unless_coverage
     @ddt.file_data('data_one_user_existing_domains_tenants.json')
     def test_add_user_admin_user_existing_doms_tenants(self, test_data):
         '''Add user_admin type users where the domains and tenants exist.'''
@@ -443,6 +457,7 @@ class TestAddUserExistingRolesTenants(base.TestBaseV2):
         if "validator" in test_data:
             self.get_validator(test_data["validator"])(resp, test_data)
 
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         for id in self.user_ids:
@@ -451,6 +466,7 @@ class TestAddUserExistingRolesTenants(base.TestBaseV2):
         super(TestAddUserExistingRolesTenants, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestAddUserExistingRolesTenants, cls).tearDownClass()
 
@@ -464,6 +480,7 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
     All tests in this class require a service admin level user credentials.
     """
 
+    @unless_coverage
     def setUp(self):
         super(TestServiceAdminLevelAddUser, self).setUp()
         if not self.test_config.run_service_admin_tests:
@@ -479,6 +496,7 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
         self.add_input = {'domain_id': const.DOMAIN_TEST}
         self.add_schema_fields = [const.NS_PASSWORD]
 
+    @unless_coverage
     @ddt.file_data('data_add_identity_admin_user.json')
     def test_add_identity_admin_user(self, test_data):
         """Add identity admin level users
@@ -505,6 +523,7 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_201)
 
+    @unless_coverage
     @ddt.file_data('data_add_user_w_mfa_attrs.json')
     @attr(type='skip_at_gate')
     def test_add_user_identity_admin_w_mfa_attrs(self, test_data):
@@ -536,6 +555,7 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
             self.assertSchema(response=resp, json_schema=updated_json_schema)
             self.assertHeaders(response=resp)
 
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         for id in self.user_ids:

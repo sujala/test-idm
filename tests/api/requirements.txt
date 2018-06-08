@@ -13,3 +13,6 @@ cryptography==1.7.2
 pyOpenSSL==16.2.0
 allpairspy==2.1.0
 munch==2.2.0
+https://artifacts.rackspace.net/artifactory/api/pypi/tableread-pypi-local/tableread/1.0.3/tableread-1.0.3.tar.gz
+https://artifacts.rackspace.net/artifactory/api/pypi/qecommon_tools-pypi-local/qecommon_tools/1.1.3/qecommon_tools-1.1.3.tar.gz
+https://artifacts.rackspace.net/artifactory/api/pypi/qe_coverage-pypi-local/qe_coverage/1.5.1/qe_coverage-1.5.1.tar.gz

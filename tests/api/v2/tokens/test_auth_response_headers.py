@@ -2,6 +2,7 @@
 import ddt
 import time
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import func_helper, header_validation
 from tests.api.v2 import base
@@ -27,9 +28,11 @@ class TestAuthResponseHeaders(base.TestBaseV2):
     """
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestAuthResponseHeaders, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestAuthResponseHeaders, self).setUp()
         self.user_ids = []
@@ -145,6 +148,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
             self.assertEqual(mfa_resp.status_code, 200)
         return mfa_resp
 
+    @unless_coverage
     @ddt.data(['user_password', False], ['user_password', True],
               ['user_apikey', False])
     @ddt.unpack
@@ -222,6 +226,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.assertHeaders(final_auth_resp, (
             header_validation.validate_username_header_not_present))
 
+    @unless_coverage
     @ddt.data(('user_password', 'tenant_id', True),
               ('user_password', 'tenant_id', False),
               ('user_apikey', 'tenant_id', False),
@@ -247,6 +252,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
                                    with_tenant=with_tenant, secret=secret,
                                    tenant_id=tenant_id)
 
+    @unless_coverage
     @ddt.data(('user_password', 'tenant_id', True),
               ('user_password', 'tenant_id', False),
               ('user_apikey', 'tenant_id', False),
@@ -279,6 +285,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
                                    with_tenant=with_tenant, secret=secret,
                                    tenant_id=tenant_id)
 
+    @unless_coverage
     @ddt.data(('user_password', 'tenant_id', True),
               ('user_password', 'tenant_id', False),
               ('user_apikey', 'tenant_id', False),
@@ -319,6 +326,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
                                    secret=secret, with_tenant=with_tenant,
                                    tenant_id=tenant_id)
 
+    @unless_coverage
     @ddt.data(['tenant_id', False],
               ['tenant_name', False],
               ['tenant_id', True],
@@ -371,6 +379,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.assertHeaders(final_auth_resp, (
             header_validation.validate_username_header_not_present))
 
+    @unless_coverage
     @ddt.data(['user_password', True], ['user_password', True],
               ['user_apikey', False])
     @ddt.unpack
@@ -402,6 +411,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.validate_auth_headers(use_mfa=use_mfa, auth_resp=auth_resp,
                                    secret=secret, tenant_id=tenant_id)
 
+    @unless_coverage
     @ddt.data(['user_password', True], ['user_password', False],
               ['user_apikey', False])
     @ddt.unpack
@@ -459,6 +469,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.assertHeaders(final_auth_resp, (
             header_validation.validate_username_header_not_present))
 
+    @unless_coverage
     @ddt.data(True, False)
     @attr(type='smoke_alpha')
     def test_auth_w_user_no_tenant(self, use_mfa):
@@ -489,6 +500,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.assertHeaders(final_auth_resp, (
             header_validation.validate_username_header_not_present))
 
+    @unless_coverage
     @ddt.data(['tenant_id', True], ['tenant_name', True],
               ['tenant_id', False], ['tenant_name', False])
     @ddt.unpack
@@ -545,6 +557,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.assertHeaders(final_auth_resp, (
             header_validation.validate_username_header_not_present))
 
+    @unless_coverage
     @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all resources created in the tests
@@ -573,3 +586,8 @@ class TestAuthResponseHeaders(base.TestBaseV2):
                 resp.status_code, 204,
                 msg='Role with ID {0} failed to delete'.format(id_))
         super(TestAuthResponseHeaders, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestAuthResponseHeaders, cls).tearDownClass()

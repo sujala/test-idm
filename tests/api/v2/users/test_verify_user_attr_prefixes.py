@@ -1,4 +1,5 @@
-import ddt
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from tests.api.v2 import base
 from tests.api.v2.schema import unboundid as unboundid_json
 from tests.api.v2.schema import groups as groups_json
@@ -9,12 +10,12 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2 import client
 
 
-@ddt.ddt
 class TestUserPrefixes(base.TestBaseV2):
     """
     Verifying user.attr.prefixes
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
         """
@@ -27,12 +28,14 @@ class TestUserPrefixes(base.TestBaseV2):
             cls.service_admin_client.default_headers[const.X_AUTH_TOKEN] = (
                 cls.identity_config.service_admin_auth_token)
 
+    @unless_coverage
     def setUp(self):
         super(TestUserPrefixes, self).setUp()
         self.user_ids = []
         self.group_ids = []
         self.role_ids = []
 
+    @tags('positive', 'p1', 'regression')
     def test_verify_absence_of_include_user_attr_prefixes(self):
         """
         Verify feature.include.user.attr.prefixes is not in unboundid config
@@ -48,6 +51,7 @@ class TestUserPrefixes(base.TestBaseV2):
                          msg=('feature.include.user.attr.prefixes is suppose'
                               ' to have been removed'))
 
+    @tags('positive', 'p1', 'regression')
     def test_create_user_has_correct_prefixes(self):
         """
         Make sure createUser API call returns a JSON structure
@@ -91,6 +95,7 @@ class TestUserPrefixes(base.TestBaseV2):
         self.assertIn(const.NS_SECRETQA, resp.json()[const.USER],
                       msg="{0} not in response.".format(const.NS_SECRETQA))
 
+    @unless_coverage
     def tearDown(self):
         for user_id in self.user_ids:
             self.identity_admin_client.delete_user(user_id=user_id)
@@ -101,6 +106,7 @@ class TestUserPrefixes(base.TestBaseV2):
         super(TestUserPrefixes, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         # @todo: Delete all users created in the setUpClass
         super(TestUserPrefixes, cls).tearDownClass()

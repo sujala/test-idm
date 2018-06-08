@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.user_groups import usergroups
 
@@ -13,9 +14,11 @@ class TestListUsersForTenantWithUserGroup(usergroups.TestUserGroups):
     List users for tenant when a user group has a role on tenant
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestListUsersForTenantWithUserGroup, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestListUsersForTenantWithUserGroup, self).setUp()
         self.user_admin_client = self.generate_client(
@@ -26,6 +29,7 @@ class TestListUsersForTenantWithUserGroup(usergroups.TestUserGroups):
                 'user_name': self.user_name
             })
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_users_for_tenant(self):
         """
@@ -79,6 +83,7 @@ class TestListUsersForTenantWithUserGroup(usergroups.TestUserGroups):
             self.user_admin_client.default_headers[const.X_USER_ID],
             user_ids)
 
+    @unless_coverage
     def tearDown(self):
         # Not explicitly adding log_tearDown_error as it is covered, by both
         # delete_client and parent class's tearDown()

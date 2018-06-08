@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.models import factory, responses
 from tests.api.v2.schema import user_groups
@@ -13,9 +14,11 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
     Tests for crud tenant-role assignments for user group for a domain service
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(CrudTenantRoleAssignmentsToUserGroup, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(CrudTenantRoleAssignmentsToUserGroup, self).setUp()
         self.user_admin_client = self.generate_client(
@@ -32,6 +35,7 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.assertEqual(create_group_resp.status_code, 201)
         return responses.UserGroup(create_group_resp.json())
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_crud_tenant_role_assignments_to_user_group(self):
         group = self.setup_user_group()
@@ -127,6 +131,7 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.assertEqual(assignments[0][const.ON_ROLE], role_2.id)
         self.assertEqual(assignments[0][const.FOR_TENANTS], ["*"])
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_add_and_delete_role_from_user_group_for_tenant(self):
         group = self.setup_user_group()
@@ -164,6 +169,7 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
               const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]
         self.assertEqual(len(assignments), 0)
 
+    @unless_coverage
     def tearDown(self):
 
         # Not calling 'log_tearDown_error' as delete_client() method is
@@ -178,3 +184,8 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.delete_client(self.user_admin_client,
                            parent_client=self.identity_admin_client)
         super(CrudTenantRoleAssignmentsToUserGroup, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(CrudTenantRoleAssignmentsToUserGroup, cls).tearDownClass()

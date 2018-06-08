@@ -9,8 +9,8 @@
      identityAdmin validates the resulting token
 """
 
-import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -22,15 +22,16 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-@ddt.ddt
 class AuthAndValidateTokens(base.TestBaseV2):
     """
     AuthAndValidateTokens
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(AuthAndValidateTokens, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(AuthAndValidateTokens, self).setUp()
         self.user_ids = []
@@ -74,6 +75,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
                 'username': username,
                 'password': create_user_with_tenant_resp.password}
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_validate_useradmin_token_from_userpass_auth(self):
         token = self.acct_info['token']
@@ -83,6 +85,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
             self.assertSchema(response=resp,
                               json_schema=tokens_json.validate_token)
 
+    @tags('positive', 'p1', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_groups_of_useradmin(self):
         user_id = self.acct_info['user_id']
@@ -92,6 +95,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
             self.assertSchema(response=resp,
                               json_schema=groups_json.list_groups)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_auth_with_api_key(self):
         username = self.acct_info['username']
@@ -112,6 +116,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
         access_resp = responses.Access(resp.json())
         self.assertIsNotNone(access_resp.access.token.id)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_validate_token_from_auth_tenant_user_pass(self):
         tenant_name = self.acct_info['tenant_name']
@@ -142,6 +147,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
             self.assertSchema(response=resp,
                               json_schema=tokens_json.validate_token)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_validate_token_from_auth_tenant_user_api_key(self):
         tenant_name = self.acct_info['tenant_name']
@@ -177,6 +183,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
             self.assertSchema(response=resp,
                               json_schema=tokens_json.validate_token)
 
+    @unless_coverage
     @base.base.log_tearDown_error
     def tearDown(self):
         resp = self.identity_admin_client.list_users_in_domain(
@@ -217,5 +224,6 @@ class AuthAndValidateTokens(base.TestBaseV2):
                     self.domain_id))
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(AuthAndValidateTokens, cls).tearDownClass()

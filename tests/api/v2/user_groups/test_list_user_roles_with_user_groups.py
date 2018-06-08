@@ -2,6 +2,7 @@
 import copy
 
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api import base
 from tests.api.v2.user_groups import usergroups
@@ -17,14 +18,17 @@ class TestListUsersRolesWithUserGroups(usergroups.TestUserGroups):
     List user roles with user groups
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestListUsersRolesWithUserGroups, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestListUsersRolesWithUserGroups, self).setUp()
         self.user_admin_wl_domain_client = None
         self.user_ids = []
 
+    @tags('positive', 'p0', 'regression')
     def test_list_user_roles_no_groups(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -43,6 +47,7 @@ class TestListUsersRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertEqual(len(list_role_names), 1)
         self.assertIn(const.USER_ADMIN_ROLE_NAME, list_role_names)
 
+    @tags('positive', 'p0', 'regression')
     def test_list_user_roles_with_user_group_without_roles(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -64,6 +69,7 @@ class TestListUsersRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertEqual(len(list_role_names), 1)
         self.assertIn(const.USER_ADMIN_ROLE_NAME, list_role_names)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_user_roles_with_user_group_with_roles(self):
         self.user_admin_wl_domain_client = self.generate_client(
@@ -117,6 +123,7 @@ class TestListUsersRolesWithUserGroups(usergroups.TestUserGroups):
         # role explicitly assigned to user
         self.assertIn(const.USER_ADMIN_ROLE_NAME, role_name_list)
 
+    @tags('positive', 'p0', 'regression')
     def test_domain_admin_change_with_user_groups(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -189,6 +196,7 @@ class TestListUsersRolesWithUserGroups(usergroups.TestUserGroups):
             self.assertNotIn(global_role.name, role_name_list)
 
     @base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         for user_id in self.user_ids:
             resp = self.identity_admin_client.delete_user(user_id=user_id)
@@ -203,5 +211,6 @@ class TestListUsersRolesWithUserGroups(usergroups.TestUserGroups):
         super(TestListUsersRolesWithUserGroups, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestListUsersRolesWithUserGroups, cls).tearDownClass()
