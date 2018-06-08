@@ -1,0 +1,1769 @@
+{
+    "configPath": "\/etc\/idm",
+    "properties": [
+        {
+            "defaultValue": false,
+            "name": "domain.restricted.to.one.user.admin.enabled",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": false,
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": "ou=keystore,o=configuration,dc=rackspace,dc=com",
+            "name": "feature.KeyCzarCrypterLocator.ldap.dn",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": "ou=keystore,o=configuration,dc=rackspace,dc=com",
+            "versionAdded": ""
+        },
+        {
+            "name": "feature.endpoint.template.type.mosso.mapping",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": [
+                "cbs:graphite",
+                "compute",
+                "compute-labs",
+                "dns",
+                "image",
+                "image-labs",
+                "key-manager",
+                "network",
+                "network-labs",
+                "orchestration",
+                "rax:arbor",
+                "rax:automation",
+                "rax:autoscale",
+                "rax:backup",
+                "rax:bigdata",
+                "rax:billing",
+                "rax:cloudmetrics",
+                "rax:customer",
+                "rax:database",
+                "rax:dns",
+                "rax:feeds",
+                "rax:incident",
+                "rax:load-balancer",
+                "rax:monitor",
+                "rax:queues",
+                "rax:rackconnect",
+                "rax:usage",
+                "volume",
+                "volumev2",
+                "rax:cdn",
+                "rax:sites",
+                "rax:identity",
+                "identity",
+                "rax:load-balancer-v2",
+                "cbs:graphite",
+                "compute",
+                "compute-labs",
+                "dns",
+                "image",
+                "image-labs",
+                "key-manager",
+                "network",
+                "network-labs",
+                "orchestration",
+                "rax:arbor",
+                "rax:automation",
+                "rax:autoscale",
+                "rax:backup",
+                "rax:bigdata",
+                "rax:billing",
+                "rax:cloudmetrics",
+                "rax:customer",
+                "rax:database",
+                "rax:dns",
+                "rax:feeds",
+                "rax:incident",
+                "rax:load-balancer",
+                "rax:monitor",
+                "rax:queues",
+                "rax:rackconnect",
+                "rax:usage",
+                "volume",
+                "volumev2",
+                "rax:cdn",
+                "rax:sites",
+                "rax:identity",
+                "identity",
+                "rax:load-balancer-v2"
+            ],
+            "versionAdded": ""
+        },
+        {
+            "name": "feature.endpoint.template.type.nast.mapping",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": [
+                "object-store",
+                "rax:object-cdn",
+                "object-store",
+                "rax:object-cdn"
+            ],
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.endpoint.template.type.use.config.mapping",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": 25,
+            "name": "feature.otp.entropy",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": 30,
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": "Rackspace",
+            "name": "feature.otp.issuer",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": "Rackspace",
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.v11.add.base.url.exposed",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": true,
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": 25,
+            "name": "ldap.paging.limit.default",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": 25,
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": 1000,
+            "name": "ldap.paging.limit.max",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": 1000,
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": 1,
+            "name": "multifactor.bypass.default.number",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": 1,
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": 10,
+            "name": "multifactor.bypass.maximum.number",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": 10,
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": 60,
+            "name": "reloadable.docs.cache.timeout",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": 3600,
+            "versionAdded": ""
+        },
+        {
+            "defaultValue": 30,
+            "name": "reloadable.properties.ttl.seconds",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": 30,
+            "versionAdded": ""
+        },
+        {
+            "name": "cloudAuth.adminRole",
+            "reloadable": false,
+            "description": "Identity admin role name.",
+            "source": "idm.properties",
+            "value": "identity:admin",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "cloudAuth.clientId",
+            "reloadable": false,
+            "description": "Cloud Identity Application ID.",
+            "source": "idm.properties",
+            "value": "bde1268ebabeeabb70a0e702a4626977c331d5c4",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "cloudAuth.rackerRoleRsId",
+            "reloadable": false,
+            "description": "The rsid id of the racker role",
+            "source": "idm.properties",
+            "value": "9",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "cloudAuth.serviceAdminRole",
+            "reloadable": false,
+            "description": "Service admin role name (super user).",
+            "source": "idm.properties",
+            "value": "identity:service-admin",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "cloudAuth.userAdminRole",
+            "reloadable": false,
+            "description": "User admin role name.",
+            "source": "idm.properties",
+            "value": "identity:user-admin",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "cloudAuth.userManagedRole",
+            "reloadable": false,
+            "description": "User manager role name.",
+            "source": "idm.properties",
+            "value": "identity:user-manage",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "cloudAuth.userRole",
+            "reloadable": false,
+            "description": "Default user role name.",
+            "source": "idm.properties",
+            "value": "identity:default",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "ga.username",
+            "reloadable": false,
+            "description": "Cloud Identity Admin user",
+            "source": "idm.properties",
+            "value": "CIDMAdmin",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "idm.clientId",
+            "reloadable": false,
+            "description": "The foundation client id",
+            "source": "idm.properties",
+            "value": "18e7a7032733486cd32f472d7bd58f709ac0d221",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "ldap.bind.dn",
+            "reloadable": false,
+            "description": "The bind DN for LDAP server simple bind requests.",
+            "source": "idm.properties",
+            "value": "uid=appadmin-cidm-extapp-n04.staging.iad3.cidm.rackspace.net,ou=internal,dc=rackspace,dc=com",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "defaultValue": 0,
+            "name": "ldap.server.pool.age.max",
+            "reloadable": false,
+            "description": "Specifies the maximum length of time in milliseconds that a connection in this pool may be established before it should be closed and replaced with another connection.",
+            "source": "idm.properties",
+            "value": 0,
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "defaultValue": 1,
+            "name": "ldap.server.pool.size.init",
+            "reloadable": false,
+            "description": "The number of connections to initially establish when the pool is created.  It must be greater than or equal to zero.",
+            "source": "idm.properties",
+            "value": 100,
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "defaultValue": 100,
+            "name": "ldap.server.pool.size.max",
+            "reloadable": false,
+            "description": "The maximum number of connections that should be maintained in the pool.  It must be greater than or equal to the initial number of connections, and must not be zero.",
+            "source": "idm.properties",
+            "value": 1000,
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "defaultValue": false,
+            "name": "ldap.server.trusted",
+            "reloadable": false,
+            "description": "Specifies if the edir connection is trusted",
+            "source": "idm.properties",
+            "value": false,
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "ldap.server.useSSL",
+            "reloadable": false,
+            "description": "Specifies if the LDAP server should use SSL for the connection",
+            "source": "idm.properties",
+            "value": true,
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "name": "ldap.serverList",
+            "reloadable": false,
+            "description": "Comma or space delimited list of server addresses in host:port format, port default is 636",
+            "source": "idm.properties",
+            "value": [
+                "cidm-datadsa-n01.staging.iad3.cidm.rackspace.net:636",
+                "cidm-datadsa-n02.staging.iad3.cidm.rackspace.net:636",
+                "cidm-datadsa-n03.staging.iad3.cidm.rackspace.net:636",
+                "cidm-datadsa-n04.staging.iad3.cidm.rackspace.net:636"
+            ],
+            "versionAdded": "1.0.14.8",
+            "region": "IAD3",
+            "environment": "Staging"
+        },
+        {
+            "name": "ldap.serverList",
+            "reloadable": false,
+            "description": "Comma or space delimited list of server addresses in host:port format, port default is 636",
+            "source": "idm.properties",
+            "value": [
+                "cidm-datadsa-n01.staging.lon3.cidm.rackspace.net:636",
+                "cidm-datadsa-n02.staging.lon3.cidm.rackspace.net:636",
+                "cidm-datadsa-n03.staging.lon3.cidm.rackspace.net:636",
+                "cidm-datadsa-n04.staging.lon3.cidm.rackspace.net:636"
+            ],
+            "versionAdded": "1.0.14.8",
+            "region": "LON3",
+            "environment": "Staging"
+        },
+        {
+            "defaultValue": 100,
+            "name": "list.users.by.role.limit",
+            "reloadable": false,
+            "description": "The limit to the number of users allowed to be assigned a role before the v2 list users with role API call will return an error.",
+            "source": "idm.properties",
+            "value": 100,
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "defaultValue": "MossoCloudFS_",
+            "name": "nast.tenant.prefix",
+            "reloadable": false,
+            "description": "The prefix to append to nast tenant ids",
+            "source": "idm.properties",
+            "value": "StagingUS_",
+            "versionAdded": "1.0.14.8"
+        },
+        {
+            "defaultValue": "cloud-identity-impersonate",
+            "name": "racker.impersonate.role",
+            "reloadable": false,
+            "description": "The group name in EDir to determine whether racker has authorization to impersonate",
+            "source": "idm.properties",
+            "value": "RackImpersonation",
+            "versionAdded": "2.3.0"
+        },
+        {
+            "defaultValue": "localhost",
+            "name": "email.host",
+            "reloadable": false,
+            "description": "Email host to use when sending emails.",
+            "source": "idm.properties",
+            "value": "localhost",
+            "versionAdded": "2.5.0"
+        },
+        {
+            "name": "email.locked.out.email.subject",
+            "reloadable": false,
+            "description": "Subject to use when sending MFA locked out email to customer.",
+            "source": "idm.properties",
+            "value": "Your account is locked out",
+            "versionAdded": "2.5.0"
+        },
+        {
+            "name": "email.mfa.disabled.subject",
+            "reloadable": false,
+            "description": "Subject to use when sending MFA disabled email to customer.",
+            "source": "idm.properties",
+            "value": "Rackspace :: Multi-Factor Authentication - Disabled",
+            "versionAdded": "2.5.0"
+        },
+        {
+            "name": "email.mfa.enabled.subject",
+            "reloadable": false,
+            "description": "Subject to use when sending MFA enabled email to customer.",
+            "source": "idm.properties",
+            "value": "Rackspace :: Multi-Factor Authentication - Enabled",
+            "versionAdded": "2.5.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "email.send.to.only.rackspace.addresses.enabled",
+            "reloadable": false,
+            "description": "Flag that restricts outgoing emails to only rackspace.com emails. This will prevent any emails from being sent from staging.",
+            "source": "idm.properties",
+            "value": true,
+            "versionAdded": "2.5.0"
+        },
+        {
+            "defaultValue": "\/etc\/idm\/config\/keys",
+            "name": "multifactor.key.location",
+            "reloadable": false,
+            "description": "The location of the legacy encryption keys",
+            "source": "idm.properties",
+            "value": "\/etc\/idm",
+            "versionAdded": "2.5.0"
+        },
+        {
+            "name": "token.scoped.expirationSeconds",
+            "reloadable": false,
+            "description": "Expiration time for Setup-MFA scoped tokens.",
+            "source": "idm.properties",
+            "value": 86400,
+            "versionAdded": "2.9.0"
+        },
+        {
+            "defaultValue": "UUID",
+            "name": "feature.provisioned.defaultTokenFormat",
+            "reloadable": false,
+            "description": "Defines the default token format for provisioned users tokens.",
+            "source": "idm.properties",
+            "value": "AE",
+            "versionAdded": "2.12.0"
+        },
+        {
+            "defaultValue": "FILE",
+            "name": "feature.KeyCzarCrypterLocator.storage",
+            "reloadable": false,
+            "description": "Whether to load keys from FILE or LDAP",
+            "source": "idm.properties",
+            "value": "LDAP",
+            "versionAdded": "2.13.0"
+        },
+        {
+            "defaultValue": "UUID",
+            "name": "feature.federated.provider.defaultTokenFormat",
+            "reloadable": true,
+            "description": "When an override property does not exist for a given federated provider, this determines the token format to use for that provide's federated users. AE | UUID",
+            "source": "idm.reloadable.properties",
+            "value": "AE",
+            "versionAdded": "2.13.0"
+        },
+        {
+            "defaultValue": "\/etc\/idm\/config\/keys",
+            "name": "multifactor.key.location",
+            "reloadable": false,
+            "description": "When FILE is used for AE key storage, where the keys are located",
+            "source": "idm.properties",
+            "value": "\/etc\/idm",
+            "versionAdded": "2.13.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.delete.unused.duo.phones",
+            "reloadable": true,
+            "description": "Whether or not to delete a Duo phone that is not linked to by any Identity user",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "2.15.0"
+        },
+        {
+            "defaultValue": 3,
+            "name": "feature.multifactor.locking.attempts.maximumNumber",
+            "reloadable": true,
+            "description": "local multifactor locking maximum number of attempts",
+            "source": "idm.reloadable.properties",
+            "value": 6,
+            "versionAdded": "2.15.0"
+        },
+        {
+            "defaultValue": 1800,
+            "name": "feature.multifactor.locking.login.failure.ttl.in.seconds",
+            "reloadable": true,
+            "description": "How long, in seconds, after which the last invalid MFA logic attempt will be ignored. This affects when an account will be automatically unlocked when using local locking",
+            "source": "idm.reloadable.properties",
+            "value": 310,
+            "versionAdded": "2.15.0"
+        },
+        {
+            "defaultValue": 10000,
+            "name": "local.multifactor.bypass.num.iterations",
+            "reloadable": true,
+            "description": "Number of hashing iterations to perform before storing bypass codes",
+            "source": "idm.reloadable.properties",
+            "value": 10000,
+            "versionAdded": "2.15.0"
+        },
+        {
+            "defaultValue": 5,
+            "name": "max.otp.device.per.user",
+            "reloadable": true,
+            "description": "Maximum number of OTP devices a user can associate with his\/her account",
+            "source": "idm.reloadable.properties",
+            "value": 5,
+            "versionAdded": "2.15.0"
+        },
+        {
+            "defaultValue": 300,
+            "name": "ae.auto.reload.keys.in.seconds",
+            "reloadable": false,
+            "description": "How often to check for AE key changes and reload if found. This is how long after the last time the check was made completes before checking again.",
+            "source": "idm.properties",
+            "value": 30,
+            "versionAdded": "2.16.0"
+        },
+        {
+            "name": "ae.node.name.for.signoff",
+            "reloadable": true,
+            "description": "The unique name for this API Node. This is used for both signoff on the AE keys loaded into cache by this node, and to record the node making changes",
+            "source": "idm.reloadable.properties",
+            "value": "cidm-extapp-n04.staging.iad3.cidm.rackspace.net",
+            "versionAdded": "2.16.0",
+            "action": "ignore"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.ae.auto.reload.keys.enabled",
+            "reloadable": true,
+            "description": "Whether or not to periodically check whether a newer version of AE keys exist and automatically reload",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "2.16.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.ae.sync.signoff.enabled",
+            "reloadable": true,
+            "description": "Whether or not to keep the signoff object in sync with the loaded AE Key cache",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "2.16.0"
+        },
+        {
+            "defaultValue": 25,
+            "name": "email.port",
+            "reloadable": false,
+            "description": "Email port to use when sending emails.",
+            "source": "idm.properties",
+            "value": 25,
+            "versionAdded": "3.0.0"
+        },
+        {
+            "name": "endpoint.regionId.default",
+            "reloadable": true,
+            "description": "Default region_id when creating an endpoint",
+            "source": "idm.reloadable.properties",
+            "value": "DEFAULT",
+            "versionAdded": "3.0.0"
+        },
+        {
+            "name": "group.domainId.default",
+            "reloadable": true,
+            "description": "Default domain_id when creating a group",
+            "source": "idm.reloadable.properties",
+            "value": "default",
+            "versionAdded": "3.0.0"
+        },
+        {
+            "name": "identity.role.tenant.default",
+            "reloadable": true,
+            "description": "Identity role default tenant",
+            "source": "idm.reloadable.properties",
+            "value": "identity",
+            "versionAdded": "3.0.0"
+        },
+        {
+            "name": "tenant.domainId.default",
+            "reloadable": true,
+            "description": "Default domain_id when creating a tenant",
+            "source": "idm.reloadable.properties",
+            "value": "default",
+            "versionAdded": "3.0.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.cache.ae.tokens",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.0.1"
+        },
+        {
+            "defaultValue": 50,
+            "name": "cached.ae.token.cache.concurrency.level",
+            "reloadable": true,
+            "description": "The concurrency level of the AE Token cache. Should roughly how many threads will attempt to concurrently update the cache.",
+            "source": "idm.reloadable.properties",
+            "value": 50,
+            "versionAdded": "3.0.3"
+        },
+        {
+            "defaultValue": 5000,
+            "name": "cached.ae.token.cache.initial.capacity",
+            "reloadable": true,
+            "description": "The initial capacity of the AE Token cache. A higher value prevents unnecessary resizing later at the cost of more upfront memory",
+            "source": "idm.reloadable.properties",
+            "value": 5000,
+            "versionAdded": "3.0.3"
+        },
+        {
+            "defaultValue": 10000,
+            "name": "cached.ae.token.cache.max.size",
+            "reloadable": true,
+            "description": "The maximum size of the AE Token cache",
+            "source": "idm.reloadable.properties",
+            "value": 10000,
+            "versionAdded": "3.0.3"
+        },
+        {
+            "defaultValue": true,
+            "name": "cached.ae.token.cache.record.stats",
+            "reloadable": true,
+            "description": "Whether the AE Token cache will record stats.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.0.3"
+        },
+        {
+            "defaultValue": 60,
+            "name": "cached.ae.token.ttl.seconds",
+            "reloadable": true,
+            "description": "The time an entry will exist in the AE token cache before naturally expiring",
+            "source": "idm.reloadable.properties",
+            "value": 60,
+            "versionAdded": "3.0.3"
+        },
+        {
+            "defaultValue": 86400,
+            "name": "feature.federated.domain.tokenLifetime.max",
+            "reloadable": true,
+            "description": "The max token lifetime for a provisioned federated user token",
+            "source": "idm.reloadable.properties",
+            "value": 86700,
+            "versionAdded": "3.1.0"
+        },
+        {
+            "defaultValue": 86400,
+            "name": "feature.federated.issueInstant.max.age",
+            "reloadable": true,
+            "description": "The max age of a saml response for it to be considered valid.",
+            "source": "idm.reloadable.properties",
+            "value": 1800,
+            "versionAdded": "3.1.0"
+        },
+        {
+            "defaultValue": 5,
+            "name": "feature.federated.issueInstant.max.skew",
+            "reloadable": true,
+            "description": "The max skew +\/- seconds of a saml response for it to still be considered valid.",
+            "source": "idm.reloadable.properties",
+            "value": 300,
+            "versionAdded": "3.1.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.support.saml.logout",
+            "reloadable": true,
+            "description": "Whether or not to support SAML Federation Logout",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.1.0"
+        },
+        {
+            "defaultValue": 43200,
+            "name": "federated.deltaExpiration.seconds",
+            "reloadable": true,
+            "description": "Delta time in seconds to be added for federated users deletion eligibility",
+            "source": "idm.reloadable.properties",
+            "value": 1576800000,
+            "versionAdded": "3.1.0"
+        },
+        {
+            "defaultValue": 1000,
+            "name": "federated.provider.maxUserCount.per.domain.default",
+            "reloadable": true,
+            "description": "The default max number of users in IDP per domain.",
+            "source": "idm.reloadable.properties",
+            "value": 1000,
+            "versionAdded": "3.1.0"
+        },
+        {
+            "defaultValue": 1000,
+            "name": "identity.provider.max.search.result.size",
+            "reloadable": true,
+            "description": "Maximum numbers of identity providers allowed to be returned in list providers call",
+            "source": "idm.reloadable.properties",
+            "value": 1000,
+            "versionAdded": "3.1.0"
+        },
+        {
+            "defaultValue": 1000,
+            "name": "feature.federation.deletion.max.count",
+            "reloadable": true,
+            "description": "Maximum count for federation deletion",
+            "source": "idm.reloadable.properties",
+            "value": 1000,
+            "versionAdded": "3.1.1"
+        },
+        {
+            "defaultValue": 1000,
+            "name": "feature.federation.deletion.max.delay",
+            "reloadable": true,
+            "description": "Maximum time for federation deletion delta in milliseconds",
+            "source": "idm.reloadable.properties",
+            "value": 1000,
+            "versionAdded": "3.1.1"
+        },
+        {
+            "defaultValue": "identity:purge-federated",
+            "name": "feature.federation.deletion.role",
+            "reloadable": true,
+            "description": "Federation deletion role",
+            "source": "idm.reloadable.properties",
+            "value": "identity:purge-federated",
+            "versionAdded": "3.1.1"
+        },
+        {
+            "defaultValue": 3600000,
+            "name": "feature.federation.deletion.timeout",
+            "reloadable": true,
+            "description": "Timeout for federation deletion lock",
+            "source": "idm.reloadable.properties",
+            "value": 3600000,
+            "versionAdded": "3.1.1"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.support.v11.legacy",
+            "reloadable": true,
+            "description": "Enable v1.1 legacy calls",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.1.1"
+        },
+        {
+            "defaultValue": "no-reply@rackspace.com",
+            "name": "email.return.email.address",
+            "reloadable": true,
+            "description": "Return email address to use when sending emails to customers. Was added as a static property in version 2.5.0, but was migrated to be a reloadable in this version.",
+            "source": "idm.reloadable.properties",
+            "value": "no-reply@rackspace.com",
+            "versionAdded": "3.2.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "email.send.to.only.rackspace.addresses.enabled",
+            "reloadable": true,
+            "description": "(Migrated from static w\/ fallback to static if not found in reloadable). Flag that restricts outgoing emails to only rackspace.com emails. This will prevent any emails from being sent from staging.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.2.0"
+        },
+        {
+            "defaultValue": "",
+            "name": "email.username",
+            "reloadable": false,
+            "description": "Email username for authentication to email server.",
+            "source": "idm.properties",
+            "value": "",
+            "versionAdded": "3.2.0"
+        },
+        {
+            "defaultValue": "[]",
+            "name": "forgot.password.valid.portals",
+            "reloadable": true,
+            "description": "Comma delimited list of valid portal values for forgot password",
+            "source": "idm.reloadable.properties",
+            "value": "[astra_preprod]",
+            "versionAdded": "3.2.0"
+        },
+        {
+            "defaultValue": 600,
+            "name": "token.forgot.password.validity.length",
+            "reloadable": true,
+            "description": "Timeout for forgot password tokens",
+            "source": "idm.reloadable.properties",
+            "value": 600,
+            "versionAdded": "3.2.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.prevent.racker.impersonate.api.key.access",
+            "reloadable": true,
+            "description": "Whether or not to allow racker impersonation requests to see user's API key credentials.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.3.1"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.return.json.specific.cloud.version",
+            "reloadable": true,
+            "description": "Whether or not to return the custom versions.json when GET \/cloud is called and json is requested or translate the versions.xml to json",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.3.2"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.reuse.jaxb.context",
+            "reloadable": true,
+            "description": "Whether or not to reuse JAXBContext across threads rather than creating new one for each use which causes a memory leak. This feature is only here to revert to existing functinality if required.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.3.3"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.ae.tokens.decrypt",
+            "reloadable": true,
+            "description": "Whether or not existing AE Tokens can be received. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.4.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.ae.tokens.encrypt",
+            "reloadable": true,
+            "description": "Whether or not new AE Tokens can be issued. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.4.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.issue.restricted.token.session.ids",
+            "reloadable": true,
+            "description": "Whether or not to issued restricted AE Tokens w\/ a sessionid scope for MFA X-Session-Ids",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.4.0"
+        },
+        {
+            "defaultValue": 5,
+            "name": "multifactor.sessionid.lifetime",
+            "reloadable": true,
+            "description": "Lifetime, in minutes, of MFA sessionIds. Was added as static prop in 2.2.0, but switched from to reloadable prop in version 3.4.0",
+            "source": "idm.reloadable.properties",
+            "value": 5,
+            "versionAdded": "3.4.0"
+        },
+        {
+            "defaultValue": 25,
+            "name": "purge.trrs.after.lifetime.hours",
+            "reloadable": true,
+            "description": "Number of hours after creation, based on accessTokenExp attribute, that a TRR can be purged",
+            "source": "idm.reloadable.properties",
+            "value": 25,
+            "versionAdded": "3.4.0"
+        },
+        {
+            "defaultValue": 1000,
+            "name": "purge.trrs.max.delay",
+            "reloadable": true,
+            "description": "Maximum time, in ms, caller can specify to delay between deleting token revocations records",
+            "source": "idm.reloadable.properties",
+            "value": 1000,
+            "versionAdded": "3.4.0"
+        },
+        {
+            "defaultValue": 1000,
+            "name": "purge.trrs.max.limit",
+            "reloadable": true,
+            "description": "Maximum number of TRRs that will be deleted in the call",
+            "source": "idm.reloadable.properties",
+            "value": 1000,
+            "versionAdded": "3.4.0"
+        },
+        {
+            "name": "atom.hopper.dataCenter",
+            "reloadable": true,
+            "description": "The data center to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
+            "source": "idm.reloadable.properties",
+            "value": "ORD1",
+            "versionAdded": "3.5.0",
+            "region": "IAD3",
+            "environment": "Staging"            
+        },
+        {
+            "name": "atom.hopper.dataCenter",
+            "reloadable": true,
+            "description": "The data center to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
+            "source": "idm.reloadable.properties",
+            "value": "LON3",
+            "versionAdded": "3.5.0",
+            "region": "LON3",
+            "environment": "Staging"            
+        },
+        {
+            "name": "atom.hopper.region",
+            "reloadable": true,
+            "description": "The region to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
+            "source": "idm.reloadable.properties",
+            "value": "ORD",
+            "versionAdded": "3.5.0",
+            "region": "IAD3",
+            "environment": "Staging"
+        },
+        {
+            "name": "atom.hopper.region",
+            "reloadable": true,
+            "description": "The region to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
+            "source": "idm.reloadable.properties",
+            "value": "LON",
+            "versionAdded": "3.5.0",
+            "region": "LON3",
+            "environment": "Staging"
+        },
+        {
+            "name": "atom.hopper.url",
+            "reloadable": true,
+            "description": "The URL to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
+            "source": "idm.reloadable.properties",
+            "value": "https:\/\/atom.staging.lon1.us.ci.rackspace.net\/identity\/events",
+            "versionAdded": "3.5.0",
+            "region": "IAD3",
+            "environment": "Staging"
+        },
+        {
+            "name": "atom.hopper.url",
+            "reloadable": true,
+            "description": "The URL to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
+            "source": "idm.reloadable.properties",
+            "value": "https:\/\/atom.staging.ord1.uk.ci.rackspace.net\/identity\/events",
+            "versionAdded": "3.5.0",
+            "region": "LON3",
+            "environment": "Staging"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.endpoint.template.disable.name.type",
+            "reloadable": true,
+            "description": "Whether or not endpoint template creation is allowed using service name and type.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.5.0"
+        },
+        {
+            "defaultValue": 30000,
+            "name": "feeds.connection.request.timeout.ms",
+            "reloadable": true,
+            "description": "The timeout in milliseconds until a connection is retrieve from the connection pool.",
+            "source": "idm.reloadable.properties",
+            "value": 30000,
+            "versionAdded": "3.5.0"
+        },
+        {
+            "defaultValue": 10000,
+            "name": "feeds.connection.timeout.ms",
+            "reloadable": true,
+            "description": "The timeout in milliseconds until a connection is established. A timeout value of zero is interpreted as an infinite",
+            "source": "idm.reloadable.properties",
+            "value": 10000,
+            "versionAdded": "3.5.0"
+        },
+        {
+            "defaultValue": 200,
+            "name": "feeds.max.connections",
+            "reloadable": false,
+            "description": "The total http connections allowed by the HttpClient used to post feed events",
+            "source": "idm.properties",
+            "value": 200,
+            "versionAdded": "3.5.0"
+        },
+        {
+            "defaultValue": 100,
+            "name": "feeds.max.connections.per.route",
+            "reloadable": false,
+            "description": "The total http connections allowed by the HttpClient for each route used to post feed events",
+            "source": "idm.properties",
+            "value": 100,
+            "versionAdded": "3.5.0"
+        },
+        {
+            "defaultValue": 20000,
+            "name": "feeds.new.connection.socket.timeout.ms",
+            "reloadable": false,
+            "description": "The timeout to establish a new socket for non-blocking I\/O operations ",
+            "source": "idm.properties",
+            "value": 20000,
+            "versionAdded": "3.5.0"
+        },
+        {
+            "defaultValue": 10000,
+            "name": "feeds.on.use.eviction.validate.after.ms",
+            "reloadable": false,
+            "description": "After how long of inactivity, in ms, a connection will be checked for validity.",
+            "source": "idm.properties",
+            "value": 10000,
+            "versionAdded": "3.5.0"
+        },
+        {
+            "defaultValue": 20000,
+            "name": "feeds.socket.timeout.ms",
+            "reloadable": true,
+            "description": "The timeout for waiting for data when sending feed requests - or, put differently, a maximum period inactivity between two consecutive data packets. A timeout value of zero is interpreted as an infinite",
+            "source": "idm.reloadable.properties",
+            "value": 20000,
+            "versionAdded": "3.5.0"
+        },
+        {
+            "defaultValue": 1000,
+            "name": "max.ca.directory.page.size",
+            "reloadable": true,
+            "description": "The maximum page size allowed to query the directory for. This property should be set to match the maximum query size as configured on the CA directory side. It should also be noted that this property will also impact other services through the API. For example, the API call used for deleting TRRs will limit how many TRRs can be deleted in a single request based upon this configuration.",
+            "source": "idm.reloadable.properties",
+            "value": 1000,
+            "versionAdded": "3.5.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "ldap.server.pool.allow.concurrent.socketfactory.use",
+            "reloadable": false,
+            "description": " Indicates whether to allow a socket factory instance to be used to create multiple sockets concurrently.",
+            "source": "idm.properties",
+            "value": false,
+            "versionAdded": "3.6.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "ldap.server.pool.check.connection.age.on.release",
+            "reloadable": false,
+            "description": "Specifies whether to check the age of a connection against the configured maximum connection age whenever it is released to the pool.",
+            "source": "idm.properties",
+            "value": false,
+            "versionAdded": "3.6.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "ldap.server.pool.create.if.necessary",
+            "reloadable": false,
+            "description": "Specifies whether the connection pool should create a new connection if one is requested when there are none available.",
+            "source": "idm.properties",
+            "value": true,
+            "versionAdded": "3.6.0"
+        },
+        {
+            "defaultValue": 60000,
+            "name": "ldap.server.pool.health.check.interval",
+            "reloadable": false,
+            "description": "Specifies the length of time in milliseconds between periodic background health checks against the available connections in this pool.",
+            "source": "idm.properties",
+            "value": 60000,
+            "versionAdded": "3.6.0"
+        },
+        {
+            "defaultValue": 0,
+            "name": "ldap.server.pool.max.wait.time",
+            "reloadable": false,
+            "description": "Specifies the maximum length of time in milliseconds to wait for a connection to become available when trying to obtain a connection from the pool.",
+            "source": "idm.properties",
+            "value": 10000,
+            "versionAdded": "3.6.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.include.endpoints.based.on.rules",
+            "reloadable": true,
+            "description": "When true, endpoints based on rules are included in 'authentication' and 'list endpoints for token'",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.8.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.list.support.additional.role.properties",
+            "reloadable": true,
+            "description": "When true, additional role attributes are returned.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.9.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.post.idp.feed.events",
+            "reloadable": true,
+            "description": "When true, whenever an IDP is created, updated, or deleted an IDP feed event is posted to the Identity feed.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.9.0"
+        },
+        {
+            "defaultValue": 2,
+            "name": "identity.provider.policy.max.kilobyte.size",
+            "reloadable": true,
+            "description": "Determines the max size in kilobytes for an IDP's policy file.",
+            "source": "idm.reloadable.properties",
+            "value": 8,
+            "versionAdded": "3.9.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.tenant.id.in.auth.response.v10",
+            "reloadable": true,
+            "description": "Determines if the X-Tenant-Id header should be populated in v1.0 authenticate calls.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.10.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.tenant.id.in.auth.response.v11",
+            "reloadable": true,
+            "description": "Determines if the X-Tenant-Id header should be populated in v1.1 authenticate calls.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.10.0"
+        },
+        {
+            "defaultValue": 200,
+            "name": "cache.client.role.by.id.size",
+            "reloadable": false,
+            "description": "The max size of the client role by id cache.",
+            "source": "idm.properties",
+            "value": 200,
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": "PT10M",
+            "name": "cache.client.role.by.id.ttl",
+            "reloadable": false,
+            "description": "The ttl of entries in the client role by id cache. A ttl of 0 means no cache.",
+            "source": "idm.properties",
+            "value": "PT10M",
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": "PT15M",
+            "name": "domain.default.session.inactivity.timeout",
+            "reloadable": true,
+            "description": "Default value for session inactivity timeout assigned to domains.",
+            "source": "idm.reloadable.properties",
+            "value": "PT12H",
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.allow.updating.approved.domain.ids.for.idp",
+            "reloadable": true,
+            "description": "When true, allow updating approvedDomainIds for Identity provider.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.force.standard.v2.exceptions.end.user.services",
+            "reloadable": true,
+            "description": "Whether to change contract for set of services accessible to user-admin\/default users which currently return non-standard v2.0 error objects to now return the standard errors",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.v2.federation.validate.origin.issue.instant",
+            "reloadable": true,
+            "description": "When true, v2 federation calls will validate the issueInstant of the origin saml assertions.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feeds.allow.connection.keep.alive",
+            "reloadable": true,
+            "description": "Specifies whether to enable keep alive for feed connections",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": 5000,
+            "name": "feeds.connection.keep.alive.ms",
+            "reloadable": true,
+            "description": "Specifies the keep alive feed connections duration",
+            "source": "idm.reloadable.properties",
+            "value": 5000,
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": 30000,
+            "name": "feeds.daemon.eviction.close.idle.after.ms",
+            "reloadable": true,
+            "description": "When the feeds pool is using DAEMON eviction strategy, connections will be removed from the pool if they have been idle for this this many ms. A value <= 0 indicates idle connections will not be removed",
+            "source": "idm.reloadable.properties",
+            "value": 30000,
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feeds.daemon.eviction.enabled",
+            "reloadable": false,
+            "description": "Specifies whether to enable feeds deamon to evict expired connections from connection pool.",
+            "source": "idm.properties",
+            "value": false,
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": 5000,
+            "name": "feeds.daemon.eviction.frequency.ms",
+            "reloadable": true,
+            "description": "When the feeds pool is using DAEMON eviction strategy, how often expired connections are removed from the pool.",
+            "source": "idm.reloadable.properties",
+            "value": 5000,
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": "PT24H",
+            "name": "session.inactivity.timeout.max.duration",
+            "reloadable": true,
+            "description": "Session inactivity timeout max duration in ISO 8601 format.",
+            "source": "idm.reloadable.properties",
+            "value": "PT24H",
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": "PT5M",
+            "name": "session.inactivity.timeout.min.duration",
+            "reloadable": true,
+            "description": "Session inactivity timeout min duration in ISO 8601 format.",
+            "source": "idm.reloadable.properties",
+            "value": "PT5M",
+            "versionAdded": "3.11.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.password.policy.services",
+            "reloadable": true,
+            "description": "Whether or not domain password policy support is enabled",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.12.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enforce.password.policy.expiration",
+            "reloadable": true,
+            "description": "Whether or not to enforce password policy password rule",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.12.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enforce.password.policy.history",
+            "reloadable": true,
+            "description": "Whether or not to enforce password policy history",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.12.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.infer.default.tenant.type",
+            "reloadable": true,
+            "description": "Whether to infer a tenant type for tenants without a tenant type when applying RCN roles",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.12.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.maintain.password.history",
+            "reloadable": true,
+            "description": "Whether or not to maintain password history. If history enforcement is enabled, this is always true",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.12.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.set.default.tenant.type.on.creation",
+            "reloadable": true,
+            "description": "Whether to set the default tenant type on the tenant upon creation based on the tenant name prefix.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.12.0"
+        },
+        {
+            "defaultValue": 999,
+            "name": "max.tenant.type.size",
+            "reloadable": true,
+            "description": "Maximum number of tenantTypes allowed to be created.  Maximum value allowed is 999.",
+            "source": "idm.reloadable.properties",
+            "value": 999,
+            "versionAdded": "3.12.0"
+        },
+        {
+            "defaultValue": 10,
+            "name": "password.history.max",
+            "reloadable": true,
+            "description": "The maximum number of password history entries Identity will store for a user. Will actually store 1 more than this to include the 'current' password.",
+            "source": "idm.reloadable.properties",
+            "value": 10,
+            "versionAdded": "3.12.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.allow.username.updates",
+            "reloadable": true,
+            "description": "Whether to allow a provisioned user's username to be updated.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.13.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.external.user.idp.management",
+            "reloadable": true,
+            "description": "Maximum number of explicit IDPs per domain",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.13.0"
+        },
+        {
+            "defaultValue": 10,
+            "name": "federated.max.identity.provider.per.domain",
+            "reloadable": true,
+            "description": "Maximum number of explicit IDPs per domain",
+            "source": "idm.reloadable.properties",
+            "value": 10,
+            "versionAdded": "3.13.0"
+        },
+        {
+            "name": "edir.bind.dn",
+            "reloadable": false,
+            "description": "The bind DN for eDir authenticated connections.",
+            "source": "idm.properties",
+            "value": "cn=cidm-edir-staging,ou=Users,o=rackspace",
+            "versionAdded": "3.15.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.cache.roles.without.application.restart",
+            "reloadable": true,
+            "description": "Whether or not to allow caching client roles retrieved by id\/name instead of loading them into memory at application startup.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.15.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.issued_at.in.response",
+            "reloadable": true,
+            "description": "Specify if issued will be included in authenticate, impersonate and validate response.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.15.0"
+        },
+        {
+            "valueType": "YAML",
+            "name": "federation.identity.provider.default.policy",
+            "reloadable": true,
+            "description": "The default policy used when creating an IDP",
+            "source": "directory",
+            "id": "3155046b53ba43b5a9acb966780e7d23",
+            "value": "---\n# NOTE: This example policy MUST be replaced BEFORE federated users can log in.\n# Refer to the Identity Federation documentation for more information.\nmapping:\n  rules:\n  - local:\n      user:\n        domain: \"{D}\"\n        name: \"{D}\"\n        email: \"{D}\"\n        roles: \"{D}\"\n        expire: \"{D}\"\n  version: RAX-1\n",
+            "versionAdded": "3.15.0"
+        },
+        {
+            "defaultValue": "[application\/json, text\/yaml]",
+            "name": "mapping.policy.accept.formats",
+            "reloadable": true,
+            "description": "Specify the acceptable media types for mapping policies",
+            "source": "idm.reloadable.properties",
+            "value": "[application\/json, text\/yaml]",
+            "versionAdded": "3.15.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "use.uuid.ids.for.new.groups.enabled",
+            "reloadable": true,
+            "description": "Whether or not to allow using UUID for group's rsId on creation.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.15.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "use.uuid.ids.for.new.question.enabled",
+            "reloadable": true,
+            "description": "Whether or not to allow using UUID for question's rsId on creation.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.15.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "use.uuid.ids.for.new.roles.enabled",
+            "reloadable": true,
+            "description": "Whether or not to allow using UUID for role's rsId on creation.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.15.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "allow.update.domain.rcn.on.update.domain",
+            "reloadable": true,
+            "description": "Whether to allow updating an domain's RCN using the update domain API call.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.16.0"
+        },
+        {
+            "valueType": "String",
+            "name": "enable.user.groups.for.domains",
+            "reloadable": true,
+            "description": "A comma delimited list of domains for which user groups will be allowed",
+            "source": "directory",
+            "id": "be9091cec333496a8997e819f9b06af1",
+            "value": "UserGroupDomain513ac917b2ba4f35834148fcc134ef3a,UserGroupDomainUGdf5f823f71644d1ca1c0b71cf1f5753b",
+            "versionAdded": "3.16.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "enable.user.groups.globally",
+            "reloadable": true,
+            "description": "Whether or not user groups are supported for all domains for management and considered during effective role calculation",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.16.0"
+        },
+        {
+            "defaultValue": 20,
+            "name": "user.groups.max.in.domain",
+            "reloadable": true,
+            "description": "Maximum number of user groups that can be created per domain",
+            "source": "idm.reloadable.properties",
+            "value": 100,
+            "versionAdded": "3.16.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.should.display.service.catalog.for.suspended.user.impersonate.tokens",
+            "reloadable": true,
+            "description": "Whether or not to filter the service catalog for impersonation tokens of suspended users (users that belong to a domain with all domain tenants disabled)",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.17.0"
+        },
+        {
+            "name": "tenant.prefixes.to.exclude.auto.assign.role.from",
+            "reloadable": true,
+            "description": "The list of tenant prefixes to exclude the auto-assigned (identity:tenant-access) role from.",
+            "source": "idm.reloadable.properties",
+            "value": "[faws, managed_gcp, faws, managed_gcp]",
+            "versionAdded": "3.17.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.send.new.relic.custom.data",
+            "reloadable": true,
+            "description": "Whether or not to push custom attributes to New Relic for each API transaction",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.17.1"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.use.repose.request.id",
+            "reloadable": true,
+            "description": "Whether or not to use the value supplied in the X-Request-Id header as the log transaction id. If set to false (or set to true but the header is null or blank), Identity generates a GUUID for the transaction id.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.17.1"
+        },
+        {
+            "defaultValue": "[callerUsername, callerUserType, effectiveCallerUsername, effectiveCallerUserType]",
+            "name": "new.relic.secured.api.resource.attributes",
+            "reloadable": true,
+            "description": "When secure attributes are enabled, a comma delimited list to secure",
+            "source": "idm.reloadable.properties",
+            "value": "[effectiveCallerToken, callerUsername, effectiveCallerUserType, callerUserType, callerToken, effectiveCallerUsername]",
+            "versionAdded": "3.17.1"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.new.relic.sha256.hmac",
+            "reloadable": true,
+            "description": "When secure attributes are enabled, whether to use SHA-256 HMAC or fallback to SHA1",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.18.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.use.subtree.delete.control.for.subtree.deletion.enabled",
+            "reloadable": true,
+            "description": "Whether to use subtree delete control for subtree deletion.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.18.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.ldap.auth.password.lockout.cache",
+            "reloadable": true,
+            "description": "Whether or not to cache user pwd lockouts and not attempt to bind to LDAP again until the specified amount of time has elapsed. Initially only lockouts for disabled users are cached.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.ldap.health.check.connection.for.continued.use",
+            "reloadable": true,
+            "description": "Whether to enable health check on valid connection for continued use.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.ldap.health.check.new.connection",
+            "reloadable": true,
+            "description": "Whether to enable health check on new LDAP connection.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": 200,
+            "name": "ldap.auth.password.lockout.cache.size",
+            "reloadable": false,
+            "description": "The max size of the user lockout cache.",
+            "source": "idm.properties",
+            "value": 250,
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": "PT2S",
+            "name": "ldap.auth.password.lockout.cache.ttl",
+            "reloadable": false,
+            "description": "The ttl of entries in the user lockout cache. A ttl of 0 means no cache.",
+            "source": "idm.properties",
+            "value": "PT12M",
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": "PT1S",
+            "name": "ldap.auth.password.lockout.duration",
+            "reloadable": true,
+            "description": "LDAP will lock out a user after a threshold of invalid pwd auth attempts for a configured amount of time. This setting mirrors the LDAP setting in order to provide valid auth messages and to cache that the user is locked out until the specified amount of time has elapsed without hitting LDAP again. This value must match the LDAP configuration setting. If higher than LDAP, then the app will incorrectly think a user is still locked out and not send the bind request to LDAP. ",
+            "source": "idm.reloadable.properties",
+            "value": "PT10M",
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": 6,
+            "name": "ldap.auth.password.lockout.retries",
+            "reloadable": true,
+            "description": "LDAP will lock out a user after a threshold of invalid pwd auth attempts for a configured amount of time. This setting is analogous to the LDAP setting 'password-retries' to specify how many attempts a user has until the account is locked. This value must match the LDAP setting for a consistency with LDAP. If higher than LDAP, the app will not log appropriate error messages and the lockout cache will not be used. If lower, the app will consider users locked out while CA doesn't.",
+            "source": "idm.reloadable.properties",
+            "value": 6,
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": 0,
+            "name": "ldap.server.pool.min.disconnect.interval.time",
+            "reloadable": false,
+            "description": "Specifies the minimum length of time in milliseconds that should pass between connections closed because they have been established for longer than the maximum connection age.",
+            "source": "idm.properties",
+            "value": 0,
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": "[]",
+            "name": "new.relic.exclude.auth.resource.attributes",
+            "reloadable": true,
+            "description": "The custom attributes to exclude from auth api resources (overrides inclusion). '*' means all available",
+            "source": "idm.reloadable.properties",
+            "value": "[]",
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": "[]",
+            "name": "new.relic.exclude.private.resource.attributes",
+            "reloadable": true,
+            "description": "The custom attributes to exclude from private api resources (overrides inclusion). '*' means all available",
+            "source": "idm.reloadable.properties",
+            "value": "[effectiveCallerUserType, callerUserType]",
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": "[]",
+            "name": "new.relic.exclude.public.resource.attributes",
+            "reloadable": true,
+            "description": "The custom attributes to exclude from public api resources (overrides inclusion). '*' means all available",
+            "source": "idm.reloadable.properties",
+            "value": "[]",
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": "[*]",
+            "name": "new.relic.include.auth.resource.attributes",
+            "reloadable": true,
+            "description": "The custom attributes to push for auth api resources. '*' means all available",
+            "source": "idm.reloadable.properties",
+            "value": "[*]",
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": "[*]",
+            "name": "new.relic.include.private.resource.attributes",
+            "reloadable": true,
+            "description": "The custom attributes to push for private api resources. '*' means all available",
+            "source": "idm.reloadable.properties",
+            "value": "[*]",
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": "[*]",
+            "name": "new.relic.include.public.resource.attributes",
+            "reloadable": true,
+            "description": "The custom attributes to push for public api resources. '*' means all available",
+            "source": "idm.reloadable.properties",
+            "value": "[*]",
+            "versionAdded": "3.19.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "enable.delegation.agreements.for.all.rcns",
+            "reloadable": true,
+            "description": "Whether or not delegation agreements are supported for all rcns",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.20.0"
+        },
+        {
+            "valueType": "String",
+            "name": "enable.delegation.agreements.for.rcns",
+            "reloadable": true,
+            "description": "A comma delimited list of rcns for which delegation\nagreements will be allowed",
+            "source": "directory",
+            "id": "cf2afde98d884af3aee16d93ed1da93f",
+            "value": "RCN-182-579-723,RCN-493-041-948",
+            "versionAdded": "3.20.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.delegation.agreement.services",
+            "reloadable": true,
+            "description": "Whether or not delegation agreement services are enabled",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.20.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.grant.roles.to.user.service",
+            "reloadable": true,
+            "description": "Whether to enable the grant multiple roles to user service.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.20.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.include.password.expiration.date",
+            "reloadable": true,
+            "description": "Specifies whether to return the user's password expiration on get user by ID and get user by name responses.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.20.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.list.users.for.own.domain.only",
+            "reloadable": true,
+            "description": "When enabled, list users service call can only be used to list users of own domain regardless of user type",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.20.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.always.return.approved.domainids.for.list.idps",
+            "reloadable": true,
+            "description": "Whether or not list idps should always return an approvedDomainId attribute for all idps.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.20.1"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.ignore.comments.for.saml.parser",
+            "reloadable": true,
+            "description": "Enable the document loader that loads saml object to strip comments when loading.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.20.1"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.phone.pin.on.user",
+            "reloadable": true,
+            "description": "Specifies whether to generate and store a user's phone PIN when the user is created. Phone PINs are generated for provisioned users created through v2.0 create user calls and Domain federated users.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.21.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.user.admin.look.up.by.domain",
+            "reloadable": true,
+            "description": "Whether to enable user-admin look up by domain.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.21.0"
+        },
+        {
+            "defaultValue": 6,
+            "name": "user.phone.pin.size",
+            "reloadable": true,
+            "description": "Specifies the length, in characters, of the phone PIN.",
+            "source": "idm.reloadable.properties",
+            "value": 6,
+            "versionAdded": "3.21.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.delegation.authentication",
+            "reloadable": true,
+            "description": "Whether to allow authentication with a delegation agreement.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.21.1"
+        },
+        {
+            "defaultValue": 10,
+            "name": "role.assignments.max.tenant.assignments.per.request",
+            "reloadable": true,
+            "description": "Maximum number tenant assignment in request that grant roles.",
+            "source": "idm.reloadable.properties",
+            "value": 5,
+            "versionAdded": "3.21.1"
+        }
+    ]
+}

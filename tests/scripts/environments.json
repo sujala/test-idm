@@ -1,0 +1,34 @@
+{
+    "Staging_External_IAD3": {
+        "endpoint": "https://staging.identity.api.rackspacecloud.com",
+        "servers": [
+            "cidm-extapp-n01.staging.iad3.cidm.rackspace.net",
+            "cidm-extapp-n02.staging.iad3.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Staging_External_LON3": {
+        "endpoint": "https://lon.staging.identity.api.rackspacecloud.com",
+        "servers": [
+            "cidm-extapp-n01.staging.lon3.cidm.rackspace.net",
+            "cidm-extapp-n02.staging.lon3.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Staging_Internal_IAD3": {
+        "endpoint": "https://staging.identity-internal.api.rackspacecloud.com",
+        "servers": [
+            "cidm-intapp-n01.staging.iad3.cidm.rackspace.net",
+            "cidm-intapp-n02.staging.iad3.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Staging_Internal_LON3": {
+        "endpoint": "https://lon.staging.identity-internal.api.rackspacecloud.com",
+        "servers": [
+            "cidm-intapp-n01.staging.lon3.cidm.rackspace.net",
+            "cidm-intapp-n02.staging.lon3.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    }
+}
