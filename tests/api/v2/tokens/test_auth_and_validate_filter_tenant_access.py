@@ -100,7 +100,6 @@ class AuthAndValidateTokens(base.TestBaseV2):
         self.assertIsNotNone(faws_tenant_access_role)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
     def test_auth_userdefault_token(self):
         resp = self.identity_admin_client.validate_token(
             self.user_default_client.default_headers[const.X_AUTH_TOKEN]
