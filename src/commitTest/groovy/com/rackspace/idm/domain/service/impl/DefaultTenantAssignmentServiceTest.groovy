@@ -35,6 +35,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         mockUserGroupService(service)
         mockDomainService(service)
         mockIdentityConfig(service)
+        mockDelegationService(service)
 
         reloadableConfig.getRoleAssignmentsMaxTenantAssignmentsPerRequest() >> 10
     }
@@ -859,6 +860,67 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         0 * applicationRoleDao._(*_)
     }
 
+    def "verifyTenantAssignmentsWithCacheForDelegationAgreement: creates appropriate assignmentCache for nested DAs"() {
+        given:
+        def tenant = entityFactory.createTenant("tenantA", "tenantA")
+        def domain = entityFactory.createDomain().with {
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+        tenant.domainId = domain.domainId
+
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.id = "parentDaId"
+            it.domainId = domain.domainId
+            it
+        }
+
+        DelegationAgreement da = new DelegationAgreement().with {
+            it.domainId = domain.domainId
+            it.parentDelegationAgreementId = parentDa.id
+            it
+        }
+
+        // Setup assignments
+        ClientRole clientRole = entityFactory.createClientRole().with {
+            it.rsWeight = DefaultTenantAssignmentService.DOMAIN_MANAGER_ALLOWED_ROLE_WEIGHT
+            it
+        }
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = clientRole.id
+                            ta.onRoleName = "roleName"
+                            ta.forTenants.add(tenant.tenantId)
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        TenantRole tenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = clientRole.id
+            it.tenantIds.add(tenant.tenantId)
+            it
+        }
+
+        when:
+        DefaultTenantAssignmentService.AssignmentCache assignmentCache = service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        !assignmentCache.roleCache.isEmpty()
+        assignmentCache.roleCache.size() == 1
+        assignmentCache.roleCache.get(clientRole.id).id == clientRole.id
+
+        1 * delegationService.getDelegationAgreementById(da.getParentDelegationAgreementId()) >> parentDa
+        1 * delegationService.getAllRoleAssignmentsOnDelegationAgreement(parentDa) >> [tenantRole]
+        1 * tenantService.getTenant(tenant.tenantId) >> tenant
+        1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
+    }
+
     def "verifyTenantAssignmentsWithCacheForDelegationAgreement: creates appropriate assignmentCache"() {
         given:
         def tenant = entityFactory.createTenant("tenantA", "tenantA")
@@ -963,6 +1025,11 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
             it
         }
 
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.id = "parentId"
+            it
+        }
+
         // Create test client roles
         def roleId = "roleId"
         ClientRole clientRole = entityFactory.createClientRole().with {
@@ -975,6 +1042,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
             it.rsWeight = 500
             it
         }
+
         RoleAssignments assignments = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments().with {
                 tas ->
@@ -988,9 +1056,15 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
             }
             it
         }
+
         TenantRole allowedTenantRole = entityFactory.createTenantRole().with {
             it.roleRsId = clientRole.id
             it.tenantIds.add("tenantB")
+            it
+        }
+        TenantRole parentTenantRole = entityFactory.createTenantRole().with {
+            it.roleRsId = "parentRoleId"
+            it.tenantIds.add("*")
             it
         }
 
@@ -1065,6 +1139,39 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         1 * tenantService.getTenant(tenant.tenantId) >> tenant
         1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
         1 * userGroupService.getRoleAssignmentsOnGroup(principalUserGroup.id) >> [allowedTenantRole]
+
+        when: "parent agreement has no role assigned - nested da"
+        da.parentDelegationAgreementId = parentDa.id
+        service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId))
+
+        1 * delegationService.getDelegationAgreementById(parentDa.id) >> parentDa
+        1 * delegationService.getAllRoleAssignmentsOnDelegationAgreement(parentDa) >> []
+
+        when: "parent agreement does not exist - nested da"
+        service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, ErrorCodes.ERROR_CODE_DATA_INTEGRITY, "Parent agreement for nested agreement was not found.")
+
+        1 * delegationService.getDelegationAgreementById(parentDa.id) >> null
+        0 * delegationService.getAllRoleAssignmentsOnDelegationAgreement(parentDa) >> []
+
+        when: "parent agreement does not have target role assigned - nested da"
+        service.verifyTenantAssignmentsWithCacheForDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId))
+
+        1 * delegationService.getDelegationAgreementById(parentDa.id) >> parentDa
+        1 * delegationService.getAllRoleAssignmentsOnDelegationAgreement(parentDa) >> [parentTenantRole]
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.getTenant(tenant.tenantId) >> tenant
     }
 
     def "verifyTenantAssignments: check tenant assignment max size"() {

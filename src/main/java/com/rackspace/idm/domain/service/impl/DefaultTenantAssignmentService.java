@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.google.common.collect.Lists;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
@@ -59,6 +60,9 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
 
     @Autowired
     private IdentityConfig identityConfig;
+
+    @Autowired
+    private DelegationService delegationService;
 
     @Override
     public List<TenantRole> replaceTenantAssignmentsOnUser(User user, List<TenantAssignment> tenantAssignments, Integer allowedRoleAccess) {
@@ -330,8 +334,20 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
         IdentityUserTypeEnum principalUserType = null;
         List<TenantRole> allowedTenantRoles = new ArrayList<>();
 
-        // Verify principal access
-        if (delegationPrincipal.getPrincipalType() == PrincipalType.USER) {
+        // Verify access to assignments
+        if (delegationAgreement.getParentDelegationAgreementId() != null) {
+            DelegationAgreement parentAgreement = delegationService.getDelegationAgreementById(delegationAgreement.getParentDelegationAgreementId());
+            if (parentAgreement == null) {
+                throw new ForbiddenException("Parent agreement for nested agreement was not found.", ERROR_CODE_DATA_INTEGRITY);
+            }
+
+            allowedTenantRoles = Lists.newArrayList(delegationService.getAllRoleAssignmentsOnDelegationAgreement(parentAgreement));
+            if (allowedTenantRoles.isEmpty()) {
+                // Role ID of the first unauthorized assignment
+                String roleId = tenantAssignments.get(0).getOnRole();
+                throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId), ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+        } else if (delegationPrincipal.getPrincipalType() == PrincipalType.USER) {
             EndUser  principalUser = identityUserService.getEndUserById(delegationPrincipal.getId());
             principalUserType = authorizationService.getIdentityTypeRoleAsEnum(principalUser);
 

@@ -1728,6 +1728,9 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
             it
         }
 
+        // Grant assignment to parent DA
+        utils.grantRoleAssignmentsOnDelegationAgreement(parentDa, assignments, userAdminToken)
+
         subAgreement = utils.createDelegationAgreement(userAdminToken, subAgreement)
 
         when: "feature is disabled"
@@ -1747,6 +1750,286 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         cleanup:
         cloud20.deleteDelegationAgreement(userAdminToken, parentDa.id)
+        cloud20.deleteDelegationAgreement(userAdminToken, subAgreement.id)
+    }
+
+    def "roles assigned to nested DA are based upon the parent DA's roles"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP, true)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        // Create a root da w/ self as delegate
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.subAgreementNestLevel = 2
+            it
+        }
+        parentDa = utils.createDelegationAgreement(userAdminToken, parentDa)
+        utils.addUserDelegate(userAdminToken, parentDa.id, userAdmin.id)
+
+        // Create a nested or sub da
+        DelegationAgreement subAgreement = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.parentDelegationAgreementId = parentDa.id
+            it.subAgreementNestLevel = 1
+            it
+        }
+
+        def assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = ROLE_RBAC1_ID
+                            ta.forTenants.add("*")
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        subAgreement = utils.createDelegationAgreement(userAdminToken, subAgreement)
+
+        when: "grant role to nested DA with no roles on parent DA"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, subAgreement, assignments)
+
+        then: "assert forbidden"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN,
+                ERROR_CODE_INVALID_ATTRIBUTE, String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, ROLE_RBAC1_ID))
+
+        when: "grant role to nested DA with role on parent DA"
+        utils.grantRoleAssignmentsOnDelegationAgreement(parentDa, assignments, userAdminToken)
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, subAgreement, assignments)
+        def retrievedEntity = response.getEntity(RoleAssignments)
+
+        then: "successful"
+        response.status == HttpStatus.SC_OK
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+
+        when: "list roles"
+        response = cloud20.listRolesOnDelegationAgreement(userAdminToken, subAgreement)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then: "successful"
+        response.status == HttpStatus.SC_OK
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+
+        cleanup:
+        cloud20.deleteDelegationAgreement(userAdminToken, parentDa.id)
+        cloud20.deleteDelegationAgreement(userAdminToken, subAgreement.id)
+    }
+
+    def "verify principal of parent DA is not allowed to manage roles on nested DA in a different domain"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP, true)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def userAdmin2 = utils.createCloudAccount()
+        def userAdmin2Token = utils.getToken(userAdmin2.username)
+
+        // update domains to same RCN
+        def rcn = testUtils.getRandomRCN()
+        utils.domainRcnSwitch(userAdmin.domainId, rcn)
+        utils.domainRcnSwitch(userAdmin2.domainId, rcn)
+
+        // Create a root da w/ self as delegate
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.subAgreementNestLevel = 2
+            it
+        }
+        parentDa = utils.createDelegationAgreement(userAdminToken, parentDa)
+        utils.addUserDelegate(userAdminToken, parentDa.id, userAdmin2.id)
+
+        // Create a nested or sub da
+        DelegationAgreement subAgreement = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.parentDelegationAgreementId = parentDa.id
+            it.subAgreementNestLevel = 1
+            it
+        }
+        subAgreement = utils.createDelegationAgreement(userAdmin2Token, subAgreement)
+
+        // Add assignment to parent DA
+        def assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = ROLE_RBAC1_ID
+                            ta.forTenants.add("*")
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+        utils.grantRoleAssignmentsOnDelegationAgreement(parentDa, assignments, userAdminToken)
+
+        when: "grant role to nested DA with parent DA's principal"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, subAgreement, assignments)
+
+        then: "assert forbidden"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND,
+                ERROR_CODE_NOT_FOUND, "The specified agreement does not exist for this user")
+
+        when: "grant role to nested DA"
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdmin2Token, subAgreement, assignments)
+        def retrievedEntity = response.getEntity(RoleAssignments)
+
+        then: "successful"
+        response.status == HttpStatus.SC_OK
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+
+        when: "list roles"
+        response = cloud20.listRolesOnDelegationAgreement(userAdmin2Token, subAgreement)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then: "successful"
+        response.status == HttpStatus.SC_OK
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
+
+        cleanup:
+        cloud20.deleteDelegationAgreement(userAdminToken, parentDa.id)
+        cloud20.deleteDelegationAgreement(userAdminToken, subAgreement.id)
+    }
+
+    def "allow granting a tenant role assignment on nested DA when parent DA has a global role assignment"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP, true)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        // Create a root da w/ self as delegate
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.subAgreementNestLevel = 2
+            it
+        }
+        parentDa = utils.createDelegationAgreement(userAdminToken, parentDa)
+        utils.addUserDelegate(userAdminToken, parentDa.id, userAdmin.id)
+
+        // Create a nested or sub da
+        DelegationAgreement subAgreement = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.parentDelegationAgreementId = parentDa.id
+            it.subAgreementNestLevel = 1
+            it
+        }
+
+        def parentAssignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = ROLE_RBAC1_ID
+                            ta.forTenants.add("*")
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+        utils.grantRoleAssignmentsOnDelegationAgreement(parentDa, parentAssignments, userAdminToken)
+
+        def assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = ROLE_RBAC1_ID
+                            ta.forTenants.add(userAdmin.domainId)
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        subAgreement = utils.createDelegationAgreement(userAdminToken, subAgreement)
+
+        when: "grant tenant role to nested DA"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, subAgreement, assignments)
+        def retrievedEntity = response.getEntity(RoleAssignments)
+
+        then: "successful"
+        response.status == HttpStatus.SC_OK
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [userAdmin.domainId])
+
+        when: "list roles"
+        response = cloud20.listRolesOnDelegationAgreement(userAdminToken, subAgreement)
+        retrievedEntity = response.getEntity(RoleAssignments)
+
+        then: "successful"
+        response.status == HttpStatus.SC_OK
+        verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [userAdmin.domainId])
+
+        cleanup:
+        cloud20.deleteDelegationAgreement(userAdminToken, parentDa.id)
+        cloud20.deleteDelegationAgreement(userAdminToken, subAgreement.id)
+    }
+
+    def "Error check on nested DAs"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP, true)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        // Create a root da w/ self as delegate
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.subAgreementNestLevel = 2
+            it
+        }
+        parentDa = utils.createDelegationAgreement(userAdminToken, parentDa)
+        utils.addUserDelegate(userAdminToken, parentDa.id, userAdmin.id)
+
+        // Create a nested or sub da
+        DelegationAgreement subAgreement = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.parentDelegationAgreementId = parentDa.id
+            it.subAgreementNestLevel = 1
+            it
+        }
+
+        def assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = ROLE_RBAC1_ID
+                            ta.forTenants.add(userAdmin.domainId)
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        subAgreement = utils.createDelegationAgreement(userAdminToken, subAgreement)
+
+        when: "parent agreement has no roles"
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, subAgreement, assignments)
+
+        then: "assert forbidden"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN,
+                ERROR_CODE_INVALID_ATTRIBUTE, String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, ROLE_RBAC1_ID))
+
+        when: "parent agreement does not exist"
+        utils.deleteDelegationAgreement(userAdminToken, parentDa)
+        response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, subAgreement, assignments)
+
+        then: "assert forbidden"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN,
+                ERROR_CODE_DATA_INTEGRITY, "Parent agreement for nested agreement was not found.")
+
+        cleanup:
         cloud20.deleteDelegationAgreement(userAdminToken, subAgreement.id)
     }
 
