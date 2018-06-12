@@ -59,6 +59,16 @@ services:
       - ../repose/config:/etc/repose
     network_mode: "service:network"
 
+  testenv:
+    image: testenv
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - /tmp/.identity:/tmp/.identity
+      - ..:/home/test/source
+    network_mode: "service:network"
+
 networks:
   identity:
     driver: bridge
