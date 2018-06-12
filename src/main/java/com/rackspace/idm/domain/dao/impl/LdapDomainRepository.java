@@ -159,10 +159,6 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
         return OBJECTCLASS_DOMAIN;
     }
 
-    public String getNextCapabilityId() {
-        return getNextId(NEXT_DOMAIN_ID);
-    }
-
     public String getSortAttribute() {
         return ATTR_ID;
     }

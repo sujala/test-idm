@@ -31,13 +31,8 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     public static final ImmutableList<Integer> roleQueryWeights = ImmutableList.copyOf(Arrays.asList(0, 50, 100, 500, 750, 900, 1000, 2000, 2500));
 
     @Override
-    protected boolean useUuidForRsId() {
-        return identityConfig.getReloadableConfig().getUseUuidIdsForNewRolesEnabled();
-    }
-
-    @Override
     public String getNextRoleId() {
-        return getNextId(NEXT_ROLE_ID);
+        return getUuid();
     }
 
     @Override

@@ -552,10 +552,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
-    @Unroll
-    def "Test feature flag 'rsid.uuid.roles.enabled' = #flag"() {
+    def "Test add role to user and validate token"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, flag)
         Role role = v2Factory.createRole(testUtils.getRandomUUID())
         def domainId = utils.createDomain()
         def userAdmin, users
@@ -567,12 +565,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
         then: "Assert role id"
         response.status == HttpStatus.SC_CREATED
-        if (flag) {
-            // 32 length UUID without dashes
-            testUtils.assertStringPattern("[a-zA-Z0-9]{32}", roleEntity.id)
-        } else {
-            testUtils.assertStringPattern("\\d+", roleEntity.id)
-        }
+        // 32 length UUID without dashes
+        testUtils.assertStringPattern("[a-zA-Z0-9]{32}", roleEntity.id)
 
         when: "Add role to user and validate token"
         utils.addRoleToUser(userAdmin, roleEntity.id)
@@ -586,10 +580,6 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         deleteRoleQuietly(role)
-        reloadableConfiguration.reset()
-
-        where:
-        flag << [true, false]
     }
 
     def "Error check on add role: Content-Type = #contentType, Accept = #accept" () {

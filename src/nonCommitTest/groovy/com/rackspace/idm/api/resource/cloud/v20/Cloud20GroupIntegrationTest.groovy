@@ -110,10 +110,8 @@ class Cloud20GroupIntegrationTest extends RootIntegrationTest {
         utils.deleteGroup(group)
     }
 
-    @Unroll
-    def "Test feature flag 'rsid.uuid.groups.enabled' = #flag"() {
+    def "Test add group to user"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP, flag)
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
@@ -128,12 +126,8 @@ class Cloud20GroupIntegrationTest extends RootIntegrationTest {
 
         then: "Assert group id"
         response.status == HttpStatus.SC_CREATED
-        if (flag) {
-            // 32 length UUID without dashes
-            testUtils.assertStringPattern("[a-zA-Z0-9]{32}", groupEntity.id)
-        } else {
-            testUtils.assertStringPattern("\\d+", groupEntity.id)
-        }
+        // 32 length UUID without dashes
+        testUtils.assertStringPattern("[a-zA-Z0-9]{32}", groupEntity.id)
 
         when: "Add group to user"
         utils.addUserToGroup(groupEntity, userAdmin)
@@ -147,10 +141,6 @@ class Cloud20GroupIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         utils.deleteGroup(groupEntity)
-        reloadableConfiguration.reset()
-
-        where:
-        flag << [true, false]
     }
 
 }

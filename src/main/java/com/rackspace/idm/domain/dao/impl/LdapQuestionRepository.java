@@ -21,13 +21,8 @@ public class LdapQuestionRepository extends LdapGenericRepository<Question> impl
         return OBJECTCLASS_QUESTION;
     }
 
-    @Override
-    protected boolean useUuidForRsId() {
-        return identityConfig.getReloadableConfig().getUseUuidIdsForNewQuestionEnabled();
-    }
-
     public String getNextId() {
-        return getNextId(NEXT_QUESTION_ID);
+        return getUuid();
     }
 
     public String getSortAttribute() {

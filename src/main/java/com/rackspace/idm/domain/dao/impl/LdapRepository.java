@@ -63,8 +63,6 @@ public abstract class LdapRepository {
     public static final String ATTR_TOKEN_FORMAT = "rsTokenFormat";
     public static final String ATTR_MULTIFACTOR_TYPE = "rsMultiFactorType";
 
-    public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
-
     public static final String OBJECTCLASS_OTP_DEVICE = "rsOTPDevice";
     public static final String ATTR_OTP_NAME = "rsOTPName";
     public static final String ATTR_OTP_KEY = "rsOTPKey";
@@ -264,7 +262,6 @@ public abstract class LdapRepository {
     public static final String USERS_BASE_DN = "ou=users,o=rackspace,dc=rackspace,dc=com";
     protected static final String RACKERS_BASE_DN = "ou=rackers,o=rackspace,dc=rackspace,dc=com";
     protected static final String FEDERATED_RACKERS_BASE_DN = EXTERNAL_PROVIDERS_BASE_DN;
-    protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";
     protected static final String PATTERN_BASE_DN = "ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String PROPERTY_BASE_DN = "ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String MULTIFACTOR_MOBILE_PHONE_BASE_DN = "ou=mobilePhones,ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com";
@@ -484,57 +481,8 @@ public abstract class LdapRepository {
         return config.getString("rackspace.inum.prefix");
     }
 
-    protected static final String NEXT_ROLE_ID = "nextRoleId";
-    protected static final String NEXT_GROUP_ID = "nextGroupId";
-    protected static final String NEXT_DOMAIN_ID = "nextDomainId";
-    protected static final String NEXT_CAPABILITY_ID = "nextCapabilityId";
-    protected static final String NEXT_QUESTION_ID = "nextQuestionId";
-    protected static final String NEXT_POLICY_ID = "nextPolicyId";
-    protected static final String NEXT_PATTERN_ID = "nextPatternId";
-
-    protected boolean useUuidForRsId() {
-        return false;
-    }
-
     protected String getUuid() {
         return UUID.randomUUID().toString().replace("-", "");
-    }
-
-    protected String getNextId(String type) {
-        if (useUuidForRsId()) {
-            return getUuid();
-        }
-
-        long nextId = 0;
-
-        while(true) {
-            Filter filter = new LdapSearchBuilder()
-                    .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_NEXT_ID)
-                    .addEqualAttribute(ATTR_NAME, type).build();
-
-            SearchResultEntry entry = this.getSingleEntry(NEXT_IDS_BASE_DN, SearchScope.ONE, filter);
-
-            nextId = entry.getAttributeValueAsLong(ATTR_ID);
-
-            List<Modification> mods = new ArrayList<Modification>();
-            mods.add(new Modification(ModificationType.DELETE,ATTR_ID, String.valueOf(nextId)));
-            mods.add(new Modification(ModificationType.ADD,ATTR_ID, String.valueOf(nextId + 1)));
-
-            try {
-                getAppInterface().modify(entry.getDN(), mods);
-                break;
-            } catch (LDAPException ex) {
-                if (ex.getResultCode() == ResultCode.NO_SUCH_ATTRIBUTE) {
-                    getLogger().info("Could not user nextId, trying again...");
-                    String errMsg = String.format("Message: %s - Exception Message %s", ex.getMessage(), ex.getExceptionMessage());
-                    getLogger().error(errMsg, ex);
-                    continue;
-                }
-                getLogger().error("Error getting next id of type {}", type, ex);
-                throw new IllegalStateException(ex.getMessage(), ex);
-            }
-        }
-        return String.valueOf(nextId);
     }
 
     static class QueryPair {

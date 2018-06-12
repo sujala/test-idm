@@ -16,13 +16,8 @@ public class LdapPatternRepository extends LdapGenericRepository<Pattern> implem
         return OBJECTCLASS_PATTERN;
     }
 
-    @Override
-    protected boolean useUuidForRsId() {
-        return true;
-    }
-
     public String getNextId() {
-        return getNextId(NEXT_PATTERN_ID);
+        return getUuid();
     }
 
     @Override

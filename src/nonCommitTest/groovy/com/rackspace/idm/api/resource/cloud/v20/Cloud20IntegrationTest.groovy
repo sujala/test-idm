@@ -1694,10 +1694,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         questions != null
     }
 
-    @Unroll
-    def "Test feature flag 'rsid.uuid.questions.enabled' = #flag"() {
+    def "Test add secretQA to user"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP, flag)
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
@@ -1710,12 +1708,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then: "Assert question id"
         response.status == HttpStatus.SC_CREATED
-        if (flag) {
-            // 32 length UUID without dashes
-            testUtils.assertStringPattern("[a-zA-Z0-9]{32}", questionEntity.id)
-        } else {
-            testUtils.assertStringPattern("\\d+", questionEntity.id)
-        }
+        testUtils.assertStringPattern("[a-zA-Z0-9]{32}", questionEntity.id)
 
         when: "Add secretQA to user"
         def answer = testUtils.getRandomUUID("Answer")
@@ -1737,10 +1730,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         utils.deleteQuestion(questionEntity)
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
-        reloadableConfiguration.reset()
-
-        where:
-        flag << [true, false]
     }
 
     def "invalid operations on question returns 'not found'"() {

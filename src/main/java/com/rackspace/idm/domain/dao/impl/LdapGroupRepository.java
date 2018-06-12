@@ -63,13 +63,8 @@ public class LdapGroupRepository extends LdapGenericRepository<Group> implements
     }
 
     @Override
-    protected boolean useUuidForRsId() {
-        return identityConfig.getReloadableConfig().getUseUuidIdsForNewGroupsEnabled();
-    }
-
-    @Override
     public String getNextGroupId() {
-        return getNextId( NEXT_GROUP_ID);
+        return getUuid();
     }
 
     private Filter searchFilterGetGroupById(String groupId) {

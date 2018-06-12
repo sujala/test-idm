@@ -347,15 +347,6 @@ public class IdentityConfig {
     public static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
     public static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
 
-    public static final String USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP = "use.uuid.ids.for.new.roles.enabled";
-    public static final boolean USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_DEFAULT = true;
-
-    public static final String USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP = "use.uuid.ids.for.new.groups.enabled";
-    public static final boolean USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_DEFAULT = true;
-
-    public static final String USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP = "use.uuid.ids.for.new.question.enabled";
-    public static final boolean USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_DEFAULT = true;
-
     public static final String FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP = "enable.user.groups.globally";
     public static final boolean FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT = false;
 
@@ -776,10 +767,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP, FEATURE_MAX_USER_GROUPS_IN_DOMAIN_DEFAULT);
         defaults.put(FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP, FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_DEFAULT);
         defaults.put(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
-
-        defaults.put(USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_DEFAULT);
-        defaults.put(USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_DEFAULT);
-        defaults.put(USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_DEFAULT);
 
         defaults.put(MAPPING_POLICY_ACCEPT_FORMATS_PROP, MAPPING_POLICY_ACCEPT_FORMATS_DEFAULT);
         defaults.put(FEATURE_ENABLE_ISSUED_IN_RESPONSE_PROP, FEATURE_ENABLE_ISSUED_IN_RESPONSE_DEFAULT);
@@ -2163,21 +2150,6 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")
         public boolean getEnableExternalUserIdpManagement() {
             return getBooleanSafely(reloadableConfiguration, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP);
-        }
-
-        @IdmProp(key = USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for role's rsId on creation.")
-        public boolean getUseUuidIdsForNewRolesEnabled() {
-            return getBooleanSafely(reloadableConfiguration, USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP);
-        }
-
-        @IdmProp(key = USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for group's rsId on creation.")
-        public boolean getUseUuidIdsForNewGroupsEnabled() {
-            return getBooleanSafely(reloadableConfiguration, USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP);
-        }
-
-        @IdmProp(key = USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for question's rsId on creation.")
-        public boolean getUseUuidIdsForNewQuestionEnabled() {
-            return getBooleanSafely(reloadableConfiguration, USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP);
         }
 
         @IdmProp(key = FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART, versionAdded = "3.15.0", description = "Whether or not to allow caching client roles retrieved by id/name instead of loading them into memory at application startup.")
