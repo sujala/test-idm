@@ -1962,7 +1962,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         expect:
         if(name != null) tenant.name = name
-        def result = service.addTenant(headers, uriInfo(), authToken, tenant)
+        def result = service.addTenant(headers, uriInfo(), authToken, tenant).build()
         result.status == 400
 
         where:
@@ -1983,7 +1983,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockTenantConverter(service)
 
         when:
-        def result = service.addTenant(headers, uriInfo(), authToken, tenant)
+        def result = service.addTenant(headers, uriInfo(), authToken, tenant).build()
 
         then:
         result.status == 409
@@ -2920,7 +2920,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
         when:
-        def result = service.updateUser(headers, authToken, "2", user)
+        def result = service.updateUser(headers, authToken, "2", user).build()
 
         then:
         result.status == 400
@@ -2996,7 +2996,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def body = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><passwordCredentials xmlns="http://docs.openstack.org/identity/api/v2.0" xmlns:ns2="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns5="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns6="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" xmlns:ns7="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" password="SomePassword1" username="someUser"/>'
 
         when:
-        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body)
+        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body).build()
 
         then:
         result.status == 400
@@ -3016,7 +3016,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def body = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><apiKeyCredentials xmlns="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" xmlns:ns2="http://docs.openstack.org/identity/api/v2.0" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns5="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns6="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns7="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" apiKey="someApiKey1" username="someUser"/>'
 
         when:
-        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body)
+        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body).build()
 
         then:
         result.status == 400
@@ -3036,7 +3036,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def body = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><apiKeyCredentials xmlns="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" xmlns:ns2="http://docs.openstack.org/identity/api/v2.0" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns5="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns6="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns7="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" apiKey="someApiKey1" username="someUser"/>'
 
         when:
-        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body)
+        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body).build()
 
         then:
         userService.updateUser(_) >> { args -> args[0].apiKey == "someApiKey1" }
@@ -3054,7 +3054,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser("user", "userId2", "domainId", "region")
 
         when:
-        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
         userService.checkAndGetUserById(_) >> user
@@ -3084,7 +3084,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser("user", "userId2", "domainId", "region")
 
         when:
-        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
         userService.checkAndGetUserById(_) >> user
@@ -3114,7 +3114,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser("user", "userId2", "domainId", "region")
 
         when:
-        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
         userService.checkAndGetUserById(_) >> user
@@ -3146,7 +3146,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser("user", "userId2", "domainId2", "region")
 
         when:
-        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
         userService.checkAndGetUserById(_) >> user
@@ -3166,7 +3166,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser("user", "userId2", "domainId", "region")
 
         when:
-        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
         userService.checkAndGetUserById(_) >> user
@@ -3198,7 +3198,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser("user", "userId2", "domainId2", "region")
 
         when:
-        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
         userService.checkAndGetUserById(_) >> user
@@ -3218,7 +3218,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser("user", "userId2", "domainId", "region")
 
         when:
-        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac")
+        def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
         userService.checkAndGetUserById(_) >> user
@@ -3251,8 +3251,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userOutOfDomain.apiKey = "key"
 
         when:
-        def inDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
-        def outDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
+        def inDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
+        def outDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
 
         then:
         2 * authorizationService.verifyUserLevelAccess(_)
@@ -3313,7 +3313,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         caller.apiKey = "key"
 
         when:
-        def result = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
+        def result = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
 
         then:
         1 * userService.checkAndGetUserById(_) >> caller
@@ -3520,7 +3520,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = v1Factory.createUserForCreate()
 
         when:
-        def result = service.addUser(headers, uriInfo(), authToken, user)
+        def result = service.addUser(headers, uriInfo(), authToken, user).build()
 
         then:
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null) >> { throw new ForbiddenException()}
@@ -3606,7 +3606,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when:
-        def result = service.updateUser(headers, authToken, "1", user)
+        def result = service.updateUser(headers, authToken, "1", user).build()
 
         then:
         result.status == expectedStatus
@@ -4419,7 +4419,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when:
-        def response = service.updateUser(headers, authToken, userId, userForCreate)
+        def response = service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then:
         2 * identityUserService.getEndUserById(userId) >> federatedUser
@@ -4442,7 +4442,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when: "access level role is not identity-admin or above"
-        def response = service.updateUser(headers, authToken, userId, userForCreate)
+        def response = service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then: "return 401 Forbidden"
         1 * identityUserService.getEndUserById(userId) >> federatedUser
@@ -4452,7 +4452,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == SC_FORBIDDEN
 
         when: "federated user not found"
-        response = service.updateUser(headers, authToken, userId, userForCreate)
+        response = service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then: "return 404 Forbidden"
         1 * identityUserService.getEndUserById(userId) >> null
@@ -4479,7 +4479,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when: "update federated user"
-        def response = service.updateUser(headers, authToken, userId, userForCreate)
+        def response = service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then:
         2 * identityUserService.getEndUserById(userId) >> federatedUser
@@ -4489,7 +4489,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == SC_OK
 
         when: "update provisioned user"
-        response = service.updateUser(headers, authToken, userId, userForCreate)
+        response = service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then:
         2 * identityUserService.getEndUserById(userId) >> user
@@ -4553,7 +4553,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it
         }
         when:
-        def response = service.authenticateFederated(headers, new byte[0], false)
+        def response = service.authenticateFederated(headers, new byte[0], false).build()
 
         then:
         1 * authConverterCloudV20.toAuthenticationResponse(_) >> authenticateResponse
@@ -4578,7 +4578,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when:
-        def response = service.addUserRole(headers, authToken, user.id, roleId)
+        def response = service.addUserRole(headers, authToken, user.id, roleId).build()
 
         then:
         1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole()
@@ -4603,7 +4603,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def tenantRole = entityFactory.createTenantRole()
 
         when:
-        def response = service.addRolesToUserOnTenant(headers, authToken, tenantId, user.id, roleId)
+        def response = service.addRolesToUserOnTenant(headers, authToken, tenantId, user.id, roleId).build()
 
         then:
         1 * userService.checkAndGetUserById(user.id) >> user
@@ -4645,7 +4645,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when:
-        def response = service.grantRolesToUser(headers, authToken, userId, roleAssignments)
+        def response = service.grantRolesToUser(headers, authToken, userId, roleAssignments).build()
 
         then:
         1 * requestContext.getEffectiveCaller() >> caller
@@ -4665,7 +4665,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def userId = "userId"
 
         when: "roleAssignment is null"
-        def response = service.grantRolesToUser(headers, authToken, userId, null)
+        def response = service.grantRolesToUser(headers, authToken, userId, null).build()
 
         then:
         response.status == SC_BAD_REQUEST
@@ -4680,7 +4680,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def role = entityFactory.createTenantRole()
 
         when:
-        def response = service.addUserToDomain(authToken, domain.domainId, user.id)
+        def response = service.addUserToDomain(authToken, domain.domainId, user.id).build()
 
         then:
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain

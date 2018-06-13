@@ -45,6 +45,7 @@ import org.springframework.util.Assert;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.rackspace.idm.GlobalConstants.MANAGED_HOSTING_TENANT_PREFIX;
 
@@ -414,11 +415,7 @@ public class DefaultTenantService implements TenantService {
         PaginatorContext<TenantType> tenantTypes = tenantTypeService.listTenantTypes(0, TENANT_TYPE_SEARCH_LIMIT);
         List<TenantType> typeEntities = tenantTypes.getValueList();
 
-        Set<String> typeNames = new HashSet<>();
-        for (TenantType typeEntity : typeEntities) {
-            typeNames.add(typeEntity.getName());
-        }
-        return typeNames;
+        return typeEntities.stream().map(TenantType::getName).collect(Collectors.toSet());
     }
 
     @Override

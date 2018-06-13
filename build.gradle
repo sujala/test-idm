@@ -38,8 +38,8 @@ project.version = "$featureVersion" + "-" + "$buildVersion"
 
 project.description = """idm"""
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 def srcJava = 'src/main/java'
 def generatedSrc = 'build/generated-src/jaxb/'
@@ -70,9 +70,11 @@ def resourceDirs = [
 
 
 dependencies {
+    def jerseyVersion = '1.19.4'
+
     wadl "com.lunatech.jax-doclets:doclets:0.8.1"
-    wadl "com.sun.jersey:jersey-bundle:1.6"
-    wadl "asm:asm:3.3.1"
+    wadl "com.sun.jersey:jersey-bundle:${jerseyVersion}"
+    wadl "asm:asm:6.0"
 
     jaxb group: 'com.sun.xml.bind', name: 'jaxb-xjc', version: '2.2.4-1'
     jaxb group: 'org.jvnet.jaxb2_commons', name: 'jaxb2-basics-ant', version: '0.6.4'
@@ -169,10 +171,10 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-collections4', version:'4.0'
     compile group: 'commons-lang', name: 'commons-lang', version:'2.4'
     compile group: 'cglib', name: 'cglib-nodep', version:'2.2'
-    compile group: 'com.sun.jersey', name: 'jersey-client', version:'1.1.5'
-    compile group: 'com.sun.jersey', name: 'jersey-server', version:'1.1.5'
-    compile group: 'com.sun.jersey', name: 'jersey-json', version:'1.1.5'
-    compile(group: 'com.sun.jersey.contribs', name: 'jersey-spring', version:'1.1.5') {
+    compile group: 'com.sun.jersey', name: 'jersey-client', version:jerseyVersion
+    compile group: 'com.sun.jersey', name: 'jersey-server', version:jerseyVersion
+    compile group: 'com.sun.jersey', name: 'jersey-json', version:jerseyVersion
+    compile(group: 'com.sun.jersey.contribs', name: 'jersey-spring', version:jerseyVersion) {
         exclude(module: 'spring', group: 'org.springframework')
         exclude(module: 'spring-core', group: 'org.springframework')
         exclude(module: 'spring-context', group: 'org.springframework')
@@ -240,12 +242,12 @@ dependencies {
     testCompile(group: 'org.mockito', name: 'mockito-core', version:'1.9.5') {
         exclude(group: 'org.hamcrest')
     }
-    testCompile (group: 'com.sun.jersey.jersey-test-framework', name:'jersey-test-framework-core', version:'1.6') {
+    testCompile (group: 'com.sun.jersey.jersey-test-framework', name:'jersey-test-framework-core', version:jerseyVersion) {
         exclude(module: 'jersey-client', group: 'com.sun.jersey')
         exclude(module: 'jersey-server', group: 'com.sun.jersey')
         exclude(group: 'junit')
     }
-    testCompile (group: 'com.sun.jersey.jersey-test-framework', name:'jersey-test-framework-grizzly', version:'1.6') {
+    testCompile (group: 'com.sun.jersey.jersey-test-framework', name:'jersey-test-framework-grizzly', version:jerseyVersion) {
         exclude(module: 'jersey-client', group: 'com.sun.jersey')
         exclude(module: 'jersey-server', group: 'com.sun.jersey')
         exclude(group: 'junit')

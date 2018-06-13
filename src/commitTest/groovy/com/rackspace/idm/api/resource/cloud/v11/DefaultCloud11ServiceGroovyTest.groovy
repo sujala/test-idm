@@ -77,7 +77,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         def baseUrl = entityFactory.createBaseUrl(null)
 
         when:
-        def response = service.addBaseURL(null, null, baseUrl)
+        def response = service.addBaseURL(null, null, baseUrl).build()
 
         then:
         response.status == HttpStatus.SC_BAD_REQUEST

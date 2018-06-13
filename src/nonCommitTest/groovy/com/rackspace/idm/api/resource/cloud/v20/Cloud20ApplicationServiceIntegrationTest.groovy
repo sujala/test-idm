@@ -57,9 +57,10 @@ class Cloud20ApplicationServiceIntegrationTest extends RootIntegrationTest {
 
         when: 'list services with limit=""'
         response = cloud20.listServices(utils.getServiceAdminToken(), contentType, null, '0', '')
+        serviceList = getEntity(response, ServiceList)
 
-        then: 'returns bad request'
-        response.status == 400
+        then: 'verify response defaults to only 25 service in the list'
+        serviceList.service.size() == 25
 
         when: 'list services with limit="badRequest"'
         response = cloud20.listServices(utils.getServiceAdminToken(), contentType, null, '0', 'badRequest')

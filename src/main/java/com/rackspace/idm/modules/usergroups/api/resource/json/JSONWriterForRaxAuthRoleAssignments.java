@@ -48,9 +48,11 @@ public class JSONWriterForRaxAuthRoleAssignments extends JSONWriterForEntity<Rol
 
                 if (outerTAssignments != null) {
                     JSONArray innerTAssignments = (JSONArray) outerTAssignments.get(TENANT_ASSIGNMENT);
-                    for (Object tAssignmentObj : innerTAssignments) {
-                        JSONObject tAssignment = (JSONObject) tAssignmentObj;
-                        tenantAssignmentArrayEntryTransformer.transform(tAssignment);
+                    if (innerTAssignments != null) {
+                        for (Object tAssignmentObj : innerTAssignments) {
+                            JSONObject tAssignment = (JSONObject) tAssignmentObj;
+                            tenantAssignmentArrayEntryTransformer.transform(tAssignment);
+                        }
                     }
                 } else {
                     // Add the outer/inner objects to put in an empty array

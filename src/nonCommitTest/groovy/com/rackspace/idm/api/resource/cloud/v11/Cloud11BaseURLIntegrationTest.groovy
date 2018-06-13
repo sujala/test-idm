@@ -67,7 +67,7 @@ class Cloud11BaseURLIntegrationTest extends RootIntegrationTest {
         baseURL.setId(baseUrlId)
         baseURL.setServiceName(UUID.randomUUID().toString()) // Random serviceName
         baseURL.setPublicURL('http://localhost')
-        def response = cloud11Service.addBaseURL(request, mock(HttpHeaders), baseURL)
+        def response = cloud11Service.addBaseURL(request, mock(HttpHeaders), baseURL).build()
 
         then:
         response.status == 404

@@ -76,7 +76,7 @@ class Cloud20BaseURLIntegrationTest extends RootIntegrationTest {
         template.setName(UUID.randomUUID().toString())
         template.setPublicURL('http://localhost')
         template.setId(templateId)
-        def response = cloud20Service.addEndpointTemplate(mock(HttpHeaders), mockUriInfo, utils.getServiceAdminToken(), template)
+        def response = cloud20Service.addEndpointTemplate(mock(HttpHeaders), mockUriInfo, utils.getServiceAdminToken(), template).build()
 
         then:
         response.status == 404
@@ -98,7 +98,7 @@ class Cloud20BaseURLIntegrationTest extends RootIntegrationTest {
         template.setName("cloudServers")
         template.setPublicURL('http://localhost')
         template.setId(templateId)
-        def response = cloud20Service.addEndpointTemplate(mock(HttpHeaders), mockUriInfo, utils.getServiceAdminToken(), template)
+        def response = cloud20Service.addEndpointTemplate(mock(HttpHeaders), mockUriInfo, utils.getServiceAdminToken(), template).build()
 
         then:
         response.status == 400

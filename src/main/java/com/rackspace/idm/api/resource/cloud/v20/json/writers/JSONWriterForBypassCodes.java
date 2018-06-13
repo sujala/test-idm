@@ -38,11 +38,10 @@ public class JSONWriterForBypassCodes extends JSONWriterForEntity<BypassCodes> {
             final JSONParser parser = new JSONParser();
             final JSONObject object = (JSONObject) parser.parse(new String(buffer.toByteArray(), "UTF8"));
             final JSONObject inner = (JSONObject) object.get(JSONConstants.RAX_AUTH_BYPASS_CODES);
-            final JSONArray array = (JSONArray) inner.get(CODES);
+            final String codes = (String) inner.get(CODES);
 
-            if (array != null) {
+            if (codes != null) {
                 // Workaround to fix the "codes" XML attribute JSON representation
-                final String codes = (String) array.get(0);
                 final JSONArray newCodes = new JSONArray();
                 inner.put(CODES, newCodes);
                 for (String code : codes.split(" ")) {

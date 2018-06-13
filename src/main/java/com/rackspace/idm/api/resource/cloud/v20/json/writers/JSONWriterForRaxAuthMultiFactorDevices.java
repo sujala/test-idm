@@ -34,13 +34,21 @@ public class JSONWriterForRaxAuthMultiFactorDevices extends JSONWriterForEntity<
         public void transform(JSONObject entry) {
             JSONObject outer = (JSONObject) entry.get(JSONConstants.RAX_AUTH_MULTIFACTOR_DEVICES);
 
-            if (outer == null || outer.get(JSONConstants.MOBILE_PHONES) == null) {
+            if (isEmptyArray(outer, JSONConstants.MOBILE_PHONES)) {
                 outer.put(JSONConstants.MOBILE_PHONES, new JsonArray());
             }
 
-            if (outer == null || outer.get(JSONConstants.OTP_DEVICES) == null) {
+            if (isEmptyArray(outer, JSONConstants.OTP_DEVICES)) {
                 outer.put(JSONConstants.OTP_DEVICES, new JsonArray());
             }
+        }
+    }
+
+    private boolean isEmptyArray(JSONObject object, String key) {
+        if (object == null || object.get(key) == null || (object.get(key) instanceof JSONObject && ((JSONObject)object.get(key)).size() == 0)) {
+            return true;
+        } else {
+            return false;
         }
     }
 }

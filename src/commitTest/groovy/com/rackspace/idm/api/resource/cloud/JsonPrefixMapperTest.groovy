@@ -87,7 +87,7 @@ class JsonPrefixMapperTest extends RootServiceTest{
         ((JSONObject)object.get(TOKEN)).containsKey(RAX_AUTH_AUTHENTICATED_BY)
         JSONObject raxAuthBy = ((JSONObject)object.get(TOKEN)).get(RAX_AUTH_AUTHENTICATED_BY)
         JSONObject authBy = ((JSONObject)object.get(TOKEN)).get(AUTHENTICATED_BY)
-        raxAuthBy == null
+        raxAuthBy.size() == 0
         authBy == null
     }
 

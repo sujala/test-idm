@@ -192,32 +192,9 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
         MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_JSON_TYPE | "abcd"    |  DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_PHONE_NUMBER
         MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE | "abcd"    |  DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_INVALID_PHONE_NUMBER
         MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_XML_TYPE | null    |  DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_MISSING_PHONE_NUMBER
-        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_JSON_TYPE | null    | DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_MISSING_PHONE_NUMBER
+        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_JSON_TYPE | null    |  DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_MISSING_PHONE_NUMBER
         MediaType.APPLICATION_XML_TYPE   |   MediaType.APPLICATION_JSON_TYPE | null    | DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_MISSING_PHONE_NUMBER
-    }
-
-    /**
-     * Due to existing base classes, providing a NULL telephone number (as opposed to an empty string) with a json request and xml response will result in a rackspace fault rather than an openstack fault
-     */
-    @Unroll("Fails with rackspace fault when provide an invalid mobile phone number: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType ; testPhoneNumber=#testPhoneNumber ; expectedMessage=#expectedMessage")
-    def "Fails with rackspace fault when provide an invalid mobile phone number"() {
-        setup:
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone = v2Factory.createMobilePhone(testPhoneNumber);
-        def userAdmin = createUserAdmin()
-        String userAdminToken = authenticate(userAdmin.username)
-
-        when:
-        def response = cloud20.addPhoneToUser(userAdminToken, userAdmin.id, requestMobilePhone, requestContentMediaType, acceptMediaType)
-
-        then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, expectedMessage)
-
-        cleanup:
-        deleteUserQuietly(userAdmin)
-
-        where:
-        requestContentMediaType | acceptMediaType   | testPhoneNumber | expectedMessage
-        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE | null    | "Must provide a telephone number"
+        MediaType.APPLICATION_JSON_TYPE   |   MediaType.APPLICATION_XML_TYPE | null    | DefaultMultiFactorCloud20Service.BAD_REQUEST_MSG_MISSING_PHONE_NUMBER
     }
 
     @Unroll("Fails when do not provide a mobile phone object in request: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType ; expectedMessage=#expectedMessage")

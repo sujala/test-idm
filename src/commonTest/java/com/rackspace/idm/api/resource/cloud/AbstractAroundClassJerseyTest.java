@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.impl.InMemoryLdapIntegrationTest;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
 import com.sun.jersey.test.framework.AppDescriptor;
 import com.sun.jersey.test.framework.JerseyTest;
@@ -135,8 +136,7 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
                                 "com.rackspace.idm.api.filter.UriExtensionFilter;" +
                                 "com.rackspace.idm.api.filter.AuthenticationFilter;" +
                                 "com.sun.jersey.api.container.filter.GZIPContentEncodingFilter")
-                        .initParam("com.sun.jersey.config.property.packages",
-                        "com.rackspace.idm;org.codehaus.jackson.jaxrs")
+                        .initParam("com.sun.jersey.config.property.packages", "com.rackspace.idm")
                         .initParam("com.sun.jersey.spi.container.ContainerResponseFilters",
                                 "com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;" +
                                 "com.rackspace.idm.api.filter.AuthenticationHeadersFilter")

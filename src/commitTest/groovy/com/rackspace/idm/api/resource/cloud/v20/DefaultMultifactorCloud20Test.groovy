@@ -108,7 +108,7 @@ class DefaultMultifactorCloud20Test extends Specification {
         MultiFactor settings = v2Factory.createMultiFactorSettings(null, true)
 
         when:
-        def response = service.updateMultiFactorSettings(uriInfo, authToken, targetUser.id, settings)
+        def response = service.updateMultiFactorSettings(uriInfo, authToken, targetUser.id, settings).build()
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerToken(authToken) >> token

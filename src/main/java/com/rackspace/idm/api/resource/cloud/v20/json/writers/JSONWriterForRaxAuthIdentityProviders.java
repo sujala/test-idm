@@ -37,7 +37,7 @@ public class JSONWriterForRaxAuthIdentityProviders extends JSONWriterForArrayEnt
             if (entry != null) {
                 Object domainIds = entry.get(JSONConstants.APPROVED_DOMAIN_IDS);
 
-                if (domainIds == null) {
+                if (domainIds instanceof JSONObject) {
                     JSONArray ar =  new JSONArray();
                     // Add or overwrite any existing entry in the json object
                     entry.put(JSONConstants.APPROVED_DOMAIN_IDS, ar);

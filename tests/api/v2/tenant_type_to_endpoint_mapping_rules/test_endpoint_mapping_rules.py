@@ -762,7 +762,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             list_resp = self.validate_list_rules_response()
             rules_list = self.get_rules_list_from_response(list_resp.json())
         # We may need to change this once defect CID-536 is fixed
-        self.assertEqual(rules_list, None)
+        self.assertEqual(rules_list, {})
 
     def tearDown(self):
         for id_ in self.template_ids:

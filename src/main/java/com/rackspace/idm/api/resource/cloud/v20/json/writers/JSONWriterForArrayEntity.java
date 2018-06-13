@@ -64,7 +64,7 @@ public abstract class JSONWriterForArrayEntity<T> implements MessageBodyWriter<T
             JSONObject newOuter = new JSONObject();
             JSONArray jsonArray = new JSONArray();
 
-            if (middle != null) {
+            if (middle != null && middle.size() > 0) {
                 Object[] keys = middle.keySet().toArray();
                 String key = (String)keys[0];
 

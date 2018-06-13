@@ -32,10 +32,8 @@ public class TenantAssignmentArrayEntryTransformer implements JsonArrayEntryTran
     }
 
     private void fixForTenantsArray(JSONObject parent) {
-        final JSONArray tenantArray = (JSONArray) parent.get(TenantAssignmentArrayTranformerHandler.FOR_TENANTS);
-        if (tenantArray != null) {
-            // Workaround to fix the "tenantIds" XML attribute JSON representation
-            final String codes = (String) tenantArray.get(0);
+        final String codes = (String) parent.get(TenantAssignmentArrayTranformerHandler.FOR_TENANTS);
+        if (codes != null) {
             final JSONArray newCodes = new JSONArray();
             parent.put(TenantAssignmentArrayTranformerHandler.FOR_TENANTS, newCodes);
             for (String code : codes.split(" ")) {
