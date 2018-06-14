@@ -13,9 +13,11 @@ logging.basicConfig(
     level=logging.DEBUG)
 
 
-PROPERTY_FILE_LOCATION = os.getenv("PROPERTY_FILE_LOCATION", os.path.join(os.curdir, "properties.json"))
+PROPERTY_FILE_LOCATION = os.getenv("PROPERTY_FILE_LOCATION", os.path.join(
+    os.curdir, "properties.json"))
 
-ENVIRONMENT_FILE_LOCATION = os.getenv("ENVIRONMENT_FILE_LOCATION", os.path.join(os.curdir, "environments.json"))
+ENVIRONMENT_FILE_LOCATION = os.getenv(
+    "ENVIRONMENT_FILE_LOCATION", os.path.join(os.curdir, "environments.json"))
 
 
 def is_prop_ignored(prop):
@@ -67,8 +69,9 @@ def get_props_from_server(token, environment_key, environments_json):
 
 def get_server_prop(server_properties, prop):
     return next(
-        (s_prop for s_prop in server_properties if s_prop['name'] == prop['name'] and s_prop['versionAdded'] == prop['versionAdded']),
-            None)
+        (s_prop for s_prop in server_properties if s_prop[
+            'name'] == prop['name'] and s_prop['versionAdded'] == prop[
+            'versionAdded']), None)
 
 
 def check_key_is_equivalent(key, prop, server_prop, server_name, error_list):
@@ -78,10 +81,11 @@ def check_key_is_equivalent(key, prop, server_prop, server_name, error_list):
                 "local": prop[key],
                 server_name: server_prop[key]
             }
-        })    
+        })
 
 
-def compare_environment_configurations(environments_json, environment, visibility, region):
+def compare_environment_configurations(environments_json, environment,
+                                       visibility, region):
     error_list = []
     environment_key = environment + "_" + visibility + "_" + region
     logging.debug("Servers in list %s",
@@ -96,12 +100,13 @@ def compare_environment_configurations(environments_json, environment, visibilit
         environment_key)
 
     logging.debug("Load the properties data for user")
-    server_properties = get_props_from_server(token, environment_key, environments_json)
+    server_properties = get_props_from_server(token, environment_key,
+                                              environments_json)
 
     logging.debug("Get server name from property 'ae.node.name.for.signoff'")
     server_name = next(
-        (prop['value'] for prop in server_properties if prop['name'] == 'ae.node.name.for.signoff'),
-        None)
+        (prop['value'] for prop in server_properties if prop[
+            'name'] == 'ae.node.name.for.signoff'), None)
 
     logging.debug("Compare for %s %s", environment_key, server_name)
     if server_name is not None:
@@ -109,49 +114,73 @@ def compare_environment_configurations(environments_json, environment, visibilit
             "Check that server %s should be checked", server_name)
         if server_name in environments_json[environment_key]['servers']:
             logging.debug(
-                "Run the comparison for property version to current state (aggregate failures)")
+                "Run the comparison for property version to current state ("
+                "aggregate failures)")
             with open(PROPERTY_FILE_LOCATION, 'r') as f:
                 prop_file_as_text = f.read()
                 prop_file_as_json = json.loads(prop_file_as_text)
                 for prop in prop_file_as_json['properties']:
-                    if not is_prop_ignored(prop) and does_region_match(prop, region) and does_environment_match(prop, environment):
+                    if not is_prop_ignored(prop) and does_region_match(
+                        prop, region) and does_environment_match(
+                          prop, environment):
                         logging.debug(
-                            'retrieve prop by name and compare defaultValue, reloadable, source, value, and versionAdded')
+                            ('retrieve prop by name and compare defaultValue,'
+                             ' reloadable, source, value, and versionAdded'))
                         server_prop = get_server_prop(server_properties, prop)
                         logging.debug('compare %s with %s', prop, server_prop)
                         if server_prop is None:
                             logging.debug(
-                                '%s not found. make sure that the version is not yet released to environment',
-                                environments_json[environment_key]['releasedVersion'])
-                            if prop['versionAdded'] != environments_json[environment_key]['releasedVersion']:
+                                ('%s not found. make sure that the version is'
+                                 ' not yet released to environment'),
+                                environments_json[environment_key][
+                                    'releasedVersion'])
+                            if prop['versionAdded'] != environments_json[
+                                  environment_key]['releasedVersion']:
                                 error_list.append(
                                     {
-                                        "{}:{}:not-found".format(prop['name'], server_name): "local prop not found in {}".format(server_name)
+                                        "{}:{}:not-found".format(
+                                            prop['name'], server_name): (
+                                            "local prop not "
+                                            "found in {}").format(server_name)
                                     })
                         else:
-                            check_key_is_equivalent('defaultValue', prop, server_prop, server_name, error_list)
-                            check_key_is_equivalent('reloadable', prop, server_prop, server_name, error_list)
-                            check_key_is_equivalent('source', prop, server_prop, server_name, error_list)
-                            check_key_is_equivalent('value', prop, server_prop, server_name, error_list)
-                            check_key_is_equivalent('versionAdded', prop, server_prop, server_name, error_list)
+                            check_key_is_equivalent(
+                                'defaultValue', prop, server_prop, server_name,
+                                error_list)
+                            check_key_is_equivalent(
+                                'reloadable', prop, server_prop, server_name,
+                                error_list)
+                            check_key_is_equivalent(
+                                'source', prop, server_prop, server_name,
+                                error_list)
+                            check_key_is_equivalent(
+                                'value', prop, server_prop, server_name,
+                                error_list)
+                            check_key_is_equivalent(
+                                'versionAdded', prop, server_prop, server_name,
+                                error_list)
                             logging.debug("Remove %s", server_prop['name'])
                             server_properties.remove(server_prop)
             logging.debug(
-                "Remove the server from the server list and run again if the server list is not empty")
+                ("Remove the server from the server list and run again if the"
+                 " server list is not empty"))
             environments_json[environment_key]['servers'].remove(server_name)
 
         if len(environments_json[environment_key]['servers']) > 0:
-            error_list + compare_environment_configurations(environments_json, environment, visibility, region)
+            error_list + compare_environment_configurations(
+                environments_json, environment, visibility, region)
     else:
         logging.debug("Server name is empty")
-        error_list + compare_environment_configurations(environments_json, environment, visibility, region)
+        error_list + compare_environment_configurations(
+            environments_json, environment, visibility, region)
 
     return error_list
 
 
 if __name__ == '__main__':
     logging.debug(
-        "start comparison of property variables (prop file location: %s) (env file location: %s",
+        ("start comparison of property variables (prop file location: %s) "
+         "(env file location: %s"),
         PROPERTY_FILE_LOCATION,
         ENVIRONMENT_FILE_LOCATION)
 
@@ -162,7 +191,8 @@ if __name__ == '__main__':
         ('Staging', 'External', 'IAD3'),
         ('Staging', 'External', 'LON3')
     ]:
-        error_list = compare_environment_configurations(environments_json, *environment)
+        error_list = compare_environment_configurations(environments_json,
+                                                        *environment)
         results = {
             "status": "success",
             "error_list": []
