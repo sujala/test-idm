@@ -137,20 +137,6 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
         return false;
     }
 
-    /**
-     * A federated user is considered expired if the expiredTimestamp is either null or contains a date before "now"
-     *
-     * @return
-     */
-    public boolean isExpired() {
-        if (expiredTimestamp == null) {
-            // If user doesn't have expired timestamp, is considered expired.
-            return true;
-        }
-        DateTime expirationDate = new DateTime(expiredTimestamp);
-        return expirationDate.isBeforeNow();
-    }
-
     @Override
     public String toString() {
         return getAuditContext();

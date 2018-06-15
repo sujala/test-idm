@@ -120,13 +120,6 @@ public class DevOpsResource {
         return devOpsService.deleteIdmProperty(authToken, propertyId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "DevOps Delete expired federated users")
-    @POST
-    @Path("/federation/deletion")
-    public Response expiredFederatedUsersDeletion(@HeaderParam(X_AUTH_TOKEN) String authToken, FederatedUsersDeletionRequest request) {
-        return devOpsService.expiredFederatedUsersDeletion(authToken, request).build();
-    }
-
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "DevOps Delete expired TRRs")
     @POST
     @Path("/token-revocation-record/deletion")

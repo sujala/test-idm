@@ -2350,32 +2350,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         assert result.status == 403
     }
 
-    def "getAdminsForDefaultUser - Expired Fed users will return 404"() {
-        given:
-        allowUserAccess()
-        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
-        def user = entityFactory.createFederatedUser("user").with {
-            it.domainId = "domainId"
-            it.id = "userId"
-            it.expiredTimestamp = new DateTime().minusHours(1).toDate()
-            it
-        }
-
-        when:
-        def response = service.getUserAdminsForUser(authToken, "userId").build()
-
-        then:
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> false
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> true
-        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
-        1 * requestContext.getEffectiveCaller() >> caller
-        1 * identityUserService.checkAndGetUserById("userId") >> user
-
-        then:
-        thrown(NotFoundException)
-    }
-
     def "getAdminsForDefaultUser - Non-Expired Fed users will return admins"() {
         given:
         allowUserAccess()
@@ -2420,6 +2394,29 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 200
         userService.checkAndGetUserById(userId) >> user
         userService.getUser(_) >> caller
+    }
+
+    def "getAdminsForDefaultUser - Expired Fed users will not throw exception"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createFederatedUser("user").with {
+            it.domainId = "domainId"
+            it.id = "userId"
+            it.expiredTimestamp = new DateTime().minusHours(1).toDate()
+            it
+        }
+
+        when:
+        def response = service.getUserAdminsForUser(authToken, "userId").build()
+
+        then:
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> false
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> true
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * identityUserService.checkAndGetUserById("userId") >> user
     }
 
     def "default user should not be able to retrieve another default users api key"() {

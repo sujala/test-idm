@@ -40,26 +40,6 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
     @Autowired
     DomainService domainService
 
-    def "test federation deletion call"() {
-        given:
-        def response = devops.getFederationDeletion(utils.getServiceAdminToken())
-
-        when:
-        def entity = new org.codehaus.jackson.map.ObjectMapper().readValue(response.getEntity(String), Map).federatedUsersDeletionResponse
-
-        then:
-        response.status == 200
-        entity.id != null
-    }
-
-    def "test federation deletion call cannot be done by who doesnt have role"() {
-        when:
-        def response = devops.getFederationDeletion(utils.getIdentityAdminToken())
-
-        then:
-        response.status == 403
-    }
-
     @Unroll
     def "test analyze token for a provisioned user token"() {
         def user

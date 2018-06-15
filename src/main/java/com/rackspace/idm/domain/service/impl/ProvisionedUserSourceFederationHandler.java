@@ -340,7 +340,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
                 updateUser = true;
             }
 
-            // [CIDMDEV-5294] Mark Federated Users as eligible for deletion
+            // [CIDMDEV-5294] Mark Federated Users as eligible to skip deletion
             if (resultUser.getExpiredTimestamp() == null ||
                     resultUser.getExpiredTimestamp().compareTo(request.getRequestedTokenExpirationDate().toDate()) == -1) {
                 resultUser.setExpiredTimestamp(request.getUser().getExpiredTimestamp());

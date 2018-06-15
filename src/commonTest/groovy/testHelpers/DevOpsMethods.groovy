@@ -56,11 +56,6 @@ class DevOpsMethods {
         resource.path("/devops/props").path(identityPropertyId).header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML).delete(ClientResponse)
     }
 
-    def getFederationDeletion(token, request = "{\"federatedUsersDeletionRequest\":{\"max\": 1000}}", accept = APPLICATION_JSON, type = APPLICATION_JSON) {
-        initOnUse()
-        resource.path("devops/federation/deletion").accept(accept).type(type).header("X-Auth-Token", token).entity(request).post(ClientResponse)
-    }
-
     def purgeObsoleteTrrs(token, request = "{\"tokenRevocationRecordDeletionRequest\":{\"limit\": 100}}", accept = APPLICATION_JSON, type = APPLICATION_JSON) {
         initOnUse()
         resource.path("devops/token-revocation-record/deletion").accept(accept).type(type).header("X-Auth-Token", token).entity(request).post(ClientResponse)

@@ -302,21 +302,6 @@ public class FederatedDomainRequestHandler {
             throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG, ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
         }
 
-        /*
-          If the existing user is expired (no expiration time or expiration is in the past), delete the user and create
-          a new one. Given the automated purge process there is a chance that the purge federated user application could
-          delete this user before it was updated causing an error.
-         */
-        if (existingUser != null && (existingUser.getExpiredTimestamp() == null || new DateTime().isAfter(new DateTime(existingUser.getExpiredTimestamp())))) {
-            try {
-                identityUserService.deleteUser(existingUser);
-            } catch (Exception e) {
-                // Ignore error as we're just trying to clean up. Perhaps was already deleted via purge
-                log.info("Encountered error deleting an expired federated user. Ignoring error", e);
-            }
-            existingUser = null;
-        }
-
         if (existingUser == null) {
             validateMaxUserCountInDomain(authRequest, originIdp);
             existingUser = createNewFederatedUser(authRequest, requestedRoles, requestedUserGroups, domainUserAdmin, originIdp);

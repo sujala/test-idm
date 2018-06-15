@@ -228,17 +228,6 @@ public class DefaultDevOpsService implements DevOpsService {
     }
 
     @Override
-    public Response.ResponseBuilder expiredFederatedUsersDeletion(String authToken, FederatedUsersDeletionRequest request) {
-        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-        authorizationService.verifyEffectiveCallerHasRoleByName(identityConfig.getReloadableConfig().getFederatedDeletionRole());
-
-        final FederatedUsersDeletionResponse response = v1ObjectFactory.createFederatedUsersDeletionResponse();
-
-        userService.expiredFederatedUsersDeletion(request, response);
-        return Response.ok().entity(v1ObjectFactory.createFederatedUsersDeletionResponse(response));
-    }
-
-    @Override
     public Response.ResponseBuilder purgeObsoleteTrrs(String authToken, TokenRevocationRecordDeletionRequest request) {
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
         authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PURGE_TOKEN_REVOCATION_RECORDS.getRoleName());

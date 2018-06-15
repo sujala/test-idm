@@ -4295,14 +4295,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
         }
 
-        // Additional fed user tests added as part of CID-66
-        if (user instanceof FederatedUser) {
-            FederatedUser federatedUser = (FederatedUser) user;
-            if (federatedUser.isExpired()) {
-                throw new NotFoundException(String.format("User %s not found", userId));
-            }
-        }
-
         List<User> admins = new ArrayList<User>();
         if (user.getDomainId() != null ) {
             admins = domainService.getEnabledDomainAdmins(user.getDomainId());

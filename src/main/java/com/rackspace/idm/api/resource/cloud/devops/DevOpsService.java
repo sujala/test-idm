@@ -52,15 +52,6 @@ public interface DevOpsService {
     Response.ResponseBuilder getIdmProps(String authToken);
 
     /**
-     * Remove Federated Users eligible for deletion
-     *
-     * @param authToken
-     *
-     * @return properties map.
-     */
-    Response.ResponseBuilder expiredFederatedUsersDeletion(String authToken, FederatedUsersDeletionRequest request);
-
-    /**
      * Remove obsolete TRRs. Must have "identity:purge-trr" role
      *
      * @param authToken

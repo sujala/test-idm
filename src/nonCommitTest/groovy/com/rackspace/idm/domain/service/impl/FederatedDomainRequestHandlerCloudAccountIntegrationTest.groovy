@@ -241,31 +241,6 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         userRoles.find {it.name == ROLE_RBAC2_NAME} != null
     }
 
-    def "Valid: Fed request for same username as expired user first deletes expired user"() {
-        given:
-        FederatedDomainAuthGenerationRequest req = createValidFedRequest()
-        def samlResponse = sharedRequestGenerator.createSignedSAMLResponse(req)
-        FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
-        def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
-
-        // Expire this user
-        FederatedUser originalUser = (FederatedUser) samlAuthResponse.user
-        originalUser.expiredTimestamp = new DateTime().minusDays(1).toDate()
-        federatedUserDao.updateUser(originalUser)
-        assert federatedUserDao.getUserById(originalUser.id) != null
-
-        when:
-        samlResponse = sharedRequestGenerator.createSignedSAMLResponse(req)
-        request = new FederatedDomainAuthRequest(samlResponse)
-        samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
-
-        then:
-        samlAuthResponse.user != null
-        samlAuthResponse.user.id != originalUser.id
-        samlAuthResponse.user.username == originalUser.username
-        federatedUserDao.getUserById(originalUser.id) == null
-    }
-
     def "Creation of fed users controlled by max number feature flag"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, 1)
@@ -887,6 +862,31 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
 
         cleanup:
         reloadableConfiguration.reset()
+    }
+
+    def "Valid: Fed request for same username as expired user does not deletes expired user"() {
+        given:
+        FederatedDomainAuthGenerationRequest req = createValidFedRequest()
+        def samlResponse = sharedRequestGenerator.createSignedSAMLResponse(req)
+        FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
+        def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
+
+        // Expire this user
+        FederatedUser originalUser = (FederatedUser) samlAuthResponse.user
+        originalUser.expiredTimestamp = new DateTime().minusDays(1).toDate()
+        federatedUserDao.updateUser(originalUser)
+        assert federatedUserDao.getUserById(originalUser.id) != null
+
+        when: "Fed user is authenticated"
+        samlResponse = sharedRequestGenerator.createSignedSAMLResponse(req)
+        request = new FederatedDomainAuthRequest(samlResponse)
+        samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
+
+        then: "Same user is retrieved"
+        samlAuthResponse.user != null
+        samlAuthResponse.user.id == originalUser.id
+        samlAuthResponse.user.username == originalUser.username
+        federatedUserDao.getUserById(originalUser.id) != null
     }
 
     def createValidFedRequest(username = UUID.randomUUID()) {
