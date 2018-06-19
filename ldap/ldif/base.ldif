@@ -1071,6 +1071,46 @@ cn: observer
 description: Observer Role for Account User
 rsWeight: 1000
 
+dn: rsId=d54478e2df284130a77accb5c4f60ba8,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: admin
+description: Admin role for account user
+rsWeight: 1000
+
+dn: rsId=2d48788b89b34a65b24bfc2df1690819,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: ticketing:admin
+description: Ticketing admin role for account user
+rsWeight: 1000
+
+dn: rsId=318c6ae090504cf79cc13f051d700e57,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: ticketing:observer
+description: Ticketing observer role for account user
+rsWeight: 1000
+
+dn: rsId=3fabab074eb04b56a6052b634aaf1610,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: billing:admin
+description: Billing admin role for account user
+rsWeight: 1000
+
+dn: rsId=4fb94f6f7fcb4085bec35ceaaebb4f17,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: billing:observer
+description: Billing observer role for account user
+rsWeight: 1000
+
 dn: rsId=10010176,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
  c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole

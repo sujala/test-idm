@@ -18,6 +18,7 @@ import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
@@ -63,6 +64,9 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
 
     @Autowired
     private DelegationService delegationService;
+
+    @Autowired
+    private Configuration config;
 
     @Override
     public List<TenantRole> replaceTenantAssignmentsOnUser(User user, List<TenantAssignment> tenantAssignments, Integer allowedRoleAccess) {
@@ -342,6 +346,7 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
             }
 
             allowedTenantRoles = Lists.newArrayList(delegationService.getAllRoleAssignmentsOnDelegationAgreement(parentAgreement));
+
             if (allowedTenantRoles.isEmpty()) {
                 // Role ID of the first unauthorized assignment
                 String roleId = tenantAssignments.get(0).getOnRole();
@@ -389,6 +394,10 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
                 throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId), ERROR_CODE_INVALID_ATTRIBUTE);
             }
 
+            if (identityConfig.getReloadableConfig().isRoleHierarchyEnabled()) {
+                expandAllowedHierarchicalRolesOnAgreement(delegationAgreement, allowedTenantRolesMap, cacheClientRole);
+            }
+
             // Verify tenantAssignment on DA is within the scope of the allowed tenant roles.
             if (!allowedTenantRolesMap.isEmpty() || delegationPrincipal.getPrincipalType().equals(PrincipalType.USER_GROUP)) {
                 Set<String> allowedRoleTenantIds = allowedTenantRolesMap.get(cache.roleCache.get(roleId).getId());
@@ -396,18 +405,61 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
                     throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId), ERROR_CODE_INVALID_ATTRIBUTE);
                 }
 
-                if(allowedRoleTenantIds.contains(ALL_TENANTS_IN_DOMAIN_WILDCARD) && !isDomainAssignment(tenantAssignment)) {
-                    Domain daDomain = domainService.getDomain(delegationAgreement.getDomainId());
-                    if (!CollectionUtils.isSubCollection(tenantAssignment.getForTenants(), Arrays.asList(daDomain.getTenantIds()))) {
-                        throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_WRONG_TENANTS_MSG_PATTERN, roleId), ERROR_CODE_INVALID_ATTRIBUTE);
-                    }
-                } else if (!CollectionUtils.isSubCollection(tenantAssignment.getForTenants(), allowedRoleTenantIds)) {
+                if (!allowedRoleTenantIds.contains(ALL_TENANTS_IN_DOMAIN_WILDCARD) && !CollectionUtils.isSubCollection(tenantAssignment.getForTenants(), allowedRoleTenantIds)) {
                     throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_WRONG_TENANTS_MSG_PATTERN, roleId), ERROR_CODE_INVALID_ATTRIBUTE);
                 }
             }
         }
 
         return cache;
+    }
+
+    /**
+     * Expands the allowed tenant role assignments on nested delegation agreement based on the role hierarchy defined on
+     * property "nested.delegation.agreement.role.hierarchy".
+     *
+     * NOTE: The support provided is just the bare minimum to support EPS migration and linking cloud accounts to MyRack.
+     * Changes below will be throw away code when full hierarchical RBAC support is implemented.
+     *
+     * @param delegationAgreement
+     * @param allowedTenantRolesMap
+     * @param cacheClientRole
+     */
+    private void expandAllowedHierarchicalRolesOnAgreement(DelegationAgreement delegationAgreement,
+                                                           Map<String, Set<String>> allowedTenantRolesMap,
+                                                           ClientRole cacheClientRole) {
+        // Retrieve role hierarchy for Nested DAs
+        Map<String, List<String>> roleHierarchyMap = identityConfig.getReloadableConfig().getNestedDelegationAgreementRoleHierarchyMap();
+        // Check role hierarchy for nested DAs
+        if (delegationAgreement.getParentDelegationAgreementId() != null
+                && (roleHierarchyMap != null && roleHierarchyMap.get(cacheClientRole.getName()) != null)) {
+            // Retrieve all parent roles for role assignment
+            List<String> parentRoleNames = roleHierarchyMap.get(cacheClientRole.getName());
+            for (String roleName : parentRoleNames) {
+                // Retrieve parent role
+                ClientRole parentClientRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), roleName);
+
+                // If parent role can not be found, ignore and continue.
+                if (parentClientRole == null) {
+                    continue;
+                }
+
+                // Determine scope from parent assignment
+                Set<String> parentTenantRoleScope = allowedTenantRolesMap.get(parentClientRole.getId());
+                if (parentTenantRoleScope != null) {
+                    Set<String> currentSubRoleScope = allowedTenantRolesMap.get(cacheClientRole.getId());
+                    if (currentSubRoleScope == null
+                            || (parentTenantRoleScope.contains(ALL_TENANTS_IN_DOMAIN_WILDCARD)
+                            && !currentSubRoleScope.contains(ALL_TENANTS_IN_DOMAIN_WILDCARD))) {
+                        allowedTenantRolesMap.put(cacheClientRole.getId(), parentTenantRoleScope);
+                    } else if (!currentSubRoleScope.isEmpty() && !currentSubRoleScope.contains(ALL_TENANTS_IN_DOMAIN_WILDCARD)) {
+                        // Create a union between the current scope and the new parent scope.
+                        currentSubRoleScope.addAll(parentTenantRoleScope);
+                        allowedTenantRolesMap.put(cacheClientRole.getId(), currentSubRoleScope);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -475,6 +527,10 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
                 throw new BadRequestException(ERROR_CODE_ROLE_ASSIGNMENT_INVALID_FOR_TENANTS_MSG, ERROR_CODE_INVALID_ATTRIBUTE);
             }
         }
+    }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
     }
 
     private class AssignmentCache {

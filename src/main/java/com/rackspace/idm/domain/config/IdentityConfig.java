@@ -428,6 +428,12 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_PROP = "feature.enable.authorization.advice.aspect";
     public static final boolean FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_DEFAULT  = true;
 
+    public static final String FEATURE_ENABLE_ROLE_HIERARCHY_PROP = "feature.enable.role.hierarchy";
+    public static final boolean FEATURE_ENABLE_ROLE_HIERARCHY_DEFAULT = true;
+
+    public static final String NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_PROP = "nested.delegation.agreement.role.hierarchy";
+    public static final String NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_DEFAULT = null;
+
     /**
      * Required static prop
      */
@@ -826,6 +832,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_DEFAULT);
         defaults.put(FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_PROP, FEATURE_ENABLE_AUTHORIZATION_ADVICE_ASPECT_DEFAULT);
         defaults.put(FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_PROP, FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_DEFAULT);
+        defaults.put(FEATURE_ENABLE_ROLE_HIERARCHY_PROP, FEATURE_ENABLE_ROLE_HIERARCHY_DEFAULT);
+        defaults.put(NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_PROP, NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_DEFAULT);
 
         return defaults;
     }
@@ -2249,6 +2257,35 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_PROP, versionAdded = "3.22.0", description = "Whether to post credential change events when a user's credentials are changed.")
         public boolean isPostCredentialChangeFeedEventsEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_ROLE_HIERARCHY_PROP, versionAdded = "3.23.0", description = "Whether to enable role hierarchy support.")
+        public boolean isRoleHierarchyEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_ROLE_HIERARCHY_PROP);
+        }
+
+        /**
+         * This property represents the sub-parents role relationship map used for the role hierarchy in nested DAs. The
+         * value is pipe delimited representing a list of sub-parents role relationship which are delimited by a
+         * semicolon. The key will represent the sub role name, and the value will represent the list of parent role
+         * names delimited by a comma.
+         * @return
+         */
+        @IdmProp(key = NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_PROP, versionAdded = "3.23.0", description = "Role assignment hierarchy for nested DAs")
+        public Map<String, List<String>> getNestedDelegationAgreementRoleHierarchyMap() {
+            String rawValue = getStringSafely(reloadableConfiguration, NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_PROP);
+            Map<String, List<String>> nestedDARoleHierarchyMap = new HashMap<>();
+
+            // Create role hierarchy map with key set to the sub role name and the value set the a string
+            // representing the list of parent role names.
+            Map<String, String> roleHierarchyMap = Splitter.on("|").omitEmptyStrings().withKeyValueSeparator(";").split(rawValue);
+
+            // Convert parent role names into a list
+            for (Map.Entry roleHierarchy : roleHierarchyMap.entrySet()) {
+                nestedDARoleHierarchyMap.put(roleHierarchy.getKey().toString(), Splitter.on(",").omitEmptyStrings().splitToList(roleHierarchy.getValue().toString()));
+            }
+
+            return nestedDARoleHierarchyMap;
         }
     }
 

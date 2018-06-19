@@ -184,4 +184,13 @@ class Constants {
     public static final String ROLE_RBAC2_NAME = "rbacRole2"
     public static final String ROLE_RBAC2_ID = "122776"
 
+    /**
+     * Hierarchical roles for nested da
+     */
+    public static final String ADMIN_ROLE_ID="d54478e2df284130a77accb5c4f60ba8";
+    public static final String OBSERVER_ROLE_ID="8ac541ae2e9d4ab3879e14bd9003fc01";
+    public static final String BILLING_ADMIN_ROLE_ID="3fabab074eb04b56a6052b634aaf1610";
+    public static final String BILLING_OBSERVER_ROLE_ID="4fb94f6f7fcb4085bec35ceaaebb4f17";
+    public static final String TICKETING_ADMIN_ROLE_ID="2d48788b89b34a65b24bfc2df1690819";
+    public static final String TICKETING_OBSERVER_ROLE_ID="318c6ae090504cf79cc13f051d700e57";
 }

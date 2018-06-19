@@ -36,6 +36,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         mockDomainService(service)
         mockIdentityConfig(service)
         mockDelegationService(service)
+        mockConfiguration(service)
 
         reloadableConfig.getRoleAssignmentsMaxTenantAssignmentsPerRequest() >> 10
     }
@@ -997,9 +998,82 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         1 * tenantService.getTenant(tenant.tenantId) >> tenant
         1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
         1 * userGroupService.getRoleAssignmentsOnGroup(principalUserGroup.id) >> [globalTenantRole]
-        1 * domainService.getDomain(domain.domainId) >> domain
         0 * identityUserService.getEndUserById(principalUser.id)
         0 * authorizationService.getIdentityTypeRoleAsEnum(principalUser)
+    }
+
+    def "verifyTenantAssignmentsWithCacheForDelegationAgreement: test role hierarchy"() {
+        given:
+        def tenant = entityFactory.createTenant("tenantA", "tenantA")
+        def domain = entityFactory.createDomain().with {
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+        tenant.domainId = domain.domainId
+
+        // Create test delegation agreements
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.id = "parentDAId"
+            it.domainId = domain.domainId
+            it
+        }
+
+        DelegationAgreement nestedDa = new DelegationAgreement().with {
+            it.parentDelegationAgreementId = parentDa.id
+            it.domainId = domain.domainId
+            it
+        }
+
+        // Create hierarchical client roles
+        ClientRole clientRole = entityFactory.createClientRole().with {
+            it.name = "observer"
+            it.rsWeight = DefaultTenantAssignmentService.DOMAIN_MANAGER_ALLOWED_ROLE_WEIGHT
+            it
+        }
+        ClientRole adminRole = entityFactory.createClientRole().with {
+            it.name = "admin"
+            it.id = "adminRoleId"
+            it.rsWeight = DefaultTenantAssignmentService.DOMAIN_MANAGER_ALLOWED_ROLE_WEIGHT
+            it
+        }
+
+        // Setup assignments
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = clientRole.id
+                            ta.onRoleName = "observer"
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.roleRsId = adminRole.id
+            it
+        }
+        Map<String, List<String>> map = new HashMap<>()
+        map.put("observer", ["admin"])
+
+        when: "verify tenant assignments to be assigned to DA"
+        DefaultTenantAssignmentService.AssignmentCache assignmentCache = service.verifyTenantAssignmentsWithCacheForDelegationAgreement(nestedDa, assignments.tenantAssignments.tenantAssignment)
+
+        then:
+        !assignmentCache.roleCache.isEmpty()
+        assignmentCache.roleCache.size() == 1
+        assignmentCache.roleCache.get(clientRole.id).id == clientRole.id
+
+        1 * delegationService.getDelegationAgreementById(nestedDa.getParentDelegationAgreementId()) >> parentDa
+        1 * reloadableConfig.isRoleHierarchyEnabled() >> true
+        1 * delegationService.getAllRoleAssignmentsOnDelegationAgreement(parentDa) >> [tenantRole]
+        1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
+        1 * identityConfig.getReloadableConfig().getNestedDelegationAgreementRoleHierarchyMap() >> map
+        1 * config.getString("cloudAuth.clientId") >> "123"
+        1 * applicationService.getClientRoleByClientIdAndRoleName(_, "admin") >> adminRole
     }
 
     def "verifyTenantAssignmentsWithCacheForDelegationAgreement: error check"() {
