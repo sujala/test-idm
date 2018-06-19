@@ -27,12 +27,15 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
 
         super(TestRoleAssignmentsWithDelegation, self).setUp()
 
-    def create_delegation_agreement(self, client, user_id):
+    def create_delegation_agreement(self, client, user_id, principal_id):
 
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(da_name=da_name)
-        da_resp = client.create_delegation_agreement(
+        da_req = requests.\
+            DelegationAgreements(da_name=da_name,
+                                 principal_type=const.USER.upper(),
+                                 principal_id=principal_id)
+        da_resp = self.user_admin_client.create_delegation_agreement(
             request_object=da_req)
         da_id = da_resp.json()[
             const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
@@ -68,9 +71,10 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
 
     def set_up_roles_tenant_and_da(self, client):
 
+        p_id = client.default_headers[const.X_USER_ID]
         # create DA with sub user
         da_id = self.create_delegation_agreement(
-            client=client, user_id=self.sub_user_id)
+            client=client, user_id=self.sub_user_id, principal_id=p_id)
         # create roles
         role_1 = self.create_role()
         role_2 = self.create_role()

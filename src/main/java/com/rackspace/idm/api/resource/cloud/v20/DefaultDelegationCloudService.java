@@ -116,8 +116,14 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
-            // Verify caller has appropriate access
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+            boolean isNestedAgreement = StringUtils.isNotBlank(agreementWeb.getParentDelegationAgreementId());
+
+            // Verify caller has appropriate access for root and Nested DA
+            if (!isNestedAgreement && !identityConfig.getReloadableConfig().isGlobalRootDelegationAgreementCreationEnabled()) {
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
+            } else {
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+            }
 
             // Verify caller is enabled
             BaseUser callerBu = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
@@ -130,7 +136,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
             boolean isNestLevelSpecified = agreementWeb.getSubAgreementNestLevel() != null;
             boolean isAllowSubAgreementsSpecified = agreementWeb.isAllowSubAgreements() != null;
-            boolean isNestedAgreement = StringUtils.isNotBlank(agreementWeb.getParentDelegationAgreementId());
+
 
             // Verify overall request
             validator20.validateStringNotNullWithMaxLength("name", agreementWeb.getName(), Validator20.MAX_LENGTH_32);

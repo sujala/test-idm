@@ -114,6 +114,7 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AUTHENTICATION_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, true)
     }
 
     /**
@@ -704,7 +705,6 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
     }
 
     def "auth with nested DA is allowed for DAs when the parent DA principal is disabled"() {
-        given:
         def rcn = "RCN-${RandomStringUtils.randomNumeric(3)}-${RandomStringUtils.randomNumeric(3)}-${RandomStringUtils.randomNumeric(3)}"
         def userAdmin = utils.createCloudAccount()
         utils.domainRcnSwitch(userAdmin.domainId, rcn)

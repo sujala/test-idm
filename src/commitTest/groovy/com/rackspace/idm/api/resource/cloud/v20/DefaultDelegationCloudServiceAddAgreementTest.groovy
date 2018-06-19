@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.ErrorCodes
-import com.rackspace.idm.domain.entity.BaseUserToken
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -11,7 +10,6 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.unboundid.ldap.sdk.DN
@@ -804,6 +802,51 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
         (1.._) * parentAgreement.getSubAgreementNestLevelNullSafe() >> 2 // sub agreement setting to 1, so this must be >1
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
         1 * delegationService.addDelegationAgreement(_)
+    }
+
+    @Unroll
+    def "addAgreement: test for feature.enable.global.root.da.creation with flag: #flag"() {
+        UriInfo uriInfo = Mock()
+        ScopeAccess tokenScopeAccess = new UserScopeAccess()
+        def token = "token"
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> tokenScopeAccess
+        reloadableConfig.isGlobalRootDelegationAgreementCreationEnabled() >> flag
+        User caller = new User().with {
+            it.id = RandomStringUtils.randomAlphabetic(10)
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it
+        }
+
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        identityUserService.getProvisionedUserById(caller.id) >> caller // Delegate call
+        Domain callerDomain = new Domain().with {
+            it.domainId = caller.domainId
+            it
+        }
+
+        domainService.getDomain(callerDomain.domainId) >> callerDomain
+        requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
+
+        def capturedException
+        exceptionHandler.exceptionResponse(_) >> { args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN) }
+
+        DelegationAgreement daValidWeb = new DelegationAgreement().with {
+            it.principalType = PrincipalType.USER
+            it.principalId = caller.id
+            it
+        }
+        when: "add agreement with principal as caller"
+        service.addAgreement(uriInfo, token, daValidWeb)
+
+        then:
+        if(flag){
+            1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        }else{
+            1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN)
+        }
+
+        where:
+        flag << [false, true]
     }
 }
 

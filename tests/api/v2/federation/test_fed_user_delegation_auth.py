@@ -189,9 +189,15 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
 
         # create DA
         da_req = requests.DelegationAgreements(
+            principal_type=const.USER.upper(),
+            principal_id=principal_id,
             da_name=self.generate_random_string(
                 pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN))
-        da_resp = fed_prinicipal_client.create_delegation_agreement(
+        self.user_admin_client.serialize_format = 'json'
+        self.user_admin_client.default_headers[const.CONTENT_TYPE] = \
+            'application/json'
+
+        da_resp = self.user_admin_client.create_delegation_agreement(
             request_object=da_req)
         self.assertEqual(da_resp.status_code, 201)
         da = Munch.fromDict(da_resp.json())

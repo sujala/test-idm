@@ -32,17 +32,25 @@ import static org.apache.http.HttpStatus.*
 
 class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest {
 
-    @Shared def sharedServiceAdminToken
-    @Shared def sharedIdentityAdminToken
+    @Shared
+    def sharedServiceAdminToken
+    @Shared
+    def sharedIdentityAdminToken
 
-    @Shared User sharedUserAdmin
-    @Shared def sharedUserAdminToken
+    @Shared
+    User sharedUserAdmin
+    @Shared
+    def sharedUserAdminToken
 
-    @Shared User sharedSubUser
-    @Shared def sharedSubUserToken
+    @Shared
+    User sharedSubUser
+    @Shared
+    def sharedSubUserToken
 
-    @Shared User sharedUserManager
-    @Shared def sharedUserManagerToken
+    @Shared
+    User sharedUserManager
+    @Shared
+    def sharedUserManagerToken
 
     @Autowired
     DelegationService delegationService
@@ -79,7 +87,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         authResponse = cloud20.authenticatePassword(sharedUserManager.username, Constants.DEFAULT_PASSWORD)
         assert authResponse.status == SC_OK
         sharedUserManagerToken = authResponse.getEntity(AuthenticateResponse).value.token.id
-  }
+    }
 
     /**
      * By default for these tests open up DAs to all RCNs. Tests that verify limiting the availability will need to
@@ -90,8 +98,41 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
     def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, true)
     }
 
+    /**
+     * Verify that all users can create root DA when feature flag is turned ON and only users with user admin or above
+     * can create root DA when feature flag is turned off
+     */
+    @Unroll
+    def "All users can create root DA when feature.enable.global.root.da.creation is enabled #flag"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, flag)
+        def token = utils.getToken(caller.username)
+
+        DelegationAgreement webDa = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.allowSubAgreements = false
+            it
+        }
+
+        when: "different users creates the DA "
+        def createResponse = cloud20.createDelegationAgreement(token, webDa)
+
+        then:
+        createResponse.status == respCode
+
+        where:
+        caller            | respCode | flag
+        sharedUserAdmin   | 201      | false
+        sharedUserManager | 403      | false
+        sharedSubUser     | 403      | false
+        sharedUserAdmin   | 201      | true
+        sharedUserManager | 201      | true
+        sharedSubUser     | 201      | true
+    }
 
     /**
      * Verifies the delegation services accessibility is controlled via the high level feature flag. Uses as invalid
@@ -120,15 +161,15 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         response.status == SC_UNAUTHORIZED
 
         where:
-        [name, responseCall]  << [
-                ["createDelegationAgreement", {cloud20.createDelegationAgreement(it, new DelegationAgreement())}]
-                , ["getDelegationAgreement", {cloud20.getDelegationAgreement(it, "id")}]
-                , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement(it, "id")}]
-                , ["addUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["addUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
-                , ["deleteUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["deleteUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
-                , ["listDelegationAgreements", {cloud20.listDelegationAgreements(it, null)}]
+        [name, responseCall] << [
+                ["createDelegationAgreement", { cloud20.createDelegationAgreement(it, new DelegationAgreement()) }]
+                , ["getDelegationAgreement", { cloud20.getDelegationAgreement(it, "id") }]
+                , ["deleteDelegationAgreement", { cloud20.deleteDelegationAgreement(it, "id") }]
+                , ["addUserDelegate", { cloud20.addUserDelegate(it, "id", "id") }]
+                , ["addUserGroupDelegate", { cloud20.addUserGroupDelegate(it, "id", "id") }]
+                , ["deleteUserDelegate", { cloud20.addUserDelegate(it, "id", "id") }]
+                , ["deleteUserGroupDelegate", { cloud20.addUserGroupDelegate(it, "id", "id") }]
+                , ["listDelegationAgreements", { cloud20.listDelegationAgreements(it, null) }]
         ]
     }
 
@@ -144,15 +185,15 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         response.status == SC_FORBIDDEN
 
         where:
-        [name, responseCall]  << [
-                ["createDelegationAgreement", {cloud20.createDelegationAgreement(it, new DelegationAgreement())}]
-                , ["getDelegationAgreement", {cloud20.getDelegationAgreement(it, "id")}]
-                , ["deleteDelegationAgreement", {cloud20.deleteDelegationAgreement(it, "id")}]
-                , ["addUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["addUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
-                , ["deleteUserDelegate", {cloud20.addUserDelegate(it, "id", "id")}]
-                , ["deleteUserGroupDelegate", {cloud20.addUserGroupDelegate(it, "id", "id")}]
-                , ["listDelegationAgreements", {cloud20.listDelegationAgreements(it, null)}]
+        [name, responseCall] << [
+                ["createDelegationAgreement", { cloud20.createDelegationAgreement(it, new DelegationAgreement()) }]
+                , ["getDelegationAgreement", { cloud20.getDelegationAgreement(it, "id") }]
+                , ["deleteDelegationAgreement", { cloud20.deleteDelegationAgreement(it, "id") }]
+                , ["addUserDelegate", { cloud20.addUserDelegate(it, "id", "id") }]
+                , ["addUserGroupDelegate", { cloud20.addUserGroupDelegate(it, "id", "id") }]
+                , ["deleteUserDelegate", { cloud20.addUserDelegate(it, "id", "id") }]
+                , ["deleteUserGroupDelegate", { cloud20.addUserGroupDelegate(it, "id", "id") }]
+                , ["listDelegationAgreements", { cloud20.listDelegationAgreements(it, null) }]
         ]
     }
 

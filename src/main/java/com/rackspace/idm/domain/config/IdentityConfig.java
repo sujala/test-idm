@@ -394,6 +394,10 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP = "feature.enable.delegation.agreement.services";
     public static final boolean FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_DEFAULT = true;
 
+    public static final String FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP = "feature.enable.global.root.da.creation";
+    public static final boolean FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_DEFAULT = false;
+
+
     public static final String FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP = "enable.delegation.agreements.for.all.rcns";
     public static final boolean FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_DEFAULT = false;
 
@@ -779,6 +783,7 @@ public class IdentityConfig {
         defaults.put(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT);
         defaults.put(ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP, ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT);
         defaults.put(FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_DEFAULT);
+        defaults.put(FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_DEFAULT);
         defaults.put(DELEGATION_MAX_NEST_LEVEL_PROP, DELEGATION_MAX_NEST_LEVEL_DEFAULT);
         defaults.put(FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP, FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_DEFAULT);
 
@@ -1827,6 +1832,10 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, versionAdded = "3.23.0", description = "Whether or not to allow all users to create root delegation agreements. If false, then only user admin or above can create root DA")
+        public boolean isGlobalRootDelegationAgreementCreationEnabled () {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP);
+        }
 
         public boolean areDelegationAgreementsEnabledForRcn(String rcn) {
             return reloadableConfig.areDelegationAgreementsEnabledForAllRcns()

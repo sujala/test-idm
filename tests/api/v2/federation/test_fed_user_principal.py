@@ -79,6 +79,9 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             const.CONTENT_TYPE] = 'application/xml'
         self.add_idp_with_metadata_return_id(
             cert_path=cert_path, api_client=self.user_admin_client)
+        self.user_admin_client.serialize_format = 'json'
+        self.user_admin_client.default_headers[
+            const.CONTENT_TYPE] = 'application/json'
 
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
@@ -94,12 +97,14 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             new_url=new_url)
         self.assertEqual(resp.status_code, 200)
         fed_user_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+        fed_user_id = resp.json()[const.ACCESS][const.USER][const.ID]
         fed_client = self.generate_client(token=fed_user_token)
-
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
-        da_req = requests.DelegationAgreements(da_name=da_name)
-
+        da_req = requests.\
+            DelegationAgreements(da_name=da_name,
+                                 principal_type=const.USER.upper(),
+                                 principal_id=fed_user_id)
         self.validate_da_crd(client=fed_client, da_req=da_req)
 
     @attr(type='regression')
@@ -117,8 +122,15 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
 
+        self.user_admin_client.serialize_format = 'xml'
+        self.user_admin_client.default_headers[
+            const.CONTENT_TYPE] = 'application/xml'
         idp_id = self.add_idp_with_metadata_return_id(
             cert_path=cert_path, api_client=self.user_admin_client)
+        self.user_admin_client.serialize_format = 'json'
+        self.user_admin_client.default_headers[
+            const.CONTENT_TYPE] = 'application/json'
+
         self.update_mapping_policy(
             idp_id=idp_id,
             client=self.user_admin_client,
@@ -147,14 +159,22 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         da_req = requests.DelegationAgreements(
             da_name=da_name,
             principal_id=group_one.id,
-            principal_type=const.USER_GROUP)
+            principal_type=const.USER_GROUP.upper())
         self.validate_da_crd(client=fed_client, da_req=da_req)
 
     def validate_da_crd(self, client, da_req):
 
         # fed user creating the DA
-        da_resp = client.create_delegation_agreement(request_object=da_req)
+        self.user_admin_client.serialize_format = 'json'
+        self.user_admin_client.default_headers[
+            const.CONTENT_TYPE] = 'application/json'
+        da_resp = self.user_admin_client.\
+            create_delegation_agreement(request_object=da_req)
         self.assertEqual(da_resp.status_code, 201)
+
+        self.user_admin_client.serialize_format = 'xml'
+        self.user_admin_client.default_headers[
+            const.CONTENT_TYPE] = 'application/xml'
 
         da = Munch.fromDict(da_resp.json())
         da_id = da[const.RAX_AUTH_DELEGATION_AGREEMENT].id

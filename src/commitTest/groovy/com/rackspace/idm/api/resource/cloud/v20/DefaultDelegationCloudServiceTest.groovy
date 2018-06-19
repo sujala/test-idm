@@ -58,6 +58,9 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
      */
     @Unroll
     def "'#name' calls standard services to validate the provided token, the user, the user's authorization level and uses standard exception handling."() {
+        given:
+        reloadableConfig.isGlobalRootDelegationAgreementCreationEnabled() >> true
+
         User caller = new User().with {
             it.id = RandomStringUtils.randomAlphabetic(10)
             it
@@ -82,17 +85,17 @@ class DefaultDelegationCloudServiceTest extends RootServiceTest {
 
         where:
         [name, methodClosure, expectedFailureExceptionClass, expectedErrorCode] << [
-                ["addAgreement", {token -> service.addAgreement(Mock(UriInfo), token, new DelegationAgreement())}, NotFoundException,"GEN-004"]
-                , ["getAgreement", {token -> service.getAgreement(token, "id")}, NotFoundException, "GEN-004"]
-                , ["deleteAgreement", {token -> service.deleteAgreement(token, "id")}, NotFoundException, "GEN-004"]
-                , ["addDelegate", {token -> service.addDelegate(token, "id", new EndUserDelegateReference("user"))}, NotFoundException, "GEN-004"]
-                , ["deleteDelegate", {token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user"))}, NotFoundException, "GEN-004"]
-                , ["grantRolesToAgreement", {token -> service.grantRolesToAgreement(token, "id", new RoleAssignments())}, NotFoundException, "GEN-004"]
-                , ["revokeRoleFromAgreement", {token -> service.revokeRoleFromAgreement(token, "id", "roleId")}, NotFoundException, "GEN-004"]
-                , ["listRoleAssignmentsOnAgreement", {token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams()))}, NotFoundException, "GEN-004"]
-                , ["listDelegationAgreements", {token -> service.listAgreements(token, "invalidRelationship")}, BadRequestException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE]
-                , ["listDelegates", {token -> service.listDelegates(token, "id")}, NotFoundException, "GEN-004"]
-                , ["updateAgreement", {token -> service.updateAgreement(token, new DelegationAgreement())}, NotFoundException, "GEN-004"]
+                ["addAgreement", { token -> service.addAgreement(Mock(UriInfo), token, new DelegationAgreement()) }, NotFoundException, "GEN-004"]
+                , ["getAgreement", { token -> service.getAgreement(token, "id") }, NotFoundException, "GEN-004"]
+                , ["deleteAgreement", { token -> service.deleteAgreement(token, "id") }, NotFoundException, "GEN-004"]
+                , ["addDelegate", { token -> service.addDelegate(token, "id", new EndUserDelegateReference("user")) }, NotFoundException, "GEN-004"]
+                , ["deleteDelegate", { token -> service.deleteDelegate(token, "id", new EndUserDelegateReference("user")) }, NotFoundException, "GEN-004"]
+                , ["grantRolesToAgreement", { token -> service.grantRolesToAgreement(token, "id", new RoleAssignments()) }, NotFoundException, "GEN-004"]
+                , ["revokeRoleFromAgreement", { token -> service.revokeRoleFromAgreement(token, "id", "roleId") }, NotFoundException, "GEN-004"]
+                , ["listRoleAssignmentsOnAgreement", { token -> service.listRoleAssignmentsOnAgreement(Mock(UriInfo), token, "id", new DelegationAgreementRoleSearchParams(new PaginationParams())) }, NotFoundException, "GEN-004"]
+                , ["listDelegationAgreements", { token -> service.listAgreements(token, "invalidRelationship") }, BadRequestException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE]
+                , ["listDelegates", { token -> service.listDelegates(token, "id") }, NotFoundException, "GEN-004"]
+                , ["updateAgreement", { token -> service.updateAgreement(token, new DelegationAgreement()) }, NotFoundException, "GEN-004"]
         ]
     }
 

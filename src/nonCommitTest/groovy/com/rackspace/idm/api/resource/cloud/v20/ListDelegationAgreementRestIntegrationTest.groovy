@@ -16,6 +16,7 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
     def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, true)
     }
 
     @Unroll
@@ -350,7 +351,7 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         entity.delegationAgreement.size() == 3 // All DAs userAdminD2 can list
         entity.delegationAgreement.find {it.id == daToD1Parent.id && it.principalDomainId == userAdminD1.domainId} != null
         entity.delegationAgreement.find {it.id == daToD1Nested2.id && it.principalDomainId == userAdminD2.domainId} != null
-        entity.delegationAgreement.find {it.id == daSubUser.id && it.principalDomainId == subUserD2.domainId} != null
+        entity.delegationAgreement.find { it.id == daSubUser.id && it.principalDomainId == subUserD2.domainId } != null
 
         when: "List DAs using userManageD2's token"
         response = cloud20.listDelegationAgreements(userManageD2Token, null, mediaType)
@@ -361,7 +362,7 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
 
         entity != null
         entity.delegationAgreement.size() == 1 // All DAs under userManageD2's domain except for those which principal is a user-admin.
-        entity.delegationAgreement.find {it.id == daSubUser.id && it.principalDomainId == subUserD2.domainId} != null
+        entity.delegationAgreement.find { it.id == daSubUser.id && it.principalDomainId == subUserD2.domainId } != null
 
         cleanup:
         reloadableConfiguration.reset()

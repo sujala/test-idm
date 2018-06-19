@@ -30,6 +30,7 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
 
     def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, true)
 
         rcn = "RCN-${RandomStringUtils.randomAlphanumeric(3)}-${RandomStringUtils.randomAlphanumeric(3)}-${RandomStringUtils.randomAlphanumeric(3)}"
         rcnAdmin = utils.createCloudAccount()
