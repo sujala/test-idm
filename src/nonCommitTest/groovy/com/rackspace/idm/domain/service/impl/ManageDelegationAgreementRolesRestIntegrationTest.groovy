@@ -2027,8 +2027,8 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, subAgreement, assignments)
 
         then: "assert forbidden"
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN,
-                ERROR_CODE_DATA_INTEGRITY, "Parent agreement for nested agreement was not found.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND,
+                ERROR_CODE_NOT_FOUND, "The specified agreement does not exist for this user")
 
         cleanup:
         cloud20.deleteDelegationAgreement(userAdminToken, subAgreement.id)

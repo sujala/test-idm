@@ -422,4 +422,88 @@ class DelegationReconciliationIntegrationTest extends RootIntegrationTest {
         delegates.delegateReference.find { it -> it.delegateId == userGroup.id } == null
     }
 
+    def "when a parent DA is deleted the child DAs are also deleted"() {
+        given:
+        // Setting the max number of DAs higher in order to test deleting several nested DAs
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, 16)
+        def userAdmin = utils.createCloudAccountWithRcn()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def parentDA = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId, 3)
+        utils.addUserDelegate(userAdminToken, parentDA.id, userAdmin.id)
+        def numDirectChildren = 5
+        def childDAs = []
+        numDirectChildren.times {
+            def curParentDA = parentDA
+            (2..0).each { nestLevel ->
+                curParentDA = utils.createChildDelegationAgreement(userAdminToken, curParentDA, nestLevel)
+                utils.addUserDelegate(userAdminToken, curParentDA.id, userAdmin.id)
+                childDAs << curParentDA
+            }
+        }
+        assert childDAs.size() == 15
+
+        when: "delete the parent DA"
+        def deleteResponse = cloud20.deleteDelegationAgreement(userAdminToken, parentDA.id)
+
+        then: "success"
+        deleteResponse.status == 204
+
+        when: "try to get each of the child DAs"
+        def getChildDAResponses = []
+        childDAs.each { childDA ->
+            getChildDAResponses << cloud20.getDelegationAgreement(userAdminToken, childDA.id)
+        }
+
+        then: "all children were deleted"
+        childDAs.size() == getChildDAResponses.size()
+        getChildDAResponses.each { getChildResponse ->
+            assert getChildResponse.status == 404
+        }
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
+    def "when a child DA is deleted the child DAs are also deleted but no other DAs within the parent DA graph are deleted"() {
+        given:
+        def userAdmin = utils.createCloudAccountWithRcn()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def parentDA = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId, 3)
+        utils.addUserDelegate(userAdminToken, parentDA.id, userAdmin.id)
+        def childDAWithoutChildren = utils.createChildDelegationAgreement(userAdminToken, parentDA)
+        def childDAWithChildren = utils.createChildDelegationAgreement(userAdminToken, parentDA, 2)
+        utils.addUserDelegate(userAdminToken, childDAWithChildren.id, userAdmin.id)
+        def grandchildDA = utils.createChildDelegationAgreement(userAdminToken, childDAWithChildren)
+
+        when: "delete the child DA with children"
+        def deleteResponse = cloud20.deleteDelegationAgreement(userAdminToken, childDAWithChildren.id)
+
+        then: "success"
+        deleteResponse.status == 204
+
+        when: "get the parent DA"
+        def getParentDA = cloud20.getDelegationAgreement(userAdminToken, parentDA.id)
+
+        then: "the DA was deleted"
+        getParentDA.status == 200
+
+        when: "try to get the child DA with children"
+        def getChildDAWithChildrenResponse = cloud20.getDelegationAgreement(userAdminToken, childDAWithChildren.id)
+
+        then: "the DA was deleted"
+        getChildDAWithChildrenResponse.status == 404
+
+        when: "try to get the grandchild DA"
+        def getGrandchildDAWithChildrenResponse = cloud20.getDelegationAgreement(userAdminToken, grandchildDA.id)
+
+        then: "the DA was deleted"
+        getGrandchildDAWithChildrenResponse.status == 404
+
+        when: "get the child DA without children"
+        def getChildDAWithoutChildrenResponse = cloud20.getDelegationAgreement(userAdminToken, childDAWithoutChildren.id)
+
+        then: "the DA was deleted"
+        getChildDAWithoutChildrenResponse .status == 200
+    }
+
 }

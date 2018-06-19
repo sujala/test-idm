@@ -139,7 +139,18 @@ public class DefaultDelegationService implements DelegationService {
 
     @Override
     public void deleteDelegationAgreement(DelegationAgreement delegationAgreement) {
+        Iterable<DelegationAgreement> childDas = getChildDelegationAgreements(delegationAgreement.getId());
+        if (childDas != null && childDas.iterator().hasNext()) {
+            for (DelegationAgreement childDa : childDas) {
+                deleteDelegationAgreement(childDa);
+            }
+        }
         delegationAgreementDao.deleteAgreement(delegationAgreement);
+    }
+
+    @Override
+    public Iterable<DelegationAgreement> getChildDelegationAgreements(String parentDelegationAgreementId) {
+        return delegationAgreementDao.getChildDelegationAgreements(parentDelegationAgreementId);
     }
 
     @Override

@@ -312,4 +312,79 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         then:
         thrown(IllegalArgumentException)
     }
+
+    def "deleteAgreement deletes the most deeply nested child DAs first"() {
+        given:
+        def da = entityFactory.createDelegationAgreement().with { it.name = "Parent DA"; it}
+        def daChild1 = entityFactory.createDelegationAgreement().with { it.name = "Child 1 DA"; it}
+        def daChild1child = entityFactory.createDelegationAgreement().with { it.name = "Child of Child 1 DA"; it}
+        def daChild2 = entityFactory.createDelegationAgreement().with { it.name = "Child 2 DA"; it}
+        delegationAgreementDao.getChildDelegationAgreements(da.id) >> [daChild1, daChild2]
+        delegationAgreementDao.getChildDelegationAgreements(daChild1.id) >> [daChild1child]
+
+        when:
+        service.deleteDelegationAgreement(da)
+
+        then:
+        1 * delegationAgreementDao.deleteAgreement(daChild1child)
+
+        then:
+        1 * delegationAgreementDao.deleteAgreement(daChild1)
+
+        then:
+        1 * delegationAgreementDao.deleteAgreement(daChild2)
+
+        then:
+        1 * delegationAgreementDao.deleteAgreement(da)
+    }
+
+    def "deleteAgreement deletes only the DA and the DA's children"() {
+        given:
+        def da = entityFactory.createDelegationAgreement().with { it.name = "Parent DA"; it}
+        def daChild1 = entityFactory.createDelegationAgreement().with { it.name = "Child 1 DA"; it}
+        def daChild1child = entityFactory.createDelegationAgreement().with { it.name = "Child of Child 1 DA"; it}
+        def daChild2 = entityFactory.createDelegationAgreement().with { it.name = "Child 2 DA"; it}
+        delegationAgreementDao.getChildDelegationAgreements(da.id) >> [daChild1, daChild2]
+        delegationAgreementDao.getChildDelegationAgreements(daChild1.id) >> [daChild1child]
+
+        when:
+        service.deleteDelegationAgreement(daChild1)
+
+        then:
+        1 * delegationAgreementDao.deleteAgreement(daChild1child)
+
+        then:
+        1 * delegationAgreementDao.deleteAgreement(daChild1)
+
+        then:
+        0 * delegationAgreementDao.deleteAgreement(daChild2)
+        0 * delegationAgreementDao.deleteAgreement(da)
+    }
+
+    def "deleteAgreement does not delete the parent when the deletion of a child fails"() {
+        given:
+        def da = entityFactory.createDelegationAgreement().with { it.name = "Parent DA"; it}
+        def daChild1 = entityFactory.createDelegationAgreement().with { it.name = "Child 1 DA"; it}
+        def daChild1child = entityFactory.createDelegationAgreement().with { it.name = "Child of Child 1 DA"; it}
+        def daChild2 = entityFactory.createDelegationAgreement().with { it.name = "Child 2 DA"; it}
+        delegationAgreementDao.getChildDelegationAgreements(da.id) >> [daChild1, daChild2]
+        delegationAgreementDao.getChildDelegationAgreements(daChild1.id) >> [daChild1child]
+
+        when:
+        service.deleteDelegationAgreement(da)
+
+        then:
+        1 * delegationAgreementDao.deleteAgreement(daChild1child)
+
+        then:
+        1 * delegationAgreementDao.deleteAgreement(daChild1) >> {
+            throw new RuntimeException()
+        }
+        thrown RuntimeException
+
+        then:
+        0 * delegationAgreementDao.deleteAgreement(daChild2)
+        0 * delegationAgreementDao.deleteAgreement(da)
+    }
+
 }

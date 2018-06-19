@@ -1306,10 +1306,24 @@ class Cloud20Utils {
         response.getEntity(DelegationAgreement)
     }
 
-    DelegationAgreement createDelegationAgreementInDomain(String token, String domainId) {
+    DelegationAgreement createDelegationAgreementInDomain(String token, String domainId, int nestLevel = 0) {
         def da = new DelegationAgreement().with {
             it.name = "Test DA name"
             it.domainId = domainId
+            it.subAgreementNestLevel = BigInteger.valueOf(nestLevel)
+            it
+        }
+        def response = methods.createDelegationAgreement(token, da)
+        assert (response.status == SC_CREATED)
+        response.getEntity(DelegationAgreement)
+    }
+
+    DelegationAgreement createChildDelegationAgreement(String token, DelegationAgreement parentDelegationAgreement, int nestLevel = 0) {
+        def da = new DelegationAgreement().with {
+            it.name = "Child DA name"
+            it.domainId = parentDelegationAgreement.domainId
+            it.parentDelegationAgreementId = parentDelegationAgreement.id
+            it.subAgreementNestLevel = nestLevel
             it
         }
         def response = methods.createDelegationAgreement(token, da)

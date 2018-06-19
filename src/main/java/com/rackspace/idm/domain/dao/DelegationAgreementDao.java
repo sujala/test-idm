@@ -64,4 +64,15 @@ public interface DelegationAgreementDao {
      * @param delegationPrincipal
      */
     int countNumberOfDelegationAgreementsByPrincipal(DelegationPrincipal delegationPrincipal);
+
+    /**
+     * Retrieves the direct child DelegationAgreements for the given DelegationAgreement.
+     * Note: This does not return all the child DelegationAgreements. This only loads the child delegation agreements
+     * one level deep.
+     *
+     * @param parentDelegationAgreementId
+     * @return
+     */
+    Iterable<DelegationAgreement> getChildDelegationAgreements(String parentDelegationAgreementId);
+
 }

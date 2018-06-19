@@ -222,6 +222,11 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
         return countObjects(searchDelegationAgreementsByPrincipal(delegationPrincipal));
     }
 
+    @Override
+    public Iterable<DelegationAgreement> getChildDelegationAgreements(String parentDelegationAgreementId) {
+        return getObjects(searchDelegationAgreementsByParent(parentDelegationAgreementId));
+    }
+
     Filter searchByIdFilter(String id) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)
@@ -231,6 +236,12 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
     private Filter searchDelegationAgreementsByPrincipal(DelegationPrincipal delegationPrincipal) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_RS_PRINCIPAL_DN, delegationPrincipal.getDn().toString())
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DELEGATION_AGREEMENT).build();
+    }
+
+    private Filter searchDelegationAgreementsByParent(String parentDelegationAgreementId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_RS_DELEGATION_AGREEMENT_ID, parentDelegationAgreementId)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DELEGATION_AGREEMENT).build();
     }
 
