@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.SAMLConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.IdentityConfigHolder
@@ -16,6 +17,7 @@ import com.rackspace.idm.domain.service.federation.v2.FederatedDomainAuthRequest
 import com.rackspace.idm.domain.service.federation.v2.FederatedDomainRequestHandler
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
+import com.rackspace.idm.validation.PrecedenceValidator
 import org.apache.commons.lang3.RandomStringUtils
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.joda.time.DateTime
@@ -65,6 +67,8 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         mockScopeAccessService(service)
         mockAuthenticationContext(service)
         mockUserGroupService(service)
+        mockAtomHopperClient(service)
+        mockRoleService(service)
     }
 
     void cleanupSpec() {
@@ -178,6 +182,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         }
         FederatedUser federatedUser = new FederatedUser().with {
             it.username = authGenerationRequest.username
+            it.email = authGenerationRequest.email
             it.domainId = domainId
             it.expiredTimestamp = new DateTime().plusYears(1).toDate()
             it.userGroupDNs = [userGroupToRemove.getGroupDn()]
@@ -196,6 +201,146 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
             assert fedUserToUpdate.getUserGroupDNs().contains(userGroup.getGroupDn())
             assert !fedUserToUpdate.getUserGroupDNs().contains(userGroupToRemove.getGroupDn())
         }
+
+        and: "Feed event is not sent when only change is a group modification"
+        0 * atomHopperClient.asyncPost(_, _)
+    }
+
+    def "If existing fed user email is changed, feed event is sent"() {
+        given:
+        IdentityProvider idp = new IdentityProvider().with {
+            it.providerId = "providerId"
+            it.approvedDomainGroup = "GLOBAL"
+            it
+        }
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def existingUser = new FederatedUser().with {
+            it.id = "fedId"
+            it.username = "username"
+            it.domainId = domainId
+            it.email = "initialEmail"
+            it
+        }
+        domainService.getDomain(domainId) >> new Domain().with {
+            it.enabled = true
+            it
+        }
+        def userAdmin = new User().with {
+            it.enabled = true
+            it
+        }
+        domainService.getDomainAdmins(domainId) >> [userAdmin]
+        authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
+        tenantService.getTenantRolesForUser(userAdmin) >> []
+        scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
+        federatedUserDao.getUserByUsernameForIdentityProviderId(existingUser.username, idp.providerId) >> existingUser
+
+        when: "Change user's email"
+        FederatedDomainAuthGenerationRequest authGenerationRequest = createValidDomainAuthGenerationRequest().with {
+            it.username = existingUser.username
+            it.domainId = domainId
+            it
+        }
+        def samlResponse = sharedDomainRequestGenerator.createSignedSAMLResponse(authGenerationRequest)
+        FederatedDomainAuthRequest authRequest = new FederatedDomainAuthRequest(samlResponse)
+        service.processAuthRequestForProvider(authRequest, idp, false)
+
+        then: "Update feed event will be sent"
+        1 * atomHopperClient.asyncPost(existingUser, AtomHopperConstants.UPDATE)
+    }
+
+    def "When existing fed user roles are changed, feed event is sent"() {
+        given:
+        IdentityProvider idp = new IdentityProvider().with {
+            it.providerId = "providerId"
+            it.approvedDomainGroup = "GLOBAL"
+            it
+        }
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def existingUser = new FederatedUser().with {
+            it.id = "fedId"
+            it.username = "username"
+            it.domainId = domainId
+            it.email = "initialEmail"
+            it
+        }
+        domainService.getDomain(domainId) >> new Domain().with {
+            it.enabled = true
+            it
+        }
+        def userAdmin = new User().with {
+            it.enabled = true
+            it
+        }
+        domainService.getDomainAdmins(domainId) >> [userAdmin]
+        authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
+        tenantService.getTenantRolesForUser(userAdmin) >> []
+        scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
+        federatedUserDao.getUserByUsernameForIdentityProviderId(existingUser.username, idp.providerId) >> existingUser
+
+        when: "Change user's roles"
+        FederatedDomainAuthGenerationRequest authGenerationRequest = createValidDomainAuthGenerationRequest().with {
+            it.username = existingUser.username
+            it.domainId = existingUser.domainId
+            it.email = existingUser.email
+            it.roleNames  = ["newRole"]
+            it
+        }
+        roleService.getRoleByName("newRole") >> entityFactory.createClientRole(authGenerationRequest.roleNames[0], PrecedenceValidator.RBAC_ROLES_WEIGHT)
+        def samlResponse = sharedDomainRequestGenerator.createSignedSAMLResponse(authGenerationRequest)
+        FederatedDomainAuthRequest authRequest = new FederatedDomainAuthRequest(samlResponse)
+        service.processAuthRequestForProvider(authRequest, idp, false)
+
+        then: "Update feed event will be sent"
+        1 * tenantService.addTenantRoleToUser(existingUser, _) // Adding a new role
+        1 * atomHopperClient.asyncPost(existingUser, AtomHopperConstants.UPDATE) // Reporting on it
+    }
+
+    def "When updated existing fed user email and roles, only one feed event is sent"() {
+        given:
+        IdentityProvider idp = new IdentityProvider().with {
+            it.providerId = "providerId"
+            it.approvedDomainGroup = "GLOBAL"
+            it
+        }
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def existingUser = new FederatedUser().with {
+            it.id = "fedId"
+            it.username = "username"
+            it.domainId = domainId
+            it.email = "initialEmail"
+            it
+        }
+        domainService.getDomain(domainId) >> new Domain().with {
+            it.enabled = true
+            it
+        }
+        def userAdmin = new User().with {
+            it.enabled = true
+            it
+        }
+        domainService.getDomainAdmins(domainId) >> [userAdmin]
+        authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
+        tenantService.getTenantRolesForUser(userAdmin) >> []
+        scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
+        federatedUserDao.getUserByUsernameForIdentityProviderId(existingUser.username, idp.providerId) >> existingUser
+
+        when: "Change user's roles"
+        FederatedDomainAuthGenerationRequest authGenerationRequest = createValidDomainAuthGenerationRequest().with {
+            it.username = existingUser.username
+            it.domainId = existingUser.domainId
+            it.email = "newEmail"
+            it.roleNames  = ["newRole"]
+            it
+        }
+        roleService.getRoleByName("newRole") >> entityFactory.createClientRole(authGenerationRequest.roleNames[0], PrecedenceValidator.RBAC_ROLES_WEIGHT)
+        def samlResponse = sharedDomainRequestGenerator.createSignedSAMLResponse(authGenerationRequest)
+        FederatedDomainAuthRequest authRequest = new FederatedDomainAuthRequest(samlResponse)
+        service.processAuthRequestForProvider(authRequest, idp, false)
+
+        then: "Update feed event will be sent"
+        1 * tenantService.addTenantRoleToUser(existingUser, _) // Adding a new role
+        1 * atomHopperClient.asyncPost(existingUser, AtomHopperConstants.UPDATE) // Reporting on it
     }
 
     def createValidDomainAuthGenerationRequest(username = UUID.randomUUID()) {

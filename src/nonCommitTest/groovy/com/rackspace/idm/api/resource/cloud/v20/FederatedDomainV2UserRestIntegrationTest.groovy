@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
@@ -13,6 +14,7 @@ import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
 import com.rackspace.idm.domain.service.DomainService
+import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
@@ -27,6 +29,7 @@ import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.joda.time.DateTime
+import org.mockserver.verify.VerificationTimes
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
@@ -47,6 +50,7 @@ import javax.xml.datatype.DatatypeFactory
 
 import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.SC_CREATED
+import static org.apache.http.HttpStatus.SC_OK
 
 class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
@@ -62,6 +66,9 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     RoleService roleService
+
+    @Autowired
+    IdentityUserService identityUserService
 
     @Autowired
     UserService userService
@@ -410,6 +417,41 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         accept                          | _
         MediaType.APPLICATION_XML_TYPE  | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def "When fed user's roles change, feed event is sent"() {
+        given:
+        def fedRequest = createFedRequest().with {
+            it.roleNames = [ROLE_RBAC1_NAME] as Set
+            it
+        }
+
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def authClientResponse = cloud20.authenticateV2FederatedUser(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+        assert authClientResponse.status == SC_OK
+
+        when:
+        resetCloudFeedsMock()
+        fedRequest.roleNames = [ROLE_RBAC2_NAME] // Update roles
+        samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def updateResponse = cloud20.authenticateV2FederatedUser(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+
+        then: "Response contains appropriate content"
+        updateResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse response = updateResponse.getEntity(AuthenticateResponse).value
+        EndUser feedUser = identityUserService.getEndUserById(response.user.id)
+
+        and: "verify that only 1 event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "verify that the UPDATE event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateFedUserFeedsRequest(feedUser, EventType.UPDATE.name()),
+                VerificationTimes.exactly(1)
+        )
     }
 
     def void verifyAuthenticateResult(FederatedDomainAuthGenerationRequest originalRequest, AuthenticateResponse authResponse, AuthenticatedByMethodGroup authByGroup, User userAdminEntity) {

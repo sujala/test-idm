@@ -3,6 +3,9 @@ package com.rackspace.idm.domain.service.federation.v2;
 import com.google.common.collect.Sets;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConnectionKeepAliveStrategy;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -82,6 +85,9 @@ public class FederatedDomainRequestHandler {
 
     @Autowired
     private UserGroupService userGroupService;
+
+    @Autowired
+    private AtomHopperClient atomHopperClient;
 
     public SamlAuthResponse processAuthRequestForProvider(FederatedDomainAuthRequest authRequest, IdentityProvider originIdentityProvider, boolean applyRcnRoles) {
         // Just a few sanity checks
@@ -334,10 +340,13 @@ public class FederatedDomainRequestHandler {
          */
         boolean updateUser = false;
 
+        boolean sendFeedEventForUserUpdate = false;
+
         // Update email if necessary
         if (!authRequest.getEmail().equalsIgnoreCase(existingUser.getEmail())) {
             existingUser.setEmail(authRequest.getEmail());
             updateUser = true;
+            sendFeedEventForUserUpdate = true;
         }
 
         // Update user expiration if necessary
@@ -364,7 +373,15 @@ public class FederatedDomainRequestHandler {
         }
 
         // Update roles as necessary
-        reconcileRequestedRbacRolesFromRequest(existingUser, requestedRoles);
+        boolean userRolesChanged = reconcileRequestedRbacRolesFromRequest(existingUser, requestedRoles);
+
+        /*
+            Currently both user and role changes will be translated to same event by atomhopperclient so only send a
+            single event rather than ultimately sending the same event twice.
+         */
+        if (sendFeedEventForUserUpdate || userRolesChanged) {
+            atomHopperClient.asyncPost(existingUser, AtomHopperConstants.UPDATE);
+        }
 
         return existingUser;
     }
@@ -381,7 +398,7 @@ public class FederatedDomainRequestHandler {
      * @param existingFederatedUser
      * @param desiredRbacRolesOnUser
      */
-    private void reconcileRequestedRbacRolesFromRequest(FederatedUser existingFederatedUser, List<TenantRole> desiredRbacRolesOnUser) {
+    private boolean reconcileRequestedRbacRolesFromRequest(FederatedUser existingFederatedUser, List<TenantRole> desiredRbacRolesOnUser) {
         boolean userRoleAssignmentChanged = false;
 
         Map<String, TenantRole> desiredRbacRoleMap = new HashMap<String, TenantRole>();
@@ -396,7 +413,7 @@ public class FederatedDomainRequestHandler {
          */
         List<TenantRole> existingRbacRolesOnUser = tenantService.getRbacRolesForUser(existingFederatedUser);
         Map<String, TenantRole> existingRbacRoleMap = new HashMap<String, TenantRole>();
-        for (TenantRole tenantRole : existingRbacRolesOnUser) {
+        for (TenantRole tenantRole : CollectionUtils.emptyIfNull(existingRbacRolesOnUser)) {
             existingRbacRoleMap.put(tenantRole.getName(), tenantRole);
         }
 
@@ -422,6 +439,8 @@ public class FederatedDomainRequestHandler {
         }
 
         existingFederatedUser.setRoles(desiredRbacRolesOnUser);
+
+        return userRoleAssignmentChanged;
     }
 
     /**

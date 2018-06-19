@@ -108,6 +108,10 @@ class CloudTestUtils {
         return "//event[@id and @resourceName='${user?.username}' and @type='$eventType']/product[@displayName='${user?.username}' and @resourceType='USER' and @serviceCode='CloudIdentity']"
     }
 
+    String getFeedsXPathForFedUser(user, eventType) {
+        return "//event[@id and @resourceName='${user?.username}@${user?.federatedIdpUri}' and @type='$eventType']/product[@displayName='${user?.username}@${user?.federatedIdpUri}' and @resourceType='USER' and @serviceCode='CloudIdentity']"
+    }
+
     String getFeedsXPathForUserTRR(user, AuthenticatedByMethodGroup authenticatedByMethodGroup) {
         def authBy = StringUtils.join(authenticatedByMethodGroup.getAuthenticatedByMethodsAsValues(), " ")
         return "//event[@id and @resourceId='$user.id' and @type='DELETE']/product[@resourceType='TRR_USER' and @serviceCode='CloudIdentity']/tokenAuthenticatedBy[@values='$authBy']"
@@ -154,6 +158,10 @@ class CloudTestUtils {
 
     HttpRequest createUpdateUserFeedsRequest(user, eventType) {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUser(user, eventType)))
+    }
+
+    HttpRequest createUpdateFedUserFeedsRequest(user, eventType) {
+        return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForFedUser(user, eventType)))
     }
 
     HttpRequest createUserTrrFeedsRequest(user, AuthenticatedByMethodGroup authenticatedByMethodGroup = null) {
