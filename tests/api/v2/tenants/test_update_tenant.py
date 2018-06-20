@@ -133,7 +133,7 @@ class TestUpdateTenant(base.TestBaseV2):
                           resp.json()[const.TENANT][const.NS_TYPES],
                           msg="Not found {0}".format(tenant_type.lower()))
 
-    @unless_coverage    
+    @unless_coverage
     @ddt.file_data('data_invalid_tenant_types.json')
     @attr('skip_at_gate')
     def test_update_invalid_tenant_types(self, test_data):
@@ -162,6 +162,7 @@ class TestUpdateTenant(base.TestBaseV2):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                          error_message)
+
     @unless_coverage
     @ddt.file_data('data_update_tenant.json')
     def test_update_tenant(self, test_data):

@@ -48,6 +48,7 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
     3.2 Default docker config set to true
     """
 
+    @unless_coverage
     @classmethod
     def setUpClass(cls):
         super(TestListRoleWTypeTenantTypesNAssignment, cls).setUpClass()
@@ -229,7 +230,7 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
             token_id=token_id)
         self.verify_role_from_auth_and_token_validation_resp(validate_resp)
 
-
+    @unless_coverage
     @classmethod
     def tearDownClass(cls):
         # Delete all resources created in the tests
