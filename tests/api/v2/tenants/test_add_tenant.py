@@ -180,6 +180,7 @@ class TestAddTenant(base.TestBaseV2):
         self.assertEqual(resp.json()['badRequest']['message'],
                          "TenantType with name: '{0}' was not found.".format(
                              tenant_type_name))
+
     @unless_coverage
     def tearDown(self):
         # Delete all tenants created in the tests
