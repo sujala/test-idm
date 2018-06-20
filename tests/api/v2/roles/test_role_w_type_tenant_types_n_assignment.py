@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 import copy
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.schema import roles as roles_json
@@ -68,6 +69,7 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
         cls.domain_ids.append(domain_id)
         cls.tenant_id = domain_id
 
+    @unless_coverage
     def setUp(self):
         super(TestListRoleWTypeTenantTypesNAssignment, self).setUp()
         self.add_schema_fields = [const.RAX_AUTH_ROLE_TYPE,
@@ -98,6 +100,7 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
             self.assertNotIn(const.RAX_AUTH_ROLE_TYPE, role)
             self.assertNotIn(const.RAX_AUTH_ASSIGNMENT, role)
 
+    @tags('positive', 'p0', 'smoke')
     def test_list_roles(self):
         # list role
 
@@ -139,6 +142,7 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
                 self.assertNotIn(const.RAX_AUTH_ROLE_TYPE, role)
                 self.assertNotIn(const.RAX_AUTH_ASSIGNMENT, role)
 
+    @tags('positive', 'p0', 'smoke')
     def test_list_user_global_role(self):
         # list user global roles
         user_id = self.identity_admin_client.default_headers[const.X_USER_ID]
@@ -150,6 +154,7 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
             self.assertNotIn(const.NS_TYPES, role)
             self.assertNotIn(const.RAX_AUTH_ASSIGNMENT, role)
 
+    @unless_coverage
     @ddt.data(True, False)
     def test_list_global_roles_for_user_with_query_param(self, apply_rcn):
 
@@ -196,6 +201,7 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
         else:
             self.assertNotIn(rcn_role.id, list_of_roles)
 
+    @tags('positive', 'p0', 'smoke')
     def test_list_role_for_user_on_tenant(self):
         # list role for user on tenant
         roles_tenant_resp = (
@@ -208,6 +214,7 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
             self.assertNotIn(const.RAX_AUTH_ROLE_TYPE, role)
             self.assertNotIn(const.RAX_AUTH_ASSIGNMENT, role)
 
+    @tags('positive', 'p0', 'smoke')
     def test_auth_and_validation(self):
         # verify authenticate
         auth_obj = requests.AuthenticateWithPassword(user_name=self.user_name,
@@ -221,6 +228,7 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
         validate_resp = self.identity_admin_client.validate_token(
             token_id=token_id)
         self.verify_role_from_auth_and_token_validation_resp(validate_resp)
+
 
     @classmethod
     def tearDownClass(cls):

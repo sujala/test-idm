@@ -1,3 +1,6 @@
+from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags
+
 from tests.api.utils import func_helper
 from tests.api.v2 import base
 from tests.api.v2.models import factory, responses
@@ -10,7 +13,6 @@ class RolesOnHiddenTenantsTests(base.TestBaseV2):
     Tests to verify that when apply_rcn_roles=true, the de-normalized roles
     for default users are shown appropriately for hidden & non-hidden tenants
     """
-
     @classmethod
     def setUpClass(cls):
         """
@@ -82,6 +84,8 @@ class RolesOnHiddenTenantsTests(base.TestBaseV2):
         cls.tenant_access_role_id = tenant_access_role.json()[
             const.ROLES][0][const.ID]
 
+    @tags('positive', 'p1', 'regression')
+    @attr(type='smoke_alpha')
     def test_auth_resp_shows_role_on_hidden_tenant(self):
         sub_user_auth_req = requests.AuthenticateWithPassword(
             user_name=self.sub_username, password=self.sub_user_pwd)
@@ -111,6 +115,8 @@ class RolesOnHiddenTenantsTests(base.TestBaseV2):
         self.assertFalse(tenant_access_role_present, (
             'default user got the tenant access role'))
 
+    @tags('positive', 'p1', 'regression')
+    @attr(type='smoke_alpha')
     def test_list_roles_for_user_on_hidden_tenants(self):
 
         list_resp = self.identity_admin_client.list_roles_for_user_on_tenant(

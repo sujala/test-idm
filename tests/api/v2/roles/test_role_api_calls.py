@@ -2,6 +2,7 @@
 import ddt
 import json
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -27,9 +28,11 @@ class TestRoleApiCalls(base.TestBaseV2):
     8, list users for role
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestRoleApiCalls, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestRoleApiCalls, self).setUp()
         self.role_ids = []
@@ -71,6 +74,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.role_ids.append(role_id)
         return role_id
 
+    @unless_coverage
     @ddt.file_data('data_add_role.json')
     @attr(type='smoke_alpha')
     def test_add_role_by_identity_admin(self, test_data):
@@ -96,6 +100,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp, json_schema=roles_json.add_role)
 
+    @unless_coverage
     @ddt.file_data('data_add_role.json')
     @api_base.skip_if_no_service_admin_available
     @attr('skip_at_gate')
@@ -123,6 +128,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertEqual(resp.json()[const.ROLE][const.SERVICE_ID],
                          new_service_id)
 
+    @unless_coverage
     @ddt.data('{}', '{"limit": 5}', '{"marker": 10}',
               '{"limit": 10, "marker": 5}')
     @attr(type='smoke_alpha')
@@ -137,6 +143,7 @@ class TestRoleApiCalls(base.TestBaseV2):
             self.assertLessEqual(len(resp.json()[const.ROLES]),
                                  option['limit'])
 
+    @unless_coverage
     @ddt.data('{}', '{"limit": 5}', '{"marker": 10}',
               '{"limit": 10, "marker": 5}')
     @api_base.skip_if_no_service_admin_available
@@ -152,6 +159,7 @@ class TestRoleApiCalls(base.TestBaseV2):
             self.assertLessEqual(len(resp.json()[const.ROLES]),
                                  option['limit'])
 
+    @tags('positive', 'p1', 'smoke')
     @attr(type='smoke_alpha')
     def test_get_roles_for_identity_admin(self):
         """
@@ -163,6 +171,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp, json_schema=roles_json.list_roles)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_add_and_delete_role_from_user(self):
         """
@@ -199,6 +208,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         self.assertNotIn(role_id, str(resp.json()[const.ROLES]))
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_users_for_role(self):
         """
@@ -228,6 +238,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         for user in new_user_ids:
             self.assertIn(user, str(resp.json()[const.USERS]))
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_delete_identity_classification_role_from_user(self):
 
@@ -239,6 +250,7 @@ class TestRoleApiCalls(base.TestBaseV2):
             delete_role_resp.json()[const.FORBIDDEN][const.MESSAGE],
             "Cannot delete identity user-type roles from a user.")
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_delete_identity_classification_role(self):
 
@@ -250,6 +262,7 @@ class TestRoleApiCalls(base.TestBaseV2):
             "Identity user type roles cannot be deleted")
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         for id_ in self.user_ids:
             resp = self.identity_admin_client.delete_user(user_id=id_)
@@ -274,5 +287,9 @@ class TestRoleApiCalls(base.TestBaseV2):
                 resp.status_code, 204,
                 msg='Domain with ID {0} failed to delete'.format(
                     id_))
-
         super(TestRoleApiCalls, self).tearDown()
+
+    @unless_coverage
+    @classmethod
+    def tearDownClass(cls):
+        super(TestRoleApiCalls, cls).tearDownClass()

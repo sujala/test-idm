@@ -2,6 +2,7 @@
 import ddt
 import copy
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.schema import roles as roles_json
@@ -42,9 +43,11 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
     returned if not an RCN role)
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestRoleAddWTypeAndTenantTypes, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestRoleAddWTypeAndTenantTypes, self).setUp()
         self.role_ids = []
@@ -58,6 +61,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
         self.role_ids.append(role_id)
         return role_id, resp
 
+    @unless_coverage
     @ddt.file_data('data_add_role_with_type.json')
     @attr(type='smoke_alpha')
     def test_add_role_w_type(self, test_data):
@@ -97,6 +101,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
         self.assertEqual(get_role_resp.status_code, 200)
         self.assertSchema(response=get_role_resp, json_schema=cp_role_schema)
 
+    @unless_coverage
     @ddt.file_data('data_add_role_with_type_neg.json')
     @attr('skip_at_gate')
     def test_add_role_w_type_neg_cases(self, test_data):
@@ -109,6 +114,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
         self.assertEqual(role_resp.json()[const.BAD_REQUEST][const.MESSAGE],
                          test_data['expected_resp']['message'])
 
+    @unless_coverage
     @base.base.log_tearDown_error
     def tearDown(self):
         for id_ in self.role_ids:
@@ -116,3 +122,9 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
             self.assertEqual(
                 resp.status_code, 204,
                 msg='Role with ID {0} failed to delete'.format(id_))
+        super(TestRoleAddWTypeAndTenantTypes, self).tearDown()
+
+    @unless_coverage
+    @classmethod
+    def tearDownClass(cls):
+        super(TestRoleAddWTypeAndTenantTypes, cls).tearDownClass()

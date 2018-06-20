@@ -1,5 +1,6 @@
 from nose.plugins.attrib import attr
 import ddt
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.schema import roles as roles_json
@@ -13,6 +14,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
     """
     Verify RAX-AUTH:assignment behavior
     """
+    @unless_coverage
     @classmethod
     def setUpClass(cls):
         """Class level set up for the tests
@@ -26,6 +28,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             cls.service_admin_client.default_headers[const.X_AUTH_TOKEN] = (
                 cls.identity_config.service_admin_auth_token)
 
+    @unless_coverage
     def setUp(self):
         super(TestRoleAssignmentFeature, self).setUp()
         self.user_ids = []
@@ -78,6 +81,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
         self.tenant_ids.append(tenant_id)
         return user_id, tenant_id
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_fail_to_create_role_with_invalid_assingment_type(self):
         assignment = self.generate_random_string(
@@ -93,6 +97,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
                    request_object=request_object)
         self.assertEqual(resp.status_code, 400)
 
+    @tags('negative', 'p1', 'regression')
     def test_fail_adding_role_with_assignment_type_tenant_to_user(self):
         user_id, tenant_id = self.create_user()
         assign_tenant_type_role_id = self.create_role_with_assignment(
@@ -111,6 +116,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             msg=("role w/ TENANT assignment type attempted to be given to user"
                  "should not appear for listRoles on user"))
 
+    @tags('negative', 'p1', 'regression')
     def test_fail_adding_role_assignment_type_global_to_user_for_tenant(self):
         user_id, tenant_id = self.create_user()
         assign_global_type_role_id = self.create_role_with_assignment(
@@ -130,6 +136,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             msg=("role w/ GLOBAL assignment type attempted to be given to user"
                  "should not appear in listRoles on user"))
 
+    @tags('positive', 'p0', 'smoke')
     def test_add_role_with_assignment_type_global_to_user(self):
         user_id, tenant_id = self.create_user()
         assign_global_type_role_id = self.create_role_with_assignment(
@@ -148,6 +155,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             msg=("role w/ GLOBAL assignment type given to user should appear"
                  "for listRoles on user"))
 
+    @tags('positive', 'p0', 'smoke')
     def test_add_role_with_assignment_type_tenant_to_user_for_tenant(self):
         user_id, tenant_id = self.create_user()
         assign_tenant_type_role_id = self.create_role_with_assignment(
@@ -167,6 +175,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             msg=("role w/ TENANT assignment type, given to user for tenant,"
                  " should not be in listRoles on user"))
 
+    @tags('positive', 'p0', 'smoke')
     def test_add_role_with_assignment_type_both_to_user(self):
         user_id, tenant_id = self.create_user()
         assign_both_type_role_id = self.create_role_with_assignment(
@@ -184,6 +193,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             msg=("role w/ BOTH assignment type given to user should appear for"
                  " listRoles on user"))
 
+    @tags('positive', 'p0', 'smoke')
     def test_add_role_with_assignment_type_both_to_user_for_tenant(self):
         user_id, tenant_id = self.create_user()
         assign_both_type_role_id = self.create_role_with_assignment(
@@ -202,6 +212,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             msg=("role w/ BOTH assignment type, given to user for tenant,"
                  " should not be in listRoles on user"))
 
+    @tags('positive', 'p0', 'smoke')
     def test_add_role_with_assignment_type_default_to_user(self):
         user_id, tenant_id = self.create_user()
         assign_default_type_role_id = self.create_role_with_assignment(
@@ -219,6 +230,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             msg=("role w/ DEFAULT assignment type given to user should appear"
                  "for listRoles on user"))
 
+    @tags('positive', 'p0', 'smoke')
     def test_add_role_with_assignment_type_default_to_user_for_tenant(self):
         user_id, tenant_id = self.create_user()
         assign_default_type_role_id = self.create_role_with_assignment(
@@ -237,6 +249,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             msg=("role w/ DEFAULT assignment type, given to user for tenant,"
                  " should not be in listRoles on user"))
 
+    @unless_coverage
     def tearDown(self):
         for user_id in self.user_ids:
             self.identity_admin_client.delete_user(user_id=user_id)
@@ -246,6 +259,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             self.identity_admin_client.delete_tenant(tenant_id=tenant_id)
         super(TestRoleAssignmentFeature, self).tearDown()
 
+    @unless_coverage
     @classmethod
     def tearDownClass(cls):
         super(TestRoleAssignmentFeature, cls).tearDownClass()

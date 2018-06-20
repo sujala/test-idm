@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 
 from tests.api.v2 import base
@@ -12,7 +13,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
 
     """ List effective role for user
     """
-
+    @unless_coverage
     def setUp(self):
         """Create users needed for the tests and generate clients for
         those users.
@@ -44,6 +45,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         self.role_ids = []
         self.tenant_ids = []
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_effective_roles_for_default_user(self):
         # create and add role to user
@@ -293,6 +295,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
             }
         )
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_effective_roles_for_manage_user(self):
         # create and add role to user
@@ -489,6 +492,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
             }
         )
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_effective_roles_for_admin_user(self):
         # create and add role to user
@@ -831,6 +835,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         self.assertEqual(add_resp.status_code, 204)
         return group
 
+    @unless_coverage
     @base.base.log_tearDown_error
     def tearDown(self):
         # Delete sub users created in the setUpClass

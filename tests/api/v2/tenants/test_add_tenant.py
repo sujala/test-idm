@@ -2,6 +2,7 @@
 from nose.plugins.attrib import attr
 import copy
 import ddt
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.models import responses
@@ -19,6 +20,7 @@ class TestAddTenant(base.TestBaseV2):
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
         self.tenant_type_ids.append(name.lower())
 
+    @unless_coverage
     def setUp(self):
         super(TestAddTenant, self).setUp()
         self.tenant_ids = []
@@ -33,6 +35,7 @@ class TestAddTenant(base.TestBaseV2):
         self.create_tenant_type(self.tenant_type_2)
         self.create_tenant_type(self.tenant_type_3)
 
+    @tags('positive', 'p1', 'regression')
     def test_create_tenant_with_types(self):
         tenant_description = 'A tenant described'
         tenant_display_name = 'A name displayed'
@@ -63,6 +66,7 @@ class TestAddTenant(base.TestBaseV2):
                           resp.json()[const.TENANT][const.NS_TYPES],
                           msg="Not found {0}".format(tenant_type))
 
+    @tags('positive', 'p1', 'regression')
     def test_create_tenant_infers_tenant_type(self):
         tenant_description = 'A tenant described'
         add_tenant_with_types_schema = copy.deepcopy(tenants.add_tenant)
@@ -86,6 +90,7 @@ class TestAddTenant(base.TestBaseV2):
                       resp.json()[const.TENANT][const.NS_TYPES],
                       msg="Not found {0}".format(self.tenant_type_1))
 
+    @unless_coverage
     @ddt.file_data('data_invalid_tenant_types.json')
     def test_create_tenant_with_invalid_tenant_types(self, test_data):
         tenant_types = test_data.get('tenant_types')
@@ -104,6 +109,7 @@ class TestAddTenant(base.TestBaseV2):
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                          error_message)
 
+    @unless_coverage
     @ddt.file_data('data_add_tenant.json')
     def test_add_tenant(self, test_data):
         '''Tests for add tenant API
@@ -155,6 +161,7 @@ class TestAddTenant(base.TestBaseV2):
             self.assertEqual(tenant.description, tenant_object.description)
         self.assertHeaders(response=resp)
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_add_tenant_with_non_existing_tenant_type(self):
 
@@ -173,7 +180,7 @@ class TestAddTenant(base.TestBaseV2):
         self.assertEqual(resp.json()['badRequest']['message'],
                          "TenantType with name: '{0}' was not found.".format(
                              tenant_type_name))
-
+    @unless_coverage
     def tearDown(self):
         # Delete all tenants created in the tests
         for id in self.tenant_ids:

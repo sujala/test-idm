@@ -1,6 +1,8 @@
 import ddt
 import copy
 
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from tests.api.v2 import base
 from tests.api.v2.schema import tenants
 
@@ -16,6 +18,7 @@ class TestGetTenant(base.TestBaseV2):
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
         self.tenant_type_ids.append(name.lower())
 
+    @unless_coverage
     def setUp(self):
         super(TestGetTenant, self).setUp()
         self.tenant_ids = []
@@ -37,6 +40,7 @@ class TestGetTenant(base.TestBaseV2):
         (self.add_tenant_with_types_schema['properties'][const.TENANT]
             ['required'].append(const.NS_TYPES))
 
+    @tags('positive', 'p0', 'regression')
     def test_get_tenant_with_type(self):
         tenant_name = tenant_id = 'tname{0}'.format(
             self.generate_random_string(const.LOWER_CASE_LETTERS))
@@ -69,6 +73,7 @@ class TestGetTenant(base.TestBaseV2):
                           resp.json()[const.TENANT][const.NS_TYPES],
                           msg="Not found {0}".format(tenant_type))
 
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         for tenant_id in self.tenant_ids:

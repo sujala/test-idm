@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -17,6 +18,7 @@ class TestMultipleRoleAssignmentsToUser(base.TestBaseV2):
     def setUpClass(cls):
         super(TestMultipleRoleAssignmentsToUser, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestMultipleRoleAssignmentsToUser, self).setUp()
         self.domain_id = func_helper.generate_randomized_domain_id(
@@ -55,6 +57,7 @@ class TestMultipleRoleAssignmentsToUser(base.TestBaseV2):
         }
         return tenant_assignment_request
 
+    @tags('positive', 'p1', 'smoke')
     def test_grant_multiple_roles_to_user(self):
 
         # create roles
@@ -116,6 +119,7 @@ class TestMultipleRoleAssignmentsToUser(base.TestBaseV2):
                     user_groups.tenants_role_assignments_for_user_group))
         return assignment_resp
 
+    @unless_coverage
     def verify_role_assignments_for_user(
             self, roles_resp, role_1, role_2, tenant, role_2_global=True):
 
@@ -130,9 +134,9 @@ class TestMultipleRoleAssignmentsToUser(base.TestBaseV2):
                     self.assertEqual(
                         assignment[const.FOR_TENANTS], [tenant.id])
 
+    @unless_coverage
     @base.base.log_tearDown_error
     def tearDown(self):
-        super(TestMultipleRoleAssignmentsToUser, self).tearDown()
         self.delete_client(self.user_admin_client,
                            parent_client=self.identity_admin_client)
         for role_id in self.role_ids:
@@ -150,3 +154,4 @@ class TestMultipleRoleAssignmentsToUser(base.TestBaseV2):
                 resp.status_code, [204, 404],
                 msg='Tenant with ID {0} failed to delete'.format(
                     tenant_id))
+        super(TestMultipleRoleAssignmentsToUser, self).tearDown()

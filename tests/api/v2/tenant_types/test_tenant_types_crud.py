@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*
 from tests.api.v2 import base
 
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 from tests.api.v2.schema import tenant_types
@@ -9,6 +11,7 @@ from tests.api.v2.schema import tenant_types
 class TestTenantTypes(base.TestBaseV2):
     """Tenant Types Crud Tests"""
 
+    @unless_coverage
     def setUp(self):
         super(TestTenantTypes, self).setUp()
         self.tenant_types = []
@@ -24,12 +27,14 @@ class TestTenantTypes(base.TestBaseV2):
                                      const.NAME])
         return resp
 
+    @tags('positive', 'p1', 'regression')
     def test_add_tenant_type(self):
 
         create_resp = self.create_tenant_type()
         self.assertEqual(create_resp.status_code, 201)
         self.assertSchema(create_resp, tenant_types.add_tenant_type)
 
+    @tags('positive', 'p1', 'regression')
     def test_get_tenant_type(self):
 
         create_resp = self.create_tenant_type()
@@ -41,6 +46,7 @@ class TestTenantTypes(base.TestBaseV2):
         self.assertEqual(get_resp.status_code, 200)
         self.assertSchema(get_resp, tenant_types.get_tenant_type)
 
+    @tags('positive', 'p1', 'regression')
     def test_list_tenant_types(self):
 
         create_resp = self.create_tenant_type()
@@ -55,6 +61,7 @@ class TestTenantTypes(base.TestBaseV2):
             const.RAX_AUTH_TENANT_TYPES]]
         self.assertIn(tenant_type, list_of_types)
 
+    @tags('positive', 'p1', 'regression')
     def test_delete_tenant_type(self):
 
         create_resp = self.create_tenant_type()
@@ -68,6 +75,7 @@ class TestTenantTypes(base.TestBaseV2):
         get_resp = self.service_admin_client.get_tenant_type(name=tenant_type)
         self.assertEqual(get_resp.status_code, 404)
 
+    @unless_coverage
     def tearDown(self):
 
         for tenant_type in self.tenant_types:

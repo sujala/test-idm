@@ -3,6 +3,8 @@ from nose.plugins.attrib import attr
 import copy
 import ddt
 
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 from tests.api.v2.models import responses
@@ -19,6 +21,7 @@ class TestUpdateTenant(base.TestBaseV2):
     """Update Tenant Tests."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestUpdateTenant, cls).setUpClass()
 
@@ -27,6 +30,7 @@ class TestUpdateTenant(base.TestBaseV2):
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
         self.tenant_type_ids.append(name.lower())
 
+    @unless_coverage
     def setUp(self):
         super(TestUpdateTenant, self).setUp()
         self.description = 'Original description'
@@ -68,6 +72,7 @@ class TestUpdateTenant(base.TestBaseV2):
         self.tenant_ids.append(tenant_id)
         return tenant_id
 
+    @unless_coverage
     @ddt.file_data('data_update_tenant_types.json')
     def test_update_tenant_types(self, test_data):
         add_tenant_with_types_schema = copy.deepcopy(tenants.add_tenant)
@@ -128,6 +133,7 @@ class TestUpdateTenant(base.TestBaseV2):
                           resp.json()[const.TENANT][const.NS_TYPES],
                           msg="Not found {0}".format(tenant_type.lower()))
 
+    @unless_coverage    
     @ddt.file_data('data_invalid_tenant_types.json')
     @attr('skip_at_gate')
     def test_update_invalid_tenant_types(self, test_data):
@@ -156,7 +162,7 @@ class TestUpdateTenant(base.TestBaseV2):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                          error_message)
-
+    @unless_coverage
     @ddt.file_data('data_update_tenant.json')
     def test_update_tenant(self, test_data):
         '''Tests for update tenant API
@@ -215,6 +221,7 @@ class TestUpdateTenant(base.TestBaseV2):
 
     # @todo - fix the decorator. Test is not picked up with the decorator.
     # @parent_base.skip_if_no_service_admin_available
+    @tags('positive', 'p1', 'regression')
     def test_update_tenant_name(self):
         '''Test to verify update on tenant name for a NAST tenant.
 
@@ -312,6 +319,7 @@ class TestUpdateTenant(base.TestBaseV2):
             item.id == role.id][0]
         self.assertEqual(tenant_id_after_update, before_tenant.id)
 
+    @tags('positive', 'p1', 'regression')
     def test_update_tenant_name_one_call_user(self):
         '''Test to verify update on tenant name for a MOSSO tenant.
 
@@ -381,6 +389,7 @@ class TestUpdateTenant(base.TestBaseV2):
             auth_one_call_user_with_password.access.token.tenant.name,
             one_call_tenant.name)
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_update_tenant_with_non_existing_tenant_type(self):
 
@@ -412,6 +421,7 @@ class TestUpdateTenant(base.TestBaseV2):
                          "TenantType with name: '{0}' was not found.".format(
                              new_tenant_type_name))
 
+    @unless_coverage
     def tearDown(self):
         # Delete all resources created in the tests
         for user_id in self.user_ids:
@@ -423,3 +433,8 @@ class TestUpdateTenant(base.TestBaseV2):
         for name in self.tenant_type_ids:
             self.service_admin_client.delete_tenant_type(name=name)
         super(TestUpdateTenant, self).tearDown()
+
+    @unless_coverage
+    @classmethod
+    def tearDownClass(cls):
+        super(TestUpdateTenant, cls).tearDownClass()

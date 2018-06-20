@@ -3,6 +3,8 @@ from nose.plugins.attrib import attr
 import copy
 import ddt
 
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from tests.api.utils import header_validation
 from tests.api.v2 import base
 from tests.api.v2.models import factory
@@ -35,6 +37,7 @@ INVALID_RESPONSE_DETAIL = "responseDetail: Invalid value"
 class TestAddEndpointMappingRule(base.TestBaseV2):
 
     """Add/Get/Delete Tenant Type to Endpoint Templates mapping rules Tests"""
+    @unless_coverage
     @classmethod
     def setUpClass(self):
         super(TestAddEndpointMappingRule, self).setUpClass()
@@ -77,6 +80,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             self.default_header_validations +
             self.unexpected_headers_HTTP_400)
 
+    @unless_coverage
     def setUp(self):
         super(TestAddEndpointMappingRule, self).setUp()
         self.description = self.generate_random_string(
@@ -161,6 +165,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         rule_ids = [rule['id'] for rule in rules_list]
         self.assertIn(mapping_rule_id, rule_ids)
 
+    @unless_coverage
     def verify_no_duplicates_in_list_rules(self, list_resp):
         """
         Assert that there are no duplicates in the list mapping rules response
@@ -204,6 +209,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.verify_no_duplicates_in_list_rules(list_resp=list_resp.json())
         return list_resp
 
+    @tags('positive', 'p1', 'regression')
     def test_create_tenant_type_to_endpoint_mapping_rules(self):
         """
         Tests to check creation of rule works with one and multiple
@@ -313,6 +319,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             rule_id=mapping_rule_id)
         self.assertEqual(get_resp.status_code, 404)
 
+    @unless_coverage
     @ddt.file_data(
         'data_create_mapping_rules_with_different_tenant_types.json')
     def test_create_mapping_rules_with_different_tenant_types(
@@ -362,6 +369,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             # validate the list rules response
             self.validate_list_rules_response(mapping_rule_id=mapping_rule_id)
 
+    @unless_coverage
     @ddt.file_data(
         'data_create_mapping_rule_with_different_descriptions.json')
     @attr('skip_at_gate')
@@ -412,6 +420,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             # validate the list rules response
             self.validate_list_rules_response(mapping_rule_id=mapping_rule_id)
 
+    @unless_coverage
     @ddt.data([], None, '')
     def test_create_mapping_rules_with_different_endpoint_ids(
             self, endpoint_ids):
@@ -439,6 +448,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         # validate the list rules response
         self.validate_list_rules_response(mapping_rule_id=mapping_rule_id)
 
+    @unless_coverage
     def verify_no_duplicate_endpoint_ids(self, response_list, request_list):
         """
         Checking if the created rule does not have duplicate endpoint ids
@@ -456,6 +466,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         response_id_list_sorted = sorted(response_id_list)
         self.assertEqual(expected_list_sorted, response_id_list_sorted)
 
+    @tags('positive', 'p1', 'regression')
     def test_create_mapping_rules_checking_no_duplication_of_endpoints(self):
         """
         Tests to verify no duplication of endpoints on rule creation
@@ -504,6 +515,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.verify_no_duplicate_endpoint_ids(
             endpoints_list_in_resp, endpoint_ids)
 
+    @tags('negative', 'p1', 'regression')
     def test_to_verify_the_need_of_endpoint_admin_role(self):
         """
         Tests to check requirement of 'identity:endpoint-rule-admin' role
@@ -542,6 +554,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             rule_id=mapping_rule_id)
         self.assertEqual(get_resp.status_code, 403)
 
+    @tags('negative', 'p1', 'regression')
     def test_to_verify_rules_creation_with_non_existing_endpoints(self):
         """
         Negative tests scenarios with endpoint templates
@@ -607,6 +620,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_400)
 
+    @tags('negative', 'p1', 'regression')
     def test_limit_on_number_of_endpoints_per_tenant_type(self):
         """
         Application does check the count before checking if the endpoints
@@ -627,6 +641,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_400)
 
+    @unless_coverage
     @attr('skip_at_gate')
     def verify_get_and_delete_given_rule(self, rule_id):
         """
@@ -648,6 +663,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.assertEqual(delete_resp.json()['itemNotFound'][const.MESSAGE],
                          RULE_DOES_NOT_EXIST_ERROR)
 
+    @tags('negative', 'p1', 'regression')
     def test_get_tenant_type_to_endpoint_mapping_rules_negative(
             self):
         """
@@ -691,6 +707,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         rule_id = mapping_rule_id[:-1]
         self.verify_get_and_delete_given_rule(rule_id)
 
+    @unless_coverage
     @ddt.file_data('data_get_mapping_rule_with_query_param.json')
     def test_get_mapping_rule_with_query_param(self, test_data):
         """
@@ -735,6 +752,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             self.assertEqual(get_resp.json()[const.BAD_REQUEST][const.MESSAGE],
                              INVALID_RESPONSE_DETAIL)
 
+    @tags('negative', 'p1', 'regression')
     def test_empty_list_of_mapping_rules(self):
         """
         Tests when there are no rules, list call returns empty list
@@ -764,6 +782,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         # We may need to change this once defect CID-536 is fixed
         self.assertEqual(rules_list, {})
 
+    @unless_coverage
     def tearDown(self):
         for id_ in self.template_ids:
             self.identity_admin_client.delete_endpoint_template(
@@ -779,3 +798,8 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         for tenant_type in self.created_tenant_types:
             self.identity_admin_client.delete_tenant_type(name=tenant_type)
         super(TestAddEndpointMappingRule, self).tearDown()
+
+    @unless_coverage
+    @classmethod
+    def tearDownClass(cls):
+        super(TestAddEndpointMappingRule, cls).tearDownClass()

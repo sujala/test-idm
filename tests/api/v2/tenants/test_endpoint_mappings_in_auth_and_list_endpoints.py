@@ -1,5 +1,8 @@
 import ddt
 import copy
+
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from tests.api.v2 import base
 from tests.api.v2.schema import tenants
 from tests.api.v2.models import factory
@@ -14,6 +17,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
     """
     EndpointMappingsInAuthAndListEndpoints test class
     """
+    @unless_coverage
     def setUp(self):
         super(EndpointMappingsInAuthAndListEndpoints, self).setUp()
         if (not self.test_config.run_service_admin_tests or not
@@ -484,6 +488,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
                            value1=endpoint[const.ADMIN_URL],
                            value2=template_data['admin_url']))
 
+    @tags('positive', 'p1', 'regression')
     def test_verify_endpoint_attributes_present_in_all_auths(self):
         """
         Verify all auths return end points mapped by rules
@@ -495,6 +500,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             template_data=self.common_input,
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p1', 'regression')
     def test_verify_endpoint_in_all_auths_infer_tenant_type(self):
         acct_info = self.create_user_with_endpoint_from_mapping_rules(
             explicit_tenant_type=False)
@@ -504,6 +510,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             template_data=self.common_input,
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p1', 'regression')
     def test_verify_adding_endpoint_attributes_to_existing_tenant_type(self):
         """
         Add another mapping rule to a tenant_type that already exists for
@@ -536,6 +543,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             template_data=self.common_input,
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p1', 'regression')
     def test_verify_remove_endpoint_attributes_from_existing_tenant_type(self):
         """
         remove mapping rule from a tenant_type that already exists for
@@ -594,6 +602,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             template_data=self.common_input,
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p0', 'smoke')
     def test_list_endpoints_for_token(self):
         """
         Verify that listing endpoints for a token contains the endpoints
@@ -615,6 +624,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             service_name=acct_info['service_name'],
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p1', 'regression')
     def test_list_endpoints_for_token_after_adding_mapping_rule(self):
         """
         Verify that listing endpoints for a token contains the endpoints
@@ -662,6 +672,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             service_name=acct_info['service_name'],
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p1', 'regression')
     def test_list_endpoints_for_token_after_add_multi_template_mapping_rule(
             self):
         """
@@ -707,6 +718,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             service_name=acct_info['service_name'],
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p1', 'regression')
     def test_endpoints_in_list_endpoints_for_token_after_adding_deleting_roles(
             self):
         """
@@ -765,6 +777,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             service_name=acct_info['service_name'],
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p1', 'regression')
     def test_endpoints_in_list_endpoints_for_token_after_deleting_rule(self):
         """
         Verify endpoint attributes disappear from response after
@@ -829,6 +842,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             service_name=acct_info['service_name'],
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p1', 'regression')
     def test_verify_auths_after_adding_deleting_role(self):
         """
         Add another role that has a new tenant_id with new types and a new
@@ -885,6 +899,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             template_data=self.common_input,
             tenant_id=acct_info['tenant_name'])
 
+    @tags('positive', 'p1', 'regression')
     def test_verify_auths_after_multiple_templates_on_single_rule(self):
         """
         Add another mapping rule to a tenant_type that already exists for
@@ -912,6 +927,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             template_data=self.common_input,
             tenant_id=acct_info['tenant_name'])
 
+    @unless_coverage
     def tearDown(self):
         for map_rule_id in self.map_rule_ids:
             (self.identity_admin_client

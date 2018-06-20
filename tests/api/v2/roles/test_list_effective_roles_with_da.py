@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+from qe_coverage.opencafe_decorators import tags
+
 from tests.api.v2 import base
 from tests.api.utils import func_helper
 from tests.api.v2.models import factory, responses
@@ -10,7 +12,6 @@ from tests.package.johny.v2.models import requests
 class TestListEffectiveRolesWithDA(base.TestBaseV2):
 
     """ List effective role for user."""
-
     @classmethod
     def setUpClass(cls):
         super(TestListEffectiveRolesWithDA, cls).setUpClass()
@@ -81,6 +82,7 @@ class TestListEffectiveRolesWithDA(base.TestBaseV2):
         cls.delegation_client.default_headers[const.X_AUTH_TOKEN] = (
             delegation_token)
 
+    @tags('positive', 'p0', 'smoke')
     def test_list_effective_roles_with_da_token(self):
         # create and add role to user
         self.create_role_and_add_to_user(

@@ -2,6 +2,8 @@ from nose.plugins.attrib import attr
 import copy
 import ddt
 
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from tests.api.v2 import base
 from tests.api.v2.schema import tenants
 from tests.api.v2.models import factory
@@ -18,6 +20,7 @@ class TestTenantTypes(base.TestBaseV2):
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
         self.tenant_type_ids.append(name.lower())
 
+    @unless_coverage
     def setUp(self):
         super(TestTenantTypes, self).setUp()
         self.tenant_ids = []
@@ -68,6 +71,7 @@ class TestTenantTypes(base.TestBaseV2):
             resp.json()[const.TENANT][const.NS_TYPES]), 3)
         return tenant_id
 
+    @tags('positive', 'p1', 'regression')
     def test_list_tenant_with_types(self):
         tenant_name = self.create_tenant_with_types()
         resp = self.identity_admin_client.get_tenant(tenant_id=tenant_name)
@@ -119,6 +123,7 @@ class TestTenantTypes(base.TestBaseV2):
         self.assertIn(const.NS_TYPES, tenant)
         self.assertEqual(len(target_tenant[const.NS_TYPES]), 3)
 
+    @tags('positive', 'p1', 'regression')
     def test_list_tenants_with_types_by_domain(self):
         tenant_id = tenant_name = self.create_tenant_with_types()
         resp = self.identity_admin_client.get_tenant(tenant_id=tenant_id)
@@ -138,6 +143,7 @@ class TestTenantTypes(base.TestBaseV2):
         self.assertIn(const.NS_TYPES, tenant)
         self.assertEqual(len(target_tenant[const.NS_TYPES]), 3)
 
+    @tags('positive', 'p1', 'regression')
     def test_delete_tenant_types_from_tenant(self):
         tenant_id = tenant_name = self.create_tenant_with_types()
         request_object = requests.Tenant(
@@ -154,6 +160,7 @@ class TestTenantTypes(base.TestBaseV2):
                           json_schema=self.add_tenant_schema)
 
     # Negative duplicates ignored
+    @tags('positive', 'p1', 'regression')
     def test_duplicate_tenant_types_create(self):
         tenant_name = tenant_id = 'tname{0}'.format(
             self.generate_random_string(const.LOWER_CASE_LETTERS))
@@ -170,6 +177,7 @@ class TestTenantTypes(base.TestBaseV2):
             ["a", "b", "c"],
             sorted(resp.json()[const.TENANT][const.NS_TYPES]))
 
+    @tags('positive', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_duplicate_tenant_types_update(self):
         tenant_id = tenant_name = self.create_tenant_with_types()
@@ -187,6 +195,7 @@ class TestTenantTypes(base.TestBaseV2):
             ["a", "b", "c"],
             sorted(resp.json()[const.TENANT][const.NS_TYPES]))
 
+    @unless_coverage
     def tearDown(self):
         for tenant_id in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=tenant_id)
