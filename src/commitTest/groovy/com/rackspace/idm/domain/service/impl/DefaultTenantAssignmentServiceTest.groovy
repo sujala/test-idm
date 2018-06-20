@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.entity.DelegationAgreement
 import com.rackspace.idm.domain.entity.DelegationPrincipal
@@ -790,6 +791,20 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         result.find {it.roleRsId == roleAId} != null
     }
 
+    def "replaceTenantAssignmentsOnDelegationAgreement: Returns empty list when no tenant assignments"() {
+        given:
+        DelegationAgreement da = new DelegationAgreement().with {
+            it
+        }
+
+        when:
+        def result = service.replaceTenantAssignmentsOnDelegationAgreement(da, new ArrayList())
+
+        then:
+        result != null
+        result.size() == 0
+    }
+
     def "replaceTenantAssignmentsOnDelegationAgreement: Verify static check validations with no backend checks"() {
         given:
         DelegationAgreement da = new DelegationAgreement()
@@ -1072,8 +1087,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         1 * delegationService.getAllRoleAssignmentsOnDelegationAgreement(parentDa) >> [tenantRole]
         1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
         1 * identityConfig.getReloadableConfig().getNestedDelegationAgreementRoleHierarchyMap() >> map
-        1 * config.getString("cloudAuth.clientId") >> "123"
-        1 * applicationService.getClientRoleByClientIdAndRoleName(_, "admin") >> adminRole
+        1 * applicationService.getCachedClientRoleByName("admin") >> new ImmutableClientRole(adminRole)
     }
 
     def "verifyTenantAssignmentsWithCacheForDelegationAgreement: error check"() {

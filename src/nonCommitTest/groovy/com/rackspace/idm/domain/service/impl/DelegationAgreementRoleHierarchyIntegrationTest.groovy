@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.ApplicationService
@@ -814,6 +815,62 @@ class DelegationAgreementRoleHierarchyIntegrationTest extends RootIntegrationTes
         cloud20.deleteDelegationAgreement(userAdminToken, subAgreement.id)
         cloud20.deleteDelegationAgreement(userAdminToken, parentDa.id)
         utils.deleteUserQuietly(subUser)
+    }
+
+    def "Verify privilege escalation is not allowed"() {
+        given:
+        def mossoTenant = userAdmin.domainId
+        def nastTenant = utils.getNastTenant(userAdmin.domainId)
+
+        DelegationAgreement parentDa = new DelegationAgreement().with {
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.subAgreementNestLevel = 2
+            it
+        }
+
+        parentDa.name = testUtils.getRandomUUIDOfLength("assignments", 32)
+        parentDa = utils.createDelegationAgreement(userAdminToken, parentDa)
+        utils.addUserDelegate(userAdminToken, parentDa.id, userAdmin.id)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ADMIN_ROLE_ID, [mossoTenant]))
+                    tas.tenantAssignment.add(createTenantAssignment(BILLING_ADMIN_ROLE_ID, [nastTenant]))
+                    tas
+            }
+            it
+        }
+        utils.grantRoleAssignmentsOnDelegationAgreement(parentDa, assignments, userAdminToken)
+
+        // Create a nested da
+        DelegationAgreement subAgreement = new DelegationAgreement().with {
+            it.name = RandomStringUtils.randomAlphabetic(32)
+            it.description = RandomStringUtils.randomAlphabetic(255)
+            it.parentDelegationAgreementId = parentDa.id
+            it.subAgreementNestLevel = 1
+            it
+        }
+
+        subAgreement = utils.createDelegationAgreement(userAdminToken, subAgreement)
+
+        when: "Try to escalate privilege on nast tenant to admin"
+        RoleAssignments tenantAssignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(BILLING_OBSERVER_ROLE_ID, [nastTenant]))
+                    tas.tenantAssignment.add(createTenantAssignment(ADMIN_ROLE_ID, [nastTenant]))
+                    tas
+            }
+            it
+        }
+        def response = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, subAgreement, tenantAssignments)
+
+        then: "Fails appropriately"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, String.format(ERROR_CODE_ROLE_ASSIGNMENT_WRONG_TENANTS_MSG_PATTERN, ADMIN_ROLE_ID))
+
+        cleanup:
+        cloud20.deleteDelegationAgreement(userAdminToken, parentDa.id)
     }
 
     void verifyContainsAssignment(RoleAssignments roleAssignments, String roleId, List<String> tenantIds) {
