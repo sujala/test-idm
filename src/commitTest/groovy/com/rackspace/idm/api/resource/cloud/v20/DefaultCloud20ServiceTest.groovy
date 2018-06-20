@@ -4801,6 +4801,62 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         "domainId"      | ["otherTenantId"] | false
     }
 
+    def "verify addTenantToDomain uses getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain feature flag"() {
+        given:
+        allowUserAccess()
+        def domainId = "domainId"
+        def tenantId = "tenantId"
+        def tenant = entityFactory.createTenant().with {
+            it.tenantId = tenantId
+            it.domainId = "domainId2"
+            it
+        }
+        def domain = entityFactory.createDomain().with {
+            it.domainId = domainId
+            it.tenantIds = []
+            it
+        }
+
+        when:
+        reloadableConfig.getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain() >> true
+        service.addTenantToDomain(authToken, domainId, tenantId)
+
+        then:
+        1 * tenantService.checkAndGetTenant(tenantId) >> tenant
+        1 * domainService.checkAndGetDomain(domainId) >> domain
+        1 * tenantService.getTenantRolesForTenant(tenantId)
+
+        when:
+        reloadableConfig.getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain() >> false
+        service.addTenantToDomain(authToken, domainId, tenantId)
+
+        then:
+        1 * tenantService.checkAndGetTenant(tenantId) >> tenant
+        1 * domainService.checkAndGetDomain(domainId) >> domain
+        0 * tenantService.getTenantRolesForTenant(tenantId)
+    }
+
+    def "verify removeTenantFromDomain uses getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain feature flag"() {
+        given:
+        allowUserAccess()
+        def domainId = "domainId"
+        def tenantId = "tenantId"
+
+        when:
+        reloadableConfig.getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain() >> true
+        service.removeTenantFromDomain(authToken, domainId, tenantId)
+
+        then:
+        1 * tenantService.getTenantRolesForTenant(tenantId)
+
+        when:
+        reloadableConfig.getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain() >> false
+        service.removeTenantFromDomain(authToken, domainId, tenantId)
+
+        then:
+        0 * tenantService.getTenantRolesForTenant(tenantId)
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)

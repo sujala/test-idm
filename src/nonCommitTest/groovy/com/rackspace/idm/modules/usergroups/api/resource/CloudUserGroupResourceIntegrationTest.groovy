@@ -1,8 +1,13 @@
 package com.rackspace.idm.modules.usergroups.api.resource
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import org.apache.commons.lang.RandomStringUtils
 import testHelpers.RootIntegrationTest
+
+import static org.apache.http.HttpStatus.SC_NO_CONTENT
 
 
 class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
@@ -1329,6 +1334,98 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         utils.deleteUserGroup(userGroup)
         utils.deleteUser(rcnAdmin)
         utils.deleteUser(user)
+    }
+
+    def "Reconcile user-group tenant roles when tenant is deleted"() {
+        given:
+        def username = testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def user = utils.createUser(utils.getIdentityAdminToken(), username, domainId)
+        def tenant = utils.createTenantInDomain(domainId)
+        def userGroup = utils.createUserGroup(domainId)
+        def role = utils.createRole(null, RandomStringUtils.randomAlphabetic(8), IdentityUserTypeEnum.USER_MANAGER.roleName)
+
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, v2Factory.createSingleRoleAssignment(role.id, [tenant.id]))
+
+        when: "Verify that the tenant exists within a domain."
+        def tenants = utils.listDomainTenants(domainId)
+
+        then:
+        assert tenants.tenant.find{it.id == tenant.id}
+
+        when: "List the roles for the user group on the tenant."
+        def roleAssignments = utils.listRoleAssignmentsOnUserGroup(userGroup)
+
+        then:
+        assert roleAssignments.tenantAssignments.tenantAssignment.find {it.forTenants.contains(tenant.id)}
+
+        when: "Delete the tenant from the domain."
+        def response = cloud20.deleteTenantFromDomain(utils.getServiceAdminToken(), domainId, tenant.id)
+
+        then:
+        assert response.status == SC_NO_CONTENT
+
+        when: "Verify that all the roles assigned to the user group are deleted."
+        roleAssignments = utils.listRoleAssignmentsOnUserGroup(userGroup)
+
+        then:
+        assert roleAssignments.tenantAssignments.tenantAssignment.find {it.forTenants.contains(tenant.id)} == null
+
+        cleanup:
+        utils.deleteUserGroup(userGroup)
+        utils.deleteTenant(tenant)
+        utils.deleteUser(user)
+        utils.deleteRole(role)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Reconcile user-group tenant roles when tenant is modified"() {
+        given:
+        def username = testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def user = utils.createUser(utils.getIdentityAdminToken(), username, domainId)
+        def tenant = utils.createTenantInDomain(domainId)
+        def userGroup = utils.createUserGroup(domainId)
+        def role = utils.createRole(null, RandomStringUtils.randomAlphabetic(8), IdentityUserTypeEnum.USER_MANAGER.roleName)
+
+        def username2 = testUtils.getRandomUUID()
+        def domainId2 = utils.createDomain()
+        def user2 = utils.createUser(utils.getIdentityAdminToken(), username2, domainId2)
+
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, v2Factory.createSingleRoleAssignment(role.id, [tenant.id]))
+
+        when: "Verify that the tenant exists within a domain."
+        def tenants = utils.listDomainTenants(domainId)
+
+        then:
+        assert tenants.tenant.find{it.id == tenant.id}
+
+        when: "List the roles for the user group on the tenant."
+        def roleAssignments = utils.listRoleAssignmentsOnUserGroup(userGroup)
+
+        then:
+        assert roleAssignments.tenantAssignments.tenantAssignment.find {it.forTenants.contains(tenant.id)}
+
+        when: "Add domain to tenant."
+        def response = cloud20.addTenantToDomain(utils.getServiceAdminToken(), domainId2, tenant.id)
+
+        then:
+        assert response.status == SC_NO_CONTENT
+
+        when: "Verify that all the roles assigned to the user group are deleted."
+        roleAssignments = utils.listRoleAssignmentsOnUserGroup(userGroup)
+
+        then:
+        assert roleAssignments.tenantAssignments.tenantAssignment.find {it.forTenants.contains(tenant.id)} == null
+
+        cleanup:
+        utils.deleteUserGroup(userGroup)
+        utils.deleteTenant(tenant)
+        utils.deleteUser(user)
+        utils.deleteRole(role)
+        utils.deleteDomain(domainId)
+        utils.deleteUser(user2)
+        utils.deleteDomain(domainId2)
     }
 
 }

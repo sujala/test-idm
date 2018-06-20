@@ -574,6 +574,9 @@ public class IdentityConfig {
     public static final String FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_PROP = "feature.enable.post.credential.feed.events";
     public static final boolean FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_DEFAULT = false;
 
+    public static final String FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP = "feature.delete.all.tenants.when.tenant.removed.from.domain";
+    public static final boolean FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_DEFAULT = true;
+
     /**
      * Identity Repository Properties
      */
@@ -834,6 +837,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_PROP, FEATURE_POST_CREDENTIAL_FEED_EVENTS_ENABLED_DEFAULT);
         defaults.put(FEATURE_ENABLE_ROLE_HIERARCHY_PROP, FEATURE_ENABLE_ROLE_HIERARCHY_DEFAULT);
         defaults.put(NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_PROP, NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_DEFAULT);
+        defaults.put(FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP, FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_DEFAULT);
 
         return defaults;
     }
@@ -2286,6 +2290,11 @@ public class IdentityConfig {
             }
 
             return nestedDARoleHierarchyMap;
+        }
+
+        @IdmProp(key = FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP, versionAdded = "3.23.0", description = "Whether to delete all tenant roles when tenant is removed from domain.")
+        public boolean getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP);
         }
     }
 

@@ -40,6 +40,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
@@ -3955,7 +3956,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         Tenant tenant = tenantService.checkAndGetTenant(tenantId);
         Domain domain = domainService.checkAndGetDomain(domainId);
-         if ((tenant.getDomainId() == null || !tenant.getDomainId().equalsIgnoreCase(domainId)) &&
+        if ((tenant.getDomainId() == null || !tenant.getDomainId().equalsIgnoreCase(domainId)) &&
                 (domain.getTenantIds() == null || domain.getTenantIds().length == 0 || !Arrays.asList(domain.getTenantIds()).contains(tenant.getTenantId()))) {
             // Roles need to be removed if the tenant was part of a domain other than the one it is being added to.
             // For this service, that means that the tenant either has a domain ID that does not match the domain ID
@@ -3964,6 +3965,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (daRoles != null && daRoles.iterator().hasNext()) {
                 for (TenantRole role : daRoles) {
                     tenantService.deleteTenantFromTenantRole(role, tenantId);
+                }
+            }
+            if (identityConfig.getReloadableConfig().getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain()) {
+                List<TenantRole> tenantRoles = tenantService.getTenantRolesForTenant(tenantId);
+                if (tenantRoles != null) {
+                    for (TenantRole tenantRole : tenantRoles) {
+                        tenantService.deleteTenantFromTenantRole(tenantRole, tenantId);
+                    }
                 }
             }
         }
@@ -3975,10 +3984,20 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         if (StringUtils.isNotBlank(tenantId)) {
+
             Iterable<TenantRole> daRoles = delegationService.getTenantRolesForDelegationAgreementsForTenant(tenantId);
             if (daRoles != null && daRoles.iterator().hasNext()) {
                 for (TenantRole role : daRoles) {
                     tenantService.deleteTenantFromTenantRole(role, tenantId);
+                }
+            }
+
+            if (identityConfig.getReloadableConfig().getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain()) {
+                List<TenantRole> tenantRoles = tenantService.getTenantRolesForTenant(tenantId);
+                if (tenantRoles != null) {
+                    for (TenantRole tenantRole : tenantRoles) {
+                        tenantService.deleteTenantFromTenantRole(tenantRole, tenantId);
+                    }
                 }
             }
         }
