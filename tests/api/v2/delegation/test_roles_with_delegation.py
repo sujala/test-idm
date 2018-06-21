@@ -272,6 +272,65 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         )
         self.assertEqual(delete_resp.status_code, 404)
 
+    def test_roles_on_nested_DA(self):
+
+        # Create parent DA
+        da_name = self.generate_random_string(
+            pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
+        da_resp, da_id = self.call_create_delegation_agreement(
+            client=self.user_admin_client,
+            delegate_id=self.user_admin2_id,
+            da_name=da_name,
+            allow_sub_agreements=True)
+
+        # Create role assignment dict
+        role = self.create_role()
+        tenant_1 = self.create_tenant()
+        tenant_assignment_req = self.generate_tenants_assignment_dict(
+            role.id, tenant_1.id)
+        tenants_role_assignment_req = requests.TenantRoleAssignments(
+            tenant_assignment_req)
+
+        # Create nested DA
+        nested_da_name = self.generate_random_string(
+            pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
+        da_req = requests.DelegationAgreements(
+            da_name=nested_da_name,
+            parent_da_id=da_id)
+        resp = self.user_admin_client_2.create_delegation_agreement(
+            request_object=da_req)
+        nested_da_id = resp.json()[
+            const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+
+        # Grant role to nested DA
+        ua_client2 = self.user_admin_client_2
+        resp = ua_client2.add_tenant_role_assignments_to_delegation_agreement(
+            nested_da_id, request_object=tenants_role_assignment_req)
+        self.assertEqual(resp.status_code, 403)
+
+        # Grant role to parent DA
+        ua_client = self.user_admin_client
+        resp = ua_client.add_tenant_role_assignments_to_delegation_agreement(
+            da_id, request_object=tenants_role_assignment_req)
+        self.assertEqual(resp.status_code, 200)
+
+        # Grant role to nested DA
+        ua_client2 = self.user_admin_client_2
+        resp = ua_client2.add_tenant_role_assignments_to_delegation_agreement(
+            nested_da_id, request_object=tenants_role_assignment_req)
+        self.assertEqual(resp.status_code, 200)
+
+        # Grant domain level role to nested DA
+        tenant_assignment_req = self.generate_tenants_assignment_dict(
+            role.id, '*')
+        tenants_role_assignment_req = requests.TenantRoleAssignments(
+            tenant_assignment_req)
+
+        ua_client2 = self.user_admin_client_2
+        resp = ua_client2.add_tenant_role_assignments_to_delegation_agreement(
+            nested_da_id, request_object=tenants_role_assignment_req)
+        self.assertEqual(resp.status_code, 403)
+
     def tearDown(self):
         super(TestRoleAssignmentsWithDelegation, self).tearDown()
 

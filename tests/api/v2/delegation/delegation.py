@@ -49,8 +49,9 @@ class TestBaseDelegation(base.TestBaseV2):
         cls.user_admin_client_2 = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data=additional_input_data)
-        cls.user_ids.append(
-            cls.user_admin_client_2.default_headers[const.X_USER_ID])
+        cls.user_admin2_id = \
+            cls.user_admin_client_2.default_headers[const.X_USER_ID]
+        cls.user_ids.append(cls.user_admin2_id)
 
         # Create RCN admin
         cls.domain_id_3 = func_helper.generate_randomized_domain_id(
