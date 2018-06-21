@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  network:
+    ports:
+      - 127.0.0.1:20389:1389
+      - 127.0.0.1:20636:1636
+      - 127.0.0.1:8080:8080
+      - 127.0.0.1:8180:8180
+      - 127.0.0.1:8083:8083
+      - 127.0.0.1:10636:10636
+      - 127.0.0.1:10025:10025
+
+  repose:
+    environment:
+      IDENTITY_HOST: localhost
+
+  mitmproxy:
+    image: mitmproxy/mitmproxy
+    environment:
+      HOSTIP: ${HOSTIP}
+    command: mitmdump --mode reverse:http://${HOSTIP}:8082 -w /tmp/traffic.mitm -p 8083
+    volumes:
+      - ./mitmproxy/data:/data
+    network_mode: "service:network"
+
+networks:
+  identity:
+    driver: bridge

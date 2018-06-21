@@ -381,7 +381,7 @@ task applicationCodeCoverageReport(type:JacocoReport){
 
 gretty {
     host = "0.0.0.0"
-    httpPort = 8083
+    httpPort = port as int
     servletContainer = "tomcat7"
     systemProperty 'idm.properties.location', System.getProperty('idm.properties.location', 'build/config/VAGRANT')
     debugSuspend = false
@@ -450,7 +450,7 @@ task wadl << {
     ant.taskdef(name: 'wadl', classname: 'com.sun.jersey.api.wadl.WadlGeneratorTask', classpath: configurations.wadl.asPath )
     ant.wadl(destFile: sourceSets.main.output.classesDir.toString()+'/application.wadl',
         classpath: sourceSets.main.output.classesDir,
-        baseUri: 'http://localhost:8083'
+        baseUri: "http://localhost:$port"
     )
 }
 
