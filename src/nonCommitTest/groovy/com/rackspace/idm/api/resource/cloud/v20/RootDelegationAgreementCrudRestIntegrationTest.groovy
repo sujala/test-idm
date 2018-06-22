@@ -109,7 +109,10 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
     def "All users can create root DA when feature.enable.global.root.da.creation is enabled #flag"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, flag)
-        def token = utils.getToken(caller.username)
+
+        if (callerToken == "fedUserToken"){
+            callerToken = utils.createFederatedUserForAuthResponse(sharedUserAdmin.domainId).token.id
+        }
 
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
@@ -119,19 +122,21 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         }
 
         when: "different users creates the DA "
-        def createResponse = cloud20.createDelegationAgreement(token, webDa)
+        def createResponse = cloud20.createDelegationAgreement(callerToken, webDa)
 
         then:
         createResponse.status == respCode
 
         where:
-        caller            | respCode | flag
-        sharedUserAdmin   | 201      | false
-        sharedUserManager | 403      | false
-        sharedSubUser     | 403      | false
-        sharedUserAdmin   | 201      | true
-        sharedUserManager | 201      | true
-        sharedSubUser     | 201      | true
+        callerToken            | respCode | flag
+        sharedUserAdminToken   | 201      | false
+        sharedUserManagerToken | 403      | false
+        sharedSubUserToken     | 403      | false
+        "fedUserToken"         | 403      | false
+        sharedUserAdminToken   | 201      | true
+        sharedUserManagerToken | 201      | true
+        sharedSubUserToken     | 201      | true
+        "fedUserToken"         | 201      | true
     }
 
     /**
