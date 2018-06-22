@@ -58,40 +58,6 @@
                 "rax:sites",
                 "rax:identity",
                 "identity",
-                "rax:load-balancer-v2",
-                "cbs:graphite",
-                "compute",
-                "compute-labs",
-                "dns",
-                "image",
-                "image-labs",
-                "key-manager",
-                "network",
-                "network-labs",
-                "orchestration",
-                "rax:arbor",
-                "rax:automation",
-                "rax:autoscale",
-                "rax:backup",
-                "rax:bigdata",
-                "rax:billing",
-                "rax:cloudmetrics",
-                "rax:customer",
-                "rax:database",
-                "rax:dns",
-                "rax:feeds",
-                "rax:incident",
-                "rax:load-balancer",
-                "rax:monitor",
-                "rax:queues",
-                "rax:rackconnect",
-                "rax:usage",
-                "volume",
-                "volumev2",
-                "rax:cdn",
-                "rax:sites",
-                "rax:identity",
-                "identity",
                 "rax:load-balancer-v2"
             ],
             "versionAdded": ""
@@ -102,8 +68,6 @@
             "description": "",
             "source": "idm.reloadable.properties",
             "value": [
-                "object-store",
-                "rax:object-cdn",
                 "object-store",
                 "rax:object-cdn"
             ],
@@ -277,7 +241,8 @@
             "description": "The bind DN for LDAP server simple bind requests.",
             "source": "idm.properties",
             "value": "uid=appadmin-cidm-extapp-n04.staging.iad3.cidm.rackspace.net,ou=internal,dc=rackspace,dc=com",
-            "versionAdded": "1.0.14.8"
+            "versionAdded": "1.0.14.8",
+            "action": "ignore"
         },
         {
             "defaultValue": 0,
@@ -309,11 +274,22 @@
         {
             "defaultValue": false,
             "name": "ldap.server.trusted",
+            "reloadable": true,
+            "description": "Specifies if the edir connection is trusted",
+            "source": "idm.properties",
+            "value": true,
+            "versionAdded": "1.0.14.8",
+            "visibility": "Internal"
+        },
+        {
+            "defaultValue": false,
+            "name": "ldap.server.trusted",
             "reloadable": false,
             "description": "Specifies if the edir connection is trusted",
             "source": "idm.properties",
-            "value": false,
-            "versionAdded": "1.0.14.8"
+            "value": true,
+            "versionAdded": "1.0.14.8",
+            "visibility": "External"
         },
         {
             "name": "ldap.server.useSSL",
@@ -369,7 +345,18 @@
             "description": "The prefix to append to nast tenant ids",
             "source": "idm.properties",
             "value": "StagingUS_",
-            "versionAdded": "1.0.14.8"
+            "versionAdded": "1.0.14.8",
+            "environment":"Staging"
+        },
+        {
+            "defaultValue": "MossoCloudFS_",
+            "name": "nast.tenant.prefix",
+            "reloadable": false,
+            "description": "The prefix to append to nast tenant ids",
+            "source": "idm.properties",
+            "value": "MossoCloudFS_",
+            "versionAdded": "1.0.14.8",
+            "environment":"Prod"
         },
         {
             "defaultValue": "cloud-identity-impersonate",
@@ -793,7 +780,18 @@
             "description": "Comma delimited list of valid portal values for forgot password",
             "source": "idm.reloadable.properties",
             "value": "[astra_preprod]",
-            "versionAdded": "3.2.0"
+            "versionAdded": "3.2.0",
+            "environment":"Staging"
+        },
+        {
+            "defaultValue": "[]",
+            "name": "forgot.password.valid.portals",
+            "reloadable": true,
+            "description": "Comma delimited list of valid portal values for forgot password",
+            "source": "idm.reloadable.properties",
+            "value": "[astra_prod]",
+            "versionAdded": "3.2.0",
+            "environment":"Prod"
         },
         {
             "defaultValue": 600,
@@ -1329,7 +1327,7 @@
             "reloadable": true,
             "description": "Whether to allow a provisioned user's username to be updated.",
             "source": "idm.reloadable.properties",
-            "value": false,
+            "value": true,
             "versionAdded": "3.13.0"
         },
         {
@@ -1356,7 +1354,17 @@
             "description": "The bind DN for eDir authenticated connections.",
             "source": "idm.properties",
             "value": "cn=cidm-edir-staging,ou=Users,o=rackspace",
-            "versionAdded": "3.15.0"
+            "versionAdded": "3.15.0",
+            "environment":"Staging"
+        },
+        {
+            "name": "edir.bind.dn",
+            "reloadable": false,
+            "description": "The bind DN for eDir authenticated connections.",
+            "source": "idm.properties",
+            "value": "cn=cidm-edir-prod,ou=Users,o=rackspace",
+            "versionAdded": "3.15.0",
+            "environment":"Prod"
         },
         {
             "defaultValue": true,
@@ -1439,7 +1447,19 @@
             "source": "directory",
             "id": "be9091cec333496a8997e819f9b06af1",
             "value": "UserGroupDomain513ac917b2ba4f35834148fcc134ef3a,UserGroupDomainUGdf5f823f71644d1ca1c0b71cf1f5753b",
-            "versionAdded": "3.16.0"
+            "versionAdded": "3.16.0",
+            "environment":"Staging"
+        },
+        {
+            "valueType": "String",
+            "name": "enable.user.groups.for.domains",
+            "reloadable": true,
+            "description": "A comma delimited list of domains for which user groups will be allowed",
+            "source": "directory",
+            "id": "be9091cec333496a8997e819f9b06af1",
+            "value": ",",
+            "versionAdded": "3.16.0",
+            "environment":"Prod"
         },
         {
             "defaultValue": false,
@@ -1473,8 +1493,8 @@
             "reloadable": true,
             "description": "The list of tenant prefixes to exclude the auto-assigned (identity:tenant-access) role from.",
             "source": "idm.reloadable.properties",
-            "value": "[faws, managed_gcp, faws, managed_gcp]",
-            "versionAdded": "3.17.0"
+            "value": "[, ]",
+            "versionAdded": "3.22.0"
         },
         {
             "defaultValue": true,
@@ -1664,7 +1684,19 @@
             "source": "directory",
             "id": "cf2afde98d884af3aee16d93ed1da93f",
             "value": "RCN-182-579-723,RCN-493-041-948",
-            "versionAdded": "3.20.0"
+            "versionAdded": "3.20.0",
+            "environment":"Staging"
+        },
+        {
+            "valueType": "String",
+            "name": "enable.delegation.agreements.for.rcns",
+            "reloadable": true,
+            "description": "A comma delimited list of rcns for which delegation\nagreements will be allowed",
+            "source": "directory",
+            "id": "cf2afde98d884af3aee16d93ed1da93f",
+            "value": ",",
+            "versionAdded": "3.20.0",
+            "environment":"Prod"
         },
         {
             "defaultValue": true,

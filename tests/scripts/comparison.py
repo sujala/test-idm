@@ -10,7 +10,7 @@ urllib3.disable_warnings(
 logging.basicConfig(
     format='%(levelname)s:%(message)s',
     filename='results.log',
-    level=logging.DEBUG)
+    level=logging.WARN)
 
 
 PROPERTY_FILE_LOCATION = os.getenv("PROPERTY_FILE_LOCATION", os.path.join(
@@ -34,6 +34,13 @@ def does_region_match(prop, region):
 def does_environment_match(prop, environment):
     if 'environment' in prop:
         return str.upper(environment) == str.upper(prop['environment'])
+    else:
+        return True
+
+
+def does_visibility_match(prop, environment):
+    if 'visibility' in prop:
+        return str.upper(environment) == str.upper(prop['visibility'])
     else:
         return True
 
@@ -75,13 +82,27 @@ def get_server_prop(server_properties, prop):
 
 
 def check_key_is_equivalent(key, prop, server_prop, server_name, error_list):
-    if key in prop and prop[key] != server_prop[key]:
-        error_list.append({
-            "{}:{}".format(prop['name'], key): {
-                "local": prop[key],
-                server_name: server_prop[key]
-            }
-        })
+    if key in prop:
+        local_property = prop[key]
+        server_property = server_prop[key]
+        if isinstance(local_property, list) and isinstance(
+                server_property, list):
+            local_property = set(local_property)
+            server_property = set(server_property)
+
+        if local_property != server_property:
+            logging.error({
+                "{}:{}".format(prop['name'], key): {
+                    "local": prop[key],
+                    server_name: server_prop[key]
+                }
+            })
+            error_list.append({
+                "{}:{}".format(prop['name'], key): {
+                    "local": prop[key],
+                    server_name: server_prop[key]
+                }
+            })
 
 
 def compare_environment_configurations(environments_json, environment,
@@ -108,7 +129,7 @@ def compare_environment_configurations(environments_json, environment,
         (prop['value'] for prop in server_properties if prop[
             'name'] == 'ae.node.name.for.signoff'), None)
 
-    logging.debug("Compare for %s %s", environment_key, server_name)
+    logging.warn("Compare for %s %s", environment_key, server_name)
     if server_name is not None:
         logging.debug(
             "Check that server %s should be checked", server_name)
@@ -122,7 +143,8 @@ def compare_environment_configurations(environments_json, environment,
                 for prop in prop_file_as_json['properties']:
                     if not is_prop_ignored(prop) and does_region_match(
                         prop, region) and does_environment_match(
-                          prop, environment):
+                            prop, environment) and does_visibility_match(
+                                prop, environment):
                         logging.debug(
                             ('retrieve prop by name and compare defaultValue,'
                              ' reloadable, source, value, and versionAdded'))
@@ -133,9 +155,9 @@ def compare_environment_configurations(environments_json, environment,
                                 ('%s not found. make sure that the version is'
                                  ' not yet released to environment'),
                                 environments_json[environment_key][
-                                    'releasedVersion'])
+                                    'versionReleased'])
                             if prop['versionAdded'] != environments_json[
-                                  environment_key]['releasedVersion']:
+                                    environment_key]['versionReleased']:
                                 error_list.append(
                                     {
                                         "{}:{}:not-found".format(
@@ -167,12 +189,14 @@ def compare_environment_configurations(environments_json, environment,
             environments_json[environment_key]['servers'].remove(server_name)
 
         if len(environments_json[environment_key]['servers']) > 0:
-            error_list + compare_environment_configurations(
+            error_list = error_list + compare_environment_configurations(
                 environments_json, environment, visibility, region)
+            logging.warn("current error list: {}".format(error_list))
     else:
         logging.debug("Server name is empty")
-        error_list + compare_environment_configurations(
+        error_list = error_list + compare_environment_configurations(
             environments_json, environment, visibility, region)
+        logging.warn("current error list: {}".format(error_list))
 
     return error_list
 
@@ -184,24 +208,25 @@ if __name__ == '__main__':
         PROPERTY_FILE_LOCATION,
         ENVIRONMENT_FILE_LOCATION)
 
+    error_list = []
     environments_json = None
     with open(ENVIRONMENT_FILE_LOCATION, 'r') as f:
         environments_json = json.loads(f.read())
-    for environment in [
-        ('Staging', 'External', 'IAD3'),
-        ('Staging', 'External', 'LON3')
-    ]:
-        error_list = compare_environment_configurations(environments_json,
-                                                        *environment)
-        results = {
-            "status": "success",
-            "error_list": []
-        }
-        if len(error_list) > 0:
-            logging.debug("Comparison for %s failed!", environment)
-            results['status'] = 'failure'
-            for error in error_list:
-                logging.debug(error)
-                results['error_list'].append(error)
+
+    environment_tuple_list = [
+        tuple(e.split('_')) for e in environments_json.keys()]
+    for environment in environment_tuple_list:
+        error_list = error_list + compare_environment_configurations(
+            environments_json, *environment)
+    results = {
+        "status": "success",
+        "error_list": []
+    }
+    if len(error_list) > 0:
+        logging.debug("Comparison for %s failed!", environment)
+        results['status'] = 'failure'
+        for error in error_list:
+            logging.debug(error)
+            results['error_list'].append(error)
     logging.debug("finish comparison of property variables")
     print(json.dumps(results))

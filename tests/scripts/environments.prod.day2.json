@@ -1,0 +1,64 @@
+{
+    "Prod_External_ORD1": {
+        "endpoint": "https://identity.api.rackspacecloud.com",
+        "servers": [
+            "cidm-extapp-n04.prod.ord1.cidm.rackspace.net",
+            "cidm-extapp-n05.prod.ord1.cidm.rackspace.net",
+            "cidm-extapp-n06.prod.ord1.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Prod_External_LON3": {
+        "endpoint": "https://lon.identity.api.rackspacecloud.com",
+        "servers": [
+            "cidm-extapp-n03.prod.lon3.cidm.rackspace.net",
+            "cidm-extapp-n04.prod.lon3.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Prod_External_DFW3": {
+        "endpoint": "https://dfw.identity.api.rackspacecloud.com",
+        "servers": [
+            "cidm-extapp-n03.prod.dfw3.cidm.rackspace.net",
+            "cidm-extapp-n04.prod.dfw3.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Prod_External_SYD2": {
+        "endpoint": "https://syd.identity.api.rackspacecloud.com",
+        "servers": [
+            "cidm-extapp-n03.prod.syd2.cidm.rackspace.net",
+            "cidm-extapp-n04.prod.syd2.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Prod_Internal_ORD1": {
+        "endpoint": "https://identity-internal.api.rackspacecloud.com",
+        "servers": [
+            "cidm-intapp-n03.prod.ord1.cidm.rackspace.net",
+            "cidm-intapp-n04.prod.ord1.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Prod_Internal_LON3": {
+        "endpoint": "https://lon.identity-internal.api.rackspacecloud.com",
+        "servers": [
+            "cidm-intapp-n02.prod.lon3.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Prod_Internal_DFW3": {
+        "endpoint": "https://dfw.identity-internal.api.rackspacecloud.com",
+        "servers": [
+            "cidm-intapp-n02.prod.dfw3.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    },
+    "Prod_Internal_SYD2": {
+        "endpoint": "https://syd.identity-internal.api.rackspacecloud.com",
+        "servers": [
+            "cidm-intapp-n02.prod.syd2.cidm.rackspace.net"
+        ],
+        "versionReleased": "3.21.2"
+    }
+}

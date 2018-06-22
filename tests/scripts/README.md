@@ -8,7 +8,7 @@ In order to validate that the configuration properties on deployed servers are
 what we expect them to be, we need to pull down the property values and
 compare them against the expected properties in our repository.
 
-### This script consist of three files:
+### This script consist of three files
 
 * `comparison.py` runs the comparison.  The result is a JSON output that
   specifies the result status (`success` or `failure`) and an `error_list`
@@ -21,7 +21,7 @@ compare them against the expected properties in our repository.
 * `environments.json` specifies the region, environment, endpoints and list
   of servers to compare against.
 
-### The following environment variables should be provided to the script:
+### The following environment variables should be provided to the script
 
 * `DEVOPS_USER` - user id that is able to retrieve properties.
 * `DEVOPS_PASSWORD` - user id that is able to retrieve properties.
@@ -40,4 +40,3 @@ docker run -ti --rm \
     -e PROPERTY_FILE_LOCATION=/opt/properties.json \
     cid-compare:latest sh -c "python /opt/comparison.py | /usr/bin/jq ."
 ```
-
