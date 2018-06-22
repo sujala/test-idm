@@ -25,11 +25,12 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.sub_users = []
 
     @attr(type='regression')
-    def test_cru_nested_da(self):
+    def test_crud_nested_da(self):
 
         parent_nest_level = 2
         _, parent_da_id = self.call_create_delegation_agreement(
-            client=self.user_admin_client, delegate_id=self.user_admin_2_id,
+            client=self.user_admin_client,
+            delegate_id=self.user_admin_2_id,
             sub_agreement_nest_level=parent_nest_level)
         get_parent_da_resp = self.user_admin_client.get_delegation_agreement(
             da_id=parent_da_id)
@@ -94,6 +95,21 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             nested_da_name=nested_da_name, nested_da_id=nested_da_id,
             parent_nest_level=parent_nest_level)
 
+        # Delete parent DA
+        resp = self.user_admin_client.delete_delegation_agreement(
+            da_id=parent_da_id)
+        self.assertEqual(resp.status_code, 204)
+
+        # Get Parent DA
+        resp = self.user_admin_client.get_delegation_agreement(
+            da_id=parent_da_id)
+        self.assertEqual(resp.status_code, 404)
+
+        # Get Child DA - will be deleted due to parent DA delete.
+        resp = self.user_admin_client.get_delegation_agreement(
+            da_id=nested_da_id)
+        self.assertEqual(resp.status_code, 404)
+
     def validate_update_nested_da(self, nested_da_name, nested_da_id,
                                   parent_nest_level):
 
@@ -106,9 +122,9 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         )
         self.assertEqual(update_resp.status_code, 400)
         self.assertEqual(
-          update_resp.json()[const.BAD_REQUEST][const.MESSAGE],
-          ("Error code: 'GEN-007'; subAgreementNestLevel value must "
-           "be between 0 and {0}".format(parent_nest_level - 1)))
+            update_resp.json()[const.BAD_REQUEST][const.MESSAGE],
+            ("Error code: 'GEN-007'; subAgreementNestLevel value must "
+             "be between 0 and {0}".format(parent_nest_level - 1)))
 
         # update with a valid nest-level
         da_req = requests.DelegationAgreements(
