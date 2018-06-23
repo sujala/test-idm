@@ -23,9 +23,28 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         cls.sub_user_id = cls.sub_user_client.default_headers[const.X_USER_ID]
         cls.users = []
 
+        cls.hierarchical_observer_role_id = cls.get_role_id_by_name(
+            role_name=const.HIERARCHICAL_OBSERVER_ROLE_NAME)
+
+        cls.hierarchical_billing_observer_role_id = cls.get_role_id_by_name(
+            role_name=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME)
+
+        cls.hierarchical_ticket_observer_role_id = cls.get_role_id_by_name(
+            role_name=const.HIERARCHICAL_TICKET_OBSERVER_ROLE_NAME)
+
     def setUp(self):
 
         super(TestRoleAssignmentsWithDelegation, self).setUp()
+
+    @classmethod
+    def get_role_id_by_name(cls, role_name):
+
+        option = {
+            const.PARAM_ROLE_NAME: role_name
+        }
+        get_role_resp = cls.user_admin_client.list_roles(option=option)
+        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
+        return role_id
 
     def create_delegation_agreement(self, client, user_id, principal_id):
 
@@ -330,6 +349,77 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         resp = ua_client2.add_tenant_role_assignments_to_delegation_agreement(
             nested_da_id, request_object=tenants_role_assignment_req)
         self.assertEqual(resp.status_code, 403)
+
+    def test_hierarchical_role_on_nested_DA(self):
+
+        # Create parent DA
+        da_name = self.generate_random_string(
+            pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
+        da_resp, parent_da_id = self.call_create_delegation_agreement(
+            client=self.user_admin_client, delegate_id=self.user_admin2_id,
+            da_name=da_name, allow_sub_agreements=True)
+
+        # Create role, tenants and role assignment dicts
+        role = self.create_role()
+        tenant_1 = self.create_tenant()
+        tenant_2 = self.create_tenant()
+        tenant_observer_assignment_req = self.generate_tenants_assignment_dict(
+            self.hierarchical_observer_role_id, tenant_2.id, tenant_1.id)
+        tenant_billing_assignment_req = self.generate_tenants_assignment_dict(
+            self.hierarchical_billing_observer_role_id, tenant_2.id)
+        tenant_ticketing_assignment_req = (
+            self.generate_tenants_assignment_dict(
+                self.hierarchical_ticket_observer_role_id, tenant_1.id))
+        tenant_other_role_assignment_req = (
+            self.generate_tenants_assignment_dict(
+                role.id, tenant_1.id))
+
+        # Create nested DA
+        nested_da_name = self.generate_random_string(
+            pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
+        da_req = requests.DelegationAgreements(
+            da_name=nested_da_name, parent_da_id=parent_da_id)
+        resp = self.user_admin_client_2.create_delegation_agreement(
+            request_object=da_req)
+        nested_da_id = resp.json()[
+            const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
+
+        # Grant hierarchical roles and a regular role to nested DA
+        ua_client2 = self.user_admin_client_2
+        tenants_child_role_assignments_req = requests.TenantRoleAssignments(
+            tenant_billing_assignment_req, tenant_ticketing_assignment_req,
+            tenant_other_role_assignment_req)
+        resp = ua_client2.add_tenant_role_assignments_to_delegation_agreement(
+            nested_da_id, request_object=tenants_child_role_assignments_req)
+        self.assertEqual(resp.status_code, 403)
+
+        # Grant corresponding parent role to parent DA i.e. 'observer' and
+        # the other regular role
+        tenants_parent_role_assignment_req = requests.TenantRoleAssignments(
+            tenant_observer_assignment_req, tenant_other_role_assignment_req)
+        ua_client = self.user_admin_client
+        resp = ua_client.add_tenant_role_assignments_to_delegation_agreement(
+            parent_da_id, request_object=tenants_parent_role_assignment_req)
+        self.assertEqual(resp.status_code, 200)
+
+        # Grant hierarchical roles and the regular role to nested DA
+        resp = ua_client2.add_tenant_role_assignments_to_delegation_agreement(
+            nested_da_id, request_object=tenants_child_role_assignments_req)
+        self.assertEqual(resp.status_code, 200)
+
+        billing_observer_role_present = False
+        ticketing_observer_role_present = False
+        for ta in resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+              const.TENANT_ASSIGNMENTS]:
+            if ta[const.ON_ROLE] == self.hierarchical_billing_observer_role_id:
+                self.assertEqual(ta[const.FOR_TENANTS], [tenant_2.id])
+                billing_observer_role_present = True
+            if ta[const.ON_ROLE] == (
+                    self.hierarchical_ticket_observer_role_id):
+                self.assertEqual(ta[const.FOR_TENANTS], [tenant_1.id])
+                ticketing_observer_role_present = True
+        self.assertTrue(billing_observer_role_present)
+        self.assertTrue(ticketing_observer_role_present)
 
     def tearDown(self):
         super(TestRoleAssignmentsWithDelegation, self).tearDown()
