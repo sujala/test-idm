@@ -454,6 +454,42 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         )
     }
 
+    def "When fed user's email changes, feed event is sent"() {
+        given:
+        def fedRequest = createFedRequest().with {
+            it.email = "newEmail"
+            it
+        }
+
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def authClientResponse = cloud20.authenticateV2FederatedUser(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+        assert authClientResponse.status == SC_OK
+
+        when:
+        resetCloudFeedsMock()
+        fedRequest.email = "newEmail2" // Update email
+        samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def updateResponse = cloud20.authenticateV2FederatedUser(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+
+        then: "Response contains appropriate content"
+        updateResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse response = updateResponse.getEntity(AuthenticateResponse).value
+        EndUser fedUser = identityUserService.getEndUserById(response.user.id)
+
+        and: "verify that only 1 event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "verify that the UPDATE event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateFedUserFeedsRequest(fedUser, EventType.UPDATE.name()),
+                VerificationTimes.exactly(1)
+        )
+    }
+
+
     def void verifyAuthenticateResult(FederatedDomainAuthGenerationRequest originalRequest, AuthenticateResponse authResponse, AuthenticatedByMethodGroup authByGroup, User userAdminEntity) {
         //check the user object
         assert authResponse.user.id != null
