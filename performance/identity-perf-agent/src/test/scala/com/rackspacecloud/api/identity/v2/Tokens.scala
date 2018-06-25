@@ -12,13 +12,13 @@ import com.rackspacecloud.scenarios.Identity.{created_users_writer, write_create
 import scala.{Console => ScalaConsole}
 //import com.rackspace.idm.federation.samlgenerator.FederatedAuthV2
 import sys.process._
-import org.opensaml.core.config.InitializationService
+//import org.opensaml.core.config.InitializationService
 import collection.JavaConversions._
-import com.rackspace.idm.federation.samlgenerator.v2.FederatedDomainAuthRequestGenerator
-import com.rackspace.idm.federation.samlgenerator.v2.ResponseFlavor
-import com.rackspace.idm.federation.samlgenerator.v2.FederatedDomainAuthGenerationRequest
-import org.joda.time.DateTime
-import com.rackspace.idm.federation.utils.SamlCredentialUtils
+//import com.rackspace.idm.federation.samlgenerator.v2.FederatedDomainAuthRequestGenerator
+//import com.rackspace.idm.federation.samlgenerator.v2.ResponseFlavor
+//import com.rackspace.idm.federation.samlgenerator.v2.FederatedDomainAuthGenerationRequest
+//import org.joda.time.DateTime
+//import com.rackspace.idm.federation.utils.SamlCredentialUtils
 import java.util.UUID
 
 object Tokens {
@@ -33,7 +33,7 @@ object Tokens {
   }
   // Initializes underlying xml engine for the saml generator.
   // You'll get a null pointer exception in that engine's marshalling code if it's not here.
-  InitializationService.initialize() 
+//  InitializationService.initialize()
   val DEFAULT_BROKER_PRIVATE_KEY = "sample_keys/fed-broker.pkcs8"
   val DEFAULT_BROKER_PUBLIC_KEY = "sample_keys/fed-broker.crt"
   val DEFAULT_ORIGIN_PRIVATE_KEY = "sample_keys/fed-origin.pkcs8"
@@ -46,9 +46,9 @@ object Tokens {
   val originPrivateKey = DEFAULT_ORIGIN_PRIVATE_KEY
   val originPublicKey = DEFAULT_ORIGIN_PUBLIC_KEY
   
-  val brokerCredential = SamlCredentialUtils.getSigningCredential(brokerPublicKey, brokerPrivateKey)
-  val originCredential = SamlCredentialUtils.getSigningCredential(originPublicKey, originPrivateKey)
-  val generator = new FederatedDomainAuthRequestGenerator(brokerCredential, originCredential)
+//  val brokerCredential = SamlCredentialUtils.getSigningCredential(brokerPublicKey, brokerPrivateKey)
+//  val originCredential = SamlCredentialUtils.getSigningCredential(originPublicKey, originPrivateKey)
+//  val generator = new FederatedDomainAuthRequestGenerator(brokerCredential, originCredential)
 
   val usersFeeder = csv(DATA_LOCATION + "data/identity/users_tokens.dat").circular
   val usersFeeder_v20_admin = csv(DATA_LOCATION + "data/identity/admin_users_tokens.dat").circular
@@ -105,124 +105,124 @@ object Tokens {
       .check(status.is(200)))
       .exitHereIfFailed
   }
-  def v20_saml_authenticate: ChainBuilder = {
-    feed(fedDomainFeeder)
-      .exec(http("POST /v2.0/RAX-AUTH/federation/saml/auth")
-      .post("/v2.0/RAX-AUTH/federation/saml/auth")
-      .header("X-Forwarded-For", "${ipaddress}")
-      .header("Accept-Encoding", "identity")
-      .header("Content-Type", "application/xml")
-      .body(StringBody(session => {
-////         val output = command.!!
-//         val baos = new ByteArrayOutputStream
-//         val ps = new PrintStream(baos)
-//         // val args = Array("/usr/bin/java", "-jar", "/root/identity-perf-agent/saml-generator.jar", "v2", "-domain="+ session("domainid").as[String], "-responseFlavor=v2DomainOrigin", "-originIssuer=https://perf-" + session("domainid").as[String] + ".issuer.com", "-roles=object-store:observer")
-//         val args = Array("-domain", session("domainid").as[String], "-responseFlavor", "v2DomainOrigin", "-originIssuer", "https://perf-" + session("domainid").as[String] + ".issuer.com", "-roles", "object-store:observer")
-//         ScalaConsole.withOut(ps)({
-//		new FederatedAuthV2().processV2AuthRequest(args: _*)})
-//         baos.toString()
-         // output
-
-     // Try #2
-     val domain = session("domainid").as[String] 
-     val username = String.format("User%s", UUID.randomUUID().toString())
-     val email = "federated@rackspace.com"
-     val roleNames = Set("object-store:observer")
-     val brokerIssuer = null
-     val originIssuer = "https://perf-" + domain+ ".issuer.com"
-     val tokenExpirationSeconds = 5000
-     val PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
-     val rawFlavor = "v2DomainOrigin"
-     val responseFlavor = ResponseFlavor.fromFlavor(rawFlavor)
-     val request= new FederatedDomainAuthGenerationRequest()
-     request.setUsername(username)
-     request.setEmail(email)
-     request.setDomainId(domain)
-     request.setRoleNames(roleNames)
-     request.setBrokerIssuer(brokerIssuer)
-     request.setOriginIssuer(originIssuer)
-     request.setValiditySeconds(tokenExpirationSeconds)
-     request.setAuthContextRefClass(PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
-     request.setRequestIssueInstant(new DateTime())
-     request.setResponseFlavor(responseFlavor.asInstanceOf[ResponseFlavor])
-     val response = generator.createSignedSAMLResponse(request)
-     val result = generator.convertResponseToString(response)
-     println(result)
-      result
-      })) 
-      .check(status.is(200), status.saveAs("status"), bodyString.saveAs("responseBody")))
-      .exitHereIfFailed
-  }
-  def v20_saml_authenticate_same_user: ChainBuilder = {
-    feed(fedDomainFeeder)
-      .exec(http("POST /v2.0/RAX-AUTH/federation/saml/auth")
-        .post("/v2.0/RAX-AUTH/federation/saml/auth")
-        .header("X-Forwarded-For", "${ipaddress}")
-        .header("Accept-Encoding", "identity")
-        .header("Content-Type", "application/xml")
-        .body(StringBody(session => {
-          val domain = session("domainid").as[String]
-          val username = s"fed_user_$domain"
-          val email = "federated@rackspace.com"
-          val brokerIssuer = null
-          val originIssuer = "https://perf-" + domain+ ".issuer.com"
-          val tokenExpirationSeconds = 5000
-          val PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
-          val rawFlavor = "v2DomainOrigin"
-          val responseFlavor = ResponseFlavor.fromFlavor(rawFlavor)
-          val request= new FederatedDomainAuthGenerationRequest()
-          request.setUsername(username)
-          request.setEmail(email)
-          request.setDomainId(domain)
-          request.setBrokerIssuer(brokerIssuer)
-          request.setOriginIssuer(originIssuer)
-          request.setValiditySeconds(tokenExpirationSeconds)
-          request.setAuthContextRefClass(PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
-          request.setRequestIssueInstant(new DateTime())
-          request.setResponseFlavor(responseFlavor.asInstanceOf[ResponseFlavor])
-          val response = generator.createSignedSAMLResponse(request)
-          val result = generator.convertResponseToString(response)
-          println(result)
-          result
-        }))
-        .check(status.is(200), status.saveAs("status"), bodyString.saveAs("responseBody")))
-      .exitHereIfFailed
-  }
-  def v20_saml_authenticate_same_user_old_endpoint: ChainBuilder = {
-    feed(fedDomainFeeder)
-      .exec(http("POST /v2.0/RAX-AUTH/saml-tokens")
-        .post("/v2.0/RAX-AUTH/saml-tokens")
-        .header("X-Forwarded-For", "${ipaddress}")
-        .header("Accept-Encoding", "identity")
-        .header("Content-Type", "application/xml")
-        .body(StringBody(session => {
-          val domain = session("domainid").as[String]
-          val username = s"fed_user_$domain"
-          val email = "federated@rackspace.com"
-          val brokerIssuer = null
-          val originIssuer = "https://perf-" + domain+ ".issuer.com"
-          val tokenExpirationSeconds = 5000
-          val PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
-          val rawFlavor = "v2DomainOrigin"
-          val responseFlavor = ResponseFlavor.fromFlavor(rawFlavor)
-          val request= new FederatedDomainAuthGenerationRequest()
-          request.setUsername(username)
-          request.setEmail(email)
-          request.setDomainId(domain)
-          request.setBrokerIssuer(brokerIssuer)
-          request.setOriginIssuer(originIssuer)
-          request.setValiditySeconds(tokenExpirationSeconds)
-          request.setAuthContextRefClass(PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
-          request.setRequestIssueInstant(new DateTime())
-          request.setResponseFlavor(responseFlavor.asInstanceOf[ResponseFlavor])
-          val response = generator.createSignedSAMLResponse(request)
-          val result = generator.convertResponseToString(response)
-          println(result)
-          result
-        }))
-        .check(status.is(200), status.saveAs("status"), bodyString.saveAs("responseBody")))
-      .exitHereIfFailed
-  }
+//  def v20_saml_authenticate: ChainBuilder = {
+//    feed(fedDomainFeeder)
+//      .exec(http("POST /v2.0/RAX-AUTH/federation/saml/auth")
+//      .post("/v2.0/RAX-AUTH/federation/saml/auth")
+//      .header("X-Forwarded-For", "${ipaddress}")
+//      .header("Accept-Encoding", "identity")
+//      .header("Content-Type", "application/xml")
+//      .body(StringBody(session => {
+//////         val output = command.!!
+////         val baos = new ByteArrayOutputStream
+////         val ps = new PrintStream(baos)
+////         // val args = Array("/usr/bin/java", "-jar", "/root/identity-perf-agent/saml-generator.jar", "v2", "-domain="+ session("domainid").as[String], "-responseFlavor=v2DomainOrigin", "-originIssuer=https://perf-" + session("domainid").as[String] + ".issuer.com", "-roles=object-store:observer")
+////         val args = Array("-domain", session("domainid").as[String], "-responseFlavor", "v2DomainOrigin", "-originIssuer", "https://perf-" + session("domainid").as[String] + ".issuer.com", "-roles", "object-store:observer")
+////         ScalaConsole.withOut(ps)({
+////		new FederatedAuthV2().processV2AuthRequest(args: _*)})
+////         baos.toString()
+//         // output
+//
+//     // Try #2
+//     val domain = session("domainid").as[String]
+//     val username = String.format("User%s", UUID.randomUUID().toString())
+//     val email = "federated@rackspace.com"
+//     val roleNames = Set("object-store:observer")
+//     val brokerIssuer = null
+//     val originIssuer = "https://perf-" + domain+ ".issuer.com"
+//     val tokenExpirationSeconds = 5000
+//     val PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+//     val rawFlavor = "v2DomainOrigin"
+//     val responseFlavor = ResponseFlavor.fromFlavor(rawFlavor)
+//     val request= new FederatedDomainAuthGenerationRequest()
+//     request.setUsername(username)
+//     request.setEmail(email)
+//     request.setDomainId(domain)
+//     request.setRoleNames(roleNames)
+//     request.setBrokerIssuer(brokerIssuer)
+//     request.setOriginIssuer(originIssuer)
+//     request.setValiditySeconds(tokenExpirationSeconds)
+//     request.setAuthContextRefClass(PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
+//     request.setRequestIssueInstant(new DateTime())
+//     request.setResponseFlavor(responseFlavor.asInstanceOf[ResponseFlavor])
+//     val response = generator.createSignedSAMLResponse(request)
+//     val result = generator.convertResponseToString(response)
+//     println(result)
+//      result
+//      }))
+//      .check(status.is(200), status.saveAs("status"), bodyString.saveAs("responseBody")))
+//      .exitHereIfFailed
+//  }
+//  def v20_saml_authenticate_same_user: ChainBuilder = {
+//    feed(fedDomainFeeder)
+//      .exec(http("POST /v2.0/RAX-AUTH/federation/saml/auth")
+//        .post("/v2.0/RAX-AUTH/federation/saml/auth")
+//        .header("X-Forwarded-For", "${ipaddress}")
+//        .header("Accept-Encoding", "identity")
+//        .header("Content-Type", "application/xml")
+//        .body(StringBody(session => {
+//          val domain = session("domainid").as[String]
+//          val username = s"fed_user_$domain"
+//          val email = "federated@rackspace.com"
+//          val brokerIssuer = null
+//          val originIssuer = "https://perf-" + domain+ ".issuer.com"
+//          val tokenExpirationSeconds = 5000
+//          val PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+//          val rawFlavor = "v2DomainOrigin"
+//          val responseFlavor = ResponseFlavor.fromFlavor(rawFlavor)
+//          val request= new FederatedDomainAuthGenerationRequest()
+//          request.setUsername(username)
+//          request.setEmail(email)
+//          request.setDomainId(domain)
+//          request.setBrokerIssuer(brokerIssuer)
+//          request.setOriginIssuer(originIssuer)
+//          request.setValiditySeconds(tokenExpirationSeconds)
+//          request.setAuthContextRefClass(PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
+//          request.setRequestIssueInstant(new DateTime())
+//          request.setResponseFlavor(responseFlavor.asInstanceOf[ResponseFlavor])
+//          val response = generator.createSignedSAMLResponse(request)
+//          val result = generator.convertResponseToString(response)
+//          println(result)
+//          result
+//        }))
+//        .check(status.is(200), status.saveAs("status"), bodyString.saveAs("responseBody")))
+//      .exitHereIfFailed
+//  }
+//  def v20_saml_authenticate_same_user_old_endpoint: ChainBuilder = {
+//    feed(fedDomainFeeder)
+//      .exec(http("POST /v2.0/RAX-AUTH/saml-tokens")
+//        .post("/v2.0/RAX-AUTH/saml-tokens")
+//        .header("X-Forwarded-For", "${ipaddress}")
+//        .header("Accept-Encoding", "identity")
+//        .header("Content-Type", "application/xml")
+//        .body(StringBody(session => {
+//          val domain = session("domainid").as[String]
+//          val username = s"fed_user_$domain"
+//          val email = "federated@rackspace.com"
+//          val brokerIssuer = null
+//          val originIssuer = "https://perf-" + domain+ ".issuer.com"
+//          val tokenExpirationSeconds = 5000
+//          val PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+//          val rawFlavor = "v2DomainOrigin"
+//          val responseFlavor = ResponseFlavor.fromFlavor(rawFlavor)
+//          val request= new FederatedDomainAuthGenerationRequest()
+//          request.setUsername(username)
+//          request.setEmail(email)
+//          request.setDomainId(domain)
+//          request.setBrokerIssuer(brokerIssuer)
+//          request.setOriginIssuer(originIssuer)
+//          request.setValiditySeconds(tokenExpirationSeconds)
+//          request.setAuthContextRefClass(PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
+//          request.setRequestIssueInstant(new DateTime())
+//          request.setResponseFlavor(responseFlavor.asInstanceOf[ResponseFlavor])
+//          val response = generator.createSignedSAMLResponse(request)
+//          val result = generator.convertResponseToString(response)
+//          println(result)
+//          result
+//        }))
+//        .check(status.is(200), status.saveAs("status"), bodyString.saveAs("responseBody")))
+//      .exitHereIfFailed
+//  }
   def v20_impersonate: ChainBuilder = {
 
     feed(usersFeeder_v20_admin)

@@ -25,7 +25,7 @@ def add_role(headers, baseurl, user_id, role_name):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file_name",
-                        default="../identity-perf-agent/localhost/data/identity/dom_users_for_fed.dat",
+                        default="../localhost/data/identity/dom_users_for_fed.dat",
                         help="File with domain ids, but with providers")
 
     parser.add_argument(

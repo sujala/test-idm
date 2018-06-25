@@ -1,6 +1,0 @@
-falcon==1.2.0
-gunicorn
-cython
-SQLAlchemy==1.1.10
-alembic==0.9.2
-marshmallow-sqlalchemy==0.13.1

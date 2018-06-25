@@ -36,19 +36,19 @@ In order for us to validate any performance characteristics of the target identi
 
    4.4. Generate users in temporary directories (positional values are: ip, loops, normal users per loop, and admin users per loop): `pushd data_generation && ./create_users.sh http://${docker_ip}:8082/idm/cloud 1 10 5 && popd`.  This will create loops * (normal users per loop) users and loops * (admin users per loop) admins.
 
-   4.5. Generate admin user data: `pushd data_generation && ./generate_files.py -u admins -c admin_file_config.json -o ../identity-perf-agent/localhost/data/identity  && popd`
+   4.5. Generate admin user data: `pushd data_generation && ./generate_files.py -u admins -c admin_file_config.json -o ../localhost/data/identity  && popd`
 
-   4.6. Generate regular user data: `pushd data_generation && ./generate_files.py -u users -c file_config.json -o ../identity-perf-agent/localhost/data/identity && popd`
+   4.6. Generate regular user data: `pushd data_generation && ./generate_files.py -u users -c file_config.json -o ../localhost/data/identity && popd`
 
-   4.7. Generate regular user data: `pushd data_generation && ./generate_files.py -u default_users -c default_user_file_config.json -o ../identity-perf-agent/localhost/data/identity && popd`
+   4.7. Generate regular user data: `pushd data_generation && ./generate_files.py -u default_users -c default_user_file_config.json -o ../localhost/data/identity && popd`
 
    The next two sub-steps need to be run only if you want to test `list users in domain` call for memory leak testing.
 
    4.8. If you want to test `users in a domain` call, you need to create default users in the domain: `pushd data_generation && ./create_users_in_domain.py -p 10 -n 20 -i users -m 1 && popd`. This will also let you specify more than 1 domain, so that you can create users in multiple domains & then the api call will be made for all those domains.
 
-   4.9. Generate users in domain data: `pushd data_generation && ./generate_files.py -u users_in_dom -c users_in_domain.json -o ../identity-perf-agent/localhost/data/identity -i true && popd`
+   4.9. Generate users in domain data: `pushd data_generation && ./generate_files.py -u users_in_dom -c users_in_domain.json -o ../localhost/data/identity -i true && popd`
 
-   4.10. If you need to do federation tests. You need to run this before running Engine.scala : `pushd data_generation && python create_idp_data.py -s http://localhost:8082/idm/cloud -f ../identity-perf-agent/localhost/data/identity/dom_users_for_fed.dat && popd`
+   4.10. If you need to do federation tests. You need to run this before running Engine.scala : `pushd data_generation && python create_idp_data.py -s http://localhost:8082/idm/cloud -f ../localhost/data/identity/dom_users_for_fed.dat && popd`
 
 5. Set up `identity-perf-agent/src/test/resources/application.properties` to the values you want to run with.  While there are many values, you can figure out the ones you need from your Simulation.  An example would be in `com.rackspacecloud.simulations.identity.IdentityDemo`:
 

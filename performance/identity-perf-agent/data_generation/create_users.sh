@@ -3,7 +3,7 @@ url=$1
 user_loops=$2
 users_per_loop=$3
 admins_per_loop=$4
-num_of_processes=30
+num_of_processes=$5
 mkdir -p users/
 mkdir -p admins/
 mkdir -p default_users/
