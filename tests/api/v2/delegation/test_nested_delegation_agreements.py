@@ -55,21 +55,6 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         nested_da_id = nested_da_resp.json()[
             const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
 
-        # CID-1551: Verify that role assignment to nested DAs is forbidden
-        role = self.create_role()
-        tenant_1 = self.create_tenant()
-
-        tenant_assignment_req = self.generate_tenants_assignment_dict(
-            role.id, tenant_1.id)
-        tenants_role_assignment_req = requests.TenantRoleAssignments(
-            tenant_assignment_req)
-
-        resp = self.user_admin_client_2.\
-            add_tenant_role_assignments_to_delegation_agreement(
-                da_id=nested_da_id,
-                request_object=tenants_role_assignment_req)
-        self.assertEqual(resp.status_code, 403)
-
         # Validate get da response
         get_nested_da_resp = self.user_admin_client_2.get_delegation_agreement(
             da_id=nested_da_id)

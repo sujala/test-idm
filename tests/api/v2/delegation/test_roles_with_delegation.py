@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*
 from munch import Munch
 
+from nose.plugins.attrib import attr
+
 from tests.api.v2.delegation import delegation
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
@@ -291,6 +293,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         )
         self.assertEqual(delete_resp.status_code, 404)
 
+    @attr(type='regression')
     def test_roles_on_nested_DA(self):
 
         # Create parent DA
@@ -350,6 +353,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
             nested_da_id, request_object=tenants_role_assignment_req)
         self.assertEqual(resp.status_code, 403)
 
+    @attr(type='regression')
     def test_hierarchical_role_on_nested_DA(self):
 
         # Create parent DA
