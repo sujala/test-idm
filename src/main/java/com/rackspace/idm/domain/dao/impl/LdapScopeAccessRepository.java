@@ -256,8 +256,6 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
         //NOTE:!! order precedence is important. Base classes should be further down in the check list.
         if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_USERSCOPEACCESS)) {
             return UserScopeAccess.class;
-        }else if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_CLIENTSCOPEACCESS)) {
-            return ClientScopeAccess.class;
         } else if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_RACKERSCOPEACCESS)) {
             return RackerScopeAccess.class;
         } else if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_IMPERSONATEDSCOPEACCESS)) {

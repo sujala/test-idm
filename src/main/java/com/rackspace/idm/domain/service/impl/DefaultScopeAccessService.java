@@ -11,7 +11,6 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
@@ -580,15 +579,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
         final ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByAccessToken(tokenStr);
         logger.debug("Done getting access token by auth header {}", authHeader);
-        return scopeAccess;
-    }
-
-    @Override
-    public ClientScopeAccess getApplicationScopeAccess(Application application) {
-        logger.debug("Getting Client ScopeAccess by clientId", application.getClientId());
-        ClientScopeAccess scopeAccess;
-        scopeAccess = (ClientScopeAccess) this.scopeAccessDao.getMostRecentScopeAccessByClientId(application, application.getClientId());
-        logger.debug("Got Client ScopeAccess {} by clientId {}", scopeAccess, application.getClientId());
         return scopeAccess;
     }
 

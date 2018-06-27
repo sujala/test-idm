@@ -271,44 +271,6 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         1 * tenantService.doesUserContainTenantRole(user, _) >> true
     }
 
-    def "authorizeIdmSuperAdmin verifies the scopeAccess is not expired"() {
-        given:
-        def expiredScopeAccess = expireScopeAccess(createUserScopeAccess())
-
-        when:
-        def result = service.authorizeIdmSuperAdmin(expiredScopeAccess)
-
-        then:
-        1 * scopeAccessService.isScopeAccessExpired(_) >> true
-        result == false
-    }
-
-    def "authorizeIdmSuperAdmin verifies scopeAccess belongs to a cloudServiceAdmin"() {
-        given:
-        def userScopeAccess = createUserScopeAccess()
-
-        when:
-        def result = service.authorizeIdmSuperAdmin(userScopeAccess)
-
-        then:
-        result == false
-    }
-
-    def "authorizeIdmSuperAdmin allows access with valid role and non expired token"() {
-        given:
-        def scopeAccess = createUserScopeAccess()
-        def user = entityFactory.createUser()
-
-        when:
-        def result = service.authorizeIdmSuperAdmin(scopeAccess)
-
-        then:
-        result == true
-        1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
-        1 * userService.getUserByScopeAccess(scopeAccess) >> user
-        1 * tenantService.doesUserContainTenantRole(user, _) >> true
-    }
-
     def "hasDefaultUserRole calls tenantService to user is not null" () {
         given:
         def user = null

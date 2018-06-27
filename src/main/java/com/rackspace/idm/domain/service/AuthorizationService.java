@@ -11,16 +11,11 @@ import java.util.List;
 public interface AuthorizationService {
 
     boolean authorizeRacker(ScopeAccess scopeAccess);
-    boolean authorizeRackspaceClient(ScopeAccess scopeAccess);
-
-    boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess, ScopeAccess requestingScopeAccess);
-    boolean authorizeCustomerIdm(ScopeAccess scopeAccess);
     boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess);
     boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess);
     boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
     boolean authorizeUserManageRole(ScopeAccess scopeAccess);
     boolean authorizeCloudUser(ScopeAccess scopeAccess);
-    boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess);
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
 

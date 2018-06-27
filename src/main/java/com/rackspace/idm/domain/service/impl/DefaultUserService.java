@@ -1256,8 +1256,6 @@ public class DefaultUserService implements UserService {
                 //will be a "provisioned" user (User)
                 user = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
             }
-        } else if (scopeAccess instanceof ClientScopeAccess) {
-            return null;
         } else {
             throw new BadRequestException("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
         }

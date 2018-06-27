@@ -84,8 +84,6 @@ public interface ScopeAccessService {
 
     ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 
-    ClientScopeAccess getApplicationScopeAccess(Application application);
-
     RackerScopeAccess getRackerScopeAccessByClientId(Racker racker, String clientId);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);

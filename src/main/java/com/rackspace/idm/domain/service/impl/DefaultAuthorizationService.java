@@ -9,7 +9,6 @@ import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.DelegationPrincipal;
 import com.rackspace.idm.domain.entity.Domain;
@@ -349,88 +348,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         return false;
-    }
-
-    private boolean hasNullvalues(String... values){
-        for(String value : values){
-            if(value == null){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess) {
-        logger.debug("Authorizing {} as idm super admin", scopeAccess);
-
-        if (this.authorizeCustomerIdm(scopeAccess)) {
-            return true;
-        }
-
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        boolean authorized = authorize(user, scopeAccess, Arrays.asList(idmSuperAdminRole));
-
-        logger.debug("Authorized {} as idm super admin - {}", scopeAccess, authorized);
-        return authorized;
-    }
-
-    @Override
-    public boolean authorizeRackspaceClient(ScopeAccess scopeAccess) {
-        logger.debug("Authorizing {} as rackspace client", scopeAccess);
-        if (!(scopeAccess instanceof ClientScopeAccess)) {
-            return false;
-        }
-        boolean authorized = scopeAccess.getClientRCN().equalsIgnoreCase(this.getRackspaceCustomerId());
-        logger.debug("Authorized {} as rackspace client - {}", scopeAccess, authorized);
-        return authorized;
-    }
-
-    @Override
-    public boolean authorizeCustomerIdm(ScopeAccess scopeAccess) {
-        logger.debug("Authorizing {} as Idm", scopeAccess);
-        if (!(scopeAccess instanceof ClientScopeAccess)) {
-            return false;
-        }
-
-        boolean authorized = getIdmClientId().equalsIgnoreCase(scopeAccess.getClientId())
-                && getRackspaceCustomerId().equalsIgnoreCase(scopeAccess.getClientRCN());
-        logger.debug("Authorized {} as Idm - {}", scopeAccess, authorized);
-        return authorized;
-    }
-
-    @Override
-    public boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess,
-                                               ScopeAccess requestingScopeAccess) {
-        logger.debug("Authorizing as Requestor or Owner");
-
-        boolean isRequestor = requestingScopeAccess instanceof ClientScopeAccess
-                && targetScopeAccess != null
-                && requestingScopeAccess != null
-                && requestingScopeAccess.getClientId().equalsIgnoreCase(
-                targetScopeAccess.getClientId());
-
-        boolean isOwner = false;
-
-        if (targetScopeAccess instanceof ClientScopeAccess && requestingScopeAccess != null) {
-            isOwner = requestingScopeAccess.getClientId().equals(
-                    targetScopeAccess.getClientId());
-        } else if (targetScopeAccess instanceof UserScopeAccess && requestingScopeAccess instanceof UserScopeAccess) {
-            isOwner = ((UserScopeAccess) requestingScopeAccess).getUserRsId()
-                    .equals(((UserScopeAccess) targetScopeAccess).getUserRsId());
-        } else if (targetScopeAccess instanceof RackerScopeAccess && requestingScopeAccess instanceof RackerScopeAccess) {
-            isOwner = ((RackerScopeAccess) requestingScopeAccess).getRackerId()
-                    .equals(((RackerScopeAccess) targetScopeAccess).getRackerId());
-        }
-
-        logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor, isOwner);
-        return (isRequestor || isOwner);
-    }
-
-    public void verifyIdmSuperAdminAccess(String authHeader) {
-        if(!this.authorizeIdmSuperAdmin(scopeAccessService.getScopeAccessByAccessToken(authHeader))){
-            throw new ForbiddenException("Access denied");
-        }
     }
 
     @Override

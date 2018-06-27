@@ -112,7 +112,6 @@ class RootServiceTest extends Specification {
     @Shared PasswordComplexityService passwordComplexityService
     @Shared TenantService tenantService
     @Shared TenantTypeService tenantTypeService
-    @Shared TokenService tokenService
     @Shared SecretQAService secretQAService
     @Shared EndpointService endpointService
     @Shared AuthorizationService authorizationService
@@ -136,7 +135,6 @@ class RootServiceTest extends Specification {
     @Shared DefaultTenantService defaultTenantService
     @Shared DefaultGroupService defaultGroupService
     @Shared DefaultUserService defaultUserService
-    @Shared DefaultTokenService defaultTokenService
     @Shared DefaultSecretQAService defaultSecretQAService
     @Shared DefaultScopeAccessService defaultScopeAccessService
     @Shared DefaultApplicationService defaultApplicationService
@@ -424,11 +422,6 @@ class RootServiceTest extends Specification {
         service.multiFactorCloud20Service = multiFactorCloud20Service
     }
 
-    def mockTokenService(service) {
-        tokenService = Mock()
-        service.tokenService = tokenService
-    }
-
     def mockSecretQAService(service) {
         secretQAService = Mock()
         service.secretQAService = secretQAService
@@ -563,11 +556,6 @@ class RootServiceTest extends Specification {
     def mockDefaultUserService(service) {
         defaultUserService = Mock()
         service.defaultUserService = defaultUserService
-    }
-
-    def mockDefaultTokenService(service) {
-        defaultTokenService = Mock()
-        service.defaultTokenService = defaultTokenService
     }
 
     def mockAeTokenService(service) {
@@ -950,24 +938,6 @@ class RootServiceTest extends Specification {
         new ScopeAccess().with {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
-            it.uniqueId = dn
-            return it
-        }
-    }
-
-    def createClientScopeAccess() {
-        return createClientScopeAccess("clientId", "tokenString", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
-    }
-
-    def createClientScopeAccess(String clientId, String tokenString, Date expiration) {
-        clientId = clientId ? clientId : "clientId"
-        tokenString = tokenString ? tokenString : "tokenString"
-        def dn = "accessToken=$tokenString,cn=TOKENS,clientId=$clientId"
-
-        new ClientScopeAccess().with {
-            it.accessTokenString = tokenString
-            it.accessTokenExp = expiration
-            it.clientId = clientId
             it.uniqueId = dn
             return it
         }

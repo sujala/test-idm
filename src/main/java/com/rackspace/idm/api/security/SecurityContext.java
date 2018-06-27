@@ -102,7 +102,7 @@ public class SecurityContext {
     public BaseUserToken getAndVerifyEffectiveCallerTokenAsBaseToken(String expectedAuthToken) {
         ScopeAccess token = getAndVerifyEffectiveCallerToken(expectedAuthToken);
 
-        // The only ScopeAccess that is not a BaseUserToken is the unused ClientScopeAccess to this should never occur
+        // All existing ScopeAccess implementations implement BaseUserToken so this should never occur
         if (!(token instanceof BaseUserToken)) {
             throw new UnrecoverableIdmException("Unrecognized token type");
         }
