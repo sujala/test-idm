@@ -4,16 +4,13 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
-import com.rackspace.idm.audit.Audit
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.dao.impl.LdapRepository
-import com.rackspace.idm.domain.entity.Auditable
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.service.DelegationService
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.unboundid.ldap.sdk.Modification
-import com.unboundid.ldap.sdk.persist.LDAPPersistException
 import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.apache.commons.lang3.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -29,6 +26,7 @@ import testHelpers.RootIntegrationTest
 import javax.ws.rs.core.MediaType
 
 import static org.apache.http.HttpStatus.*
+import static com.rackspace.idm.Constants.*
 
 class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest {
 
@@ -114,6 +112,15 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
             callerToken = utils.createFederatedUserForAuthResponse(sharedUserAdmin.domainId).token.id
         }
 
+        if (callerToken == "rackerImpersonationToken") {
+            def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
+            callerToken = utils.impersonateWithToken(rackerToken, sharedUserAdmin).token.id
+        }
+
+        if (callerToken == "idAdminImpersonationToken") {
+            callerToken = utils.impersonateWithToken(utils.getIdentityAdminToken(), sharedUserAdmin).token.id
+        }
+
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
@@ -127,16 +134,29 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         then:
         createResponse.status == respCode
 
+        cleanup:
+        try {
+            def daId = createResponse.getEntity(DelegationAgreement).id
+            cloud20.deleteDelegationAgreement(sharedUserAdminToken, daId)
+        } catch (Exception ex) {
+            //eat
+        }
+
         where:
-        callerToken            | respCode | flag
-        sharedUserAdminToken   | 201      | false
-        sharedUserManagerToken | 403      | false
-        sharedSubUserToken     | 403      | false
-        "fedUserToken"         | 403      | false
-        sharedUserAdminToken   | 201      | true
-        sharedUserManagerToken | 201      | true
-        sharedSubUserToken     | 201      | true
-        "fedUserToken"         | 201      | true
+        callerToken                 | respCode | flag
+        sharedUserAdminToken        | 201      | false
+        sharedUserManagerToken      | 403      | false
+        sharedSubUserToken          | 403      | false
+        "fedUserToken"              | 403      | false
+        "idAdminImpersonationToken" | 201      | false
+        "rackerImpersonationToken"  | 201      | false
+
+        sharedUserAdminToken        | 201      | true
+        sharedUserManagerToken      | 201      | true
+        sharedSubUserToken          | 201      | true
+        "fedUserToken"              | 201      | true
+        "idAdminImpersonationToken" | 201      | true
+        "rackerImpersonationToken"  | 201      | true
     }
 
     /**
