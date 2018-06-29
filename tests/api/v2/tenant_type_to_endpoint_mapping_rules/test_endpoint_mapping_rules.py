@@ -37,8 +37,8 @@ INVALID_RESPONSE_DETAIL = "responseDetail: Invalid value"
 class TestAddEndpointMappingRule(base.TestBaseV2):
 
     """Add/Get/Delete Tenant Type to Endpoint Templates mapping rules Tests"""
-    @unless_coverage
     @classmethod
+    @unless_coverage
     def setUpClass(self):
         super(TestAddEndpointMappingRule, self).setUpClass()
 
@@ -799,7 +799,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             self.identity_admin_client.delete_tenant_type(name=tenant_type)
         super(TestAddEndpointMappingRule, self).tearDown()
 
-    @unless_coverage
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestAddEndpointMappingRule, cls).tearDownClass()

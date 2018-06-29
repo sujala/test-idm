@@ -1,4 +1,5 @@
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.utils import func_helper
@@ -14,6 +15,7 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
     """Tests for Fed User's global roles."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -33,10 +35,12 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
 
         cls.domain_ids.append(cls.domain_id)
 
+    @unless_coverage
     def setUp(self):
         super(TestFedUserGlobalRoles, self).setUp()
         self.users = []
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_fed_user_global_roles(self):
         """
@@ -83,6 +87,7 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         self.assertIn(const.USER_DEFAULT_ROLE_ID, role_ids)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         for user_id in self.users:
             resp = self.identity_admin_client.delete_user(user_id=user_id)
@@ -91,3 +96,8 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
                 msg='User with ID {0} failed to delete'.format(user_id))
         self.delete_client(self.user_admin_client)
         super(TestFedUserGlobalRoles, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestFedUserGlobalRoles, cls).tearDownClass()

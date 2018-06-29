@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -11,11 +12,21 @@ from tests.package.johny.v2.models import requests
 
 class TestServiceCatalogForImpersonation(base.TestBaseV2):
 
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        """Class level set up for the tests
+        Create users needed for the tests and generate clients for those users.
+        """
+        super(TestServiceCatalogForImpersonation, cls).setUpClass()
+
+    @unless_coverage
     def setUp(self):
         super(TestServiceCatalogForImpersonation, self).setUp()
         self.domain_id = func_helper.generate_randomized_domain_id(
             client=self.identity_admin_client)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_display_catalog_for_impersonation_token(self):
 
@@ -71,6 +82,7 @@ class TestServiceCatalogForImpersonation(base.TestBaseV2):
         self.assertNotEqual(list_resp.json()[const.ENDPOINTS], [])
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         super(TestServiceCatalogForImpersonation, self).tearDown()
         users = self.identity_admin_client.list_users_in_domain(self.domain_id)
@@ -90,3 +102,8 @@ class TestServiceCatalogForImpersonation(base.TestBaseV2):
         resp = self.identity_admin_client.delete_domain(self.domain_id)
         self.assertEqual(resp.status_code, 204, (
             'Domain with ID {0} failed to delete'.format(self.domain_id)))
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestServiceCatalogForImpersonation, cls).tearDownClass()

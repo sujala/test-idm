@@ -2,6 +2,7 @@
 import ddt
 from munch import Munch
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2.federation import federation
@@ -23,6 +24,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
     """
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """
         Class level set up for the tests
@@ -48,6 +50,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         resp = cls.identity_admin_client.add_user(req_object)
         cls.user_admin_2 = responses.User(resp.json())
 
+    @unless_coverage
     def setUp(self):
         super(TestDelegationWithFederation, self).setUp()
         self.group_ids = []
@@ -64,6 +67,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             'domain was not created successfully')
         return domain_id
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.data(['xml', False, False], ['formEncode', True, False],
               ['xml', False, True], ['formEncode', True, True])
@@ -107,6 +111,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
                                  principal_id=fed_user_id)
         self.validate_da_crd(client=fed_client, da_req=da_req)
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.data(['xml', False, False], ['formEncode', True, False],
               ['xml', False, True], ['formEncode', True, True])
@@ -190,6 +195,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         self.assertEqual(get_resp.status_code, 404)
 
     @federation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         for group_id, domain_id in self.group_ids:
             resp = self.identity_admin_client.delete_user_group_from_domain(
@@ -202,6 +208,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
 
     @classmethod
     @federation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDownClass(cls):
         # domain 1
         cls.delete_client(cls.user_admin_client)

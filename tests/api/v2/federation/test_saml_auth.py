@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 import ddt
 
 from tests.api.utils import saml_helper
@@ -16,6 +17,7 @@ class TestSAMLAuth(federation.TestBaseFederation):
     Currently only tests which involve setting the name."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -23,6 +25,7 @@ class TestSAMLAuth(federation.TestBaseFederation):
         """
         super(TestSAMLAuth, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestSAMLAuth, self).setUp()
         # create a cert
@@ -31,6 +34,7 @@ class TestSAMLAuth(federation.TestBaseFederation):
 
         self.idp = self.add_and_check_broker_idp(certs=[self.pem_encoded_cert])
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_cant_auth_with_broker_idp(self):
         """ Note: will fail once broker auth is enabled. """
@@ -60,9 +64,11 @@ class TestSAMLAuth(federation.TestBaseFederation):
             "Error code: 'FED2-004'; The Origin IDP is not valid")
         self.assertEquals(403, resp.status_code)
 
+    @unless_coverage
     def tearDown(self):
         super(TestSAMLAuth, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestSAMLAuth, cls).tearDownClass()

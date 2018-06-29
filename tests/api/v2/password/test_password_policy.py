@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
-
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -15,7 +15,7 @@ from tests.package.johny.v2 import client
 
 class TestPasswordPolicy(base.TestBaseV2):
     """Tests Create, Get, Update, Delete password policies."""
-
+    @unless_coverage
     def setUp(self):
         super(TestPasswordPolicy, self).setUp()
 
@@ -44,6 +44,7 @@ class TestPasswordPolicy(base.TestBaseV2):
         self.assertIsNotNone(get_user_resp.json()[const.USER][
                                const.RAX_AUTH_PASSWORD_EXPIRATION])
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_create_password_policy(self):
         self.assertEqual(self.resp.status_code, 200)
@@ -85,6 +86,7 @@ class TestPasswordPolicy(base.TestBaseV2):
         get_user_by_name_resp = user_admin_client.list_users(option=option)
         self.verify_get_user_response(get_user_resp=get_user_by_name_resp)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_update_password_policy(self):
         self.assertEqual(self.resp.status_code, 200)
@@ -111,6 +113,7 @@ class TestPasswordPolicy(base.TestBaseV2):
             resp.json()[const.PASSWORD_POLICY][const.PASSWORD_DURATION],
             new_duration)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_delete_password_policy(self):
         resp = self.identity_admin_client.delete_password_policy(
@@ -122,6 +125,7 @@ class TestPasswordPolicy(base.TestBaseV2):
         self.assertEqual(resp.status_code, 404)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         super(TestPasswordPolicy, self).tearDown()
         for user_id in self.user_ids:

@@ -1,4 +1,4 @@
-from qe_coverage.opencafe_decorators import tags
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -13,6 +13,7 @@ class RolesOnHiddenTenantsTests(base.TestBaseV2):
     for default users are shown appropriately for hidden & non-hidden tenants
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """
         SetUpClass() is creating user admin & default user for the tests.
@@ -82,6 +83,10 @@ class RolesOnHiddenTenantsTests(base.TestBaseV2):
             option=option)
         cls.tenant_access_role_id = tenant_access_role.json()[
             const.ROLES][0][const.ID]
+
+    @unless_coverage
+    def setUp(self):
+        super(RolesOnHiddenTenantsTests, self).setUp()
 
     @tags('positive', 'p1', 'regression')
     def test_auth_resp_shows_role_on_hidden_tenant(self):
@@ -159,7 +164,12 @@ class RolesOnHiddenTenantsTests(base.TestBaseV2):
             self.assertFalse(default_user_role_present, (
                 'default user got the unexpected role on the tenant'))
 
+    @unless_coverage
+    def tearDown(self):
+        super(RolesOnHiddenTenantsTests, self).tearDown()
+
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(RolesOnHiddenTenantsTests, cls).tearDownClass()
         cls.identity_admin_client.delete_user(cls.sub_user_id)

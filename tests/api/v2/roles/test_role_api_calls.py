@@ -289,7 +289,7 @@ class TestRoleApiCalls(base.TestBaseV2):
                     id_))
         super(TestRoleApiCalls, self).tearDown()
 
-    @unless_coverage
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestRoleApiCalls, cls).tearDownClass()

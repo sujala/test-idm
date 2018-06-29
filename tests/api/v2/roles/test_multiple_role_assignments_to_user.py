@@ -15,6 +15,7 @@ class TestMultipleRoleAssignmentsToUser(base.TestBaseV2):
     a single api call
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestMultipleRoleAssignmentsToUser, cls).setUpClass()
 
@@ -134,8 +135,8 @@ class TestMultipleRoleAssignmentsToUser(base.TestBaseV2):
                     self.assertEqual(
                         assignment[const.FOR_TENANTS], [tenant.id])
 
-    @unless_coverage
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         self.delete_client(self.user_admin_client,
                            parent_client=self.identity_admin_client)
@@ -155,3 +156,8 @@ class TestMultipleRoleAssignmentsToUser(base.TestBaseV2):
                 msg='Tenant with ID {0} failed to delete'.format(
                     tenant_id))
         super(TestMultipleRoleAssignmentsToUser, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestMultipleRoleAssignmentsToUser, cls).tearDownClass()

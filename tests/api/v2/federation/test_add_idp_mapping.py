@@ -6,6 +6,7 @@ import sys
 
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import data_file_iterator
 from tests.api.utils import func_helper
@@ -23,6 +24,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
     """Add IDP Mapping Tests"""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -53,6 +55,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         cls.default_headers = copy.deepcopy(
             cls.identity_admin_client.default_headers)
 
+    @unless_coverage
     def setUp(self):
         super(TestAddMappingIDP, self).setUp()
         self.idp_id = None
@@ -129,6 +132,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
         fed_token, _, _ = self.parse_auth_response(fed_auth)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
@@ -152,6 +156,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.validate_fed_user_auth_bad_request(
             cert_path, domain_id, issuer, key_path, self.identity_admin_client)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
@@ -182,6 +187,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path, self.domain_id, self.issuer, key_path,
             self.idp_user_admin_client)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
@@ -205,6 +211,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path, self.domain_id, self.issuer, key_path,
             self.idp_user_manage_client)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
@@ -224,6 +231,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.validate_fed_auth_success(
             cert_path, domain_id, issuer, key_path, self.identity_admin_client)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
@@ -254,6 +262,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path, self.domain_id, self.issuer, key_path,
             self.idp_user_admin_client)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
@@ -285,6 +294,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.idp_user_manage_client)
 
     # verify must have role manager for put, read only for get
+    @unless_coverage
     @attr(type='regression')
     @ddt.file_data('data_update_idp_mapping_policy.json')
     def test_add_mapping_manager_role(self, mapping):
@@ -297,6 +307,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=provider_id)
         self.assertEquals(resp_get_manager.status_code, 200)
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.file_data('data_update_idp_valid_mapping_policy.json')
     def test_add_mapping_valid_json(self, mapping):
@@ -315,6 +326,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                               const.JSON))
         self.assertEquals(resp_get_ro.json(), mapping)
 
+    @tags('negative', 'p0', 'regression')
     @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_invalid_policy.yaml",
@@ -346,6 +358,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertNotEquals(resp_get_ro.text, mapping)
         self.assertEquals(resp_get_ro.json(), current_resp_policy.json())
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
@@ -367,6 +380,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                           "No [JSON] mapping policy found for IDP with "
                           "ID {}.".format(provider_id))
 
+    @unless_coverage
     # Try none, empty {} [] for set
     @ddt.data({}, [], {"test": "test"})
     def test_add_mapping_invalid_json(self, mapping):
@@ -388,6 +402,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertEquals(resp_get_ro.json(), current_resp_policy.json())
 
     # idp missing causes 404
+    @unless_coverage
     @ddt.file_data('data_update_idp_mapping_policy.json')
     @attr('skip_at_gate')
     def test_add_mapping_missing_idp(self, mapping):
@@ -400,6 +415,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             const.MESSAGE], "Identity Provider with id/name: '{0}' was"
                             " not found.".format(idp_id))
 
+    @unless_coverage
     @ddt.data("xml", "xhtml_xml")
     @attr('skip_at_gate')
     def test_idp_mapping_content_type_xml(self, content_type):
@@ -415,6 +431,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.default_headers[const.CONTENT_TYPE])
         self.assertEquals(resp_put_manager.status_code, 400)
 
+    @unless_coverage
     @ddt.data("text", "x-www-form-urlencoded")
     def test_idp_mapping_content_type(self, content_type):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
@@ -428,6 +445,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.default_headers[const.CONTENT_TYPE])
         self.assertEquals(resp_put_manager.status_code, 415)
 
+    @unless_coverage
     @ddt.data("xml", "xhtml_xml", "x-www-form-urlencoded")
     def test_idp_mapping_accept_type(self, accept_type):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
@@ -452,6 +470,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.assertEquals(resp_get_ro.status_code, 200)
             self.assertEquals(resp_get_ro.json(), mapping)
 
+    @tags('negative', 'p0', 'regression')
     @attr(type='regression')
     def test_idp_mapping_max_size(self):
         max_size_in_kilo = self.test_config.max_mapping_policy_size_in_kb
@@ -476,6 +495,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                             "n {max_size}"
                             " Kilobytes.".format(max_size=max_size_in_kilo))
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_idp_mapping_upto_max_size(self):
         max_size_in_kilo = self.test_config.max_mapping_policy_size_in_kb
@@ -495,9 +515,11 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertEquals(resp_put_manager.status_code, 204)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         super(TestAddMappingIDP, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestAddMappingIDP, cls).tearDownClass()

@@ -2,6 +2,7 @@
 import copy
 
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -21,6 +22,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
     """IDP Metadata Tests."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -47,9 +49,11 @@ class TestIDPMetadata(federation.TestBaseFederation):
         cls.domain_ids = []
         cls.domain_ids.append(cls.domain_id)
 
+    @unless_coverage
     def setUp(self):
         super(TestIDPMetadata, self).setUp()
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_add_idp_auth_fed_user(self):
         '''
@@ -113,6 +117,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
         self.assertSchema(response=get_resp,
                           json_schema=updated_get_user_schema)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_update_idp_cert_w_metadata(self):
         '''
@@ -167,6 +172,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
             idp_id=idp_id, request_object=idp_request_object)
         self.assertEqual(resp.status_code, 403)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_list_idp(self):
         '''Test to List IDP.'''
@@ -180,6 +186,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp, json_schema=idp_json.list_idps)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_add_mapping_user_default(self):
         (pem_encoded_cert, cert_path, _, key_path,
@@ -190,6 +197,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
 
         self.assertEquals(resp.status_code, 403)
 
+    @tags('negative', 'p1', 'regression')
     def test_add_idp_with_dup_entityid(self):
         """
         CID-1156 was found during SIT by other team. Ideally would like to
@@ -219,10 +227,12 @@ class TestIDPMetadata(federation.TestBaseFederation):
             "Error code: 'FED_IDP-004'; Provider already exists with this "
             "issuer or entityID")
 
+    @unless_coverage
     def tearDown(self):
         super(TestIDPMetadata, self).tearDown()
 
     @classmethod
+    @unless_coverage
     @base.base.log_tearDown_error
     def tearDownClass(cls):
         super(TestIDPMetadata, cls).tearDownClass()

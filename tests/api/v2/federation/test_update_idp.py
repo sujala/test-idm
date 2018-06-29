@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper, saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -23,6 +24,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
     request, in the exact case in which it was originally provided
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -30,6 +32,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         """
         super(TestUpdateIDP, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestUpdateIDP, self).setUp()
 
@@ -64,6 +67,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         provider_name = resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
         return provider_id, provider_name
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_update_idp_valid_name(self):
         """Test update with valid name randomly generate name with
@@ -79,6 +83,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
                          idp_name)
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_update_idp_name_with_empty_string(self):
         """Update with empty string"""
@@ -101,6 +106,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             idp_id=provider_id, request_object=update_idp_obj)
         self.assertEqual(resp.status_code, 200)
 
+    @unless_coverage
     @attr(type='skip_at_gate')
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_approved_domain_ids_with_spaces(self, test_data):
@@ -134,6 +140,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(fed_auth.status_code, 200)
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_enable_disable_idp(self, test_data):
@@ -208,6 +215,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(fed_auth.status_code, 200)
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_domain_and_re_auth(self, test_data):
@@ -242,6 +250,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             test_data=test_data, key_path=key_path, cert_path=cert_path,
             issuer=issuer, domain_1=domain_id, domain_2=domain_id_2)
 
+    @tags('positive', 'p1', 'regression')
     @attr(type='regression')
     def test_update_idp_approved_domain_ids_with_duplicates(self):
         domain_id = func_helper.generate_randomized_domain_id(
@@ -266,6 +275,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             resp.json()[const.NS_IDENTITY_PROVIDER][const.APPROVED_DOMAIN_Ids],
             [domain_id])
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_update_idp_by_rcn_admin(self):
 
@@ -324,6 +334,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         # should be changed to test w/ an existing RCN in Staging/Prod,
         self.assertEqual(resp.status_code, 200)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_update_idp_by_user_clients(self):
         request_object = factory.get_domain_request_object({})
@@ -345,6 +356,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.clients.append(user_client)
         self.assert_update_idp(provider_id, user_client)
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.data("user:admin", "user:manage")
     def test_update_idp_by_user_clients_metadata(self, client_key):
@@ -383,6 +395,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.role_ids.append(role.id)
         return role
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.file_data('modified_saml_fed_auth.json')
     def test_fed_auth_with_modified_saml(self, test_data):
@@ -453,6 +466,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             const.CONTENT_TYPE] = 'application/xml'
         client_instance.serialize_format = 'xml'
 
+    @unless_coverage
     @base.base.log_tearDown_error
     def tearDown(self):
         if "user:manage" in self.user_clients:
@@ -486,5 +500,6 @@ class TestUpdateIDP(federation.TestBaseFederation):
         super(TestUpdateIDP, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestUpdateIDP, cls).tearDownClass()

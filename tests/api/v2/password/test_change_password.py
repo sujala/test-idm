@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -12,12 +13,13 @@ from tests.package.johny.v2 import client
 
 class TestChangePassword(base.TestBaseV2):
     """Tests Change password endpoint"""
-
+    @unless_coverage
     def setUp(self):
         super(TestChangePassword, self).setUp()
         self.user_ids = []
         self.domain_ids = []
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_change_password(self):
 
@@ -56,6 +58,7 @@ class TestChangePassword(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         super(TestChangePassword, self).tearDown()
         for user_id in self.user_ids:

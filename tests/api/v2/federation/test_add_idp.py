@@ -3,6 +3,7 @@ from allpairspy import AllPairs
 
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory
@@ -18,6 +19,7 @@ class TestAddIDP(federation.TestBaseFederation):
     """Add IDP Tests."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -25,9 +27,11 @@ class TestAddIDP(federation.TestBaseFederation):
         """
         super(TestAddIDP, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestAddIDP, self).setUp()
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_add_idp_email_domain(self):
         email_domains = []
@@ -81,6 +85,7 @@ class TestAddIDP(federation.TestBaseFederation):
             response=resp,
             json_schema=idp_json.identity_provider_w_email_domain)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_add_idp_with_name(self):
         '''Add with a name.'''
@@ -93,6 +98,7 @@ class TestAddIDP(federation.TestBaseFederation):
         self.assertEquals(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
                           request_object.idp_name)
 
+    @tags('negative', 'p1', 'regression')
     def test_add_idp_with_no_name(self):
         '''Add with empty  name.'''
         request_object = factory.get_add_idp_request_object()
@@ -103,6 +109,7 @@ class TestAddIDP(federation.TestBaseFederation):
                           "Error code: 'GEN-001'; 'name' is a required"
                           " attribute")
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_add_idp_with_empty_name(self):
         '''Add with empty name.'''
@@ -114,6 +121,7 @@ class TestAddIDP(federation.TestBaseFederation):
                           "Error code: 'GEN-001'; 'name' is a required"
                           " attribute")
 
+    @tags('negative', 'p1', 'regression')
     def test_add_idp_with_dup_name(self):
         '''Add with dup name.'''
         request_object = factory.get_add_idp_request_object()
@@ -128,6 +136,7 @@ class TestAddIDP(federation.TestBaseFederation):
                           "name {0} already exist.".format(
                               request_object.idp_name))
 
+    @tags('negative', 'p1', 'regression')
     def test_add_idp_name_max_length(self):
         '''Add with bad characters in name.'''
         request_object = factory.get_add_idp_request_object()
@@ -152,12 +161,14 @@ class TestAddIDP(federation.TestBaseFederation):
                           "Error code: 'GEN-002'; name length cannot exceed "
                           "255 characters")
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_add_idp_with_bad_char(self):
         '''Add with bad characters in name
         '''
         self.check_bad_name(name="DSAFDSFA#@$@$#@$AFAS")
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_add_idp_with_spaces_at_end(self):
         '''Add with spaces at the end of the name.
@@ -165,6 +176,7 @@ class TestAddIDP(federation.TestBaseFederation):
         self.check_bad_name(
             name=self.generate_random_string(const.IDP_NAME_PATTERN) + "  ")
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_add_idp_with_spaces_at_the_beginning(self):
         '''Add with spaces at the beginning of the name.
@@ -172,9 +184,11 @@ class TestAddIDP(federation.TestBaseFederation):
         self.check_bad_name(
             name="  " + self.generate_random_string(const.IDP_NAME_PATTERN))
 
+    @tags('positive', 'p1', 'regression')
     def test_add_broker_idp(self):
         self.add_and_check_broker_idp()
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_adg_with_broker_idp(self):
         fed_type = const.BROKER
@@ -191,6 +205,7 @@ class TestAddIDP(federation.TestBaseFederation):
             "Error code: 'FED_IDP-001'; When BROKER IDP is specified, the"
             " approvedDomainGroup must be set, and specified as GLOBAL")
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_add_idp_with_name_get_idp(self):
         '''Verify get provider by id has name attribute.'''
@@ -205,6 +220,7 @@ class TestAddIDP(federation.TestBaseFederation):
         get_name = get_name_resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
         self.assertEquals(get_name, request_object.idp_name)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_add_idp_with_name_list_idp(self):
         '''Verify list providers has name attribute.'''
@@ -224,6 +240,7 @@ class TestAddIDP(federation.TestBaseFederation):
                 found = True
         self.assertEquals(found, True)
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.data(*AllPairs([["issuer", "name"],
                          ["test12345", "*"]]))
@@ -246,6 +263,7 @@ class TestAddIDP(federation.TestBaseFederation):
 
         self.assertTrue(len(idp_list) == 0)
 
+    @tags('positive', 'p1', 'regression')
     def test_list_idp_query_param_issuer_case(self):
         '''Verify list providers issuer filter is case sensitive.'''
         idps = [self.create_idp_helper(), self.create_idp_helper()]
@@ -257,6 +275,7 @@ class TestAddIDP(federation.TestBaseFederation):
         self.assertEquals(idp_resp.status_code, 200)
         self.assertTrue(len(idp_list) == 0)
 
+    @unless_coverage
     @ddt.data(*AllPairs([["issuer", "name"],
                          [None, ""]]))
     def test_list_idp_query_param_ignore_null_empty(self, data):
@@ -279,6 +298,7 @@ class TestAddIDP(federation.TestBaseFederation):
 
         self.assertEqual(len(idp_list), len(idp_list2))
 
+    @unless_coverage
     @ddt.data("name", "issuer")
     def test_list_idp_query_param_name(self, name):
         '''Verify list providers can filter by name parameter
@@ -301,6 +321,7 @@ class TestAddIDP(federation.TestBaseFederation):
                 found = False
         self.assertEquals(found, True)
 
+    @unless_coverage
     # use_property means to get that property from the generated idp object.
     @ddt.data(*AllPairs([["issuer", "name"],
                          [None, "", "use_property"]]))
@@ -347,6 +368,7 @@ class TestAddIDP(federation.TestBaseFederation):
 
         self.assertEquals(found, True)
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.data('GLOBAL', 'RACKER', 'BROKER')
     def test_list_idps_for_global_and_racker_idps(self, idp_flavor):
@@ -393,9 +415,11 @@ class TestAddIDP(federation.TestBaseFederation):
             else:
                 self.assertNotEqual(idp[const.APPROVED_DOMAIN_Ids], [])
 
+    @unless_coverage
     def tearDown(self):
         super(TestAddIDP, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestAddIDP, cls).tearDownClass()

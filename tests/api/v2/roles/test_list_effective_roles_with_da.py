@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from qe_coverage.opencafe_decorators import tags
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.utils import func_helper
@@ -13,6 +13,7 @@ class TestListEffectiveRolesWithDA(base.TestBaseV2):
 
     """ List effective role for user."""
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestListEffectiveRolesWithDA, cls).setUpClass()
         cls.rcn = cls.test_config.da_rcn
@@ -81,6 +82,10 @@ class TestListEffectiveRolesWithDA(base.TestBaseV2):
         cls.delegation_client = cls.user_admin2_client
         cls.delegation_client.default_headers[const.X_AUTH_TOKEN] = (
             delegation_token)
+
+    @unless_coverage
+    def setUp(self):
+        super(TestListEffectiveRolesWithDA, self).setUp()
 
     @tags('positive', 'p0', 'smoke')
     def test_list_effective_roles_with_da_token(self):
@@ -155,6 +160,7 @@ class TestListEffectiveRolesWithDA(base.TestBaseV2):
         return tenant
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         # Delete sub users created in the setUpClass
         for id_ in self.user_ids:
@@ -180,3 +186,8 @@ class TestListEffectiveRolesWithDA(base.TestBaseV2):
             assert resp.status_code == 204, (
                 'Domain with ID {0} failed to delete'.format(id_))
         super(TestListEffectiveRolesWithDA, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestListEffectiveRolesWithDA, cls).tearDownClass()

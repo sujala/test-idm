@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.federation import federation
@@ -18,6 +19,7 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
     """Tests for Fed User Impersonation."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -38,9 +40,11 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
 
         cls.domain_ids.append(cls.domain_id)
 
+    @unless_coverage
     def setUp(self):
         super(TestFedUserImpersonation, self).setUp()
 
+    @tags('positive', 'p1', 'regression')
     def test_impersonate_fed_user(self):
         '''
         Test to impersonate fed user.
@@ -103,6 +107,7 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         self.assertIn(const.IMPERSONATE, auth_by_list)
         self.assertIn(const.PASSWORD.upper(), auth_by_list)
 
+    @tags('positive', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_analyze_fed_user_tokens(self):
         (pem_encoded_cert, cert_path, _, key_path,
@@ -180,11 +185,13 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
             json_schema=tokens_json.analyze_token_fed_user_impersonation)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         super(TestFedUserImpersonation, self).tearDown()
 
     @classmethod
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDownClass(cls):
         super(TestFedUserImpersonation, cls).tearDownClass()
 

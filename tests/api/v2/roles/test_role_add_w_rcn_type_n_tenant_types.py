@@ -114,8 +114,8 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
         self.assertEqual(role_resp.json()[const.BAD_REQUEST][const.MESSAGE],
                          test_data['expected_resp']['message'])
 
-    @unless_coverage
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         for id_ in self.role_ids:
             resp = self.identity_admin_client.delete_role(role_id=id_)
@@ -124,7 +124,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
                 msg='Role with ID {0} failed to delete'.format(id_))
         super(TestRoleAddWTypeAndTenantTypes, self).tearDown()
 
-    @unless_coverage
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestRoleAddWTypeAndTenantTypes, cls).tearDownClass()

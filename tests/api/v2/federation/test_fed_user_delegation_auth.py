@@ -2,6 +2,7 @@
 from collections import defaultdict
 import ddt
 from munch import Munch
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2.schema import tokens as tokens_json
@@ -24,6 +25,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
     """
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """
         Class level set up for the tests
@@ -49,6 +51,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         cls.role_ids = []
         cls.tenant_ids = []
 
+    @unless_coverage
     def setUp(self):
         super(TestDelegationWithFederation, self).setUp()
         self.group_ids = []
@@ -166,6 +169,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         self.tenant_ids.append(tenant.id)
         return tenant
 
+    @tags('positive', 'p1', 'regression')
     def test_d_auth_with_fed_users_as_principal_and_delegate(self):
         '''
         Tests with federated User as Principal & Delegate.
@@ -257,6 +261,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             da_id=da_id)
         self.assertEqual(resp.status_code, 404)
 
+    @tags('positive', 'p1', 'regression')
     def test_d_auth_fed_user_with_user_group_as_delegate(self):
 
         # create user group for domain 2
@@ -374,6 +379,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         self.assertIn(tenant_2.id, role_to_tenant_map[role_2.id])
 
     @federation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         for group_id, domain_id in self.group_ids:
             resp = self.identity_admin_client.delete_user_group_from_domain(
@@ -385,6 +391,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         super(TestDelegationWithFederation, self).tearDown()
 
     @classmethod
+    @unless_coverage
     @federation.base.base.log_tearDown_error
     def tearDownClass(cls):
         # domain 1

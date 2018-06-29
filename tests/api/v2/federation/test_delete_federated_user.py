@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.utils import saml_helper
@@ -18,6 +19,7 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
     """Delete Federated User Tests."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests."""
         super(TestDeleteFederatedUser, cls).setUpClass()
@@ -39,6 +41,7 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
             approved_domain_ids=[cls.domain_id])
         cls.identity_admin_client.create_idp(cls.idp_request_object)
 
+    @unless_coverage
     def setUp(self):
         super(TestDeleteFederatedUser, self).setUp()
 
@@ -59,6 +62,7 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
         self.assertEquals(saml_resp.status_code, 200)
         self.auth_resp = responses.Access(saml_resp.json())
 
+    @tags('positive', 'p1', 'regression')
     @attr(type='regression')
     def test_delete_federated_user_and_validate_token(self):
         resp = self.user_admin_client.delete_user(
@@ -83,10 +87,12 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
             user_id=saml_resp.json()[const.ACCESS][const.USER][const.ID])
         self.assertEquals(resp.status_code, 204)
 
+    @unless_coverage
     def tearDown(self):
         super(TestDeleteFederatedUser, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestDeleteFederatedUser, cls).tearDownClass()
         cls.delete_client(cls.user_admin_client)

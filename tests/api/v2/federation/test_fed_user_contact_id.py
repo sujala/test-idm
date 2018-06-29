@@ -1,4 +1,5 @@
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.utils import func_helper
@@ -15,6 +16,7 @@ class TestFedUserContactId(federation.TestBaseFederation):
     """Tests for Conatct Id on Fed User."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -34,10 +36,12 @@ class TestFedUserContactId(federation.TestBaseFederation):
 
         cls.domain_ids.append(cls.domain_id)
 
+    @unless_coverage
     def setUp(self):
         super(TestFedUserContactId, self).setUp()
         self.users = []
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_fed_user_contact_id(self):
         """
@@ -113,6 +117,7 @@ class TestFedUserContactId(federation.TestBaseFederation):
         # self.assertEqual(1, 2)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
 
         for user_id in self.users:
@@ -124,6 +129,7 @@ class TestFedUserContactId(federation.TestBaseFederation):
         super(TestFedUserContactId, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         cls.delete_client(cls.user_admin_client)
         super(TestFedUserContactId, cls).tearDownClass()

@@ -1,4 +1,5 @@
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.utils import func_helper, saml_helper
@@ -16,6 +17,7 @@ class TestFedUserGroups(federation.TestBaseFederation):
     """Tests for Fed User's global roles."""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -34,6 +36,7 @@ class TestFedUserGroups(federation.TestBaseFederation):
         cls.user_admin_client.default_headers[
             const.CONTENT_TYPE] = 'application/xml'
 
+    @unless_coverage
     def setUp(self):
         super(TestFedUserGroups, self).setUp()
         # get tenant access role id
@@ -73,6 +76,7 @@ class TestFedUserGroups(federation.TestBaseFederation):
         }
         return tenant_assignment_request
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_fed_user_groups(self):
         """
@@ -343,6 +347,7 @@ class TestFedUserGroups(federation.TestBaseFederation):
         self.assertNotIn(fed_user_id, user_ids)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         resp = self.identity_admin_client.list_users_in_domain(
             domain_id=self.domain_id)
@@ -384,5 +389,6 @@ class TestFedUserGroups(federation.TestBaseFederation):
         super(TestFedUserGroups, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestFedUserGroups, cls).tearDownClass()

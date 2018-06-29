@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import unless_coverage
 import ddt
 
 from tests.api.v2 import base
@@ -17,6 +18,7 @@ class ForbidImpersonation(base.TestBaseV2):
     Forbid Impersonation tests for users having 'identity:internal' role
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
         Create users needed for the tests and generate clients for those users.
@@ -42,6 +44,7 @@ class ForbidImpersonation(base.TestBaseV2):
         }
         cls.domain_ids = []
 
+    @unless_coverage
     def setUp(self):
         super(ForbidImpersonation, self).setUp()
         self.user_ids = []
@@ -95,6 +98,7 @@ class ForbidImpersonation(base.TestBaseV2):
             'User cannot be impersonated; No valid impersonation '
             'roles assigned')
 
+    @unless_coverage
     @ddt.data('identity_admin', 'racker')
     def test_forbid_impersonation_of_user_admin(self, impersonator):
 
@@ -109,6 +113,7 @@ class ForbidImpersonation(base.TestBaseV2):
             username=user_admin_name, user_id=user_admin_id,
             client=self.clients[impersonator])
 
+    @unless_coverage
     @ddt.data(['identity_admin', True], ['racker', True],
               ['identity_admin', False], ['racker', False])
     @ddt.unpack
@@ -134,6 +139,7 @@ class ForbidImpersonation(base.TestBaseV2):
             username=sub_user_name, user_id=sub_user_id,
             client=self.clients[impersonator])
 
+    @unless_coverage
     def tearDown(self):
 
         # Delete all users created in the tests
@@ -142,6 +148,7 @@ class ForbidImpersonation(base.TestBaseV2):
         super(ForbidImpersonation, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
 
         cls.delete_client(client=cls.user_admin_client)

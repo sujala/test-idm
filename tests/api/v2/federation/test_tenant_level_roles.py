@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import func_helper, saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -19,6 +20,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
     verify they are returned in auth response
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -27,6 +29,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         super(TestTenantLevelRolesForFederation, cls).setUpClass()
         cls.test_email = 'random@rackspace.com'
 
+    @unless_coverage
     def setUp(self):
         super(TestTenantLevelRolesForFederation, self).setUp()
         self.provider_ids = []
@@ -109,6 +112,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
                 role_present = True
         self.assertEqual(role_present, positive)
 
+    @unless_coverage
     @attr(type='regression')
     @ddt.file_data('data_tenant_level_roles.json')
     def test_tenant_level_roles_in_fed_auth(self, test_data):
@@ -182,6 +186,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
                                        positive=False)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         for user_id in self.users:
             resp = self.identity_admin_client.delete_user(user_id=user_id)
@@ -197,5 +202,6 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         super(TestTenantLevelRolesForFederation, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestTenantLevelRolesForFederation, cls).tearDownClass()

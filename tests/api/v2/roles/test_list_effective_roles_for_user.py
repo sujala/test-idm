@@ -835,8 +835,8 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         self.assertEqual(add_resp.status_code, 204)
         return group
 
-    @unless_coverage
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         # Delete sub users created in the setUpClass
         resp = self.identity_admin_client.delete_user(

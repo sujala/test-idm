@@ -14,8 +14,8 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
     """
     Verify RAX-AUTH:assignment behavior
     """
-    @unless_coverage
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
         """
@@ -259,7 +259,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
             self.identity_admin_client.delete_tenant(tenant_id=tenant_id)
         super(TestRoleAssignmentFeature, self).tearDown()
 
-    @unless_coverage
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestRoleAssignmentFeature, cls).tearDownClass()

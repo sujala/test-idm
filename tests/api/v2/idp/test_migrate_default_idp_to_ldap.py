@@ -3,6 +3,7 @@ JIRA CID-612
 Migrate default mapping policy to LDAP Based Reloadable Property
 """
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 import ddt
 import json
 
@@ -18,11 +19,13 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
     TestMigrateDefaultIDPtoLDAP
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestMigrateDefaultIDPtoLDAP, cls).setUpClass()
         cls.devops_client.default_headers.update(
             cls.identity_admin_client.default_headers)
 
+    @unless_coverage
     def setUp(self):
         super(TestMigrateDefaultIDPtoLDAP, self).setUp()
         self.idp_ids = []
@@ -119,6 +122,7 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
         self.user_ids.append(resp.json()[const.USER][const.ID])
         return tenant_id
 
+    @unless_coverage
     @ddt.file_data('data_create_prop_types.json')
     def test_create_devops_prop_type(self, test_data):
         prop = self.generate_prop(test_data)
@@ -129,6 +133,7 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
         self.devops_props_ids.append(
             resp.json()[const.IDENTITY_PROPERTY][const.ID])
 
+    @unless_coverage
     @ddt.file_data('data_create_invalid_prop_types.json')
     @attr('skip_at_gate')
     def test_create_invalid_devops_prop_type(self, test_data):
@@ -138,6 +143,7 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
             request_object=req_obj)
         self.assertEqual(resp.status_code, 400)
 
+    @tags('positive', 'p1', 'regression')
     def test_update_idp_default_policy_affects_only_idp_created_after_update(
       self):
         domain_id = self.get_domain_id_from_one_call_user_create()
@@ -171,7 +177,9 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
             # Reset the default policy
             self.reset_default_policy(original_mapping)
 
+    @unless_coverage
     def tearDown(self):
+        super(TestMigrateDefaultIDPtoLDAP, self).tearDown()
         for user_id in self.user_ids:
             self.identity_admin_client.delete_user(user_id=user_id)
         for tenant_id in self.tenant_ids:
@@ -186,3 +194,8 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
         for devops_props_id in self.devops_props_ids:
             self.devops_client.delete_devops_prop(
                 devops_props_id=devops_props_id)
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestMigrateDefaultIDPtoLDAP, cls).tearDownClass()
