@@ -1,12 +1,15 @@
 package com.rackspace.idm.domain.config
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
 import com.rackspace.idm.domain.entity.IdentityProperty
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.service.IdentityPropertyService
 import com.rackspace.test.SingleTestConfiguration
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy
+import org.apache.commons.lang.StringUtils
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -255,6 +258,73 @@ class IdentityConfigComponentTest extends Specification {
         null        | "123"     | false // Empty rcnsAllowed means no rcn will match
         null        | null      | false // Empty rcnsAllowed means no rcn will match
         ","         | "123"     | false // Empty rcnsAllowed means no rcn will match
+    }
+
+    def "getTenantVisibilityRoleMap: Returns maps appropriately"() {
+        def t1 = "t1"
+        def t2 = "t2"
+        def t3 = "t3"
+        def t4 = "t4"
+
+        def role1 = "role1"
+        def role2 = "role2:yippy"
+        def role3 = "role3:skippy"
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP_REG, t1), StringUtils.join([role1], ","))
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP_REG, t2), StringUtils.join([role1, role2, role3], ","))
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP_REG, t3), "")
+
+        when: "get role map"
+        Map<String, Set<String>> map = config.getReloadableConfig().getTenantTypeRoleWhitelistFilterMap()
+
+        then:
+        map != null
+
+        and: "whitelists for each tenant type are set correctly"
+        map.get(t1) != null
+        CollectionUtils.isEqualCollection(map.get(t1), [role1])
+        CollectionUtils.isEqualCollection(map.get(t2), [role1, role2, role3])
+        CollectionUtils.isEmpty(map.get(t3))
+    }
+
+    @Unroll
+    def "getTenantVisibilityRoleMap: Normalizes string #testSet to #expected"() {
+        def t1 = "t1"
+
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP_REG, t1), testSet)
+
+        when: "get role map"
+        Map<String, Set<String>> map = config.getReloadableConfig().getTenantTypeRoleWhitelistFilterMap()
+
+        then:
+        map != null
+
+        and: "whitelists for each tenant type are set correctly"
+        map.get(t1) != null
+        CollectionUtils.isEqualCollection(map.get(t1), expected)
+
+        where:
+        testSet             | expected
+        "role1"             | ["role1"] // Standard
+        "role1,role1,role2" | ["role1", "role2"] // Removes duplicate elements
+        ",role1, "          | [",role1, "] // if any split item doesn't contain value, doesn't split
+        ",role1, role2"     | [",role1, role2"]  // if any split item doesn't contain value, doesn't split
+        "role1, role2"      | ["role1", "role2"]  // if all split values contain non-empty string, is split to array
+        ",role1"            | [",role1"] // Removes empty elements
+    }
+
+    def "getTenantVisibilityRoleMap: Load canned tenant type"() {
+        Map<String, Set<String>> map = config.getReloadableConfig().getTenantTypeRoleWhitelistFilterMap()
+
+        List<String> expectedRoles = Arrays.asList(StringUtils.split("identity:service-admin,identity:admin,identity:user-admin,identity:user-manage,admin,observer,creator,ticketing:admin,ticketing:observer,billing:admin,billing:observer", ","))
+
+        when: "get whitelist map for canned type"
+        Set<String> whitelist = map.get(Constants.TENANT_TYPE_WHITELIST_TEST)
+
+        then:
+        whitelist != null
+
+        and: "Contains all expected roles"
+        CollectionUtils.isEqualCollection(whitelist, expectedRoles)
     }
 
     @SingleTestConfiguration

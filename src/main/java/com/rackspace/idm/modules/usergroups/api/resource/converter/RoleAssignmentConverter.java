@@ -2,6 +2,7 @@ package com.rackspace.idm.modules.usergroups.api.resource.converter;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.idm.api.security.ImmutableClientRole;
+import com.rackspace.idm.domain.entity.RoleAssignmentSource;
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantAssignmentService;
@@ -66,7 +67,7 @@ public class RoleAssignmentConverter {
         assignment.getForTenants().addAll(sourcedRoleAssignment.getTenantIds());
         assignment.setSources(new AssignmentSources());
 
-        for (SourcedRoleAssignments.Source source : sourcedRoleAssignment.getSources()) {
+        for (RoleAssignmentSource source : sourcedRoleAssignment.getSources()) {
             AssignmentSource assignmentSource = new AssignmentSource();
 
             if (source.getAssignmentType() != null) {

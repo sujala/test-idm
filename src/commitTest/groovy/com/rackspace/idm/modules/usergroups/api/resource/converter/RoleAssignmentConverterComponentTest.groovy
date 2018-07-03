@@ -186,7 +186,7 @@ class RoleAssignmentConverterComponentTest extends Specification {
 
         SourcedRoleAssignments sourcedRoleAssignments = new SourcedRoleAssignments(user)
         ImmutableClientRole role = createRandomImmutableRole()
-        sourcedRoleAssignments.addUserSourcedAssignment(role, SourcedRoleAssignments.AssignmentType.DOMAIN, tenants)
+        sourcedRoleAssignments.addUserSourcedAssignment(role, RoleAssignmentType.DOMAIN, tenants)
 
         when:
         RoleAssignments roleAssignments = converter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(sourcedRoleAssignments)
@@ -213,8 +213,8 @@ class RoleAssignmentConverterComponentTest extends Specification {
 
         SourcedRoleAssignments sourcedRoleAssignments = new SourcedRoleAssignments(user)
         ImmutableClientRole role = createRandomImmutableRole()
-        sourcedRoleAssignments.addUserSourcedAssignment(role, SourcedRoleAssignments.AssignmentType.DOMAIN, tenants)
-        sourcedRoleAssignments.addUserGroupSourcedAssignment(role, "groupId", SourcedRoleAssignments.AssignmentType.TENANT, tenants)
+        sourcedRoleAssignments.addUserSourcedAssignment(role, RoleAssignmentType.DOMAIN, tenants)
+        sourcedRoleAssignments.addUserGroupSourcedAssignment(role, "groupId", RoleAssignmentType.TENANT, tenants)
 
         when:
         RoleAssignments roleAssignments = converter.fromSourcedRoleAssignmentsToRoleAssignmentsWeb(sourcedRoleAssignments)

@@ -106,9 +106,9 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : interimSourcedRoleAssignments.getSourcedRoleAssignments()) {
             ImmutableClientRole cr = sourcedRoleAssignment.getRole();
 
-            for (SourcedRoleAssignments.Source rawSource : sourcedRoleAssignment.getSources()) {
+            for (RoleAssignmentSource rawSource : sourcedRoleAssignment.getSources()) {
                 Set<String> finalTenantIds = calculateFinalEffectiveTenantIdsForSource(userType, rawSource);
-                SourcedRoleAssignments.Source revisedSource = new SourcedRoleAssignments.Source(rawSource.getSourceType(), rawSource.getSourceId(), rawSource.getAssignmentType(), finalTenantIds);
+                RoleAssignmentSource revisedSource = new RoleAssignmentSource(rawSource.getSourceType(), rawSource.getSourceId(), rawSource.getAssignmentType(), finalTenantIds);
                 finalSourcedRoleAssignments.addSourceForRole(cr, revisedSource);
             }
         }
@@ -133,7 +133,7 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         if (icr == null) {
             logger.error(String.format("User '%s' is assigned non-existing role '%s'", userRoleLookupService.getUser().getId(), tenantRole.getRoleRsId()));
         } else {
-            SourcedRoleAssignments.AssignmentType assignmentType = determineAssignmentTypeForTenantRole(icr, tenantRole);
+            RoleAssignmentType assignmentType = determineAssignmentTypeForTenantRole(icr, tenantRole);
             Set<String> effectiveTenantIds = calculatePreliminaryEffectiveTenantIdsForRole(assignmentType, tenantRole);
             interimSourcedRoleAssignments.addUserSourcedAssignment(icr, assignmentType, effectiveTenantIds);
         }
@@ -164,7 +164,7 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         if (icr == null) {
             logger.error(String.format("Group '%s' is assigned non-existing role '%s'", groupId, tenantRole.getRoleRsId()));
         } else {
-            SourcedRoleAssignments.AssignmentType assignmentType = determineAssignmentTypeForTenantRole(icr, tenantRole);
+            RoleAssignmentType assignmentType = determineAssignmentTypeForTenantRole(icr, tenantRole);
             Set<String> effectiveTenantIds = calculatePreliminaryEffectiveTenantIdsForRole(assignmentType, tenantRole);
             interimSourcedRoleAssignments.addUserGroupSourcedAssignment(icr, groupId, assignmentType, effectiveTenantIds);
         }
@@ -195,24 +195,24 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         if (icr == null) {
             logger.error(String.format("Assigning via system the non-existing role '%s'", tenantRole.getRoleRsId()));
         } else {
-            SourcedRoleAssignments.AssignmentType assignmentType = determineAssignmentTypeForTenantRole(icr, tenantRole);
+            RoleAssignmentType assignmentType = determineAssignmentTypeForTenantRole(icr, tenantRole);
             Set<String> effectiveTenantIds = calculatePreliminaryEffectiveTenantIdsForRole(assignmentType, tenantRole);
             interimSourcedRoleAssignments.addSystemSourcedAssignment(icr, systemId, assignmentType, effectiveTenantIds);
         }
     }
 
     private void addOtherSourcedAssignmentsToInterim() {
-        Map<TenantRole, SourcedRoleAssignments.Source> systemSourcedTenantRoles = userRoleLookupService.getOtherSourcedRoles();
+        Map<TenantRole, RoleAssignmentSource> systemSourcedTenantRoles = userRoleLookupService.getOtherSourcedRoles();
         if (MapUtils.isNotEmpty(systemSourcedTenantRoles)) {
-            for (Map.Entry<TenantRole, SourcedRoleAssignments.Source> entry : systemSourcedTenantRoles.entrySet()) {
+            for (Map.Entry<TenantRole, RoleAssignmentSource> entry : systemSourcedTenantRoles.entrySet()) {
                 TenantRole tr = entry.getKey();
-                SourcedRoleAssignments.Source source = entry.getValue();
+                RoleAssignmentSource source = entry.getValue();
                 addOtherSourcedAssignmentToInterim(tr, source);
             }
         }
     }
 
-    private void addOtherSourcedAssignmentToInterim(TenantRole tenantRole, SourcedRoleAssignments.Source rawSource) {
+    private void addOtherSourcedAssignmentToInterim(TenantRole tenantRole, RoleAssignmentSource rawSource) {
         Validate.notNull(rawSource);
         Validate.notEmpty(rawSource.getSourceId());
         Validate.notNull(rawSource.getSourceType());
@@ -225,9 +225,9 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         if (icr == null) {
             logger.error(String.format("The sourceId '%s' of type '%s' references a non-existing role '%s'", rawSource.getSourceId(), rawSource.getSourceType(), tenantRole.getRoleRsId()));
         } else {
-            SourcedRoleAssignments.AssignmentType assignmentType = determineAssignmentTypeForTenantRole(icr, tenantRole);
+            RoleAssignmentType assignmentType = determineAssignmentTypeForTenantRole(icr, tenantRole);
             Set<String> effectiveTenantIds = calculatePreliminaryEffectiveTenantIdsForRole(assignmentType, tenantRole);
-            SourcedRoleAssignments.Source interimSource = new SourcedRoleAssignments.Source(rawSource.getSourceType(), rawSource.getSourceId(), assignmentType, effectiveTenantIds);
+            RoleAssignmentSource interimSource = new RoleAssignmentSource(rawSource.getSourceType(), rawSource.getSourceId(), assignmentType, effectiveTenantIds);
             interimSourcedRoleAssignments.addSourceForRole(icr, interimSource);
         }
     }
@@ -241,10 +241,10 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
      * @param tenantRole
      * @return
      */
-    private Set<String> calculatePreliminaryEffectiveTenantIdsForRole(SourcedRoleAssignments.AssignmentType assignmentType, TenantRole tenantRole) {
-        if (assignmentType == SourcedRoleAssignments.AssignmentType.TENANT) {
+    private Set<String> calculatePreliminaryEffectiveTenantIdsForRole(RoleAssignmentType assignmentType, TenantRole tenantRole) {
+        if (assignmentType == RoleAssignmentType.TENANT) {
             return tenantRole.getTenantIds();
-        } else if (assignmentType == SourcedRoleAssignments.AssignmentType.RCN) {
+        } else if (assignmentType == RoleAssignmentType.RCN) {
             // Determine tenant types for which the RCN would apply
             ImmutableClientRole icr = userRoleLookupService.getImmutableClientRole(tenantRole.getRoleRsId());
             Set<String> roleTenantTypes = icr.getTenantTypes();
@@ -263,9 +263,9 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         return Collections.emptySet();
     }
 
-    private Set<String> calculateFinalEffectiveTenantIdsForSource(IdentityUserTypeEnum userType, SourcedRoleAssignments.Source source) {
+    private Set<String> calculateFinalEffectiveTenantIdsForSource(IdentityUserTypeEnum userType, RoleAssignmentSource source) {
         Set<String> effectiveTenantIds = new HashSet<>();
-        if (source.getAssignmentType() == SourcedRoleAssignments.AssignmentType.DOMAIN) {
+        if (source.getAssignmentType() == RoleAssignmentType.DOMAIN) {
             effectiveTenantIds.addAll(getDomainAssignmentTenants(userType));
         } else {
             // TENANT | RCN - already calculated as part of preliminary calculation
@@ -319,8 +319,8 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
     private Set<String> getTenantsAssignedViaTenantAssignment() {
         Set<String> tenantsAssignedExplicit = new HashSet();
         for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : interimSourcedRoleAssignments.getSourcedRoleAssignments()) {
-            for (SourcedRoleAssignments.Source source : sourcedRoleAssignment.getSources()) {
-                if (source.getAssignmentType() == SourcedRoleAssignments.AssignmentType.TENANT) {
+            for (RoleAssignmentSource source : sourcedRoleAssignment.getSources()) {
+                if (source.getAssignmentType() == RoleAssignmentType.TENANT) {
                     tenantsAssignedExplicit.addAll(source.getTenantIds());
                 }
             }
@@ -342,12 +342,12 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         return idComponents.length >= 2 ? idComponents[0] : null;
     }
 
-    private SourcedRoleAssignments.AssignmentType determineAssignmentTypeForTenantRole(ImmutableClientRole cr, TenantRole tenantRole) {
+    private RoleAssignmentType determineAssignmentTypeForTenantRole(ImmutableClientRole cr, TenantRole tenantRole) {
         if (cr.getRoleType() == RoleTypeEnum.RCN) {
-            return SourcedRoleAssignments.AssignmentType.RCN;
+            return RoleAssignmentType.RCN;
         }
 
         return CollectionUtils.isEmpty(tenantRole.getTenantIds())
-                ? SourcedRoleAssignments.AssignmentType.DOMAIN : SourcedRoleAssignments.AssignmentType.TENANT;
+                ? RoleAssignmentType.DOMAIN : RoleAssignmentType.TENANT;
     }
 }

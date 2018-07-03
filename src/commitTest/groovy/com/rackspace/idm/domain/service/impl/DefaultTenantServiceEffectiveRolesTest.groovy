@@ -39,6 +39,8 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         mockFederatedUserDao(service)
         mockUserGroupService(service)
         mockUserGroupAuthorizationService(service)
+        mockTenantTypeService(service)
+        mockTenantTypeWhitelistFilter(service)
     }
 
     def "getSourcedRoleAssignmentsForRacker: Error When supply null racker"() {
@@ -81,8 +83,8 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         CollectionUtils.isEmpty(assignment.tenantIds)
         assignment.sources.size() == 1
         CollectionUtils.isEmpty(assignment.sources[0].tenantIds)
-        assignment.sources[0].assignmentType == SourcedRoleAssignments.AssignmentType.DOMAIN
-        assignment.sources[0].sourceType == SourcedRoleAssignments.SourceType.SYSTEM
+        assignment.sources[0].assignmentType == RoleAssignmentType.DOMAIN
+        assignment.sources[0].sourceType == RoleAssignmentSourceType.SYSTEM
         assignment.sources[0].sourceId == "IDENTITY"
     }
 
@@ -192,9 +194,9 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         CollectionUtils.isEmpty(assignments.sourcedRoleAssignments[0].tenantIds)
         assignments.sourcedRoleAssignments[0].sources != null
         assignments.sourcedRoleAssignments[0].sources.size() == 1
-        assignments.sourcedRoleAssignments[0].sources[0].sourceType == SourcedRoleAssignments.SourceType.USER
+        assignments.sourcedRoleAssignments[0].sources[0].sourceType == RoleAssignmentSourceType.USER
         assignments.sourcedRoleAssignments[0].sources[0].sourceId == user.id
-        assignments.sourcedRoleAssignments[0].sources[0].assignmentType == SourcedRoleAssignments.AssignmentType.DOMAIN
+        assignments.sourcedRoleAssignments[0].sources[0].assignmentType == RoleAssignmentType.DOMAIN
         CollectionUtils.isEmpty(assignments.sourcedRoleAssignments[0].sources[0].tenantIds)
 
         where:
@@ -238,9 +240,9 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         CollectionUtils.isEqualCollection(assignments.sourcedRoleAssignments[0].tenantIds, Arrays.asList(domain.tenantIds))
         assignments.sourcedRoleAssignments[0].sources != null
         assignments.sourcedRoleAssignments[0].sources.size() == 1
-        assignments.sourcedRoleAssignments[0].sources[0].sourceType == SourcedRoleAssignments.SourceType.USER
+        assignments.sourcedRoleAssignments[0].sources[0].sourceType == RoleAssignmentSourceType.USER
         assignments.sourcedRoleAssignments[0].sources[0].sourceId == user.id
-        assignments.sourcedRoleAssignments[0].sources[0].assignmentType == SourcedRoleAssignments.AssignmentType.DOMAIN
+        assignments.sourcedRoleAssignments[0].sources[0].assignmentType == RoleAssignmentType.DOMAIN
         CollectionUtils.isEqualCollection(assignments.sourcedRoleAssignments[0].sources[0].tenantIds, Arrays.asList(domain.tenantIds))
 
         where:
@@ -289,9 +291,9 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         CollectionUtils.isEqualCollection(assignments.sourcedRoleAssignments[0].tenantIds, Arrays.asList(domain.tenantIds))
         assignments.sourcedRoleAssignments[0].sources != null
         assignments.sourcedRoleAssignments[0].sources.size() == 1
-        assignments.sourcedRoleAssignments[0].sources[0].sourceType == SourcedRoleAssignments.SourceType.USER
+        assignments.sourcedRoleAssignments[0].sources[0].sourceType == RoleAssignmentSourceType.USER
         assignments.sourcedRoleAssignments[0].sources[0].sourceId == user.id
-        assignments.sourcedRoleAssignments[0].sources[0].assignmentType == SourcedRoleAssignments.AssignmentType.DOMAIN
+        assignments.sourcedRoleAssignments[0].sources[0].assignmentType == RoleAssignmentType.DOMAIN
         CollectionUtils.isEqualCollection(assignments.sourcedRoleAssignments[0].sources[0].tenantIds, Arrays.asList(domain.tenantIds))
 
         where:

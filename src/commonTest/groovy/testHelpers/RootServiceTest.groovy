@@ -116,6 +116,7 @@ class RootServiceTest extends Specification {
     @Shared EndpointService endpointService
     @Shared AuthorizationService authorizationService
     @Shared UserService userService
+    @Shared TenantTypeWhitelistFilter tenantTypeWhitelistFilter
 
     /**
      * New classes should use the IdmExceptionHandler interface rather than the concrete ExceptionHandler class
@@ -395,6 +396,11 @@ class RootServiceTest extends Specification {
     def mockTenantTypeService(service) {
         tenantTypeService = Mock()
         service.tenantTypeService = tenantTypeService
+    }
+
+    def mockTenantTypeWhitelistFilter(service) {
+        tenantTypeWhitelistFilter = Mock()
+        service.tenantTypeWhitelistFilter = tenantTypeWhitelistFilter
     }
 
     def mockFederatedIdentityService(service) {

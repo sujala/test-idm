@@ -6,7 +6,9 @@ import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.DelegationAgreement
 import com.rackspace.idm.domain.entity.ProvisionedUserDelegate
-import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.RoleAssignmentSource
+import com.rackspace.idm.domain.entity.RoleAssignmentSourceType
+import com.rackspace.idm.domain.entity.RoleAssignmentType
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
@@ -16,7 +18,6 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.ForbiddenException
 import org.apache.commons.lang3.RandomStringUtils
 import org.opensaml.core.config.InitializationService
-import testHelpers.EntityFactory
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.HttpHeaders
@@ -134,7 +135,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         ImmutableClientRole immutableClientRole2 = new ImmutableClientRole(clientRole2)
 
         // Add user source Assignment
-        assignments.addUserSourcedAssignment(immutableClientRole, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
+        assignments.addUserSourcedAssignment(immutableClientRole, RoleAssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
 
         // Standard mocks to get past authorization
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()
@@ -180,7 +181,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         }
 
         when: "role assignments having multiple sources on tenant"
-        SourcedRoleAssignments.Source source = new SourcedRoleAssignments.Source(SourcedRoleAssignments.SourceType.USERGROUP, "groupId", SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet(tenantId))
+        RoleAssignmentSource source = new RoleAssignmentSource(RoleAssignmentSourceType.USERGROUP, "groupId", RoleAssignmentType.TENANT, Sets.newHashSet(tenantId))
         assignments.sourcedRoleAssignments.iterator().next().addAdditionalSource(source)
         service.listEffectiveRolesForUser(headers, token, user.id, params)
 
@@ -201,7 +202,7 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
         }
 
         when: "having multiple roles on the same tenant"
-        assignments.addUserSourcedAssignment(immutableClientRole2, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
+        assignments.addUserSourcedAssignment(immutableClientRole2, RoleAssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
         service.listEffectiveRolesForUser(headers, token, user.id, params)
 
         then:
@@ -343,8 +344,8 @@ class ListEffectiveRolesForUserTest extends RootServiceTest {
 
         // Add user source Assignment
         SourcedRoleAssignments assignments = new SourcedRoleAssignments(federatedUser)
-        assignments.addUserSourcedAssignment(immutableClientRole1, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
-        assignments.addUserSourcedAssignment(immutableClientRole2, SourcedRoleAssignments.AssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
+        assignments.addUserSourcedAssignment(immutableClientRole1, RoleAssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
+        assignments.addUserSourcedAssignment(immutableClientRole2, RoleAssignmentType.TENANT, Sets.newHashSet("t1", tenantId))
 
         // Standard mocks to get past authorization
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token) >> new UserScopeAccess()

@@ -62,5 +62,5 @@ public interface UserRoleLookupService {
     /**
      * Retrieves the set of other source roles the user receives
      */
-    Map<TenantRole, SourcedRoleAssignments.Source> getOtherSourcedRoles();
+    Map<TenantRole, RoleAssignmentSource> getOtherSourcedRoles();
 }

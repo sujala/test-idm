@@ -103,10 +103,10 @@ public class SourcedRoleAssignments {
 
         for (SourcedRoleAssignment sa : sourcedRoleAssignments.values()) {
             SourcedRoleAssignment sourcedRoleAssignment = null;
-            for (Source s : sa.getSources()) {
-                for (String tid : s.tenantIds) {
+            for (RoleAssignmentSource s : sa.getSources()) {
+                for (String tid : s.getTenantIds()) {
                     if (tid.equalsIgnoreCase(tenantId)) {
-                        Source source = new Source(s.sourceType, s.sourceId, s.assignmentType, Sets.newHashSet(tid));
+                        RoleAssignmentSource source = new RoleAssignmentSource(s.getSourceType(), s.getSourceId(), s.getAssignmentType(), Sets.newHashSet(tid));
                         if (sourcedRoleAssignment == null) {
                             sourcedRoleAssignment = new SourcedRoleAssignment(sa.role, source);
                         } else {
@@ -122,7 +122,6 @@ public class SourcedRoleAssignments {
                 finalSourcedRoleAssignments.sourcedRoleAssignments.put(sourcedRoleAssignment.role.getId(), sourcedRoleAssignment);
             }
         }
-
         return finalSourcedRoleAssignments;
     }
 
@@ -131,34 +130,34 @@ public class SourcedRoleAssignments {
      *
      * @param role
      */
-    Source addUserSourcedAssignment(ImmutableClientRole role, AssignmentType assignmentType, Set<String> tenantIds) {
+    RoleAssignmentSource addUserSourcedAssignment(ImmutableClientRole role, RoleAssignmentType assignmentType, Set<String> tenantIds) {
         Validate.notNull(role);
         Validate.notNull(role.getId());
 
-        Source source = new Source(SourceType.USER, user.getId(), assignmentType, tenantIds);
+        RoleAssignmentSource source = new RoleAssignmentSource(RoleAssignmentSourceType.USER, user.getId(), assignmentType, tenantIds);
         addSourceForRole(role, source);
         return source;
     }
 
-    Source addUserGroupSourcedAssignment(ImmutableClientRole role, String groupId, AssignmentType assignmentType, Set<String> tenantIds) {
+    RoleAssignmentSource addUserGroupSourcedAssignment(ImmutableClientRole role, String groupId, RoleAssignmentType assignmentType, Set<String> tenantIds) {
         Validate.notNull(role);
         Validate.notNull(role.getId());
 
-        Source source = new Source(SourceType.USERGROUP, groupId, assignmentType, tenantIds);
+        RoleAssignmentSource source = new RoleAssignmentSource(RoleAssignmentSourceType.USERGROUP, groupId, assignmentType, tenantIds);
         addSourceForRole(role, source);
         return source;
     }
 
-    Source addSystemSourcedAssignment(ImmutableClientRole role, String systemId, AssignmentType assignmentType, Set<String> tenantIds) {
+    RoleAssignmentSource addSystemSourcedAssignment(ImmutableClientRole role, String systemId, RoleAssignmentType assignmentType, Set<String> tenantIds) {
         Validate.notNull(role);
         Validate.notNull(role.getId());
 
-        Source source = new Source(SourceType.SYSTEM, systemId, assignmentType, tenantIds);
+        RoleAssignmentSource source = new RoleAssignmentSource(RoleAssignmentSourceType.SYSTEM, systemId, assignmentType, tenantIds);
         addSourceForRole(role, source);
         return source;
     }
 
-    void addSourceForRole(ImmutableClientRole role, Source source) {
+    void addSourceForRole(ImmutableClientRole role, RoleAssignmentSource source) {
         SourcedRoleAssignment ra = sourcedRoleAssignments.get(role.getId());
 
         if (ra == null) {
@@ -172,25 +171,25 @@ public class SourcedRoleAssignments {
     public static class SourcedRoleAssignment {
         @Getter
         private ImmutableClientRole role;
-        private List<Source> sources = new ArrayList<>();
+        private List<RoleAssignmentSource> sources = new ArrayList<>();
 
-        public SourcedRoleAssignment(ImmutableClientRole role, Source initialSource) {
+        public SourcedRoleAssignment(ImmutableClientRole role, RoleAssignmentSource initialSource) {
             this.role = role;
             sources.add(initialSource);
         }
 
-        public List<Source> getSources() {
+        public List<RoleAssignmentSource> getSources() {
             return ImmutableList.copyOf(sources);
         }
 
-        private void addAdditionalSource(Source source) {
+        private void addAdditionalSource(RoleAssignmentSource source) {
             sources.add(source);
         }
 
         public Set<String> getTenantIds() {
             Set<String> tenantIds = new HashSet<>();
-            for (Source source : sources) {
-                tenantIds.addAll(source.tenantIds);
+            for (RoleAssignmentSource source : sources) {
+                tenantIds.addAll(source.getTenantIds());
             }
             return tenantIds;
         }
@@ -239,38 +238,5 @@ public class SourcedRoleAssignments {
 
             return tr;
         }
-
-    }
-
-    public static class Source {
-        @Getter
-        private SourceType sourceType;
-
-        @Getter
-        private String sourceId;
-
-        @Getter
-        private AssignmentType assignmentType;
-
-        private Set<String> tenantIds = new HashSet<>();
-
-        public Source(SourceType sourceType, String sourceId, AssignmentType assignmentType, Set<String> tenantIds) {
-            this.sourceType = sourceType;
-            this.sourceId = sourceId;
-            this.tenantIds = ImmutableSet.copyOf(tenantIds);
-            this.assignmentType = assignmentType;
-        }
-
-        public List<String> getTenantIds() {
-            return ImmutableList.copyOf(tenantIds);
-        }
-    }
-
-    public enum SourceType {
-        USER, USERGROUP, SYSTEM, DA
-    }
-
-    public enum AssignmentType {
-        RCN, DOMAIN, TENANT
     }
 }

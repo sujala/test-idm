@@ -152,6 +152,12 @@ public class IdentityConfig {
     public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
     public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
 
+
+    public static final String FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP = "feature.enable.tenant.role.whitelist.visibility.filter";
+    public static final boolean FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_DEFAULT = false;
+    public static final String TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX = "tenant.role.whitelist.visibility.filter";
+    public static final String TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP_REG = TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + ".%s";
+
     public static final String FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP = "feature.multifactor.locking.login.failure.ttl.in.seconds";
     public static final int FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_DEFAULT = 1800;
     public static final String FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP = "feature.multifactor.locking.attempts.maximumNumber";
@@ -697,6 +703,8 @@ public class IdentityConfig {
 
         defaults.put(MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(EMAIL_FROM_EMAIL_ADDRESS, EMAIL_FROM_EMAIL_ADDRESS_DEFAULT);
+
+        defaults.put(FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP, FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_DEFAULT);
 
         defaults.put(PURGE_TRRS_MAX_DELAY_PROP, PURGE_TRRS_MAX_DELAY_DEFAULT);
 
@@ -2290,6 +2298,32 @@ public class IdentityConfig {
             }
 
             return nestedDARoleHierarchyMap;
+        }
+
+        /**
+         * Due to how Apache Configuration works with determining lists from a string value
+         * @return
+         */
+        @IdmProp(key = TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX, versionAdded = "3.24.0", description = "Set of whitelisted roles per tenant type")
+        public Map<String, Set<String>> getTenantTypeRoleWhitelistFilterMap() {
+            Map<String, Set<String>> result = new HashMap<>();
+
+            Iterator<String> propKeys = reloadableConfiguration.getKeys(TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX);
+
+            while (propKeys.hasNext()) {
+                String key = propKeys.next();
+                String tenantType = StringUtils.removeStart(key, TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + ".");
+                Set<String> visibilityRoles = getSetSafely(reloadableConfiguration, key);
+                visibilityRoles.removeIf(String::isEmpty);
+                result.put(tenantType, visibilityRoles);
+            }
+
+            return result;
+        }
+
+        @IdmProp(key = FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP, versionAdded = "3.24.0", description = "Whether to filter user tenants and roles based on role visibility filter.")
+        public boolean isTenantRoleWhitelistVisibilityFilterEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP);
         }
 
         @IdmProp(key = FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP, versionAdded = "3.23.0", description = "Whether to delete all tenant roles when tenant is removed from domain.")

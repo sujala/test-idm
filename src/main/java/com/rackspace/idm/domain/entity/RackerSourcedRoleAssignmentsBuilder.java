@@ -24,12 +24,12 @@ public class RackerSourcedRoleAssignmentsBuilder {
     }
 
     public RackerSourcedRoleAssignmentsBuilder addIdentitySystemSourcedAssignment(ImmutableClientRole role) {
-        interimSourcedRoleAssignments.addSystemSourcedAssignment(role, "IDENTITY", SourcedRoleAssignments.AssignmentType.DOMAIN, Collections.EMPTY_SET);
+        interimSourcedRoleAssignments.addSystemSourcedAssignment(role, "IDENTITY", RoleAssignmentType.DOMAIN, Collections.EMPTY_SET);
         return this;
     }
 
     public RackerSourcedRoleAssignmentsBuilder addEdirSystemSourcedAssignment(ImmutableClientRole role) {
-        interimSourcedRoleAssignments.addSystemSourcedAssignment(role, "EDIR", SourcedRoleAssignments.AssignmentType.DOMAIN, Collections.EMPTY_SET);
+        interimSourcedRoleAssignments.addSystemSourcedAssignment(role, "EDIR", RoleAssignmentType.DOMAIN, Collections.EMPTY_SET);
         return this;
     }
 
@@ -44,7 +44,7 @@ public class RackerSourcedRoleAssignmentsBuilder {
         for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : interimSourcedRoleAssignments.getSourcedRoleAssignments()) {
             ImmutableClientRole cr = sourcedRoleAssignment.getRole();
 
-            for (SourcedRoleAssignments.Source rawSource : sourcedRoleAssignment.getSources()) {
+            for (RoleAssignmentSource rawSource : sourcedRoleAssignment.getSources()) {
                 // Just add the source as is
                 finalSourceRoleAssignments.addSourceForRole(cr, rawSource);
             }

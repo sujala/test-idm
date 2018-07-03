@@ -109,6 +109,9 @@ public class DefaultTenantService implements TenantService {
     @Autowired
     private DelegationService delegationService;
 
+    @Autowired
+    private TenantTypeWhitelistFilter tenantTypeWhitelistFilter;
+
     // Not using component w/ Autowiring because want just a dumb a utility class
     private RoleUtil roleUtil = new RoleUtil();
 
@@ -1675,8 +1678,13 @@ public class DefaultTenantService implements TenantService {
         if (CollectionUtils.isNotEmpty(hiddenTenantPrefixes)) {
             sourcedRoleAssignmentsBuilder.setHiddenTenantPrefixes(new HashSet<>(hiddenTenantPrefixes));
         }
+        SourcedRoleAssignments finalAssignments = sourcedRoleAssignmentsBuilder.build();
 
-        return sourcedRoleAssignmentsBuilder.build();
+        if (identityConfig.getReloadableConfig().isTenantRoleWhitelistVisibilityFilterEnabled()) {
+            finalAssignments = tenantTypeWhitelistFilter.apply(finalAssignments);
+        }
+
+        return finalAssignments;
     }
 
     /**
@@ -1774,7 +1782,7 @@ public class DefaultTenantService implements TenantService {
         }
 
         @Override
-        public Map<TenantRole, SourcedRoleAssignments.Source> getOtherSourcedRoles() {
+        public Map<TenantRole, RoleAssignmentSource> getOtherSourcedRoles() {
             return Collections.emptyMap();
         }
 
@@ -1888,19 +1896,19 @@ public class DefaultTenantService implements TenantService {
         }
 
         @Override
-        public Map<TenantRole, SourcedRoleAssignments.Source> getOtherSourcedRoles() {
+        public Map<TenantRole, RoleAssignmentSource> getOtherSourcedRoles() {
             return getDelegationAgreementSourcedRoles();
         }
 
         // TODO: Need to refactor these searches into a single call that retrieves all sources
-        private Map<TenantRole, SourcedRoleAssignments.Source> getDelegationAgreementSourcedRoles() {
-            Map<TenantRole, SourcedRoleAssignments.Source> daSourcedRoles = new LinkedHashMap<>();
+        private Map<TenantRole, RoleAssignmentSource> getDelegationAgreementSourcedRoles() {
+            Map<TenantRole, RoleAssignmentSource> daSourcedRoles = new LinkedHashMap<>();
 
             Iterable<TenantRole> tenantRoles = delegationService.getAllRoleAssignmentsOnDelegationAgreement(provisionedUserDelegate.getDelegationAgreement());
 
             if (tenantRoles != null) {
                 for (TenantRole tenantRole : tenantRoles) {
-                    SourcedRoleAssignments.Source source = new SourcedRoleAssignments.Source(SourcedRoleAssignments.SourceType.DA, provisionedUserDelegate.getDelegationAgreement().getId(), null, tenantRole.getTenantIds());
+                    RoleAssignmentSource source = new RoleAssignmentSource(RoleAssignmentSourceType.DA, provisionedUserDelegate.getDelegationAgreement().getId(), null, tenantRole.getTenantIds());
                     daSourcedRoles.put(tenantRole, source);
                 }
             }

@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.entity
 import com.google.common.collect.Sets
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.security.ImmutableClientRole
-import com.rackspace.idm.domain.entity.SourcedRoleAssignments.Source
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.rolecalculator.UserRoleLookupService
 import org.apache.commons.collections4.CollectionUtils
@@ -183,9 +182,9 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
 
         and: "source created appropriately"
         def userSource = sourcedRoleAssignments.sourcedRoleAssignments[0].sources[0]
-        userSource.sourceType == SourcedRoleAssignments.SourceType.USER
+        userSource.sourceType == RoleAssignmentSourceType.USER
         CollectionUtils.isEqualCollection(userSource.tenantIds, Arrays.asList(domain.tenantIds) as Set)
-        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.DOMAIN
+        userSource.assignmentType == RoleAssignmentType.DOMAIN
 
         where:
         identityUserType << IdentityUserTypeEnum.values()
@@ -218,9 +217,9 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
 
         and: "source created appropriately"
         def userSource = sourcedRoleAssignments.sourcedRoleAssignments[0].sources[0]
-        userSource.sourceType == SourcedRoleAssignments.SourceType.USER
+        userSource.sourceType == RoleAssignmentSourceType.USER
         CollectionUtils.isEqualCollection(userSource.tenantIds, Arrays.asList(domain.tenantIds) as Set)
-        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.DOMAIN
+        userSource.assignmentType == RoleAssignmentType.DOMAIN
 
         where:
         identityUserType << [IdentityUserTypeEnum.SERVICE_ADMIN, IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
@@ -259,9 +258,9 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         and: "source created appropriately"
         userTypeAssignment.sources.size() == 1
         def userSource = userTypeAssignment.sources[0]
-        userSource.sourceType == SourcedRoleAssignments.SourceType.USER
+        userSource.sourceType == RoleAssignmentSourceType.USER
         CollectionUtils.isEqualCollection(userSource.tenantIds, ["p2:t2", "1234"] as Set)
-        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.DOMAIN
+        userSource.assignmentType == RoleAssignmentType.DOMAIN
 
         where:
         identityUserType << [IdentityUserTypeEnum.DEFAULT_USER]
@@ -410,16 +409,16 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         and: "User source contains correct info"
         def userSource = assignment.sources.find {it.sourceId == user.id}
         userSource != null
-        userSource.sourceType == SourcedRoleAssignments.SourceType.USER
+        userSource.sourceType == RoleAssignmentSourceType.USER
         CollectionUtils.isEqualCollection(userSource.tenantIds, ["p1:t1"] as Set)
-        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+        userSource.assignmentType == RoleAssignmentType.TENANT
 
         and: "group source contains expected info"
         def groupSource = assignment.sources.find {it.sourceId == "aGroupId"}
         groupSource != null
-        groupSource.sourceType == SourcedRoleAssignments.SourceType.USERGROUP
+        groupSource.sourceType == RoleAssignmentSourceType.USERGROUP
         CollectionUtils.isEqualCollection(groupSource.tenantIds, ["p2:t1"] as Set)
-        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+        userSource.assignmentType == RoleAssignmentType.TENANT
     }
 
     def "Mixing global source and tenant source results in role on all domain tenants"() {
@@ -475,16 +474,16 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         and: "User source contains correct info"
         def userSource = assignment.sources.find {it.sourceId == user.id}
         userSource != null
-        userSource.sourceType == SourcedRoleAssignments.SourceType.USER
+        userSource.sourceType == RoleAssignmentSourceType.USER
         CollectionUtils.isEqualCollection(userSource.tenantIds, ["p1:t1"] as Set)
-        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+        userSource.assignmentType == RoleAssignmentType.TENANT
 
         and: "group source associated with all tenants"
         def groupSource = assignment.sources.find {it.sourceId == "aGroupId"}
         groupSource != null
-        groupSource.sourceType == SourcedRoleAssignments.SourceType.USERGROUP
+        groupSource.sourceType == RoleAssignmentSourceType.USERGROUP
         CollectionUtils.isEqualCollection(groupSource.tenantIds, Arrays.asList(domain.tenantIds))
-        userSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+        userSource.assignmentType == RoleAssignmentType.TENANT
     }
 
     def "System source sets appropriate metadata"() {
@@ -529,10 +528,10 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
 
         and: "System source contains correct info"
         def systemSource = assignment.sources[0]
-        systemSource.sourceType == SourcedRoleAssignments.SourceType.SYSTEM
+        systemSource.sourceType == RoleAssignmentSourceType.SYSTEM
         systemSource.sourceId == "IDENTITY"
         CollectionUtils.isEqualCollection(systemSource.tenantIds, ["p1:t1"] as Set)
-        systemSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+        systemSource.assignmentType == RoleAssignmentType.TENANT
     }
 
     def "Other source sets appropriate metadata"() {
@@ -555,8 +554,8 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
             it
         }
         def icr = createImmutableCrFromTenantRole(sourceTr)
-        Source otherSource = new Source(SourcedRoleAssignments.SourceType.DA, "abc", null, Collections.emptySet())
-        Map<TenantRole, SourcedRoleAssignments.Source> otherSources = [(sourceTr):otherSource] as Map
+        RoleAssignmentSource otherSource = new RoleAssignmentSource(RoleAssignmentSourceType.DA, "abc", null, Collections.emptySet())
+        Map<TenantRole, RoleAssignmentSource> otherSources = [(sourceTr):otherSource] as Map
 
         when: "Build"
         SourcedRoleAssignments result = builder.build()
@@ -581,7 +580,7 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         finalOtherSource.sourceType == otherSource.sourceType
         finalOtherSource.sourceId == otherSource.sourceId
         CollectionUtils.isEqualCollection(finalOtherSource.tenantIds, ["p1:t1"] as Set)
-        finalOtherSource.assignmentType == SourcedRoleAssignments.AssignmentType.TENANT
+        finalOtherSource.assignmentType == RoleAssignmentType.TENANT
     }
 
     def "When RCN role assigned, retrieves all tenants within RCN and grants role on all matching tenants"() {
@@ -639,10 +638,10 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
 
         and: "RCN source contains correct info"
         def systemSource = assignment.sources[0]
-        systemSource.sourceType == SourcedRoleAssignments.SourceType.USER
+        systemSource.sourceType == RoleAssignmentSourceType.USER
         systemSource.sourceId == user.id
         CollectionUtils.isEqualCollection(systemSource.tenantIds, [matchingRcnTenantInDomain.tenantId, matchingRcnTenantOutsideDomain.tenantId] as Set)
-        systemSource.assignmentType == SourcedRoleAssignments.AssignmentType.RCN
+        systemSource.assignmentType == RoleAssignmentType.RCN
     }
 
     User defaultUser(String domainId = "domainId") {

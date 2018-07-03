@@ -5,7 +5,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.AssignmentSources
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
-import com.rackspace.idm.domain.entity.SourcedRoleAssignments
+import com.rackspace.idm.domain.entity.RoleAssignmentSourceType
+import com.rackspace.idm.domain.entity.RoleAssignmentType
 import com.rackspace.idm.modules.usergroups.Constants
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
@@ -72,8 +73,8 @@ class JSONWriterForRaxAuthRoleAssignmentsTest extends Specification {
             it.sources = new AssignmentSources()
             AssignmentSource aSource = new AssignmentSource();
             aSource.sourceId = "sourceId"
-            aSource.assignmentType = SourcedRoleAssignments.AssignmentType.DOMAIN.name()
-            aSource.sourceType = SourcedRoleAssignments.SourceType.USER.name()
+            aSource.assignmentType = RoleAssignmentType.DOMAIN.name()
+            aSource.sourceType = RoleAssignmentSourceType.USER.name()
             aSource.forTenants.addAll(["tenantA", "tenantB"])
             it.sources.source.add(aSource)
 
@@ -96,8 +97,8 @@ class JSONWriterForRaxAuthRoleAssignmentsTest extends Specification {
         sources.size() == 1
         JSONObject source = sources.get(0)
         source.get("sourceId") == "sourceId"
-        source.get("assignmentType") == SourcedRoleAssignments.AssignmentType.DOMAIN.name()
-        source.get("sourceType") == SourcedRoleAssignments.SourceType.USER.name()
+        source.get("assignmentType") == RoleAssignmentType.DOMAIN.name()
+        source.get("sourceType") == RoleAssignmentSourceType.USER.name()
         source.get("forTenants") == ["tenantA", "tenantB"]
     }
 
