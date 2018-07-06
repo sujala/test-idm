@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.models import factory
@@ -13,9 +14,11 @@ class TestGetDomain(base.TestBaseV2):
     """
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestGetDomain, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestGetDomain, self).setUp()
         self.domain_ids = []
@@ -34,6 +37,7 @@ class TestGetDomain(base.TestBaseV2):
         self.domain_ids.append(domain_id)
         return domain_id
 
+    @tags('positive', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_get_domain(self):
         domain_id = self.create_domain()
@@ -42,6 +46,7 @@ class TestGetDomain(base.TestBaseV2):
         self.assertEqual(
             domain_id, resp.json()[const.RAX_AUTH_DOMAIN][const.ID])
 
+    @unless_coverage
     def tearDown(self):
         super(TestGetDomain, self).tearDown()
         for domain_id in self.domain_ids:
@@ -49,3 +54,8 @@ class TestGetDomain(base.TestBaseV2):
             self.identity_admin_client.update_domain(
                 domain_id=domain_id, request_object=disable_domain_req)
             self.identity_admin_client.delete_domain(domain_id=domain_id)
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestGetDomain, cls).tearDownClass()

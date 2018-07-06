@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 from hypothesis import given, strategies
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 import ast
 import copy
 import ddt
@@ -19,6 +20,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
 
     """Add Endpoint Template Tests"""
     @classmethod
+    @unless_coverage
     def setUpClass(self):
         super(TestAddEndpointTemplate, self).setUpClass()
 
@@ -43,12 +45,14 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                 const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] +
             self.additional_schema_fields)
 
+    @unless_coverage
     def setUp(self):
         super(TestAddEndpointTemplate, self).setUp()
         self.service_ids = []
         self.template_ids = []
         self.user_ids = []
 
+    @unless_coverage
     @ddt.file_data('data_add_endpoint_template_using_new_service_name_and_'
                    'type.json')
     @parent_base.skip_if_no_service_admin_available
@@ -135,6 +139,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                 public_url=public_url, assignment_type=assignment_type,
                 expected_endpoint_in_catalog=expected_endpoint_in_catalog)
 
+    @unless_coverage
     @ddt.file_data('data_add_endpoint_template_using_existing_service_name_'
                    'and_type.json')
     def test_add_endpoint_template_using_existing_service_name_and_type(
@@ -206,6 +211,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                     public_url=public_url, assignment_type=assignment_type,
                     expected_endpoint_in_catalog=expected_endpoint_in_catalog)
 
+    @unless_coverage
     @ddt.file_data('data_add_endpoint_template_using_new_service_id.json')
     @parent_base.skip_if_no_service_admin_available
     def test_add_endpoint_template_using_new_service_id(self, test_data):
@@ -288,6 +294,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                 public_url=public_url,
                 expected_endpoint_in_catalog=expected_endpoint_in_catalog)
 
+    @unless_coverage
     @ddt.file_data('data_add_endpoint_template_using_existing_service_id.json')
     def test_add_endpoint_template_using_existing_service_id(self, test_data):
         """
@@ -357,6 +364,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                     template_id=template_id, public_url=public_url,
                     expected_endpoint_in_catalog=expected_endpoint_in_catalog)
 
+    @unless_coverage
     @attr('skip_at_gate')
     @ddt.file_data('data_add_endpoint_template_negative_cases.json')
     def test_add_endpoint_template_negative(self, test_data):
@@ -409,6 +417,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
             self.assertEqual(resp.json()['badRequest']['message'],
                              expected_error_message)
 
+    @tags('positive', 'p1', 'regression')
     @given(strategies.text(), strategies.booleans())
     def test_add_endpoint_template_hypothesis(self, template_id, region):
         """Property Based Testing
@@ -524,6 +533,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
         self.service_admin_client.delete_endpoint_from_tenant(
             tenant_id=tenant_id, endpoint_template_id=template_id)
 
+    @unless_coverage
     def tearDown(self):
         # Disable & delete all templates created in the tests
         if self.test_config.run_service_admin_tests:
@@ -546,3 +556,8 @@ class TestAddEndpointTemplate(base.TestBaseV2):
             resp = self.identity_admin_client.delete_user(user_id=id_)
             self.assertEqual(resp.status_code, 204)
         super(TestAddEndpointTemplate, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestAddEndpointTemplate, cls).tearDownClass()

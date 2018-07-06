@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import copy
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -15,6 +16,7 @@ class TestRCNDomain(base.TestBaseV2):
     """
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestRCNDomain, cls).setUpClass()
         cls.domain_with_rcn_schema = copy.deepcopy(domains_json.domain)
@@ -22,6 +24,7 @@ class TestRCNDomain(base.TestBaseV2):
             'properties'][const.RAX_AUTH_DOMAIN]['required'].append(
                 const.RCN_LONG)
 
+    @unless_coverage
     def setUp(self):
         super(TestRCNDomain, self).setUp()
         self.domain_ids = []
@@ -40,6 +43,7 @@ class TestRCNDomain(base.TestBaseV2):
         resp = self.identity_admin_client.add_domain(req_obj)
         return resp
 
+    @tags('positive', 'p0', 'regression')
     def test_create_domain_with_rcn(self):
         resp = self.create_domain_with_rcn()
         self.assertEqual(resp.status_code, 201)
@@ -58,6 +62,7 @@ class TestRCNDomain(base.TestBaseV2):
         self.assertEqual(
             rcn, resp.json()[const.RAX_AUTH_DOMAIN][const.RCN_LONG])
 
+    @tags('positive', 'p1', 'smoke')
     @attr(type='smoke_alpha')
     def test_update_domain_with_rcn(self):
         resp = self.create_domain_with_rcn()
@@ -105,6 +110,7 @@ class TestRCNDomain(base.TestBaseV2):
         else:
             self.assertNotIn(const.RCN_ADMIN_ROLE_NAME, role_names)
 
+    @tags('positive', 'p1', 'regression')
     def test_move_domain_to_rcn(self):
         """
         Test to validate the 'move domain to an RCN' call
@@ -156,6 +162,7 @@ class TestRCNDomain(base.TestBaseV2):
                         const.X_USER_ID])
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         super(TestRCNDomain, self).tearDown()
         for user_id in self.user_ids:
@@ -173,3 +180,8 @@ class TestRCNDomain(base.TestBaseV2):
                 resp.status_code, 204,
                 msg='Domain with ID {0} failed to delete'.format(
                     domain_id))
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestRCNDomain, cls).tearDownClass()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 import copy
+from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.schema import endpoint_templates
@@ -16,6 +17,7 @@ class TestUpdateEndpointTemplate(base.TestBaseV2):
 
     """Update Endpoint Template Tests"""
 
+    @unless_coverage
     def setUp(self):
         super(TestUpdateEndpointTemplate, self).setUp()
         self.service_ids = []
@@ -47,6 +49,7 @@ class TestUpdateEndpointTemplate(base.TestBaseV2):
         self.template_ids.append(template_id)
         return resp
 
+    @unless_coverage
     @ddt.file_data('data_update_endpoint_template_version.json')
     @parent_base.skip_if_no_service_admin_available
     def test_update_endpoint_template_version(self, test_data):
@@ -114,6 +117,7 @@ class TestUpdateEndpointTemplate(base.TestBaseV2):
             self.additional_schema_fields)
         self.assertSchema(response=resp, json_schema=updated_json_schema)
 
+    @unless_coverage
     def tearDown(self):
         # Delete all templates created in the tests
         for id_ in self.template_ids:
@@ -124,3 +128,8 @@ class TestUpdateEndpointTemplate(base.TestBaseV2):
             resp = self.service_admin_client.delete_service(service_id=id_)
             self.assertEqual(resp.status_code, 204)
         super(TestUpdateEndpointTemplate, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestUpdateEndpointTemplate, cls).tearDownClass()

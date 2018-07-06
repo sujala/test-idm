@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import header_validation
 from tests.api.v2 import base
@@ -14,9 +15,15 @@ class TestCorsHeaders(base.TestBaseV2):
     """Tests CORS headers"""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestCorsHeaders, cls).setUpClass()
 
+    @unless_coverage
+    def setUp(self):
+        super(TestCorsHeaders, self).setUp()
+
+    @tags('negative', 'p1', 'regression')
     def test_cors_headers_only_allow_for_post_to_tokens(self):
         request_origin = 'http://example.rackspace.com'
         headers = {const.ORIGIN: request_origin}
@@ -41,6 +48,7 @@ class TestCorsHeaders(base.TestBaseV2):
 
     # TODO: add test with other token calls when support client available
 
+    @unless_coverage
     @ddt.data("OPTIONS", "POST", "GET", "HEAD", "DELETE", "PUT", "PATCH")
     def test_cors_headers_verify_allow_methods(self, method):
         request_origin = "test.rackspace.com"
@@ -62,6 +70,7 @@ class TestCorsHeaders(base.TestBaseV2):
         else:
             self.assertEqual(response.status_code, 403)
 
+    @unless_coverage
     @ddt.data("OPTIONS", "POST", "GET", "HEAD", "DELETE", "PUT", "PATCH")
     def test_cors_headers_all_cors_headers(self, method):
         request_origin = "test.rackspace.com"
@@ -90,6 +99,7 @@ class TestCorsHeaders(base.TestBaseV2):
         else:
             self.assertEqual(response.status_code, 403)
 
+    @unless_coverage
     @ddt.data("OPTIONS", "POST", "GET", "HEAD", "DELETE", "PUT", "PATCH")
     def test_without_origin_header(self, method):
         """
@@ -113,3 +123,12 @@ class TestCorsHeaders(base.TestBaseV2):
         # cors headers not included
         header_validation.validate_header_not_present(
             unexpected_headers=unexpected_headers)(response)
+
+    @unless_coverage
+    def tearDown(self):
+        super(TestCorsHeaders, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestCorsHeaders, cls).tearDownClass()

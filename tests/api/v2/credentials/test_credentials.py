@@ -1,5 +1,6 @@
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -15,6 +16,7 @@ class TestCredentials(base.TestBaseV2):
     """
     Credentials
     """
+    @unless_coverage
     def setUp(self):
         super(TestCredentials, self).setUp()
         self.user_ids = []
@@ -38,6 +40,7 @@ class TestCredentials(base.TestBaseV2):
         username = resp.json()[const.USER][const.USERNAME]
         return user_id, username
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_credentials(self):
         resp = self.identity_admin_client.list_credentials(self.user_id)
@@ -49,6 +52,7 @@ class TestCredentials(base.TestBaseV2):
         self.assertIsNotNone(resp.json()[const.CREDENTIALS][0]
                              [const.NS_API_KEY_CREDENTIALS][const.API_KEY])
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_add_password_credentials(self):
         password = self.generate_random_string(
@@ -75,6 +79,7 @@ class TestCredentials(base.TestBaseV2):
         )
         self.assertEqual(resp.status_code, 200)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_get_apikey(self):
         resp = self.identity_admin_client.get_api_key(self.user_id)
@@ -86,6 +91,7 @@ class TestCredentials(base.TestBaseV2):
         self.assertEqual(resp.json()[const.NS_API_KEY_CREDENTIALS]
                          [const.USERNAME], self.testusername)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_reset_apikey(self):
         resp = self.identity_admin_client.get_api_key(self.user_id)
@@ -100,6 +106,7 @@ class TestCredentials(base.TestBaseV2):
         self.assertFalse(previous_apikey == new_apikey,
                          msg="The API key should be different after reset!")
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_delete_apikey(self):
         resp = self.identity_admin_client.delete_api_key(self.user_id)
@@ -110,6 +117,7 @@ class TestCredentials(base.TestBaseV2):
         resp = self.identity_admin_client.get_api_key(self.user_id)
         self.assertEqual(resp.status_code, 404)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_update_apikey(self):
         apikey = self.generate_random_string(pattern=const.API_KEY_PATTERN)
@@ -130,6 +138,7 @@ class TestCredentials(base.TestBaseV2):
                                     [const.API_KEY], apikey)
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         for user_id in self.user_ids:

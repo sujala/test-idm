@@ -15,6 +15,7 @@ Tests verify
 
 from nose.plugins.attrib import attr
 import ddt
+from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.models import factory
@@ -27,6 +28,7 @@ from tests.package.johny.v2.models import requests
 class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestAddIdentityProdRoleToUserOnTenant, cls).setUpClass()
         cls.domain_id = cls.generate_random_string(
@@ -47,6 +49,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
         self.tenant_type_ids.append(name.lower())
 
+    @unless_coverage
     def setUp(self):
         super(TestAddIdentityProdRoleToUserOnTenant, self).setUp()
         self.user_ids = []
@@ -99,6 +102,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             role_id = resp.json()[const.ROLES][0][const.ID]
         return role_id
 
+    @unless_coverage
     @ddt.data('identity-admin', 'user-admin', 'user-default', 'user-manager')
     def test_add_identity_product_role_to_user_on_tenant(self, user):
         """
@@ -178,6 +182,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             self.weight500_role_id, str(auth_resp.json()[const.ACCESS][
                                           const.USER][const.ROLES]))
 
+    @unless_coverage
     @ddt.data('identity-admin', 'user-admin', 'user-default', 'user-manager')
     @attr('skip_at_gate')
     def test_add_identity_product_role_weight50_to_user_on_tenant(self, user):
@@ -254,6 +259,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
                          str(auth_resp.json()[const.ACCESS][const.USER][
                                  const.ROLES]))
 
+    @unless_coverage
     @ddt.data('identity-admin', 'user-admin', 'user-default', 'user-manager')
     def test_add_identity_tenant_access_role(self, user):
         """
@@ -326,6 +332,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
                                               const.USER][const.ROLES]))
 
+    @unless_coverage
     @ddt.data(const.IDENTITY_ADMIN_ROLE_ID, const.USER_ADMIN_ROLE_ID,
               const.USER_DEFAULT_ROLE_ID, const.SERVICE_ADMIN_ROLE_ID,
               const.USER_MANAGER_ROLE_ID)
@@ -352,8 +359,10 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         )
         self.assertEqual(add_resp.status_code, 403)
 
+    @unless_coverage
     def tearDown(self):
         # clean up resources
+        super(TestAddIdentityProdRoleToUserOnTenant, self).tearDown()
         for id_ in self.user_ids:
             self.identity_admin_client.delete_user(user_id=id_)
         for id_ in self.tenant_ids:
@@ -362,6 +371,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             self.service_admin_client.delete_tenant_type(name=name)
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         cls.delete_client(client=cls.user_admin_client)
         # Cleaning up the identity product roles added in setupClass.

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
 from urlparse import urljoin
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.models import factory
@@ -25,6 +26,7 @@ class TestGlobalEndpoints(base.TestBaseV2):
     """
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestGlobalEndpoints, cls).setUpClass()
         # These are preset role names to ldif to follow alphabetical order
@@ -36,6 +38,7 @@ class TestGlobalEndpoints(base.TestBaseV2):
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
         self.tenant_type_ids.append(name.lower())
 
+    @unless_coverage
     def setUp(self):
         super(TestGlobalEndpoints, self).setUp()
         if not self.test_config.run_local_and_jenkins_only:
@@ -134,6 +137,7 @@ class TestGlobalEndpoints(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         return resp.json()[const.ROLES][0][const.ID]
 
+    @tags('positive', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_assign_global_endpoints_on_tenant(self):
         """Tests that a user receives MOSSO global endpoints when granted
@@ -249,6 +253,7 @@ class TestGlobalEndpoints(base.TestBaseV2):
                                  urljoin(compute_public_url,
                                          tenant_id))
 
+    @unless_coverage
     def tearDown(self):
         # Delete all resources created in the tests
         for id_ in self.user_ids:
@@ -278,3 +283,8 @@ class TestGlobalEndpoints(base.TestBaseV2):
         for name in self.tenant_type_ids:
             self.service_admin_client.delete_tenant_type(name=name)
         super(TestGlobalEndpoints, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestGlobalEndpoints, cls).tearDownClass()

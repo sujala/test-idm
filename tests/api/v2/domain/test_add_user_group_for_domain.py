@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -15,6 +16,7 @@ class AddUserGroupForDomain(base.TestBaseV2):
     Tests for Add/Get user group for a domain service
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(AddUserGroupForDomain, cls).setUpClass()
         if cls.test_config.use_domain_for_user_groups:
@@ -33,6 +35,11 @@ class AddUserGroupForDomain(base.TestBaseV2):
             'user_manager': cls.user_manager_client
         }
 
+    @unless_coverage
+    def setUp(self):
+        super(AddUserGroupForDomain, self).setUp()
+
+    @unless_coverage
     @ddt.data('user_admin', 'user_manager')
     @attr(type='smoke_alpha')
     def test_add_and_get_user_group_for_domain(self, user_type):
@@ -61,7 +68,13 @@ class AddUserGroupForDomain(base.TestBaseV2):
         self.assertSchema(get_user_group_resp,
                           json_schema=user_groups.get_user_group_for_domain)
 
+    @unless_coverage
+    def tearDown(self):
+        # clean up resources
+        super(AddUserGroupForDomain, self).tearDown()
+
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         # Not calling 'log_tearDown_error' as delete_client() method is
         # already wrapped with it. So, any cleanup failures will be caught.

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from urlparse import urljoin
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.models import factory
@@ -31,6 +32,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
     """ Test Assign global endpoint for all roll on tenant"""
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestRCNAccountManagement, cls).setUpClass()
         if not cls.test_config.run_service_admin_tests:
@@ -45,6 +47,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
         cls.service_id = cls.get_service_id_by_name(
             service_name=cls.SERVICE_NAME)
 
+    @unless_coverage
     def setUp(self):
         super(TestRCNAccountManagement, self).setUp()
         self.user_ids = []
@@ -148,6 +151,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         return resp.json()[const.ROLES][0][const.ID]
 
+    @tags('positive', 'p1', 'regression')
     def test_assign_global_endpoints_for_all_roles_on_tenant_case1(self):
         """3.7.0 features assign global endpoints for all roles on tenant
             this test need specific roles setting in order to verify correctly
@@ -215,6 +219,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
                              const.PUBLIC_URL], urljoin(public_url,
                                                         tenant_id))
 
+    @tags('positive', 'p1', 'regression')
     def test_assign_global_endpoints_for_all_roles_on_tenant_case2(self):
         """3.7.0 features assign global endpoints for all roles on tenant
             this test need specific role setting in order to verify correctly
@@ -288,6 +293,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
                              const.PUBLIC_URL], urljoin(public_url,
                                                         tenant_id))
 
+    @tags('positive', 'p1', 'regression')
     def test_assign_global_endpoints_for_all_roles_on_mosso_tenant(self):
         """3.7.0 features assign global endpoints for all roles on tenant
             This case role randomly create so added global endpoint may or
@@ -360,6 +366,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
         self.assertEqual(endpoints[0][const.ENDPOINTS][0][const.TENANT_ID],
                          tenant_id)
 
+    @unless_coverage
     def tearDown(self):
         # Delete all resources created in the tests
         for id_ in self.user_ids:
@@ -387,3 +394,8 @@ class TestRCNAccountManagement(base.TestBaseV2):
         for id_ in self.service_ids:
             self.service_admin_client.delete_service(service_id=id_)
         super(TestRCNAccountManagement, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestRCNAccountManagement, cls).tearDownClass()

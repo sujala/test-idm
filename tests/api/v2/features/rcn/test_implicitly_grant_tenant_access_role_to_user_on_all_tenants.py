@@ -29,6 +29,7 @@
 """
 from nose.plugins.attrib import attr
 import collections
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
 from tests.api.v2.models import factory, responses
@@ -42,6 +43,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
     Test implicitly grant identity:tenant-access role
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestUserImplicitlyGrantedTenantAccessRole, cls).setUpClass()
         # skip if not service admin tests
@@ -90,6 +92,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             const.ID]
         return tenant_access_role_id
 
+    @unless_coverage
     def setUp(self):
         super(TestUserImplicitlyGrantedTenantAccessRole, self).setUp()
         self.user_ids = []
@@ -675,6 +678,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         self.service_admin_client.delete_endpoint_from_tenant(
             tenant_id=tenant, endpoint_template_id=template_id)
 
+    @tags('positive', 'p1', 'regression')
     def test_implicitly_grant_tenant_access_role_create_user_one_call(self):
         """
         Test verify implicitly grant identity tenant access role to user on all
@@ -812,6 +816,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         self.verify_list_roles_for_user_on_tenant_post_del(
             tenant_id=tenant_id, user_id=user_id)
 
+    @tags('positive', 'p1', 'regression')
     def test_implicitly_grant_tenant_access_role_new_tenant(self):
         """
         Test with regular steps:
@@ -888,6 +893,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         self.verify_endpoint_present_in_service_catalog(
             user_name=user_name, password=password, tenant=tenant_id)
 
+    @tags('positive', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_implicit_tenant_access_role_on_user_when_user_or_tenant_disabled(
             self):
@@ -1015,6 +1021,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                                                   user_id=user_id,
                                                   tenant_on_the_domain=False)
 
+    @unless_coverage
     def tearDown(self):
         # Delete all resources created in the tests
         for id_ in self.service_ids:
@@ -1032,3 +1039,8 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                 domain_id=id_, request_object=disable_domain_req)
             self.identity_admin_client.delete_domain(domain_id=id_)
         super(TestUserImplicitlyGrantedTenantAccessRole, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestUserImplicitlyGrantedTenantAccessRole, cls).tearDownClass()

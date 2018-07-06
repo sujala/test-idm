@@ -45,6 +45,7 @@ services:
       TOMCAT_AJP_PORT: 8082
       TOMCAT_SHUTDOWN_PORT: 8104
       EDIRECTORY_PORT: 1636
+      CLOUDFEEDS_PORT: 8180
     volumes:
       - ../build/libs:/usr/share/tomcat/webapps/
       - .identity/configs:/etc/idm/config

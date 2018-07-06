@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -13,6 +14,7 @@ class TestAdministratorChange(base.TestBaseV2):
     """
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """Class level set up for the tests
 
@@ -34,6 +36,7 @@ class TestAdministratorChange(base.TestBaseV2):
         cls.test_user_adm_token = cls.test_user_admin_client.default_headers[
             const.X_AUTH_TOKEN]
 
+    @unless_coverage
     def setUp(self):
         super(TestAdministratorChange, self).setUp()
         self.sub_user_ids = []
@@ -52,6 +55,7 @@ class TestAdministratorChange(base.TestBaseV2):
         self.test_user_admin_client.add_role_to_user(
             const.USER_MANAGER_ROLE_ID, self.test_user_manager_id)
 
+    @tags('positive', 'p0', 'regression')
     def test_admin_swap(self):
         request_object = requests.DomainAdministratorChange(
             self.test_user_manager_id,
@@ -98,6 +102,7 @@ class TestAdministratorChange(base.TestBaseV2):
                                  const.ROLES]))
 
     @base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests
         resp = self.identity_admin_client.delete_user(
@@ -126,5 +131,6 @@ class TestAdministratorChange(base.TestBaseV2):
         super(TestAdministratorChange, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestAdministratorChange, cls).tearDownClass()
