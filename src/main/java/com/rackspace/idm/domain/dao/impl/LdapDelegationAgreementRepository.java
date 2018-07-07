@@ -62,16 +62,6 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
     @Override
     public void addAgreement(DelegationAgreement delegationAgreement) {
         delegationAgreement.setId(getNextAgreementId());
-
-        /*
-         Update with default when creating new DAs. While the DelegationAgreement entity has preencode/postencode
-         defined to default this value to false, callers of this service expect the passed in delegationAgreement to
-         reflect any defaults applied when saving the DA. Therefore we need to set the defaults on the object itself.
-         */
-        if (delegationAgreement.getAllowSubAgreements() == null) {
-            delegationAgreement.setAllowSubAgreements(Boolean.FALSE);
-        }
-
         addObject(delegationAgreement);
     }
 
@@ -274,15 +264,9 @@ public class LdapDelegationAgreementRepository extends LdapGenericRepository<Del
             }
         }
 
-        // If nest level is specified it overrides allowSubAgreements
-        if (object.getSubAgreementNestLevel() != null) {
-            object.setAllowSubAgreements(object.getSubAgreementNestLevel() > 0);
-        } else if (BooleanUtils.isTrue(object.getAllowSubAgreements())) {
-            object.setSubAgreementNestLevel(identityConfig.getReloadableConfig().getMaxDelegationAgreementNestingLevel());
-        } else {
+        // If nest level isn't specified, set to 0
+        if (object.getSubAgreementNestLevel() == null) {
             object.setSubAgreementNestLevel(0);
         }
     }
-
-
 }

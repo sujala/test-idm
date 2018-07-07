@@ -33,7 +33,7 @@ public interface DelegationCloudService {
     Response addAgreement(UriInfo uriInfo, String authToken, DelegationAgreement agreement);
 
     /**
-     * Update a delegation agreement (DA). Only name, description, and  allowSubAgreements fields are allowed to be
+     * Update a delegation agreement (DA). Only name, description, and nestLevel fields are allowed to be
      * updated on a DA.
      *
      * On success returns:

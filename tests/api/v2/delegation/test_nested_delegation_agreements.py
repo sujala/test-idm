@@ -131,11 +131,6 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             get_nested_da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][
                 const.SUBAGREEMENT_NEST_LEVEL], 1)
         self.assertSchema(get_nested_da_resp, da_schema.add_da)
-        if parent_nest_level > 1:
-            self.assertTrue(
-                get_nested_da_resp.json()[
-                    const.RAX_AUTH_DELEGATION_AGREEMENT][
-                    const.ALLOW_SUB_AGREEMENTS])
 
     def validate_nested_da_response(self, nested_da_resp, resp_code=201):
 

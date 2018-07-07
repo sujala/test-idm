@@ -97,6 +97,8 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_DELEGATION_MAX_NUMBER_OF_DA_PER_PRINCIPAL_PROP, 30)
+
     }
 
     /**
@@ -124,7 +126,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.allowSubAgreements = false
+            it.subAgreementNestLevel = 0
             it
         }
 
@@ -250,7 +252,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == sharedUserAdmin.id
         createdDa.principalType == PrincipalType.USER
-        !createdDa.isAllowSubAgreements() // default when when not specified
+        createdDa.subAgreementNestLevel == 0 // default when when not specified
 
         when:
         def getResponse = cloud20.getDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)
@@ -267,7 +269,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == sharedUserAdmin.id
         getDa.principalType == PrincipalType.USER
-        !getDa.isAllowSubAgreements() // default when when not specified
+        createdDa.subAgreementNestLevel == 0 // default when when not specified
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)
@@ -292,7 +294,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.allowSubAgreements = true
+            it.subAgreementNestLevel = 1
             it
         }
 
@@ -311,7 +313,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == caller.id
         createdDa.principalType == PrincipalType.USER
-        createdDa.isAllowSubAgreements()
+        createdDa.subAgreementNestLevel == 1
 
         when:
         def getResponse = cloud20.getDelegationAgreement(token, createdDa.id)
@@ -328,7 +330,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.description == webDa.description
         getDa.principalId == caller.id
         getDa.principalType == PrincipalType.USER
-        getDa.isAllowSubAgreements()
+        createdDa.subAgreementNestLevel == 1
 
         when:
         def deleteResponse = cloud20.deleteDelegationAgreement(token, createdDa.id)
@@ -371,7 +373,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.description == webDa.description
         createdDa.principalId == fedAuthResponse.user.id
         createdDa.principalType == PrincipalType.USER
-        !createdDa.allowSubAgreements
         createdDa.subAgreementNestLevel == 0
 
         when:
@@ -463,13 +464,12 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
     }
 
     @Unroll
-    def "addAgreement: allowSubAgreements and subAgreementNestLevel set appropriately based on input: maxNest: #maxNest; allowSubAgreement: #allowSubAgreement; nestLevel: #nestLevel"() {
+    def "addAgreement: subAgreementNestLevel set appropriately based on input: maxNest: #maxNest; nestLevel: #nestLevel"() {
         reloadableConfiguration.setProperty(IdentityConfig.DELEGATION_MAX_NEST_LEVEL_PROP, maxNest)
 
         DelegationAgreement webDa = new DelegationAgreement().with {
             it.name = RandomStringUtils.randomAlphabetic(32)
             it.description = RandomStringUtils.randomAlphabetic(255)
-            it.allowSubAgreements = allowSubAgreement
             it.subAgreementNestLevel = nestLevel
             it
         }
@@ -483,15 +483,13 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         and: "created da was returned appropriately"
         def createdDa = createResponse.getEntity(DelegationAgreement)
         createdDa != null
-        createdDa.isAllowSubAgreements() == expectedAllowSubAgreement
-        createdDa.getSubAgreementNestLevel() == expectedNextLevel
+        createdDa.getSubAgreementNestLevel() == nestLevel
 
         when:
         def getDa = utils.getDelegationAgreement(sharedUserAdminToken, createdDa.id)
 
         then:
-        getDa.isAllowSubAgreements() == expectedAllowSubAgreement
-        getDa.getSubAgreementNestLevel() == expectedNextLevel
+        getDa.getSubAgreementNestLevel() == nestLevel
 
         cleanup:
         try {
@@ -501,14 +499,11 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         }
 
         where:
-        maxNest | allowSubAgreement | nestLevel | expectedAllowSubAgreement | expectedNextLevel
-        5 | null | null | false | 0
-        5 | null | 2 | true | 2
-        5 | null | 2 | true | 2
-        3 | null | 0 | false | 0
-        5 | false | null | false | 0
-        5 | true | null | true | 5
-        3 | true | null | true | 3
+        maxNest | nestLevel
+        5 | 2
+        3 | 0
+        5 | 5
+
     }
 
     @Unroll
@@ -616,51 +611,6 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
 
         cleanup:
         cloud20.deleteDelegationAgreement(sharedUserAdminToken, parentDa.id)
-    }
-
-    @Unroll
-    def "addAgreement: subAgreementNestLevel set appropriately for legacy agreements: maxNest: #maxNest; allowSubAgreement: #allowSubAgreement"() {
-        reloadableConfiguration.setProperty(IdentityConfig.DELEGATION_MAX_NEST_LEVEL_PROP, maxNest)
-
-        DelegationAgreement webDa = new DelegationAgreement().with {
-            it.name = RandomStringUtils.randomAlphabetic(32)
-            it.description = RandomStringUtils.randomAlphabetic(255)
-            it.allowSubAgreements = allowSubAgreement
-            it
-        }
-        def createdDa = utils.createDelegationAgreement(sharedUserAdminToken, webDa)
-
-        // Hack backend to remove nest level attribute to simulate existing DA prior to this release
-        com.rackspace.idm.domain.entity.DelegationAgreement daEntity = delegationService.getDelegationAgreementById(createdDa.id)
-        daEntity.setSubAgreementNestLevel(null)
-        LDAPPersister<DelegationAgreement> persister = (LDAPPersister<com.rackspace.idm.domain.entity.DelegationAgreement>) LDAPPersister.getInstance(daEntity.getClass())
-        List<Modification> mods = persister.getModifications(daEntity, true, LdapRepository.ATTR_RS_NEST_LEVEL)
-        if (mods.size() > 0) {
-            persister.modify(daEntity, connPools.getAppConnPoolInterface(), null, true,  LdapRepository.ATTR_RS_NEST_LEVEL)
-        }
-
-        when: "Retrieve DA from backend service"
-        com.rackspace.idm.domain.entity.DelegationAgreement daEntityRefresh = delegationService.getDelegationAgreementById(createdDa.id)
-
-        then:
-        daEntityRefresh.allowSubAgreements == expectedAllowSubAgreement
-        daEntityRefresh.subAgreementNestLevel == expectedNextLevel
-
-        when: "Retrieve DA from API"
-        def getDa = utils.getDelegationAgreement(sharedUserAdminToken, createdDa.id)
-
-        then:
-        getDa.isAllowSubAgreements() == expectedAllowSubAgreement
-        getDa.getSubAgreementNestLevel() == expectedNextLevel
-
-        cleanup:
-        cloud20.deleteDelegationAgreement(sharedUserAdminToken, createdDa.id)
-
-        where:
-        maxNest | allowSubAgreement | expectedAllowSubAgreement | expectedNextLevel
-        5 | null | false | 0
-        5 | false | false | 0
-        5 | true | true | 5
     }
 
     def "Can manage user delegates on root delegation agreement"() {

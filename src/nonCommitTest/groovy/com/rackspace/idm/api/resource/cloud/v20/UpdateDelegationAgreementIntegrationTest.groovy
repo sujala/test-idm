@@ -40,13 +40,13 @@ class UpdateDelegationAgreementIntegrationTest extends RootIntegrationTest {
         returnedEntity.id == createDa.id
         returnedEntity.domainId == createDa.domainId
         returnedEntity.description == null
-        !returnedEntity.allowSubAgreements
+        returnedEntity.subAgreementNestLevel == BigInteger.ZERO
 
         when: "update da with same values"
         DelegationAgreement delegationAgreement = new DelegationAgreement().with {
             it.name = createDa.name
             it.description = createDa.description
-            it.allowSubAgreements = createDa.allowSubAgreements
+            it.subAgreementNestLevel = createDa.subAgreementNestLevel
             it.id = createDa.id
             it
         }
@@ -59,7 +59,7 @@ class UpdateDelegationAgreementIntegrationTest extends RootIntegrationTest {
         returnedEntity.id == createDa.id
         returnedEntity.domainId == createDa.domainId
         returnedEntity.description == null
-        !returnedEntity.allowSubAgreements
+        returnedEntity.subAgreementNestLevel == BigInteger.ZERO
 
         when: "update da without any updates"
         delegationAgreement = new DelegationAgreement()
@@ -72,7 +72,7 @@ class UpdateDelegationAgreementIntegrationTest extends RootIntegrationTest {
         returnedEntity.id == createDa.id
         returnedEntity.domainId == createDa.domainId
         returnedEntity.description == null
-        !returnedEntity.allowSubAgreements
+        returnedEntity.subAgreementNestLevel == BigInteger.ZERO
 
         when: "update da's name"
         delegationAgreement.name = testUtils.getRandomUUIDOfLength("da", 32)
@@ -85,7 +85,7 @@ class UpdateDelegationAgreementIntegrationTest extends RootIntegrationTest {
         returnedEntity.id == createDa.id
         returnedEntity.domainId == createDa.domainId
         returnedEntity.description == null
-        !returnedEntity.allowSubAgreements
+        returnedEntity.subAgreementNestLevel == BigInteger.ZERO
 
         when: "update da's description"
         delegationAgreement.setDescription("new description")
@@ -98,10 +98,10 @@ class UpdateDelegationAgreementIntegrationTest extends RootIntegrationTest {
         returnedEntity.id == createDa.id
         returnedEntity.domainId == createDa.domainId
         returnedEntity.description == delegationAgreement.description
-        !returnedEntity.allowSubAgreements
+        returnedEntity.subAgreementNestLevel == BigInteger.ZERO
 
-        when: "update da's allowSubAgreement"
-        delegationAgreement.setAllowSubAgreements(true)
+        when: "update da's nest level"
+        delegationAgreement.setSubAgreementNestLevel(BigInteger.ONE)
         response = cloud20.updateDelegationAgreement(userToken, createDa.id, delegationAgreement, mediaType)
         returnedEntity = response.getEntity(DelegationAgreement)
 
@@ -111,7 +111,7 @@ class UpdateDelegationAgreementIntegrationTest extends RootIntegrationTest {
         returnedEntity.id == createDa.id
         returnedEntity.domainId == createDa.domainId
         returnedEntity.description == delegationAgreement.description
-        returnedEntity.allowSubAgreements
+        returnedEntity.subAgreementNestLevel == BigInteger.ONE
 
         cleanup:
         utils.deleteUserQuietly(user)
@@ -146,7 +146,6 @@ class UpdateDelegationAgreementIntegrationTest extends RootIntegrationTest {
         returnedEntity.id == createDa.id
         returnedEntity.domainId == createDa.domainId
         returnedEntity.description == null
-        returnedEntity.allowSubAgreements == (newNestLevel > 0)
         returnedEntity.subAgreementNestLevel == newNestLevel
 
         cleanup:
@@ -195,7 +194,6 @@ class UpdateDelegationAgreementIntegrationTest extends RootIntegrationTest {
         returnedEntity.id == childDa.id
         returnedEntity.domainId == childDa.domainId
         returnedEntity.description == null
-        returnedEntity.allowSubAgreements == (newChildNestLevel > 0)
         returnedEntity.subAgreementNestLevel == newChildNestLevel
 
         cleanup:

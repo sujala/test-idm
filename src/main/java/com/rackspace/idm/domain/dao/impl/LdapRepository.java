@@ -238,7 +238,6 @@ public abstract class LdapRepository {
 
     // Delegation Agreement attributes
     public static final String ATTR_RS_PRINCIPAL_DN = "rsPrincipalDN";
-    public static final String ATTR_RS_ALLOW_SUB_AGREEMENTS = "rsAllowSubAgreements";
     public static final String ATTR_RS_NEST_LEVEL = "rsNestLevel";
     public static final String ATTR_RS_DELEGATION_AGREEMENT_ID = "rsDelegationAgreementId";
     public static final String ATTR_RS_PRINCIPAL_DOMAIN_ID = "rsPrincipalDomainId";

@@ -21,14 +21,14 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
     def test_delegation_agreement_crud(self):
         # assert that the subAgreements attribute is false
         self.validate_delegation_agreements_crud(
-            allow_sub_agreements=False,
+            sub_agreement_nest_level=0,
             client=self.user_admin_client)
 
     @attr(type='regression')
     def test_delegation_agreement_crud_with_sub_agreements(self):
         # assert that the subAgreements attribute is true
         self.validate_delegation_agreements_crud(
-            allow_sub_agreements=True,
+            sub_agreement_nest_level=1,
             client=self.user_admin_client)
 
     @attr(type='regression')
@@ -36,7 +36,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
         # assert that the subAgreements attribute is false
         self.validate_delegation_agreements_crud(
             client=self.rcn_admin_client,
-            allow_sub_agreements=False)
+            sub_agreement_nest_level=0)
 
     @attr(type='regression')
     def test_list_delegation_agreements(self):
@@ -90,7 +90,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
         return da_1_id, da_2_id
 
     def validate_delegation_agreements_crud(
-            self, allow_sub_agreements, client):
+            self, sub_agreement_nest_level, client):
         # Create DA
         da_name = self.generate_random_string(
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
@@ -98,13 +98,13 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
             client=client,
             delegate_id=self.user_admin_2_id,
             da_name=da_name,
-            allow_sub_agreements=allow_sub_agreements)
+            sub_agreement_nest_level=sub_agreement_nest_level)
 
         self.assertEqual(da_resp.status_code, 201)
         self.assertEqual(
             da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][
-                const.ALLOW_SUB_AGREEMENTS],
-            allow_sub_agreements
+                const.SUBAGREEMENT_NEST_LEVEL],
+            sub_agreement_nest_level
         )
         # TODO: Add schema validations once contracts are finalized for
         # Add User to DA
@@ -120,14 +120,15 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
 
         self.assertEqual(
             get_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][
-                const.ALLOW_SUB_AGREEMENTS],
-            allow_sub_agreements
+                const.SUBAGREEMENT_NEST_LEVEL],
+            sub_agreement_nest_level
         )
 
         # Update DA
-        allow_sub_agreements = not allow_sub_agreements
+        update_da_name = self.generate_random_string(
+            pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
         da_req = requests.DelegationAgreements(
-            da_name=da_name, allow_sub_agreements=allow_sub_agreements)
+            da_name=update_da_name)
 
         update_resp = client.update_delegation_agreement(
             da_id=da_id, request_object=da_req)
@@ -136,13 +137,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
         self.assertEqual(
             update_resp.json()[
                 const.RAX_AUTH_DELEGATION_AGREEMENT][const.NAME],
-            da_name)
-
-        self.assertEqual(
-            update_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][
-                const.ALLOW_SUB_AGREEMENTS],
-            allow_sub_agreements
-        )
+            update_da_name)
 
         # Delete DA
         delete_resp = client.delete_delegation_agreement(da_id=da_id)

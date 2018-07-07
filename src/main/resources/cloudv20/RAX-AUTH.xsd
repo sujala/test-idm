@@ -1290,16 +1290,6 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="allowSubAgreements" type="xsd:boolean" use="optional">
-            <annotation>
-                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        Deprecated. Use subagreementnestlevel instead. Whether this DA can be used by the delegates as
-                        the basis for creating another DA
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
         <attribute name="subAgreementNestLevel" type="xsd:nonNegativeInteger" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">

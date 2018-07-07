@@ -146,14 +146,12 @@ class TestBaseDelegation(base.TestBaseV2):
 
     def call_create_delegation_agreement(self, client, delegate_id,
                                          da_name=None, user_delegate=True,
-                                         sub_agreement_nest_level=None,
-                                         allow_sub_agreements=None):
+                                         sub_agreement_nest_level=None):
         if not da_name:
             da_name = self.generate_random_string(
                 pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
         da_req = requests.DelegationAgreements(
-            da_name=da_name, sub_agreement_nest_level=sub_agreement_nest_level,
-            allow_sub_agreements=allow_sub_agreements)
+            da_name=da_name, sub_agreement_nest_level=sub_agreement_nest_level)
         da_resp = client.create_delegation_agreement(request_object=da_req)
         da_id = da_resp.json()[const.RAX_AUTH_DELEGATION_AGREEMENT][const.ID]
 

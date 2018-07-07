@@ -303,7 +303,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
             client=self.user_admin_client,
             delegate_id=self.user_admin2_id,
             da_name=da_name,
-            allow_sub_agreements=True)
+            sub_agreement_nest_level=1)
 
         # Create role assignment dict
         role = self.create_role()
@@ -361,7 +361,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
             pattern=const.DELEGATION_AGREEMENT_NAME_PATTERN)
         da_resp, parent_da_id = self.call_create_delegation_agreement(
             client=self.user_admin_client, delegate_id=self.user_admin2_id,
-            da_name=da_name, allow_sub_agreements=True)
+            da_name=da_name, sub_agreement_nest_level=1)
 
         # Create role, tenants and role assignment dicts
         role = self.create_role()

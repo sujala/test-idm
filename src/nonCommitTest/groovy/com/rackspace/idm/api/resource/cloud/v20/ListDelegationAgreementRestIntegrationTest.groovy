@@ -219,7 +219,6 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         def daToD1Nested3 = utils.createDelegationAgreement(userAdminD2Token, daToD1Nested3ToCreate)
         utils.addUserDelegate(userAdminD2Token, daToD1Nested3.id, d2SubUser.id)
 
-
         when: "List DAs for user-admin in d2"
         def response2 = cloud20.listDelegationAgreements(userAdminD2Token, null, mediaType)
 
@@ -232,19 +231,16 @@ class ListDelegationAgreementRestIntegrationTest extends RootIntegrationTest {
         and: "parent da returned w/ nest fields"
         def parentDa = entity2.delegationAgreement.find { it.name == daToD1Parent.name}
         parentDa.subAgreementNestLevel == daToD1Parent.subAgreementNestLevel
-        parentDa.allowSubAgreements
         parentDa.parentDelegationAgreementId == null
 
         and: "first nested da returned w/ nest fields"
         def nestedDa2 = entity2.delegationAgreement.find { it.name == daToD1Nested2.name}
         nestedDa2.subAgreementNestLevel == daToD1Nested2.subAgreementNestLevel
-        nestedDa2.allowSubAgreements
         nestedDa2.parentDelegationAgreementId == parentDa.id
 
         and: "other nested da returned w/ nest fields"
         def nestedDa3 = entity2.delegationAgreement.find { it.name == daToD1Nested3.name}
         nestedDa3.subAgreementNestLevel == daToD1Nested3.subAgreementNestLevel
-        nestedDa3.allowSubAgreements
         nestedDa3.parentDelegationAgreementId == parentDa.id
 
         cleanup:
