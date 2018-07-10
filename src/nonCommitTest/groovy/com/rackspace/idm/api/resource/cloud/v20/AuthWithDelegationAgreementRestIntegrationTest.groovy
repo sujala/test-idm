@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.apache.commons.lang3.RandomStringUtils
+import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
@@ -438,6 +439,77 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         utils.deleteDelegationAgreement(ua1Token, da)
     }
 
+    def "Verify delegate auth applies whitelist tenant filter"() {
+        String tenant_type_x = RandomStringUtils.randomAlphabetic(15).toLowerCase()
+        TenantType tenantTypeX = v2Factory.createTenantType(tenant_type_x, "description")
+        assert cloud20.addTenantType(sharedServiceAdminToken, tenantTypeX).status == HttpStatus.SC_CREATED
+
+
+        // Create 2 domains in same RCN
+        def ua1 = utils.createCloudAccount()
+        def ua2 = utils.createGenericUserAdmin()
+        utils.domainRcnSwitch(ua1.domainId, commonRcn)
+        utils.domainRcnSwitch(ua2.domainId, commonRcn)
+
+        // Create 2 tenants with the newly added tenant type in ua1 domain
+        def tenantX1 = createTenant(ua1.domainId, tenant_type_x)
+        def tenantX2 = createTenant(ua1.domainId, tenant_type_x)
+        def tenantX3 = createTenant(ua1.domainId, tenant_type_x)
+
+        def daToCreate = new DelegationAgreement().with {
+            it.name = "a name"
+            it.domainId = sharedUserAdmin.domainId
+            it
+        }
+
+        def ua1Token = utils.getToken(ua1.username)
+
+        // Auth as ua2
+        AuthenticateResponse ua2AuthResponse = utils.authenticate(ua2)
+
+        // Give ua2 access to d1
+        def da = utils.createDelegationAgreement(ua1Token, daToCreate)
+        utils.addUserDelegate(ua1Token, da.id, ua2.id)
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, ["*"]))
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, [tenantX2.id, tenantX3.id]))
+                    tas
+            }
+            it
+        }
+        utils.grantRoleAssignmentsOnDelegationAgreement(da, assignments, ua1Token)
+
+        when: "Whitelist filter requires Role 1 only"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, ROLE_RBAC1_NAME)
+        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(ua2AuthResponse.token.id, da.id)
+
+        then: "Delegate gets role 1/role2 on tenantX2 and tenantX3"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == tenantX2.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == tenantX2.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == tenantX3.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == tenantX3.id} != null
+
+        and: "Delegate doesn't get any roles on tenantX1"
+        delegateAuthResponse.user.roles.role.find {it.tenantId == tenantX1.id} == null
+
+        when: "Whitelist filter requires Role 2 only"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, ROLE_RBAC2_NAME)
+        delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(ua2AuthResponse.token.id, da.id)
+
+        then: "Delegate gets role 1/role2 on tenantX1, tenantX2 and tenantX3"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == tenantX1.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == tenantX1.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == tenantX2.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == tenantX2.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == tenantX3.id} != null
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == tenantX3.id} != null
+
+        cleanup:
+        utils.deleteDelegationAgreement(ua1Token, da)
+    }
+
     @Unroll
     def "Verify delegate auth does not return any roles if the DA domain does not contain tenants; mediaType=#mediaType"() {
         // Create 2 domains in same RCN without any tenants
@@ -822,15 +894,16 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
 
     // created "hidden" tenant in account (TENANT_TYPE_PROTECTED_PREFIX is configured as such)
     Tenant createProtectedTenant(String domainId) {
-        def tenantResponse = cloud20.addTenant(sharedIdentityAdminToken, new Tenant().with {
-            it.name = Constants.TENANT_TYPE_PROTECTED_PREFIX + ":" + RandomStringUtils.randomAlphabetic(5)
-            it.id = it.name
-            it.domainId = domainId
-            it
-        })
-        utils.createTenant()
+        return createTenant(domainId,  Constants.TENANT_TYPE_PROTECTED_PREFIX)
+    }
 
-        assert tenantResponse.status == SC_CREATED
-        return tenantResponse.getEntity(Tenant).value
+    // created tenant with specified tenant type in domain
+    Tenant createTenant(String domainId, String tenantType) {
+        def tenantName = tenantType + ":" + RandomStringUtils.randomAlphabetic(8)
+        def tenantWeb =  v2Factory.createTenant(tenantName, tenantName, [tenantType]).with {it.domainId = domainId; it}
+        def response = cloud20.addTenant(sharedIdentityAdminToken, tenantWeb)
+        assert response.status == HttpStatus.SC_CREATED
+        def tenant = response.getEntity(Tenant).value
+        return tenant
     }
 }

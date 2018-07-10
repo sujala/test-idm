@@ -109,9 +109,9 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         */
         ServiceCatalogInfo scInfo;
         if (applyRcnRoles) {
-            scInfo = scopeAccessService.getServiceCatalogInfoApplyRcnRoles(authResponseTuple.getUser());
+            scInfo = identityUserService.getServiceCatalogInfoApplyRcnRoles(authResponseTuple.getUser());
         } else {
-            scInfo = scopeAccessService.getServiceCatalogInfo(authResponseTuple.getUser());
+            scInfo = identityUserService.getServiceCatalogInfo(authResponseTuple.getUser());
         }
 
         boolean restrictingAuthByTenant = isUserRestrictingAuthByTenant(authenticationRequest);

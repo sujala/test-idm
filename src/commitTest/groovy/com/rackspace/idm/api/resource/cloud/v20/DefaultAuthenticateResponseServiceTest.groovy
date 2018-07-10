@@ -28,6 +28,7 @@ class DefaultAuthenticateResponseServiceTest extends RootServiceTest {
         mockTokenConverter(service)
         mockAuthConverterCloudV20(service)
         mockJAXBObjectFactories(service)
+        mockIdentityUserService(service)
     }
 
     @Unroll
@@ -74,7 +75,7 @@ class DefaultAuthenticateResponseServiceTest extends RootServiceTest {
         service.buildAuthResponseForAuthenticate(authResponseTuple, authenticationRequest)
 
         then: "correct backend services are called"
-        1 * scopeAccessService.getServiceCatalogInfo(authResponseTuple.getUser()) >> serviceCatalogInfo
+        1 * identityUserService.getServiceCatalogInfo(authResponseTuple.getUser()) >> serviceCatalogInfo
         authorizationService.restrictUserAuthentication(_) >> true
         1 * identityConfig.getReloadableConfig().shouldDisplayServiceCatalogForSuspendedUserImpersonationTokens() >> shouldDisplayServiceCatalog
         1 * authConverterCloudV20.toAuthenticationResponse(_ as AuthResponseTuple, _ as ServiceCatalogInfo) >> { args ->

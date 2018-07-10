@@ -177,12 +177,24 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scInfo.getUserEndpoints();
     }
 
+    /**
+     * @deprecated Use Identity user service of same name
+     * @param baseUser
+     * @return
+     */
+    @Deprecated
     @Trace
     @Override
     public ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser) {
         return identityUserService.getServiceCatalogInfo(baseUser);
     }
 
+    /**
+     * @deprecated Use Identity user service of same name
+     * @param baseUser
+     * @return
+     */
+    @Deprecated
     @Override
     public ServiceCatalogInfo getServiceCatalogInfoApplyRcnRoles(BaseUser baseUser) {
         return identityUserService.getServiceCatalogInfoApplyRcnRoles(baseUser);
