@@ -5,6 +5,7 @@ import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.dao.IdentityUserDao
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments
+import com.rackspace.idm.domain.entity.SourcedRoleAssignmentsLegacyAdapter
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
@@ -122,6 +123,8 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
     def "getServiceCatalogInfo: Calls getTenantRolesForUserPerformant to retrieve effective user roles"() {
         given:
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.DEFAULT_USER
+        def sourcedRoleAssignments = Mock(SourcedRoleAssignments)
+        SourcedRoleAssignmentsLegacyAdapter sourcedRoleAssignmentsLegacyAdapter = Mock()
 
         def user = entityFactory.createUser()
 
@@ -129,7 +132,9 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         service.getServiceCatalogInfo(user)
 
         then:
-        1 * tenantService.getTenantRolesForUserPerformant(user) >> []
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> sourcedRoleAssignments
+        1 * sourcedRoleAssignments.getSourcedRoleAssignmentsLegacyAdapter() >> sourcedRoleAssignmentsLegacyAdapter
+        1 * sourcedRoleAssignmentsLegacyAdapter.getStandardTenantRoles() >> []
     }
 
     /**
@@ -173,15 +178,20 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             it
         }]
 
+        def sourcedRoleAssignments = Mock(SourcedRoleAssignments)
+        SourcedRoleAssignmentsLegacyAdapter sourcedRoleAssignmentsLegacyAdapter = Mock()
+
         when:
         service.getServiceCatalogInfo(user)
 
         then: "the correct services were called"
         // Get roles for user
-        1 * tenantService.getTenantRolesForUserPerformant(user) >> userRoles
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> sourcedRoleAssignments
+        1 * sourcedRoleAssignments.getSourcedRoleAssignmentsLegacyAdapter() >> sourcedRoleAssignmentsLegacyAdapter
+        1 * sourcedRoleAssignmentsLegacyAdapter.getStandardTenantRoles() >> userRoles
 
         // Retrieve user type
-        1 * authorizationService.getIdentityTypeRoleAsEnum(userRoles) >> IdentityUserTypeEnum.DEFAULT_USER
+        1 * sourcedRoleAssignments.getUserTypeFromAssignedRoles() >> IdentityUserTypeEnum.DEFAULT_USER
 
         // Various services required to calc metadata
         2 * identityConfig.getReloadableConfig().includeEndpointsBasedOnRules() >> true
@@ -221,16 +231,20 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             it.tenantType = tenantType
             it
         }]
+        def sourcedRoleAssignments = Mock(SourcedRoleAssignments)
+        SourcedRoleAssignmentsLegacyAdapter sourcedRoleAssignmentsLegacyAdapter = Mock()
 
         when:
         service.getServiceCatalogInfo(user)
 
         then: "the correct services were called"
         // Get roles for user
-        1 * tenantService.getTenantRolesForUserPerformant(user) >> userRoles
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> sourcedRoleAssignments
+        1 * sourcedRoleAssignments.getSourcedRoleAssignmentsLegacyAdapter() >> sourcedRoleAssignmentsLegacyAdapter
+        1 * sourcedRoleAssignmentsLegacyAdapter.getStandardTenantRoles() >> userRoles
 
         // Retrieve user type
-        1 * authorizationService.getIdentityTypeRoleAsEnum(userRoles) >> IdentityUserTypeEnum.DEFAULT_USER
+        1 * sourcedRoleAssignments.getUserTypeFromAssignedRoles() >> IdentityUserTypeEnum.DEFAULT_USER
 
         // Various services required to calc metadata
         2 * identityConfig.getReloadableConfig().includeEndpointsBasedOnRules() >> true
@@ -272,16 +286,20 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             it.tenantType = tenantType
             it
         }]
+        def sourcedRoleAssignments = Mock(SourcedRoleAssignments)
+        SourcedRoleAssignmentsLegacyAdapter sourcedRoleAssignmentsLegacyAdapter = Mock()
 
         when:
         service.getServiceCatalogInfo(user)
 
         then: "the correct services were called"
         // Get roles for user
-        1 * tenantService.getTenantRolesForUserPerformant(user) >> userRoles
+        1 * tenantService.getSourcedRoleAssignmentsForUser(user) >> sourcedRoleAssignments
+        1 * sourcedRoleAssignments.getSourcedRoleAssignmentsLegacyAdapter() >> sourcedRoleAssignmentsLegacyAdapter
+        1 * sourcedRoleAssignmentsLegacyAdapter.getStandardTenantRoles() >> userRoles
 
         // Retrieve user type
-        1 * authorizationService.getIdentityTypeRoleAsEnum(userRoles) >> IdentityUserTypeEnum.DEFAULT_USER
+        1 * sourcedRoleAssignments.getUserTypeFromAssignedRoles() >> IdentityUserTypeEnum.DEFAULT_USER
 
         // Various services required to calc metadata
         2 * identityConfig.getReloadableConfig().includeEndpointsBasedOnRules() >> featureEnabled

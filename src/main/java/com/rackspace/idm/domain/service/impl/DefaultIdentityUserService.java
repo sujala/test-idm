@@ -327,14 +327,17 @@ public class DefaultIdentityUserService implements IdentityUserService {
         // Get the tenantRoles for the user
         List<TenantRole> tenantRoles;
         IdentityUserTypeEnum userTypeEnum;
+
+        // Retrieve all roles effectively assigned to user denormalized to tenants
+        SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);
+        userTypeEnum = sourcedRoleAssignments.getUserTypeFromAssignedRoles();
         if (applyRcnRoles || baseUser instanceof ProvisionedUserDelegate) {
-            // Retrieve all roles effectively assigned to user denormalized to tenants
-            SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);
+            // If the "applyRcnRoles" perspective is being applied (where all roles must be denormalized to explicit tenants)
             tenantRoles = sourcedRoleAssignments.asTenantRolesExcludeNoTenants();
-            userTypeEnum = sourcedRoleAssignments.getUserTypeFromAssignedRoles();
         } else {
-            tenantRoles = tenantService.getTenantRolesForUserPerformant(baseUser);
-            userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
+            // Adapt to perspective where no tenants on role means it's a domain assigned role
+            SourcedRoleAssignmentsLegacyAdapter legacyAdapter = sourcedRoleAssignments.getSourcedRoleAssignmentsLegacyAdapter();
+            tenantRoles = legacyAdapter.getStandardTenantRoles();
         }
 
         // Translate the tenantRoles to all the info necessary to determine endpoints

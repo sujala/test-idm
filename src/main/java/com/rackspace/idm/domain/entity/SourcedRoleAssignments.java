@@ -91,8 +91,11 @@ public class SourcedRoleAssignments {
                 finalTenantRoles.add(tenantRole);
             }
         }
-
         return finalTenantRoles;
+    }
+
+    public SourcedRoleAssignmentsLegacyAdapter getSourcedRoleAssignmentsLegacyAdapter() {
+        return new SourcedRoleAssignmentsLegacyAdapter(this);
     }
 
     /**
