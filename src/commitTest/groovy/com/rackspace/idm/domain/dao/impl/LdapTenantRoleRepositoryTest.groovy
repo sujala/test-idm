@@ -17,7 +17,7 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
 
     LdapConnectionPools ldapConnectionPools
     LDAPInterface ldapInterface
-    LdapPaginatorRepository paginator
+    LdapPaginatorSearcher paginator
 
     def setup() {
         dao = new LdapTenantRoleRepository()
@@ -28,7 +28,7 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
         ldapInterface = Mock()
         ldapConnectionPools.getAppConnPoolInterface() >> ldapInterface
 
-        paginator = Mock(LdapPaginatorRepository)
+        paginator = Mock(LdapPaginatorSearcher)
         dao.paginator = paginator
 
         mockConfiguration(dao)

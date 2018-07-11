@@ -11,6 +11,8 @@ services:
       - 127.0.0.1:8083:8083
       - 127.0.0.1:10636:10636
       - 127.0.0.1:10025:10025
+      - 127.0.0.1:16686:16686
+      - 127.0.0.1:5775:5775/udp
     command: ["sleep", "infinity"]
     stop_signal: SIGKILL
     networks:
@@ -68,6 +70,11 @@ services:
     volumes:
       - /tmp/.identity:/tmp/.identity
       - ..:/home/test/source
+    network_mode: "service:network"
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
     network_mode: "service:network"
 
 networks:

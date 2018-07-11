@@ -31,4 +31,11 @@ public class IdentityPointcuts {
     @Pointcut("identityApiResourceMethod() && (execution(* com.rackspace.idm.api.resource.cloud.v20..*.*(..)) || execution(* com.rackspace.idm.modules.*.api.resource..*.*(..)))")
     public void identityApiResourceMethodV20() {
     }
+
+    /**
+     * Pointcut on all method calls on a Spring bean name ending in "Dao" - the IDM standard for classes that define
+     * methods hitting CA.
+     */
+    @Pointcut("anyPublicOperation() && (bean(*Dao) || bean(tokenRevocationRecordPersistenceStrategy))")
+    public void daoResource() { }
 }

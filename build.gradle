@@ -118,6 +118,9 @@ dependencies {
     compile group: 'org.codehaus.woodstox', name: 'woodstox-core-asl', version:'4.4.1'
     compile fileTree(dir: 'static-jars', include: '*.jar')
     compile group: 'commons-io', name: 'commons-io', version:'2.1'
+    compile group: 'io.opentracing', name: 'opentracing-api', version:'0.31.0'
+    compile group: 'io.opentracing', name: 'opentracing-util', version: '0.31.0'
+    compile group: 'io.jaegertracing', name: 'jaeger-core', version: '0.27.0'
 
     def springVersion = '4.1.7.RELEASE'
     compile group: 'org.springframework', name: 'spring-core', version:springVersion

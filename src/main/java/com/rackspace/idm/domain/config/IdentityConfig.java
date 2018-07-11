@@ -362,6 +362,18 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP = "feature.enable.send.new.relic.custom.data";
     public static final boolean FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT = true;
 
+    public static final String FEATURE_ENABLE_OPEN_TRACING_WEB_RESOURCES_PROP = "feature.enable.open.tracing.web.resources";
+    public static final boolean FEATURE_ENABLE_OPEN_TRACING_WEB_RESOURCES_DEFAULT = true;
+
+    public static final String FEATURE_ENABLE_OPEN_TRACING_DAO_RESOURCES_PROP = "feature.enable.open.tracing.dao.resources";
+    public static final boolean FEATURE_ENABLE_OPEN_TRACING_DAO_RESOURCES_DEFAULT = true;
+
+    public static final String FEATURE_OPEN_TRACING_INCLUDE_WEB_RESOURCES_PROP = "open.tracing.include.web.resources";
+    public static final List<String> FEATURE_OPEN_TRACING_INCLUDE_WEB_RESOURCES_DEFAULT = Arrays.asList("*");
+
+    public static final String FEATURE_OPEN_TRACING_EXCLUDE_WEB_RESOURCES_PROP = "open.tracing.exclude.web.resources";
+    public static final List<String> FEATURE_OPEN_TRACING_EXCLUDE_WEB_RESOURCES_DEFAULT = Arrays.asList();
+
     public static final String FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP = "new.relic.include.auth.resource.attributes";
     public static final List<String> FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_DEFAULT = Arrays.asList("*");
 
@@ -603,6 +615,40 @@ public class IdentityConfig {
     public static final String EDIR_LDAP_SERVER_TRUSTED_PROP = "ldap.server.trusted";
     public static final boolean EDIR_LDAP_SERVER_TRUSED_DEFAULT = false;
 
+
+    /**
+     * Opentracing properties
+     */
+
+    public static final String OPENTRACING_ENABLED_PROP = "opentracing.enabled";
+    public static final boolean OPENTRACING_ENABLED_DEFAULT = false;
+
+    public static final String OPENTRACING_SERVICE_NAME_PROP = "opentracing.service.name";
+    public static final String OPENTRACING_SERVICE_NAME_DEFAULT = "Customer Identity API";
+
+    public static final String OPENTRACING_TRACER_PROP = "opentracing.tracer";
+    public static final OpenTracingTracerEnum OPENTRACING_TRACER_DEFAULT = OpenTracingTracerEnum.JAEGER;
+
+    public static final String OPENTRACING_AGENT_HOST_PROP = "opentracing.agent.host";
+    public static final String OPENTRACING_AGENT_PORT_PROP = "opentracing.agent.port";
+    public static final String OPENTRACING_COLLECTOR_ENDPOINT_PROP = "opentracing.collector.endpoint";
+    public static final String OPENTRACING_COLLECTOR_USERNAME_PROP = "opentracing.collector.username";
+    public static final String OPENTRACING_COLLECTOR_PASSWORD_PROP = "opentracing.collector.password";
+    public static final String OPENTRACING_COLLECTOR_TOKEN_PROP = "opentracing.collector.token";
+    public static final String OPENTRACING_CONSTANT_TOGGLE_PROP = "opentracing.sampling.constant.toggle";
+    public static final String OPENTRACING_RATE_LIMITING_LIMIT_PROP = "opentracing.sampling.rate.limiting.traces_per_second";
+    public static final String OPENTRACING_PROBABILITY_PROP = "opentracing.sampling.probability";
+
+    public static final String OPENTRACING_LOGGING_ENABLED_PROP = "opentracing.logging.enabled";
+    public static final boolean OPENTRACING_LOGGING_ENABLED_DEFAULT = false;
+
+    public static final String OPENTRACING_FLUSH_INTERVAL_MS_PROP = "opentracing.flush.interval.ms";
+    public static final Integer OPENTRACING_FLUSH_INTERVAL_MS_DEFAULT = 1000; // 1 second
+
+    public static final String OPENTRACING_MAX_BUFFER_SIZE_PROP = "opentracing.max.buffer.size";
+    public static final Integer OPENTRACING_MAX_BUFFER_SIZE_DEFAULT = 10000; // 10k
+
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -807,6 +853,12 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
 
+        defaults.put(FEATURE_ENABLE_OPEN_TRACING_WEB_RESOURCES_PROP, FEATURE_ENABLE_OPEN_TRACING_WEB_RESOURCES_DEFAULT);
+        defaults.put(FEATURE_OPEN_TRACING_INCLUDE_WEB_RESOURCES_PROP, FEATURE_OPEN_TRACING_INCLUDE_WEB_RESOURCES_DEFAULT);
+        defaults.put(FEATURE_OPEN_TRACING_EXCLUDE_WEB_RESOURCES_PROP, FEATURE_OPEN_TRACING_EXCLUDE_WEB_RESOURCES_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_OPEN_TRACING_DAO_RESOURCES_PROP, FEATURE_ENABLE_OPEN_TRACING_DAO_RESOURCES_DEFAULT);
+
         defaults.put(FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_DEFAULT);
         defaults.put(FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, FEATURE_EXCLUDE_AUTH_RESOURCE_ATTRIBUTES_DEFAULT);
 
@@ -846,6 +898,17 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_ROLE_HIERARCHY_PROP, FEATURE_ENABLE_ROLE_HIERARCHY_DEFAULT);
         defaults.put(NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_PROP, NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_DEFAULT);
         defaults.put(FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP, FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_DEFAULT);
+
+        /**
+         * OpenTracing defaults
+         */
+
+        defaults.put(OPENTRACING_ENABLED_PROP, OPENTRACING_ENABLED_DEFAULT);
+        defaults.put(OPENTRACING_SERVICE_NAME_PROP, OPENTRACING_SERVICE_NAME_DEFAULT);
+        defaults.put(OPENTRACING_TRACER_PROP, OPENTRACING_TRACER_DEFAULT);
+        defaults.put(OPENTRACING_LOGGING_ENABLED_PROP, OPENTRACING_LOGGING_ENABLED_DEFAULT);
+        defaults.put(OPENTRACING_FLUSH_INTERVAL_MS_PROP, OPENTRACING_MAX_BUFFER_SIZE_DEFAULT);
+        defaults.put(OPENTRACING_MAX_BUFFER_SIZE_PROP, OPENTRACING_MAX_BUFFER_SIZE_DEFAULT);
 
         return defaults;
     }
@@ -911,6 +974,26 @@ public class IdentityConfig {
         verifyAndLogReloadableProperty(IDENTITY_ROLE_TENANT_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(ENDPOINT_REGIONID_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(EMAIL_FROM_EMAIL_ADDRESS, OPTIONAL);
+
+
+        /**
+         * OpenTracing properties
+         */
+        verifyAndLogStaticProperty(OPENTRACING_ENABLED_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_SERVICE_NAME_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_TRACER_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_AGENT_HOST_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_AGENT_PORT_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_COLLECTOR_ENDPOINT_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_COLLECTOR_USERNAME_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_COLLECTOR_PASSWORD_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_COLLECTOR_TOKEN_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_CONSTANT_TOGGLE_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_RATE_LIMITING_LIMIT_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_PROBABILITY_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_LOGGING_ENABLED_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_FLUSH_INTERVAL_MS_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(OPENTRACING_MAX_BUFFER_SIZE_PROP, OPTIONAL);
     }
 
     private void verifyRequiredStaticProperty(String property) {
@@ -964,6 +1047,23 @@ public class IdentityConfig {
      * To maintain existing application logic, the safe getters continue to return null
      * when a default doesn't exist.
      */
+
+    private Double getDoubleSafely(Configuration config, String prop) {
+        Object defaultValue = propertyDefaults.get(prop);
+        try {
+            if (defaultValue == null) {
+                return config.getDouble(prop);
+            } else {
+                return config.getDouble(prop, (Double) defaultValue);
+            }
+        } catch (NumberFormatException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return (Double) defaultValue;
+        } catch (ConversionException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return (Double) defaultValue;
+        }
+    }
 
     private Integer getIntSafely(Configuration config, String prop) {
         Object defaultValue = propertyDefaults.get(prop);
@@ -1570,6 +1670,85 @@ public class IdentityConfig {
         public boolean getEDirServerTrusted() {
             return getBooleanSafely(staticConfiguration, EDIR_LDAP_SERVER_TRUSTED_PROP);
         }
+
+        /**
+         * OpenTracing configurations
+         */
+        
+        @IdmProp(key = OPENTRACING_ENABLED_PROP, versionAdded = "3.24.0", description = "Enable OpenTracing")
+        public boolean getOpenTracingEnabledFlag() {
+            return getBooleanSafely(staticConfiguration, OPENTRACING_ENABLED_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_SERVICE_NAME_PROP, versionAdded = "3.24.0", description = "Set OpenTracing service name")
+        public String getOpenTracingServiceName() {
+            return getStringSafely(staticConfiguration, OPENTRACING_SERVICE_NAME_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_TRACER_PROP, versionAdded = "3.24.0", description = "Set OpenTracing tracer (e.g. jaeger)")
+        public OpenTracingTracerEnum getOpenTracingTracer() {
+            return getEnumSafely(staticConfiguration, OPENTRACING_TRACER_PROP, OpenTracingTracerEnum.class);
+        }
+
+        @IdmProp(key = OPENTRACING_AGENT_HOST_PROP, versionAdded = "3.24.0", description = "Set OpenTracing agent host (when using agent setup)")
+        public String getOpenTracingAgentHost() {
+            return getStringSafely(staticConfiguration, OPENTRACING_AGENT_HOST_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_AGENT_PORT_PROP, versionAdded = "3.24.0", description = "Set OpenTracing agent port (when using agent setup)")
+        public Integer getOpenTracingAgentPort() {
+            return getIntSafely(staticConfiguration, OPENTRACING_AGENT_PORT_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_COLLECTOR_ENDPOINT_PROP, versionAdded = "3.24.0", description = "Set OpenTracing collector endpoint (when pushing directly to collector)")
+        public String getOpenTracingCollectorEndpoint() {
+            return getStringSafely(staticConfiguration, OPENTRACING_COLLECTOR_ENDPOINT_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_COLLECTOR_USERNAME_PROP, versionAdded = "3.24.0", description = "Set OpenTracing collector username (optional basicauth when pushing directly to collector)")
+        public String getOpenTracingCollectorUsername() {
+            return getStringSafely(staticConfiguration, OPENTRACING_COLLECTOR_USERNAME_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_COLLECTOR_PASSWORD_PROP, versionAdded = "3.24.0", description = "Set OpenTracing collector password (optional basicauth when pushing directly to collector)")
+        public String getOpenTracingCollectorPassword() {
+            return getStringSafely(staticConfiguration, OPENTRACING_COLLECTOR_PASSWORD_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_COLLECTOR_TOKEN_PROP, versionAdded = "3.24.0", description = "Set OpenTracing collector token (optional bearer token when pushing directly to collector)")
+        public String getOpenTracingCollectorToken() {
+            return getStringSafely(staticConfiguration, OPENTRACING_COLLECTOR_TOKEN_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_CONSTANT_TOGGLE_PROP, versionAdded = "3.24.0", description = "Set OpenTracing constant sampling toggle (uses constant sampling)")
+        public Integer getOpenTracingConstantToggle() {
+            return getIntSafely(staticConfiguration, OPENTRACING_CONSTANT_TOGGLE_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_RATE_LIMITING_LIMIT_PROP, versionAdded = "3.24.0", description = "Set OpenTracing rate-limiting sampling traces per second limit (uses rate limiting sampling)")
+        public Double getOpenTracingRateLimitingLimit() {
+            return getDoubleSafely(staticConfiguration, OPENTRACING_RATE_LIMITING_LIMIT_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_PROBABILITY_PROP, versionAdded = "3.24.0", description = "Set OpenTracing probabilistic sampling probability (uses probabilistic sampling)")
+        public Double getOpenTracingProbability() {
+            return getDoubleSafely(staticConfiguration, OPENTRACING_PROBABILITY_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_LOGGING_ENABLED_PROP, versionAdded = "3.24.0", description = "Set OpenTracing logging")
+        public Boolean getOpenTracingLoggingEnabled() {
+            return getBooleanSafely(staticConfiguration, OPENTRACING_LOGGING_ENABLED_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_FLUSH_INTERVAL_MS_PROP, versionAdded = "3.24.0", description = "Set OpenTracing flush interval ms (flushes buffer of traces after this time)")
+        public Integer getOpenTracingFlushIntervalMs() {
+            return getIntSafely(staticConfiguration, OPENTRACING_FLUSH_INTERVAL_MS_PROP);
+        }
+
+        @IdmProp(key = OPENTRACING_MAX_BUFFER_SIZE_PROP, versionAdded = "3.24.0", description = "Set OpenTracing max buffer size (flushes buffer of traces when reached this size)")
+        public Integer getOpenTracingMaxBufferSize() {
+            return getIntSafely(staticConfiguration, OPENTRACING_MAX_BUFFER_SIZE_PROP);
+        }
     }
 
     /**
@@ -1695,6 +1874,28 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENABLE_OPEN_TRACING_WEB_RESOURCES_PROP, versionAdded = "3.24.0", description = "Whether or not to send open tracing data for web resources. Also requires 'opentracing.enabled' to be set to 'true'")
+        public boolean isOpenTracingForWebResourcesFeatureEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_OPEN_TRACING_WEB_RESOURCES_PROP) &&
+                    staticConfig.getOpenTracingEnabledFlag();
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_OPEN_TRACING_DAO_RESOURCES_PROP, versionAdded = "3.24.0", description = "Whether or not to send open tracing data for dao resources. Requires 'feature.enable.open.tracing.web.resources' and 'opentracing.enabled' to also be enabled.")
+        public boolean isOpenTracingForDaoResourcesFeatureEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_OPEN_TRACING_DAO_RESOURCES_PROP) &&
+                    isOpenTracingForWebResourcesFeatureEnabled();
+        }
+
+        @IdmProp(key = FEATURE_OPEN_TRACING_INCLUDE_WEB_RESOURCES_PROP, versionAdded = "3.24.0", description = "The web resources to include for open tracing. '*' means all resources")
+        public Set<String> getOpenTracingIncludedWebResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_OPEN_TRACING_INCLUDE_WEB_RESOURCES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_OPEN_TRACING_EXCLUDE_WEB_RESOURCES_PROP, versionAdded = "3.24.0", description = "The web resources to exclude from open tracing (overrides inclusion). '*' means all resources")
+        public Set<String> getOpenTracingExcludedWebResources() {
+            return getSetSafely(reloadableConfiguration, FEATURE_OPEN_TRACING_EXCLUDE_WEB_RESOURCES_PROP);
+        }
+            
         @IdmProp(key = FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.19.0", description = "The custom attributes to push for auth api resources. '*' means all available")
         public Set<String> getIncludedNewRelicCustomDataAttributesForAuthResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP);

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -45,16 +46,7 @@ public class ApiEventPostingAdvice {
 
     @After("com.rackspace.idm.aspect.IdentityPointcuts.identityApiResourceMethod()")
     public void postEvent(JoinPoint joinPoint) {
-        // Short circuit via flag
-        if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled()) {
-            return;
-        }
-
-        Signature sig = joinPoint.getSignature();
-        if (sig instanceof MethodSignature) {
-            MethodSignature methodSignature = (MethodSignature) sig;
-            postApiEvent(methodSignature.getMethod());
-        }
+        postApiEvent(joinPoint);
     }
 
     /**
@@ -65,16 +57,7 @@ public class ApiEventPostingAdvice {
      */
     @AfterThrowing(pointcut = "com.rackspace.idm.aspect.IdentityPointcuts.identityApiResourceMethod()", throwing = "ex")
     public void postEventWithException(JoinPoint joinPoint, Throwable ex) {
-        // Short circuit via flag
-        if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled()) {
-            return;
-        }
-
-        Signature sig = joinPoint.getSignature();
-        if (sig instanceof MethodSignature) {
-            MethodSignature methodSignature = (MethodSignature) sig;
-            postApiEvent(methodSignature.getMethod());
-        }
+        postApiEvent(joinPoint);
     }
 
     /**
@@ -84,47 +67,61 @@ public class ApiEventPostingAdvice {
      * Events must not include full tokens, though may contain PII information that would need to be scrubbed before
      * exposing. The exact requirements for PII handling lies in how that information is used from the event.
      */
-    private void postApiEvent(Method method) {
-        if (method == null) {
-            throw new IllegalArgumentException(String.format("Must provide method to send API event"));
-        }
+    private void postApiEvent(JoinPoint joinPoint) {
+        try {
+            // Short circuit via flag
+            if (!identityConfig.getReloadableConfig().isFeatureSendNewRelicCustomDataEnabled()) {
+                return;
+            }
+            Signature sig = joinPoint.getSignature();
+            Method method = null;
+            if (sig instanceof MethodSignature) {
+                MethodSignature methodSignature = (MethodSignature) sig;
+                method = methodSignature.getMethod();
+            }
+            if (method == null) {
+                throw new IllegalArgumentException(String.format("Must provide method to send API event"));
+            }
 
-        IdentityApi identityApi = method.getAnnotation(IdentityApi.class);
-        if (identityApi == null) {
-            throw new IllegalArgumentException(String.format("Method must provide API annotation to send API event. Error method '%s'", method.toString()));
-        }
+            IdentityApi identityApi = method.getAnnotation(IdentityApi.class);
+            if (identityApi == null) {
+                throw new IllegalArgumentException(String.format("Method must provide API annotation to send API event. Error method '%s'", method.toString()));
+            }
 
-        RequestContext requestContext = requestContextHolder.getRequestContext();
-        if (requestContext == null) {
-            throw new IllegalArgumentException(String.format("Request context must be set to post API events. Invalid method %s", method.toString()));
-        }
+            RequestContext requestContext = requestContextHolder.getRequestContext();
+            if (requestContext == null) {
+                throw new IllegalArgumentException(String.format("Request context must be set to post API events. Invalid method %s", method.toString()));
+            }
 
-        // Must have ContainerRequest
-        ContainerRequest request = requestContextHolder.getRequestContext().getContainerRequest();
-        if (request == null) {
-            throw new IllegalArgumentException(String.format("Resource context must be set on request context to post API events. Invalid method %s", method.toString()));
-        }
+            // Must have ContainerRequest
+            ContainerRequest request = requestContextHolder.getRequestContext().getContainerRequest();
+            if (request == null) {
+                throw new IllegalArgumentException(String.format("Resource context must be set on request context to post API events. Invalid method %s", method.toString()));
+            }
 
-        IdentityApiResourceRequest resourceContext = new IdentityApiResourceRequest(method, request);
+            IdentityApiResourceRequest resourceContext = new IdentityApiResourceRequest(method, request);
 
-        ApiResourceType eventType = identityApi.apiResourceType();
-        ApiEvent event = null;
-        switch (eventType) {
-            case AUTH:
-                event = createAuthEvent(resourceContext);
-                break;
-            case PRIVATE:
-                event = createPrivateEvent(resourceContext);
-                break;
-            case PUBLIC:
-                event = createPublicEvent(resourceContext);
-                break;
-            default:
-                logger.warn(String.format("Error posting API event. Unsupported event type '%s'", eventType.getReportValue()));
-        }
+            ApiResourceType eventType = identityApi.apiResourceType();
+            ApiEvent event = null;
+            switch (eventType) {
+                case AUTH:
+                    event = createAuthEvent(resourceContext);
+                    break;
+                case PRIVATE:
+                    event = createPrivateEvent(resourceContext);
+                    break;
+                case PUBLIC:
+                    event = createPublicEvent(resourceContext);
+                    break;
+                default:
+                    logger.warn(String.format("Error posting API event. Unsupported event type '%s'", eventType.getReportValue()));
+            }
 
-        if (event != null) {
-            applicationEventPublisher.publishEvent(new ApiEventSpringWrapper(this, event));
+            if (event != null) {
+                applicationEventPublisher.publishEvent(new ApiEventSpringWrapper(this, event));
+            }
+        } catch (Exception e) {
+            logger.warn("Error posting API Event from advice. Swallowing error", e);
         }
     }
 

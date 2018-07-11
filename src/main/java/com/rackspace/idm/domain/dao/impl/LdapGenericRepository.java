@@ -43,7 +43,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
     @Autowired
-    protected LdapPaginatorRepository<T> paginator;
+    protected LdapPaginatorSearcher<T> paginator;
 
     @Override
     public Iterable<T> getObjects(Filter searchFilter) {

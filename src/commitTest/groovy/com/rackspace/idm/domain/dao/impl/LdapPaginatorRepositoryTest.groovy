@@ -16,7 +16,7 @@ class LdapPaginatorRepositoryTest extends RootServiceTest {
     @Shared PaginatorDao paginator
 
     def setupSpec() {
-        paginator = new LdapPaginatorRepository<User>()
+        paginator = new LdapPaginatorSearcher<User>()
     }
 
     def setup() {

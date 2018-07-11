@@ -13,7 +13,7 @@ import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 import org.springframework.stereotype.Component;
 
 @Component
-public class LdapPaginatorRepository<T> implements PaginatorDao <T>{
+public class LdapPaginatorSearcher<T> implements PaginatorDao <T>{
 
     @Override
     public PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit) {

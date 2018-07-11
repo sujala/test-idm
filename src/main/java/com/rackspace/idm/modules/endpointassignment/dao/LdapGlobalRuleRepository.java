@@ -33,7 +33,7 @@ public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implem
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    LdapTenantTypeRuleRepository ldapTenantTypeRuleRepository;
+    TenantTypeRuleDao ldapTenantTypeRuleRepository;
 
     @Autowired
     IdentityConfig identityConfig;
