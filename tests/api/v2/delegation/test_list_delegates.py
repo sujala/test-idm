@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
 from tests.package.johny import constants as const
@@ -9,6 +10,7 @@ from tests.package.johny.v2.models import requests
 class TestListDelegates(delegation.TestBaseDelegation):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestListDelegates, cls).setUpClass()
 
@@ -66,6 +68,10 @@ class TestListDelegates(delegation.TestBaseDelegation):
             cls.da_id, cls.user_group_id
         )
 
+    @unless_coverage
+    def setUp(self):
+        super(TestListDelegates, self).setUp()
+
     @classmethod
     def add_user_group(cls, domain_id, user_admin_client):
 
@@ -83,6 +89,7 @@ class TestListDelegates(delegation.TestBaseDelegation):
             'user group successfully added'
         return user_group_resp.json()[const.RAX_AUTH_USER_GROUP][const.ID]
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_delegates(self):
         # get all delegates
@@ -133,8 +140,13 @@ class TestListDelegates(delegation.TestBaseDelegation):
         self.assertBoolean('true', assert_user_group_is_returned)
         self.assertBoolean('false', assert_user_is_returned)
 
+    @unless_coverage
+    def tearDown(self):
+        super(TestListDelegates, self).tearDown()
+
     @classmethod
     @delegation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDownClass(cls):
         resp = cls.user_admin_client_2.delete_user(cls.sub_user_id)
         assert resp.status_code == 204, (

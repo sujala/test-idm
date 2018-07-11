@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2.delegation import delegation
@@ -10,6 +12,7 @@ from tests.package.johny.v2.models import requests
 class TestListEndpointsForDelegationToken(delegation.TestBaseDelegation):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestListEndpointsForDelegationToken, cls).setUpClass()
 
@@ -54,6 +57,10 @@ class TestListEndpointsForDelegationToken(delegation.TestBaseDelegation):
         ua_client_one_call.add_user_delegate_to_delegation_agreement(
             cls.da_id, cls.sub_user_id)
 
+    @unless_coverage
+    def setUp(self):
+        super(TestListEndpointsForDelegationToken, self).setUp()
+
     def create_tenant_with_faws_prefix(self, domain_id=None):
         if domain_id is None:
             domain_id = self.domain_id
@@ -67,6 +74,8 @@ class TestListEndpointsForDelegationToken(delegation.TestBaseDelegation):
         self.assertEqual(add_tenant_resp.status_code, 201)
         return responses.Tenant(add_tenant_resp.json())
 
+    @tags('positive', 'p0', 'regression')
+    @attr(type='regression')
     def test_list_endpoints_for_delegation_token(self):
 
         # Commented till CID-1439 is fixed...will need to add more checks once
@@ -99,8 +108,13 @@ class TestListEndpointsForDelegationToken(delegation.TestBaseDelegation):
         # Since principal is created via one user call
         self.assertNotEqual(list_endpoints_resp.json()[const.ENDPOINTS], [])
 
+    @unless_coverage
+    def tearDown(self):
+        super(TestListEndpointsForDelegationToken, self).tearDown()
+
     @classmethod
     @delegation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDownClass(cls):
         resp = cls.user_admin_client_2.delete_user(cls.sub_user_id)
         assert resp.status_code == 204, (

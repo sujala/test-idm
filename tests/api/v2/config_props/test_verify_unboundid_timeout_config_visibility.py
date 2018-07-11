@@ -1,4 +1,5 @@
 import ddt
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 from tests.api.v2 import base
 from tests.api.v2.schema import unboundid as unboundid_json
 
@@ -11,15 +12,18 @@ class TestListUnboundIdConfigTimeoutSettings(base.TestBaseV2):
     List unboundId config
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         """
         Class level set up for the tests
         """
         super(TestListUnboundIdConfigTimeoutSettings, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestListUnboundIdConfigTimeoutSettings, self).setUp()
 
+    @tags('positive', 'p1', 'regression')
     def test_verify_unboundid_timeout_settings_visibility(self):
         """
         Verify unboundid timeout settings visible in config
@@ -39,5 +43,11 @@ class TestListUnboundIdConfigTimeoutSettings(base.TestBaseV2):
                             msg="Cannot find {0} in idm.properties".format(
                                 config_name))
 
+    @unless_coverage
     def tearDown(self):
         super(TestListUnboundIdConfigTimeoutSettings, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestListUnboundIdConfigTimeoutSettings, cls).tearDownClass()

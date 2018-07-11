@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
 from tests.api.v2.delegation import delegation
@@ -10,6 +12,7 @@ from tests.package.johny.v2.models import requests
 class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestAuthUnderDelegationAgreement, cls).setUpClass()
         cls.admin_auth_token = cls.identity_admin_client.default_headers[
@@ -28,6 +31,10 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
             const.X_AUTH_TOKEN]
         cls.users = []
 
+    @unless_coverage
+    def setUp(self):
+        super(TestAuthUnderDelegationAgreement, self).setUp()
+
     def create_delegation_agreement(self, user_id):
 
         # Create a Delegation Agreement for Domain 1, with sub user in Domain 2
@@ -43,6 +50,8 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
             da_id, user_id)
         return da_id
 
+    @tags('positive', 'p1', 'regression')
+    @attr(type='regression')
     def test_auth_validate_delegation_token(self):
 
         # create DA with sub user
@@ -85,6 +94,8 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
             resp.json()[const.USER][const.RAX_AUTH_DELEGATION_AGREEMENT_ID],
             da_id)
 
+    @tags('positive', 'p0', 'regression')
+    @attr(type='regression')
     def test_reconcile_DA_delegate_user_delete(self):
 
         # create DA, with sub user as the delegate
@@ -102,6 +113,8 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 401)
 
+    @tags('positive', 'p0', 'regression')
+    @attr(type='regression')
     def test_mfa_auth_followed_by_delegation(self):
         sub_user_name_2 = self.generate_random_string(
             pattern=const.SUB_USER_PATTERN)
@@ -164,6 +177,7 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
         kwargs = {'session_id': session_id, 'pass_code': code}
         return self.identity_admin_client.auth_with_mfa_cred(**kwargs)
 
+    @unless_coverage
     def tearDown(self):
         super(TestAuthUnderDelegationAgreement, self).tearDown()
         self.identity_admin_client.default_headers[const.X_AUTH_TOKEN] = (
@@ -171,6 +185,7 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
 
     @classmethod
     @delegation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDownClass(cls):
         resp = cls.user_admin_client_2.delete_user(cls.sub_user_id)
         assert resp.status_code == 204, (

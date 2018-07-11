@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
 from tests.api.v2.schema import delegation as da_schema
@@ -12,11 +13,17 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
     Create/Read/Delete tests for Delegation Agreements
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(DelegationAgreementsCrudTests, cls).setUpClass()
         cls.user_admin_2_id = cls.user_admin_client_2.default_headers[
             const.X_USER_ID]
 
+    @unless_coverage
+    def setUp(self):
+        super(DelegationAgreementsCrudTests, self).setUp()
+
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_delegation_agreement_crud(self):
         # assert that the subAgreements attribute is false
@@ -24,6 +31,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
             sub_agreement_nest_level=0,
             client=self.user_admin_client)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_delegation_agreement_crud_with_sub_agreements(self):
         # assert that the subAgreements attribute is true
@@ -31,6 +39,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
             sub_agreement_nest_level=1,
             client=self.user_admin_client)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_delegation_agreement_crud_rcn_admin(self):
         # assert that the subAgreements attribute is false
@@ -38,6 +47,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
             client=self.rcn_admin_client,
             sub_agreement_nest_level=0)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_list_delegation_agreements(self):
 
@@ -157,8 +167,13 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
         self.assertIn(da_1_id, da_ids_from_resp)
         self.assertIn(da_2_id, da_ids_from_resp)
 
+    @unless_coverage
+    def tearDown(self):
+        super(DelegationAgreementsCrudTests, self).tearDown()
+
     @classmethod
     @delegation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDownClass(cls):
         resp = cls.identity_admin_client.delete_user(
             user_id=cls.user_admin_client.default_headers[const.X_USER_ID])

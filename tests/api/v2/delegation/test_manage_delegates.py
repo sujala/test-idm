@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
 from tests.api.v2.models import factory, responses
@@ -10,6 +11,7 @@ from tests.package.johny.v2.models import requests
 class TestManageDelegates(delegation.TestBaseDelegation):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestManageDelegates, cls).setUpClass()
 
@@ -26,11 +28,17 @@ class TestManageDelegates(delegation.TestBaseDelegation):
             const.X_AUTH_TOKEN]
         cls.group_ids = []
 
+    @unless_coverage
+    def setUp(self):
+        super(TestManageDelegates, self).setUp()
+
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_add_and_remove_user_delegate(self):
         self.verify_add_and_remove_user_delegate(
             client=self.user_admin_client)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_add_and_remove_user_delegate_rcn_admin(self):
         self.verify_add_and_remove_user_delegate(
@@ -130,16 +138,23 @@ class TestManageDelegates(delegation.TestBaseDelegation):
                 da_id=da_id, user_group_id=group_one.id))
         self.assertEqual(delete_resp.status_code, 404)
 
+    @tags('positive', 'p0', 'regression')
     def test_add_and_remove_user_group_delegate(self):
         self.verify_add_and_remove_user_group_delegate(
             client=self.user_admin_client)
 
+    @tags('positive', 'p0', 'regression')
     def test_add_and_remove_user_group_delegate_rcn_admin(self):
         self.verify_add_and_remove_user_group_delegate(
             client=self.rcn_admin_client)
 
+    @unless_coverage
+    def tearDown(self):
+        super(TestManageDelegates, self).tearDown()
+
     @classmethod
     @delegation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDownClass(cls):
         for group_id, domain_id in cls.group_ids:
             resp = cls.user_admin_client_2.delete_user_group_from_domain(

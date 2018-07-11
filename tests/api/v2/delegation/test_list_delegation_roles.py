@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
 from tests.package.johny import constants as const
@@ -10,6 +11,7 @@ from tests.api.v2.schema import delegation as da_schema
 class TestListDelegationRoles(delegation.TestBaseDelegation):
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestListDelegationRoles, cls).setUpClass()
 
@@ -38,6 +40,11 @@ class TestListDelegationRoles(delegation.TestBaseDelegation):
         cls.user_admin_client.add_user_delegate_to_delegation_agreement(
             cls.da_id, cls.sub_user_id)
 
+    @unless_coverage
+    def setUp(self):
+        super(TestListDelegationRoles, self).setUp()
+
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
     def test_list_delegation_roles(self):
         # create role
@@ -80,8 +87,13 @@ class TestListDelegationRoles(delegation.TestBaseDelegation):
         self.assertEquals(role.id, tenant_roles[0][const.ON_ROLE])
         self.assertIn(tenant.name, tenant_roles[0][const.FOR_TENANTS])
 
+    @unless_coverage
+    def tearDown(self):
+        super(TestListDelegationRoles, self).tearDown()
+
     @classmethod
     @delegation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDownClass(cls):
         resp = cls.user_admin_client_2.delete_user(cls.sub_user_id)
         assert resp.status_code == 204, (

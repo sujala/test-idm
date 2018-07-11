@@ -2,6 +2,7 @@
 import copy
 
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
 from tests.api.v2.schema import delegation as da_schema
@@ -14,16 +15,19 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
     Create/Read/Delete tests for Delegation Agreements
     """
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(NestedDelegationAgreementsTests, cls).setUpClass()
         cls.user_admin_2_id = cls.user_admin_client_2.default_headers[
             const.X_USER_ID]
 
+    @unless_coverage
     def setUp(self):
         super(NestedDelegationAgreementsTests, self).setUp()
         self.group_ids = []
         self.sub_users = []
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_crud_nested_da(self):
 
@@ -140,7 +144,8 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             'required'] += [const.PARENT_DELEGATION_AGREEMENT_ID]
         self.assertSchema(nested_da_resp, modified_schema)
 
-    @attr('skip_at_gate')
+    @tags('positive', 'p0', 'regression')
+    @attr('regression')
     def test_auth_under_nested_da(self):
 
         parent_nest_level = 2
@@ -187,6 +192,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             resp.json()[const.ACCESS][const.USER][const.RAX_AUTH_DOMAIN_ID],
             self.domain_id)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_nested_da_when_principal_is_user_group(self):
 
@@ -241,6 +247,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             " allow nested agreements")
 
     @delegation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDown(self):
         super(NestedDelegationAgreementsTests, self).tearDown()
         for group_id, domain_id in self.group_ids:
@@ -258,6 +265,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
 
     @classmethod
     @delegation.base.base.log_tearDown_error
+    @unless_coverage
     def tearDownClass(cls):
         resp = cls.identity_admin_client.delete_user(
             user_id=cls.user_admin_client.default_headers[const.X_USER_ID])
