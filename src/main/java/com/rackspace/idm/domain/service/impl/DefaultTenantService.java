@@ -1663,7 +1663,6 @@ public class DefaultTenantService implements TenantService {
         logger.debug("Getting effective tenant roles for user");
         Validate.notNull(user);
         Validate.notNull(user.getId());
-        Validate.notNull(user.getDomainId());
 
         // Code smell. Need to replace this with factory or some other manner to avoid all these 'instanceof'
         UserRoleLookupService userRoleLookupService = null;

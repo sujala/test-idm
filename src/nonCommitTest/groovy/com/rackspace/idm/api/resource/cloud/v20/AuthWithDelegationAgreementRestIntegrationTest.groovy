@@ -498,8 +498,8 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, ROLE_RBAC2_NAME)
         delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(ua2AuthResponse.token.id, da.id)
 
-        then: "Delegate gets role 1/role2 on tenantX1, tenantX2 and tenantX3"
-        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == tenantX1.id} != null
+        then: "Delegate gets role2 (domain assigned) on tenantX1, tenantX2 and tenantX3 and role 1 on x2 and x3 (tenant assigned)"
+        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == tenantX1.id} == null
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == tenantX1.id} != null
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == tenantX2.id} != null
         delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == tenantX2.id} != null

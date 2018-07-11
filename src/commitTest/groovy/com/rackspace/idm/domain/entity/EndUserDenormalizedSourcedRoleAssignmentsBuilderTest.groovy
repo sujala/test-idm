@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.rolecalculator.UserRoleLookupService
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -45,6 +46,13 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         thrown(IllegalArgumentException)
     }
 
+    /**
+     * Ignoring this test while Customer Identity must support users authenticating that are an invalid state and do
+     * not have a domain (either not linked to domain or the domain linked to does not exist). This is invalid, but
+     * for various legacy reasons we allowed the users to continue authenticating even though they're invalid.
+     * @return
+     */
+    @Ignore
     def "endUserBuilder: Must supply domain to create builder"() {
         given:
         userRoleLookupService.getUser() >> new User().with {

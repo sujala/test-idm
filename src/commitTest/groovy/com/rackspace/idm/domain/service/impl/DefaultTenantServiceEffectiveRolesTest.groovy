@@ -8,6 +8,7 @@ import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -107,7 +108,13 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         thrown(IllegalArgumentException)
     }
 
-    def "getSourcedRoleAssignmentsForUser: Error When supply user with missing domain"() {
+    /**
+     * Ignoring this test while Customer Identity must support users authenticating that are an invalid state and do
+     * not have a domain (either not linked to domain or the domain linked to does not exist). This is invalid, but
+     * for various legacy reasons we allowed the users to continue authenticating even though they're invalid.
+     * @return
+     */
+    @Ignore    def "getSourcedRoleAssignmentsForUser: Error When supply user with missing domain"() {
         when:
         service.getSourcedRoleAssignmentsForUser(new User().with {
             it.id = "userId"

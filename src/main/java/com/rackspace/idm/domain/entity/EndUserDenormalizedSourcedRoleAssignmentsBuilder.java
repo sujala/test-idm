@@ -47,8 +47,9 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         Validate.notNull(userRoleLookupService);
         Validate.notNull(userRoleLookupService.getUser());
         Validate.notEmpty(userRoleLookupService.getUser().getId());
-        Validate.notNull(userRoleLookupService.getUserDomain());
-        Validate.isTrue(userRoleLookupService.getUser().getDomainId().equalsIgnoreCase(userRoleLookupService.getUserDomain().getDomainId()));
+        if (userRoleLookupService.getUserDomain() != null) {
+            Validate.isTrue(userRoleLookupService.getUserDomain().getDomainId().equalsIgnoreCase(userRoleLookupService.getUser().getDomainId()));
+        }
 
         EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = new EndUserDenormalizedSourcedRoleAssignmentsBuilder();
         builder.userRoleLookupService = userRoleLookupService;
@@ -288,26 +289,29 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
      of tenantIds in the domain that we need to check whether or not to exclude from receiving DOMAIN level roles
      */
     private Set<String> calculateTenantsForDomainAssignedRolesOnUser(IdentityUserTypeEnum userType) {
-        String[] domainTenantIds = userRoleLookupService.getUserDomain().getTenantIds();
-
         Set<String> tenantIdsToReceiveDomainRoles = new HashSet<>();
-        if (ArrayUtils.isNotEmpty(domainTenantIds)) {
-            tenantIdsToReceiveDomainRoles = new HashSet<>(Arrays.asList(domainTenantIds));
 
-            // If user is a regular subuser, some tenants remain hidden
-            if (IdentityUserTypeEnum.DEFAULT_USER == userType) {
+        if (userRoleLookupService.getUserDomain() != null) {
+            String[] domainTenantIds = userRoleLookupService.getUserDomain().getTenantIds();
 
-                // Calc tenants in domain on which user is not assigned a role directly on the tenant
-                Set<String> tenantsToCheck = Sets.difference(tenantIdsToReceiveDomainRoles, getTenantsAssignedViaTenantAssignment()).copyInto(new HashSet<String>());
+            if (ArrayUtils.isNotEmpty(domainTenantIds)) {
+                tenantIdsToReceiveDomainRoles = new HashSet<>(Arrays.asList(domainTenantIds));
 
-                // Check these tenants to see if should be excluded from receiving domain level roles
-                if (!tenantsToCheck.isEmpty() && CollectionUtils.isNotEmpty(hiddenTenantPrefixes)) {
-                    for (String tenantId : tenantsToCheck) {
-                        String tenantPrefix = parseTenantPrefixFromTenantId(tenantId);
+                // If user is a regular subuser, some tenants remain hidden
+                if (IdentityUserTypeEnum.DEFAULT_USER == userType) {
 
-                        // While this means the hidden prefixes are case sensitive, other does this to so okay here.
-                        if (StringUtils.isNotBlank(tenantPrefix) && hiddenTenantPrefixes.contains(tenantPrefix)) {
-                            tenantIdsToReceiveDomainRoles.remove(tenantId);
+                    // Calc tenants in domain on which user is not assigned a role directly on the tenant
+                    Set<String> tenantsToCheck = Sets.difference(tenantIdsToReceiveDomainRoles, getTenantsAssignedViaTenantAssignment()).copyInto(new HashSet<String>());
+
+                    // Check these tenants to see if should be excluded from receiving domain level roles
+                    if (!tenantsToCheck.isEmpty() && CollectionUtils.isNotEmpty(hiddenTenantPrefixes)) {
+                        for (String tenantId : tenantsToCheck) {
+                            String tenantPrefix = parseTenantPrefixFromTenantId(tenantId);
+
+                            // While this means the hidden prefixes are case sensitive, other does this to so okay here.
+                            if (StringUtils.isNotBlank(tenantPrefix) && hiddenTenantPrefixes.contains(tenantPrefix)) {
+                                tenantIdsToReceiveDomainRoles.remove(tenantId);
+                            }
                         }
                     }
                 }

@@ -4027,6 +4027,12 @@ description: Default Domain
 tenantRsId: 132885
 tenantRsId: MossoCloudFS_132885
 
+dn: rsId=-543569094,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+cn: -543569094
+enabled: TRUE
+description: Default Domain
+
 dn: rsId=15f080741fc24768bd235d696776afde,ou=domains,ou=cloud,o=rackspace,d
  c=rackspace,dc=com
 objectClass: rsDomain
