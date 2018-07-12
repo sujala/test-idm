@@ -12,9 +12,11 @@ import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import static org.apache.http.HttpStatus.SC_OK
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 
 class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
 
@@ -61,14 +63,14 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         TenantType tenantTypeX = v2Factory.createTenantType(tenant_type_x, "description")
         assert cloud20.addTenantType(sharedServiceAdminToken, tenantTypeX).status == HttpStatus.SC_CREATED
 
-        // Create a tenant with for the newly added tenant type
+        // Create a tenant with the newly added tenant type
         def whiteListTenantName = tenant_type_x + ":" + sharedUserAdmin.domainId
         def whitelisttenant =  v2Factory.createTenant(whiteListTenantName, whiteListTenantName, [tenant_type_x]).with {it.domainId = sharedUserAdmin.domainId; it}
         def response = cloud20.addTenant(sharedIdentityAdminToken, whitelisttenant)
         assert response.status == HttpStatus.SC_CREATED
         tenantX1 = response.getEntity(Tenant).value
 
-        // Create a tenant with for the newly added tenant type
+        // Create a tenant with the newly added tenant type
         whiteListTenantName = tenant_type_x + ":" + sharedUserAdmin.domainId + "_2"
         whitelisttenant =  v2Factory.createTenant(whiteListTenantName, whiteListTenantName, [tenant_type_x]).with {it.domainId = sharedUserAdmin.domainId; it}
         response = cloud20.addTenant(sharedIdentityAdminToken, whitelisttenant)
@@ -228,5 +230,38 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         then: "user has endpoint on tenant in service catalog"
         response.serviceCatalog.service.find {it.endpoint.find {e -> e.tenantId == tenantX1.id}} != null
         responseNoRcn.serviceCatalog.service.find {it.endpoint.find {e -> e.tenantId == tenantX1.id}} != null
+    }
+
+    def "Auth w/ Token + Tenant: Roles on a tenant with a whitelisted tenant type are returned when user is assigned a whitelist role at the tenant level"() {
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+
+        def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
+        def initialToken = utils.getToken(mySubUser.username, Constants.DEFAULT_PASSWORD)
+
+        when: "User doesn't have whitelisted role"
+        def responseRcn = cloud20.authenticateTokenAndTenant(initialToken, tenantX1.id, "true")
+        def responseNoRcn = cloud20.authenticateTokenAndTenant(initialToken, tenantX1.id, "false")
+
+        then: "Can't authenticate under tenant"
+        responseRcn.status == SC_UNAUTHORIZED
+        responseNoRcn.status == SC_UNAUTHORIZED
+
+        when: "User assigned whitelisted role on tenant"
+        utils.addRoleToUserOnTenantId(mySubUser, tenantX1.id, Constants.ROLE_RBAC1_ID)
+        responseRcn = cloud20.authenticateTokenAndTenant(initialToken, tenantX1.id, "true")
+        responseNoRcn = cloud20.authenticateTokenAndTenant(initialToken, tenantX1.id, "false")
+
+        then: "Can authenticate under tenant"
+        responseRcn.status == SC_OK
+        responseNoRcn.status == SC_OK
+
+        when: "Change whitelist so user doesn't have access to tenant any more"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, "non-existant-role")
+        responseRcn = cloud20.authenticateTokenAndTenant(initialToken, tenantX1.id, "true")
+        responseNoRcn = cloud20.authenticateTokenAndTenant(initialToken, tenantX1.id, "false")
+
+        then: "Can't authenticate under tenant"
+        responseRcn.status == SC_UNAUTHORIZED
+        responseNoRcn.status == SC_UNAUTHORIZED
     }
 }
