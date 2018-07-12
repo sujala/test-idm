@@ -1,35 +1,75 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ChangePasswordCredentials;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainAdministratorChange;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordReset;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.XMLReader;
-import com.rackspace.idm.event.*;
-import com.rackspace.idm.modules.usergroups.api.resource.CloudUserGroupResource;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.exception.*;
+import com.rackspace.idm.event.ApiKeyword;
+import com.rackspace.idm.event.ApiResourceType;
+import com.rackspace.idm.event.IdentityApi;
+import com.rackspace.idm.event.NewRelicApiEventListener;
+import com.rackspace.idm.event.ReportableQueryParams;
+import com.rackspace.idm.event.SecureResourcePath;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.ExceptionHandler;
+import com.rackspace.idm.exception.IdmException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.UnsupportedMediaTypeException;
 import com.rackspace.idm.modules.endpointassignment.api.resource.EndpointAssignmentRuleResource;
+import com.rackspace.idm.modules.usergroups.api.resource.CloudUserGroupResource;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
+import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.v2.Tenant;
+import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import org.w3c.dom.Document;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -915,7 +955,7 @@ public class Cloud20VersionResource {
         return cloud20Service.setUserEnabled(httpHeaders, authToken, userId, user).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List user legacy groups")
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name=GlobalConstants.V2_LIST_USER_LEGACY_GROUPS)
     @GET
     @Path("users/{userId}/RAX-KSGRP")
     public Response listUserGroups(

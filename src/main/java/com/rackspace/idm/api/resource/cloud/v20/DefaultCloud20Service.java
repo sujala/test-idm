@@ -3,19 +3,49 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.google.common.collect.ImmutableList;
 import com.newrelic.api.agent.NewRelic;
 import com.rackspace.docs.core.event.EventType;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ChangePasswordCredentials;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationCredentials;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainAdministratorChange;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordReset;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypes;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.converter.cloudv20.*;
+import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.SecretQAConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.TenantTypeConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.NewRelicTransactionNames;
@@ -30,17 +60,81 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.BaseUserToken;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.EndUserDelegate;
+import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.IdentityProperty;
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.PasswordPolicy;
+import com.rackspace.idm.domain.entity.PhonePinProtectedUser;
+import com.rackspace.idm.domain.entity.Racker;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.SamlAuthResponse;
+import com.rackspace.idm.domain.entity.SamlLogoutResponse;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.SourcedRoleAssignments;
 import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.TokenScopeEnum;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.domain.service.impl.*;
-import com.rackspace.idm.exception.*;
+import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthenticationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.CloudRegionService;
+import com.rackspace.idm.domain.service.CreateSubUserService;
+import com.rackspace.idm.domain.service.DelegationService;
+import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.FederatedIdentityService;
+import com.rackspace.idm.domain.service.GroupService;
+import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum;
+import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+import com.rackspace.idm.domain.service.IdpPolicyFormatEnum;
+import com.rackspace.idm.domain.service.PhonePinService;
+import com.rackspace.idm.domain.service.QuestionService;
+import com.rackspace.idm.domain.service.RoleLevelEnum;
+import com.rackspace.idm.domain.service.RoleService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.SecretQAService;
+import com.rackspace.idm.domain.service.ServiceCatalogInfo;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.TenantTypeService;
+import com.rackspace.idm.domain.service.TokenRevocationService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.impl.CreateIdentityAdminService;
+import com.rackspace.idm.domain.service.impl.CreateUserAdminService;
+import com.rackspace.idm.domain.service.impl.CreateUserUtil;
+import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
+import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
+import com.rackspace.idm.exception.ExceptionHandler;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.IdmException;
+import com.rackspace.idm.exception.InvalidPasswordPolicyException;
+import com.rackspace.idm.exception.MultiFactorNotEnabledException;
+import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.SizeLimitExceededException;
+import com.rackspace.idm.exception.UnrecoverableIdmException;
+import com.rackspace.idm.exception.UnsupportedMediaTypeException;
+import com.rackspace.idm.exception.UserPasswordExpiredException;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
-import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
@@ -72,7 +166,16 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.AuthenticateResponse;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.CredentialListType;
+import org.openstack.docs.identity.api.v2.CredentialType;
+import org.openstack.docs.identity.api.v2.EndpointList;
+import org.openstack.docs.identity.api.v2.IdentityFault;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.v2.VersionForService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,8 +187,13 @@ import org.w3c.dom.Element;
 
 import javax.naming.ServiceUnavailableException;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -99,7 +207,18 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
@@ -4421,17 +4540,41 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+            BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             if (!caller.getId().equals(userId)) {
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.GET_USER_GROUPS_GLOBAL.getRoleName());
             }
 
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
+            String retrievedUserId;
 
-            EndUser user = identityUserService.checkAndGetUserById(userId);
+            /*
+             * Lookup the user-admin under the domain the DA token is authenticated and return its legacy groups.
+             *
+             * Note: These changes can affect future release when `feature.enable.global.root.da.creation` is enabled.
+             * This logic will always retrieve the user-admin of a domain to determine the rate limiting groups,
+             * whether or not the user-admin is the principal of the delegation agreement.
+             */
+            if (token.isDelegationToken()) {
+                String agreementId = token.getDelegationAgreementId();
+                DelegationAgreement agreement = delegationService.getDelegationAgreementById(agreementId);
+                if (agreement == null) {
+                    logger.error("Delegation agreement associated with token was not found.");
+                    throw new NotFoundException(ErrorCodes.ERROR_CODE_DATA_INTEGRITY, "No groups found for user with provided token.");
+                }
+                Domain domain = domainService.getDomain(agreement.getDomainId());
+                if (domain.getUserAdminId() == null) {
+                    logger.error("User admin was not found under the domain associated with delegation agreement token.");
+                    throw new NotFoundException(ErrorCodes.ERROR_CODE_DATA_INTEGRITY, "No groups found for user with provided token.");
+                }
+                retrievedUserId = domain.getUserAdminId();
+            } else {
+                EndUser user = identityUserService.checkAndGetUserById(userId);
+                retrievedUserId = user.getId();
+            }
 
-            Iterable<Group> groups = identityUserService.getGroupsForEndUser(user.getId());
+            Iterable<Group> groups = identityUserService.getGroupsForEndUser(retrievedUserId);
 
             if (!groups.iterator().hasNext()) {
                 Group defGroup = groupService.getGroupById(config.getString("defaultGroupId"));
@@ -4443,7 +4586,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 cloudGroups.getGroup().add(cloudGroup);
             }
             return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups).getValue());
-
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
         }

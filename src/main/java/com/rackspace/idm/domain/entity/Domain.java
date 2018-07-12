@@ -92,4 +92,8 @@ public class Domain implements Auditable, UniqueId {
             internalPasswordPolicy = policy.toJsonBytes();
         }
     }
+
+    public String getUserAdminId() {
+        return userAdminDN == null ? null : userAdminDN.getRDNString().split("=")[1];
+    }
 }
