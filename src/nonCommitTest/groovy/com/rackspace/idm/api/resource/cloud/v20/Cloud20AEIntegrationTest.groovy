@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.UUIDScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -25,8 +26,8 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     @Shared def identityAdmin, userAdmin, userManage, defaultUser, users
     @Shared def domainId
 
-    @Autowired(required = false)
-    LdapScopeAccessRepository ldapScopeAccessRepository
+    @Autowired
+    UUIDScopeAccessDao ldapScopeAccessRepository
 
     @Autowired
     IdentityConfig config;

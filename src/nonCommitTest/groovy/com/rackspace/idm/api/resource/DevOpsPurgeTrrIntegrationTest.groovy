@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDele
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionResponse
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy
 import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.domain.dao.impl.LdapTokenRevocationRecordRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
@@ -26,7 +27,7 @@ class DevOpsPurgeTrrIntegrationTest extends RootConcurrentIntegrationTest {
     IdentityConfig identityConfig
 
     @Autowired
-    LdapTokenRevocationRecordRepository trrRepository
+    TokenRevocationRecordPersistenceStrategy trrRepository
 
     def TRR_TOKEN_NAME = "devOpsPurgeTrrIntegrationTest"
     def TRR_USER_ID = "devOpsPurgeTrrIntegrationTest"
@@ -40,6 +41,13 @@ class DevOpsPurgeTrrIntegrationTest extends RootConcurrentIntegrationTest {
      * self clean TRRs the various tests create so there's no cross test pollution in the event of a test failure
      */
     def setup() {
+
+        /*
+         Ignore tests unless trrRepository is the LdapTokenRevocationRecordRepository. This class makes assumption that
+          trrRepository is a proxy around the actual class due to being used as part of a pointcut
+          */
+        boolean ldapStrategy = trrRepository instanceof LdapTokenRevocationRecordRepository || (trrRepository.getTargetSource().getTarget() instanceof LdapTokenRevocationRecordRepository)
+        org.junit.Assume.assumeTrue("DevOpsPurgeTrrIntegrationTest being skipped due to trrRepository not being of type LdapTokenRevocationRecordRepository.", ldapStrategy)
 
         reloadableConfiguration.setProperty(IdentityConfig.PURGE_TRRS_OBSOLETE_AFTER_PROP, 25)
         Filter tokenTrr = new LdapRepository.LdapSearchBuilder()
