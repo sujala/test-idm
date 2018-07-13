@@ -64,6 +64,7 @@ class Constants {
     static def IDENTITY_MIGRATE_DOMAIN_ADMIN = "b5e1ace62bb511e8b4670ed5f89f718b"
 
     static def DEFAULT_GROUP = "Default"
+    static def DEFAULT_GROUP_ID = "0"
     static def RAX_STATUS_RESTRICTED_GROUP_NAME = "rax_status_restricted"
     static def RAX_STATUS_RESTRICTED_GROUP_ID = "1"
 
