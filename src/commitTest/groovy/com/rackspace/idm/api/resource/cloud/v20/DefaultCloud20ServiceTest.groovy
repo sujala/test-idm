@@ -22,6 +22,7 @@ import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
+import com.unboundid.ldap.sdk.DN
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang3.RandomStringUtils
 import org.dozer.DozerBeanMapper
@@ -4855,6 +4856,68 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         0 * tenantService.getTenantRolesForTenant(tenantId)
+    }
+
+    def "listUserGroups: allow using a DA tokens to retrieve groups"() {
+        given:
+        def domain = entityFactory.createDomain().with {
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
+        def agreement = entityFactory.createDelegationAgreement()
+        def daToken = entityFactory.createUserToken().with {
+            it.userRsId = caller.id
+            it.delegationAgreementId = "daId"
+            it
+        }
+
+        when:
+        service.listUserGroups(headers, authToken, caller.id)
+
+        then:
+        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> daToken
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daToken.delegationAgreementId) >> agreement
+        1 * domainService.getDomain(agreement.getDomainId()) >> domain
+        1 * identityUserService.getGroupsForEndUser(_)
+    }
+
+    def "listUserGroups: error check"() {
+        given:
+        mockExceptionHandler(service)
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
+        def agreement = entityFactory.createDelegationAgreement()
+        def daToken = entityFactory.createUserToken().with {
+            it.userRsId = caller.id
+            it.delegationAgreementId = "daId"
+            it
+        }
+
+        when: "user-admin's DN not set on domain"
+        service.listUserGroups(headers, authToken, caller.id)
+
+        then:
+        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> daToken
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daToken.delegationAgreementId) >> agreement
+        1 * domainService.getDomain(agreement.getDomainId()) >> entityFactory.createDomain() // Domain with no userAdmin DN
+        1 * exceptionHandler.exceptionResponse(_ as NotFoundException) >> Response.serverError()
+
+        when: "DA set on token was not found"
+        service.listUserGroups(headers, authToken, caller.id)
+
+        then:
+        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> daToken
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * delegationService.getDelegationAgreementById(daToken.delegationAgreementId) >> null
+        1 * exceptionHandler.exceptionResponse(_ as NotFoundException) >> Response.serverError()
     }
 
     def mockServices() {

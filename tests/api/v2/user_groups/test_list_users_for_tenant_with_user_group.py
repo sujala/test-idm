@@ -90,3 +90,8 @@ class TestListUsersForTenantWithUserGroup(usergroups.TestUserGroups):
         self.delete_client(client=self.user_admin_client,
                            parent_client=self.identity_admin_client)
         super(TestListUsersForTenantWithUserGroup, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestListUsersForTenantWithUserGroup, cls).tearDownClass()

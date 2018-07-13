@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 from nose.plugins.attrib import attr
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 from tests.api.utils import header_validation
 
@@ -17,9 +18,11 @@ class TestAuthAndValidationV11(base.TestBaseV1):
     """
 
     @classmethod
+    @unless_coverage
     def setUpClass(cls):
         super(TestAuthAndValidationV11, cls).setUpClass()
 
+    @unless_coverage
     def setUp(self):
         super(TestAuthAndValidationV11, self).setUp()
         self.user_info = self.create_user_get_info()
@@ -50,6 +53,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.assertEqual(resp.status_code, 200)
         header_validation.validate_header_not_present('response-source')(resp)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke')
     def test_auth_with_key_and_validate_token(self):
         username = self.user_info['id']
@@ -72,6 +76,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_auth_with_invalid_key(self):
         username = self.user_info['id']
@@ -83,6 +88,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         header_validation.validate_header_not_present(
                 [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke')
     def test_auth_with_key_and_mosso_and_validate_token(self):
         key = self.user_info['key']
@@ -106,6 +112,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_auth_with_invalid_key_and_mosso(self):
         key = 'invalid'
@@ -117,6 +124,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         header_validation.validate_header_not_present(
             [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke')
     def test_auth_with_key_and_nast_and_validate_token(self):
         key = self.user_info['key']
@@ -139,6 +147,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    @tags('negative', 'p1', 'regression')
     @attr('skip_at_gate')
     def test_auth_with_invalid_key_and_nast(self):
         key = 'invalid'
@@ -150,6 +159,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         header_validation.validate_header_not_present(
             [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
 
+    @tags('positive', 'p0', 'smoke')
     @attr(type='smoke')
     def test_auth_with_username_password(self):
         admin_password = self.identity_config.identity_admin_password
@@ -175,6 +185,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    @tags('negative', 'p0', 'regression')
     @attr('skip_at_gate')
     def test_auth_with_username_and_invalid_password(self):
         admin_password = 'invalid'
@@ -186,11 +197,13 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         header_validation.validate_header_not_present(
             [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
 
+    @unless_coverage
     def tearDown(self):
         for id_ in self.user_ids:
             self.identity_admin_client.delete_user(user_id=id_)
         super(TestAuthAndValidationV11, self).tearDown()
 
     @classmethod
+    @unless_coverage
     def tearDownClass(cls):
         super(TestAuthAndValidationV11, cls).tearDownClass()

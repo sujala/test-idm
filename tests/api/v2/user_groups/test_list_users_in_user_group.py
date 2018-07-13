@@ -31,6 +31,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
         self.domain_ids = []
         self.domain_ids.append(self.domain_id)
 
+    @unless_coverage
     @ddt.data('user_admin', 'user_manager')
     @attr(type='smoke_alpha')
     def test_list_users_in_user_group_for_domain(self, user_type):
@@ -169,6 +170,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
             self.user_manager_client.default_headers[const.X_USER_ID],
             user_id_list)
 
+    @unless_coverage
     @ddt.data('user_admin', 'user_manager')
     @attr(type='smoke_alpha')
     def test_get_users_in_user_group(self, user_type):
