@@ -7,10 +7,14 @@ import urllib3
 
 urllib3.disable_warnings(
     urllib3.exceptions.InsecureRequestWarning)
+
+LOG_PATH_LOCATION = os.getenv(
+    "LOG_PATH_LOCATION", os.getcwd())
+
 logging.basicConfig(
     format='%(levelname)s:%(message)s',
-    filename='results.log',
-    level=logging.WARN)
+    filename='{}/results.log'.format(LOG_PATH_LOCATION),
+    level=logging.DEBUG)
 
 
 PROPERTY_FILE_LOCATION = os.getenv("PROPERTY_FILE_LOCATION", os.path.join(
