@@ -350,7 +350,7 @@ public interface TenantService {
      * roles on that tenant, the identity:tenant-access role (if enabled), and any roles received via group membership on
      * that tenant (if enabled).
      *
-     * RCN roles on the user are NOT applied, so no RCN roles will be returned. Global roles are also not returned.
+     * RCN roles on the user are NOT applied, so no RCN roles will be returned. Domain assigned roles are also not returned.
      *
      * @param user
      * @param tenant
@@ -362,7 +362,7 @@ public interface TenantService {
      * Return the set of roles the user "effectively" has on the specified tenant. This includes all explicitly assigned
      * roles, the identity:tenant-access role (if enabled), and any roles received via group membership (if enabled).
      *
-     * RCN roles on the user are applied, so RCN roles will be returned if applicable. Furthermore, roles globally assigned
+     * RCN roles on the user are applied, so RCN roles will be returned if applicable. Furthermore, roles domain assigned
      * to the user will be returned for tenants within the same domain as the user.
      *
      * @param user

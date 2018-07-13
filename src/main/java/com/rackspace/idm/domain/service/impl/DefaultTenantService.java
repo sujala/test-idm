@@ -1067,7 +1067,9 @@ public class DefaultTenantService implements TenantService {
         logger.debug(GETTING_TENANT_ROLES);
 
         // Original code didn't return fully populated roles (e.g. role names) so continue just returning minimal info
-        List<TenantRole> allRoles = getEffectiveTenantRolesForUser(user);
+        SourcedRoleAssignments sourcedRoleAssignments = getSourcedRoleAssignmentsForUser(user);
+        SourcedRoleAssignmentsLegacyAdapter legacyAdapter = new SourcedRoleAssignmentsLegacyAdapter(sourcedRoleAssignments);
+        List<TenantRole> allRoles = legacyAdapter.getTenantAssignedTenantRoles();
 
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : allRoles) {
