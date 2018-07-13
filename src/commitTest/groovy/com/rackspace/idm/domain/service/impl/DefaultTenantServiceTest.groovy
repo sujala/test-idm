@@ -111,7 +111,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         given:
         def user = entityFactory.createUser()
         def tenant = entityFactory.createTenant()
-        def tenantRole = entityFactory.createTenantRole().with { it.tenantIds = [ "tenantId" ]; return it }
+        def tenantRole = entityFactory.createTenantRole().with { it.tenantIds = [ "tenantId" ]; it.name = "identity:default"; return it }
         def tenantRoles = [ tenantRole ].asList()
 
         when:
@@ -119,7 +119,12 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         then:
         tenants == [ tenant ].asList()
-        1 * tenantRoleDao.getTenantRolesForUser(_) >> tenantRoles
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> [tenantRole]
+        1 * applicationService.getCachedClientRoleById(tenantRole.roleRsId) >> new ImmutableClientRole(new ClientRole().with {
+            it.name = tenantRole.name
+            it.id = tenantRole.roleRsId
+            it}
+        )
         1 * tenantDao.getTenant(_) >> tenant
     }
 
