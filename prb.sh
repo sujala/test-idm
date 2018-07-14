@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./gradlew clean commitTest
+./gradlew clean build commitCodeCoverage -x nonCommitTest --profile

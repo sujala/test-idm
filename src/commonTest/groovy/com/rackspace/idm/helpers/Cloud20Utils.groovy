@@ -308,6 +308,13 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
     }
 
+    def grantRoleAssignmentsOnUser(User user, RoleAssignments roleAssignments, token = getIdentityAdminToken()) {
+        def response = methods.grantRoleAssignmentsOnUser(token, user, roleAssignments)
+        assert response.status == SC_OK
+        return response.getEntity(RoleAssignments)
+    }
+
+
     def deleteRoleOnUser(user, roleId, token=getServiceAdminToken()) {
         def response = methods.deleteApplicationRoleOnUser(token, roleId, user.id)
         assert (response.status == SC_NO_CONTENT)
@@ -802,6 +809,22 @@ class Cloud20Utils {
 
     Tenant createTenantInDomain(String domainId) {
         createTenant(testUtils.getRandomUUID("tenant"), true, testUtils.getRandomUUID("tenant"), domainId)
+    }
+
+    /**
+     * Create a random tenant with the specified tenant
+     * @param domainId
+     * @param tenantType
+     * @param tenantPrefix - prefix to use in tenantId/name
+     * @return
+     */
+    Tenant createTenantInDomainWithTenantType(String domainId, String tenantType, String tenantPrefix = tenantType) {
+        def tenantName = tenantPrefix + ":" + RandomStringUtils.randomAlphabetic(8)
+        def tenantWeb =  factory.createTenant(tenantName, tenantName, [tenantType]).with {it.domainId = domainId; it}
+        def response = methods.addTenant(getServiceAdminToken(), tenantWeb)
+        assert response.status == SC_CREATED
+        def tenant = response.getEntity(Tenant).value
+        return tenant
     }
 
     /**
