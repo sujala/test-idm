@@ -63,6 +63,22 @@ class ListEndpointsForTokenApiTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
+        0 * scopeAccessService.getServiceCatalogInfoApplyRcnRoles(_) >> new ServiceCatalogInfo()
+    }
+
+    def "List endpoints for tokens calls Scope Access Service getServiceCatalogInfoApplyRcnRoles when called with apply rcn roles"() {
+        given:
+        def tokenId = "token"
+        User user = entityFactory.createUser()
+        userService.getUserByScopeAccess(_, _) >> user
+        authorizationService.restrictTokenEndpoints(_) >> true
+        requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() >> entityFactory.createUserToken()
+        when:
+        service.listEndpointsForToken(headers, tokenId, tokenId, true)
+
+        then:
+        0 * scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
+        1 * scopeAccessService.getServiceCatalogInfoApplyRcnRoles(user) >> new ServiceCatalogInfo()
     }
 
     @Unroll
@@ -82,7 +98,7 @@ class ListEndpointsForTokenApiTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getServiceCatalogInfoApplyRcnRoles(subjectUser) >> new ServiceCatalogInfo()
-        0 * scopeAccessService.getServiceCatalogInfo(subjectUser)
+        0 * scopeAccessService.getServiceCatalogInfo(_)
 
         where:
         applyRcnRoles << [true, false]

@@ -29,6 +29,7 @@ compare them against the expected properties in our repository.
   current directory if not provided
 * `ENVIRONMENT_FILE_LOCATION` - location of `environments.json` file.
   Defaults to current directory if not provided
+* `LOG_PATH_LOCATION` - directory of log file.  Defaults to /opt
 
 ## How to run it
 
@@ -38,5 +39,10 @@ docker run -ti --rm \
     -e Staging_DEVOPS_USER=user \
     -e Staging_DEVOPS_PASSWORD=pass \
     -e PROPERTY_FILE_LOCATION=/opt/properties.json \
+    -e LOG_PATH_LOCATION=/var/log \
+    -v $(pwd):/var/log \
     cid-compare:latest sh -c "python /opt/comparison.py | /usr/bin/jq ."
 ```
+
+## If something fails, check out log file in `results.log` that's synched
+to your local file

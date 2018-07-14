@@ -333,5 +333,4 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         where:
         applyRcn << [true, false]
     }
-
 }
