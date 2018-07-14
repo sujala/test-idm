@@ -1,9 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.idm.domain.config.IdentityConfig
 
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import org.apache.commons.lang3.RandomStringUtils
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Endpoint
 import org.openstack.docs.identity.api.v2.EndpointList
@@ -15,8 +21,15 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.Constants.DEFAULT_OBJECT_STORE_ROLE
+import static com.rackspace.idm.Constants.MOSSO_ENDPOINT_TEMPLATE_ID
+import static com.rackspace.idm.Constants.MOSSO_ENDPOINT_TEMPLATE_ID
 import static com.rackspace.idm.Constants.MOSSO_ROLE_ID
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static com.rackspace.idm.Constants.ROLE_RBAC1_ID
+import static com.rackspace.idm.Constants.ROLE_RBAC1_NAME
+import static com.rackspace.idm.Constants.ROLE_RBAC2_ID
+import static com.rackspace.idm.Constants.ROLE_RBAC2_NAME
 
 
 class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
@@ -423,4 +436,66 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         endpoints.endpoint.find { e -> e.tenantId == userAdmin2.domainId } == null
     }
 
+
+    @Unroll
+    def "Verify endpoints for token don't include tenants excluded by whitelist: apply_rcn_roles: #apply_rcn_roles"() {
+        String tenant_type_x = RandomStringUtils.randomAlphabetic(15).toLowerCase()
+        TenantType tenantTypeX = v2Factory.createTenantType(tenant_type_x, "description")
+        assert cloud20.addTenantType(utils.getServiceAdminToken(), tenantTypeX).status == HttpStatus.SC_CREATED
+
+        def ua1 = utils.createGenericUserAdmin()
+
+        // Create 2 tenants with the newly added tenant type in ua1 domain
+        def tenantX1 = utils.createTenantInDomainWithTenantType(ua1.domainId, tenant_type_x)
+        utils.addEndpointTemplateToTenant(tenantX1.id, Integer.parseInt(MOSSO_ENDPOINT_TEMPLATE_ID))
+        def tenantX2 = utils.createTenantInDomainWithTenantType(ua1.domainId, tenant_type_x)
+        utils.addEndpointTemplateToTenant(tenantX2.id, Integer.parseInt(MOSSO_ENDPOINT_TEMPLATE_ID))
+        def tenantX3 = utils.createTenantInDomainWithTenantType(ua1.domainId, tenant_type_x)
+        utils.addEndpointTemplateToTenant(tenantX3.id, Integer.parseInt(MOSSO_ENDPOINT_TEMPLATE_ID))
+
+        def ua1Token = utils.getToken(ua1.username)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(v2Factory.createTenantAssignment(ROLE_RBAC2_ID, ["*"]))
+                    tas.tenantAssignment.add(v2Factory.createTenantAssignment(ROLE_RBAC1_ID, [tenantX2.id, tenantX3.id]))
+                    tas
+            }
+            it
+        }
+        utils.grantRoleAssignmentsOnUser(ua1, assignments, utils.getIdentityAdminToken())
+
+        when: "Whitelist filter requires Role 1 only"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, ROLE_RBAC1_NAME)
+        EndpointList endpointList = utils.listEndpointsForToken(ua1Token, ua1Token, apply_rcn_roles)
+
+        then: "Endpoints returned for x2 and x3"
+        endpointList.endpoint.find {it.tenantId == tenantX2.id} != null
+        endpointList.endpoint.find {it.tenantId == tenantX3.id} != null
+
+        and: "No endpoints returned on x1"
+        endpointList.endpoint.find {it.tenantId == tenantX1.id} == null
+
+        when: "Whitelist filter requires Role 2 only"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, ROLE_RBAC2_NAME)
+        endpointList = utils.listEndpointsForToken(ua1Token, ua1Token, apply_rcn_roles)
+
+        then: "Delegate gets endpoints on all tenants"
+        endpointList.endpoint.find {it.tenantId == tenantX1.id} != null
+        endpointList.endpoint.find {it.tenantId == tenantX2.id} != null
+        endpointList.endpoint.find {it.tenantId == tenantX3.id} != null
+
+        when: "Whitelist filter requires Role 2 only"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, DEFAULT_OBJECT_STORE_ROLE)
+        endpointList = utils.listEndpointsForToken(ua1Token, ua1Token, apply_rcn_roles)
+
+        then: "Delegate gets endpoints on no tenants"
+        endpointList.endpoint.find {it.tenantId == tenantX1.id} == null
+        endpointList.endpoint.find {it.tenantId == tenantX2.id} == null
+        endpointList.endpoint.find {it.tenantId == tenantX3.id} == null
+
+        where:
+        apply_rcn_roles << [true, false]
+    }
 }
