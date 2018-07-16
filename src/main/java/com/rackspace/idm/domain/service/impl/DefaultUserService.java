@@ -9,6 +9,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.AuthenticationContext;
@@ -1107,10 +1108,15 @@ public class DefaultUserService implements UserService {
             return Collections.emptyList();
         }
 
-        return tenantAssignmentService.replaceTenantAssignmentsOnUser(
+        List<TenantRole> tenantRoles = tenantAssignmentService.replaceTenantAssignmentsOnUser(
                 user,
                 roleAssignments.getTenantAssignments().getTenantAssignment(),
                 allowedRoleAccess);
+
+        // Send an UPDATE user event when roles change on user.
+        atomHopperClient.asyncPost(user, AtomHopperConstants.UPDATE);
+
+        return tenantRoles;
     }
 
     @Override

@@ -1,10 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import org.apache.commons.lang3.RandomStringUtils
+import org.mockserver.verify.VerificationTimes
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
@@ -113,6 +115,7 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
         }
 
         when: "delete delegates on DAs with management access"
+        resetCloudFeedsMock()
         def deleteResponses = []
         dasRcnAdminsCanManage.each { daToManage ->
             deleteResponses << cloud20.deleteUserDelegate(rcnAdminToken, daToManage.id, userToAdd.id)
@@ -123,6 +126,12 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
         deleteResponses.each { responseToValidate ->
             assert responseToValidate.status == 204
         }
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(userToAdd, EventType.UPDATE),
+                VerificationTimes.exactly(6) // dasRcnAdminsCanManage has 6 DAs
+        )
     }
 
     def "user admins have management access to a DA within their domain"() {
@@ -174,6 +183,7 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
         }
 
         when: "delete delegates on DAs with management access"
+        resetCloudFeedsMock()
         def deleteResponsesCanManage = []
         def deleteResponsesCannotManage = []
         dasUserAdminsCanManage.each { daToManage ->
@@ -192,6 +202,12 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
         deleteResponsesCannotManage.each { responseToValidate ->
             assert responseToValidate.status == 404
         }
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(userToAdd, EventType.UPDATE),
+                VerificationTimes.exactly(3) // dasRcnAdminsCanManage has 3 DAs
+        )
     }
 
     def "user managers have management access to a DA within their domain except for DAs for the user admin of their domain"() {
