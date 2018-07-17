@@ -4364,6 +4364,11 @@ dn: cn=dp,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsTenantTypeObject
 description: Datapipe tenant type
 
+dn: cn=wl_tenant_type,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsTenantTypeObject
+cn: wl_tenant_type
+description: whitelist tenant type
+
 dn: rsId=132885,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: tenant
 rsId: 132885
