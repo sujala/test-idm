@@ -12,9 +12,9 @@ import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
-import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
+import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_OK
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 
@@ -139,7 +139,7 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         responseRcn.user.roles.role.find {it.tenantId == tenantX1.id} == null
         responseRcn.user.roles.role.find {it.tenantId == tenantX2.id} == null
 
-        and: "withour rcn doesn't include tenant"
+        and: "without rcn doesn't include tenant"
         responseNoRcn.user.roles.role.find {it.tenantId == tenantX1.id} == null
         responseNoRcn.user.roles.role.find {it.tenantId == tenantX2.id} == null
 
@@ -263,5 +263,167 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         then: "Can't authenticate under tenant"
         responseRcn.status == SC_UNAUTHORIZED
         responseNoRcn.status == SC_UNAUTHORIZED
+    }
+
+    def "Validate token: Roles on a tenant with a whitelisted tenant type are returned when user is assigned a whitelist role at the tenant level"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+        def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
+        def responseRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "true")
+        def responseNoRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "false")
+
+        // Get tokens
+        def tokenRcn = responseRcn.token.id
+        def tokenNoRcn = responseNoRcn.token.id
+
+        when: "validate token"
+        def validateRcnResponse = utils.validateTokenApplyRcnRoles(tokenRcn, "true")
+        def validateNoRcnResponse = utils.validateTokenApplyRcnRoles(tokenNoRcn,"false")
+        def validateBelongsToResponse = cloud20.validateTokenApplyRcnRoles(utils.getServiceAdminToken(), tokenNoRcn,"false", tenantX1.id)
+
+        then: "with rcn doesn't include tenant"
+        validateRcnResponse.user.roles.role.find {it.tenantId == tenantX1.id} == null
+        validateRcnResponse.user.roles.role.find {it.tenantId == tenantX2.id} == null
+
+        and: "without rcn doesn't include tenant"
+        validateNoRcnResponse.user.roles.role.find {it.tenantId == tenantX1.id} == null
+        validateNoRcnResponse.user.roles.role.find {it.tenantId == tenantX2.id} == null
+
+        and: "assert 404 Not Found - belongsTo"
+        validateBelongsToResponse.status == SC_NOT_FOUND
+
+        and: "verify roles"
+        validateRcnResponse.user.roles.role.size() == responseRcn.user.roles.role.size()
+        validateNoRcnResponse.user.roles.role.size() == responseNoRcn.user.roles.role.size()
+
+        when: "User assigned whitelisted role on tenant"
+        utils.addRoleToUserOnTenantId(mySubUser, tenantX1.id, Constants.ROLE_RBAC1_ID)
+        utils.addRoleToUserOnTenantId(mySubUser, tenantX2.id, Constants.ROLE_RBAC2_ID)
+        responseRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "true")
+        responseNoRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "false")
+        tokenRcn = responseRcn.token.id
+        tokenNoRcn = responseNoRcn.token.id
+        validateRcnResponse = utils.validateTokenApplyRcnRoles(tokenRcn)
+        validateNoRcnResponse = utils.validateTokenApplyRcnRoles(tokenNoRcn,"false")
+        validateBelongsToResponse = utils.validateTokenApplyRcnRoles(tokenNoRcn,"false", tenantX1.id)
+
+        then: "with RCN has domain roles assigned to tenant and tenant assigned role only on tenant assigned."
+        validateRcnResponse.user.roles.role.findAll {it.tenantId == tenantX1.id}.size() == 3 //default, tenant access, rbac1
+        validateRcnResponse.user.roles.role.find {it.tenantId == tenantX2.id} == null
+
+        and: "without RCN only has role assigned to tenant and tenant access"
+        validateNoRcnResponse.user.roles.role.findAll {it.tenantId == tenantX1.id}.size() == 2 //tenant access, rbac1
+        validateNoRcnResponse.user.roles.role.find {it.tenantId == tenantX2.id} == null
+
+        and: "without RCN only has role assigned to tenant and tenant access - belongsTo"
+        validateBelongsToResponse.user.roles.role.findAll {it.tenantId == tenantX1.id}.size() == 2 //tenant access, rbac1
+        validateBelongsToResponse.user.roles.role.find {it.tenantId == tenantX2.id} == null
+
+        and: "verify roles"
+        validateRcnResponse.user.roles.role.size() == responseRcn.user.roles.role.size()
+        validateNoRcnResponse.user.roles.role.size() == responseNoRcn.user.roles.role.size()
+        validateBelongsToResponse.user.roles.role.size() == responseNoRcn.user.roles.role.size()
+    }
+
+    def "Include all roles when tenant type is not specified on whitelist"() {
+        given:
+        String tenantTypeName = RandomStringUtils.randomAlphabetic(15).toLowerCase()
+        TenantType tenantType = v2Factory.createTenantType(tenantTypeName, "description")
+        assert cloud20.addTenantType(sharedServiceAdminToken, tenantType).status == HttpStatus.SC_CREATED
+
+        // Create a tenant with the newly added tenant type
+        def tenantName = tenantTypeName + ":" + sharedUserAdmin.domainId
+        def tenant = v2Factory.createTenant(tenantName, tenantName, [tenantTypeName]).with {it.domainId = sharedUserAdmin.domainId; it}
+        def response = cloud20.addTenant(sharedIdentityAdminToken, tenant)
+        assert response.status == HttpStatus.SC_CREATED
+        def tenantEntity = response.getEntity(Tenant).value
+
+        def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
+
+        // add tenant role
+        utils.addRoleToUserOnTenantId(mySubUser, tenantEntity.id, Constants.ROLE_RBAC1_ID)
+
+        def responseRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "true")
+        def responseNoRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "false")
+
+        // Get tokens
+        def tokenRcn = responseRcn.token.id
+        def tokenNoRcn = responseNoRcn.token.id
+
+        when: "validate token"
+        def validateRcnResponse = utils.validateTokenApplyRcnRoles(tokenRcn, "true")
+        def validateNoRcnResponse = utils.validateTokenApplyRcnRoles(tokenNoRcn,"false")
+        def validateBelongsToResponse = utils.validateTokenApplyRcnRoles(tokenNoRcn,"false", tenant.id)
+
+        then: "with RCN has domain roles assigned to tenant and tenant assigned role only on tenant assigned."
+        validateRcnResponse.user.roles.role.findAll {it.tenantId == tenant.id}.size() == 3 //default, tenant access, rbac1
+
+        and: "without RCN only has role assigned to tenant and tenant access"
+        validateNoRcnResponse.user.roles.role.findAll {it.tenantId == tenant.id}.size() == 2 //tenant access, rbac1
+
+        and: "without RCN only has role assigned to tenant and tenant access - belongsTo"
+        validateBelongsToResponse.user.roles.role.findAll {it.tenantId == tenant.id}.size() == 2 //tenant access, rbac1
+
+        and: "verify roles"
+        validateRcnResponse.user.roles.role.size() == responseRcn.user.roles.role.size()
+        validateNoRcnResponse.user.roles.role.size() == responseNoRcn.user.roles.role.size()
+        validateBelongsToResponse.user.roles.role.size() == responseNoRcn.user.roles.role.size()
+
+        when: "check token"
+        def checkTokenRcnResponse = cloud20.checkTokenApplyRcnRoles(sharedServiceAdminToken, tokenRcn, "true")
+        def checkTokenNoRcnResponse = cloud20.checkTokenApplyRcnRoles(sharedServiceAdminToken, tokenNoRcn,"false")
+        def checkTokenBelongsToResponse = cloud20.checkTokenApplyRcnRoles(sharedServiceAdminToken, tokenNoRcn,"false", tenant.id)
+
+        then: "asset 200 OK"
+        checkTokenRcnResponse.status == SC_OK
+        checkTokenNoRcnResponse.status == SC_OK
+        checkTokenBelongsToResponse.status == SC_OK
+    }
+
+    def "Check token: Roles on a tenant with a whitelisted tenant type are returned when user is assigned a whitelist role at the tenant level"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+        def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
+        def responseRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "true")
+        def responseNoRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "false")
+
+        // Get tokens
+        def serviceAdminToken = utils.getServiceAdminToken()
+        def tokenRcn = responseRcn.token.id
+        def tokenNoRcn = responseNoRcn.token.id
+
+        when: "validate token"
+        def checkTokenRcnResponse = cloud20.checkTokenApplyRcnRoles(serviceAdminToken, tokenRcn, "true")
+        def checkTokenNoRcnResponse = cloud20.checkTokenApplyRcnRoles(serviceAdminToken, tokenNoRcn,"false")
+        def checkTokenBelongsToResponse = cloud20.checkTokenApplyRcnRoles(serviceAdminToken, tokenNoRcn,"false", tenantX1.id)
+        def checkTokenBelongsTo2Response = cloud20.checkTokenApplyRcnRoles(serviceAdminToken, tokenNoRcn,"false", tenantX2.id)
+
+        then: "assert 200 OK "
+        checkTokenRcnResponse.status == SC_OK
+        checkTokenNoRcnResponse.status == SC_OK
+
+        and: "assert 404 Not Found - belongsTo"
+        checkTokenBelongsToResponse.status == SC_NOT_FOUND
+        checkTokenBelongsTo2Response.status == SC_NOT_FOUND
+
+        when: "User assigned whitelisted role on tenant"
+        utils.addRoleToUserOnTenantId(mySubUser, tenantX1.id, Constants.ROLE_RBAC1_ID)
+        utils.addRoleToUserOnTenantId(mySubUser, tenantX2.id, Constants.ROLE_RBAC2_ID)
+        responseRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "true")
+        responseNoRcn = utils.authenticate(mySubUser, Constants.DEFAULT_PASSWORD, "false")
+        tokenRcn = responseRcn.token.id
+        tokenNoRcn = responseNoRcn.token.id
+        checkTokenRcnResponse = cloud20.checkTokenApplyRcnRoles(serviceAdminToken, tokenRcn, "true")
+        checkTokenNoRcnResponse = cloud20.checkTokenApplyRcnRoles(serviceAdminToken, tokenNoRcn,"false")
+        checkTokenBelongsToResponse = cloud20.checkTokenApplyRcnRoles(serviceAdminToken, tokenNoRcn,"false", tenantX1.id)
+        checkTokenBelongsTo2Response = cloud20.checkTokenApplyRcnRoles(serviceAdminToken, tokenNoRcn,"false", tenantX2.id)
+
+        then: "asset 200 OK"
+        checkTokenRcnResponse.status == SC_OK
+        checkTokenNoRcnResponse.status == SC_OK
+        checkTokenBelongsToResponse.status == SC_OK
+
+        and: "assert 404 Not Found - belongsTo"
+        checkTokenBelongsTo2Response.status == SC_NOT_FOUND // tenantX2 is hidden
     }
 }

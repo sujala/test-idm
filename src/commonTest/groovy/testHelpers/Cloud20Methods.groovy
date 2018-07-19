@@ -142,13 +142,28 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).path(token).header(X_AUTH_TOKEN, authToken).accept(accept).get(ClientResponse)
     }
 
-    def validateTokenApplyRcnRoles(authToken, token, String applyRcnRoles, MediaType accept = APPLICATION_XML_TYPE) {
+    def validateTokenApplyRcnRoles(authToken, token, String applyRcnRoles, String belongsTo = null, MediaType accept = APPLICATION_XML_TYPE) {
         initOnUse()
         def queryParams = new MultivaluedMapImpl()
         if (applyRcnRoles != null) {
             queryParams.add("apply_rcn_roles", applyRcnRoles)
         }
+        if (belongsTo != null) {
+            queryParams.add("belongsTo", belongsTo)
+        }
         resource.path(path20).path(TOKENS).queryParams(queryParams).path(token).header(X_AUTH_TOKEN, authToken).accept(accept).get(ClientResponse)
+    }
+
+    def checkTokenApplyRcnRoles(authToken, token, String applyRcnRoles, String belongsTo = null) {
+        initOnUse()
+        def queryParams = new MultivaluedMapImpl()
+        if (applyRcnRoles != null) {
+            queryParams.add("apply_rcn_roles", applyRcnRoles)
+        }
+        if (belongsTo != null) {
+            queryParams.add("belongsTo", belongsTo)
+        }
+        resource.path(path20).path(TOKENS).queryParams(queryParams).path(token).header(X_AUTH_TOKEN, authToken).head()
     }
 
     def getUserByName(String token, String name, MediaType mediaType = APPLICATION_XML_TYPE) {

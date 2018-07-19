@@ -691,10 +691,10 @@ class Cloud20Utils {
         return mediaType == APPLICATION_XML_TYPE ? entity.value : entity
     }
 
-    def validateTokenApplyRcnRoles(token, String applyRcnRolesParam = "true") {
-        def response = methods.validateTokenApplyRcnRoles(getServiceAdminToken(), token, applyRcnRolesParam)
+    AuthenticateResponse validateTokenApplyRcnRoles(token, String applyRcnRolesParam = "true", belongsTo = null) {
+        def response = methods.validateTokenApplyRcnRoles(getServiceAdminToken(), token, applyRcnRolesParam, belongsTo)
         assert (response.status == SC_OK)
-        response.getEntity(AuthenticateResponse).value
+        return response.getEntity(AuthenticateResponse).value
     }
 
     def validateToken(token, tokenToValidate) {

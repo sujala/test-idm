@@ -229,14 +229,16 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
         // Throws NotFoundException if user can not be retrieved
         EndUser user = (EndUser) userService.getUserByScopeAccess(sa);
+        SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);
         List<TenantRole> roles;
         if (applyRcnRoles) {
-            SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);
             roles = sourcedRoleAssignments.asTenantRolesExcludeNoTenants();
             authenticateResponse.setToken(tokenConverterCloudV20.toValidateResponseToken(sa, user, roles));
         }
         else {
-            roles = tenantService.getTenantRolesForUserPerformant(user);
+            // Adapt to perspective where no tenants on role means it's a domain assigned role
+            SourcedRoleAssignmentsLegacyAdapter legacyAdapter = sourcedRoleAssignments.getSourcedRoleAssignmentsLegacyAdapter();
+            roles = legacyAdapter.getStandardTenantRoles();
             authenticateResponse.setToken(tokenConverterCloudV20.toToken(sa, roles));
         }
         validator20.validateTenantIdInRoles(tenantId, roles);
