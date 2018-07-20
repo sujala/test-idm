@@ -124,4 +124,7 @@ public final class GlobalConstants {
     public static final String V2_LIST_TOKEN_ENDPOINTS = "v2.0 List token endpoints";
     public static final String V2_AUTHENTICATE = "v2.0 Authenticate";
     public static final String V2_LIST_USER_LEGACY_GROUPS = "v2.0 List user legacy groups";
+
+    public static final String ALL_RCNS_WILDCARD = "*";
+
 }

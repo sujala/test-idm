@@ -126,6 +126,10 @@ public class DefaultIdentityUserService implements IdentityUserService {
         return identityUserRepository.getProvisionedUserById(userId);
     }
 
+    @Override
+    public Iterable<User> getProvisionedUsersByDomainIdAndEmail(String domainId, String email) {
+        return identityUserRepository.getProvisionedUsersByDomainIdAndEmail(domainId, email);
+    }
 
     @Override
     public User getProvisionedUserByIdWithPwdHis(String userId) {

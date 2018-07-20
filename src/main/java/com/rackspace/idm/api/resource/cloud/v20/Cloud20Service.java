@@ -98,6 +98,8 @@ public interface Cloud20Service {
 
     ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user);
 
+    ResponseBuilder addInviteUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user);
+
     ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user);
 
     ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId);

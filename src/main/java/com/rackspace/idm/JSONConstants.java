@@ -114,6 +114,7 @@ public final class JSONConstants {
     public static final String UPDATED = "updated";
     public static final String USER = "user";
     public static final String USERS = "users";
+    public static final String INVITE = "invite";
     public static final String USERNAME = "username";
     public static final String USER_PASSWORD = "userPassword";
     public static final String PASSWORD_RESET = "passwordReset";
@@ -254,6 +255,11 @@ public final class JSONConstants {
     public static final String DELEGATION_AGREEMENT_ID_PATH = "user." + DELEGATION_AGREEMENT_ID;
     public static final String RAX_AUTH_DELEGATION_AGREEMENT_ID = "RAX-AUTH:" + DELEGATION_AGREEMENT_ID;
     public static final String USER_RAX_AUTH_DELEGATION_AGREEMENT_ID_PATH = "user.RAX-AUTH:" + DELEGATION_AGREEMENT_ID;
+
+    public static final String UNVERIFIED = "unverified";
+    public static final String UNVERIFIED_PATH = "user." + UNVERIFIED;
+    public static final String RAX_AUTH_UNVERIFIED_ID = "RAX-AUTH:" + UNVERIFIED;
+    public static final String USER_RAX_AUTH_UNVERIFIED_PATH = "user.RAX-AUTH:" + UNVERIFIED;
 
     public static final String DELEGATION_CREDENTIALS = "delegationCredentials";
     public static final String RAX_AUTH_DELEGATION_CREDENTIALS = "RAX-AUTH:" + DELEGATION_CREDENTIALS;
