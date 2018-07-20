@@ -4218,7 +4218,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             domainService.checkAndGetDomain(domainId);
 
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
+            List<OpenstackEndpoint> endpoints;
+            if (identityConfig.getReloadableConfig().isScInfoDomainEndpointsForUserEnabled()) {
+                ServiceCatalogInfo scInfo = identityUserService.getServiceCatalogInfoApplyRcnRoles(user);
+                endpoints = scInfo.getUserEndpoints();
+            } else {
+                endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
+            }
             List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
 
             List<OpenstackEndpoint> domainEndpoints = cloudUserAccessibility.getAccessibleDomainEndpoints(endpoints, tenants, user);

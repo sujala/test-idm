@@ -452,6 +452,9 @@ public class IdentityConfig {
     public static final String NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_PROP = "nested.delegation.agreement.role.hierarchy";
     public static final String NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_DEFAULT = null;
 
+    public static final String FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_PROP = "feature.enable.scInfo.accessible.domains.endpoints.for.user";
+    public static final boolean FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -898,6 +901,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_ROLE_HIERARCHY_PROP, FEATURE_ENABLE_ROLE_HIERARCHY_DEFAULT);
         defaults.put(NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_PROP, NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_DEFAULT);
         defaults.put(FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP, FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_DEFAULT);
+        defaults.put(FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_PROP, FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -2530,6 +2534,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP, versionAdded = "3.23.0", description = "Whether to delete all tenant roles when tenant is removed from domain.")
         public boolean getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_PROP, versionAdded = "3.24.0", description = "Whether or not to enabled rcn logic for endpoints.")
+        public boolean isScInfoDomainEndpointsForUserEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_PROP);
         }
     }
 

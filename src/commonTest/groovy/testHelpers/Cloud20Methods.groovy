@@ -1077,6 +1077,11 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(DOMAINS).accept(acceptMediaType.toString()).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
+    def getAccessibleDomainEndpointsForUser(String token, String userId, String domainId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(DOMAINS).path(domainId).path(ENDPOINTS).accept(acceptMediaType.toString()).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
     def addUserToDomain(String token, String userId, String domainId) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(USERS).path(userId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).put(ClientResponse)
