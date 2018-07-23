@@ -195,4 +195,6 @@ class Constants {
     public static final String BILLING_OBSERVER_ROLE_ID="4fb94f6f7fcb4085bec35ceaaebb4f17";
     public static final String TICKETING_ADMIN_ROLE_ID="2d48788b89b34a65b24bfc2df1690819";
     public static final String TICKETING_OBSERVER_ROLE_ID="318c6ae090504cf79cc13f051d700e57";
+
+    public static final String RCN_ALLOWED_FOR_INVITE_USERS = 'RCN-TEST1'
 }

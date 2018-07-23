@@ -145,6 +145,7 @@ public abstract class LdapRepository {
     public static final String ATTR_RACKER_ID = "rackerId";
     public static final String ATTR_RACKSPACE_API_KEY = "rsApiKey";
     public static final String ATTR_IDENTITY_PROVIDER_ID = "rsIdentityProviderId";
+    public static final String ATTR_UNVERIFIED = "rsUnverified";
 
     /**
      * @deprecated

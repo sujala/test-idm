@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
@@ -13,6 +14,7 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
@@ -347,6 +349,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         }
 
         when: "assignment 0"
+        resetCloudFeedsMock()
         def getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments0, mediaType)
         RoleAssignments retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -355,7 +358,14 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         retrievedEntity.tenantAssignments != null
         retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
 
+        and: "verify no update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
+
         when: "assignment 1"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments1, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -366,7 +376,14 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def rbac2Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == ROLE_RBAC2_ID}
         rbac2Assignment == null
 
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "assignment 2"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments2, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -376,7 +393,14 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, ["*"])
 
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "assignment 3"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments3, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -386,7 +410,14 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, [cloudTenantId, filesTenantId])
 
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "assignment 4"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments4, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -396,7 +427,14 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, [cloudTenantId])
 
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "assignment 5"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(userAdminToken, createdDA, assignments5, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -405,6 +443,12 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         retrievedEntity.tenantAssignments != null
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, ["*"])
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -441,6 +485,11 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
             it
         }
         def createdDA = utils.createDelegationAgreement(fedUserToken, delegationAgreement)
+
+        def fedUserId = authResponse.user.id
+        utils.addUserDelegate(fedUserToken, createdDA.id, fedUserId)
+
+        def fedUser = utils.getUserById(fedUserId)
 
         RoleAssignments assignments0 = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments()
@@ -492,6 +541,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         }
 
         when: "assignment 0"
+        resetCloudFeedsMock()
         def getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments0, mediaType)
         RoleAssignments retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -500,7 +550,14 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         retrievedEntity.tenantAssignments != null
         retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
 
+        and: "verify an update user event is not sent for a federated user"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
+
         when: "assignment 1"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments1, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -511,7 +568,14 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         def rbac2Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == ROLE_RBAC2_ID}
         rbac2Assignment == null
 
+        and: "verify an update user event is not sent for a federated user"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
+
         when: "assignment 2"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments2, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -521,7 +585,14 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, ["*"])
 
+        and: "verify an update user event is not sent for a federated user"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
+
         when: "assignment 3"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments3, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -531,7 +602,14 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, [cloudTenantId, filesTenantId])
 
+        and: "verify an update user event is not sent for a federated user"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
+
         when: "assignment 4"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments4, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -541,9 +619,22 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, [cloudTenantId])
 
+        and: "verify an update user event is not sent for a federated user"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
+
         when: "assignment 5"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnDelegationAgreement(fedUserToken, createdDA, assignments5, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
+
+        and: "verify an update user event is not sent for a federated user"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
 
         then:
         getResponse.status == HttpStatus.SC_OK
@@ -1019,10 +1110,17 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [cloudTenantId])
 
         when: "revoke role"
+        resetCloudFeedsMock()
         response = cloud20.revokeRoleAssignmentFromDelegationAgreement(userAdminToken, createdDA, ROLE_RBAC1_ID)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "list roles for DA"
         response = cloud20.listRolesOnDelegationAgreement(userAdminToken, createdDA)

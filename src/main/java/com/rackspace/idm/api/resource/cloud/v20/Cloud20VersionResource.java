@@ -925,6 +925,15 @@ public class Cloud20VersionResource {
         return cloud20Service.addUser(httpHeaders, uriInfo, authToken, user).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Add Invite User")
+    @POST
+    @Path("RAX-AUTH/invite/user")
+    public Response addInviteUser(@Context UriInfo uriInfo,
+                                  @Context HttpHeaders httpHeaders,
+                                  @HeaderParam(X_AUTH_TOKEN) String authToken, User user) {
+        return cloud20Service.addInviteUser(httpHeaders, uriInfo, authToken, user).build();
+    }
+
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update user")
     @POST
     @Path("users/{userId}")

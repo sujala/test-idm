@@ -231,9 +231,11 @@ public class UserConverterCloudV20 {
                 jaxbUser.setFactorType(user.getMultiFactorTypeAsEnum());
             }
 
-            //if the user has null for mfa enabled the set the value to false
-            //this is done to match the json logic to write the user to the logic used to write the user in xml
-            jaxbUser.setMultiFactorEnabled(user.getMultifactorEnabled() == null ? false : user.getMultifactorEnabled());
+            if (!user.isUnverified()) {
+                //if the user has null for mfa enabled the set the value to false
+                //this is done to match the json logic to write the user to the logic used to write the user in xml
+                jaxbUser.setMultiFactorEnabled(user.getMultifactorEnabled() == null ? false : user.getMultifactorEnabled());
+            }
 
             if(includeOtherAttributes) {
                 if (user.getSecretQuestion() != null || user.getSecretAnswer() != null) {

@@ -135,3 +135,8 @@ class TestConfig(data_interfaces.ConfigSectionInterface):
     def max_mapping_policy_size_in_kb(self):
         """maximum size in kb for mapping policy"""
         return self.get('max_mapping_policy_size_in_kb')
+
+    @property
+    def mpc_whitelist_tenant_type(self):
+        """MPC whitelist tenant type"""
+        return self.get('mpc_whitelist_tenant_type')

@@ -1,14 +1,14 @@
 package com.rackspace.idm.modules.usergroups.api.resource
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.apache.commons.lang.RandomStringUtils
+import org.mockserver.verify.VerificationTimes
 import testHelpers.RootIntegrationTest
 
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
-
 
 class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
     void doSetupSpec() {
@@ -122,10 +122,17 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         utils.disableUser(user)
 
         when:
+        resetCloudFeedsMock()
         def response = cloud20.addUserToUserGroup(utils.getServiceAdminToken(), domainId, userGroup.id, user.id)
 
         then:
         response.status == 204
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         cleanup:
         utils.deleteUserGroup(userGroup)
@@ -273,10 +280,17 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
 
         when:
+        resetCloudFeedsMock()
         def response = cloud20.addUserToUserGroup(token, domainId, userGroup.id, user.id)
 
         then:
         response.status == 204
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         cleanup:
         utils.deleteUserGroup(userGroup)
@@ -537,10 +551,17 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         def defaultUser = utils.createUser(token, defaultUsername, domainId)
 
         when:
+        resetCloudFeedsMock()
         def response = cloud20.addUserToUserGroup(token, domainId, userGroup.id, defaultUser.id)
 
         then:
         response.status == 204
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         cleanup:
         utils.deleteUserGroup(userGroup)
@@ -805,10 +826,18 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         utils.disableUser(user)
 
         when:
+        resetCloudFeedsMock()
+        cloud20.addUserToUserGroup(utils.getServiceAdminToken(), domainId, userGroup.id, user.id)
         def response = cloud20.removeUserFromUserGroup(utils.getServiceAdminToken(), domainId, userGroup.id, user.id)
 
         then:
         response.status == 204
+
+        and: "verify an update user event is sent for both add and remove user from user group"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE),
+                VerificationTimes.exactly(2)
+        )
 
         cleanup:
         utils.deleteUserGroup(userGroup)
@@ -902,11 +931,18 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
 
         when:
+        resetCloudFeedsMock()
         cloud20.addUserToUserGroup(token, domainId, userGroup.id, user.id)
         def response = cloud20.removeUserFromUserGroup(token, domainId, userGroup.id, user.id)
 
         then:
         response.status == 204
+
+        and: "verify an update user event is sent for both add and remove user from user group"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE),
+                VerificationTimes.exactly(2)
+        )
 
         cleanup:
         utils.deleteUserGroup(userGroup)

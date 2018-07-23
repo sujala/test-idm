@@ -1404,33 +1404,6 @@
             "versionAdded": "3.15.0"
         },
         {
-            "defaultValue": true,
-            "name": "use.uuid.ids.for.new.groups.enabled",
-            "reloadable": true,
-            "description": "Whether or not to allow using UUID for group's rsId on creation.",
-            "source": "idm.reloadable.properties",
-            "value": true,
-            "versionAdded": "3.15.0"
-        },
-        {
-            "defaultValue": true,
-            "name": "use.uuid.ids.for.new.question.enabled",
-            "reloadable": true,
-            "description": "Whether or not to allow using UUID for question's rsId on creation.",
-            "source": "idm.reloadable.properties",
-            "value": true,
-            "versionAdded": "3.15.0"
-        },
-        {
-            "defaultValue": true,
-            "name": "use.uuid.ids.for.new.roles.enabled",
-            "reloadable": true,
-            "description": "Whether or not to allow using UUID for role's rsId on creation.",
-            "source": "idm.reloadable.properties",
-            "value": true,
-            "versionAdded": "3.15.0"
-        },
-        {
             "defaultValue": false,
             "name": "allow.update.domain.rcn.on.update.domain",
             "reloadable": true,
@@ -1493,7 +1466,51 @@
             "reloadable": true,
             "description": "The list of tenant prefixes to exclude the auto-assigned (identity:tenant-access) role from.",
             "source": "idm.reloadable.properties",
-            "value": "[, ]",
+            "value": "[]",
+            "versionAdded": "3.17.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.global.root.da.creation",
+            "reloadable": true,
+            "description": "Limit the creation of “root” DAs to user-admins.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.23.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.role.hierarchy",
+            "reloadable": true,
+            "description": "Whether to enable role hierarchy support.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.23.0"
+        },
+        {
+            "name": "nested.delegation.agreement.role.hierarchy",
+            "reloadable": true,
+            "description": "Role assignment hierarchy for nested DAs.",
+            "source": "idm.reloadable.properties",
+            "value": "observer;admin| billing:admin;admin| billing:observer;admin,observer,billing:admin| ticketing:admin;admin| ticketing:observer;admin,observer,ticketing:admin",
+            "versionAdded": "3.23.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.delete.all.tenants.when.tenant.removed.from.domain",
+            "reloadable": true,
+            "description": "Whether to delete all tenant roles when tenant is removed from domain.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.23.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.delegation.grant.roles.to.nested.da",
+            "reloadable": true,
+            "description": "Whether to delete all tenant roles when tenant is removed from domain.",
+            "source": "idm.reloadable.properties",
+            "value": true,
             "versionAdded": "3.22.0"
         },
         {
@@ -1785,8 +1802,19 @@
             "reloadable": true,
             "description": "Whether to allow authentication with a delegation agreement.",
             "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.21.1",
+            "environment": "Staging"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.delegation.authentication",
+            "reloadable": true,
+            "description": "Whether to allow authentication with a delegation agreement.",
+            "source": "idm.reloadable.properties",
             "value": false,
-            "versionAdded": "3.21.1"
+            "versionAdded": "3.21.1",
+            "environment": "Prod"
         },
         {
             "defaultValue": 10,

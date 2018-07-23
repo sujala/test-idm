@@ -70,7 +70,7 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "Validate email"(){
+    def "Validate valid email"() {
         given:
         ldapPatternRepository.getPattern(_) >> emailPattern
 
@@ -81,12 +81,45 @@ class ValidatorTest extends Specification {
         result
     }
 
+    def "Validate invalid email"() {
+        given:
+        ldapPatternRepository.getPattern(_) >> emailPattern
+
+        when:
+        boolean result = validator.isEmailValid("joe.racker")
+
+        then:
+        !result
+    }
+
+    def "assert valid email"() {
+        given:
+        ldapPatternRepository.getPattern(_) >> emailPattern
+
+        when:
+        validator.assertEmailValid("joe.racker@rackspace.com")
+
+        then:
+        notThrown BadRequestException
+    }
+
+    def "assert invalid email"() {
+        given:
+        ldapPatternRepository.getPattern(_) >> emailPattern
+
+        when:
+        validator.assertEmailValid("joe.racker")
+
+        then:
+        thrown BadRequestException
+    }
+
     def "Invalid email"(){
         given:
         ldapPatternRepository.getPattern(_) >> emailPattern
 
         when:
-        validator.isEmailValid("joe racker@rackspace.com")
+        validator.assertEmailValid("joe racker@rackspace.com")
 
         then:
         thrown(BadRequestException)

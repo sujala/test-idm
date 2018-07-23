@@ -1,12 +1,14 @@
 package com.rackspacecloud.simulations.identity
 
-import com.rackspacecloud.scenarios.Identity
+import com.rackspacecloud.scenarios._
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.commons.validation._
 import java.io._
+
 import io.gatling.core.structure._
 import io.gatling.core.protocol.Protocol
+
 import scala.concurrent.duration._
 import com.typesafe.config.ConfigFactory
 
@@ -166,6 +168,8 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   // V20 crud user
 
   val V20_CRUD_USER_USERS_PER_SEC : Double = conf.getDouble("soa.v20_crud_user.users_per_sec")
+  val DAS_PER_SEC : Double =  conf.getDouble("soa.parent_das_per_sec")
+  val MAX_DURATION_FOR_DAS_SECS: Int = conf.getInt("simulation.max_duration_secs_for_das")
 
   val v20_create_user_scn = Identity.v20_create_user
   // val v20_create_user_repl_scn = Identity.v20_create_user_repl
@@ -176,6 +180,11 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val v20_validate_default_user_token_scn = Identity.v20_token_validate_default_user
 
   val v20_crud_user_scn = Identity.v20_crud_user
+
+  val create_da_scn = DelegationAgreementCreation.create_parent_das
+  val add_user_delegate_scn = AddUserDelegate.add_user_delegate
+  val create_nested_da_scn = CreateNestedDAs.create_nested_das
+  val delete_parent_da_scn = DeleteParentDAs.delete_parent_das
 
 
 
@@ -221,7 +230,7 @@ class IdentityConstantTputUsersRampUp extends Simulation {
 
 
 
-  def scn_wrapper(scenario: ScenarioBuilder, users_per_sec: Double, duration: Int, protocol_conf: Protocol): PopulationBuilder= {
+  def scn_wrapper(scenario: ScenarioBuilder, users_per_sec: Double, duration: Int, protocol_conf: Protocol, wait_time: Int=0): PopulationBuilder= {
     var local_users_per_sec = users_per_sec;
     var local_duration = duration;    
     if (users_per_sec <= 0.05){
@@ -310,12 +319,17 @@ class IdentityConstantTputUsersRampUp extends Simulation {
 
     scn_wrapper(v20_create_user_scn, V20_CREATE_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 
-    scn_wrapper(v20_list_all_roles_scn, V20_LIST_ROLES_FOR_IDENTITY_ADMIN_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf)
+    scn_wrapper(v20_list_all_roles_scn, V20_LIST_ROLES_FOR_IDENTITY_ADMIN_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 //    scn_wrapper(v20_create_user_repl_scn, V20_CREATE_USER_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 //    scn_wrapper(v20_create_user_internal_scn, V20_CREATE_USER_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
 //    scn_wrapper(v20_create_user_internal_repl_scn, V20_CREATE_USER_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf)
 
-)
+      scn_wrapper(create_da_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, 0),
+       scn_wrapper(add_user_delegate_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, MAX_DURATION_FOR_DAS_SECS/4),
+       scn_wrapper(create_nested_da_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, 2 * MAX_DURATION_FOR_DAS_SECS/4),
+       scn_wrapper(delete_parent_da_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, 3 * MAX_DURATION_FOR_DAS_SECS/4)
+
+     )
 
 } 
   setUp(list_scns():_*

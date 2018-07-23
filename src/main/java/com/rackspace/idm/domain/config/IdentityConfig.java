@@ -59,6 +59,7 @@ public class IdentityConfig {
     public static final String EMAIL_HOST_USERNAME_DEFAULT = "";
     public static final String EMAIL_HOST_PASSWORD_PROP = "email.password";
     public static final String EMAIL_HOST_PASSWORD_DEFAULT = "";
+    public static final String MAX_NUM_USERS_IN_DOMAIN = "maxNumberOfUsersInDomain";
 
     private static final String EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES = "email.send.to.only.rackspace.addresses.enabled";
     private static final String SETUP_MFA_SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
@@ -595,6 +596,9 @@ public class IdentityConfig {
     public static final String FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP = "feature.delete.all.tenants.when.tenant.removed.from.domain";
     public static final boolean FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_DEFAULT = true;
 
+    public static final String FEATURE_ENABLE_CREATE_INVITES_PROP = "feature.enable.create.invites";
+    public static final boolean FEATURE_ENABLE_CREATE_INVITES_DEFAULT = false;
+
     /**
      * Identity Repository Properties
      */
@@ -614,6 +618,9 @@ public class IdentityConfig {
 
     public static final String EDIR_LDAP_SERVER_TRUSTED_PROP = "ldap.server.trusted";
     public static final boolean EDIR_LDAP_SERVER_TRUSED_DEFAULT = false;
+
+    public static final String INVITES_SUPPORTED_FOR_RCNS_PROP = "invites.supported.for.rcns";
+    public static final String INVITES_SUPPORTED_FOR_RCNS_DEFAULT = "";
 
 
     /**
@@ -849,6 +856,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_DEFAULT);
         defaults.put(DELEGATION_MAX_NEST_LEVEL_PROP, DELEGATION_MAX_NEST_LEVEL_DEFAULT);
         defaults.put(FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP, FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_DEFAULT);
+        defaults.put(INVITES_SUPPORTED_FOR_RCNS_PROP, INVITES_SUPPORTED_FOR_RCNS_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
@@ -898,6 +906,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_ROLE_HIERARCHY_PROP, FEATURE_ENABLE_ROLE_HIERARCHY_DEFAULT);
         defaults.put(NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_PROP, NESTED_DELEGATION_AGREEMENT_ROLE_HIERARCHY_DEFAULT);
         defaults.put(FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP, FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_DEFAULT);
+        defaults.put(FEATURE_ENABLE_CREATE_INVITES_PROP, FEATURE_ENABLE_CREATE_INVITES_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -1339,6 +1348,11 @@ public class IdentityConfig {
         @IdmProp(key = GA_USERNAME, description = "Cloud Identity Admin user", versionAdded = "1.0.14.8")
         public String getGaUsername() {
             return getStringSafely(staticConfiguration, GA_USERNAME);
+        }
+
+        @IdmProp(key = MAX_NUM_USERS_IN_DOMAIN, description = "The max number of users allowed in a domain.", versionAdded = "1.0.14.8")
+        public int getMaxNumberOfUsersInDomain() {
+            return getIntSafely(staticConfiguration, MAX_NUM_USERS_IN_DOMAIN);
         }
 
         @IdmProp(key = EMAIL_LOCKED_OUT_SUBJECT, description = "Subject to use when sending MFA locked out email to customer.", versionAdded = "2.5.0")
@@ -2531,6 +2545,12 @@ public class IdentityConfig {
         public boolean getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP);
         }
+
+        @IdmProp(key = FEATURE_ENABLE_CREATE_INVITES_PROP, versionAdded = "3.24.0", description = "Whether to allow for the creation of invite users")
+        public boolean isCreationOfInviteUsersEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_CREATE_INVITES_PROP);
+        }
+
     }
 
     public class RepositoryConfig {
@@ -2590,15 +2610,59 @@ public class IdentityConfig {
         @IdmProp(key = ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP, versionAdded = "3.20.0", description = "A comma delimited list of rcns for which delegation agreements will be allowed")
         public List<String> getRCNsExplicitlyEnabledForDelegationAgreements() {
             String rawValue = getRepositoryStringSafely(ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP);
-            if (StringUtils.isNotBlank(rawValue)) {
-                rawValue = rawValue.toLowerCase();
-            }
-            List<String> rcns = Collections.emptyList();
-            if (StringUtils.isNotBlank(rawValue)) {
-                rcns = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(rawValue);
-            }
-            return rcns;
+            return splitStringPropIntoList(rawValue);
         }
+
+        /**
+         * This property represents a list of RCNs for which the creation of invite users are explicitly enabled.
+         * The value for the prop in the backend is a comma delimited list of RCNs. This method will trim all whitespace
+         * from all individual values in the list. Empty values are ignored. As an example:
+         *
+         * <ul>
+         *     <li>"a,b" = ["a","b"]</li>
+         *     <li>"  a  ,  b " = ["a","b"]</li>
+         *     <li>"a,,b" = ["a","b"]</li>
+         *     <li>",b" = ["b"]</li>
+         *     <li>"," = []</li>
+         * </ul>
+         *
+         * Note - A wildcard of '*' can be used to indicate that all RCNs are allowed to create invite users.
+         *
+         * @return
+         */
+        @IdmProp(key = INVITES_SUPPORTED_FOR_RCNS_PROP, versionAdded = "3.24.0", description = "A comma delimited list of RCNs for which the creation of invite users will be allowed")
+        public List<String> getInvitesSupportedForRCNs() {
+            String rawValue = getRepositoryStringSafely(INVITES_SUPPORTED_FOR_RCNS_PROP);
+            return splitStringPropIntoList(rawValue);
+        }
+    }
+
+    /**
+     * This method will take a string containing comma delimited values, split the values by the comma delimiter,
+     * and trim all whitespace from all individual values in the list. Empty values are ignored. As an example:
+     *
+     * <ul>
+     *     <li>"a,b" = ["a","b"]</li>
+     *     <li>"  a  ,  b " = ["a","b"]</li>
+     *     <li>"a,,b" = ["a","b"]</li>
+     *     <li>",b" = ["b"]</li>
+     *     <li>"," = []</li>
+     * </ul>
+     *
+     * @param rawValue
+     * @return
+     */
+    private List<String> splitStringPropIntoList(String rawValue) {
+        if (StringUtils.isNotBlank(rawValue)) {
+            rawValue = rawValue.toLowerCase();
+        }
+
+        List<String> values = Collections.emptyList();
+        if (StringUtils.isNotBlank(rawValue)) {
+            values = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(rawValue);
+        }
+
+        return values;
     }
 
     @Deprecated

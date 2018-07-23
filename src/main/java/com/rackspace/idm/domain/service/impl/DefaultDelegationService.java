@@ -1,19 +1,24 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.google.common.collect.Lists;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.DelegateType;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.DelegationConsumer;
 import com.rackspace.idm.domain.entity.DelegationDelegate;
 import com.rackspace.idm.domain.entity.DelegationPrincipal;
 import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.DelegationService;
@@ -21,6 +26,7 @@ import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.TenantAssignmentService;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.Constants;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.unboundid.ldap.sdk.DN;
 import org.apache.commons.collections4.CollectionUtils;
@@ -29,8 +35,10 @@ import org.eclipse.persistence.jpa.jpql.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -53,6 +61,10 @@ public class DefaultDelegationService implements DelegationService {
 
     @Autowired
     private TenantRoleDao tenantRoleDao;
+
+    @Lazy
+    @Autowired
+    private AtomHopperClient atomHopperClient;
 
     @Override
     public DelegationAgreement addDelegationAgreement(DelegationAgreement delegationAgreement) {
@@ -115,8 +127,15 @@ public class DefaultDelegationService implements DelegationService {
             return Collections.emptyList();
         }
 
-        return tenantAssignmentService.replaceTenantAssignmentsOnDelegationAgreement(
+        List<TenantRole> tenantRoles =  tenantAssignmentService.replaceTenantAssignmentsOnDelegationAgreement(
                 delegationAgreement, roleAssignments.getTenantAssignments().getTenantAssignment());
+
+        // Send UPDATE user event for members of agreement when roles change.
+        for (DelegationDelegate delegate : getDelegates(delegationAgreement)) {
+            sendUpdateUserEventsForDelegate(delegate);
+        }
+
+        return tenantRoles;
     }
 
     @Override
@@ -130,6 +149,11 @@ public class DefaultDelegationService implements DelegationService {
         }
 
         tenantRoleDao.deleteTenantRole(assignedRole);
+
+        // Send UPDATE user event for members of agreement when roles change.
+        for (DelegationDelegate delegate : getDelegates(delegationAgreement)) {
+            sendUpdateUserEventsForDelegate(delegate);
+        }
     }
 
     @Override
@@ -146,7 +170,17 @@ public class DefaultDelegationService implements DelegationService {
             }
         }
         delegationAgreementDao.deleteAgreement(delegationAgreement);
+
+        /* Send an UPDATE user event for all delegates of agreement. Technically, a USER_TRR should be sent
+         * since all DA tokens should be revoked when a DA is deleted. For now, we are only sending a user
+         * event.
+         */
+        for (DelegationDelegate delegate : getDelegates(delegationAgreement)) {
+            sendUpdateUserEventsForDelegate(delegate);
+        }
     }
+
+
 
     @Override
     public Iterable<DelegationAgreement> getChildDelegationAgreements(String parentDelegationAgreementId) {
@@ -215,6 +249,7 @@ public class DefaultDelegationService implements DelegationService {
             boolean removed = existingDelegates.remove(delegateDnToDelete);
             if (removed) {
                 delegationAgreementDao.updateAgreement(delegationAgreement);
+                sendUpdateUserEventsForDelegate(delegate);
                 modified = true;
             }
         }
@@ -290,5 +325,34 @@ public class DefaultDelegationService implements DelegationService {
         return delegationAgreementDao.countNumberOfDelegationAgreementsByPrincipal(delegationPrincipal);
     }
 
+    /**
+     * Post update feed events for delegate. If delegate is of type USER, post an UPDATE user feed event for provisioned
+     * user. If delegate is of type USER_GROUP, then post an UPDATE user feed event for every provisioned user that is a
+     * member of the user group.
+     *
+     * Note: This method will not post events for federated users.
+     *
+     * @param delegate
+     *
+     * @throws IllegalArgumentException if delegate is null
+     */
+    private void sendUpdateUserEventsForDelegate(DelegationDelegate delegate) {
+        Validate.notNull(delegate);
+
+        List<EndUser> users = new ArrayList<>();
+
+        if (delegate.getDelegateReference().getDelegateType().equals(DelegateType.USER)) {
+            users.add((EndUser) delegate);
+        } else if (delegate.getDelegateReference().getDelegateType().equals(DelegateType.USER_GROUP)) {
+            users.addAll(Lists.newArrayList(userGroupService.getUsersInGroup((UserGroup) delegate)));
+        }
+
+        for (BaseUser user : users) {
+            // Only post events for provisioned users.
+            if (!(user instanceof FederatedUser)) {
+                atomHopperClient.asyncPost((EndUser) user, AtomHopperConstants.UPDATE);
+            }
+        }
+    }
 
 }

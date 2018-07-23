@@ -25,6 +25,14 @@ public interface IdentityUserDao {
      */
     User getProvisionedUserById(String userId);
 
+    /**
+     * Search for a provisioned user with the specified domainId and email.
+     *
+     * @param domainId
+     * @param email
+     * @return
+     */
+    Iterable<User> getProvisionedUsersByDomainIdAndEmail(String domainId, String email);
 
     /**
      * Search for a provisioned user with the specified userId with password history

@@ -36,6 +36,15 @@ public interface IdentityUserService {
      */
     User getProvisionedUserById(String userId);
 
+    /**
+     * Search for provisioned users with the specified domain and email address. Returns null if no provisioned user
+     * matches the domain and email address.
+     *
+     * @param domainId
+     * @param email
+     * @return
+     */
+    Iterable<User> getProvisionedUsersByDomainIdAndEmail(String domainId, String email);
 
     /**
      * Search for a provisioned user with the specified userId with password history.

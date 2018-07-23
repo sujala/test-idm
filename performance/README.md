@@ -32,9 +32,9 @@ In order for us to validate any performance characteristics of the target identi
 
    4.2. Run `pip install -r data_generation/requirements.txt`
 
-   4.3. Run `mkdir -p identity-perf-agent/localhost/data/identity`. Please wipe out any any old csv files in admins, users or default_users directories.
+   4.3. Run `cd identity-perf-agent` and then `mkdir -p localhost/data/identity`. Please wipe out any any old csv files in admins, users or default_users directories.
 
-   4.4. Generate users in temporary directories (positional values are: ip, loops, normal users per loop, and admin users per loop): `pushd data_generation && ./create_users.sh http://${docker_ip}:8082/idm/cloud 1 10 5 && popd`.  This will create loops * (normal users per loop) users and loops * (admin users per loop) admins.
+   4.4. Generate users in temporary directories (positional values are: ip, loops, normal users per loop, and admin users per loop): `pushd data_generation && ./create_users.sh http://${docker_ip}:8082/idm/cloud 1 10 5 1 && popd`.  This will create loops * (normal users per loop) users and loops * (admin users per loop) admins.
 
    4.5. Generate admin user data: `pushd data_generation && ./generate_files.py -u admins -c admin_file_config.json -o ../localhost/data/identity  && popd`
 
@@ -49,6 +49,10 @@ In order for us to validate any performance characteristics of the target identi
    4.9. Generate users in domain data: `pushd data_generation && ./generate_files.py -u users_in_dom -c users_in_domain.json -o ../localhost/data/identity -i true && popd`
 
    4.10. If you need to do federation tests. You need to run this before running Engine.scala : `pushd data_generation && python create_idp_data.py -s http://localhost:8082/idm/cloud -f ../localhost/data/identity/dom_users_for_fed.dat && popd`
+
+   4.11 If you want to run delegation tests, you need to run 'python data_generation/add_rcn_to_domain.py -i data_generation/users/<file_name>'. This will add RCN attribute to each domain in that file.
+
+   4.12 Currently, delegation tests for performance impact of parent DA deletion are added. But, it is to be run sequentially by editing Engine.scala. This needs to be corrected.
 
 5. Set up `identity-perf-agent/src/test/resources/application.properties` to the values you want to run with.  While there are many values, you can figure out the ones you need from your Simulation.  An example would be in `com.rackspacecloud.simulations.identity.IdentityDemo`:
 
@@ -88,7 +92,7 @@ In order for us to validate any performance characteristics of the target identi
             )
         }
 
-6. *NOTE* in real execution environment, we wrap this but locally you have to execute this: 
+6. *NOTE* in real execution environment, we wrap this but locally you have to execute this:
 
    * Update `identity-perf-agent/src/test/scala/Engine.scala` to include `props.simulationClass("com.rackspacecloud.simulations.identity.IdentityConstantTputGenerateTokens")`
 
