@@ -24,7 +24,7 @@ object Identity {
  
    // For Create User
    var created_users_writer = new PrintWriter(new File(DATA_LOCATION + "data/identity/created_users.dat"))
-  created_users_writer.append("admin_token,user_id,username\n")
+  created_users_writer.write("admin_token,user_id,username\n")
 
    // V11 Authenticate
    val v11_apikey_auth                 = scenario("V1.1_Authenticate_External").exec(Tokens.v11_authenticate).exitHereIfFailed
