@@ -2,15 +2,37 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.api.resource.cloud.v20.EndUserDelegateReference;
-import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.DelegationConsumer;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.ProvisionedUserDelegate;
+import com.rackspace.idm.domain.entity.Racker;
+import com.rackspace.idm.domain.entity.SourcedRoleAssignments;
+import com.rackspace.idm.domain.entity.SourcedRoleAssignmentsLegacyAdapter;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.CreateSubUserService;
+import com.rackspace.idm.domain.service.DelegationService;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+import com.rackspace.idm.domain.service.ServiceCatalogInfo;
+import com.rackspace.idm.domain.service.TenantEndpointMeta;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
@@ -23,10 +45,18 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public class DefaultIdentityUserService implements IdentityUserService {
@@ -64,6 +94,10 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Autowired
     private DelegationService delegationService;
 
+    @Lazy
+    @Autowired
+    private AtomHopperClient atomHopperClient;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
     private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
@@ -92,6 +126,10 @@ public class DefaultIdentityUserService implements IdentityUserService {
         return identityUserRepository.getProvisionedUserById(userId);
     }
 
+    @Override
+    public Iterable<User> getProvisionedUsersByDomainIdAndEmail(String domainId, String email) {
+        return identityUserRepository.getProvisionedUsersByDomainIdAndEmail(domainId, email);
+    }
 
     @Override
     public User getProvisionedUserByIdWithPwdHis(String userId) {
@@ -276,11 +314,17 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Override
     public void addUserGroupToUser(UserGroup group, User baseUser) {
         userService.addUserGroupToUser(group, baseUser);
+
+        // Send an UPDATE user event for user being added to user group.
+        atomHopperClient.asyncPost(baseUser, AtomHopperConstants.UPDATE);
     }
 
     @Override
     public void removeUserGroupFromUser(UserGroup group, User baseUser) {
         userService.removeUserGroupFromUser(group, baseUser);
+
+        // Send an UPDATE user event for user being removed from a user group.
+        atomHopperClient.asyncPost(baseUser, AtomHopperConstants.UPDATE);
     }
 
     @Override

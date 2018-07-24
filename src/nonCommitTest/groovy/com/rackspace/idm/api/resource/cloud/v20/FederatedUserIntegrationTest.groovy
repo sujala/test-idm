@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
@@ -31,7 +32,6 @@ import org.apache.commons.lang.BooleanUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
-import org.codehaus.jackson.map.ObjectMapper
 import org.joda.time.DateTime
 import org.mockserver.verify.VerificationTimes
 import org.opensaml.saml.saml2.core.LogoutResponse
@@ -50,6 +50,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
+import testHelpers.V2Factory
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
 import testHelpers.saml.SamlProducer
@@ -64,6 +65,11 @@ import static org.apache.http.HttpStatus.*
 class FederatedUserIntegrationTest extends RootIntegrationTest {
 
     private static final Logger LOG = Logger.getLogger(FederatedUserIntegrationTest.class)
+
+    static String TENANT_TYPE = "dumb_tenant_type"
+    static String CLOUD = "cloud"
+    static String WHITE_LIST_FILTER_PROPERTY = IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + TENANT_TYPE
+    static String WHITE_LIST_FILTER_PROPERTY_CLOUD = IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + CLOUD
 
     @Autowired
     FederatedUserDao federatedUserRepository
@@ -87,6 +93,9 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     SamlUnmarshaller samlUnmarshaller
 
     @Shared String specificationServiceAdminToken;
+
+    @Autowired
+    V2Factory factory
 
     /**
      * An identity provider created for this class. No code should modify this provider.
@@ -130,6 +139,13 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
             it
         }
         cloud20.createIdentityProvider(specificationServiceAdminToken, sharedIdentityProvider)
+
+        def tenantType = new TenantType().with {
+            it.name = TENANT_TYPE
+            it.description = "description"
+            it
+        }
+        cloud20.addTenantType(specificationServiceAdminToken, tenantType)
     }
 
     def setup() {
@@ -2203,6 +2219,94 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         where:
         ignoreComments << [false, true]
+    }
+
+    def "Federated Authentication for Managed Public Cloud - whitelist role based on tenant type"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def tenantName = testUtils.getRandomUUID("${TENANT_TYPE}:")
+        def tenant = utils.createTenantWithTypes(tenantName, [TENANT_TYPE])
+        utils.addTenantToDomain(domainId, tenant.id)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        when: "auth with apply_rcn_roles and feature flag enabled and white list tenant type"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "identity:default")
+        def samlResponse = cloud20.federatedAuthenticate(samlAssertion, true, null)
+
+        then: "roles are returned for tenant"
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def roles = authResponse.user.roles.role
+        roles.find {it.tenantId == tenant.id} != null
+
+        when: "auth with apply_rcn_roles and feature flag enabled and white list tenant type without role"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "identity:service-admin")
+        samlResponse = cloud20.federatedAuthenticate(samlAssertion, true, null)
+
+        then: "role with tenant type matching white list is not returned"
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse2 = samlResponse.getEntity(AuthenticateResponse).value
+        def roles2 = authResponse2.user.roles.role
+        roles2.find {it.tenantId == tenant.id} == null
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+        utils.deleteTenant(tenant)
+        reloadableConfiguration.reset()
+    }
+
+    def "Federated Authentication for Managed Public Cloud - whitelist role endpoints on tenant type"() {
+        given:
+        reloadableConfiguration.reset()
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def tenantName = testUtils.getRandomUUID("tenant")
+        def tenant = utils.createTenantWithTypes(tenantName, [CLOUD])
+        utils.addTenantToDomain(domainId, tenant.id)
+
+        when: "auth with apply_rcn_roles and feature flag enabled and white list tenant type"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "identity:default")
+        def samlResponse = cloud20.federatedAuthenticate(samlAssertion, true, null)
+
+        then: "endpoints are returned for tenant"
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def endpoints = authResponse.serviceCatalog.service
+        endpoints.findAll { it.type == "compute" }.size() > 0
+
+        when: "auth with apply_rcn_roles and feature flag enabled and white list tenant type without role"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY_CLOUD, "identity:service-admin")
+        samlResponse = cloud20.federatedAuthenticate(samlAssertion, true, null)
+
+        then: "endpoint with tenant type matching white list is not returned"
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse2 = samlResponse.getEntity(AuthenticateResponse).value
+        def endpoints2 = authResponse2.serviceCatalog.service
+        endpoints2.findAll { it.type == "compute" }.size() == 0
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+        utils.deleteTenant(tenant)
+        reloadableConfiguration.reset()
     }
 
     def getFederatedUser(String domainId, mediaType) {

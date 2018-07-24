@@ -1,5 +1,7 @@
 package com.rackspace.idm.modules.usergroups.service
 
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao
@@ -22,6 +24,8 @@ class RevokeRoleAssignmentsFromUserGroupServiceTest extends RootServiceTest{
         mockApplicationService(service)
         mockTenantService(service)
         mockTenantRoleDao(service)
+        mockIdentityUserService(service)
+        mockAtomHopperClient(service)
 
         dao = Mock()
         service.userGroupDao = dao
@@ -90,6 +94,8 @@ class RevokeRoleAssignmentsFromUserGroupServiceTest extends RootServiceTest{
 
         def tenantRoleAssignment = new TenantRole()
 
+        def user = entityFactory.createUser()
+
         when:
         service.revokeRoleAssignmentOnGroup(group, roleId)
 
@@ -99,5 +105,8 @@ class RevokeRoleAssignmentsFromUserGroupServiceTest extends RootServiceTest{
 
         // Calls delete role dao service
         1 * tenantRoleDao.deleteTenantRole(tenantRoleAssignment)
+
+        1 * identityUserService.getEndUsersInUserGroup(group) >> [user]
+        1 * atomHopperClient.asyncPost((EndUser) user, AtomHopperConstants.UPDATE)
     }
 }

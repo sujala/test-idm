@@ -55,6 +55,7 @@ import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCreden
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.ImmutableClientRole;
+import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -90,31 +91,7 @@ import com.rackspace.idm.domain.entity.TokenScopeEnum;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthenticationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.CloudRegionService;
-import com.rackspace.idm.domain.service.CreateSubUserService;
-import com.rackspace.idm.domain.service.DelegationService;
-import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.FederatedIdentityService;
-import com.rackspace.idm.domain.service.GroupService;
-import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
-import com.rackspace.idm.domain.service.IdpPolicyFormatEnum;
-import com.rackspace.idm.domain.service.PhonePinService;
-import com.rackspace.idm.domain.service.QuestionService;
-import com.rackspace.idm.domain.service.RoleLevelEnum;
-import com.rackspace.idm.domain.service.RoleService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.SecretQAService;
-import com.rackspace.idm.domain.service.ServiceCatalogInfo;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TenantTypeService;
-import com.rackspace.idm.domain.service.TokenRevocationService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.CreateIdentityAdminService;
 import com.rackspace.idm.domain.service.impl.CreateUserAdminService;
 import com.rackspace.idm.domain.service.impl.CreateUserUtil;
@@ -149,6 +126,7 @@ import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
@@ -257,6 +235,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String ERROR_CANNOT_ADD_GLOBAL_ROLE_TO_USER_ERROR_MESSAGE = "Cannot add global role to user. Role already assigned as a tenant role.";
     public static final String ERROR_CANNOT_ADD_ROLE_TO_USER_ON_TENANT_ERROR_MESSAGE = "Cannot add role to user on tenant. Role already assigned globally.";
+
+    public static final String ERROR_DOMAIN_NOT_IN_AUTHORIZED_RCN_FOR_INVITE_USERS = "The specified domain does not belong to an RCN authorized for unverified user creation.";
+    public static final String ERROR_CREATION_OF_INVITE_USERS_DISABLED = "Creation of invite users is disabled.";
+    public static final String ERROR_DOMAIN_USERS_RESTRICTED_TO_SAME_DOMAIN_FOR_INVITE_USERS = "Creation of invite users is only allowed within the callers domain.";
+    public static final String ERROR_UNVERIFIED_USERS_REQUIRE_EMAIL_ADDRESS = "An invite user must have an email address.";
+    public static final String ERROR_UNVERIFIED_USERS_REQUIRED_VALID_EMAIL_ADDRESS = "The email specified for the invite user is invalid.";
+    public static final String ERROR_DOMAIN_MUST_EXIST_FOR_UNVERIFIED_USERS = "The domain for the user does not exist.";
+    public static final String ERROR_DOMAIN_MUST_BE_ENABLED_FOR_UNVERIFIED_USERS = "The domain for the user must be enabled.";
+    public static final String ERROR_UVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN = "A user with the provided email already exists in the domain.";
 
     public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
 
@@ -870,6 +857,78 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return builder.entity(userTO);
 
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder addInviteUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.User requestUser) {
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+
+            if (!identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled()) {
+                throw new ForbiddenException(ERROR_CREATION_OF_INVITE_USERS_DISABLED, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+            user.setDomainId(requestUser.getDomainId());
+            user.setEmail(requestUser.getEmail());
+
+            if (StringUtils.isBlank(user.getDomainId())) {
+                user.setDomainId(caller.getDomainId());
+            }
+
+            if ((IdentityUserTypeEnum.USER_ADMIN == callerType || IdentityUserTypeEnum.USER_MANAGER == callerType) &&
+                    !user.getDomainId().equalsIgnoreCase(caller.getDomainId())) {
+                throw new ForbiddenException(ERROR_DOMAIN_USERS_RESTRICTED_TO_SAME_DOMAIN_FOR_INVITE_USERS, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            Domain domain = domainService.getDomain(user.getDomainId());
+            if (domain == null) {
+                throw new NotFoundException(ERROR_DOMAIN_MUST_EXIST_FOR_UNVERIFIED_USERS, ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            if (!domain.getEnabled()) {
+                throw new ForbiddenException(ERROR_DOMAIN_MUST_BE_ENABLED_FOR_UNVERIFIED_USERS, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            List<String> allowedRCNs = identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs();
+            if (!allowedRCNs.contains(GlobalConstants.ALL_RCNS_WILDCARD)) {
+                boolean domainAuthorized = !StringUtils.isBlank(domain.getRackspaceCustomerNumber()) && CollectionUtils.find(allowedRCNs, new Predicate<String>() {
+                    @Override
+                    public boolean evaluate(String allowedRcn) {
+                        return allowedRcn.equalsIgnoreCase(domain.getRackspaceCustomerNumber());
+                    }
+                }) != null;
+                if (!domainAuthorized) {
+                    throw new ForbiddenException(ERROR_DOMAIN_NOT_IN_AUTHORIZED_RCN_FOR_INVITE_USERS, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+                }
+            }
+
+            if (StringUtils.isBlank(user.getEmail())) {
+                throw new BadRequestException(ERROR_UNVERIFIED_USERS_REQUIRE_EMAIL_ADDRESS, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            }
+
+            if (!validator.isEmailValid(user.getEmail())) {
+                throw new BadRequestException(ERROR_UNVERIFIED_USERS_REQUIRED_VALID_EMAIL_ADDRESS, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            }
+
+            Iterable<User> usersWithEmailAddressInDomain = identityUserService.getProvisionedUsersByDomainIdAndEmail(domain.getDomainId(), user.getEmail());
+            if (usersWithEmailAddressInDomain != null && usersWithEmailAddressInDomain.iterator().hasNext()) {
+                throw new DuplicateException(ERROR_UVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN, ErrorCodes.ERROR_CODE_INVALID_VALUE);
+            }
+
+            User unverifiedUser = this.userConverterCloudV20.fromUser(user);
+
+            userService.addUnverifiedUser(unverifiedUser);
+
+            org.openstack.docs.identity.api.v2.User responseUser = this.userConverterCloudV20.toUser(unverifiedUser, false);
+
+            return Response.created(uriInfo.getBaseUriBuilder().path("v2.0").path("users").path(unverifiedUser.getId()).build()).entity(responseUser);
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

@@ -1200,6 +1200,13 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.153) = {
     description = "The principal's domain stored on a delegation agreement"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.154) = {
+    name = rsUnverified
+    ldap-names = rsUnverified
+    syntax = boolean
+    description = "The verified state of the user."
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1260,7 +1267,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         rsContactId,
         rsMultiFactorFailedAttemptCount,
         rsMultiFactorLastFailedTimestamp,
-        rsPasswordHistory
+        rsPasswordHistory,
+        rsUnverified
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {

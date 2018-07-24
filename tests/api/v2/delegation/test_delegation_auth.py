@@ -187,9 +187,6 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
     @delegation.base.base.log_tearDown_error
     @unless_coverage
     def tearDownClass(cls):
-        resp = cls.user_admin_client_2.delete_user(cls.sub_user_id)
-        assert resp.status_code == 204, (
-            'Subuser with ID {0} failed to delete'.format(cls.sub_user_id))
         for user in cls.users:
             resp = cls.user_admin_client_2.delete_user(user)
             assert resp.status_code == 204, (

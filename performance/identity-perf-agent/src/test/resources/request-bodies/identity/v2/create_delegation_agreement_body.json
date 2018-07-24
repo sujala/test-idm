@@ -1,0 +1,7 @@
+{
+  "RAX-AUTH:delegationAgreement": {
+    "name": "perf_test_da_${next_int}",
+    "description": "identity performance test DA",
+    "subAgreementNestLevel": 2
+  }
+}

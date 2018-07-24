@@ -91,7 +91,6 @@ public class TenantTypeWhitelistFilter implements SourcedRoleAssignmentsFilter {
     private Map<String, Set<ImmutableClientRole>> mapTenantRoles(SourcedRoleAssignments assignments) {
         Map<String, Set<ImmutableClientRole>> tenantToRoleMap = new HashMap<>();
         for (SourcedRoleAssignments.SourcedRoleAssignment assignment : assignments.getSourcedRoleAssignments()) {
-            String roleName = assignment.getRole().getName();
             Set<String> tenantIds = assignment.getTenantIds();
 
             for (String tenantId : tenantIds) {

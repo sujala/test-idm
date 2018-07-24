@@ -207,6 +207,21 @@ class Cloud20Utils {
         return entity
     }
 
+    User createUnverifiedUser(String domainId, String email = "${RandomStringUtils.randomAlphabetic(8)}@example.com", String token = getServiceAdminToken()) {
+        def user = new User().with {
+            it.domainId = domainId
+            it.email = email
+            it
+        }
+        def response = methods.createUnverifiedUser(token, user)
+
+        assert (response.status == SC_CREATED)
+
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
+    }
+
     User createUser(token, username=testUtils.getRandomUUID(), domainId=null, defaultRegion=null) {
         def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@rackspace.com", true, defaultRegion, domainId, DEFAULT_PASSWORD))
 
@@ -691,10 +706,10 @@ class Cloud20Utils {
         return mediaType == APPLICATION_XML_TYPE ? entity.value : entity
     }
 
-    def validateTokenApplyRcnRoles(token, String applyRcnRolesParam = "true") {
-        def response = methods.validateTokenApplyRcnRoles(getServiceAdminToken(), token, applyRcnRolesParam)
+    AuthenticateResponse validateTokenApplyRcnRoles(token, String applyRcnRolesParam = "true", belongsTo = null) {
+        def response = methods.validateTokenApplyRcnRoles(getServiceAdminToken(), token, applyRcnRolesParam, belongsTo)
         assert (response.status == SC_OK)
-        response.getEntity(AuthenticateResponse).value
+        return response.getEntity(AuthenticateResponse).value
     }
 
     def validateToken(token, tokenToValidate) {
@@ -728,7 +743,7 @@ class Cloud20Utils {
         response.getEntity(RoleList).value
     }
 
-    def listUserGlobalRoles(token, userId) {
+    RoleList listUserGlobalRoles(token, userId) {
         def response = methods.listUserGlobalRoles(token, userId)
         assert (response.status == SC_OK)
         response.getEntity(RoleList).value
@@ -766,7 +781,7 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
-    def createPropagatingRole(service=null) {
+    Role createPropagatingRole(service=null) {
         def role = factory.createRole().with {
             it.name = testUtils.getRandomUUID("role")
             it.roleType = RoleTypeEnum.PROPAGATE
@@ -974,7 +989,7 @@ class Cloud20Utils {
         response.getEntity(AuthenticateResponse).value
     }
 
-    def createGroup() {
+    Group createGroup() {
         def group = v1Factory.createGroup(testUtils.getRandomUUID('group'), "description")
         def response = methods.createGroup(getServiceAdminToken(), group)
         assert (response.status == SC_CREATED)

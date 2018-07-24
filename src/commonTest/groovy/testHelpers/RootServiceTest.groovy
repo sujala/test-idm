@@ -928,6 +928,7 @@ class RootServiceTest extends Specification {
                 return new URI("http://absolute.path/to/resource")
             }
         }
+        uriInfo.getBaseUriBuilder() >> builderMock
         uriInfo.getRequestUriBuilder() >> builderMock
         uriInfo.getAbsolutePath() >> new URI(absolutePath)
 

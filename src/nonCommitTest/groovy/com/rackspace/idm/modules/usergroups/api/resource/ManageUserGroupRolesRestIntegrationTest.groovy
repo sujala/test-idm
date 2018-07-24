@@ -1,5 +1,6 @@
 package com.rackspace.idm.modules.usergroups.api.resource
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
@@ -11,6 +12,7 @@ import com.rackspace.idm.domain.service.ApplicationService
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -80,6 +82,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
             it
         }
         def createdGroup = cloud20.createUserGroup(sharedIdentityAdminToken, group, mediaType).getEntity(UserGroup)
+        utils.addUserToUserGroup(sharedUserAdmin.id, createdGroup)
 
         RoleAssignments assignments0 = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments()
@@ -131,6 +134,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         }
 
         when: "assignment 0"
+        resetCloudFeedsMock()
         def getResponse = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments0, mediaType)
         RoleAssignments retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -139,7 +143,14 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         retrievedEntity.tenantAssignments != null
         retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
 
+        and: "verify no update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
+
         when: "assignment 1"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments1, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -150,7 +161,14 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         def rbac2Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == ROLE_RBAC2_ID}
         rbac2Assignment == null
 
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "assignment 2"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments2, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -160,7 +178,14 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, [sharedUserAdminCloudTenant.id])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, ["*"])
 
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "assignment 3"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments3, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -170,7 +195,14 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, [sharedUserAdminCloudTenant.id, sharedUserAdminFilesTenant.id])
 
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "assignment 4"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments4, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
 
@@ -180,15 +212,31 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, [sharedUserAdminCloudTenant.id])
 
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "assignment 5"
+        resetCloudFeedsMock()
         getResponse = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments5, mediaType)
         retrievedEntity = getResponse.getEntity(RoleAssignments)
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         then:
         getResponse.status == HttpStatus.SC_OK
         retrievedEntity.tenantAssignments != null
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC1_ID, ["*"])
         verifyContainsAssignment(retrievedEntity, ROLE_RBAC2_ID, ["*"])
+
+        cleanup:
+        utils.removeUserFromUserGroup(sharedUserAdmin.id, createdGroup)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -298,12 +346,20 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
             it
         }
         def createdGroup = cloud20.createUserGroup(sharedIdentityAdminToken, group).getEntity(UserGroup)
+        utils.addUserToUserGroup(sharedUserAdmin.id, createdGroup)
 
         when: "Granting new role on tenant to user group"
+        resetCloudFeedsMock()
         def response = cloud20.grantRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "List role on user group"
         def listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
@@ -320,10 +376,17 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         rbac1Assignment.forTenants[0] == sharedUserAdminCloudTenant.id
 
         when: "Granting role on tenant to user group - existing role"
+        resetCloudFeedsMock()
         response = cloud20.grantRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminFilesTenant.id)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "List role on user group"
         listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
@@ -341,6 +404,7 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         rbac1Assignment.forTenants.contains(sharedUserAdminFilesTenant.id)
 
         cleanup:
+        utils.removeUserFromUserGroup(sharedUserAdmin.id, createdGroup)
         utils.deleteUserGroup(createdGroup)
     }
 
@@ -440,12 +504,20 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
             it
         }
         def createdGroup = cloud20.createUserGroup(sharedIdentityAdminToken, group).getEntity(UserGroup)
+        utils.addUserToUserGroup(sharedUserAdmin.id, createdGroup)
 
         when: "Granting new role on tenant to user group"
+        resetCloudFeedsMock()
         def response = cloud20.grantRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "List role on user group"
         def listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
@@ -462,16 +534,30 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         rbac1Assignment.forTenants[0] == sharedUserAdminCloudTenant.id
 
         when: "Granting role on tenant to user group - existing role"
+        resetCloudFeedsMock()
         response = cloud20.grantRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminFilesTenant.id)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT
 
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "Revoking role on tenant to user group"
+        resetCloudFeedsMock()
         response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminFilesTenant.id)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "List role on user group"
         listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
@@ -488,10 +574,17 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         rbac1Assignment.forTenants.contains(sharedUserAdminCloudTenant.id)
 
         when: "Revoking role on tenant to user group"
+        resetCloudFeedsMock()
         response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "List role on user group"
         listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)

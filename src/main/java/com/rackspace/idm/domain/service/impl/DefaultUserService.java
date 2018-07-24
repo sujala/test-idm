@@ -9,9 +9,11 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.AuthenticationContext;
+import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.*;
@@ -27,6 +29,7 @@ import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.validation.Validator;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
@@ -60,6 +63,8 @@ public class DefaultUserService implements UserService {
     private static final String ERROR_MSG_NEW_ACCOUNT_IN_DOMAIN_WITH_USERS = "Can not create a new account in an existing domain with users";
     private static final String ERROR_MSG_NEW_ACCOUNT_EXISTING_TENANT_DIFFERENT_DOMAIN = "Can not create new account with an an existing tenant in a different domain";
     private static final String ERROR_MSG_NEW_ACCOUNT_EXISTING_TENANT_WITH_USERS = "Can not create new account with an existing tenant that has users";
+
+    public static final String ERROR_PATTERN_MAX_NUM_USERS_IN_DOMAIN = "User cannot create more than %d users in an account.";
 
     public static final String ERROR_MSG_TOKEN_NOT_FOUND = "Token not found.";
 
@@ -256,6 +261,38 @@ public class DefaultUserService implements UserService {
         }
 
         addExpiredScopeAccessesForUser(user);
+    }
+
+    @Override
+    public void addUnverifiedUser(User unverifiedUser) {
+        logger.info("Adding User: {}", unverifiedUser);
+        Validate.isTrue(StringUtils.isNotBlank(unverifiedUser.getDomainId()), "Unverified users must have a domain ID.");
+        Validate.isTrue(StringUtils.isNotBlank(unverifiedUser.getEmail()), "Unverified users must have an email.");
+
+        DomainSubUserDefaults defaults = createSubUserService.calculateDomainSubUserDefaults(unverifiedUser.getDomainId());
+        unverifiedUser.setRegion(defaults.getRegion());
+        unverifiedUser.setRsGroupId(defaults.getRateLimitingGroupIds());
+        Collection<TenantRole> tenantRoles =  CollectionUtils.collect(defaults.getSubUserTenantRoles(), new Transformer<ImmutableTenantRole, TenantRole>() {
+            @Override
+            public TenantRole transform(ImmutableTenantRole input) {
+                return input.asTenantRole();
+            }
+        });
+        unverifiedUser.setRoles(new ArrayList<TenantRole>(tenantRoles));
+        CreateUserUtil.attachRoleToUser(roleService.getDefaultRole(), unverifiedUser);
+
+        checkMaxNumberOfUsersInDomain(unverifiedUser.getDomainId());
+
+        unverifiedUser.setNastId(getNastTenantId(unverifiedUser.getDomainId()));
+        unverifiedUser.setMossoId(Integer.parseInt(unverifiedUser.getDomainId()));
+        unverifiedUser.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
+        unverifiedUser.setSalt(cryptHelper.generateSalt());
+        unverifiedUser.setEnabled(false);
+        unverifiedUser.setUnverified(true);
+
+        userDao.addUser(unverifiedUser);
+
+        assignUserRoles(unverifiedUser, false);
     }
 
     private boolean userContainsRole(User user, String roleName) {
@@ -918,7 +955,7 @@ public class DefaultUserService implements UserService {
         logger.info("Updating User: {}", user);
 
         if(!validator.isBlank(user.getEmail())){
-            validator.isEmailValid(user.getEmail());
+            validator.assertEmailValid(user.getEmail());
         }
         // Expire all User tokens if we are updating the password field
         User currentUser = null;
@@ -1107,10 +1144,15 @@ public class DefaultUserService implements UserService {
             return Collections.emptyList();
         }
 
-        return tenantAssignmentService.replaceTenantAssignmentsOnUser(
+        List<TenantRole> tenantRoles = tenantAssignmentService.replaceTenantAssignmentsOnUser(
                 user,
                 roleAssignments.getTenantAssignments().getTenantAssignment(),
                 allowedRoleAccess);
+
+        // Send an UPDATE user event when roles change on user.
+        atomHopperClient.asyncPost(user, AtomHopperConstants.UPDATE);
+
+        return tenantRoles;
     }
 
     @Override
@@ -1689,14 +1731,14 @@ public class DefaultUserService implements UserService {
         if (StringUtils.isNotBlank(domainId)) {
             Iterable<User> users = getUsersWithDomain(domainId);
             int numUsers = 0;
-            int maxNumberOfUsersInDomain = getMaxNumberOfUsersInDomain();
+            int maxNumberOfUsersInDomain = identityConfig.getStaticConfig().getMaxNumberOfUsersInDomain();
 
             for (Iterator i = users.iterator(); i.hasNext();) {
                 i.next();
                 numUsers++;
 
                 if (numUsers >= maxNumberOfUsersInDomain) {
-                    String errMsg = String.format("User cannot create more than %d users in an account.", maxNumberOfUsersInDomain);
+                    String errMsg = String.format(ERROR_PATTERN_MAX_NUM_USERS_IN_DOMAIN, maxNumberOfUsersInDomain);
                     throw new BadRequestException(errMsg);
                 }
             }
@@ -1746,10 +1788,6 @@ public class DefaultUserService implements UserService {
             }
         }
         return hasRole;
-    }
-
-    int getMaxNumberOfUsersInDomain() {
-        return config.getInt("maxNumberOfUsersInDomain");
     }
 
     String getCloudRegion() {

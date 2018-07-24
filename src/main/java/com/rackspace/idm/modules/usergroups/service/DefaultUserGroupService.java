@@ -2,12 +2,22 @@ package com.rackspace.idm.modules.usergroups.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
-import com.rackspace.idm.api.resource.cloud.v20.UserGroupDelegateReference;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.DelegationService;
+import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.RoleLevelEnum;
+import com.rackspace.idm.domain.service.TenantAssignmentService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -28,6 +38,7 @@ import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -78,6 +89,10 @@ public class DefaultUserGroupService implements UserGroupService {
 
     @Autowired
     private DelegationService delegationService;
+
+    @Lazy
+    @Autowired
+    private AtomHopperClient atomHopperClient;
 
     @Override
     public UserGroup addGroup(UserGroup group) {
@@ -292,6 +307,11 @@ public class DefaultUserGroupService implements UserGroupService {
 
             tenantRoleDao.addRoleAssignmentOnGroup(userGroup, tenantRole);
         }
+
+        // Send an UPDATE user event for all members of the user group.
+        for(BaseUser baseUser : getUsersInGroup(userGroup)) {
+            atomHopperClient.asyncPost((EndUser) baseUser, AtomHopperConstants.UPDATE);
+        }
     }
 
     @Override
@@ -329,6 +349,11 @@ public class DefaultUserGroupService implements UserGroupService {
         tenantRole.getTenantIds().clear();
         tenantRole.getTenantIds().add(tenantId);
         tenantRoleDao.deleteOrUpdateRoleAssignmentOnGroup(userGroup, tenantRole);
+
+        // Send an UPDATE user event for all members of the user group.
+        for(BaseUser baseUser : getUsersInGroup(userGroup)) {
+            atomHopperClient.asyncPost((EndUser) baseUser, AtomHopperConstants.UPDATE);
+        }
     }
 
     private UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId) {
@@ -400,8 +425,15 @@ public class DefaultUserGroupService implements UserGroupService {
             return Collections.emptyList();
         }
 
-        return tenantAssignmentService.replaceTenantAssignmentsOnUserGroup(
+        List<TenantRole> tenantRoles = tenantAssignmentService.replaceTenantAssignmentsOnUserGroup(
                 userGroup, roleAssignments.getTenantAssignments().getTenantAssignment() );
+
+        // Send an UPDATE user event for all members of the user group.
+        for (BaseUser baseUser : getUsersInGroup(userGroup)) {
+            atomHopperClient.asyncPost((EndUser) baseUser, AtomHopperConstants.UPDATE);
+        }
+
+        return tenantRoles;
     }
 
     @Override
@@ -417,6 +449,11 @@ public class DefaultUserGroupService implements UserGroupService {
         }
 
         tenantRoleDao.deleteTenantRole(assignedRole);
+
+        // Send an UPDATE user event for all members of the user group.
+        for (BaseUser baseUser : getUsersInGroup(userGroup)) {
+            atomHopperClient.asyncPost((EndUser) baseUser, AtomHopperConstants.UPDATE);
+        }
     }
 
     @Override

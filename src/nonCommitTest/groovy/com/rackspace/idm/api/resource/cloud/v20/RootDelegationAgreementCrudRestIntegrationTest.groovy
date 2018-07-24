@@ -1,18 +1,17 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
-import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.service.DelegationService
 import com.rackspace.idm.domain.service.IdentityUserService
-import com.unboundid.ldap.sdk.Modification
-import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.apache.commons.lang3.RandomStringUtils
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
@@ -25,8 +24,9 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.Constants.getRACKER_IMPERSONATE
+import static com.rackspace.idm.Constants.getRACKER_IMPERSONATE_PASSWORD
 import static org.apache.http.HttpStatus.*
-import static com.rackspace.idm.Constants.*
 
 class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest {
 
@@ -272,10 +272,18 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         createdDa.subAgreementNestLevel == 0 // default when when not specified
 
         when:
+        resetCloudFeedsMock()
+        utils.addUserDelegate(sharedUserAdminToken, createdDa.id, sharedUserAdmin.id)
         def deleteResponse = cloud20.deleteDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)
 
         then:
         deleteResponse.status == SC_NO_CONTENT
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "Get DA after deleting"
         def getResponse2 = cloud20.getDelegationAgreement(sharedUserAdminToken, createdDa.id, mediaType)
@@ -350,6 +358,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
 
     def "Fed user can create/get/delete basic root delegation agreement for self"() {
         def fedAuthResponse = utils.createFederatedUserForAuthResponse(sharedUserAdmin.domainId)
+        def fedUser = utils.getUserById(fedAuthResponse.user.id)
         def token = fedAuthResponse.token.id
 
         DelegationAgreement webDa = new DelegationAgreement().with {
@@ -392,10 +401,18 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         getDa.principalType == PrincipalType.USER
 
         when:
+        resetCloudFeedsMock()
+        utils.addUserDelegate(token, createdDa.id, fedAuthResponse.user.id)
         def deleteResponse = cloud20.deleteDelegationAgreement(token, createdDa.id)
 
         then:
         deleteResponse.status == SC_NO_CONTENT
+
+        and: "verify no update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
 
         when: "Get DA after deleting"
         def getResponse2 = cloud20.getDelegationAgreement(token, createdDa.id)
@@ -688,11 +705,18 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         daEntity.isEffectiveDelegate(groupUserEntity)
 
         when: "Delete user group delegate"
+        resetCloudFeedsMock()
         def deleteResponse = cloud20.deleteUserGroupDelegate(sharedUserAdminToken, da.id, userGroup.id)
         daEntity = delegationService.getDelegationAgreementById(da.getId()) // Reload as delegates changed
 
         then: "successful"
         deleteResponse.status == SC_NO_CONTENT
+
+        and: "verify an update user event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(groupUserEntity, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         and: "User no longer a delegate"
         !daEntity.isEffectiveDelegate(groupUserEntity)

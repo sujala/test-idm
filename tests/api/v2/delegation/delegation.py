@@ -90,6 +90,16 @@ class TestBaseDelegation(base.TestBaseV2):
         cls.domain_ids.append(domain_id)
         return domain_id
 
+    @classmethod
+    def get_role_id_by_name(cls, role_name):
+
+        option = {
+            const.PARAM_ROLE_NAME: role_name
+        }
+        get_role_resp = cls.user_admin_client.list_roles(option=option)
+        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
+        return role_id
+
     def setUp(self):
         super(TestBaseDelegation, self).setUp()
 
@@ -104,11 +114,16 @@ class TestBaseDelegation(base.TestBaseV2):
         self.role_ids.append(role.id)
         return role
 
-    def create_tenant(self, domain=None):
+    def create_tenant(self, domain=None, name=None, tenant_types=None):
 
         if not domain:
             domain = self.domain_id
-        tenant_req = factory.get_add_tenant_object(domain_id=domain)
+        if name:
+            tenant_req = factory.get_add_tenant_object(
+                domain_id=domain, tenant_name=name, tenant_types=tenant_types)
+        else:
+            tenant_req = factory.get_add_tenant_object(
+                domain_id=domain, tenant_types=tenant_types)
         add_tenant_resp = self.identity_admin_client.add_tenant(
             tenant=tenant_req)
         self.assertEqual(add_tenant_resp.status_code, 201)

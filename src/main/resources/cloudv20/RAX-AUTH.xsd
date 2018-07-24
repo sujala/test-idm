@@ -45,6 +45,7 @@
     <attribute name="passwordExpiration" type="xsd:dateTime" />
     <attribute name="delegationAgreementId" type="xsd:string"/>
     <attribute name="principalDomain" type="xsd:string"/>
+    <attribute name="unverified" type="xsd:boolean"/>
 
     <attribute name="sessionInactivityTimeout" type="xsd:duration">
         <annotation>

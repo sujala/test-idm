@@ -4364,6 +4364,11 @@ dn: cn=dp,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsTenantTypeObject
 description: Datapipe tenant type
 
+dn: cn=wl_tenant_type,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsTenantTypeObject
+cn: wl_tenant_type
+description: whitelist tenant type
+
 dn: rsId=132885,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: tenant
 rsId: 132885
@@ -6077,6 +6082,18 @@ cn: enable.delegation.agreements.for.rcns
 description: A comma delimited list of rcns for which delegation agreements
  can be created.
 rsIdmVersion: 3.20.0
+rsPropertyValue: RCN-TEST1,RCN-TEST2,RCN-TEST3
+rsPropertyValueType: String
+rsReloadable: TRUE
+rsSearchable: TRUE
+
+dn: rsId=6631a28089ea11e8b1ec5bc873de38f4,ou=properties,ou=cloud,o=configura
+ tion,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: invites.supported.for.rcns
+description: A comma delimited list of RCNs for which the creation of
+ invite users will be allowed
+rsIdmVersion: 3.24.0
 rsPropertyValue: RCN-TEST1,RCN-TEST2,RCN-TEST3
 rsPropertyValueType: String
 rsReloadable: TRUE

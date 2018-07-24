@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.entity.*
@@ -29,6 +30,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         mockDelegationAgreementDao(service)
         mockIdentityUserService(service)
         mockUserGroupService(service)
+        mockAtomHopperClient(service)
     }
 
     def "replaceRoleAssignmentsOnDelegationAgreement: calls correct service"() {
@@ -48,11 +50,15 @@ class DefaultDelegationServiceTest extends RootServiceTest {
             it
         }
 
+        def user = entityFactory.createUser()
+
         when:
         service.replaceRoleAssignmentsOnDelegationAgreement(da, assignments)
 
         then:
         1 * tenantAssignmentService.replaceTenantAssignmentsOnDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
+        1 * delegationAgreementDao.getDelegationAgreementDelegates(da) >> [user]
+        1 * atomHopperClient.asyncPost((EndUser) user, AtomHopperConstants.UPDATE)
     }
 
     def "replaceRoleAssignmentsOnDelegationAgreement: error check and invalid cases"() {
@@ -134,12 +140,16 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         DelegationAgreement da = new DelegationAgreement()
         TenantRole tenantRole = entityFactory.createTenantRole()
 
+        def user = entityFactory.createUser()
+
         when:
         service.revokeRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId)
 
         then:
         1 * tenantRoleDao.getRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId) >> tenantRole
         1 * tenantRoleDao.deleteTenantRole(tenantRole)
+        1 * delegationAgreementDao.getDelegationAgreementDelegates(da) >> [user]
+        1 * atomHopperClient.asyncPost((EndUser) user, AtomHopperConstants.UPDATE)
     }
 
     def "revokeRoleAssignmentOnDelegationAgreement: error check"() {
@@ -237,6 +247,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         1 * delegationAgreementDao.findDelegationAgreements({ it.principal == user }) >> [principalDelegationAgreement]
         1 * identityUserService.getEndUserById(user.id) >> user
         1 * delegationAgreementDao.updateAgreement(delegateDelegationAgreement)
+        1 * delegationAgreementDao.getDelegationAgreementDelegates(principalDelegationAgreement) >> [user]
 
         when: "remove the federated user from explicit DA assignments"
         delegateDelegationAgreement.delegates = [new DN(fedUser.uniqueId)]
@@ -249,6 +260,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         1 * delegationAgreementDao.findDelegationAgreements({ it.principal == fedUser }) >> [principalDelegationAgreement]
         1 * identityUserService.getEndUserById(fedUser.id) >> fedUser
         1 * delegationAgreementDao.updateAgreement(delegateDelegationAgreement)
+        1 * delegationAgreementDao.getDelegationAgreementDelegates(principalDelegationAgreement) >> [fedUser]
 
         when: "remove the user group from explicit DA assignments"
         delegateDelegationAgreement.delegates = [new DN(userGroup.uniqueId)]
@@ -261,6 +273,8 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         1 * delegationAgreementDao.findDelegationAgreements({ it.principal == userGroup }) >> [principalDelegationAgreement]
         1 * userGroupService.getGroupById(userGroup.id) >> userGroup
         1 * delegationAgreementDao.updateAgreement(delegateDelegationAgreement)
+        1 * delegationAgreementDao.getDelegationAgreementDelegates(principalDelegationAgreement) >> [userGroup]
+        2 * userGroupService.getUsersInGroup(userGroup) >> [user]
     }
 
     def "updateDelegationAgreement: calls correct daos"() {
@@ -321,6 +335,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         def daChild2 = entityFactory.createDelegationAgreement().with { it.name = "Child 2 DA"; it}
         delegationAgreementDao.getChildDelegationAgreements(da.id) >> [daChild1, daChild2]
         delegationAgreementDao.getChildDelegationAgreements(daChild1.id) >> [daChild1child]
+        delegationAgreementDao.getDelegationAgreementDelegates(_) >> []
 
         when:
         service.deleteDelegationAgreement(da)
@@ -346,6 +361,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         def daChild2 = entityFactory.createDelegationAgreement().with { it.name = "Child 2 DA"; it}
         delegationAgreementDao.getChildDelegationAgreements(da.id) >> [daChild1, daChild2]
         delegationAgreementDao.getChildDelegationAgreements(daChild1.id) >> [daChild1child]
+        delegationAgreementDao.getDelegationAgreementDelegates(_) >> []
 
         when:
         service.deleteDelegationAgreement(daChild1)
@@ -369,6 +385,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         def daChild2 = entityFactory.createDelegationAgreement().with { it.name = "Child 2 DA"; it}
         delegationAgreementDao.getChildDelegationAgreements(da.id) >> [daChild1, daChild2]
         delegationAgreementDao.getChildDelegationAgreements(daChild1.id) >> [daChild1child]
+        delegationAgreementDao.getDelegationAgreementDelegates(_) >> []
 
         when:
         service.deleteDelegationAgreement(da)
