@@ -455,7 +455,7 @@ public interface TenantService {
      * @param user
      * @return
      */
-    List<Tenant> getTenantsForUserByTenantRoles(BaseUser user);
+    List<Tenant> getTenantsForUserByTenantRoles(EndUser user);
 
     /**
      * Returns all enabled tenants on which the user has a role assigned - including those tenants to which the user has access

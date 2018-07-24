@@ -10,6 +10,7 @@ import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Tenant
+import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -276,6 +277,74 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         then: "Can't authenticate under tenant"
         responseRcn.status == SC_UNAUTHORIZED
         responseNoRcn.status == SC_UNAUTHORIZED
+    }
+
+    @Unroll
+    def "List tenants for user: Tenants of a whitelisted tenant type are returned when user is assigned a whitelist role at the tenant level: applyRcn: #applyRcn"() {
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+
+        def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
+        def initialToken = utils.getToken(mySubUser.username, Constants.DEFAULT_PASSWORD)
+
+        when: "User doesn't have whitelisted role"
+        Tenants tenants = utils.listTenantsForToken(initialToken, applyRcn)
+
+        then: "Whitelisted tenants not returned"
+        tenants.tenant.find {it.id == tenantX1.id} == null
+        tenants.tenant.find {it.id == tenantX2.id} == null
+
+        when: "User assigned whitelisted role on tenant"
+        utils.addRoleToUserOnTenantId(mySubUser, tenantX1.id, Constants.ROLE_RBAC1_ID)
+        tenants = utils.listTenantsForToken(initialToken, applyRcn)
+
+        then: "Tenant on which role is assigned is returned"
+        tenants.tenant.find {it.id == tenantX1.id} != null
+        tenants.tenant.find {it.id == tenantX2.id} == null
+
+        when: "Change whitelist so user doesn't have access to tenant any more"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, "non-existant-role")
+        tenants = utils.listTenantsForToken(initialToken, applyRcn)
+
+        then: "No longer see whitelisted tenants"
+        tenants.tenant.find {it.id == tenantX1.id} == null
+        tenants.tenant.find {it.id == tenantX2.id} == null
+
+        where:
+        applyRcn << [true, false]
+    }
+
+    @Unroll
+    def "List tenants for user: Tenants of a whitelisted tenant type are returned when user is assigned a whitelist role at the domain level: applyRcn: #applyRcn"() {
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+
+        def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
+        def initialToken = utils.getToken(mySubUser.username, Constants.DEFAULT_PASSWORD)
+
+        when: "User doesn't have whitelisted role"
+        Tenants tenants = utils.listTenantsForToken(initialToken, applyRcn)
+
+        then: "Whitelisted tenants not returned"
+        tenants.tenant.find {it.id == tenantX1.id} == null
+        tenants.tenant.find {it.id == tenantX2.id} == null
+
+        when: "User assigned whitelisted role on tenant"
+        utils.addRoleToUser(mySubUser, Constants.ROLE_RBAC1_ID)
+        tenants = utils.listTenantsForToken(initialToken, applyRcn)
+
+        then: "Tenant on which role is assigned is returned"
+        tenants.tenant.find {it.id == tenantX1.id} != null
+        tenants.tenant.find {it.id == tenantX2.id} != null
+
+        when: "Change whitelist so user doesn't have access to tenant any more"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, "non-existant-role")
+        tenants = utils.listTenantsForToken(initialToken, applyRcn)
+
+        then: "No longer see whitelisted tenants"
+        tenants.tenant.find {it.id == tenantX1.id} == null
+        tenants.tenant.find {it.id == tenantX2.id} == null
+
+        where:
+        applyRcn << [true, false]
     }
 
     def "Validate token: Roles on a tenant with a whitelisted tenant type are returned when user is assigned a whitelist role at the tenant level"() {
