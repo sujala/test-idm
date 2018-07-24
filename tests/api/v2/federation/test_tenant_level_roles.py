@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 from nose.plugins.attrib import attr
-from qe_coverage.opencafe_decorators import unless_coverage
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper, saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -28,6 +28,18 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         """
         super(TestTenantLevelRolesForFederation, cls).setUpClass()
         cls.test_email = 'random@rackspace.com'
+        cls.hierarchical_billing_observer_role_id = cls.get_role_id_by_name(
+            role_name=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME)
+
+    @classmethod
+    def get_role_id_by_name(cls, role_name):
+
+        option = {
+            const.PARAM_ROLE_NAME: role_name
+        }
+        get_role_resp = cls.identity_admin_client.list_roles(option=option)
+        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
+        return role_id
 
     @unless_coverage
     def setUp(self):
@@ -35,6 +47,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         self.provider_ids = []
         self.roles = []
         self.users = []
+        self.tenant_ids = []
 
         self.domain_id = func_helper.generate_randomized_domain_id(
             client=self.identity_admin_client)
@@ -185,6 +198,84 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             self.validate_role_present(auth_resp=fed_auth, role=role_0,
                                        positive=False)
 
+    def create_tenant(self, domain=None, name=None, tenant_types=None):
+
+        if not domain:
+            domain = self.domain_id
+        if name:
+            tenant_req = factory.get_add_tenant_object(
+                domain_id=domain, tenant_name=name, tenant_types=tenant_types)
+        else:
+            tenant_req = factory.get_add_tenant_object(
+                domain_id=domain, tenant_types=tenant_types)
+        add_tenant_resp = self.identity_admin_client.add_tenant(
+            tenant=tenant_req)
+        self.assertEqual(add_tenant_resp.status_code, 201)
+        tenant = responses.Tenant(add_tenant_resp.json())
+        self.tenant_ids.append(tenant.id)
+        return tenant
+
+    def set_up_role_and_tenant(self):
+
+        # create role
+        role_1 = self.create_role()
+        # create tenant with type for which there is a whitelist filter
+        tenant_name = ":".join([
+            self.test_config.mpc_whitelist_tenant_type,
+            self.generate_random_string(pattern=const.ID_PATTERN)])
+        tenant_1 = self.create_tenant(
+            name=tenant_name,
+            tenant_types=[self.test_config.mpc_whitelist_tenant_type])
+        return role_1, tenant_1
+
+    @tags('positive', 'p0', 'regression')
+    @attr(type='regression')
+    def test_whitelist_roles_for_fed_user_on_tenant(self):
+
+        test_data = {"fed_input": {
+            "base64_url_encode": True,
+            "new_url": True,
+            "content_type": "x-www-form-urlencoded",
+            "fed_api": "v2",
+            "metadata": True,
+        }}
+        issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
+        provider_id, cert_path, key_path = self.create_idp_with_certs(
+            domain_id=self.domain_id, issuer=issuer, metadata=test_data[
+                'fed_input']['metadata'])
+        self.update_mapping_policy(idp_id=provider_id,
+                                   client=self.user_admin_client)
+
+        role_1, tenant_1 = self.set_up_role_and_tenant()
+        self.validate_auth_with_fed_token(
+            test_data=test_data, key_path=key_path, cert_path=cert_path,
+            issuer=issuer, role=role_1.name, tenant=tenant_1,
+            expected_response=401)
+
+        self.validate_auth_with_fed_token(
+            test_data=test_data, key_path=key_path, cert_path=cert_path,
+            issuer=issuer, role=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME,
+            tenant=tenant_1, expected_response=200)
+
+    def validate_auth_with_fed_token(self, test_data, key_path, cert_path,
+                                     issuer, role, tenant, expected_response):
+
+        role_to_add = '/'.join([role, tenant.id])
+        fed_auth = self.fed_user_call(
+            test_data=test_data, domain_id=self.domain_id,
+            private_key=key_path, public_key=cert_path, issuer=issuer,
+            roles=[role_to_add])
+        self.assertEqual(fed_auth.status_code, 200)
+        fed_user_id = fed_auth.json()[const.ACCESS][const.USER][const.ID]
+        self.users.append(fed_user_id)
+        fed_user_token = fed_auth.json()[const.ACCESS][const.TOKEN][const.ID]
+        auth_with_token_req = requests.AuthenticateAsTenantWithToken(
+            token_id=fed_user_token, tenant_id=tenant.id
+        )
+        auth_with_token_resp = self.identity_admin_client.get_auth_token(
+            request_object=auth_with_token_req)
+        self.assertEqual(auth_with_token_resp.status_code, expected_response)
+
     @base.base.log_tearDown_error
     @unless_coverage
     def tearDown(self):
@@ -193,6 +284,12 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             self.assertIn(
                 resp.status_code, [204, 404],
                 msg='User with ID {0} failed to delete'.format(user_id))
+        for tenant_id in self.tenant_ids:
+            resp = self.identity_admin_client.delete_tenant(
+                tenant_id=tenant_id)
+            self.assertIn(
+                resp.status_code, [204, 404],
+                msg='Tenant with ID {0} failed to delete'.format(tenant_id))
         for role_id in self.roles:
             resp = self.identity_admin_client.delete_role(role_id=role_id)
             self.assertEqual(
