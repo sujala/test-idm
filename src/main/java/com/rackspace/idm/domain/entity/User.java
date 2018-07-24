@@ -251,6 +251,13 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
     )
     private List<String> passwordHistory;
 
+    @LDAPField(attribute=LdapRepository.ATTR_UNVERIFIED,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED,
+            defaultEncodeValue = "FALSE",
+            defaultDecodeValue = "FALSE")
+    private Boolean unverified;
+
     private List<TenantRole> roles;
 
     TokenFormatConverter tfEnumConverter = new TokenFormatConverter();
@@ -260,6 +267,10 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
 
     public boolean isDisabled() {
     	return this.enabled == null || !this.enabled;
+    }
+
+    public boolean isUnverified() {
+        return this.unverified == null ? false : unverified;
     }
 
     public boolean isMultiFactorEnabled() {

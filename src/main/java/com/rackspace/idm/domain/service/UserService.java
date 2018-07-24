@@ -27,6 +27,8 @@ public interface UserService {
 
     void addUserAdminV20(User user, boolean isCreateUserOneCall);
 
+    void addUnverifiedUser(User user);
+
     UserAuthenticationResult authenticate(String userId, String password);
 
     UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);

@@ -256,14 +256,17 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<Tenant> getTenantsForUserByTenantRoles(BaseUser user) {
+    public List<Tenant> getTenantsForUserByTenantRoles(EndUser user) {
         if (user == null) {
             throw new IllegalStateException();
         }
 
         logger.info("Getting Tenants for Parent");
 
-        Iterable<TenantRole> tenantRoles = getEffectiveTenantRolesForUser(user);
+        SourcedRoleAssignments sourcedRoleAssignments = getSourcedRoleAssignmentsForUser(user);
+        SourcedRoleAssignmentsLegacyAdapter legacyAdapter = new SourcedRoleAssignmentsLegacyAdapter(sourcedRoleAssignments);
+        List<TenantRole> tenantRoles = legacyAdapter.getStandardTenantRoles();
+
         List<Tenant> tenants = getTenants(tenantRoles, new TenantEnabledPredicate());
 
         logger.info("Got {} tenants", tenants.size());

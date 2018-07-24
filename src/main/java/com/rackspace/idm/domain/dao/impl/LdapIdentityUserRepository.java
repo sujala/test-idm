@@ -40,14 +40,22 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return ATTR_PROV_FED_USER_SEARCH_ATTRIBUTES_NO_PWD_HIS;
     }
 
+    @Override
     public User getProvisionedUserById(String userId) {
         return searchForUserById(userId, PROVISIONED_USER_CLASS_FILTERS, User.class);
     }
 
+    @Override
+    public Iterable<User> getProvisionedUsersByDomainIdAndEmail(String domainId, String email) {
+        return (Iterable) getObjects(searchFilterGetUserByDomainIdAndEmail(domainId, email, PROVISIONED_USER_CLASS_FILTERS));
+   }
+
+   @Override
     public FederatedUser getFederatedUserById(String userId) {
         return searchForUserById(userId, FEDERATED_USER_CLASS_FILTERS, FederatedUser.class);
     }
 
+    @Override
     public FederatedUser getFederatedUserByUsernameAndIdpId(String username, String idpId) {
         return searchForUserByUsername(username, FEDERATED_USER_CLASS_FILTERS, FederatedUser.class, getBaseDnWithIdpName(idpId));
     }
@@ -255,6 +263,14 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return Filter.createANDFilter(
                 Filter.createORFilter(userClassFilterList),
                 Filter.createEqualityFilter(ATTR_UID, username)
+        );
+    }
+
+    private Filter searchFilterGetUserByDomainIdAndEmail(String domainId, String email, List<Filter> userClassFilterList) {
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId),
+                Filter.createEqualityFilter(ATTR_MAIL, email),
+                Filter.createORFilter(userClassFilterList)
         );
     }
 

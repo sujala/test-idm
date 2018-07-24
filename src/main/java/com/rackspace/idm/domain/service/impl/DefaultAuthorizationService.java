@@ -443,11 +443,17 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Override
     public void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess) {
         BaseUser user = userService.getUserByScopeAccess(authScopeAccess);
+
+        // High level admins have implicit access to all tenants
         if (authorizeRoleAccess(user, authScopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole))) {
             return;
         }
 
-        List<Tenant> adminTenants = tenantService.getTenantsForUserByTenantRoles(user);
+        List<Tenant> adminTenants = new ArrayList<>();
+        if (user instanceof EndUser) {
+            // Only EndUsers will ever have access to tenants.
+            adminTenants = tenantService.getTenantsForUserByTenantRoles((EndUser)user);
+        }
 
         for (Tenant tenant : adminTenants) {
             if (tenant.getTenantId().equals(tenantId)) {

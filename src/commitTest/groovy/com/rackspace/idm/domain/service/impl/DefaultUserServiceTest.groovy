@@ -422,7 +422,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = this.createUser(null, true, domainId)
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("region", "cloud", true)
         userDao.getUsersByDomain(_) >> [ new User(), new User(), new User()].asList()
-        config.getInt("maxNumberOfUsersInDomain") >> 100
+        identityConfig.staticConfig.getMaxNumberOfUsersInDomain() >> 100
         domainService.getDomain(domainId) >> entityFactory.createDomain()
         domainService.getDomainAdmins(domainId) >> [new User()].asList()
 

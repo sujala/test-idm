@@ -77,8 +77,12 @@ public class Validator {
         return checkPattern(ALPHANUMERIC, value);
     }
 
+    public void assertEmailValid(String email) {
+        checkPattern(EMAIL, email);
+    }
+
     public boolean isEmailValid(String email) {
-        return checkPattern(EMAIL, email);
+        return checkPatternNoException(EMAIL, email);
     }
 
     public void validate11User(com.rackspacecloud.docs.auth.api.v1.User user) {
@@ -151,6 +155,26 @@ public class Validator {
         }
         if(value == null || !pat.matcher(value).matches()){
             throw new BadRequestException(tempPattern.getErrMsg());
+        }
+
+        return true;
+    }
+
+    private boolean checkPatternNoException(String pattern, String value) {
+        logger.info("Checking regex pattern");
+        com.rackspace.idm.domain.entity.Pattern tempPattern = ldapPatternRepository.getPattern(pattern);
+
+        Pattern pat;
+        try {
+            pat = Pattern.compile(tempPattern.getRegex());
+        } catch (Exception ex) {
+            String errMsg = String.format("'%s' is not a valid regular expression.", tempPattern.getRegex());
+            logger.error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        if(value == null || !pat.matcher(value).matches()) {
+            return false;
         }
 
         return true;

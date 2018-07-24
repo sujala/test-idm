@@ -6087,6 +6087,18 @@ rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE
 
+dn: rsId=6631a28089ea11e8b1ec5bc873de38f4,ou=properties,ou=cloud,o=configura
+ tion,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: invites.supported.for.rcns
+description: A comma delimited list of RCNs for which the creation of
+ invite users will be allowed
+rsIdmVersion: 3.24.0
+rsPropertyValue: RCN-TEST1,RCN-TEST2,RCN-TEST3
+rsPropertyValueType: String
+rsReloadable: TRUE
+rsSearchable: TRUE
+
 dn: rsId=b59a7a0ac6e2433ca45c3af059c75325,ou=users,o=rackspace,dc=rackspace,dc=com
 rsId: b59a7a0ac6e2433ca45c3af059c75325
 objectClass: rsPerson
