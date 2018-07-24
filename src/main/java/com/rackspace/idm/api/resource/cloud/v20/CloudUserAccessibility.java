@@ -17,14 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: 9/25/12
- * Time: 2:37 PM
- * To change this template use File | Settings | File Templates.
- */
-
 public class CloudUserAccessibility {
 
     protected Configuration config;
