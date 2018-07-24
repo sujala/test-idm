@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -15,6 +16,8 @@ import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
+import javax.servlet.http.HttpServletResponse
+
 import static org.apache.http.HttpStatus.SC_OK
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 
@@ -38,6 +41,9 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
 
     @Shared Tenant tenantX1
     @Shared Tenant tenantX2
+
+    static String TENANT_TYPE = "dumb_tenant_type"
+    static String WHITE_LIST_FILTER_PROPERTY = IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + TENANT_TYPE
 
     def setupSpec() {
         def authResponse = cloud20.authenticatePassword(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
@@ -80,6 +86,13 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         // Add an endpoint to the tenantX
         def addEndpointToTenantResponse = cloud20.addEndpoint(sharedIdentityAdminToken, tenantX1.id, v1Factory.createEndpointTemplate(Constants.MOSSO_ENDPOINT_TEMPLATE_ID, "unused"))
         assert addEndpointToTenantResponse.status == SC_OK
+
+        def tenantType = new TenantType().with {
+            it.name = TENANT_TYPE
+            it.description = "description"
+            it
+        }
+        cloud20.addTenantType(sharedServiceAdminToken, tenantType)
     }
 
     def cleanup() {
@@ -425,5 +438,293 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
 
         and: "assert 404 Not Found - belongsTo"
         checkTokenBelongsTo2Response.status == SC_NOT_FOUND // tenantX2 is hidden
+    }
+
+    def "Tenant type whitelist filter for roles assigned at a domain level"() {
+        given:
+        def domainId = utils.createDomain()
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def tenantName = testUtils.getRandomUUID("${TENANT_TYPE}:")
+        def tenant = utils.createTenantWithTypes(tenantName, [TENANT_TYPE])
+        utils.addTenantToDomain(domainId, tenant.id)
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.clearProperty(WHITE_LIST_FILTER_PROPERTY)
+        def response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment = response.getEntity(RoleAssignments)
+        roleAssignment.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment2 = response.getEntity(RoleAssignments)
+        roleAssignment2.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type does not have the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "identity:service-admin")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "role with tenant type matching white list is not returned"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment3 = response.getEntity(RoleAssignments)
+        roleAssignment3.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() ==  0
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenant(tenant)
+        reloadableConfiguration.reset()
+    }
+
+    def "Tenant type whitelist filter for roles assigned at a tenant level"() {
+        given:
+        def domainId = utils.createDomain()
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def tenantName = testUtils.getRandomUUID("${TENANT_TYPE}:")
+        def tenant = utils.createTenantWithTypes(tenantName, [TENANT_TYPE])
+        utils.addRoleToUserOnTenantId(userAdmin, tenant.id, Constants.ROLE_RBAC1_ID)
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.clearProperty(WHITE_LIST_FILTER_PROPERTY)
+        def response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment = response.getEntity(RoleAssignments)
+        roleAssignment.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment2 = response.getEntity(RoleAssignments)
+        roleAssignment2.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type does not have the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "identity:service-admin")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "role with tenant type matching white list is not returned"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment3 = response.getEntity(RoleAssignments)
+        roleAssignment3.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() ==  0
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenant(tenant)
+        reloadableConfiguration.reset()
+    }
+
+    def "Tenant type whitelist filter for roles granted to user by tenantName"() {
+        given:
+        def domainId = utils.createDomain()
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def tenantName = testUtils.getRandomUUID("${TENANT_TYPE}:")
+        def tenant = utils.createTenantWithTypes(tenantName, [TENANT_TYPE])
+        def userGroup = utils.createUserGroup(domainId)
+        utils.addTenantToDomain(domainId, tenant.id)
+        utils.addUserToUserGroup(userAdmin.id, userGroup)
+        utils.grantRoleAssignmentsOnUser(userAdmin, v2Factory.createSingleRoleAssignment(Constants.ROLE_RBAC1_ID, [tenantName]))
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.clearProperty(WHITE_LIST_FILTER_PROPERTY)
+        def response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment = response.getEntity(RoleAssignments)
+        roleAssignment.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment2 = response.getEntity(RoleAssignments)
+        roleAssignment2.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type does not have the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "identity:service-admin")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "role with tenant type matching white list is not returned"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment3 = response.getEntity(RoleAssignments)
+        roleAssignment3.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() ==  0
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenant(tenant)
+        reloadableConfiguration.reset()
+    }
+
+    def "Tenant type whitelist filter for roles granted to user by '*' tenant"() {
+        given:
+        def domainId = utils.createDomain()
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def tenantName = testUtils.getRandomUUID("${TENANT_TYPE}:")
+        def tenant = utils.createTenantWithTypes(tenantName, [TENANT_TYPE])
+        def userGroup = utils.createUserGroup(domainId)
+        utils.addTenantToDomain(domainId, tenant.id)
+        utils.addUserToUserGroup(userAdmin.id, userGroup)
+        utils.grantRoleAssignmentsOnUser(userAdmin, v2Factory.createSingleRoleAssignment(Constants.ROLE_RBAC1_ID, ['*']))
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.clearProperty(WHITE_LIST_FILTER_PROPERTY)
+        def response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment = response.getEntity(RoleAssignments)
+        roleAssignment.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment2 = response.getEntity(RoleAssignments)
+        roleAssignment2.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type does not have the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "identity:service-admin")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "role with tenant type matching white list is not returned"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment3 = response.getEntity(RoleAssignments)
+        roleAssignment3.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() ==  0
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenant(tenant)
+        reloadableConfiguration.reset()
+    }
+
+    def "Tenant type whitelist filter for roles granted to user group by tenantName"() {
+        given:
+        def domainId = utils.createDomain()
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def tenantName = testUtils.getRandomUUID("${TENANT_TYPE}:")
+        def tenant = utils.createTenantWithTypes(tenantName, [TENANT_TYPE])
+        def userGroup = utils.createUserGroup(domainId)
+        utils.addTenantToDomain(domainId, tenant.id)
+        utils.addUserToUserGroup(userAdmin.id, userGroup)
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, v2Factory.createSingleRoleAssignment(Constants.ROLE_RBAC1_ID, [tenantName]))
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.clearProperty(WHITE_LIST_FILTER_PROPERTY)
+        def response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment = response.getEntity(RoleAssignments)
+        roleAssignment.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment2 = response.getEntity(RoleAssignments)
+        roleAssignment2.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type does not have the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "identity:service-admin")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "role with tenant type matching white list is not returned"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment3 = response.getEntity(RoleAssignments)
+        roleAssignment3.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() ==  0
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenant(tenant)
+        reloadableConfiguration.reset()
+    }
+
+    def "Tenant type whitelist filter for roles granted to user group by '*' tenant"() {
+        given:
+        def domainId = utils.createDomain()
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def tenantName = testUtils.getRandomUUID("${TENANT_TYPE}:")
+        def tenant = utils.createTenantWithTypes(tenantName, [TENANT_TYPE])
+        def userGroup = utils.createUserGroup(domainId)
+        utils.addTenantToDomain(domainId, tenant.id)
+        utils.addUserToUserGroup(userAdmin.id, userGroup)
+        utils.grantRoleAssignmentsOnUserGroup(userGroup, v2Factory.createSingleRoleAssignment(Constants.ROLE_RBAC1_ID, ['*']))
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.clearProperty(WHITE_LIST_FILTER_PROPERTY)
+        def response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment = response.getEntity(RoleAssignments)
+        roleAssignment.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type has the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "Verify the role is returned with the appropriate tenants"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment2 = response.getEntity(RoleAssignments)
+        roleAssignment2.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() > 0
+
+        when: "Tenant type does not have the role in the whitelist filter"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP , true)
+        reloadableConfiguration.setProperty(WHITE_LIST_FILTER_PROPERTY, "identity:service-admin")
+        response = cloud20.listUserEffectiveRolesWithSources(sharedServiceAdminToken, userAdmin.id)
+
+        then: "role with tenant type matching white list is not returned"
+        response.status == HttpServletResponse.SC_OK
+        RoleAssignments roleAssignment3 = response.getEntity(RoleAssignments)
+        roleAssignment3.getTenantAssignments().tenantAssignment.findAll { it.forTenants.contains(tenant.name)}.size() ==  0
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenant(tenant)
+        reloadableConfiguration.reset()
     }
 }
