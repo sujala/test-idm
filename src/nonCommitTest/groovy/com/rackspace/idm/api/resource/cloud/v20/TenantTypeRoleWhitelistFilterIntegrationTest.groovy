@@ -9,6 +9,7 @@ import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.EndpointList
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
@@ -17,11 +18,10 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
-import static org.apache.http.HttpStatus.SC_NOT_FOUND
+
+import static org.apache.http.HttpStatus.*
 import javax.servlet.http.HttpServletResponse
 
-import static org.apache.http.HttpStatus.SC_OK
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 
 class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
 
@@ -508,6 +508,62 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
 
         and: "assert 404 Not Found - belongsTo"
         checkTokenBelongsTo2Response.status == SC_NOT_FOUND // tenantX2 is hidden
+    }
+
+    @Unroll
+    def "Get accessible domain endpoints for user: endpoints on whitelisted tenant are not returned - feature enabled = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_PROP, featureEnabled)
+        def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
+
+        String tenantTypeName = RandomStringUtils.randomAlphabetic(15).toLowerCase()
+        TenantType tenantType = v2Factory.createTenantType(tenantTypeName, "description")
+        assert cloud20.addTenantType(sharedServiceAdminToken, tenantType).status == HttpStatus.SC_CREATED
+
+        // Create a tenant with the newly added tenant type
+        def tenantName = tenantTypeName + ":" + sharedUserAdmin.domainId
+        def tenant = v2Factory.createTenant(tenantName, tenantName, [tenantTypeName]).with {it.domainId = sharedUserAdmin.domainId; it}
+        def addTenantResponse = cloud20.addTenant(sharedIdentityAdminToken, tenant)
+        assert addTenantResponse.status == HttpStatus.SC_CREATED
+        def tenantEntity = addTenantResponse.getEntity(Tenant).value
+
+        // Add tenant role to user
+        utils.addRoleToUserOnTenantId(mySubUser, tenantEntity.id, Constants.ROLE_RBAC1_ID)
+
+        // Create endpoint template
+        def endpointTemplate = utils.createEndpointTemplate(true, null, true, "compute", "ORD")
+
+        // Add endpoint to tenant
+        utils.addEndpointTemplateToTenant(tenantEntity.id, endpointTemplate.id)
+
+        when: "list accessible domain endpoints for user"
+        def response = cloud20.getAccessibleDomainEndpointsForUser(sharedServiceAdminToken, mySubUser.id, mySubUser.domainId)
+        EndpointList endpointList = response.getEntity(EndpointList).value
+
+        then:
+        response.status == SC_OK
+        endpointList.endpoint.find {it.id == endpointTemplate.id} != null
+
+        when: "list accessible domain endpoints for user - whitelisted"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+        response = cloud20.getAccessibleDomainEndpointsForUser(sharedServiceAdminToken, mySubUser.id, mySubUser.domainId)
+        endpointList = response.getEntity(EndpointList).value
+
+        then:
+        response.status == SC_OK
+        if (featureEnabled) {
+            endpointList.endpoint.find {it.id == endpointTemplate.id} == null
+        } else {
+            endpointList.endpoint.find {it.id == endpointTemplate.id} != null
+        }
+
+        cleanup:
+        utils.deleteUserQuietly(mySubUser)
+        utils.deleteTenantQuietly(tenantEntity)
+        utils.deleteTenantType(tenantTypeName)
+
+        where:
+        featureEnabled << [true, false]
     }
 
     def "Tenant type whitelist filter for roles assigned at a domain level"() {
