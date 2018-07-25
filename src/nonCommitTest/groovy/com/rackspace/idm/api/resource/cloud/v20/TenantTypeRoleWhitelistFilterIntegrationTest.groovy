@@ -2,11 +2,14 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.Constants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.EndpointList
@@ -17,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
 
 import static org.apache.http.HttpStatus.*
 import javax.servlet.http.HttpServletResponse
@@ -853,4 +856,78 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         utils.deleteTenant(tenant)
         reloadableConfiguration.reset()
     }
+
+    @Unroll
+    def "A role is not returned for a user when the role is assigned only on a whitelisted tenant and the user does not have a whitelisted role on that tenant: roleWhitelisted = #roleWhitelisted"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def tenant = utils.createTenantInDomainWithTenantType(userAdmin.domainId, tenant_type_x)
+        if (roleWhitelisted) {
+            def configName = IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x
+            def whitelistedRoles = []
+            whitelistedRoles << Constants.ROLE_RBAC1_NAME
+            reloadableConfiguration.setProperty(configName, whitelistedRoles)
+        } else {
+            def configName = IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x
+            reloadableConfiguration.setProperty(configName, RandomStringUtils.randomAlphanumeric(8))
+        }
+        utils.addRoleToUserOnTenantId(userAdmin, tenant.id, Constants.ROLE_RBAC1_ID)
+        def samlRequest = new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = userAdmin.domainId
+            it.validitySeconds = 1000
+            it.brokerIssuer = Constants.DEFAULT_BROKER_IDP_URI
+            it.originIssuer = Constants.IDP_V2_DOMAIN_URI
+            it.email = Constants.DEFAULT_FED_EMAIL
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = RandomStringUtils.randomAlphanumeric(8)
+            it.roleNames = ["${Constants.ROLE_RBAC1_NAME}/${tenant.name}"]
+            it.groupNames = []
+            it
+        }
+
+        when: "do not apply RCN roles"
+        def authResponse = utils.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, false.toString())
+
+        then:
+        if (roleWhitelisted) {
+            assert authResponse.user.roles.role.find { r -> r.id == Constants.ROLE_RBAC1_ID }.tenantId == tenant.id
+        } else {
+            assert authResponse.user.roles.role.find { r -> r.id == Constants.ROLE_RBAC1_ID } == null
+        }
+
+        when: "apply RCN roles"
+        authResponse = utils.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, true.toString())
+
+        then:
+        if (roleWhitelisted) {
+            assert authResponse.user.roles.role.find { r -> r.id == Constants.ROLE_RBAC1_ID }.tenantId == tenant.id
+        } else {
+            assert authResponse.user.roles.role.find { r -> r.id == Constants.ROLE_RBAC1_ID } == null
+        }
+
+        when: "fed auth do not apply rcn roles"
+        def fedAuthResponse = utils.authenticateV2FederatedUser(samlRequest, false)
+
+        then:
+        if (roleWhitelisted) {
+            assert fedAuthResponse.user.roles.role.find { r -> r.id == Constants.ROLE_RBAC1_ID }.tenantId == tenant.id
+        } else {
+            assert fedAuthResponse.user.roles.role.find { r -> r.id == Constants.ROLE_RBAC1_ID } == null
+        }
+
+        when: "fed auth with apply rcn roles"
+        fedAuthResponse = utils.authenticateV2FederatedUser(samlRequest, true)
+
+        then:
+        if (roleWhitelisted) {
+            assert fedAuthResponse.user.roles.role.find { r -> r.id == Constants.ROLE_RBAC1_ID }.tenantId == tenant.id
+        } else {
+            assert fedAuthResponse.user.roles.role.find { r -> r.id == Constants.ROLE_RBAC1_ID } == null
+        }
+
+        where:
+        roleWhitelisted << [true, false]
+    }
+
 }

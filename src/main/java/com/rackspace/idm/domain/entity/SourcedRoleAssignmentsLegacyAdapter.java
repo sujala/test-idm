@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.entity;
 
+import org.apache.commons.collections.CollectionUtils;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,7 +47,7 @@ public class SourcedRoleAssignmentsLegacyAdapter {
                 rcnAssignedRoles.add(asRcnAssignedRole(sourcedRoleAssignment));
             } else if (domainAssigned) {
                 domainAssignedRoles.add(asDomainAssignedRole(sourcedRoleAssignment));
-            } else if (tenantAssigned) {
+            } else if (tenantAssigned && !CollectionUtils.isEmpty(sourcedRoleAssignment.getTenantIds())) {
                 tenantAssignedRoles.add(asTenantAssignedRole(sourcedRoleAssignment));
             }
         }
