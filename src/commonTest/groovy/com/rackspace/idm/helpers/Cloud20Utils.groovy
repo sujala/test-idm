@@ -1259,7 +1259,7 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
-    def createTenant(Tenant tenant) {
+    Tenant createTenant(Tenant tenant) {
         def response = methods.addTenant(getServiceAdminToken(), tenant)
         assert (response.status == SC_CREATED)
         response.getEntity(Tenant).value
