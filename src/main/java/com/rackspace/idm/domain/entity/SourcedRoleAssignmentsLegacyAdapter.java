@@ -31,6 +31,15 @@ public class SourcedRoleAssignmentsLegacyAdapter {
             boolean domainAssigned = false;
             boolean tenantAssigned = false;
 
+            /**
+             * A role can be assigned in multiple different ways:
+             * 1. DOMAIN
+             * 2. TENANT
+             * 3. DOMAIN & TENANT
+             * 4. RCN (An RCN role can only be assigned as an RCN role.)
+             *
+             * When determining the placement it's based on the overall
+             */
             for (RoleAssignmentSource roleAssignmentSource : sourcedRoleAssignment.getSources()) {
                 if (roleAssignmentSource.getAssignmentType() == RoleAssignmentType.DOMAIN) {
                     domainAssigned = true;
@@ -63,6 +72,23 @@ public class SourcedRoleAssignmentsLegacyAdapter {
         List<TenantRole> tenantRoles = new ArrayList<>(domainAssignedRoles.size() + tenantAssignedRoles.size());
         tenantRoles.addAll(tenantAssignedRoles);
         tenantRoles.addAll(domainAssignedRoles);
+
+        return tenantRoles;
+    }
+
+    /**
+     * Returns only those roles that are explicitly and only assigned on tenants. If a role is
+     * also assigned at the domain level, it will not be returned by this service (e.g. role assigned on user at
+     * tenant level and on user group at domain level).
+     *
+     * If callers care about the various details of how roles are assigned, they should use the {@link SourcedRoleAssignments}
+     * directly and iterate through the sources of each role assignment.
+     *
+     * @return
+     */
+    public List<TenantRole> getTenantAssignedTenantRoles() {
+        List<TenantRole> tenantRoles = new ArrayList<>(tenantAssignedRoles.size());
+        tenantRoles.addAll(tenantAssignedRoles);
 
         return tenantRoles;
     }
