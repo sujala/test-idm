@@ -1907,3 +1907,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             da_id=da_id, role_id=role_id)
         return self.request(
             'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
+    def create_unverified_user(self, request_object, requestslib_kwargs=None):
+        """
+        POST v2.0/RAX-AUTH/invite/user
+        """
+        url = self.url + const.CREATE_UNVERIFIED_USER_URL
+        return self.request(
+            'POST', url, request_entity=request_object,
+            requestslib_kwargs=requestslib_kwargs)

@@ -43,6 +43,7 @@ CERTIFICATE_DELETE_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
                           "certificates/{cert_id}")
 CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 CHANGE_PASSWORD_URL = '/users/RAX-AUTH/change-pwd'
+CREATE_UNVERIFIED_USER_URL = "/RAX-AUTH/invite/user"
 DELETE_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}'
 DELEGATION_AGREEMENTS_URL = '/RAX-AUTH/delegation-agreements'
 DELEGATION_AGREEMENTS_RD_URL = '/RAX-AUTH/delegation-agreements/{da_id}'
@@ -194,6 +195,7 @@ TENANT_TYPE_PATTERN = 'ttype[a-z0-9]{10}'
 UPPER_CASE_LETTERS = '[A-Z]{8}'
 URL_PATTERN = 'http://www.rackspace.com/'
 EMAIL_PATTERN = '[\w]{12}.com'
+UNVERIFIED_EMAIL_PATTERN = '[A-Za-z]{12}@[A-Za-z]{8}.com'
 USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
 USER_MANAGER_NAME_PATTERN = 'user[\-]manager[\d\w]{12}'
 USER_GROUP_NAME_PATTERN = 'user[\-]group[\-][\d\w]{10}'

@@ -1206,3 +1206,21 @@ class DelegationAgreements(base.AutoMarshallingModel):
             delegation_agreement_request[const.RAX_AUTH_DELEGATION_AGREEMENT][
                 const.PARENT_DELEGATION_AGREEMENT_ID] = self.parent_da_id
         return json.dumps(delegation_agreement_request)
+
+
+class UnverifiedUser(base.AutoMarshallingModel):
+    def __init__(self, email=None, domain_id=None):
+        self.email = email
+        self.domain_id = domain_id
+
+    def _obj_to_json(self):
+        unverified_user_request = {
+            const.USER: {
+                const.EMAIL: self.email
+            }
+        }
+        if self.domain_id is not None:
+            unverified_user_request[const.USER][const.RAX_AUTH_DOMAIN_ID] = (
+                self.domain_id
+            )
+        return json.dumps(unverified_user_request)

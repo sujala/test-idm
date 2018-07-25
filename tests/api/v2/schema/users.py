@@ -158,3 +158,26 @@ get_admins_of_user = {
         }
     }
 }
+
+add_unverified_user = {
+    'type': 'object', 'properties':
+        {const.USER: {
+            'type': 'object',
+            'properties': {
+                const.EMAIL: {'type': 'string', 'format': 'email'},
+                const.RAX_AUTH_UNVERIFIED: {'type': 'boolean'},
+                const.ENABLED: {'type': 'boolean'},
+                const.RAX_AUTH_DEFAULT_REGION: {
+                    'type': 'string',
+                    'enum': const.DC_LIST},
+                const.ID: {'type': 'string'},
+                const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
+                },
+            'required': [const.ENABLED, const.RAX_AUTH_UNVERIFIED,
+                         const.RAX_AUTH_DEFAULT_REGION, const.ID,
+                         const.RAX_AUTH_DOMAIN_ID, const.EMAIL
+                         ],
+            'additionalProperties': False}},
+    'required': [const.USER],
+    'additionalProperties': False
+}

@@ -140,3 +140,8 @@ class TestConfig(data_interfaces.ConfigSectionInterface):
     def mpc_whitelist_tenant_type(self):
         """MPC whitelist tenant type"""
         return self.get('mpc_whitelist_tenant_type')
+
+    @property
+    def unverified_user_rcn(self):
+        """Approved RCN for unverified user functionality"""
+        return self.get('unverified_user_rcn')
