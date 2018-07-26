@@ -53,6 +53,7 @@ class TestWhitelistRolesForFedDAAuth(federation.TestBaseFederation):
     def setUp(self):
         super(TestWhitelistRolesForFedDAAuth, self).setUp()
         self.group_ids = []
+        self.roles = []
 
     @classmethod
     def create_domain_with_rcn(cls):
@@ -65,16 +66,6 @@ class TestWhitelistRolesForFedDAAuth(federation.TestBaseFederation):
         assert add_dom_resp.status_code == 201, (
             'domain was not created successfully')
         return domain_id
-
-    @classmethod
-    def get_role_id_by_name(cls, role_name):
-
-        option = {
-            const.PARAM_ROLE_NAME: role_name
-        }
-        get_role_resp = cls.user_admin_client.list_roles(option=option)
-        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
-        return role_id
 
     def create_fed_user_for_da(self, client, domain, issuer=None,
                                update_policy=False, group=None):
@@ -137,17 +128,6 @@ class TestWhitelistRolesForFedDAAuth(federation.TestBaseFederation):
             const.FOR_TENANTS: list(for_tenants)
         }
         return tenant_assignment_request
-
-    def create_role(self):
-
-        role_obj = factory.get_add_role_request_object(
-            administrator_role=const.USER_MANAGE_ROLE_NAME)
-        add_role_resp = self.identity_admin_client.add_role(
-            request_object=role_obj)
-        self.assertEqual(add_role_resp.status_code, 201)
-        role = responses.Role(add_role_resp.json())
-        self.role_ids.append(role.id)
-        return role
 
     def create_tenant(self, domain=None, name=None, tenant_types=None):
 

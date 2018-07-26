@@ -260,6 +260,27 @@ class TestBaseFederation(base.TestBaseV2):
         return idp_ia_client
 
     @classmethod
+    def get_role_id_by_name(cls, role_name):
+
+        option = {
+            const.PARAM_ROLE_NAME: role_name
+        }
+        get_role_resp = cls.identity_admin_client.list_roles(option=option)
+        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
+        return role_id
+
+    def create_role(self):
+
+        role_obj = factory.get_add_role_request_object(
+            administrator_role=const.USER_MANAGE_ROLE_NAME)
+        add_role_resp = self.identity_admin_client.add_role(
+            request_object=role_obj)
+        self.assertEqual(add_role_resp.status_code, 201)
+        role = responses.Role(add_role_resp.json())
+        self.roles.append(role.id)
+        return role
+
+    @classmethod
     def add_role_by_name_to_user(self, user_id, role_name):
         if self.test_config.run_service_admin_tests:
             option = {
@@ -314,7 +335,6 @@ class TestBaseFederation(base.TestBaseV2):
             self.assertEqual(
                 resp.status_code, 204,
                 msg='Domain with ID {0} failed to delete'.format(dom))
-
         super(TestBaseFederation, self).tearDown()
 
     @classmethod
