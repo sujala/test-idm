@@ -13,6 +13,7 @@ import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.EndpointList
+import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
@@ -568,6 +569,68 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         where:
         featureEnabled << [true, false]
     }
+
+    def "Get roles on user for tenant applies whitelist tenant filter when apply_rcn_roles=true"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP, true)
+
+        def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
+
+        when: "Whitelist doesn't apply"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, "")
+        RoleList roleList = utils.listRolesForUserOnTenant(mySubUser, tenantX1, sharedServiceAdminToken, true)
+
+        then: "Existing roles on tenant are returned"
+        roleList.role.find {it.tenantId == tenantX1.id && it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID} != null
+
+        when: "User not assigned whitelisted role on tenant"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+        roleList = utils.listRolesForUserOnTenant(mySubUser, tenantX1, sharedServiceAdminToken, true)
+
+        then: "Existing roles on tenant are not returned"
+        roleList.role.find {it.tenantId == tenantX1.id} == null
+
+        when: "User is assigned whitelisted role on tenant"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+        utils.addRoleToUserOnTenant(mySubUser, tenantX1, Constants.ROLE_RBAC1_ID)
+        roleList = utils.listRolesForUserOnTenant(mySubUser, tenantX1, sharedServiceAdminToken, true)
+
+        then: "Existing roles on tenant are returned as well as whitelisted role"
+        roleList.role.find {it.tenantId == tenantX1.id && it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID} != null
+        roleList.role.find {it.tenantId == tenantX1.id && it.id == Constants.ROLE_RBAC1_ID} != null
+    }
+
+    def "Get roles on user for tenant applies whitelist tenant filter when apply_rcn_roles=false"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLED_TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PROP, true)
+
+        def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
+        utils.addRoleToUserOnTenant(mySubUser, tenantX1, Constants.ROLE_RBAC2_ID)
+
+        when: "Whitelist doesn't apply"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, "")
+        RoleList roleList = utils.listRolesForUserOnTenant(mySubUser, tenantX1, sharedServiceAdminToken, false)
+
+        then: "Existing roles on tenant are returned"
+        roleList.role.find {it.tenantId == tenantX1.id && it.id == Constants.ROLE_RBAC2_ID} != null
+
+        when: "User not assigned whitelisted role on tenant"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+        roleList = utils.listRolesForUserOnTenant(mySubUser, tenantX1, sharedServiceAdminToken, false)
+
+        then: "No roles on tenant are returned"
+        roleList.role.find {it.tenantId == tenantX1.id} == null
+
+        when: "User is assigned whitelisted role on tenant"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+        utils.addRoleToUserOnTenant(mySubUser, tenantX1, Constants.ROLE_RBAC1_ID)
+        roleList = utils.listRolesForUserOnTenant(mySubUser, tenantX1, sharedServiceAdminToken, false)
+
+        then: "Existing roles on tenant are returned as well as whitelisted role"
+        roleList.role.find {it.tenantId == tenantX1.id && it.id == Constants.ROLE_RBAC2_ID} != null
+        roleList.role.find {it.tenantId == tenantX1.id && it.id == Constants.ROLE_RBAC1_ID} != null
+    }
+
 
     def "Tenant type whitelist filter for roles assigned at a domain level"() {
         given:
