@@ -864,7 +864,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
     def auth_with_saml(self, saml, base64_url_encode=False, new_url=False,
                        content_type=None, accept_type='json',
-                       requestslib_kwargs=None):
+                       options=None, requestslib_kwargs=None):
         """
         Returns response object from saml auth api call for federated users
         POST call
@@ -890,8 +890,9 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 content_type or 'xml'
             )
 
-        resp = self.request('POST', url, data=saml, headers=headers,
-                            requestslib_kwargs=requestslib_kwargs)
+        resp = self.request(
+            'POST', url, data=saml, headers=headers, params=options,
+            requestslib_kwargs=requestslib_kwargs)
         return resp
 
     def logout_with_saml(self, saml=None,

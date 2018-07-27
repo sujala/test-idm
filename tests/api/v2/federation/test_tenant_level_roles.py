@@ -61,7 +61,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             const.CONTENT_TYPE] = 'application/xml'
 
     def fed_user_call(self, test_data, domain_id, private_key,
-                      public_key, issuer, roles=None):
+                      public_key, issuer, roles=None, apply_rcn_roles=False):
 
         # Check what happens with the fed users under that domain
         subject = self.generate_random_string(
@@ -77,9 +77,13 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             public_key_path=public_key, response_flavor='v2DomainOrigin',
             output_format='formEncode', roles=roles)
 
+        options = {
+            const.QUERY_PARAM_APPLY_RCN_ROLES: apply_rcn_roles
+        }
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=content_type,
-            base64_url_encode=base64_url_encode, new_url=new_url)
+            base64_url_encode=base64_url_encode, new_url=new_url,
+            options=options)
         return auth
 
     def create_idp_with_certs(self, domain_id, issuer, metadata=False):
@@ -239,22 +243,28 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         self.validate_auth_with_fed_token(
             test_data=test_data, key_path=key_path, cert_path=cert_path,
             issuer=issuer, role=role_1.name, tenant=tenant_1,
-            expected_response=401)
+            expected_response=401, apply_rcn_roles=True)
 
         self.validate_auth_with_fed_token(
             test_data=test_data, key_path=key_path, cert_path=cert_path,
             issuer=issuer, role=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME,
-            tenant=tenant_1, expected_response=200)
+            tenant=tenant_1, expected_response=200, apply_rcn_roles=True)
 
     def validate_auth_with_fed_token(self, test_data, key_path, cert_path,
-                                     issuer, role, tenant, expected_response):
+                                     issuer, role, tenant, expected_response,
+                                     apply_rcn_roles=False):
 
         role_to_add = '/'.join([role, tenant.id])
         fed_auth = self.fed_user_call(
             test_data=test_data, domain_id=self.domain_id,
             private_key=key_path, public_key=cert_path, issuer=issuer,
-            roles=[role_to_add])
+            roles=[role_to_add], apply_rcn_roles=apply_rcn_roles)
         self.assertEqual(fed_auth.status_code, 200)
+        # This method is for CID-1601
+        self.validate_wl_role_in_fed_auth_response(
+            auth=fed_auth, role=role, tenant=tenant,
+            expected_response=expected_response)
+
         fed_user_id = fed_auth.json()[const.ACCESS][const.USER][const.ID]
         self.users.append(fed_user_id)
         fed_user_token = fed_auth.json()[const.ACCESS][const.TOKEN][const.ID]
@@ -264,6 +274,20 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         auth_with_token_resp = self.identity_admin_client.get_auth_token(
             request_object=auth_with_token_req)
         self.assertEqual(auth_with_token_resp.status_code, expected_response)
+
+    def validate_wl_role_in_fed_auth_response(
+            self, auth, role, tenant, expected_response):
+
+        roles = auth.json()[const.ACCESS][const.USER][const.ROLES]
+        role_count = 0
+        for role_ in roles:
+            if role_[const.NAME] == role:
+                self.assertEqual(role_[const.TENANT_ID], tenant.id)
+                role_count += 1
+        if expected_response == 401:
+            self.assertEqual(role_count, 0)
+        elif expected_response == 200:
+            self.assertEqual(role_count, 1)
 
     @base.base.log_tearDown_error
     @unless_coverage
