@@ -44,10 +44,6 @@ public class CreateIdentityAdminService implements CreateUserService {
         }
 
         CreateUserUtil.attachRoleToUser(roleService.getIdentityAdminRole(), user);
-
-        if (!identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
-            user.setTokenFormat(null);
-        }
     }
 
 }

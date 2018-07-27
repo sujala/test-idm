@@ -65,16 +65,6 @@ public class GlobalAuthTokenProvider extends BaseAETokenProvider {
         final boolean isRackerUser = object instanceof Racker;
         final boolean isRackerToken = scopeAccess instanceof RackerScopeAccess;
 
-        // AE service supports
-        // - federated and provisioned user "unrestricted" tokens
-        // - provision user "restricted" and "un tokens
-        // - provisioned users & rackers creating "impersonation" tokens (against fed/provisioned users)
-        // - racker users creating "racker" tokens
-
-        if (!identityConfig.getReloadableConfig().getFeatureAETokensEncrypt() && TokenScopeEnum.fromScope(scopeAccess.getScope()) != TokenScopeEnum.MFA_SESSION_ID) {
-            return false; //if ae tokens are disabled then only support mfa session ids
-        }
-
         return (isProvisionedUser && (isImpersonationToken || isUserToken))
                 || (isFederatedUser && isUserToken)
                 || (isRackerUser && (isImpersonationToken || isRackerToken))
@@ -83,22 +73,7 @@ public class GlobalAuthTokenProvider extends BaseAETokenProvider {
 
     @Override
     public ScopeAccess unmarshallToken(String webSafeToken) {
-        ScopeAccess sa;
-        if (!identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
-            //decrypting all ae tokens except mfa session ids is disabled, so catch any exceptions
-            try {
-                sa = super.unmarshallToken(webSafeToken);
-                if (TokenScopeEnum.fromScope(sa.getScope()) != TokenScopeEnum.MFA_SESSION_ID) {
-                    sa = null;
-                }
-            } catch (Exception ex) {
-                LOG.warn("Decrypting potential AE token when AE tokens are disabled through exception. Returning null.", ex);
-                sa =  null;
-            }
-        } else {
-            sa =  super.unmarshallToken(webSafeToken);
-        }
-        return sa;
+        return super.unmarshallToken(webSafeToken);
     }
 
     @Override

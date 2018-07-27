@@ -27,7 +27,6 @@ class KeyCzarAuthenticatedMessageProviderTest extends Specification {
     def "crypter initialized on init"() {
         given:
         Crypter crypter = Mock(Crypter)
-        reloadableConfig.getFeatureAETokensDecrypt() >> true
 
         when:
         authenticatedMessageProvider.init()
@@ -39,7 +38,6 @@ class KeyCzarAuthenticatedMessageProviderTest extends Specification {
     def "encryption and decryption always lookup crypter on encryption and decryption"() {
         given:
         Crypter crypter = Mock(Crypter)
-        reloadableConfig.getFeatureAETokensDecrypt() >> true
 
         when:
         authenticatedMessageProvider.decrypt()

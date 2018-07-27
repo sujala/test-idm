@@ -7,7 +7,6 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdRe
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
-import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.service.IdentityPropertyService;
 import com.rackspace.idm.event.NewRelicCustomAttributesEnum;
 import com.rackspace.idm.exception.MissingRequiredConfigIdmException;
@@ -1255,10 +1254,6 @@ public class IdentityConfig {
         return result;
     }
 
-    private TokenFormat convertToTokenFormat(String strFormat) {
-        return TokenFormat.AE;
-    }
-
     /**
      * Return properties and their values, as annotated by {@link com.rackspace.idm.domain.config.IdmProp}.
      *
@@ -1409,10 +1404,6 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_USER_MANAGE_ROLE_NAME_PROP, description = "User manager role name.", versionAdded = "1.0.14.8")
         public String getIdentityUserManagerRoleName() {
             return getStringSafely(staticConfiguration, IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
-        }
-
-        public TokenFormat getIdentityProvisionedTokenFormat() {
-            return TokenFormat.AE;
         }
 
         @IdmProp(key = LDAP_PAGING_LIMIT_DEFAULT_PROP)
@@ -1829,25 +1820,6 @@ public class IdentityConfig {
             return getAENodeNameForSignoff();
         }
 
-        /**
-         * @deprecated
-         * @param idpLabeledUri
-         * @return
-         */
-        @Deprecated
-        public TokenFormat getIdentityFederationRequestTokenFormatForIdp(String idpLabeledUri) {
-            return TokenFormat.AE;
-        }
-
-        /**
-         * @deprecated
-         * @return
-         */
-        @Deprecated
-        public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
-            return TokenFormat.AE;
-        }
-
         @IdmProp(key = GROUP_DOMAINID_DEFAULT, description = "Default domain_id when creating a group", versionAdded = "3.0.0")
         public String getGroupDefaultDomainId() {
             return getStringSafely(reloadableConfiguration, GROUP_DOMAINID_DEFAULT);
@@ -2166,14 +2138,6 @@ public class IdentityConfig {
         @IdmProp(key = SESSION_ID_LIFETIME_PROP, versionAdded = "3.4.0", description = "Lifetime, in minutes, of MFA sessionIds. Was added as static prop in 2.2.0, but switched from to reloadable prop in version 3.4.0")
         public int getMfaSessionIdLifetime() {
             return getIntSafely(reloadableConfiguration, SESSION_ID_LIFETIME_PROP);
-        }
-
-        public boolean getFeatureAETokensEncrypt() {
-            return true;
-        }
-
-        public boolean getFeatureAETokensDecrypt() {
-            return true;
         }
 
         @IdmProp(key = FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, versionAdded = "3.3.1", description = "Whether or not to allow racker impersonation requests to see user's API key credentials.")
@@ -2716,11 +2680,6 @@ public class IdentityConfig {
     @Deprecated
     public String getIdentityUserManagerRoleName() {
         return getStaticConfig().getIdentityUserManagerRoleName();
-    }
-
-    @Deprecated
-    public TokenFormat getIdentityProvisionedTokenFormat() {
-        return getStaticConfig().getIdentityProvisionedTokenFormat();
     }
 
     @Deprecated
