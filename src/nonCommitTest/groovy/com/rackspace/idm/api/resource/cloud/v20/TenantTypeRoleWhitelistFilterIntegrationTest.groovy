@@ -515,7 +515,7 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Get accessible domain endpoints for user: endpoints on whitelisted tenant are not returned - feature enabled = #featureEnabled"() {
+    def "Get accessible domain endpoints for user: endpoints on tenants excluded by whitelisted tenant filter are not returned - feature enabled = #featureEnabled"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_PROP, featureEnabled)
         def mySubUser = cloud20.createSubUser(sharedUserAdminToken)
@@ -535,7 +535,7 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         utils.addRoleToUserOnTenantId(mySubUser, tenantEntity.id, Constants.ROLE_RBAC1_ID)
 
         // Create endpoint template
-        def endpointTemplate = utils.createEndpointTemplate(true, null, true, "compute", "ORD")
+        def endpointTemplate = utils.createEndpointTemplate(false, null, true, "compute", "ORD")
 
         // Add endpoint to tenant
         utils.addEndpointTemplateToTenant(tenantEntity.id, endpointTemplate.id)
@@ -549,22 +549,32 @@ class TenantTypeRoleWhitelistFilterIntegrationTest extends RootIntegrationTest {
         endpointList.endpoint.find {it.id == endpointTemplate.id} != null
 
         when: "list accessible domain endpoints for user - whitelisted"
-        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenant_type_x, Constants.ROLE_RBAC1_NAME)
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenantTypeName, Constants.ROLE_RBAC1_NAME)
         response = cloud20.getAccessibleDomainEndpointsForUser(sharedServiceAdminToken, mySubUser.id, mySubUser.domainId)
         endpointList = response.getEntity(EndpointList).value
 
-        then:
+        then: "endpoints are whitelisted"
+        response.status == SC_OK
+        endpointList.endpoint.find {it.id == endpointTemplate.id} != null
+
+        when: "list accessible domain endpoints for user - not whitelisted"
+        reloadableConfiguration.setProperty(IdentityConfig.TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + "." + tenantTypeName, Constants.ROLE_RBAC2_NAME)
+        response = cloud20.getAccessibleDomainEndpointsForUser(sharedServiceAdminToken, mySubUser.id, mySubUser.domainId)
+        endpointList = response.getEntity(EndpointList).value
+
+        then: "endpoints are not whitelisted when feature is on (removed from endpoint list)"
         response.status == SC_OK
         if (featureEnabled) {
-            endpointList.endpoint.find {it.id == endpointTemplate.id} == null
+            assert endpointList.endpoint.find {it.id == endpointTemplate.id} == null
         } else {
-            endpointList.endpoint.find {it.id == endpointTemplate.id} != null
+            assert endpointList.endpoint.find {it.id == endpointTemplate.id} != null
         }
 
         cleanup:
         utils.deleteUserQuietly(mySubUser)
         utils.deleteTenantQuietly(tenantEntity)
         utils.deleteTenantType(tenantTypeName)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplate.id.toString())
 
         where:
         featureEnabled << [true, false]
