@@ -289,6 +289,73 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         elif expected_response == 200:
             self.assertEqual(role_count, 1)
 
+    @tags('positive', 'p0', 'regression')
+    @attr(type='regression')
+    def test_list_wl_role_for_fed_user_on_tenant(self):
+
+        test_data = {"fed_input": {
+            "base64_url_encode": True,
+            "new_url": True,
+            "content_type": "x-www-form-urlencoded",
+            "fed_api": "v2",
+            "metadata": True,
+        }}
+        issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
+        provider_id, cert_path, key_path = self.create_idp_with_certs(
+            domain_id=self.domain_id, issuer=issuer, metadata=test_data[
+                'fed_input']['metadata'])
+        self.update_mapping_policy(idp_id=provider_id,
+                                   client=self.user_admin_client)
+
+        role_1, tenant_1 = self.set_up_role_and_tenant()
+        list_roles = self.fed_auth_and_call_get_roles_for_user_on_tenant(
+            test_data=test_data, key_path=key_path, cert_path=cert_path,
+            issuer=issuer, role=role_1.name, tenant=tenant_1,
+            expected_response=200)
+        self.assertEqual(list_roles.json()[
+                    const.RAX_AUTH_ROLE_ASSIGNMENTS][
+                    const.TENANT_ASSIGNMENTS], {})
+
+        list_roles = self.fed_auth_and_call_get_roles_for_user_on_tenant(
+            test_data=test_data, key_path=key_path, cert_path=cert_path,
+            issuer=issuer, role=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME,
+            tenant=tenant_1, expected_response=200)
+        roles_assignments = list_roles.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
+            const.TENANT_ASSIGNMENTS]
+        for assignment in roles_assignments:
+            if assignment[const.ON_ROLE_NAME] == \
+                                const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME:
+                self.assertEqual(
+                    assignment[const.SOURCES][0][const.ASSIGNMENT_TYPE],
+                    const.TENANT_ASSIGNMENT_TYPE)
+                self.assertEqual(
+                    assignment[const.SOURCES][0][const.SOURCE_TYPE],
+                    const.USER_SOURCE_TYPE)
+                self.assertEqual(
+                    assignment[const.FOR_TENANTS][0],
+                    tenant_1.id)
+
+    def fed_auth_and_call_get_roles_for_user_on_tenant(
+            self, test_data, key_path,
+            cert_path, issuer, role, tenant, expected_response):
+
+        role_to_add = '/'.join([role, tenant.id])
+        fed_auth = self.fed_user_call(
+            test_data=test_data, domain_id=self.domain_id,
+            private_key=key_path, public_key=cert_path, issuer=issuer,
+            roles=[role_to_add])
+        self.assertEqual(fed_auth.status_code, 200)
+        fed_user_id = fed_auth.json()[const.ACCESS][const.USER][const.ID]
+        self.users.append(fed_user_id)
+        fed_user_token = fed_auth.json()[const.ACCESS][const.TOKEN][const.ID]
+        fed_user_client = self.generate_client(
+            token=fed_user_token)
+        list_roles_resp = fed_user_client.list_effective_roles_for_user(
+                    user_id=fed_user_id,
+                    params={const.ON_TENANT_ID: tenant.id})
+        self.assertEqual(list_roles_resp.status_code, expected_response)
+        return list_roles_resp
+
     @base.base.log_tearDown_error
     @unless_coverage
     def tearDown(self):
