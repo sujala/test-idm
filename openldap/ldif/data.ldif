@@ -1,0 +1,60 @@
+version: 1
+
+dn: dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: dcObject
+dc: rackspace
+ou: rackspace
+
+dn: o=rackspace,dc=rackspace,dc=com
+objectClass: organization
+objectClass: top
+o: rackspace
+
+dn: ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Users
+
+dn: cn=test.racker,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: test.racker
+sn: racker
+uid: test.racker
+memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
+userPassword:: cGFzc3dvcmQ=
+
+dn: o=legacy,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organization
+o: legacy
+
+dn: cn=test.legacy,o=legacy,o=rackspace,dc=rackspace,dc=com
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+cn: test.legacy
+sn: racker
+uid: test.legacy
+memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
+userPassword:: cGFzc3dvcmQ=
+
+dn: cn=test.alias,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: alias
+objectClass: extensibleObject
+cn: test.alias
+aliasedObjectName: cn=test.legacy,o=legacy,o=rackspace,dc=rackspace,dc=com
+
+dn: ou=Groups,o=rackspace,dc=rackspace,dc=com
+ou: Groups
+objectClass: organizationalUnit
+objectClass: top
+
+dn: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
+objectClass: groupOfNames
+objectClass: top
+cn: team-cloud-identity
+member: cn=test.racker,ou=Users,o=rackspace,dc=rackspace,dc=com

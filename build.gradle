@@ -356,6 +356,16 @@ task zipEdirConfig(type: Zip) {
     from "edir/config"
 }
 
+task zipOpenLdapLdif(type: Zip) {
+    classifier = 'openldap-ldif'
+    from "openldap/ldif"
+}
+
+task zipOpenLdapConfig(type: Zip) {
+    classifier = 'openldap-config'
+    from "openldap/config"
+}
+
 task zipRepose(type: Zip) {
     classifier = 'repose'
     from "repose"
@@ -405,6 +415,8 @@ artifacts {
     archives zipLdap
     archives zipEdirLdif
     archives zipEdirConfig
+    archives zipOpenLdapLdif
+    archives zipOpenLdapConfig
     archives zipResources
     archives zipRepose
     archives jar
@@ -507,6 +519,8 @@ war.dependsOn zipConfig
 war.dependsOn zipLdap
 war.dependsOn zipEdirLdif
 war.dependsOn zipEdirConfig
+war.dependsOn zipOpenLdapLdif
+war.dependsOn zipOpenLdapConfig
 war.dependsOn zipRepose
 war.dependsOn copyBuildInfo
 clean.dependsOn deleteBuildInfo
@@ -676,6 +690,8 @@ publishing {
             artifact zipLdap
             artifact zipEdirLdif
             artifact zipEdirConfig
+            artifact zipOpenLdapLdif
+            artifact zipOpenLdapConfig
             artifact zipResources
             artifact zipRepose
             artifact jar
