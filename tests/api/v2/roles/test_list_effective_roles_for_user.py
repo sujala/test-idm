@@ -11,8 +11,7 @@ from tests.package.johny import constants as const
 
 class TestListEffectiveRolesForUser(base.TestBaseV2):
 
-    """ List effective role for user
-    """
+    """ List effective role for user."""
     @unless_coverage
     def setUp(self):
         """Create users needed for the tests and generate clients for
@@ -494,6 +493,63 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
 
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
+    def test_effective_roles_mpc_whitelist_filter(self):
+
+        self.sub_user_client = self.generate_client(
+            parent_client=self.user_admin_client,
+            additional_input_data={'domain_id': self.domain_id})
+
+        # create tenant and add role on tenant for user
+        tenant_one, tenant_role_name_one = \
+            self.create_tenant_and_add_role_on_tenant_for_user(
+                tenant_type=self.test_config.mpc_whitelist_tenant_type,
+                user_id=self.sub_user_client.default_headers[const.X_USER_ID]
+            )
+
+        resp = self.sub_user_client.list_effective_roles_for_user(
+            user_id=self.sub_user_client.default_headers[const.X_USER_ID])
+
+        # Verify that no roles are returned assigned to the tenant.
+        # (because the user has no whitelisted roles assigned on tenant.)
+        role_assignments = resp.json()[
+            const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]
+        role_for_wl_tenant_type = [
+            assigment for assigment in role_assignments
+            if tenant_one.name in assigment[const.FOR_TENANTS]]
+        self.assertEqual(len(role_for_wl_tenant_type), 0)
+
+        # Add WL role
+        hierarchical_billing_observer_role_id = self.get_role_id_by_name(
+            role_name=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME)
+        resp = self.identity_admin_client.add_role_to_user_for_tenant(
+            tenant_id=tenant_one.id,
+            user_id=self.sub_user_client.default_headers[const.X_USER_ID],
+            role_id=hierarchical_billing_observer_role_id)
+        self.assertEqual(resp.status_code, 200)
+
+        # Verify that roles are returned assigned to the tenant.
+        # (because the user now has whitelisted roles assigned on tenant.)
+        resp = self.sub_user_client.list_effective_roles_for_user(
+            user_id=self.sub_user_client.default_headers[const.X_USER_ID])
+        role_assignments = resp.json()[
+            const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]
+        role_for_wl_tenant_type = [
+            assigment for assigment in role_assignments
+            if tenant_one.name in assigment[const.FOR_TENANTS]]
+        self.assertGreater(len(role_for_wl_tenant_type), 0)
+
+    @classmethod
+    def get_role_id_by_name(cls, role_name):
+
+        option = {
+            const.PARAM_ROLE_NAME: role_name
+        }
+        get_role_resp = cls.identity_admin_client.list_roles(option=option)
+        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
+        return role_id
+
+    @tags('positive', 'p0', 'smoke')
+    @attr(type='smoke_alpha')
     def test_effective_roles_for_admin_user(self):
         # create and add role to user
         role_name = self.create_role_and_add_to_user(
@@ -663,9 +719,10 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
 
         return role_name
 
-    def create_tenant_and_add_role_on_tenant_for_user(self, user_id):
+    def create_tenant_and_add_role_on_tenant_for_user(
+            self, user_id, tenant_type=None):
         # create tenant
-        tenant = self.create_tenant()
+        tenant = self.create_tenant(tenant_type=tenant_type)
         # create tenant role
         tenant_role_id, tenant_role_name = self.create_role()
         # add tenant role to sub user for tenant
@@ -695,7 +752,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         # tenant access
         self.assertEqual(
             len(resp.json()[const.RAX_AUTH_ROLE_ASSIGNMENTS][
-                    const.TENANT_ASSIGNMENTS]),
+                const.TENANT_ASSIGNMENTS]),
             number_of_tenant_assignments)
 
         if number_of_tenant_assignments > 0:
@@ -810,8 +867,17 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         self.role_ids.append((role_id, role_name))
         return role_id, role_name
 
-    def create_tenant(self):
-        tenant_req = factory.get_add_tenant_object(domain_id=self.domain_id)
+    def create_tenant(self, tenant_type=None):
+        if tenant_type:
+            name = ":".join([tenant_type, self.generate_random_string(
+                pattern=const.TENANT_NAME_PATTERN)])
+            tenant_req = factory.get_add_tenant_object(
+                domain_id=self.domain_id,
+                tenant_name=name,
+                tenant_types=[tenant_type])
+        else:
+            tenant_req = factory.get_add_tenant_object(
+                domain_id=self.domain_id)
         add_tenant_resp = self.identity_admin_client.add_tenant(
             tenant=tenant_req)
         self.assertEqual(add_tenant_resp.status_code, 201)
