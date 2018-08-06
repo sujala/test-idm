@@ -15,6 +15,8 @@ echo "create admins"
 ./generate_files.py -u admins -c admin_file_config.json -o ../localhost/data/identity
 ./generate_files.py -u users -c file_config.json -o ../localhost/data/identity
 ./generate_files.py -u default_users -c default_user_file_config.json -o ../localhost/data/identity
+USERS_FILE_NAME=$(ls users)
+./add_rcn_to_domain.py -i users/${USERS_FILE_NAME} -s ${IDM_ENDPOINT}
 #./create_users_in_domain.py -p 10 -n 20 -i users -m 1
 #./generate_files.py -u users_in_dom -c users_in_domain.json -o ../localhost/data/identity -i true
 cd ..

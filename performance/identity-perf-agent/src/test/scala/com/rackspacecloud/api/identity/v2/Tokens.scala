@@ -6,8 +6,8 @@ import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import com.typesafe.config.ConfigFactory
 import io.gatling.http.Predef._
-
 import com.rackspacecloud.scenarios.Identity._
+
 import scala.collection.mutable.ArrayBuffer
 import scala.{Console => ScalaConsole}
 //import com.rackspace.idm.federation.samlgenerator.FederatedAuthV2
@@ -51,13 +51,21 @@ object IdentityFeederCircular extends Feeder[String] {
   }
 }
 
-object IdentityFeederRandom extends Feeder[String] {
+object IdentityFeederAlternatingCircular extends Feeder[String] {
 
   private var records: Iterator[Map[String, String]] = Iterator()
 
   private var cachedRecords: ArrayBuffer[Map[String, String]] = ArrayBuffer()
 
-  override def next: Map[String, String] = records.next()
+  override def next: Map[String, String] = {
+
+  records.next()
+
+  if (!records.hasNext) {
+    records = cachedRecords.toIterator
+  }
+    records.next()
+  }
 
   override def hasNext: Boolean = {
     if (records.hasNext) {
@@ -117,7 +125,7 @@ object Tokens {
   val fedDomainFeeder = csv(DATA_LOCATION + "data/identity/dom_users_for_fed.dat").circular
   val defaultUsersFeeder = csv(DATA_LOCATION + "data/identity/default_users_tokens.dat").circular
   val daFeeder = IdentityFeederCircular
-  val anotherDAFeeder = IdentityFeederCircular
+  val anotherDAFeeder = IdentityFeederAlternatingCircular
   val parentDADelegatePairingFeeder = IdentityFeederCircular
 
   // Can uncomment once we are ready to add this memory-leak test to regular perf suite
@@ -636,7 +644,6 @@ def v20_create_user: ChainBuilder = {
   def v20_delete_delegation_agreement: ChainBuilder = {
 
     feed(usersFeeder)
-      .feed(parentDADelegatePairingFeeder)
       .feed(daFeeder)
       .exec(
         http("DELETE DELEGATION AGREEMENT")

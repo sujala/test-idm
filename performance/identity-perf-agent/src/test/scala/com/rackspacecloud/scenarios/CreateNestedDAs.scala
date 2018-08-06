@@ -1,6 +1,6 @@
 package com.rackspacecloud.scenarios
 
-import com.rackspacecloud.api.identity.v2.{Tokens}
+import com.rackspacecloud.api.identity.v2.Tokens
 import io.gatling.core.Predef._
 
 object CreateNestedDAs {

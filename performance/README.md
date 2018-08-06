@@ -20,7 +20,7 @@ In order for us to validate any performance characteristics of the target identi
 
 1. Set up all of identity and its dependencies: `PWD=$(pwd) docker-compose up -d`
 
-2. Copy over `identity-saml-generator-*-.jar` from `tests/resources` to `data_generation` directory: `cp ../tests/resources/identity-saml-generator-* data_generation/'
+2. Run `cd identity-perf-agent` and then copy over `identity-saml-generator-*-.jar` from `tests/resources` to `data_generation` directory: `cp ../../tests/resources/identity-saml-generator-* data_generation/'
 
 3. Generate fed_origin cert: `pushd data_generation && jar xf identity-saml-generator-* sample_keys/fed-origin.crt && popd`
 
@@ -32,7 +32,7 @@ In order for us to validate any performance characteristics of the target identi
 
    4.2. Run `pip install -r data_generation/requirements.txt`
 
-   4.3. Run `cd identity-perf-agent` and then `mkdir -p localhost/data/identity`. Please wipe out any any old csv files in admins, users or default_users directories.
+   4.3. Run `mkdir -p localhost/data/identity`. Please wipe out any any old csv files in admins, users or default_users directories.
 
    4.4. Generate users in temporary directories (positional values are: ip, loops, normal users per loop, and admin users per loop): `pushd data_generation && ./create_users.sh http://${docker_ip}:8082/idm/cloud 1 10 5 1 && popd`.  This will create loops * (normal users per loop) users and loops * (admin users per loop) admins.
 
@@ -40,7 +40,7 @@ In order for us to validate any performance characteristics of the target identi
 
    4.6. Generate regular user data: `pushd data_generation && ./generate_files.py -u users -c file_config.json -o ../localhost/data/identity && popd`
 
-   4.7. Generate regular user data: `pushd data_generation && ./generate_files.py -u default_users -c default_user_file_config.json -o ../localhost/data/identity && popd`
+   4.7. Generate default user data: `pushd data_generation && ./generate_files.py -u default_users -c default_user_file_config.json -o ../localhost/data/identity && popd`
 
    The next two sub-steps need to be run only if you want to test `list users in domain` call for memory leak testing.
 
@@ -51,8 +51,6 @@ In order for us to validate any performance characteristics of the target identi
    4.10. If you need to do federation tests. You need to run this before running Engine.scala : `pushd data_generation && python create_idp_data.py -s http://localhost:8082/idm/cloud -f ../localhost/data/identity/dom_users_for_fed.dat && popd`
 
    4.11 If you want to run delegation tests, you need to run 'python data_generation/add_rcn_to_domain.py -i data_generation/users/<file_name>'. This will add RCN attribute to each domain in that file.
-
-   4.12 Currently, delegation tests for performance impact of parent DA deletion are added. But, it is to be run sequentially by editing Engine.scala. This needs to be corrected.
 
 5. Set up `identity-perf-agent/src/test/resources/application.properties` to the values you want to run with.  While there are many values, you can figure out the ones you need from your Simulation.  An example would be in `com.rackspacecloud.simulations.identity.IdentityDemo`:
 

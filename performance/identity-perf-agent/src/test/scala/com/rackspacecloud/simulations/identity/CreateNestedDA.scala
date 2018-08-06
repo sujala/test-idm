@@ -10,7 +10,7 @@ import io.gatling.core.structure.{PopulationBuilder, ScenarioBuilder}
 import scala.concurrent.duration._
 
 
-class CreateNestedDAs extends Simulation {
+class CreateNestedDA extends Simulation {
   val conf = ConfigFactory.load()
   val DAS_PER_SEC : Double =  conf.getDouble("soa.parent_das_per_sec")
 
