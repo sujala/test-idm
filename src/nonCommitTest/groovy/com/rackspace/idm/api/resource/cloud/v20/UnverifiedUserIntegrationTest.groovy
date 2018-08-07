@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Invite
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.RandomUtils
@@ -17,6 +19,7 @@ import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
+import javax.xml.datatype.DatatypeFactory
 
 class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
@@ -383,6 +386,231 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         createdUser['user'].each { prop ->
             assert expectedUnverifiedUserProperties.contains(prop.key)
         }
+    }
+
+    @Unroll
+    def "send invite for unverified users: accept = #accept"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def userManager = utils.createUser(userAdminToken)
+        def userManagerToken = utils.getToken(userManager.username)
+        utils.addRoleToUser(userManager, Constants.USER_MANAGE_ROLE_ID)
+        def user = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@rackspace.com"
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+        def response = cloud20.createUnverifiedUser(userAdminToken, user)
+        assert response.status == HttpStatus.SC_CREATED
+        def unverifiedUserEntity = response.getEntity(User).value
+
+        when: "using user admin token"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(userAdminToken, unverifiedUserEntity.id, accept)
+        def inviteEntity = getInviteEntity(response)
+
+        then: "assert valid response"
+        response.status == HttpStatus.SC_OK
+
+        inviteEntity.userId == unverifiedUserEntity.id
+        inviteEntity.email == unverifiedUserEntity.email
+        inviteEntity.registrationCode != null
+        inviteEntity.created != null
+
+        and: "email sent"
+        wiserWrapper.wiserServer.getMessages() != null
+        wiserWrapper.wiserServer.getMessages().size() == 1
+
+        when: "using user manager token"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(userManagerToken, unverifiedUserEntity.id, accept)
+        inviteEntity = getInviteEntity(response)
+
+        then: "assert valid response"
+        response.status == HttpStatus.SC_OK
+
+        inviteEntity.userId == unverifiedUserEntity.id
+        inviteEntity.email == unverifiedUserEntity.email
+        inviteEntity.registrationCode != null
+        inviteEntity.created != null
+
+        and: "email sent"
+        wiserWrapper.wiserServer.getMessages() != null
+        wiserWrapper.wiserServer.getMessages().size() == 1
+
+        when: "using identity admin token"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(utils.getIdentityAdminToken(), unverifiedUserEntity.id, accept)
+        inviteEntity = getInviteEntity(response)
+
+        then: "assert valid response"
+        response.status == HttpStatus.SC_OK
+
+        inviteEntity.userId == unverifiedUserEntity.id
+        inviteEntity.email == unverifiedUserEntity.email
+        inviteEntity.registrationCode != null
+        inviteEntity.created != null
+
+        and: "email sent"
+        wiserWrapper.wiserServer.getMessages() != null
+        wiserWrapper.wiserServer.getMessages().size() == 1
+
+        when: "using identity service admin token"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(utils.getIdentityAdminToken(), unverifiedUserEntity.id, accept)
+        inviteEntity = getInviteEntity(response)
+
+        then: "assert valid response"
+        response.status == HttpStatus.SC_OK
+
+        inviteEntity.userId == unverifiedUserEntity.id
+        inviteEntity.email == unverifiedUserEntity.email
+        inviteEntity.registrationCode != null
+        inviteEntity.created != null
+
+        and: "email sent"
+        wiserWrapper.wiserServer.getMessages() != null
+        wiserWrapper.wiserServer.getMessages().size() == 1
+
+        cleanup:
+        reloadableConfiguration.reset()
+        clearEmailServerMessages()
+
+        where:
+        accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "unauthorized users can not send an unverified user invite: accept = #accept"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def userAdmin2 = utils.createCloudAccount()
+        def userAdmin2Token = utils.getToken(userAdmin2.username)
+        def userManager2 = utils.createUser(userAdmin2Token)
+        def userManager2Token = utils.getToken(userManager2.username)
+        utils.addRoleToUser(userManager2, Constants.USER_MANAGE_ROLE_ID)
+        def defaultUser = utils.createUser(userAdminToken)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        def user = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@rackspace.com"
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+        def response = cloud20.createUnverifiedUser(userAdminToken, user)
+        assert response.status == HttpStatus.SC_CREATED
+        def unverifiedUserEntity = response.getEntity(User).value
+
+        when: "using default user's token"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(defaultUserToken, unverifiedUserEntity.id, accept)
+
+        then: "expect forbidden"
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        and: "email is not sent"
+        wiserWrapper.wiserServer.getMessages().isEmpty()
+
+        when: "using user admin's token from another domain"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(userAdmin2Token, unverifiedUserEntity.id, accept)
+
+        then: "expect forbidden"
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        and: "email is not sent"
+        wiserWrapper.wiserServer.getMessages().isEmpty()
+
+        when: "using user manage's token from another domain"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(userManager2Token, unverifiedUserEntity.id, accept)
+
+        then: "expect forbidden"
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        and: "email is not sent"
+        wiserWrapper.wiserServer.getMessages().isEmpty()
+
+        when: "using invalid token"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite("invalid", unverifiedUserEntity.id, accept)
+
+        then: "expect forbidden"
+        response.status == HttpStatus.SC_UNAUTHORIZED
+
+        and: "email is not sent"
+        wiserWrapper.wiserServer.getMessages().isEmpty()
+
+        cleanup:
+        reloadableConfiguration.reset()
+        clearEmailServerMessages()
+
+        where:
+        accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "error check: unverified user invite common errors: accept = #accept"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def defaultUser = utils.createUser(userAdminToken)
+        def user = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@rackspace.com"
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+        def response = cloud20.createUnverifiedUser(userAdminToken, user)
+        assert response.status == HttpStatus.SC_CREATED
+
+        when: "invalid user id"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(userAdminToken, "invalid", accept)
+
+        then: "expect not found"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format("Unverified user with ID '%s' was not found.", "invalid"))
+
+        and: "email is not sent"
+        wiserWrapper.wiserServer.getMessages().isEmpty()
+
+        when: "not an unverified user id"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(userAdminToken, defaultUser.id, accept)
+
+        then: "expect not found"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format("Unverified user with ID '%s' was not found.", defaultUser.id))
+
+        and: "email is not sent"
+        wiserWrapper.wiserServer.getMessages().isEmpty()
+
+        cleanup:
+        reloadableConfiguration.reset()
+        clearEmailServerMessages()
+
+        where:
+        accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def getInviteEntity(ClientResponse response) {
+        if (response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            return response.getEntity(Invite)
+        }
+
+        Invite invite = new Invite()
+        def entity = new JsonSlurper().parseText(response.getEntity(String))
+        invite.userId = entity["RAX-AUTH:invite"]["userId"]
+        invite.registrationCode = entity["RAX-AUTH:invite"]["registrationCode"]
+        invite.email = entity["RAX-AUTH:invite"]["email"]
+        invite.created = DatatypeFactory.newInstance().newXMLGregorianCalendar(entity["RAX-AUTH:invite"]["created"])
+
+        return invite
     }
 
 }

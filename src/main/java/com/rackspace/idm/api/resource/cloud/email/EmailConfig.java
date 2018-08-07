@@ -9,6 +9,7 @@ import java.util.List;
 
 public class EmailConfig {
     public static final String CONTENT_TEMPLATE_SUFFIX_NAME = "_content.vm";
+    public static final String CONTENT_HTML_TEMPLATE_SUFFIX_NAME = "_content_html.vm";
     public static final String SUBJECT_TEMPLATE_SUFFIX_NAME = "_subject.vm";
     public static final String PROPERTIES_SUFFIX_NAME = ".properties";
 
@@ -22,6 +23,9 @@ public class EmailConfig {
     private String contentVelocityTemplatePath;
 
     @Getter
+    private String contentHtmlVelocityTemplatePath;
+
+    @Getter
     private PropertiesConfiguration extraProperties;
 
     @Getter
@@ -31,6 +35,7 @@ public class EmailConfig {
     public EmailConfig(List<String> recipients, String emailPath, String prefix, PropertiesConfiguration extraProperties) {
         this.subjectVelocityTemplatePath = EmailConfig.constructEmailPartPath(emailPath, prefix, SUBJECT_TEMPLATE_SUFFIX_NAME);
         this.contentVelocityTemplatePath = EmailConfig.constructEmailPartPath(emailPath, prefix, CONTENT_TEMPLATE_SUFFIX_NAME);
+        this.contentHtmlVelocityTemplatePath = EmailConfig.constructEmailPartPath(emailPath, prefix, CONTENT_HTML_TEMPLATE_SUFFIX_NAME);
         this.extraProperties = extraProperties;
 
         //extract the standard props and push to in emailMeta

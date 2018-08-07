@@ -19,4 +19,9 @@ public final class EmailTemplateConstants {
      */
     public static final String MFA_USER_NAME_PROP = "username"; //string
 
+     /*
+        Dynamic properties made available to unverified user invite template
+     */
+    public static final String INVITE_USER_ID_PROP = "user_id"; // string
+    public static final String INVITE_REGISTRATION_CODE_PROP = "registration_code"; // string
 }

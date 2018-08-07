@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.DocumentService;
 import lombok.Setter;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.joda.time.Minutes;
 import org.slf4j.Logger;
@@ -47,6 +48,10 @@ public class MailTransferAgentClient implements EmailClient {
     public static final String MFA_DISABLED_PREFIX = "disabled";
     public static final String MFA_LOCKED_OUT_PREFIX = "lockedout";
 
+
+    public static final String UNVERIFIED_USER_TEMPLATE_DIR_NAME = "unverified_user";
+    public static final String UNVERIFIED_USER_EMAIL_BASE_DIR =  TEMPLATE_DIR + File.separator + UNVERIFIED_USER_TEMPLATE_DIR_NAME;
+    public static final String INVITE_PREFIX = "invite";
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -176,6 +181,38 @@ public class MailTransferAgentClient implements EmailClient {
     @Async
     public void asyncSendForgotPasswordMessage(User user, ScopeAccess token, String portal) {
         sendForgotPasswordMessage(user, token, portal);
+    }
+
+    @Override
+    public boolean sendUnverifiedUserInviteMessage(User user) {
+        Validate.notNull(user);
+        Validate.notEmpty(user.getId());
+        Validate.isTrue(user.isUnverified());
+        Validate.notEmpty(user.getEmail());
+        Validate.notEmpty(user.getRegistrationCode());
+
+        // Populate the velocity model
+        Map<String, Object> model = new HashMap<>();
+        model.put(EmailTemplateConstants.INVITE_USER_ID_PROP, user.getId());
+        model.put(EmailTemplateConstants.INVITE_REGISTRATION_CODE_PROP, user.getRegistrationCode());
+
+
+        // Calc the config
+        EmailConfig emailConfig = emailConfigBuilder.buildEmailConfig(Arrays.asList(user.getEmail()), UNVERIFIED_USER_EMAIL_BASE_DIR, INVITE_PREFIX);
+
+        try {
+            emailService.sendTemplatedMultiPartMimeEmail(emailConfig, model);
+            return true;
+        } catch (Exception ex) {
+            logger.error("Attempted to be send a unverified user invite, but encountered an error sending the email.", ex);
+            return false;
+        }
+    }
+
+    @Override
+    @Async
+    public void asyncSendUnverifiedUserInviteMessage(User user) {
+        sendUnverifiedUserInviteMessage(user);
     }
 
     /**

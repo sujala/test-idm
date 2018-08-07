@@ -3,10 +3,17 @@ package com.rackspace.idm.api.resource.cloud.email;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.*;
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailParseException;
+import org.springframework.mail.MailPreparationException;
+import org.springframework.mail.MailSendException;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 import java.util.Map;
 
 @Component
@@ -60,7 +67,47 @@ public class EmailServiceImpl implements EmailService {
         simpleMailMessage.setReplyTo(emailMetaProperties.getReplyTo());
         simpleMailMessage.setSubject(subject);
         simpleMailMessage.setText(message);
+
         mailSender.send(simpleMailMessage);
+    }
+
+    @Override
+    public void sendTemplatedMultiPartMimeEmail(EmailConfig emailConfig, Map<String, Object> velocityModel) throws MessagingException {
+        sendTemplatedMultiPartMimeEmail(emailConfig.getEmailMetaProperties(), emailConfig.getSubjectVelocityTemplatePath(), emailConfig.getContentVelocityTemplatePath(), emailConfig.getContentHtmlVelocityTemplatePath(), velocityModel);
+    }
+
+    @Override
+    public void sendTemplatedMultiPartMimeEmail(EmailMetaProperties emailMetaProperties, String subjectTemplateRelativePath, String contentTemplateRelativePath, String contentHtmlTemplateRelativePath, Map<String, Object> velocityModel) throws MessagingException {
+        String subject = resolveEmailTemplate(subjectTemplateRelativePath, velocityModel);
+        String content = resolveEmailTemplate(contentTemplateRelativePath, velocityModel);
+        String contentHtml = resolveEmailTemplate(contentHtmlTemplateRelativePath, velocityModel);
+
+        sendMultiPartMimeEmail(emailMetaProperties, subject, content, contentHtml);
+    }
+
+    @Override
+    public void sendMultiPartMimeEmail(EmailMetaProperties emailMetaProperties, String subject, String message, String messageHtml) throws MessagingException {
+        if (StringUtils.isBlank(subject)) {
+            throw new MailPreparationException("Can not send an empty subject email.");
+        }
+        if (StringUtils.isBlank(message) || StringUtils.isBlank(messageHtml)) {
+            throw new MailPreparationException("Can not send multi-part email, both text and html messages are required.");
+        }
+
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+        mimeMessageHelper.setTo(emailMetaProperties.getRecipientsAsArray());
+        mimeMessageHelper.setFrom(emailMetaProperties.getSender());
+
+        // ReplyTo will be default to sender if not set
+        if (StringUtils.isNotBlank(emailMetaProperties.getReplyTo())) {
+            mimeMessageHelper.setReplyTo(emailMetaProperties.getReplyTo());
+        }
+
+        mimeMessageHelper.setSubject(subject);
+        mimeMessageHelper.setText(message, messageHtml);
+
+        mailSender.send(mimeMessageHelper.getMimeMessage());
     }
 
     private String resolveEmailTemplate(String templateLocation, Map model) {

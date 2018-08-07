@@ -81,4 +81,76 @@ class EmailServiceIntegrationTest extends RootIntegrationTest {
         message.getMimeMessage().getReplyTo()[0].toString() == expectedReplyTo
     }
 
+    def "Use hardcoded 'no-reply@rackspace.com' sender if one is not provided for multi-part mime email"() {
+        given:
+        def expectedSender = "no-reply@rackspace.com"
+
+        reloadableConfiguration.setProperty(IdentityConfig.EMAIL_FROM_EMAIL_ADDRESS, null)
+        def emailConfig = emailConfigBuilder.buildEmailConfig(Arrays.asList("no-recip@rackspace.com"), TEST_EMAIL_DIR, "no_sender")
+
+        when:
+        emailService.sendTemplatedMultiPartMimeEmail(emailConfig, Collections.EMPTY_MAP)
+
+        then:
+        wiserWrapper.wiserServer.getMessages().size() == 1
+        WiserMessage message = wiserWrapper.wiserServer.getMessages().get(0)
+        message.getEnvelopeSender().toString().equals(expectedSender)
+
+        message.getMimeMessage().getReplyTo().length == 1
+        message.getMimeMessage().getReplyTo()[0].toString() == expectedSender
+    }
+
+    def "Use sender from reloadable properties when no configured sender in email template for multi-part mime email"() {
+        given:
+        def expectedSender = "sender@rackspace.com"
+        reloadableConfiguration.setProperty(IdentityConfig.EMAIL_FROM_EMAIL_ADDRESS, expectedSender)
+        def emailConfig = emailConfigBuilder.buildEmailConfig(Arrays.asList("no-recip@rackspace.com"), TEST_EMAIL_DIR, "no_sender")
+
+        when:
+        emailService.sendTemplatedMultiPartMimeEmail(emailConfig, Collections.EMPTY_MAP)
+
+        then:
+        wiserWrapper.wiserServer.getMessages().size() == 1
+        WiserMessage message = wiserWrapper.wiserServer.getMessages().get(0)
+        message.getEnvelopeSender().toString().equals(expectedSender)
+
+        //when reply-to not specified, uses sender
+        message.getMimeMessage().getReplyTo().length == 1
+        message.getMimeMessage().getReplyTo()[0].toString() == expectedSender
+    }
+
+    def "Use sender and reply-to from email template if configured for multi-part mime email"() {
+        given:
+        def expectedSender = "template-sender@rackspace.com"
+        def expectedReplyTo = "template-replyto@rackspace.com"
+
+        reloadableConfiguration.setProperty(IdentityConfig.EMAIL_FROM_EMAIL_ADDRESS, "property-sender@rackspace.com")
+        def emailConfig = emailConfigBuilder.buildEmailConfig(Arrays.asList("no-recip@rackspace.com"), TEST_EMAIL_DIR, "with_sender")
+
+        when:
+        emailService.sendTemplatedMultiPartMimeEmail(emailConfig, Collections.EMPTY_MAP)
+
+        then:
+        wiserWrapper.wiserServer.getMessages().size() == 1
+        WiserMessage message = wiserWrapper.wiserServer.getMessages().get(0)
+        message.getEnvelopeSender().toString().equals(expectedSender)
+        message.getMimeMessage().getReplyTo().length == 1
+        message.getMimeMessage().getReplyTo()[0].toString() == expectedReplyTo
+    }
+
+    def "Verify the multi-part mime email includes both text and HTML"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.EMAIL_FROM_EMAIL_ADDRESS, "property-sender@rackspace.com")
+        def emailConfig = emailConfigBuilder.buildEmailConfig(Arrays.asList("no-recip@rackspace.com"), TEST_EMAIL_DIR, "with_sender")
+
+        when:
+        emailService.sendTemplatedMultiPartMimeEmail(emailConfig, Collections.EMPTY_MAP)
+
+        then:
+        wiserWrapper.wiserServer.getMessages().size() == 1
+        WiserMessage message = wiserWrapper.wiserServer.getMessages().get(0)
+        message.toString().contains(/Content-Type: text\/plain/)
+        message.toString().contains(/Content-Type: text\/html/)
+    }
+
 }

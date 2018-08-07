@@ -8,6 +8,8 @@ import com.rackspace.idm.api.resource.IdmPathUtils
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.email.EmailClient
+import com.rackspace.idm.api.resource.cloud.email.EmailConfigBuilder
+import com.rackspace.idm.api.resource.cloud.email.EmailService
 import com.rackspace.idm.api.resource.cloud.v11.Cloud11Service
 import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
 import com.rackspace.idm.api.resource.cloud.v20.*
@@ -69,6 +71,8 @@ class RootServiceTest extends Specification {
     @Shared RepositoryConfig repositoryConfig
     @Shared AtomHopperClient atomHopperClient
     @Shared EmailClient emailClient
+    @Shared EmailConfigBuilder emailConfigBuilder
+    @Shared EmailService emailService
     @Shared RSAClient rsaClient
     @Shared Validator validator
     @Shared Validator20 validator20
@@ -860,6 +864,16 @@ class RootServiceTest extends Specification {
     def mockEmailClient(service) {
         emailClient = Mock()
         service.emailClient = emailClient
+    }
+
+    def mockEmailConfigBuilder(service) {
+        emailConfigBuilder = Mock()
+        service.emailConfigBuilder = emailConfigBuilder
+    }
+
+    def mockEmailService(service) {
+        emailService = Mock()
+        service.emailService = emailService
     }
 
     def mockRSAClient(service) {

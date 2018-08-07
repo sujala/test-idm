@@ -29,4 +29,18 @@ public interface EmailClient {
      * @param portal
      */
     void asyncSendForgotPasswordMessage(User user, ScopeAccess token, String portal);
+
+    /**
+     * Send the unverified user invite with the subject/content based on the templates.
+     *
+     * @param user
+     */
+    boolean sendUnverifiedUserInviteMessage(User user);
+
+    /**
+     * Send the unverified user invite HTML based email asynchronously
+     * @param user
+     * @throws IllegalArgumentException If unverified user's id, email, or registration code are null
+     */
+    void asyncSendUnverifiedUserInviteMessage(User user);
 }

@@ -29,6 +29,7 @@ public class DefaultEncryptionService implements EncryptionService {
     public static final String DISPLAY_NAME = "DisplayName";
     public static final String API_KEY = "ApiKey";
     public static final String PHONE_PIN = "PhonePin";
+    public static final String REGISTRATION_CODE = "registrationCode";
     public static final String CRYPTO_SALT = "crypto.salt";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -119,6 +120,16 @@ public class DefaultEncryptionService implements EncryptionService {
             logger.error(String.format(PROV_USER_ENCRYPTION_ERROR_MESSAGE, PHONE_PIN, user.getId()), e);
         } catch (InvalidCipherTextException e) {
             logger.error(String.format(PROV_USER_ENCRYPTION_ERROR_MESSAGE, PHONE_PIN, user.getId()), e);
+        }
+
+        try {
+            if (user.getRegistrationCode() != null) {
+                user.setEncryptedRegistrationCode(cryptHelper.encrypt(user.getRegistrationCode(), encryptionVersionId, encryptionSalt));
+            }
+        } catch (GeneralSecurityException e) {
+            logger.error(String.format(PROV_USER_ENCRYPTION_ERROR_MESSAGE, REGISTRATION_CODE, user.getId()), e);
+        } catch (InvalidCipherTextException e) {
+            logger.error(String.format(PROV_USER_ENCRYPTION_ERROR_MESSAGE, REGISTRATION_CODE, user.getId()), e);
         }
     }
 
@@ -233,6 +244,16 @@ public class DefaultEncryptionService implements EncryptionService {
             logger.error(String.format(PROV_USER_DECRYPTION_ERROR_MESSAGE, PHONE_PIN, user.getId()), e);
         } catch (InvalidCipherTextException e) {
             logger.error(String.format(PROV_USER_DECRYPTION_ERROR_MESSAGE, PHONE_PIN, user.getId()), e);
+        }
+
+        try {
+            if (user.getEncryptedRegistrationCode() != null) {
+                user.setRegistrationCode(cryptHelper.decrypt(user.getEncryptedRegistrationCode(), encryptionVersionId, encryptionSalt));
+            }
+        } catch (GeneralSecurityException e) {
+            logger.error(String.format(PROV_USER_DECRYPTION_ERROR_MESSAGE, REGISTRATION_CODE, user.getId()), e);
+        } catch (InvalidCipherTextException e) {
+            logger.error(String.format(PROV_USER_DECRYPTION_ERROR_MESSAGE, REGISTRATION_CODE, user.getId()), e);
         }
     }
 

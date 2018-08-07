@@ -181,6 +181,11 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(INVITE).path(USER).accept(accept).type(request).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
+    def sendUnverifiedUserInvite(String token, String userId, MediaType accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(INVITE).path(USER).path(userId).accept(accept).header(X_AUTH_TOKEN, token).put(ClientResponse)
+    }
+
     /**
      * Takes in an int domainId because cloud accounts MUST have an int domain on user creation to create the nast/mosso
      * tenants

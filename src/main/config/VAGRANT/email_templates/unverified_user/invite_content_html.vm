@@ -1,0 +1,26 @@
+<html>
+    <body>
+        <h3>You've been given access to a Rackspace account</h3>
+
+        <p>
+            To use this account, register a new username with Rackspace by completing the following steps:
+        </p>
+
+        <ol>
+            <li>Browse to: <a href="https://accounts.rackspace.com/users/${user_id}/registration/${registration_code}">https://accounts.rackspace.com/users/${user_id}/registration/${registration_code}</a></li>
+            <li>Create a username and password of your choice.</li>
+        </ol>
+
+        <p>
+            After registering, we recommend that you bookmark the following link to access this account in the future: <a href="https://login.rackspace.com">https://login.rackspace.com</a>
+        </p>
+
+        <p>
+            If you have any questions, contact your <a href="https://www.rackspace.com/support">Rackspace Fanatical Support(TM)</a> team.
+        </p>
+
+        <p>
+            Note: This invitation is for you only! Don't share the link and instructions with anyone else. Every registration email is unique and won't work for multiple users. If you need to register another user, either create a new user in the Portal and invite them, or contact your <a href="https://www.rackspace.com/support">support team</a>.
+        </p>
+    </body>
+</html>

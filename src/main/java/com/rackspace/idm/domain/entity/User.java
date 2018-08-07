@@ -258,6 +258,17 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
             defaultDecodeValue = "FALSE")
     private Boolean unverified;
 
+    @LDAPField(attribute = LdapRepository.ATTR_REGISTRATION_CODE,
+            objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
+    private byte[] encryptedRegistrationCode;
+    private String registrationCode;
+
+    @LDAPField(attribute=LdapRepository.ATTR_INVITE_CREATED_DATE,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private Date inviteSendDate;
+
     private List<TenantRole> roles;
 
     TokenFormatConverter tfEnumConverter = new TokenFormatConverter();

@@ -4920,6 +4920,118 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * exceptionHandler.exceptionResponse(_ as NotFoundException) >> Response.serverError()
     }
 
+    def "sendUnverifiedUserInvite: calls correct services"() {
+        given:
+        def domainId = "domainId"
+        def caller = entityFactory.createUser().with {
+            it.domainId = domainId
+            it
+        }
+        def unverifiedUser = entityFactory.createUser().with {
+            it.email = "test@rackspace.com"
+            it.domainId = domainId
+            it.unverified = true
+            it
+        }
+
+        when: "caller is a user admin"
+        service.sendUnverifiedUserInvite(headers, uriInfo(), authToken, unverifiedUser.id)
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * identityUserService.getProvisionedUserById(unverifiedUser.id) >> unverifiedUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * userService.updateUser(unverifiedUser)
+        1 * emailClient.asyncSendUnverifiedUserInviteMessage(unverifiedUser) >> { args ->
+            com.rackspace.idm.domain.entity.User user = args[0]
+            assert user.registrationCode != null
+            assert user.inviteSendDate != null
+        }
+
+        when: "caller is a service admin"
+        caller.domainId = "otherDomain"
+        service.sendUnverifiedUserInvite(headers, uriInfo(), authToken, unverifiedUser.id)
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * identityUserService.getProvisionedUserById(unverifiedUser.id) >> unverifiedUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.SERVICE_ADMIN
+        1 * userService.updateUser(unverifiedUser)
+        1 * emailClient.asyncSendUnverifiedUserInviteMessage(unverifiedUser) >> { args ->
+            com.rackspace.idm.domain.entity.User user = args[0]
+            assert user.registrationCode != null
+            assert user.inviteSendDate != null
+        }
+
+        when: "caller is an identity admin"
+        caller.domainId = "otherDomain"
+        service.sendUnverifiedUserInvite(headers, uriInfo(), authToken, unverifiedUser.id)
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * identityUserService.getProvisionedUserById(unverifiedUser.id) >> unverifiedUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        1 * userService.updateUser(unverifiedUser)
+        1 * emailClient.asyncSendUnverifiedUserInviteMessage(unverifiedUser) >> { args ->
+            com.rackspace.idm.domain.entity.User user = args[0]
+            assert user.registrationCode != null
+            assert user.inviteSendDate != null
+        }
+    }
+
+    def "sendUnverifiedUserInvite: error check"() {
+        given:
+        mockExceptionHandler(service)
+        def domainId = "domainId"
+        def caller = entityFactory.createUser().with {
+            it.domainId = domainId
+            it
+        }
+        def unverifiedUser = entityFactory.createUser().with {
+            it.email = "test@rackspace.com"
+            it.domainId = domainId
+            it.unverified = true
+            it
+        }
+
+        when: "unverified user not found"
+        service.sendUnverifiedUserInvite(headers, uriInfo(), authToken, unverifiedUser.id)
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * identityUserService.getProvisionedUserById(unverifiedUser.id) >> null
+        1 * exceptionHandler.exceptionResponse(_ as NotFoundException) >> Response.serverError()
+
+
+        when: "caller is a user admin in another domain"
+        caller.domainId = "otherDomain"
+        service.sendUnverifiedUserInvite(headers, uriInfo(), authToken, unverifiedUser.id)
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * identityUserService.getProvisionedUserById(unverifiedUser.id) >> unverifiedUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+
+        when: "caller is a user manager in another domain"
+        service.sendUnverifiedUserInvite(headers, uriInfo(), authToken, unverifiedUser.id)
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * identityUserService.getProvisionedUserById(unverifiedUser.id) >> unverifiedUser
+        1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.USER_MANAGER
+        1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+
+        when: "caller is a default user in same domain"
+        service.sendUnverifiedUserInvite(headers, uriInfo(), authToken, unverifiedUser.id)
+
+        then:
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null) >> {
+            throw new ForbiddenException()
+        }
+        1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)
@@ -4967,6 +5079,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserConverter(service)
         mockSamlUnmarshaller(service)
         mockIdmPathUtils(service)
+        mockEmailClient(service)
     }
 
     def createFilter(FilterParam.FilterParamName name, String value) {

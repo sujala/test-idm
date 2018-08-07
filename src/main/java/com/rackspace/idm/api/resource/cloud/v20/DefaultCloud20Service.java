@@ -15,6 +15,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederatio
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Invite;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordReset;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin;
@@ -51,11 +52,11 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.NewRelicTransactionNames;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.ImmutableClientRole;
-import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -91,7 +92,31 @@ import com.rackspace.idm.domain.entity.TokenScopeEnum;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthenticationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.CloudRegionService;
+import com.rackspace.idm.domain.service.CreateSubUserService;
+import com.rackspace.idm.domain.service.DelegationService;
+import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.FederatedIdentityService;
+import com.rackspace.idm.domain.service.GroupService;
+import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum;
+import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+import com.rackspace.idm.domain.service.IdpPolicyFormatEnum;
+import com.rackspace.idm.domain.service.PhonePinService;
+import com.rackspace.idm.domain.service.QuestionService;
+import com.rackspace.idm.domain.service.RoleLevelEnum;
+import com.rackspace.idm.domain.service.RoleService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.SecretQAService;
+import com.rackspace.idm.domain.service.ServiceCatalogInfo;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.TenantTypeService;
+import com.rackspace.idm.domain.service.TokenRevocationService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.CreateIdentityAdminService;
 import com.rackspace.idm.domain.service.impl.CreateUserAdminService;
 import com.rackspace.idm.domain.service.impl.CreateUserUtil;
@@ -115,6 +140,7 @@ import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
+import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlUnmarshaller;
 import com.rackspace.idm.validation.Cloud20CreateUserValidator;
@@ -126,7 +152,6 @@ import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
@@ -189,6 +214,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -472,6 +498,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private DelegationService delegationService;
+
+    @Autowired
+    private EmailClient emailClient;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -930,6 +959,56 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.created(uriInfo.getBaseUriBuilder().path("v2.0").path("users").path(unverifiedUser.getId()).build()).entity(responseUser);
         } catch (Exception ex) {
+            logger.debug("Error creating unverified user.", ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder sendUnverifiedUserInvite(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String userId) {
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
+
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            User retrievedUnverifiedUser = identityUserService.getProvisionedUserById(userId);
+
+            if (retrievedUnverifiedUser == null || !retrievedUnverifiedUser.isUnverified()) {
+                throw new NotFoundException(String.format("Unverified user with ID '%s' was not found.", userId), ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            // Verify caller has permission to send invite
+            IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+            if (!(IdentityUserTypeEnum.SERVICE_ADMIN == callerType
+                    || IdentityUserTypeEnum.IDENTITY_ADMIN == callerType
+                    || caller.getDomainId().equalsIgnoreCase(retrievedUnverifiedUser.getDomainId()))) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
+            /* Update unverified user's information to include registration code and updated send date for the
+             * invitation.
+             */
+
+            // Generate a secure 256-bit random number
+            retrievedUnverifiedUser.setRegistrationCode(RandomGeneratorUtil.generateSecureRandomNumber(64));
+            retrievedUnverifiedUser.setInviteSendDate(new Date());
+
+            userService.updateUser(retrievedUnverifiedUser);
+
+            // Attempt to send email
+            emailClient.asyncSendUnverifiedUserInviteMessage(retrievedUnverifiedUser);
+
+            // Create the invite
+            Invite invite = new Invite();
+            invite.setUserId(retrievedUnverifiedUser.getId());
+            invite.setEmail(retrievedUnverifiedUser.getEmail());
+            invite.setCreated(DatatypeFactory.newInstance()
+                    .newXMLGregorianCalendar(new DateTime(retrievedUnverifiedUser.getInviteSendDate()).toGregorianCalendar()));
+            invite.setRegistrationCode(retrievedUnverifiedUser.getRegistrationCode());
+
+            return Response.ok(invite);
+        } catch (Exception ex) {
+            logger.debug(String.format("Error sending invite to unverified user '%s'.", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }
