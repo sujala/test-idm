@@ -1,12 +1,26 @@
+*Welcome to Rackspace*
+
 You've been given access to a Rackspace account
 
 To use this account, register a new username with Rackspace by completing the following steps:
 
 1. Browse to: https://accounts.rackspace.com/users/${user_id}/registration/${registration_code}
 2. Create a username and password of your choice.
+3. Set a secret question and answer.
 
 After registering, we recommend that you bookmark the following link to access this account in the future: https://login.rackspace.com
 
-If you have any questions, contact your Rackspace Fanatical Support(TM) (https://www.rackspace.com/support) team.
+If you have any questions, contact your Rackspace Fanatical Support(R) team. (https://www.rackspace.com/support)
 
-Note: This invitation is for you only! Don't share the link and instructions with anyone else. Every registration email is unique and won't work for multiple users. If you need to register another user, either create a new user in the Portal and invite them, or contact your support team (https://www.rackspace.com/support).
+Note: This invitation is for you only and expires in ${ttl_hours} hours! Don't share the link and instructions with anyone else. Every registration email is unique and won't work for multiple users. If you need to register another user, either create a new user and invite them, or contact your support team.
+
+-------------------------------------------------------
+
+Want to manage your account on-the-go?
+
+Download our app to quickly view product status and communications from Rackspace.
+
+- iPhone App Store Download: https://itunes.apple.com/us/app/rackspace-mobile/id672443103?mt=8
+- Google Play Download: https://play.google.com/store/apps/details?id=com.rackspace.cloudmobile&hl=en&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1
+
+Copyright ${year} Rackspace US. Inc. | Support: 1-800-961-4454

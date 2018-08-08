@@ -20,6 +20,8 @@ import javax.annotation.PostConstruct;
 import javax.mail.Session;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -195,16 +197,19 @@ public class MailTransferAgentClient implements EmailClient {
         Map<String, Object> model = new HashMap<>();
         model.put(EmailTemplateConstants.INVITE_USER_ID_PROP, user.getId());
         model.put(EmailTemplateConstants.INVITE_REGISTRATION_CODE_PROP, user.getRegistrationCode());
-
+        model.put(EmailTemplateConstants.INVITE_TTL_HOURS_PROP,
+                identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours());
+        model.put(EmailTemplateConstants.INVITE_YEAR_PROP, Calendar.getInstance().get(Calendar.YEAR));
 
         // Calc the config
-        EmailConfig emailConfig = emailConfigBuilder.buildEmailConfig(Arrays.asList(user.getEmail()), UNVERIFIED_USER_EMAIL_BASE_DIR, INVITE_PREFIX);
+        EmailConfig emailConfig = emailConfigBuilder.buildEmailConfig(Collections.singletonList(user.getEmail()), UNVERIFIED_USER_EMAIL_BASE_DIR, INVITE_PREFIX);
 
         try {
             emailService.sendTemplatedMultiPartMimeEmail(emailConfig, model);
             return true;
         } catch (Exception ex) {
-            logger.error("Attempted to be send a unverified user invite, but encountered an error sending the email.", ex);
+            String errMsg = String.format("Attempted to send invite to unverified user '%s', but encountered an error sending the email.", user.getId());
+            logger.error(errMsg, ex);
             return false;
         }
     }

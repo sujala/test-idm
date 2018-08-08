@@ -24,4 +24,6 @@ public final class EmailTemplateConstants {
      */
     public static final String INVITE_USER_ID_PROP = "user_id"; // string
     public static final String INVITE_REGISTRATION_CODE_PROP = "registration_code"; // string
+    public static final String INVITE_TTL_HOURS_PROP = "ttl_hours"; // string
+    public static final String INVITE_YEAR_PROP = "year"; // string
 }

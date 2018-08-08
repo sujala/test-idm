@@ -1,26 +1,128 @@
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title></title>
+        <style>
+            table, td { border-collapse: collapse;}
+            td { padding-left: 20px; padding-right: 20px;
+                 font-family: 'Roboto', sans-serif;
+                 font-weight: 400; font-size: 16px;
+                 color: #424242; line-height: 24px;}
+            a { color: #0d74d1; text-decoration: none; cursor: pointer; }
+            a:hover, a.hover { color: #3391ff;}
+        </style>
+        <link href='https://fonts.googleapis.com/css?family=Roboto:400,300,700,500,100' rel='stylesheet' type='text/css'>
+    </head>
     <body>
-        <h3>You've been given access to a Rackspace account</h3>
-
-        <p>
-            To use this account, register a new username with Rackspace by completing the following steps:
-        </p>
-
-        <ol>
-            <li>Browse to: <a href="https://accounts.rackspace.com/users/${user_id}/registration/${registration_code}">https://accounts.rackspace.com/users/${user_id}/registration/${registration_code}</a></li>
-            <li>Create a username and password of your choice.</li>
-        </ol>
-
-        <p>
-            After registering, we recommend that you bookmark the following link to access this account in the future: <a href="https://login.rackspace.com">https://login.rackspace.com</a>
-        </p>
-
-        <p>
-            If you have any questions, contact your <a href="https://www.rackspace.com/support">Rackspace Fanatical Support(TM)</a> team.
-        </p>
-
-        <p>
-            Note: This invitation is for you only! Don't share the link and instructions with anyone else. Every registration email is unique and won't work for multiple users. If you need to register another user, either create a new user in the Portal and invite them, or contact your <a href="https://www.rackspace.com/support">support team</a>.
-        </p>
+        <table cellspacing="0" cellpadding="0" border="0" style="width:800px;" width="800">
+            <tr>
+                <td>
+                    <table style="border-bottom:1px solid #D8D8D8;" width="100%">
+                        <tr>
+                            <td style="padding-top:16px; padding-bottom:16px; padding-left:0px; min-width:500px;">
+                                <table>
+                                    <tr>
+                                        <td style="font-weight:100; font-size:48px; padding-left:0px; line-height:52px">
+                                            Welcome to Rackspace
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td width="175" style="width:175px">
+                                <a href="https://www.rackspace.com/" target="_blank" style="text-decoration:none">
+                                    <img src="http://c1ee333499ed5f44e56a-fa12562cfe810d69bedcc36a0ac289ef.r55.cf1.rackcdn.com/img/layout/email-templates/RS-Logo.png" style="width:150px;height:32px;padding-bottom:6px" width="150" height="32"/>
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size:24px;padding-top:20px">
+                    You've been given access to a Rackspace account
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size:16px; padding-top:24px">
+                    To use this account, <a href="https://accounts.rackspace.com/users/${user_id}/registration/${registration_code}">register a new username</a> with Rackspace by completing the following steps:
+                    <ol>
+                        <li>Create a username and password of your choice.</li>
+                        <li>Set a secret question and answer.</li>
+                    </ol>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size:16px; padding-top:14px">
+                    After registering, we recommend that you bookmark the following link to access this account in the future: <a href="https://login.rackspace.com">https://login.rackspace.com</a>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size:16px; padding-top:24px">
+                    If you have any questions, contact your <a href="https://www.rackspace.com/support">Rackspace <b>Fanatical Support</b>&reg; team</a>.
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-top:24px">
+                    <a href="https://accounts.rackspace.com/users/${user_id}/registration/${registration_code}" style="text-decoration:none;color:white;background-color: #006064;padding:10px;font-size:14px;cursor: pointer;border-radius:2px" target="_blank">
+                            REGISTER USER
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size:16px; padding-top:24px; color:#6b6b6b; padding-bottom:36px;">
+                    <b>Note:</b> This invitation is for you only and expires in ${ttl_hours} hours! Don't share the link and instructions with anyone else. Every registration email is unique and won't work for multiple users. If you need to register another user, either create a new user and invite them, or contact your <a href="https://www.rackspace.com/support">support team</a>.
+                </td>
+            </tr>
+            <tr style="background-color:#F5F5F5;border:1px solid #E7E7E7;">
+                <td style="padding: 24px 0px;">
+                    <table align="left">
+                        <tr>
+                            <td style="font-weight:700">
+                                Want to manage your account on-the-go?
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Download our app to quickly view product status and
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                               communications from Rackspace.
+                            </td>
+                        </tr>
+                    </table>
+                    <table align="left">
+                        <tr>
+                            <td style="padding-left:48px;padding-right:0px">
+                                 <a href="https://itunes.apple.com/us/app/rackspace-mobile/id672443103?mt=8" target="_blank"><img src="http://c1ee333499ed5f44e56a-fa12562cfe810d69bedcc36a0ac289ef.r55.cf1.rackcdn.com/img/layout/email-templates/appBadge.png" style="width:135px;height:40px" width="135" height="40"/></a>
+                            </td>
+                            <td style="padding-right:0px;padding-left:10px">
+                                <a href="https://play.google.com/store/apps/details?id=com.rackspace.cloudmobile&hl=en&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1" target="_blank"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" style="width:155.938px;height:60.348px" width="155.938" height="60.348"/></a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr bgcolor="#000000">
+                <td style="padding: 20px 0px;">
+                    <table align="left">
+                        <tr>
+                            <td style="font-size:14px; line-height: 14px;color:#E0E0E0;">
+                                &copy; ${year} Rackspace US. Inc.
+                            </td>
+                        </tr>
+                    </table>
+                    <table>
+                        <tr>
+                            <td style="font-size:14px; line-height: 14px; color:#E0E0E0; padding-left:10px">
+                                Support: <a href="tel:1-800-961-4454">1-800-961-4454</a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
     </body>
 </html>

@@ -602,6 +602,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_CREATE_INVITES_PROP = "feature.enable.create.invites";
     public static final boolean FEATURE_ENABLE_CREATE_INVITES_DEFAULT = false;
 
+    public static final String UNVERIFIED_USER_INVITES_TTL_HOURS_PROP = "unverified.user.invites.ttl.hours";
+    public static final int UNVERIFIED_USER_INVITES_TTL_HOURS_DEFAULT = 48;
+
     /**
      * Identity Repository Properties
      */
@@ -624,7 +627,6 @@ public class IdentityConfig {
 
     public static final String INVITES_SUPPORTED_FOR_RCNS_PROP = "invites.supported.for.rcns";
     public static final String INVITES_SUPPORTED_FOR_RCNS_DEFAULT = "";
-
 
     /**
      * Opentracing properties
@@ -918,6 +920,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_PROP, FEATURE_DELETE_ALL_TENANTS_WHEN_TENANT_IS_REMOVED_FROM_DOMAIN_DEFAULT);
         defaults.put(FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_PROP, FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_DEFAULT);
         defaults.put(FEATURE_ENABLE_CREATE_INVITES_PROP, FEATURE_ENABLE_CREATE_INVITES_DEFAULT);
+        defaults.put(UNVERIFIED_USER_INVITES_TTL_HOURS_PROP, UNVERIFIED_USER_INVITES_TTL_HOURS_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -2576,6 +2579,12 @@ public class IdentityConfig {
         public boolean isCreationOfInviteUsersEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_CREATE_INVITES_PROP);
         }
+
+        @IdmProp(key = UNVERIFIED_USER_INVITES_TTL_HOURS_PROP, versionAdded = "3.25.0", description = "The TTL in hours for unverified user invites")
+        public int getUnverifiedUserInvitesTTLHours() {
+            return getIntSafely(reloadableConfiguration, UNVERIFIED_USER_INVITES_TTL_HOURS_PROP);
+        }
+
     }
 
     public class RepositoryConfig {
