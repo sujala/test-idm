@@ -658,6 +658,11 @@ public class IdentityConfig {
     public static final String OPENTRACING_MAX_BUFFER_SIZE_PROP = "opentracing.max.buffer.size";
     public static final Integer OPENTRACING_MAX_BUFFER_SIZE_DEFAULT = 10000; // 10k
 
+    public static final String AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP = "auth.ldap.use.active.directory";
+    public static final boolean AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_DEFAULT = false;
+    public static final String AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP = "auth.ldap.search.for.user.before.bind";
+    public static final boolean AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_DEFAULT = false;
+
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -793,6 +798,8 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
         defaults.put(LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP, LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_DEFAULT);
         defaults.put(LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_PROP, LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_DEFAULT);
+        defaults.put(AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP, AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_DEFAULT);
+        defaults.put(AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP, AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP, FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_DEFAULT);
 
@@ -1767,6 +1774,16 @@ public class IdentityConfig {
         public Integer getOpenTracingMaxBufferSize() {
             return getIntSafely(staticConfiguration, OPENTRACING_MAX_BUFFER_SIZE_PROP);
         }
+
+        @IdmProp(key = AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP, versionAdded = "3.25.0", description = "This must be set to 'true' if the property auth.ldap.server points to an ADFS racker server, false if configured for an eDir racker server")
+        public boolean useActiveDirectory() {
+            return getBooleanSafely(staticConfiguration, AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP);
+        }
+
+        @IdmProp(key = AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP, versionAdded = "3.25.0", description = "Specify ActiveDirectory to search for user before trying to bind")
+        public boolean getActiveDirectorySearchForUserBeforeBind() {
+            return getBooleanSafely(staticConfiguration, AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP);
+        }
     }
 
     /**
@@ -2559,7 +2576,6 @@ public class IdentityConfig {
         public boolean isCreationOfInviteUsersEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_CREATE_INVITES_PROP);
         }
-
     }
 
     public class RepositoryConfig {

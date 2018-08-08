@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
 import com.rackspace.idm.exception.NotFoundException;
@@ -25,15 +26,29 @@ public class LdapAuthRepository implements AuthDao {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public boolean authenticate(String userName, String password) {
         logger.debug("Authenticating racker {}", userName);
         Audit audit = Audit.authRacker(userName);
 
+        String userDn = getBindDn(userName);
+
+        if (identityConfig.getStaticConfig().getActiveDirectorySearchForUserBeforeBind()) {
+            try {
+                SearchResultEntry rackerEntry = getRackerEntry(userName);
+                userDn = rackerEntry.getDN();
+            } catch (NotFoundException e) {
+                return false;
+            }
+        }
+
         BindResult result = null;
         try {
-            final String userDn = String.format("cn=%s,", userName) + getBaseDn();
             result = connPool.bindAndRevertAuthentication(userDn, password);
         } catch (LDAPException e1) {
             if (ResultCode.INVALID_CREDENTIALS.equals(e1.getResultCode())) {
@@ -71,12 +86,30 @@ public class LdapAuthRepository implements AuthDao {
 
     @Override
     public List<String> getRackerRoles(String username) {
-        List<String> roles = new ArrayList<String>();
+        SearchResultEntry entry = getRackerEntry(username);
+        List<String> roles = getRackerRoles(entry);
 
+        return roles;
+    }
+
+    private List<String> getRackerRoles(SearchResultEntry entry) {
+        List<String> roles = new ArrayList<String>();
+        String[] groups = entry.getAttributeValues(getMembershipAttribute());
+
+        if(groups != null && groups.length > 0) {
+            for (String group : groups) {
+                String[] split1 = group.split(",");
+                roles.add(split1[0].split("=")[1]);
+            }
+        }
+        return roles;
+    }
+
+    private SearchResultEntry getRackerEntry(String username) {
         SearchResultEntry entry = null;
         try {
             final Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_UID, username).build();
-            entry = getLdapInterface().searchForEntry(getBaseDn(), SearchScope.ONE, searchFilter);
+            entry = getLdapInterface().searchForEntry(getBaseDn(), getSearchScope(), searchFilter, getMembershipAttribute());
             if (entry == null) {
                 // Handle aliases
                 entry = getAliasEntry(username);
@@ -91,16 +124,7 @@ public class LdapAuthRepository implements AuthDao {
             throw new NotFoundException(errMsg);
         }
 
-        String[] groups = entry.getAttributeValues("groupMembership");
-
-        if(groups != null && groups.length > 0) {
-            for (String group : groups) {
-                String[] split1 = group.split(",");
-                roles.add(split1[0].split("=")[1]);
-            }
-        }
-
-        return roles;
+        return entry;
     }
 
     private String getBaseDn() {
@@ -113,7 +137,7 @@ public class LdapAuthRepository implements AuthDao {
 
     private String getAliasDN(String username) throws LDAPSearchException {
         final Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_NAME, username).build();
-        final SearchResultEntry entry = connPool.searchForEntry(getBaseDn(), SearchScope.ONE, DereferencePolicy.NEVER, 0, false, searchFilter, ATTR_ALIASEDOBJECTNAME);
+        final SearchResultEntry entry = connPool.searchForEntry(getBaseDn(), getSearchScope(), DereferencePolicy.NEVER, 0, false, searchFilter, ATTR_ALIASEDOBJECTNAME);
         if (entry != null && entry.getAttribute(ATTR_ALIASEDOBJECTNAME) != null) {
             return entry.getAttribute(ATTR_ALIASEDOBJECTNAME).getValueAsDN().toNormalizedString();
         } else {
@@ -126,7 +150,7 @@ public class LdapAuthRepository implements AuthDao {
         if (userDn == null) {
             return null;
         } else {
-            return getLdapInterface().getEntry(userDn);
+            return getLdapInterface().getEntry(userDn, getMembershipAttribute());
         }
     }
 
@@ -136,6 +160,30 @@ public class LdapAuthRepository implements AuthDao {
             throw new LDAPException(ResultCode.INVALID_CREDENTIALS);
         } else {
             return connPool.bindAndRevertAuthentication(realUserDn, password);
+        }
+    }
+
+    private String getMembershipAttribute() {
+        if (identityConfig.getStaticConfig().useActiveDirectory()) {
+            return "memberOf";
+        } else {
+            return "groupMembership";
+        }
+    }
+
+    private String getBindDn(String userName) {
+        if (identityConfig.getStaticConfig().useActiveDirectory()) {
+            return String.format("%s@rackspace.corp", userName);
+        } else {
+            return String.format("cn=%s,", userName) + getBaseDn();
+        }
+    }
+
+    SearchScope getSearchScope() {
+        if (identityConfig.getStaticConfig().useActiveDirectory()) {
+            return SearchScope.SUB;
+        } else {
+            return SearchScope.ONE;
         }
     }
 

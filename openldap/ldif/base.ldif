@@ -1,0 +1,121 @@
+version: 1
+
+dn: dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: dcObject
+dc: rackspace
+ou: rackspace
+
+dn: o=rackspace,dc=rackspace,dc=com
+objectClass: organization
+objectClass: top
+o: rackspace
+
+dn: ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Users
+
+dn: cn=test.racker,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: test.racker
+sn: racker
+uid: test.racker
+memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
+userPassword:: cGFzc3dvcmQ=
+
+dn: cn=test.alias,o=rackspace,dc=rackspace,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: top
+sn: alias
+cn: test.alias
+uid: test.alias
+memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
+userPassword:: cGFzc3dvcmQ=
+
+dn: o=legacy,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organization
+o: legacy
+
+dn: cn=test.legacy,o=legacy,o=rackspace,dc=rackspace,dc=com
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+cn: test.legacy
+sn: legacy
+uid: test.legacy
+memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
+userPassword:: cGFzc3dvcmQ=
+
+dn: cn=test.alias.legacy,ou=Users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: alias
+objectClass: top
+aliasedObjectName: cn=test.legacy,o=rackspace,dc=rackspace,dc=com
+
+dn: cn=test.alias,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: alias
+objectClass: extensibleObject
+cn: test.alias
+aliasedObjectName: cn=test.legacy,o=legacy,o=rackspace,dc=rackspace,dc=com
+
+dn: cn=test.impersonate,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: top
+cn: test.impersonate
+sn: impersonate
+uid: test.impersonate
+memberOf: cn=cloud-identity-impersonate,ou=Groups,o=rackspace,dc=rackspace,dc=com
+userPassword:: cGFzc3dvcmQ=
+
+dn: cn=test.nogroup,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: top
+cn: test.nogroup
+sn: nogroup
+uid: test.nogroup
+userPassword:: cGFzc3dvcmQ=
+
+dn: cn=test.ae,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: top
+sn: ae
+cn: test.ae
+uid: test.ae
+memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
+memberOf: cn=cloud-identity-ae-tokens,ou=Groups,o=rackspace,dc=rackspace,dc=com
+userPassword:: cGFzc3dvcmQ=
+
+dn: ou=Groups,o=rackspace,dc=rackspace,dc=com
+ou: Groups
+objectClass: organizationalUnit
+objectClass: top
+
+dn: cn=cloud-identity-ae-tokens,ou=Groups,o=rackspace,dc=rackspace,dc=com
+objectClass: groupOfNames
+objectClass: top
+cn: cloud-identity-ae-tokens
+member: cn=test.ae,ou=Users,o=rackspace,dc=rackspace,dc=com
+
+dn: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
+objectClass: groupOfNames
+objectClass: top
+cn: team-cloud-identity
+member: cn=test.ae,ou=Users,o=rackspace,dc=rackspace,dc=com
+member: cn=test.racker,ou=Users,o=rackspace,dc=rackspace,dc=com
+member: cn=test.alias,o=rackspace,dc=rackspace,dc=com
+member: cn=test.legacy,o=rackspace,dc=rackspace,dc=com
+
+dn: cn=cloud-identity-impersonate,ou=Groups,o=rackspace,dc=rackspace,dc=com
+objectClass: groupOfNames
+objectClass: top
+cn: cloud-identity-impersonate
+member: cn=test.impersonate,ou=Users,o=rackspace,dc=rackspace,dc=com
