@@ -223,16 +223,22 @@ class TestAddIDP(federation.TestBaseFederation):
     @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_add_idp_with_name_list_idp(self):
-        '''Verify list providers has name attribute.'''
-        request_object = factory.get_add_idp_request_object()
+        """
+        Verify list providers has name attribute.
+        """
+        request_object = factory.get_add_idp_request_object(
+            federation_type=const.DOMAIN.upper(),
+            approved_domain_group=const.APPROVED_DOMAIN_GROUP_GLOBAL)
         resp = self.identity_admin_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
 
-        idp_resp = self.identity_admin_client.list_idp()
+        idp_resp = self.identity_admin_client.list_idp(
+            option={const.ISSUER: request_object.issuer})
         self.assertEquals(resp.status_code, 201)
         idps = idp_resp.json()[const.NS_IDENTITY_PROVIDERS]
+
         found = False
         for idp in idps:
             idp_name = idp[const.NAME]
@@ -250,12 +256,6 @@ class TestAddIDP(federation.TestBaseFederation):
         value = data[1]
 
         self.create_idp_helper()
-        idp_list = self.identity_admin_client.list_idp(
-            option={"name": None}).json()[
-                const.NS_IDENTITY_PROVIDERS]
-
-        self.assertTrue(len(idp_list) > 1)
-
         idp_resp = self.identity_admin_client.list_idp(option={name: value})
         self.assertEquals(idp_resp.status_code, 200)
         idp_list = idp_resp.json()[
@@ -403,17 +403,6 @@ class TestAddIDP(federation.TestBaseFederation):
         self.assertEqual(
             list_resp.json()[
                 const.NS_IDENTITY_PROVIDERS][0][const.APPROVED_DOMAIN_Ids], [])
-
-        # list idps without query param
-        list_resp = self.identity_admin_client.list_idp()
-        for idp in list_resp.json()[const.NS_IDENTITY_PROVIDERS]:
-            if (idp[const.FEDERATION_TYPE] in {const.BROKER, const.RACKER} or
-                (const.APPROVED_DOMAIN_GROUP in idp and idp[
-                    const.APPROVED_DOMAIN_GROUP] == (
-                        const.APPROVED_DOMAIN_GROUP_GLOBAL))):
-                self.assertEqual(idp[const.APPROVED_DOMAIN_Ids], [])
-            else:
-                self.assertNotEqual(idp[const.APPROVED_DOMAIN_Ids], [])
 
     @unless_coverage
     def tearDown(self):

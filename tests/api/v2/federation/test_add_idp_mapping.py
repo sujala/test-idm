@@ -496,7 +496,6 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                             " Kilobytes.".format(max_size=max_size_in_kilo))
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
     def test_idp_mapping_upto_max_size(self):
         max_size_in_kilo = self.test_config.max_mapping_policy_size_in_kb
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
