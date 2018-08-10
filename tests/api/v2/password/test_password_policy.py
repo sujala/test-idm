@@ -15,6 +15,11 @@ from tests.package.johny.v2 import client
 
 class TestPasswordPolicy(base.TestBaseV2):
     """Tests Create, Get, Update, Delete password policies."""
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestPasswordPolicy, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(TestPasswordPolicy, self).setUp()
@@ -142,3 +147,8 @@ class TestPasswordPolicy(base.TestBaseV2):
         self.assertEqual(resp.status_code, 204,
                          msg='Domain with ID {0} failed to delete'.format(
                            self.domain_id))
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestPasswordPolicy, cls).tearDownClass()

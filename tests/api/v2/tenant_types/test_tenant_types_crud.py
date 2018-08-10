@@ -10,6 +10,10 @@ from tests.api.v2.schema import tenant_types
 
 class TestTenantTypes(base.TestBaseV2):
     """Tenant Types Crud Tests"""
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestTenantTypes, cls).setUpClass()
 
     @unless_coverage
     def setUp(self):
@@ -82,3 +86,8 @@ class TestTenantTypes(base.TestBaseV2):
             self.service_admin_client.delete_tenant_type(
                 tenant_type)
         super(TestTenantTypes, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestTenantTypes, cls).tearDownClass()

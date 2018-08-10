@@ -15,6 +15,11 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
     """
     Tests for List users in user group for a domain service
     """
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(ListUsersInUserGroup, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(ListUsersInUserGroup, self).setUp()
@@ -261,3 +266,8 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
         # in that domain. Hence, not explicitly deleting the user groups
         self.delete_client(self.user_admin_client,
                            parent_client=self.identity_admin_client)
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(ListUsersInUserGroup, cls).tearDownClass()

@@ -17,6 +17,11 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
     """
     EndpointMappingsInAuthAndListEndpoints test class
     """
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(EndpointMappingsInAuthAndListEndpoints, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(EndpointMappingsInAuthAndListEndpoints, self).setUp()
@@ -945,3 +950,8 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
                 self.service_admin_client.delete_service(
                     service_id=service_id)
         super(EndpointMappingsInAuthAndListEndpoints, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(EndpointMappingsInAuthAndListEndpoints, cls).tearDownClass()

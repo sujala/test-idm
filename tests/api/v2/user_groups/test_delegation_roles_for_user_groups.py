@@ -16,6 +16,11 @@ class TestDelegationRolesWithUserGroups(usergroups.TestUserGroups):
     """
     Tests for Delegation agreements roles for user group as principal
     """
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestDelegationRolesWithUserGroups, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         """
@@ -207,3 +212,8 @@ class TestDelegationRolesWithUserGroups(usergroups.TestUserGroups):
                          msg='Domain with ID {0} failed to delete'.format(
                              self.domain_id_2))
         super(TestDelegationRolesWithUserGroups, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestDelegationRolesWithUserGroups, cls).tearDownClass()

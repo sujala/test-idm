@@ -16,6 +16,15 @@ class TestLockoutUser(base.TestBaseV2):
 
         This test will lock out a user and then test the lockout time
     """
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        """Class level set up for the tests
+
+        Create users needed for the tests and generate clients for those users.
+        """
+        super(TestLockoutUser, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(TestLockoutUser, self).setUp()
@@ -148,3 +157,8 @@ class TestLockoutUser(base.TestBaseV2):
 
         return prop_resp.json()[
             const.PROPERTIES][0][const.VALUE]
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestLockoutUser, cls).tearDownClass()

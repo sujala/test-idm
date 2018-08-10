@@ -24,6 +24,11 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
         return (self.test_config.run_local_and_jenkins_only and
                 self.test_config.run_service_admin_tests)
 
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(AuthUserWithRoleMissingOpenstackType, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(AuthUserWithRoleMissingOpenstackType, self).setUp()
@@ -241,3 +246,8 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
             self.service_admin_client.delete_domain(domain_id=domain_id)
         for service_id in self.service_ids:
             self.service_admin_client.delete_service(service_id=service_id)
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(AuthUserWithRoleMissingOpenstackType, cls).tearDownClass()

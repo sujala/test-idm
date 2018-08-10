@@ -13,6 +13,11 @@ from tests.package.johny.v2.models import requests
 @ddt.ddt
 class TestGetTenant(base.TestBaseV2):
     """Get Tenant Test"""
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestGetTenant, cls).setUpClass()
+
     def create_tenant_type(self, name):
         request_object = requests.TenantType(name, 'description')
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
@@ -81,3 +86,8 @@ class TestGetTenant(base.TestBaseV2):
         for name in self.tenant_type_ids:
             self.service_admin_client.delete_tenant_type(name=name)
         super(TestGetTenant, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestGetTenant, cls).tearDownClass()

@@ -14,6 +14,11 @@ from tests.package.johny.v2.models import requests
 
 class TestImpersonateUser(base.TestBaseV2):
 
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestImpersonateUser, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(TestImpersonateUser, self).setUp()
@@ -106,3 +111,8 @@ class TestImpersonateUser(base.TestBaseV2):
                                  id_))
 
         super(TestImpersonateUser, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestImpersonateUser, cls).tearDownClass()

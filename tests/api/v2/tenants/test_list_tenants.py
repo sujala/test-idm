@@ -11,6 +11,11 @@ from tests.api.v2.schema import tenants
 class TestListTenants(base.TestBaseV2):
 
     """List Tenant Tests"""
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestListTenants, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(TestListTenants, self).setUp()
@@ -33,3 +38,8 @@ class TestListTenants(base.TestBaseV2):
         # Delete all tenants created in the tests
         self.identity_admin_client.delete_tenant(tenant_id=self.tenant_id)
         super(TestListTenants, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestListTenants, cls).tearDownClass()

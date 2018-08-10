@@ -479,6 +479,14 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
     Adds identity_admin users using a service admin level user.
     All tests in this class require a service admin level user credentials.
     """
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        """Class level set up for the tests
+
+        Create users needed for the tests and generate clients for those users.
+        """
+        super(TestServiceAdminLevelAddUser, cls).setUpClass()
 
     @unless_coverage
     def setUp(self):
@@ -562,3 +570,8 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
             resp = self.service_admin_client.delete_user(user_id=id)
             self.assertEqual(resp.status_code, 204)
         super(TestServiceAdminLevelAddUser, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestServiceAdminLevelAddUser, cls).tearDownClass()

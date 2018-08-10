@@ -16,6 +16,10 @@ from tests.package.johny.v2.models import requests
 class TestUpdateEndpointTemplate(base.TestBaseV2):
 
     """Update Endpoint Template Tests"""
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestUpdateEndpointTemplate, cls).setUpClass()
 
     @unless_coverage
     def setUp(self):

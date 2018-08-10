@@ -13,6 +13,11 @@ from tests.package.johny.v2 import client
 
 class TestChangePassword(base.TestBaseV2):
     """Tests Change password endpoint"""
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestChangePassword, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(TestChangePassword, self).setUp()
@@ -76,3 +81,8 @@ class TestChangePassword(base.TestBaseV2):
             self.assertEqual(
                 resp.status_code, 204,
                 msg='Domain with ID {0} failed to delete'.format(domain_id))
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestChangePassword, cls).tearDownClass()

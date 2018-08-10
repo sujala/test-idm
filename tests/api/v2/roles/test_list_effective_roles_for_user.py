@@ -12,6 +12,11 @@ from tests.package.johny import constants as const
 class TestListEffectiveRolesForUser(base.TestBaseV2):
 
     """ List effective role for user."""
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestListEffectiveRolesForUser, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         """Create users needed for the tests and generate clients for
@@ -924,3 +929,8 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
                 'Role with ID {0} failed to delete. Got {1} for {2}'.format(
                     role_id, resp.status_code, role_name))
         super(TestListEffectiveRolesForUser, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestListEffectiveRolesForUser, cls).tearDownClass()

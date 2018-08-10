@@ -40,6 +40,7 @@ class TestValidateToken(base.TestBaseV2):
     @unless_coverage
     def setUp(self):
         super(TestValidateToken, self).setUp()
+        self.users = []
 
     @classmethod
     def get_role_id_by_name(cls, role_name):
@@ -114,6 +115,8 @@ class TestValidateToken(base.TestBaseV2):
         self.sub_user_client = self.generate_client(
             parent_client=self.user_admin_client,
             additional_input_data={'domain_id': self.domain_id})
+        self.users.append(
+            self.sub_user_client.default_headers[const.X_USER_ID])
 
         # Add Role to user on tenant
         resp = self.identity_admin_client.add_role_to_user_for_tenant(
@@ -190,6 +193,8 @@ class TestValidateToken(base.TestBaseV2):
     @unless_coverage
     def tearDown(self):
         super(TestValidateToken, self).tearDown()
+        for user_id in self.users:
+            self.user_admin_client.delete_user(user_id=user_id)
 
     @classmethod
     @unless_coverage

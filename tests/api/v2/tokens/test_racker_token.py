@@ -13,6 +13,10 @@ from tests.package.johny.v2.models import requests
 class TestRackerToken(base.TestBaseV2):
 
     """ Racker Token tests"""
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestRackerToken, cls).setUpClass()
 
     @unless_coverage
     def setUp(self):
@@ -70,3 +74,8 @@ class TestRackerToken(base.TestBaseV2):
     @unless_coverage
     def tearDown(self):
         super(TestRackerToken, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestRackerToken, cls).tearDownClass()

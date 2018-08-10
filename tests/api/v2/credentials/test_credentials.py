@@ -16,6 +16,11 @@ class TestCredentials(base.TestBaseV2):
     """
     Credentials
     """
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestCredentials, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(TestCredentials, self).setUp()
@@ -156,3 +161,8 @@ class TestCredentials(base.TestBaseV2):
                 resp.status_code, 204,
                 msg='Domain with ID {0} failed to delete'.format(domain_id))
         super(TestCredentials, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestCredentials, cls).tearDownClass()

@@ -20,6 +20,11 @@ class TestTenantTypes(base.TestBaseV2):
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
         self.tenant_type_ids.append(name.lower())
 
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(TestTenantTypes, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(TestTenantTypes, self).setUp()
@@ -207,3 +212,8 @@ class TestTenantTypes(base.TestBaseV2):
             self.service_admin_client.delete_tenant_type(name=name)
 
         super(TestTenantTypes, self).tearDown()
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(TestTenantTypes, cls).tearDownClass()

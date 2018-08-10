@@ -13,6 +13,11 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
     """
     Tests for user groups in a domain services.
     """
+    @classmethod
+    @unless_coverage
+    def setUpClass(cls):
+        super(UserGroupsInDomain, cls).setUpClass()
+
     @unless_coverage
     def setUp(self):
         super(UserGroupsInDomain, self).setUp()
@@ -133,3 +138,8 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
         self.delete_client(
             self.user_admin_client,
             parent_client=self.identity_admin_client)
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(UserGroupsInDomain, cls).tearDownClass()

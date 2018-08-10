@@ -27,6 +27,7 @@ class UnverifiedUsersTests(base.TestBaseV2):
         assert add_dom_resp.status_code == 201, (
             'domain was not created successfully')
 
+    @unless_coverage
     def setUp(self):
         super(UnverifiedUsersTests, self).setUp()
         self.user_admin_client = self.generate_client(
@@ -65,3 +66,8 @@ class UnverifiedUsersTests(base.TestBaseV2):
                 resp.status_code, 204,
                 msg='User with ID {0} failed to delete'.format(user_id))
         self.delete_client(self.user_admin_client)
+
+    @classmethod
+    @unless_coverage
+    def tearDownClass(cls):
+        super(UnverifiedUsersTests, cls).tearDownClass()
