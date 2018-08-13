@@ -12,7 +12,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.Constants.getDEFAULT_PASSWORD
+import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static org.apache.http.HttpStatus.SC_CREATED
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
