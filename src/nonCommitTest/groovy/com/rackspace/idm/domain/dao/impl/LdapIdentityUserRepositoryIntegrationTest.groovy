@@ -168,7 +168,7 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         federatedUserDao.addUser(commonIdentityProvider, fedUser)
 
         when: "search for users by domain id"
-        Iterable<EndUser> retrievedEndUsers = identityUserDao.getEndUsersByDomainId(domainId)
+        Iterable<EndUser> retrievedEndUsers = identityUserDao.getEndUsersByDomainId(domainId, User.UserType.VERIFIED)
         def retrievedFederatedUser
         def retrievedProvisionedUser
         for(user in retrievedEndUsers) {

@@ -40,6 +40,7 @@ import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.unboundid.ldap.sdk.DN;
+import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -203,8 +204,8 @@ public class DefaultIdentityUserService implements IdentityUserService {
     }
 
     @Override
-    public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
-        return identityUserRepository.getEndUsersByDomainId(domainId);
+    public Iterable<EndUser> getEndUsersByDomainId(String domainId, UserType userType) {
+        return identityUserRepository.getEndUsersByDomainId(domainId, userType);
     }
 
     @Override
@@ -212,8 +213,8 @@ public class DefaultIdentityUserService implements IdentityUserService {
         return userService.getUsersWithDomain(domainId);
     }
 
-    public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
-        return identityUserRepository.getEndUsersByDomainIdAndEnabledFlag(domainId, enabled);
+    public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag (String domainId, boolean enabled, UserType userType) {
+        return identityUserRepository.getEndUsersByDomainIdAndEnabledFlag(domainId, enabled, userType);
     }
 
     @Override

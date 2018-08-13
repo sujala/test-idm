@@ -149,6 +149,7 @@ import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
 import com.rackspace.idm.validation.property.IdentityProviderDefaultPolicyPropertyValidator;
 import com.unboundid.ldap.sdk.LDAPException;
+import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
@@ -4090,7 +4091,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(GlobalConstants.ERROR_MSG_DELETE_ENABLED_DOMAIN);
             }
 
-            Iterable<EndUser> users = identityUserService.getEndUsersByDomainId(domainId);
+            Iterable<EndUser> users = identityUserService.getEndUsersByDomainId(domainId, UserType.ALL);
             if (users.iterator().hasNext()) {
                 throw new BadRequestException(GlobalConstants.ERROR_MSG_DELETE_DOMAIN_WITH_USERS);
             }
@@ -4135,14 +4136,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersByDomainIdAndEnabledFlag(String authToken, String domainId, String enabled) {
+    public ResponseBuilder getUsersByDomainIdAndEnabledFlag (String authToken, String domainId, String enabled, UserType userType) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         domainService.checkAndGetDomain(domainId);
         Iterable<EndUser> users;
         if (enabled == null) {
-            users = identityUserService.getEndUsersByDomainId(domainId);
+            users = identityUserService.getEndUsersByDomainId(domainId, userType);
         } else {
-            users = identityUserService.getEndUsersByDomainIdAndEnabledFlag(domainId, Boolean.valueOf(enabled));
+            users = identityUserService.getEndUsersByDomainIdAndEnabledFlag(domainId, Boolean.valueOf(enabled), userType);
         }
 
         return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
@@ -4820,7 +4821,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
 
                 if (authorizationService.hasUserAdminRole(user)) {
-                    Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId());
+                    Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId(), UserType.ALL);
                     for (EndUser subUser : subUsers) {
                         if (!user.getId().equalsIgnoreCase(subUser.getId())) {
                             identityUserService.addGroupToEndUser(groupId, subUser.getId());
@@ -4868,7 +4869,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (isUserAdmin) {
-                Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId());
+                Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId(), UserType.ALL);
                 for (EndUser subUser : subUsers) {
                     if (!user.getId().equalsIgnoreCase(subUser.getId())) {
                         identityUserService.removeGroupFromEndUser(groupId, subUser.getId());

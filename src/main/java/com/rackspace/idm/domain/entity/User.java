@@ -273,6 +273,12 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
 
     TokenFormatConverter tfEnumConverter = new TokenFormatConverter();
 
+    /* This user_type enum will be used to filter user based on their type.
+     * Enum will help to avoid typo in the code */
+    public enum UserType {
+        ALL, VERIFIED, UNVERIFIED
+    }
+
     public User() {
     }
 

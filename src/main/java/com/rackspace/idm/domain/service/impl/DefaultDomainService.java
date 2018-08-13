@@ -277,7 +277,7 @@ public class DefaultDomainService implements DomainService {
 
     @Override
     public void expireAllTokenInDomain(String domainId) {
-        for(EndUser user : identityUserService.getEndUsersByDomainId(domainId)) {
+        for(EndUser user : identityUserService.getEndUsersByDomainId(domainId, User.UserType.VERIFIED)) {
             try {
                 scopeAccessService.expireAllTokensForUserById(user.getId());
             } catch (Exception ex) {

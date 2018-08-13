@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.domain.entity.User.UserType;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -287,7 +288,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getDomainTenants(String authToken, String domainId, String enabled);
 
-    ResponseBuilder getUsersByDomainIdAndEnabledFlag(String authToken, String domainId, String enabled);
+    ResponseBuilder getUsersByDomainIdAndEnabledFlag(String authToken, String domainId, String enabled, UserType userType);
 
     ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) throws IOException, JAXBException;
 

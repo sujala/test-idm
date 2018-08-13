@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -19,10 +18,10 @@ import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.UserDisabledException
 import com.rackspace.idm.validation.Validator
+import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
-import org.slf4j.MDC
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -736,7 +735,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def users = [subUser].asList()
         domainService.getEnabledDomainAdmins(_) >> [].asList()
-        identityUserService.getEndUsersByDomainId(_) >> users
+        identityUserService.getEndUsersByDomainId(_, UserType.VERIFIED) >> users
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -759,7 +758,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def users = [].asList()
         domainService.getEnabledDomainAdmins(_) >> [].asList()
-        identityUserService.getEndUsersByDomainId(_) >> users
+        identityUserService.getEndUsersByDomainId(_, UserType.VERIFIED) >> users
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -780,7 +779,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def users = [subUser].asList()
         domainService.getEnabledDomainAdmins(_) >> [].asList()
-        identityUserService.getEndUsersByDomainId(_) >> users
+        identityUserService.getEndUsersByDomainId(_, UserType.VERIFIED) >> users
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -800,7 +799,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def users = [subUser].asList()
         domainService.getEnabledDomainAdmins(_) >> [].asList()
-        identityUserService.getEndUsersByDomainId(_) >> users
+        identityUserService.getEndUsersByDomainId(_, UserType.VERIFIED) >> users
 
         when:
         service.disableUserAdminSubUsers(user)
@@ -825,7 +824,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
         def users = [subUser].asList()
         domainService.getEnabledDomainAdmins(_) >> [].asList()
-        identityUserService.getEndUsersByDomainId(_) >> users
+        identityUserService.getEndUsersByDomainId(_, UserType.VERIFIED) >> users
 
         when:
         service.updateUser(user)
@@ -886,7 +885,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.disableUserAdminSubUsers(userAdmin)
 
         then:
-        1 * identityUserService.getEndUsersByDomainId(_) >> users
+        1 * identityUserService.getEndUsersByDomainId(_, UserType.VERIFIED) >> users
         1 * userDao.updateUser(_)
     }
 

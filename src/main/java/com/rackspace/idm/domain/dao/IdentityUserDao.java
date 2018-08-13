@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.unboundid.ldap.sdk.DN;
+import com.rackspace.idm.domain.entity.User.UserType;
 
 import java.util.List;
 
@@ -126,17 +127,19 @@ public interface IdentityUserDao {
      * Search for end users with the specified domain id.
      *
      * @param domainId
+     * @param userType (pass default as VERIFIED)
      * @return
      */
-    public Iterable<EndUser> getEndUsersByDomainId(String domainId);
+    public Iterable<EndUser> getEndUsersByDomainId (String domainId, UserType userType);
 
     /**
      * Search for end users with the specified domain id and enabled attribute
      *
      * @param domainId
+     * @param userType
      * @return
      */
-    Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled);
+    Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag (String domainId, boolean enabled, UserType userType);
 
     /**
      * Search for end users with the specified domain id.

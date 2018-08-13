@@ -5,6 +5,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import org.openstack.docs.identity.api.v2.UserList
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
@@ -596,6 +597,93 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         where:
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "Test listing of Verified and Unverified users in domain"(){
+        given :
+        def userAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        def unverifiedUser1 = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = userAdmin.domainId
+            it.unverified = true
+            it
+        }
+
+        def unverifiedUser2 = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = userAdmin.domainId
+            it.unverified = true
+            it
+        }
+
+        // Create Verified Users
+        def verifiedUser1 = utils.createUser(utils.getToken(userAdmin.username))
+        def verifiedUser2 = utils.createUser(utils.getToken(userAdmin.username))
+        def verifiedUser3 = utils.createUser(utils.getToken(userAdmin.username))
+
+        // Create unverifeid Users
+        unverifiedUser1 = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), unverifiedUser1).getEntity(User).value
+        unverifiedUser2 = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), unverifiedUser2).getEntity(User).value
+
+        when: "list users in domain with filter - VERIFIED"
+        def listOnlyVerifiedUsers = cloud20.listUsersInDomain(utils.getServiceAdminToken(), userAdmin.getDomainId(), "VERIFIED").getEntity(UserList).value
+
+        then: "only verified users are listed"
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser1.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser2.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser3.id)
+
+        and: "unverified users are not listed"
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser1.id)
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser2.id)
+
+        when: "list users in domain with filter - UNVERIFIED"
+        def listOnlyUnverifiedUsers = cloud20.listUsersInDomain(utils.getServiceAdminToken(), userAdmin.getDomainId(), "UNVERIFIED").getEntity(UserList).value
+
+        then: "only unverified users are listed"
+        listOnlyUnverifiedUsers.user.id.contains(unverifiedUser1.id)
+        listOnlyUnverifiedUsers.user.id.contains(unverifiedUser2.id)
+
+        and: "unverified users are not listed"
+        !listOnlyUnverifiedUsers.user.id.contains(verifiedUser1.id)
+        !listOnlyUnverifiedUsers.user.id.contains(verifiedUser2.id)
+        !listOnlyUnverifiedUsers.user.id.contains(verifiedUser3.id)
+
+        when: "list users in domain with filter - ALL"
+        def listAllUsers = cloud20.listUsersInDomain(utils.getServiceAdminToken(), userAdmin.getDomainId(), "ALL").getEntity(UserList).value
+
+        then: "both unverified users and verified users are listed"
+        listAllUsers.user.id.contains(unverifiedUser1.id)
+        listAllUsers.user.id.contains(unverifiedUser2.id)
+        listAllUsers.user.id.contains(verifiedUser1.id)
+        listAllUsers.user.id.contains(verifiedUser2.id)
+        listAllUsers.user.id.contains(verifiedUser3.id)
+
+        when: "list users in domain with filter - unexpected value"
+        listOnlyVerifiedUsers = cloud20.listUsersInDomain(utils.getServiceAdminToken(), userAdmin.getDomainId(), "unExpectedV&&**&").getEntity(UserList).value
+
+        then: "only by default verified users are listed"
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser1.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser2.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser3.id)
+
+        and: "unverified users are not listed"
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser1.id)
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser2.id)
+
+        when: "list users in domain with filter - null value"
+        listOnlyVerifiedUsers = cloud20.listUsersInDomain(utils.getServiceAdminToken(), userAdmin.getDomainId(), "unExpectedV&&**&").getEntity(UserList).value
+
+        then: "only by default verified users are listed"
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser1.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser2.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser3.id)
+
+        and: "unverified users are not listed"
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser1.id)
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser2.id)
     }
 
     def getInviteEntity(ClientResponse response) {

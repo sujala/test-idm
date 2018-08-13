@@ -23,6 +23,7 @@ import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.DN
+import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang3.RandomStringUtils
 import org.dozer.DozerBeanMapper
@@ -3341,7 +3342,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         identityUserService.checkAndGetUserById(_) >> user
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
-        identityUserService.getEndUsersByDomainId(_) >> [user].asList()
+        identityUserService.getEndUsersByDomainId(_, UserType.ALL) >> [user].asList()
 
         when:
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", "2")
@@ -3361,7 +3362,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
         userService.isUserInGroup(user.id, "1") >> false
-        identityUserService.getEndUsersByDomainId(_) >> [user, entityFactory.createRandomUser()].asList()
+        identityUserService.getEndUsersByDomainId(_, UserType.ALL) >> [user, entityFactory.createRandomUser()].asList()
 
         when:
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", user.id)
@@ -3381,7 +3382,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
         userService.isUserInGroup(user.id, "1") >> true
-        identityUserService.getEndUsersByDomainId(_) >> [user, entityFactory.createRandomUser()].asList()
+        identityUserService.getEndUsersByDomainId(_, UserType.ALL) >> [user, entityFactory.createRandomUser()].asList()
 
         when:
         Response.ResponseBuilder response = service.addUserToGroup(headers, authToken, "1", user.id)
@@ -3400,7 +3401,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         identityUserService.checkAndGetUserById(_) >> user
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
-        identityUserService.getEndUsersByDomainId(_) >> [user].asList()
+        identityUserService.getEndUsersByDomainId(_, UserType.ALL) >> [user].asList()
         userService.isUserInGroup(_, _) >> true
 
         when:
@@ -3420,7 +3421,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         identityUserService.checkAndGetUserById(_) >> user
         authorizationService.hasDefaultUserRole(_) >> false
         authorizationService.hasUserAdminRole(_) >> true
-        identityUserService.getEndUsersByDomainId(_) >> [user, entityFactory.createRandomUser()].asList()
+        identityUserService.getEndUsersByDomainId(_, UserType.ALL) >> [user, entityFactory.createRandomUser()].asList()
         userService.isUserInGroup(_, _) >> true
 
         when:
@@ -3620,6 +3621,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.name = "identity:user-manage"
             return it
         }
+
         User user = entityFactory.createUser()
         user.id = "somthingdifferentfromcaller"
         User caller = entityFactory.createUser()
@@ -4067,7 +4069,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         reloadableConfig.getTenantDefaultDomainId() >> "default"
         domainService.checkAndGetDomain(domainId) >> domain
-        identityUserService.getEndUsersByDomainId(domainId) >> [].asList()
+        identityUserService.getEndUsersByDomainId(domainId, UserType.ALL) >> [].asList()
 
         UserGroup userGroup1 = new UserGroup().with {
             it.domainId = domainId

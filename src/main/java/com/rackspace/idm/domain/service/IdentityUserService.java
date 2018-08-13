@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
+import com.rackspace.idm.domain.entity.User.UserType;
 import com.unboundid.ldap.sdk.DN;
 
 import java.util.List;
@@ -144,9 +145,10 @@ public interface IdentityUserService {
      * Returns all federated and provisioned users associated with the specified domain.
      *
      * @param domainId
+     * @param userType (Verified, Unverified, All from enum)
      * @return
      */
-    Iterable<EndUser> getEndUsersByDomainId(String domainId);
+    Iterable<EndUser> getEndUsersByDomainId (String domainId, UserType userType);
 
     /**
      * Returns all federated and provisioned users associated with the specified domain based on their
@@ -155,9 +157,10 @@ public interface IdentityUserService {
      *
      * @param domainId
      * @param enabled
+     * @param userType
      * @return
      */
-    Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled);
+    Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag (String domainId, boolean enabled, UserType userType);
 
     /**
      * Returns a page of federated and provisioned users associated with the specified domain.

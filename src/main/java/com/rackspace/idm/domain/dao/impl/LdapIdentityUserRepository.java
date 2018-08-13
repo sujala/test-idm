@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
+import com.rackspace.idm.domain.entity.User.UserType;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,13 +107,26 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
-    public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
-        return searchForUsersByDomainId(domainId, ENDUSER_CLASS_FILTERS, EndUser.class);
+    public Iterable<EndUser> getEndUsersByDomainId(String domainId, UserType userType) {
+        if(UserType.ALL == userType){
+            return searchForUsersByDomainId(domainId, ENDUSER_CLASS_FILTERS, EndUser.class);
+        } else if(UserType.UNVERIFIED == userType){
+            return searchForUsersByDomainIdAndUserType(domainId, true, ENDUSER_CLASS_FILTERS, EndUser.class);
+        }
+        // By default return list of Verified Users
+        return searchForUsersByDomainIdAndUserType(domainId, false, ENDUSER_CLASS_FILTERS, EndUser.class);
     }
 
     @Override
-    public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
-        return (Iterable) getObjects(searchFilterGetEnabledUsersByDomainIdAndEnabledFlag(domainId, enabled));
+    public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled, UserType userType) {
+        if (User.UserType.ALL == userType) {
+            return (Iterable) getObjects(searchFilterGetEnabledUsersByDomainIdAndEnabledFlag(domainId, enabled));
+        } else if (User.UserType.UNVERIFIED == userType) {
+            return (Iterable) getObjects(searchFilterGetEnabledUsersByDomainIdAndEnabledFlagAndUserType(domainId, true, enabled));
+        }
+
+        // By default return list of Verified Users
+        return (Iterable) getObjects(searchFilterGetEnabledUsersByDomainIdAndEnabledFlagAndUserType(domainId, false, enabled));
     }
 
     @Override
@@ -186,6 +200,10 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
 
     private <T extends EndUser> Iterable<T> searchForUsersByDomainId(String domainId, List<Filter> userClassFilterList, Class<T> clazz) {
         return (Iterable) getObjects(searchFilterGetUserByDomainId(domainId, userClassFilterList));
+    }
+
+    private <T extends EndUser> Iterable<T> searchForUsersByDomainIdAndUserType (String domainId, Boolean isUnverifiedUserType, List<Filter> userClassFilterList, Class<T> clazz) {
+        return (Iterable) getObjects(searchFilterGetUserByDomainIdAndUserType(domainId, isUnverifiedUserType, userClassFilterList));
     }
 
     private <T extends EndUser> PaginatorContext<T> searchForUsersByDomainIdPaged(String domainId, List<Filter> userClassFilterList, Class<T> clazz, int offset, int limit) {
@@ -424,6 +442,55 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
             //the only other type of users are Rackers (Federated and Non-Federated) which are NOT persisted so no deletion necessary
             throw new UnsupportedOperationException("Not supported");
         }
+    }
+
+    /**
+     * @param isUnverifiedUserType Boolean - use it as false for normal / verified users
+     * @param domainId             String
+     * @param userClassFilterList  List<Filter>
+     * @return Filter
+     */
+    private Filter searchFilterGetUserByDomainIdAndUserType(String domainId, Boolean isUnverifiedUserType, List<Filter> userClassFilterList) {
+        Filter unverifiedFilter;
+        if (isUnverifiedUserType) {
+            unverifiedFilter = Filter.createEqualityFilter(ATTR_UNVERIFIED, isUnverifiedUserType.toString().toUpperCase());
+        } else {
+            unverifiedFilter = Filter.createORFilter(Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_UNVERIFIED)),
+                    Filter.createEqualityFilter(ATTR_UNVERIFIED, isUnverifiedUserType.toString().toUpperCase()));
+        }
+
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId),
+                unverifiedFilter,
+                Filter.createORFilter(userClassFilterList)
+        );
+    }
+
+    private Filter searchFilterGetEnabledUsersByDomainIdAndEnabledFlagAndUserType (String domainId, Boolean isUnverifiedUserType, boolean enabled) {
+        //only query for federated users if you are searching for enabled users
+        if (enabled) {
+            return Filter.createORFilter(searchFilterGetFederatedUsersByDomainId(domainId), searchFilterGetUserByDomainIdAndEnabledFlagAndUserType(domainId, isUnverifiedUserType, enabled));
+        } else {
+            return searchFilterGetUserByDomainIdAndEnabledFlagAndUserType(domainId, isUnverifiedUserType, enabled);
+        }
+    }
+
+    private Filter searchFilterGetUserByDomainIdAndEnabledFlagAndUserType (String domainId, Boolean isUnverifiedUserType, boolean enabled) {
+
+        Filter unverifiedFilter;
+        if (isUnverifiedUserType) {
+            unverifiedFilter = Filter.createEqualityFilter(ATTR_UNVERIFIED, isUnverifiedUserType.toString().toUpperCase());
+        } else {
+            unverifiedFilter = Filter.createORFilter(Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_UNVERIFIED)),
+                    Filter.createEqualityFilter(ATTR_UNVERIFIED, isUnverifiedUserType.toString().toUpperCase()));
+        }
+
+        return Filter.createANDFilter(
+                Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId),
+                Filter.createANDFilter(PROVISIONED_USER_CLASS_FILTER),
+                unverifiedFilter,
+                Filter.createEqualityFilter(ATTR_ENABLED, Boolean.toString(enabled).toUpperCase())
+        );
     }
 
     @Override

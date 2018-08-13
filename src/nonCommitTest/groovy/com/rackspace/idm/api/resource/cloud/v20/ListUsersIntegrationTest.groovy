@@ -203,19 +203,19 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         !userList2.user.id.contains(disabledUser.id)
 
         when: "list users in domain"
-        def usersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId).getEntity(UserList).value
+        def usersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, "VERIFIED").getEntity(UserList).value
 
         then: "see federated user"
         usersInDomain.user.id.contains(authResponse.user.id)
 
         when: "list enabled users in domain"
-        def enabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, true).getEntity(UserList).value
+        def enabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, "VERIFIED", true).getEntity(UserList).value
 
         then: "see federated user"
         enabledUsersInDomain.user.id.contains(authResponse.user.id)
 
         when: "list disabled users in domain"
-        def disabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, false).getEntity(UserList).value
+        def disabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, "VERIFIED",false).getEntity(UserList).value
 
         then: "no federated user"
         !disabledUsersInDomain.user.id.contains(authResponse.user.id)

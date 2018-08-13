@@ -1207,7 +1207,7 @@ public class DefaultUserService implements UserService {
                 return;
             }
 
-            Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId());
+            Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId(), User.UserType.VERIFIED);
 
             for (EndUser subUser : subUsers) {
                 if(subUser instanceof User) {

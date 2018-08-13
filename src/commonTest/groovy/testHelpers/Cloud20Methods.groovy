@@ -329,12 +329,13 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
     }
 
-    def listUsersInDomain(String token, String domainId, enabled = null, MediaType mediaType = APPLICATION_XML_TYPE) {
+    def listUsersInDomain(String token, String domainId, String userType = null, enabled = null, MediaType mediaType = APPLICATION_XML_TYPE) {
         initOnUse()
         def request = resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(USERS)
         if(enabled != null) {
             request = request.queryParam("enabled", "" + enabled)
         }
+        request = request.queryParam("user_type", "" + userType)
         request.header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
     }
 
