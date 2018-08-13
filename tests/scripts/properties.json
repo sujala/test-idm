@@ -11,6 +11,178 @@
             "versionAdded": ""
         },
         {
+            "name": "feature.enable.tenant.role.whitelist.visibility.filter",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "feature.enable.create.invites",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "feature.enable.scInfo.accessible.domains.endpoints.for.user",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "feature.enable.open.tracing.web.resources",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "feature.enable.open.tracing.dao.resources",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "open.tracing.include.web.resources",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": "[*]",
+            "multivalue": true,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "open.tracing.exclude.web.resources",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": "[]",
+            "multivalue": true,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "tenant.role.whitelist.visibility.filter.faws",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": "identity:service-admin,identity:admin,identity:user-admin,identity:user-manage,admin,observer,creator,ticketing:admin,ticketing:observer,billing:admin,billing:observer",
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "tenant.role.whitelist.visibility.filter.managed_gcp",
+            "reloadable": true,
+            "description": "",
+            "source": "idm.reloadable.properties",
+            "value": "identity:service-admin,identity:admin,identity:user-admin,identity:user-manage,admin,observer,creator,ticketing:admin,ticketing:observer,billing:admin,billing:observer",
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "tenant.role.whitelist.visibility.filter.cid_test",
+            "reloadable": true,
+            "description": "A tenant type for MPC filter testing",
+            "source": "idm.reloadable.properties",
+            "value": "billing:observer",
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "opentracing.enabled",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": false,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "opentracing.service.name",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": "Customer Identity Api",
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "opentracing.tracer",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": "JAEGER",
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "opentracing.collector.endpoint",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": "https://jaeger-collector-test.devapps.rsi.rackspace.net/api/traces",
+            "versionAdded": "3.24.0",
+            "environment": "Staging"
+        },
+        {
+            "name": "opentracing.collector.endpoint",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": "https://jaeger-collector.devapps.rsi.rackspace.net/api/traces",
+            "versionAdded": "3.24.0",
+            "environment": "Prod"
+        },
+        {
+            "name": "opentracing.sampling.constant.toggle",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": -1,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "opentracing.sampling.rate.limiting.traces_per_second",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": -1,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "opentracing.sampling.probability",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": -1,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "opentracing.logging.enabled",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": false,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "opentracing.flush.interval.ms",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": 1000,
+            "versionAdded": "3.24.0"
+        },
+        {
+            "name": "opentracing.max.buffer.size",
+            "reloadable": false,
+            "description": "",
+            "source": "idm.properties",
+            "value": 10000,
+            "versionAdded": "3.24.0"
+        },
+        {
             "defaultValue": "ou=keystore,o=configuration,dc=rackspace,dc=com",
             "name": "feature.KeyCzarCrypterLocator.ldap.dn",
             "reloadable": false,
@@ -937,7 +1109,7 @@
             "reloadable": true,
             "description": "The URL to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
             "source": "idm.reloadable.properties",
-            "value": "https:\/\/atom.staging.lon1.us.ci.rackspace.net\/identity\/events",
+            "value": "https:\/\/atom.staging.ord1.us.ci.rackspace.net\/identity\/events",
             "versionAdded": "3.5.0",
             "region": "IAD3",
             "environment": "Staging"
@@ -1466,7 +1638,7 @@
             "reloadable": true,
             "description": "The list of tenant prefixes to exclude the auto-assigned (identity:tenant-access) role from.",
             "source": "idm.reloadable.properties",
-            "value": "[]",
+            "value": "[, ]",
             "versionAdded": "3.17.0"
         },
         {
@@ -1492,7 +1664,7 @@
             "reloadable": true,
             "description": "Role assignment hierarchy for nested DAs.",
             "source": "idm.reloadable.properties",
-            "value": "observer;admin| billing:admin;admin| billing:observer;admin,observer,billing:admin| ticketing:admin;admin| ticketing:observer;admin,observer,ticketing:admin",
+            "value": "{billing:admin=[admin], ticketing:observer=[admin, observer, ticketing:admin], observer=[admin], billing:observer=[admin, observer, billing:admin], ticketing:admin=[admin]}",
             "versionAdded": "3.23.0"
         },
         {
@@ -1537,7 +1709,8 @@
             "reloadable": true,
             "description": "When secure attributes are enabled, a comma delimited list to secure",
             "source": "idm.reloadable.properties",
-            "value": "[effectiveCallerToken, callerUsername, effectiveCallerUserType, callerUserType, callerToken, effectiveCallerUsername]",
+            "value": "[effectiveCallerToken, effectiveCallerUserType, callerUserType, callerToken, effectiveCallerUsername, callerUsername]",
+            "multivalue": true,
             "versionAdded": "3.17.1"
         },
         {

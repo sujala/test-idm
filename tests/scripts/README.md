@@ -31,6 +31,24 @@ compare them against the expected properties in our repository.
   Defaults to current directory if not provided
 * `LOG_PATH_LOCATION` - directory of log file.  Defaults to /opt
 
+## Properties.json file
+
+The properties json file consists of a list of properties with the
+following attributes:
+
+| Attribute | Required | Description |
+| --------- | ------ | --- |
+| defaultValue | no | default value returned for a property.  Provided by server |
+| name | yes | property name |
+| reloadable | yes | whether the property is reloadable or not.  Provided by server |
+| description | yes | property description |
+| source | yes | source file.  Provided by server |
+| value | yes | property value. Provided by server |
+| versionAdded | yes | version the property was added. Provied by server |
+| multivalue | no | whether the string property is multivalue. If so, server returns it wrapped in an array |
+| environment | no | local property that specifies which environment to compare the value to. Default is to compare it to every environment |
+| action | no | local property that specifies a particular action to take on the property.  Currently, just ignore is supported |
+
 ## How to run it
 
 ```bash

@@ -85,10 +85,18 @@ def get_server_prop(server_properties, prop):
             'versionAdded']), None)
 
 
-def check_key_is_equivalent(key, prop, server_prop, server_name, error_list):
+def check_key_is_equivalent(key, prop, server_prop, server_name, error_list,
+                            value_comparer=False):
     if key in prop:
         local_property = prop[key]
         server_property = server_prop[key]
+        if value_comparer and 'multivalue' in prop:
+            # the values are arrays in a string.  But they're not valid arrays
+            # so first, take out the leading and trailing [] and then split
+            # into array
+            local_property = local_property[1:-1].strip().split(',')
+            server_property = server_property[1:-1].strip().split(',')
+
         if isinstance(local_property, list) and isinstance(
                 server_property, list):
             local_property = set(local_property)
@@ -172,7 +180,7 @@ def compare_environment_configurations(environments_json, environment,
                         else:
                             check_key_is_equivalent(
                                 'defaultValue', prop, server_prop, server_name,
-                                error_list)
+                                error_list, value_comparer=True)
                             check_key_is_equivalent(
                                 'reloadable', prop, server_prop, server_name,
                                 error_list)
@@ -181,7 +189,7 @@ def compare_environment_configurations(environments_json, environment,
                                 error_list)
                             check_key_is_equivalent(
                                 'value', prop, server_prop, server_name,
-                                error_list)
+                                error_list, value_comparer=True)
                             check_key_is_equivalent(
                                 'versionAdded', prop, server_prop, server_name,
                                 error_list)
