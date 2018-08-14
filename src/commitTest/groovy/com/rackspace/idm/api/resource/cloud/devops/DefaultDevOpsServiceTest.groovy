@@ -232,7 +232,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain
         1 * domainService.getUsersByDomainId(domain.domainId) >> [userAdmin]
-        1 * authorizationService.getCachedIdentityRoleByName(_) >> userAdminIcr
+        1 * applicationService.getCachedClientRoleByName(_) >> userAdminIcr
         1 * tenantService.getTenantRoleForUserById(userAdmin, userAdminCr.id) >> userAdminTr
         1 * domainService.updateDomain(domain)
 
@@ -247,7 +247,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
         1 * domainService.checkAndGetDomain(domainWithAdminSet.domainId) >> domainWithAdminSet
         1 * domainService.getUsersByDomainId(domainWithAdminSet.domainId) >> [userAdmin]
-        1 * authorizationService.getCachedIdentityRoleByName(_) >> userAdminIcr
+        1 * applicationService.getCachedClientRoleByName(_) >> userAdminIcr
         1 * tenantService.getTenantRoleForUserById(userAdmin, userAdminCr.id) >> userAdminTr
         1 * domainService.updateDomain(domain)
 
@@ -262,7 +262,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain
         1 * domainService.getUsersByDomainId(domain.domainId) >> []
-        1 * authorizationService.getCachedIdentityRoleByName(_) >> userAdminIcr
+        1 * applicationService.getCachedClientRoleByName(_) >> userAdminIcr
         0 * tenantService.getTenantRoleForUserById(userAdmin, userAdminCr.id) >> userAdminTr
         0 * domainService.updateDomain(domain)
 
@@ -278,7 +278,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain
         1 * domainService.getUsersByDomainId(domain.domainId) >> [userAdmin, userAdmin2]
-        1 * authorizationService.getCachedIdentityRoleByName(_) >> userAdminIcr
+        1 * applicationService.getCachedClientRoleByName(_) >> userAdminIcr
         1 * tenantService.getTenantRoleForUserById(userAdmin, userAdminCr.id) >> userAdminTr
         1 * tenantService.getTenantRoleForUserById(userAdmin2, userAdminCr.id) >> userAdminTr
         1 * domainService.updateDomain(domain)
@@ -295,7 +295,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain
         1 * domainService.getUsersByDomainId(domain.domainId) >> [disabledUserAdmin, userAdmin2]
-        1 * authorizationService.getCachedIdentityRoleByName(_) >> userAdminIcr
+        1 * applicationService.getCachedClientRoleByName(_) >> userAdminIcr
         1 * tenantService.getTenantRoleForUserById(disabledUserAdmin, userAdminCr.id) >> userAdminTr
         1 * tenantService.getTenantRoleForUserById(userAdmin2, userAdminCr.id) >> userAdminTr
         1 * domainService.updateDomain(domain)
@@ -312,7 +312,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain
         1 * domainService.getUsersByDomainId(domain.domainId) >> [disabledUserAdmin]
-        1 * authorizationService.getCachedIdentityRoleByName(_) >> userAdminIcr
+        1 * applicationService.getCachedClientRoleByName(_) >> userAdminIcr
         1 * tenantService.getTenantRoleForUserById(disabledUserAdmin, userAdminCr.id) >> userAdminTr
         1 * domainService.updateDomain(domain)
     }
@@ -320,6 +320,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
     def setupMocks() {
         mockAuthorizationService(service)
+        mockApplicationService(service)
         mockUserService(service)
         mockScopeAccessService(service)
         mockCacheableKeyCzarCrypterLocator(service)

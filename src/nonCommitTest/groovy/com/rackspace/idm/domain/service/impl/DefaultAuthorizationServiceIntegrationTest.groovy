@@ -5,6 +5,7 @@ import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -19,56 +20,16 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
     DefaultAuthorizationService service
 
     @Autowired
+    ApplicationService applicationService
+
+    @Autowired
     private IdentityConfig identityConfig
 
     @Shared def entityFactory = new EntityFactory()
 
-    def "Service loads all identity roles into name map on construction"() {
-        given:
-        List<String> minRoleNamesExpected = getExpectedRoles()
-
-        expect:
-        service.identityRoleNameToRoleMap.size() > 0
-        for (String expectedRoleName : minRoleNamesExpected) {
-            service.identityRoleNameToRoleMap.find {it.key == expectedRoleName && it.key == it.value.name} != null
-        }
-
-        //only loads "identity:" roles, rcn:admin and the racker role
-        service.identityRoleNameToRoleMap.find {!(it.key.startsWith(GlobalConstants.IDENTITY_ROLE_PREFIX)
-                || it.key.equals(GlobalConstants.ROLE_NAME_RACKER)
-                || it.key.equals(IdentityRole.RCN_ADMIN.roleName))} == null
-    }
-
-    def "Service loads all identity roles into id map on construction"() {
-        given:
-        List<String> minRoleNamesExpected = getExpectedRoles()
-
-        expect:
-        service.identityRoleIdToRoleMap.size() > 0
-        for (String expectedRoleName : minRoleNamesExpected) {
-            service.identityRoleIdToRoleMap.find {it.value.name == expectedRoleName && it.key == it.value.id} != null
-        }
-
-        //only loads "identity:" roles, rcn:admin and the racker role
-        service.identityRoleNameToRoleMap.find {!(it.value.name.startsWith(GlobalConstants.IDENTITY_ROLE_PREFIX)
-                || it.value.name.equals(GlobalConstants.ROLE_NAME_RACKER)
-                || it.key.equals(IdentityRole.RCN_ADMIN.roleName))} == null
-    }
-
-    def "Service loads cached role variables on construction"() {
-        expect:
-        service.idmSuperAdminRole != null
-        service.cloudServiceAdminRole != null
-        service.cloudIdentityAdminRole != null
-        service.cloudUserAdminRole != null
-        service.cloudUserRole != null
-        service.cloudUserManagedRole != null
-        service.rackerRole != null
-    }
-
     def "Getting identity user type only recognizes user type roles"() {
-        ImmutableClientRole uaRole = service.identityRoleNameToRoleMap.get(identityConfig.getStaticConfig().getIdentityUserAdminRoleName())
-        ImmutableClientRole umRole = service.identityRoleNameToRoleMap.get(identityConfig.getStaticConfig().getIdentityUserManagerRoleName())
+        ImmutableClientRole uaRole = applicationService.getCachedClientRoleByName(identityConfig.getStaticConfig().getIdentityUserAdminRoleName())
+        ImmutableClientRole umRole = applicationService.getCachedClientRoleByName(identityConfig.getStaticConfig().getIdentityUserManagerRoleName())
 
         List<TenantRole> tenantRoles = [createTenantRoleForClientRole(umRole), createTenantRoleForClientRole(uaRole)]
 
@@ -77,14 +38,13 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
     }
 
     def "Getting identity user type returns null when no identity type role provided"() {
-        ImmutableClientRole rackerRole = service.identityRoleNameToRoleMap.get(GlobalConstants.ROLE_NAME_RACKER)
+        ImmutableClientRole rackerRole = applicationService.getCachedClientRoleByName(GlobalConstants.ROLE_NAME_RACKER)
 
         List<TenantRole> tenantRoles = [createTenantRoleForClientRole(rackerRole)]
 
         expect:
         service.getIdentityTypeRoleAsEnum(tenantRoles) == null
     }
-
 
     def List<String> getExpectedRoles() {
         return Arrays.asList(identityConfig.getStaticConfig().getIdentityServiceAdminRoleName()

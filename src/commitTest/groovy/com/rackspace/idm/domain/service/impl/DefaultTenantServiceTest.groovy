@@ -681,16 +681,14 @@ class DefaultTenantServiceTest extends RootServiceTest {
         "asdf:12345"        | ["files"] as Set    | ["cloud","asdf","files"] as Set    | ["files"] as Set
     }
 
-    def "test getEphemeralRackerTenantRole with retrieving cached role by id from applicationService/authorizationService"() {
+    def "test getEphemeralRackerTenantRole with retrieving cached role by id from applicationService"() {
         given:
         def roleId = "roleId"
 
-        reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
         identityConfig.getStaticConfig() >> staticConfig
         staticConfig.getRackerRoleId() >> roleId
 
         applicationService.getCachedClientRoleById(roleId) >>  createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-        authorizationService.getCachedIdentityRoleById(roleId) >>  createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
 
         when:
         def tenantRole = service.getEphemeralRackerTenantRole()
@@ -699,16 +697,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         tenantRole.getRoleRsId() != null
         tenantRole.getRoleRsId() == roleId
 
-        if (flag) {
-            1 * applicationService.getCachedClientRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-            0 * authorizationService.getCachedIdentityRoleById(_)
-        } else {
-            1 * authorizationService.getCachedIdentityRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-            0 * applicationService.getCachedClientRoleById(_)
-        }
-
-        where:
-        flag << [true, false]
+        1 * applicationService.getCachedClientRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
     }
 
 
@@ -733,8 +722,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         tenantRoleDao.getTenantRolesForUser(user) >> (Iterable<TenantRole>)tenantRoles
 
-        reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
-
         when:
         def tenantRoleList = service.getTenantRolesForUserPerformant(user)
 
@@ -742,18 +729,8 @@ class DefaultTenantServiceTest extends RootServiceTest {
         !tenantRoleList.isEmpty()
         tenantRoleList.size() == 3
 
-        if (flag) {
-            (1.._) * applicationService.getCachedClientRoleById(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-            (1.._) * applicationService.getCachedClientRoleByName(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-            0 * authorizationService.getCachedIdentityRoleByName(_)
-        } else {
-            (1.._) * applicationService.getCachedClientRoleById(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-            (1.._) * authorizationService.getCachedIdentityRoleByName(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-            0 * applicationService.getCachedClientRoleByName(_)
-        }
-
-        where:
-        flag << [true, false]
+        (1.._) * applicationService.getCachedClientRoleById(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+        (1.._) * applicationService.getCachedClientRoleByName(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
     }
 
     /**

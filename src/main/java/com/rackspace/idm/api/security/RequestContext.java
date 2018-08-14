@@ -167,15 +167,10 @@ public class RequestContext {
             } else {
                 userTenantRoles = IteratorUtils.toList(tenantService.getTenantRolesForUserNoDetail(effectiveCaller).iterator());
             }
-            //get all the tenant roles for the user, and limit down to "identity" ones
+            //get all the tenant roles for the user
             for (TenantRole userTenantRole : userTenantRoles) {
-                ImmutableClientRole identityRole = null;
+                ImmutableClientRole identityRole = applicationService.getCachedClientRoleById(userTenantRole.getRoleRsId());
 
-                if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
-                    identityRole = applicationService.getCachedClientRoleById(userTenantRole.getRoleRsId());
-                } else {
-                    identityRole = authorizationService.getCachedIdentityRoleById(userTenantRole.getRoleRsId());
-                }
                 if (identityRole != null) {
                     //role on user is an "identity" role so add to list of effective identity roles
                     userTenantRole.setName(identityRole.getName());

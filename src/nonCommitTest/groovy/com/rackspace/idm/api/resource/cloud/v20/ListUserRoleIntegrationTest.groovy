@@ -264,7 +264,7 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         String uaToken = token.accessTokenString
         String iaToken = utils.getToken(users[0].username)
 
-        def userRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())
+        def userRole = applicationService.getCachedClientRoleByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())
 
         when: "user admin tries to load identity admin roles"
         def uaResponse = cloud20.listUserGlobalRoles(uaToken, users[0].id)

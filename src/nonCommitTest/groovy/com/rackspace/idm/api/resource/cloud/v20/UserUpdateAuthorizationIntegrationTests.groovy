@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import org.openstack.docs.identity.api.v2.User
@@ -14,6 +16,9 @@ import spock.lang.Shared
 class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationTest {
 
     @Autowired DefaultAuthorizationService authorizationService
+
+    @Autowired
+    ApplicationService applicationService
 
     def "identity admin can retrieve service admin user"() {
         when:
@@ -93,7 +98,7 @@ class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationT
         User defaultUser = createDefaultUser(userAdminToken)
         def defaultUserToken = authenticate(defaultUser.username)
 
-        ClientRole userManageRole = authorizationService.getCloudUserManagedRole()
+        ClientRole userManageRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_MANAGER.roleName).asClientRole()
         cloud20.addUserRole(userAdminToken, defaultUser.getId(), userManageRole.getId())
         defaultUser.setEmail("anythingelse@anything.com")
 
@@ -118,7 +123,7 @@ class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationT
 
         User defaultUser2 = createDefaultUser(userAdminToken)
 
-        ClientRole userManageRole = authorizationService.getCloudUserManagedRole()
+        ClientRole userManageRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_MANAGER.roleName).asClientRole()
         cloud20.addUserRole(userAdminToken, defaultUser.getId(), userManageRole.getId())
         cloud20.addUserRole(userAdminToken, defaultUser2.getId(), userManageRole.getId())
 
