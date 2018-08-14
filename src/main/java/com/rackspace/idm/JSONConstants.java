@@ -5,6 +5,7 @@ public final class JSONConstants {
     private JSONConstants() {}
 
     public static final String ACCESS = "access";
+    public static final String ACCEPT = "accept";
     public static final String ADMIN_URL = "adminURL";
     public static final String ALIAS = "alias";
     public static final String ANSWER = "answer";
@@ -338,6 +339,9 @@ public final class JSONConstants {
     public static final String USER_CONTACT_ID_PATH = "user.contactId";
     public static final String USER_RAX_AUTH_CONTACT_ID_PATH = "user.RAX-AUTH:contactId";
     public static final String RAX_AUTH_CONTACT_ID = "RAX-AUTH:contactId";
+
+    public static final String REGISTRATION_CODE = "registrationCode";
+    public static final String USER_RAX_AUTH_REGISTRATION_CODE_PATH = "user.RAX-AUTH:registrationCode";
 
     public static final String FEDERATED_IDP = "federatedIdp";
     public static final String USER_RAX_AUTH_FEDERATED_IDP_PATH = "user.RAX-AUTH:federatedIdp";

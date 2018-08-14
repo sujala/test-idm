@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.*
@@ -34,6 +35,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.*
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.HttpHeaders
@@ -5032,6 +5034,160 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             throw new ForbiddenException()
         }
         1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+    }
+
+    def "acceptUnverifiedUserInvite: calls correct services"() {
+        given:
+        // Setup mocks
+        mockValidator20(service)
+        mockJAXBObjectFactories(service)
+        service.userConverterCloudV20 = Mock(UserConverterCloudV20)
+
+        def userId = "id"
+        def registrationCode = "code"
+        UserForCreate user = new UserForCreate().with {
+            it.id = userId
+            it.username = "username"
+            it.registrationCode = registrationCode
+            it.password = "password"
+            it.secretQA = v2Factory.createSecretQA()
+            it
+        }
+        def entityUser = entityFactory.createUser().with {
+            it.id = userId
+            it.registrationCode = registrationCode
+            it.inviteSendDate = new Date()
+            it.unverified = true
+            it.enabled = false
+            it.username = null
+            it
+        }
+
+        when:
+        def response = service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        // Validate username
+        1 * validator20.validateRequiredAttribute("username", user.username)
+        1 * validator.validateUsername(user.username)
+        // Validate password
+        1 * validator20.validateRequiredAttribute("password", user.password)
+        1 * validator.validatePasswordForCreateOrUpdate(user.password)
+        // Validate secretQA
+        1 * validator20.validateRequiredAttribute("answer", user.secretQA.answer)
+        1 * validator20.validateRequiredAttribute("question", user.secretQA.question)
+
+        1 * identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 48
+        1 * userService.updateUser(entityUser)
+        1 * identityUserService.getEndUserById(user.id) >> entityUser
+        1 * service.userConverterCloudV20.toUser(entityUser) >> v2Factory.createUser()
+        1 * openStackIdentityV2Factory.createUser(_) >> new JAXBElement<User>(org.openstack.docs.identity.api.v2.ObjectFactory._User_QNAME, User.class, null, v2Factory.createUser())
+    }
+
+    def "acceptUnverifiedUserInvite: error check"() {
+        given:
+        // Setup Mocks
+        mockValidator20(service)
+        mockExceptionHandler(service)
+        mockJAXBObjectFactories(service)
+
+        service.userConverterCloudV20 = Mock(UserConverterCloudV20)
+        def userId = "id"
+        def registrationCode = "code"
+        UserForCreate user = new UserForCreate().with {
+            it.id = userId
+            it.username = "username"
+            it.registrationCode = registrationCode
+            it.password = "password"
+            it.secretQA = v2Factory.createSecretQA()
+            it
+        }
+        def entityUser = entityFactory.createUser().with {
+            it.id = userId
+            it.registrationCode = registrationCode
+            it.inviteSendDate = new Date()
+            it.unverified = true
+            it.enabled = false
+            it.username = null
+            it
+        }
+        def invalidUser = entityFactory.createUser().with {
+            it.unverified = false
+            it
+        }
+
+        when: "user is not found"
+        service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> null
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, user.id))
+            return Response.status(SC_NOT_FOUND)
+        }
+
+        when: "user is not unverified"
+        service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> invalidUser
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, user.id))
+            return Response.status(SC_NOT_FOUND)
+        }
+
+        when: "invalid registration code"
+        user.registrationCode = "badCode"
+        service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, user.id))
+            return Response.status(SC_NOT_FOUND)
+        }
+
+        when: "username is not unique"
+        user.registrationCode = registrationCode
+        service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        1 * validator20.validateRequiredAttribute("username", user.username)
+        1 * identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 48
+        1 * validator.validateUsername(user.username) >> {throw new DuplicateUsernameException()}
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            return Response.status(SC_CONFLICT)
+        }
+
+        when: "secretQA not provided"
+        user.secretQA = null
+        service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        1 * identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 48
+        1 * validator20.validateRequiredAttribute("username", user.username)
+        1 * validator.validateUsername(user.username)
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0], BadRequestException, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE, "Secret question and answer are required attributes.")
+            return Response.status(SC_BAD_REQUEST)
+        }
+
+        when: "expired registration code"
+        user.secretQA = v2Factory.createSecretQA()
+        service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        1 * identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 0
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, "Your registration code has expired, please request a new invite.")
+            return Response.status(SC_FORBIDDEN)
+        }
     }
 
     def mockServices() {

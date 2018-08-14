@@ -1025,6 +1025,13 @@ public class Validator20 {
         }
     }
 
+    public void validateRequiredAttribute(String attrName, String value) {
+        if (StringUtils.isBlank(value)) {
+            String errMsg = String.format(REQUIRED_ATTR_MESSAGE, attrName);
+            throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
+        }
+    }
+
     private String generateLengthExceededMsg(String propertyName, int maxLength) {
         return String.format(LENGTH_EXCEEDED_ERROR_MSG, propertyName, maxLength);
     }

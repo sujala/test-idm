@@ -332,7 +332,7 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
             1 * exceptionHandler.exceptionResponse(_) >> { args ->
                 def exception = args[0]
                 assert exception.class == DuplicateException
-                assert exception.message.endsWith(DefaultCloud20Service.ERROR_UVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN)
+                assert exception.message.endsWith(DefaultCloud20Service.ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN)
             }
         }
 
