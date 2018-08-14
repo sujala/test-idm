@@ -947,6 +947,16 @@ public class Cloud20VersionResource {
         return cloud20Service.sendUnverifiedUserInvite(httpHeaders, uriInfo, authToken, userId).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Validate Invite User")
+    @HEAD
+    @Path("RAX-AUTH/invite/{userId}")
+    public Response validateInviteUser(@Context UriInfo uriInfo,
+                                       @Context HttpHeaders httpHeaders,
+                                       @QueryParam("registrationCode") String registrationCode,
+                                       @PathParam("userId") String userId) {
+        return cloud20Service.verifyInviteUser(httpHeaders, uriInfo, userId, registrationCode).build();
+    }
+
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update user")
     @POST
     @Path("users/{userId}")

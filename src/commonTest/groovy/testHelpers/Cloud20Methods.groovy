@@ -186,6 +186,11 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(INVITE).path(USER).path(userId).accept(accept).header(X_AUTH_TOKEN, token).put(ClientResponse)
     }
 
+    def verifyUserInvite(String userId, String registrationCode) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(INVITE).path(userId).queryParam("registrationCode", registrationCode).head()
+    }
+
     /**
      * Takes in an int domainId because cloud accounts MUST have an int domain on user creation to create the nast/mosso
      * tenants

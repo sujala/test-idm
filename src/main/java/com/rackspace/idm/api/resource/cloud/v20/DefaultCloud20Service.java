@@ -1015,6 +1015,22 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder verifyInviteUser(HttpHeaders httpHeaders, UriInfo uriInfo, String userId, String registrationCode) {
+        User user = userService.getUserById(userId);
+        int expiration = identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours();
+        if (user != null && user.isUnverified() && user.getRegistrationCode().equalsIgnoreCase(registrationCode)) {
+            if (!new DateTime(user.getInviteSendDate()).plusHours(expiration).isBeforeNow()) {
+                return Response.ok();
+            } else {
+                return exceptionHandler.exceptionResponse(new ForbiddenException("Your registration code has expired, please request a new invite.", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION));
+            }
+        }
+        String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
+        logger.warn(errMsg);
+        return exceptionHandler.exceptionResponse(new NotFoundException(errMsg, ErrorCodes.ERROR_CODE_NOT_FOUND));
+    }
+
+    @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);

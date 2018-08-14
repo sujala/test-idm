@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Invite
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import org.openstack.docs.identity.api.v2.UserList
 import com.sun.jersey.api.client.ClientResponse
@@ -15,6 +16,7 @@ import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.openstack.docs.identity.api.v2.User
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
@@ -23,6 +25,9 @@ import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
 
 class UnverifiedUserIntegrationTest extends RootIntegrationTest {
+
+    @Autowired
+    UserDao userDao
 
     @Unroll
     def "The feature flag 'feature.enable.create.invites' must be enabled in order for unverified users to be created: featureEnabled == #featureEnabled"() {
@@ -597,6 +602,86 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         where:
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "Verify User Invite"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def user = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@rackspace.com"
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+        def response = cloud20.createUnverifiedUser(userAdminToken, user)
+        assert response.status == HttpStatus.SC_CREATED
+        def unverifiedUserEntity = response.getEntity(User).value
+
+        when: "send unverified user invite"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(userAdminToken, unverifiedUserEntity.id)
+
+        then: "assert valid response"
+        response.status == HttpStatus.SC_OK
+
+        when: "verify valid user invite"
+        com.rackspace.idm.domain.entity.User daoUser = userDao.getUserById(unverifiedUserEntity.id)
+        response = cloud20.verifyUserInvite(unverifiedUserEntity.id, daoUser.registrationCode)
+
+        then: "returns valid response"
+        response.status == HttpStatus.SC_OK
+
+        when: "verify valid user invite invalid code"
+        response = cloud20.verifyUserInvite(unverifiedUserEntity.id, "01234567890")
+
+        then: "returns not found"
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "verify regular user"
+        response = cloud20.verifyUserInvite(userAdmin.id, "01234567890")
+
+        then: "returns not found"
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "verify invalid user invite invalid code"
+        response = cloud20.verifyUserInvite("0123456789", "01234567890")
+
+        then: "returns not found"
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "re-send unverified user invite"
+        clearEmailServerMessages()
+        response = cloud20.sendUnverifiedUserInvite(userAdminToken, unverifiedUserEntity.id)
+
+        then: "assert valid response"
+        response.status == HttpStatus.SC_OK
+
+        when: "verify valid user invite with first registrationCode"
+        response = cloud20.verifyUserInvite(unverifiedUserEntity.id, daoUser.registrationCode)
+
+        then: "returns not found"
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "verify valid user invite with second registartionCode"
+        com.rackspace.idm.domain.entity.User daoUser2 = userDao.getUserById(unverifiedUserEntity.id)
+        response = cloud20.verifyUserInvite(unverifiedUserEntity.id, daoUser2.registrationCode)
+
+        then: "returns valid response"
+        response.status == HttpStatus.SC_OK
+
+        when: "verify expired user invite"
+        reloadableConfiguration
+        reloadableConfiguration.setProperty(IdentityConfig.UNVERIFIED_USER_INVITES_TTL_HOURS_PROP, 0)
+        response = cloud20.verifyUserInvite(unverifiedUserEntity.id, daoUser2.registrationCode)
+
+        then: "returns not found"
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        cleanup:
+        reloadableConfiguration.reset()
+        clearEmailServerMessages()
     }
 
     def "Test listing of Verified and Unverified users in domain"(){
