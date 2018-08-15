@@ -991,8 +991,9 @@ public class DefaultCloud20Service implements Cloud20Service {
              * invitation.
              */
 
-            // Generate a secure 256-bit random number
-            retrievedUnverifiedUser.setRegistrationCode(RandomGeneratorUtil.generateSecureRandomNumber(64));
+            // Generate a secure random number for registration code of configurable size.
+            int registrationCodeSize = identityConfig.getReloadableConfig().getUnverifiedUserRegistrationCodeSize();
+            retrievedUnverifiedUser.setRegistrationCode(RandomGeneratorUtil.generateSecureRandomNumber(registrationCodeSize));
             retrievedUnverifiedUser.setInviteSendDate(new Date());
 
             userService.updateUser(retrievedUnverifiedUser);

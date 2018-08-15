@@ -4945,11 +4945,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * identityUserService.getProvisionedUserById(unverifiedUser.id) >> unverifiedUser
         1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * identityConfig.getReloadableConfig().getUnverifiedUserRegistrationCodeSize() >> 32
         1 * userService.updateUser(unverifiedUser)
         1 * emailClient.asyncSendUnverifiedUserInviteMessage(unverifiedUser) >> { args ->
             com.rackspace.idm.domain.entity.User user = args[0]
             assert user.registrationCode != null
             assert user.inviteSendDate != null
+            assert user.registrationCode.size() == 32
         }
 
         when: "caller is a service admin"
@@ -4960,11 +4962,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * identityUserService.getProvisionedUserById(unverifiedUser.id) >> unverifiedUser
         1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.SERVICE_ADMIN
+        1 * identityConfig.getReloadableConfig().getUnverifiedUserRegistrationCodeSize() >> 32
         1 * userService.updateUser(unverifiedUser)
         1 * emailClient.asyncSendUnverifiedUserInviteMessage(unverifiedUser) >> { args ->
             com.rackspace.idm.domain.entity.User user = args[0]
             assert user.registrationCode != null
             assert user.inviteSendDate != null
+            assert user.registrationCode.size() == 32
         }
 
         when: "caller is an identity admin"
@@ -4975,11 +4979,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * identityUserService.getProvisionedUserById(unverifiedUser.id) >> unverifiedUser
         1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        1 * identityConfig.getReloadableConfig().getUnverifiedUserRegistrationCodeSize() >> 32
         1 * userService.updateUser(unverifiedUser)
         1 * emailClient.asyncSendUnverifiedUserInviteMessage(unverifiedUser) >> { args ->
             com.rackspace.idm.domain.entity.User user = args[0]
             assert user.registrationCode != null
             assert user.inviteSendDate != null
+            assert user.registrationCode.size() == 32
         }
     }
 

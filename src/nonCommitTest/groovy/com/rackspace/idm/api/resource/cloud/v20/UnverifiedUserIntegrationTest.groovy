@@ -402,6 +402,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
     def "send invite for unverified users: accept = #accept"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP, 32)
         def userAdmin = utils.createCloudAccount()
         def userAdminToken = utils.getToken(userAdmin.username)
         def userManager = utils.createUser(userAdminToken)
@@ -428,6 +429,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         inviteEntity.userId == unverifiedUserEntity.id
         inviteEntity.email == unverifiedUserEntity.email
         inviteEntity.registrationCode != null
+        inviteEntity.registrationCode.size() == 32
         inviteEntity.created != null
 
         and: "email sent"
@@ -445,6 +447,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         inviteEntity.userId == unverifiedUserEntity.id
         inviteEntity.email == unverifiedUserEntity.email
         inviteEntity.registrationCode != null
+        inviteEntity.registrationCode.size() == 32
         inviteEntity.created != null
 
         and: "email sent"
@@ -462,6 +465,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         inviteEntity.userId == unverifiedUserEntity.id
         inviteEntity.email == unverifiedUserEntity.email
         inviteEntity.registrationCode != null
+        inviteEntity.registrationCode.size() == 32
         inviteEntity.created != null
 
         and: "email sent"
@@ -479,6 +483,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         inviteEntity.userId == unverifiedUserEntity.id
         inviteEntity.email == unverifiedUserEntity.email
         inviteEntity.registrationCode != null
+        inviteEntity.registrationCode.size() == 32
         inviteEntity.created != null
 
         and: "email sent"
