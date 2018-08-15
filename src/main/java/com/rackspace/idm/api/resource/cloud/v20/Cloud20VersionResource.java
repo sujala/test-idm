@@ -947,6 +947,28 @@ public class Cloud20VersionResource {
         return cloud20Service.sendUnverifiedUserInvite(httpHeaders, uriInfo, authToken, userId).build();
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Send unverified user invite")
+    @PUT
+    @Path("RAX-AUTH/invite/user/{userId}/accept")
+    public Response acceptUnverifiedUserInvite(@Context UriInfo uriInfo,
+                                               @Context HttpHeaders httpHeaders,
+                                               @HeaderParam(X_AUTH_TOKEN) String authToken,
+                                               @PathParam("userId") String userId,
+                                               UserForCreate user) {
+        user.setId(userId);
+        return cloud20Service.acceptUnverifiedUserInvite(httpHeaders, uriInfo, user).build();
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Validate Invite User")
+    @HEAD
+    @Path("RAX-AUTH/invite/{userId}")
+    public Response validateInviteUser(@Context UriInfo uriInfo,
+                                       @Context HttpHeaders httpHeaders,
+                                       @QueryParam("registrationCode") String registrationCode,
+                                       @PathParam("userId") String userId) {
+        return cloud20Service.verifyInviteUser(httpHeaders, uriInfo, userId, registrationCode).build();
+    }
+
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Update user")
     @POST
     @Path("users/{userId}")

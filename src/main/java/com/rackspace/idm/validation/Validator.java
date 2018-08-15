@@ -180,7 +180,7 @@ public class Validator {
         return true;
     }
 
-    private void validateUsername(String username) {
+    public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
             throw new BadRequestException("Username is not specified");
         }

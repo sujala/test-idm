@@ -103,6 +103,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_INVALID_VALUE = "GEN-007";
     public static final String ERROR_CODE_THRESHOLD_REACHED = "GEN-008";
     public static final String ERROR_CODE_DATA_INTEGRITY = "GEN-009";
+    public static final String ERROR_CODE_CONFLICT = "GEN-010";
 
     public static final String ERROR_CODE_DOMAIN_DEFAULT_MISSING_USER_ADMIN = "DOM-008";
     public static final String ERROR_CODE_DOMAIN_DEFAULT_NO_ENABLED_USER_ADMIN = "DOM-009";

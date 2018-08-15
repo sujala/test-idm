@@ -270,7 +270,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ERROR_UNVERIFIED_USERS_REQUIRED_VALID_EMAIL_ADDRESS = "The email specified for the invite user is invalid.";
     public static final String ERROR_DOMAIN_MUST_EXIST_FOR_UNVERIFIED_USERS = "The domain for the user does not exist.";
     public static final String ERROR_DOMAIN_MUST_BE_ENABLED_FOR_UNVERIFIED_USERS = "The domain for the user must be enabled.";
-    public static final String ERROR_UVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN = "A user with the provided email already exists in the domain.";
+    public static final String ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN = "A user with the provided email already exists in the domain.";
+    public static final String UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE = "Unverified user with ID '%s' was not found.";
 
     public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
 
@@ -949,7 +950,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Iterable<User> usersWithEmailAddressInDomain = identityUserService.getProvisionedUsersByDomainIdAndEmail(domain.getDomainId(), user.getEmail());
             if (usersWithEmailAddressInDomain != null && usersWithEmailAddressInDomain.iterator().hasNext()) {
-                throw new DuplicateException(ERROR_UVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN, ErrorCodes.ERROR_CODE_INVALID_VALUE);
+                throw new DuplicateException(ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN, ErrorCodes.ERROR_CODE_INVALID_VALUE);
             }
 
             User unverifiedUser = this.userConverterCloudV20.fromUser(user);
@@ -990,8 +991,9 @@ public class DefaultCloud20Service implements Cloud20Service {
              * invitation.
              */
 
-            // Generate a secure 256-bit random number
-            retrievedUnverifiedUser.setRegistrationCode(RandomGeneratorUtil.generateSecureRandomNumber(64));
+            // Generate a secure random number for registration code of configurable size.
+            int registrationCodeSize = identityConfig.getReloadableConfig().getUnverifiedUserRegistrationCodeSize();
+            retrievedUnverifiedUser.setRegistrationCode(RandomGeneratorUtil.generateSecureRandomNumber(registrationCodeSize));
             retrievedUnverifiedUser.setInviteSendDate(new Date());
 
             userService.updateUser(retrievedUnverifiedUser);
@@ -1012,6 +1014,91 @@ public class DefaultCloud20Service implements Cloud20Service {
             logger.debug(String.format("Error sending invite to unverified user '%s'.", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    @Override
+    public ResponseBuilder acceptUnverifiedUserInvite(HttpHeaders httpHeaders, UriInfo uriInfo, UserForCreate user) {
+        try {
+            /*
+             * Perform request validation on open resource.
+             *
+             */
+            // Validate user
+            User retrievedUnverifiedUser = identityUserService.getProvisionedUserById(user.getId());
+
+            if (retrievedUnverifiedUser == null
+                    || !retrievedUnverifiedUser.isUnverified()
+                    || !retrievedUnverifiedUser.getRegistrationCode().equalsIgnoreCase(user.getRegistrationCode())) {
+                throw new NotFoundException(String.format(UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, user.getId()),
+                        ErrorCodes.ERROR_CODE_NOT_FOUND);
+            }
+
+            // Validate TTL of invite
+            int expiration = identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours();
+            if (new DateTime(retrievedUnverifiedUser.getInviteSendDate()).plusHours(expiration).isBeforeNow()) {
+                logger.debug(String.format("An attempt was made to register user '%s' with an expired registration code.", user.getId()));
+                throw new ForbiddenException("Your registration code has expired, please request a new invite.", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            // Validate username
+            validator20.validateRequiredAttribute("username", user.getUsername());
+            validator.validateUsername(user.getUsername());
+
+            // Validate password
+            validator20.validateRequiredAttribute("password", user.getPassword());
+            validator.validatePasswordForCreateOrUpdate(user.getPassword());
+
+            // Validate secret question and answer
+            if (user.getSecretQA() == null) {
+                throw new BadRequestException("Secret question and answer are required attributes.", ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
+            }
+            validator20.validateRequiredAttribute("answer", user.getSecretQA().getAnswer());
+            validator20.validateRequiredAttribute("question", user.getSecretQA().getQuestion());
+
+            /*
+             * Convert unverified user from unverified to registered user by updating the username, password, and
+             * secret question and answer.
+             */
+            retrievedUnverifiedUser.setUnverified(false);
+
+            // Remove the registration code and invite created date
+            retrievedUnverifiedUser.setRegistrationCode(null);
+            retrievedUnverifiedUser.setEncryptedRegistrationCode(null);
+            retrievedUnverifiedUser.setInviteSendDate(null);
+
+            // Enabled and generate API key
+            retrievedUnverifiedUser.setEnabled(true);
+            retrievedUnverifiedUser.setApiKey(UUID.randomUUID().toString().replaceAll("-", ""));
+
+            // Set required attributes
+            retrievedUnverifiedUser.setUsername(user.getUsername());
+            retrievedUnverifiedUser.setUserPassword(user.getPassword());
+            retrievedUnverifiedUser.setSecretQuestion(user.getSecretQA().getQuestion());
+            retrievedUnverifiedUser.setSecretAnswer(user.getSecretQA().getAnswer());
+
+            userService.updateUser(retrievedUnverifiedUser);
+
+            EndUser endUser = identityUserService.getEndUserById(retrievedUnverifiedUser.getId());
+            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(endUser)).getValue());
+        } catch (Exception ex) {
+            logger.debug(String.format("Error accepting invite for unverified user '%s'.", user.getId()), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+    
+    public ResponseBuilder verifyInviteUser(HttpHeaders httpHeaders, UriInfo uriInfo, String userId, String registrationCode) {
+        User user = userService.getUserById(userId);
+        int expiration = identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours();
+        if (user != null && user.isUnverified() && user.getRegistrationCode().equalsIgnoreCase(registrationCode)) {
+            if (!new DateTime(user.getInviteSendDate()).plusHours(expiration).isBeforeNow()) {
+                return Response.ok();
+            } else {
+                return exceptionHandler.exceptionResponse(new ForbiddenException("Your registration code has expired, please request a new invite.", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION));
+            }
+        }
+        String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
+        logger.warn(errMsg);
+        return exceptionHandler.exceptionResponse(new NotFoundException(errMsg, ErrorCodes.ERROR_CODE_NOT_FOUND));
     }
 
     @Override
