@@ -19,6 +19,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.commons.lang.StringUtils
 import org.opensaml.security.credential.Credential
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.stereotype.Component
 import spock.lang.Shared
@@ -184,6 +185,16 @@ class Cloud20Methods {
     def sendUnverifiedUserInvite(String token, String userId, MediaType accept = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(INVITE).path(USER).path(userId).accept(accept).header(X_AUTH_TOKEN, token).put(ClientResponse)
+    }
+
+    def acceptUnverifiedUserInvite(UserForCreate user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(INVITE).path(USER).path(user.id).path(ACCEPT).accept(accept).type(request).entity(user).put(ClientResponse)
+    }
+    
+    def verifyUserInvite(String userId, String registrationCode) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(INVITE).path(userId).queryParam("registrationCode", registrationCode).head()
     }
 
     /**

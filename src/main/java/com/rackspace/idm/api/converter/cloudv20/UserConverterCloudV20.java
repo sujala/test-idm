@@ -226,6 +226,9 @@ public class UserConverterCloudV20 {
             */
             jaxbUser.setRoles(null);
 
+            // Null out the registration code for unverified users
+            jaxbUser.setRegistrationCode(null);
+
             jaxbUser.setMultiFactorState(basicMultiFactorService.getLogicalUserMultiFactorState(user));
             if (user.isMultiFactorEnabled()) {
                 jaxbUser.setFactorType(user.getMultiFactorTypeAsEnum());

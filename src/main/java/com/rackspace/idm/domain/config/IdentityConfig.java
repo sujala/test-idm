@@ -602,6 +602,9 @@ public class IdentityConfig {
     public static final String UNVERIFIED_USER_INVITES_TTL_HOURS_PROP = "unverified.user.invites.ttl.hours";
     public static final int UNVERIFIED_USER_INVITES_TTL_HOURS_DEFAULT = 48;
 
+    public static final String UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP = "unverified.user.registration.code.size";
+    public static final int UNVERIFIED_USER_REGISTRATION_CODE_SIZE_DEFAULT = 32;
+
     /**
      * Identity Repository Properties
      */
@@ -918,6 +921,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_PROP, FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_DEFAULT);
         defaults.put(FEATURE_ENABLE_CREATE_INVITES_PROP, FEATURE_ENABLE_CREATE_INVITES_DEFAULT);
         defaults.put(UNVERIFIED_USER_INVITES_TTL_HOURS_PROP, UNVERIFIED_USER_INVITES_TTL_HOURS_DEFAULT);
+        defaults.put(UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP, UNVERIFIED_USER_REGISTRATION_CODE_SIZE_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -2575,6 +2579,11 @@ public class IdentityConfig {
         @IdmProp(key = UNVERIFIED_USER_INVITES_TTL_HOURS_PROP, versionAdded = "3.25.0", description = "The TTL in hours for unverified user invites")
         public int getUnverifiedUserInvitesTTLHours() {
             return getIntSafely(reloadableConfiguration, UNVERIFIED_USER_INVITES_TTL_HOURS_PROP);
+        }
+
+        @IdmProp(key = UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP, versionAdded = "3.25.0", description = "The size of the registration code generated on unverified user invite")
+        public int getUnverifiedUserRegistrationCodeSize() {
+            return getIntSafely(reloadableConfiguration, UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP);
         }
 
     }
