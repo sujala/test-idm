@@ -110,7 +110,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
             it
         }
         domainService.getDomainAdmins(domainId) >> [userAdmin]
-        authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
+        applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
         tenantService.getTenantRolesForUser(userAdmin) >> []
         scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
 
@@ -173,7 +173,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
             it
         }
         domainService.getDomainAdmins(domainId) >> [userAdmin]
-        authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
+        applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
         tenantService.getTenantRolesForUser(userAdmin) >> []
         scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
         def userGroupToRemove = new UserGroup().with {
@@ -230,7 +230,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
             it
         }
         domainService.getDomainAdmins(domainId) >> [userAdmin]
-        authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
+        applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
         tenantService.getTenantRolesForUser(userAdmin) >> []
         scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
         federatedUserDao.getUserByUsernameForIdentityProviderId(existingUser.username, idp.providerId) >> existingUser
@@ -273,7 +273,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
             it
         }
         domainService.getDomainAdmins(domainId) >> [userAdmin]
-        authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
+        applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
         tenantService.getTenantRolesForUser(userAdmin) >> []
         scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
         federatedUserDao.getUserByUsernameForIdentityProviderId(existingUser.username, idp.providerId) >> existingUser
@@ -320,7 +320,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
             it
         }
         domainService.getDomainAdmins(domainId) >> [userAdmin]
-        authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
+        applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
         tenantService.getTenantRolesForUser(userAdmin) >> []
         scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
         federatedUserDao.getUserByUsernameForIdentityProviderId(existingUser.username, idp.providerId) >> existingUser

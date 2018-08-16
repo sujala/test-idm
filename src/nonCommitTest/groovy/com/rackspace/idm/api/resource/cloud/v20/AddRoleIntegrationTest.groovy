@@ -184,7 +184,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
         def userManager = createDefaultUser(userAdminToken)
         def userManagerToken = authenticate(userManager.username)
-        ClientRole userManageRole = defaultAuthorizationService.getCloudUserManagedRole()
+        ClientRole userManageRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_MANAGER.roleName).asClientRole()
         def status = addRoleToUser(specificationServiceAdminToken, userManager, userManageRole)
         assert status == HttpStatus.SC_OK.intValue()
         assertUserHasRole(userManager, userManageRole) //verify test state
@@ -255,7 +255,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         //create an identity-admin from which we'll remove the identity-admin role
         def identityAdmin = createIdentityAdmin()
 
-        ClientRole cloudIdentityAdminRole = defaultAuthorizationService.getCloudIdentityAdminRole();
+        ClientRole cloudIdentityAdminRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.IDENTITY_ADMIN.roleName).asClientRole()
 
         def identityAdminEntity = userService.getUserById(identityAdmin.id)
         tenantService.deleteTenantRoleForUser(identityAdminEntity, tenantService.getTenantRoleForUserById(identityAdminEntity, Constants.IDENTITY_ADMIN_ROLE_ID))
@@ -301,7 +301,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
         def defaultUser = createDefaultUser(userAdminToken)
 
-        ClientRole userManageRole = defaultAuthorizationService.getCloudUserManagedRole()
+        ClientRole userManageRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_MANAGER.roleName).asClientRole()
         def status = addRoleToUser(specificationServiceAdminToken, userManager, userManageRole)
         assert status == HttpStatus.SC_OK
         assertUserHasRole(userManager, userManageRole) //verify test state

@@ -53,6 +53,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
+    @Unroll
     def "user admin cannot see federated users that are not in their domain: enabled: #enabled"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, enabled)

@@ -7,6 +7,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import org.apache.http.HttpStatus
@@ -20,7 +21,7 @@ class ListUserGroupsIntegrationTest extends RootIntegrationTest {
     ScopeAccessService scopeAccessService
 
     @Autowired
-    AuthorizationService authorizationService
+    ApplicationService applicationService
 
     def "test authorization for list user group"() {
         def userAdmin, users
@@ -31,7 +32,7 @@ class ListUserGroupsIntegrationTest extends RootIntegrationTest {
         String uaToken = token.accessTokenString
         String iaToken = utils.getToken(users[0].username)
 
-        def userRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.GET_USER_GROUPS_GLOBAL.getRoleName())
+        def userRole = applicationService.getCachedClientRoleByName(IdentityRole.GET_USER_GROUPS_GLOBAL.getRoleName())
 
         when: "user admin tries to load identity admin groups"
         def uaResponse = cloud20.listGroupsForUser(uaToken, users[0].id)

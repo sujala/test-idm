@@ -57,6 +57,9 @@ public class DefaultDevOpsService implements DevOpsService {
     private AuthorizationService authorizationService;
 
     @Autowired
+    private ApplicationService applicationService;
+
+    @Autowired
     private ScopeAccessService scopeAccessService;
 
     @Autowired
@@ -424,7 +427,7 @@ public class DefaultDevOpsService implements DevOpsService {
             Iterable<User> userList = domainService.getUsersByDomainId(domainId);
 
             // Get user-admin client role.
-            ImmutableClientRole userAdminCr = authorizationService.getCachedIdentityRoleByName(
+            ImmutableClientRole userAdminCr = applicationService.getCachedClientRoleByName(
                     IdentityUserTypeEnum.USER_ADMIN.getRoleName());
 
             // Determine the user-admins for domain.

@@ -54,7 +54,7 @@ public class DefaultCreateSubUserService implements CreateSubUserService {
     RequestContextHolder requestContextHolder;
 
     @Autowired
-    AuthorizationService authorizationService;
+    ApplicationService applicationService;
 
     @Override
     public User setDefaultsAndCreateUser(org.openstack.docs.identity.api.v2.User userForCreate, User userForDefaults) {
@@ -80,7 +80,7 @@ public class DefaultCreateSubUserService implements CreateSubUserService {
         Domain domain = domainService.getDomain(domainId);
         List<TenantRole> subUserRoles = getAssignableCallerRoles(userAdmin);
 
-        ImmutableClientRole icr = authorizationService.getCachedIdentityRoleByName(identityConfig.getStaticConfig().getIdentityDefaultUserRoleName());
+        ImmutableClientRole icr = applicationService.getCachedClientRoleByName(identityConfig.getStaticConfig().getIdentityDefaultUserRoleName());
         TenantRole tr = RoleUtil.newTenantRoleFromClientRole(icr);
         subUserRoles.add(tr);
 

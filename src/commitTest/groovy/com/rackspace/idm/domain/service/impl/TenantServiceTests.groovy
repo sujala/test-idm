@@ -65,7 +65,7 @@ class TenantServiceTests extends RootServiceTest {
         then: "the correct backend services are called"
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
         1 * domainService.getDomain(domainId) >> domain
-        1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
+        1 * applicationService.getCachedClientRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         if (excludeTenantType) {
             1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
@@ -130,7 +130,7 @@ class TenantServiceTests extends RootServiceTest {
         then: "the correct backend services are called"
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
         1 * domainService.getDomain(domainId) >> domain
-        1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
+        1 * applicationService.getCachedClientRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
 
@@ -180,7 +180,7 @@ class TenantServiceTests extends RootServiceTest {
         then: "the correct backend services are called"
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
         1 * domainService.getDomain(domainId) >> domain
-        1 * authorizationService.getCachedIdentityRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
+        1 * applicationService.getCachedClientRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
 

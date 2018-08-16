@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import org.apache.commons.configuration.Configuration
@@ -22,7 +23,7 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
     ScopeAccessService scopeAccessService
 
     @Autowired
-    AuthorizationService authorizationService
+    ApplicationService applicationService
 
     @Shared def userAdmin, users
 
@@ -85,7 +86,7 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
         String uaToken = token.accessTokenString
         String iaToken = utils.getToken(users[0].username)
 
-        def endpointRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName())
+        def endpointRole = applicationService.getCachedClientRoleByName(IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName())
 
         when: "user admin tries to load own endpoints w/ different tokens"
         def uaResponse = cloud20.listEndpointsForToken(uaToken, iaToken)
