@@ -79,12 +79,7 @@ class DomainAdminChangeServiceTest extends Specification {
         identityConfig.getReloadableConfig() >> reloadableConfig
         defaultCloud20Service.identityConfig = identityConfig
 
-
-
         // Common settings for the client role lookups. Based on convention for role names.
-        authorizationService.getCachedIdentityRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
-        authorizationService.getCachedIdentityRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
-
         applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
         applicationService.getCachedClientRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
         applicationService.getCachedClientRoleById(_) >> {String id -> createImmutableClientRole(id, id.endsWith("RBAC") ? RoleLevelEnum.LEVEL_1000.levelAsInt : RoleLevelEnum.LEVEL_500.levelAsInt)}
@@ -494,7 +489,6 @@ class DomainAdminChangeServiceTest extends Specification {
 
     def "Positive Test: Promoting user-manage to user-admin. No RBAC deletions"() {
         given:
-        reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
         def callerToken = "atoken"
         def promoteUser = createUser("promoteUser").with {
             it.uniqueId = "rsId=1"
@@ -541,26 +535,13 @@ class DomainAdminChangeServiceTest extends Specification {
 
         response.status == HttpStatus.SC_NO_CONTENT
 
-        and: "verify if cached role name is retrieved from applicationService/authorizationService"
-        if (flag) {
-            1 * applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
-            1 * applicationService.getCachedClientRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
-            0 * authorizationService.getCachedIdentityRoleByName(_)
-            0 * authorizationService.getCachedIdentityRoleByName(_)
-        } else {
-            1 * authorizationService.getCachedIdentityRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
-            1 * authorizationService.getCachedIdentityRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
-            0 * applicationService.getCachedClientRoleByName(_)
-            0 * applicationService.getCachedClientRoleByName(_)
-        }
-
-        where:
-        flag << [true, false]
+        and: "verify if cached role name is retrieved from applicationService"
+        1 * applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
+        1 * applicationService.getCachedClientRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
     }
 
     def "Positive Test: Promoting user-manage to user-admin. Deletes RBAC and user-classification roles from promote and demote users"() {
         given:
-        reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
         def callerToken = "atoken"
         def promoteUser = createUser("promoteUser").with {
             it.uniqueId = "rsId=1"
@@ -616,21 +597,9 @@ class DomainAdminChangeServiceTest extends Specification {
         1 * atomHopperClient.asyncPost(promoteUser, AtomHopperConstants.ROLE)
         1 * atomHopperClient.asyncPost(demoteUser, AtomHopperConstants.ROLE)
 
-        and: "verify if cached role name is retrieved from applicationService/authorizationService"
-        if (flag) {
-            1 * applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
-            1 * applicationService.getCachedClientRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
-            0 * authorizationService.getCachedIdentityRoleByName(_)
-            0 * authorizationService.getCachedIdentityRoleByName(_)
-        } else {
-            1 * authorizationService.getCachedIdentityRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
-            1 * authorizationService.getCachedIdentityRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
-            0 * applicationService.getCachedClientRoleByName(_)
-            0 * applicationService.getCachedClientRoleByName(_)
-        }
-
-        where:
-        flag << [true, false]
+        and: "verify if cached role name is retrieved from applicationService"
+        1 * applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
+        1 * applicationService.getCachedClientRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
     }
 
     def createTenantRole(String name, RoleTypeEnum roleType = STANDARD, Set<String> tenantIds = [] as Set) {

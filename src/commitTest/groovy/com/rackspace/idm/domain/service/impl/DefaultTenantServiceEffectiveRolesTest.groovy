@@ -64,7 +64,6 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         given:
         String rackerRoleId = "1"
         def rackerCr = createImmutableClientRole(rackerRoleId, 2000)
-        reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> true
         applicationService.getCachedClientRoleById(rackerRoleId) >> rackerCr
         staticConfig.getRackerRoleId() >> rackerRoleId
         Racker racker = new Racker().with {

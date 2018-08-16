@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.DefaultAETokenService
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -52,7 +53,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     ScopeAccessDao scopeAccessDao
 
     @Autowired
-    AuthorizationService authorizationService
+    ApplicationService applicationService
 
     @Autowired
     TokenFormatSelector tokenFormatSelector
@@ -119,7 +120,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         def uaToken = utils.getToken(userAdmin.username)
         def iaToken = utils.getToken(users[0].username)
 
-        def validateRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.VALIDATE_TOKEN_GLOBAL.getRoleName())
+        def validateRole = applicationService.getCachedClientRoleByName(IdentityRole.VALIDATE_TOKEN_GLOBAL.getRoleName())
 
         when: "when useradmin does not have validate role, and validate identity admin token"
         def validateResponse = cloud20.validateToken(uaToken, iaToken)

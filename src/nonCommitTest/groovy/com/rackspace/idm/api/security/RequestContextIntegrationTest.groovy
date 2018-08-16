@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.BaseUser
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import org.openstack.docs.identity.api.v2.Role
@@ -27,7 +28,7 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
     IdentityConfig identityConfig
 
     @Autowired
-    AuthorizationService authorizationService
+    ApplicationService applicationService
 
     def "can load effective caller from request context when token set on security context"() {
         given:
@@ -50,14 +51,14 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
 
         when: "try to load effective user with only caller token set"
         ctx.setCallerToken(scopeAccessService.getScopeAccessByAccessToken(iaToken))
-        requestContext.getEffectiveCaller();
+        requestContext.getEffectiveCaller()
 
         then:
         thrown(IllegalStateException)
 
         when: "set the effective token and then try to load the effective caller"
         ctx.setEffectiveCallerToken(scopeAccessService.getScopeAccessByAccessToken(uaToken))
-        BaseUser effectiveCaller = requestContext.getEffectiveCaller();
+        BaseUser effectiveCaller = requestContext.getEffectiveCaller()
 
         then: "get the appropriate user"
         effectiveCaller.id == userAdmin.id
@@ -86,14 +87,14 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         requestContext.setSecurityContext(ctx)
 
         when: "try to load domain with no token set"
-        requestContext.getEffectiveCaller();
+        requestContext.getEffectiveCaller()
 
         then:
         thrown(IllegalStateException)
 
         when: "try to load domain with only caller token set"
         ctx.setCallerToken(scopeAccessService.getScopeAccessByAccessToken(iaToken))
-        requestContext.getEffectiveCaller();
+        requestContext.getEffectiveCaller()
 
         then:
         thrown(IllegalStateException)
@@ -117,7 +118,6 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
 
     def "can load effective caller roles from request context when token set on security context"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART, flag)
         utils.createUserAdmin()
         def users
         def userAdmin
@@ -130,14 +130,14 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         requestContext.setSecurityContext(ctx)
 
         when: "try to load authorization context with no token set"
-        requestContext.getEffectiveCaller();
+        requestContext.getEffectiveCaller()
 
         then:
         thrown(IllegalStateException)
 
         when: "try to load authorization context with only caller token set"
         ctx.setCallerToken(scopeAccessService.getScopeAccessByAccessToken(uaToken))
-        requestContext.getEffectiveCallerAuthorizationContext();
+        requestContext.getEffectiveCallerAuthorizationContext()
 
         then:
         thrown(IllegalStateException)
@@ -166,15 +166,10 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
         reloadableConfiguration.reset()
-
-        where:
-        flag << [true, false]
     }
 
     def "can load repose-standard roles as implicit roles"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART, flag)
-
         utils.createUserAdmin()
         def users
         def userAdmin
@@ -192,7 +187,7 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
 
         when: "add repose-standard role and reset"
         requestContext.setSecurityContext(createSecurityContext(sa, sa))
-        def reposeRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.REPOSE_STANDARD.getRoleName())
+        def reposeRole = applicationService.getCachedClientRoleByName(IdentityRole.REPOSE_STANDARD.getRoleName())
         utils.addRoleToUser(userAdmin, reposeRole.id)
         authCtx = requestContext.getEffectiveCallerAuthorizationContext()
 
@@ -206,9 +201,6 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
         reloadableConfiguration.reset()
-
-        where:
-        flag << [true, false]
     }
 
     def createSecurityContext(ScopeAccess callerToken, ScopeAccess effectiveCallerToken) {

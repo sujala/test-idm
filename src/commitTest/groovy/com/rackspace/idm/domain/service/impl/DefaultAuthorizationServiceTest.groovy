@@ -4,6 +4,7 @@ import com.google.common.collect.Sets
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType
 import com.rackspace.idm.api.security.AuthorizationContext
 import com.rackspace.idm.api.security.IdentityRole
+import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.api.security.ImmutableTenantRole
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -37,6 +38,8 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         mockIdentityConfig(service)
         mockIdentityUserService(service)
         mockRequestContextHolder(service)
+
+        applicationService.getCachedClientRoleByName(_) >> new ImmutableClientRole(new ClientRole())
 
         retrieveIdentityRoles()
     }
@@ -445,12 +448,6 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         false           | null      | "domain2"
         false           | "domain1" | null
         false           | null      | null
-    }
-
-    def "can retrieve identity role by name and id"() {
-        expect:
-        service.getCachedIdentityRoleById(TEST_ROLE.id).name == TEST_ROLE.name
-        service.getCachedIdentityRoleByName(TEST_ROLE.name).id == TEST_ROLE.id
     }
 
     def "test role has implicit role"() {

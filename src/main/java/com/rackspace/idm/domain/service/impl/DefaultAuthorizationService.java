@@ -64,6 +64,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Autowired
     private ApplicationService applicationService;
+
     @Autowired
     private Configuration config;
     @Autowired
@@ -95,28 +96,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Autowired
     private IdentityUserService identityUserService;
 
-    //TODO: Remove these constants and lookup via map cache rather than these individual variables serving as a cache
-    private ClientRole idmSuperAdminRole = null;
-    private ClientRole cloudServiceAdminRole = null;
-    private ClientRole cloudIdentityAdminRole = null;
-    private ClientRole cloudUserAdminRole = null;
-    private ClientRole cloudUserRole = null;
-    private ClientRole cloudUserManagedRole = null;
-    private ClientRole rackerRole = null;
-    private ClientRole rcnAdminRole = null;
-
-    /**
-     * A map of the identity role names to an immutable client role. Use immutable to prevent inadvertent changes that
-     * would corrupt the cache.
-     */
-    private Map<String, ImmutableClientRole> identityRoleNameToRoleMap = new HashMap<String, ImmutableClientRole>();
-
-    /**
-     * A map of the identity role ids to an immutable client role. Use immutable versions of the roles to prevent
-     * inadvertent changes that would corrupt the cache.
-     */
-    private Map<String, ImmutableClientRole> identityRoleIdToRoleMap = new HashMap<String, ImmutableClientRole>();
-
     private Map<String, List<ImmutableClientRole>> identityRoleNameToImplicitRoleMap = new HashMap<String, List<ImmutableClientRole>>();
 
     @PostConstruct
@@ -124,72 +103,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
         //On startup, cache all the identity client roles into easily accessible maps.
         List<ClientRole> identityRoles = roleService.getAllIdentityRoles();
         if (identityRoles != null) {
-            //populate the base set of maps
-            for (ClientRole identityRole : identityRoles) {
-                populateMapsWithRole(identityRole);
-            }
-
-            //loop second time to process implicit roles
             for (ClientRole identityRole : identityRoles) {
                 populateImplicitMapWithRoles(identityRole);
             }
-
-        }
-
-        //TODO: Remove dependence on these variables and lookup from maps. Loading backup method just to be on safe side
-        //to do what legacy code did. Eventually should remove this
-        cloudServiceAdminRole = loadClientRole(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
-        idmSuperAdminRole = loadClientRole(getIdmClientId(), getIdmSuperAdminRoleName());
-        cloudServiceAdminRole = loadClientRole(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
-        cloudIdentityAdminRole = loadClientRole(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
-        cloudUserAdminRole = loadClientRole(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-        cloudUserRole = loadClientRole(getCloudAuthClientId(), getCloudAuthUserRole());
-        cloudUserManagedRole = loadClientRole(getCloudAuthClientId(), getCloudAuthUserManagedRole());
-        rackerRole = loadClientRole(getIdmClientId(), GlobalConstants.ROLE_NAME_RACKER);
-        rcnAdminRole = loadClientRole(getCloudAuthClientId(), IdentityRole.RCN_ADMIN.getRoleName());
-
-        //add in racker role as we may make auth decisions on it
-        if (rackerRole != null) {
-            populateMapsWithRole(rackerRole);
-        }
-
-        if (rcnAdminRole != null) {
-            populateMapsWithRole(rcnAdminRole);
-        }
-    }
-
-    @Override
-    public ImmutableClientRole getCachedIdentityRoleById(String id) {
-        return identityRoleIdToRoleMap.get(id);
-    }
-
-    @Override
-    public ImmutableClientRole getCachedIdentityRoleByName(String name) {
-        return identityRoleNameToRoleMap.get(name);
-    }
-
-    private ClientRole loadClientRole(String clientId, String roleName) {
-        ImmutableClientRole role = identityRoleNameToRoleMap.get(roleName);
-
-        ClientRole result;
-        if (role == null) {
-            result = applicationService.getClientRoleByClientIdAndRoleName(clientId, roleName);
-        } else {
-            result = role.asClientRole();
-        }
-        return result;
-    }
-
-    private void populateMapsWithRole(ClientRole role) {
-        String roleName = role.getName();
-
-        //name should be globally unique, but perform some verification
-        if (identityRoleNameToRoleMap.containsKey(roleName)) {
-            String errorMsg = String.format("Multiple identity authorization roles exists with name '%s'. Ignoring role with id '%s'", roleName, role.getId());
-            logger.error(errorMsg);
-        } else {
-            identityRoleNameToRoleMap.put(role.getName(), new ImmutableClientRole(role));
-            identityRoleIdToRoleMap.put(role.getId(), new ImmutableClientRole(role)); //assume id is globally unique
         }
     }
 
@@ -205,7 +121,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             List<ImmutableClientRole> implicitClientRoles = new ArrayList<ImmutableClientRole>();
             if (CollectionUtils.isNotEmpty(implicitRoles)) {
                 for (IdentityRole implicitIdentityRole : implicitRoles) {
-                    ImmutableClientRole implicitClientRole = identityRoleNameToRoleMap.get(implicitIdentityRole.getRoleName());
+                    ImmutableClientRole implicitClientRole = applicationService.getCachedClientRoleByName(implicitIdentityRole.getRoleName());
                     if (implicitClientRole != null) {
                         implicitClientRoles.add(implicitClientRole);
                     } else {
@@ -232,7 +148,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess) {
 
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole));
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole()));
     }
 
     public boolean authorizeRacker(ScopeAccess scopeAccess){
@@ -241,7 +157,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        boolean authorized = authorize(user, scopeAccess, Arrays.asList(rackerRole));
+        boolean authorized = authorize(user, scopeAccess, Arrays.asList(applicationService.getCachedClientRoleByName(GlobalConstants.ROLE_NAME_RACKER).asClientRole()));
         logger.debug("Authorized {} as Racker - {}", scopeAccess, authorized);
         return authorized;
     }
@@ -249,7 +165,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Override
     public boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess) {
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudIdentityAdminRole));
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getIdentityAdminRole().asClientRole()));
     }
 
     @Override
@@ -262,7 +178,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (!authorizeDomainAccess(domain)) {
             return false;
         }
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudUserAdminRole));
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getUserAdminRole().asClientRole()));
     }
 
     @Override
@@ -275,7 +191,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (!authorizeDomainAccess(domain)) {
             return false;
         }
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudUserManagedRole));
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getUserManageRole().asClientRole()));
     }
 
     @Override
@@ -289,7 +205,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (!authorizeDomainAccess(domain)) {
             return false;
         }
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(cloudUserRole));
+        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getDefaultUserRole().asClientRole()));
     }
 
     @Override
@@ -297,7 +213,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (user == null) {
             return false;
         }
-        return containsRole(user, Arrays.asList(cloudUserRole));
+        return containsRole(user, Arrays.asList(getDefaultUserRole().asClientRole()));
     }
 
     @Override
@@ -305,7 +221,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (user == null || user instanceof FederatedUser) {
             return false;
         }
-        return containsRole(user, Arrays.asList(cloudUserAdminRole));
+        return containsRole(user, Arrays.asList(getUserAdminRole().asClientRole()));
     }
 
     @Override
@@ -313,7 +229,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (user == null || user instanceof FederatedUser) {
             return false;
         }
-        return containsRole(user, Arrays.asList(cloudUserManagedRole));
+        return containsRole(user, Arrays.asList(getUserManageRole().asClientRole()));
     }
 
     @Override
@@ -321,7 +237,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (user == null || user instanceof FederatedUser) {
             return false;
         }
-        return containsRole(user, Arrays.asList(cloudIdentityAdminRole));
+        return containsRole(user, Arrays.asList(getIdentityAdminRole().asClientRole()));
     }
 
     @Override
@@ -329,7 +245,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (user == null || user instanceof FederatedUser) {
             return false;
         }
-        return containsRole(user, Arrays.asList(cloudServiceAdminRole));
+        return containsRole(user, Arrays.asList(getServiceAdminRole().asClientRole()));
     }
 
     @Override
@@ -350,11 +266,31 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return false;
     }
 
+    private ImmutableClientRole getServiceAdminRole() {
+        return applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.SERVICE_ADMIN.getRoleName());
+    }
+
+    private ImmutableClientRole getIdentityAdminRole() {
+        return applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.IDENTITY_ADMIN.getRoleName());
+    }
+
+    private ImmutableClientRole getUserAdminRole() {
+        return applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName());
+    }
+
+    private ImmutableClientRole getUserManageRole() {
+        return applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_MANAGER.getRoleName());
+    }
+
+    private ImmutableClientRole getDefaultUserRole() {
+        return applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName());
+    }
+
     @Override
     public void verifyServiceAdminLevelAccess(ScopeAccess scopeAccess) {
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
         verifyUserAccess(user);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole));
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole()));
     }
 
     @Override
@@ -379,7 +315,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private void verifyIdentityAdminLevelAccess(BaseUser user, ScopeAccess scopeAccess) {
         verifyUserAccess(user);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole));
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole()));
     }
 
     @Override
@@ -388,7 +324,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         verifyUserAccess(user);
         Domain domain = domainService.getDomain(user.getDomainId());
         verifyDomainAccess(domain);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole));
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole(), getUserAdminRole().asClientRole()));
     }
 
     @Override
@@ -397,7 +333,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         verifyUserAccess(user);
         Domain domain = domainService.getDomain(user.getDomainId());
         verifyDomainAccess(domain);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserManagedRole));
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole(), getUserAdminRole().asClientRole(), getUserManageRole().asClientRole()));
     }
 
     @Override
@@ -420,7 +356,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         verifyUserAccess(user);
         Domain domain = domainService.getDomain(user.getDomainId());
         verifyDomainAccess(domain);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole, cloudUserAdminRole, cloudUserRole));
+        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole(), getUserAdminRole().asClientRole(), getDefaultUserRole().asClientRole()));
     }
 
     @Override
@@ -428,7 +364,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         // This method returns whether or not a user is a default user
         // A default user is defined as one that has the identity:default role
         // this includes a user that also has the identity:user-manage role
-        return containsRole(user, Arrays.asList(cloudUserRole));
+        return containsRole(user, Arrays.asList(getDefaultUserRole().asClientRole()));
     }
 
     @Override
@@ -445,7 +381,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         BaseUser user = userService.getUserByScopeAccess(authScopeAccess);
 
         // High level admins have implicit access to all tenants
-        if (authorizeRoleAccess(user, authScopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole))) {
+        if (authorizeRoleAccess(user, authScopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole()))) {
             return;
         }
 
@@ -533,7 +469,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         IdentityUserTypeEnum userLowestWeightIdentityRoleType = null;
 
         for (TenantRole tenantRole : userRoles) {
-            ImmutableClientRole immutableClientRole = identityRoleIdToRoleMap.get(tenantRole.getRoleRsId());
+            ImmutableClientRole immutableClientRole = applicationService.getCachedClientRoleById(tenantRole.getRoleRsId());
             if (immutableClientRole != null) {
                 //try to convert to classification role
                 ClientRole clientRole = immutableClientRole.asClientRole();
@@ -838,62 +774,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     public void setScopeAccessService(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
-    }
-
-    public ClientRole getCloudServiceAdminRole() {
-        return cloudServiceAdminRole;
-    }
-
-    public void setCloudServiceAdminRole(ClientRole cloudServiceAdminRole) {
-        this.cloudServiceAdminRole = cloudServiceAdminRole;
-    }
-
-    public ClientRole getRackerRole() {
-        return rackerRole;
-    }
-
-    public  void setRackerRole(ClientRole rackerRole) {
-        this.rackerRole = rackerRole;
-    }
-
-    public  ClientRole getCloudIdentityAdminRole() {
-        return cloudIdentityAdminRole;
-    }
-
-    public  void setCloudIdentityAdminRole(ClientRole cloudIdentityAdminRole) {
-        this.cloudIdentityAdminRole = cloudIdentityAdminRole;
-    }
-
-    public  ClientRole getCloudUserAdminRole() {
-        return cloudUserAdminRole;
-    }
-
-    public  void setCloudUserAdminRole(ClientRole cloudUserAdminRole) {
-        this.cloudUserAdminRole = cloudUserAdminRole;
-    }
-
-    public  ClientRole getCloudUserRole() {
-        return cloudUserRole;
-    }
-
-    public  void setCloudUserRole(ClientRole cloudUserRole) {
-        this.cloudUserRole = cloudUserRole;
-    }
-
-    public  ClientRole getIdmSuperAdminRole() {
-        return idmSuperAdminRole;
-    }
-
-    public  void setIdmSuperAdminRole(ClientRole idmSuperAdminRole) {
-        this.idmSuperAdminRole = idmSuperAdminRole;
-    }
-
-    public ClientRole getCloudUserManagedRole() {
-        return cloudUserManagedRole;
-    }
-
-    public void setCloudUserManagedRole(ClientRole cloudUserManagedRole) {
-        this.cloudUserManagedRole = cloudUserManagedRole;
     }
 
     public void setTenantService(TenantService tenantService) {

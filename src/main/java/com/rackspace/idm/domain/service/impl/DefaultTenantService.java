@@ -586,13 +586,8 @@ public class DefaultTenantService implements TenantService {
          * @return
          */
     private ImmutableClientRole getAutoAssignedRole() {
-        ImmutableClientRole autoAssignedRole = null;
+        ImmutableClientRole autoAssignedRole = this.applicationService.getCachedClientRoleByName(IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName());
 
-        if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
-            autoAssignedRole = this.applicationService.getCachedClientRoleByName(IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName());
-        } else {
-            autoAssignedRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName());
-        }
         if (autoAssignedRole == null) {
             logger.warn(String.format("The auto-assign role '%s' is invalid. Not found in identity role cache.", IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName()));
         } else if (BooleanUtils.isTrue(autoAssignedRole.getPropagate())) {
@@ -955,12 +950,8 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public TenantRole getEphemeralRackerTenantRole() {
-        ImmutableClientRole rackerClientRole = null;
-        if (identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
-            rackerClientRole = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
-        } else {
-            rackerClientRole = authorizationService.getCachedIdentityRoleById(identityConfig.getStaticConfig().getRackerRoleId());
-        }
+        ImmutableClientRole rackerClientRole = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
+
         TenantRole rackerTenantRole = new TenantRole();
         rackerTenantRole.setRoleRsId(rackerClientRole.getId());
         rackerTenantRole.setClientId(rackerClientRole.getClientId());
