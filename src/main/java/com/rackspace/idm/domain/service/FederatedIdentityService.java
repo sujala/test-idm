@@ -38,6 +38,8 @@ public interface FederatedIdentityService {
      */
     SamlLogoutResponse processLogoutRequest(LogoutRequest logoutRequest);
 
+    void verifyLogoutRequest(LogoutRequest logoutRequest);
+
     /**
      * Add a new identity provider.
      * @param identityProvider

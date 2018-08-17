@@ -21,7 +21,7 @@ public class LogoutRequestDecorator {
     public String checkAndGetIssuer() {
         String issuer = getIssuer();
         if (StringUtils.isBlank(issuer)) {
-            throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_INVALID_ISSUER, "Issuer is not specified"));
+            throw new BadRequestException("Issuer is not specified", ErrorCodes.ERROR_CODE_FEDERATION_INVALID_ISSUER);
         }
         return issuer;
     }
@@ -36,7 +36,7 @@ public class LogoutRequestDecorator {
     public Signature checkAndGetSignature() {
         Signature sig = getSignature();
         if (sig == null) {
-            throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_MISSING_SIGNATURE, "No Signature specified"));
+            throw new BadRequestException("No Signature specified", ErrorCodes.ERROR_CODE_FEDERATION_INVALID_ISSUER);
         }
         return sig;
     }
@@ -48,7 +48,7 @@ public class LogoutRequestDecorator {
     public String checkAndGetUsername() {
         String username = getUsername();
         if (StringUtils.isBlank(username)) {
-            throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_MISSING_USERNAME, "Username is not specified"));
+            throw new BadRequestException("Username is not specified", ErrorCodes.ERROR_CODE_FEDERATION_MISSING_USERNAME);
         }
         return username;
     }
@@ -65,9 +65,8 @@ public class LogoutRequestDecorator {
         DateTime issueInstant = logoutRequest.getIssueInstant();
 
         if (issueInstant == null) {
-            throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_MISSING_AUTH_INSTANT, "IssueInstant is not specified"));
+            throw new BadRequestException("IssueInstant is not specified", ErrorCodes.ERROR_CODE_FEDERATION_MISSING_AUTH_INSTANT);
         }
-
         return issueInstant;
     }
 

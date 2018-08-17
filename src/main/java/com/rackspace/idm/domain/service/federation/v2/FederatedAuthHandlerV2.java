@@ -46,7 +46,7 @@ public class FederatedAuthHandlerV2 {
     @Autowired
     private IdentityConfig identityConfig;
 
-    SAMLSignatureProfileValidator profileValidator = new SAMLSignatureProfileValidator();
+    private SAMLSignatureProfileValidator profileValidator = new SAMLSignatureProfileValidator();
 
     /**
      * Authenticates an Federated Authentication request per Identity v2 specifications

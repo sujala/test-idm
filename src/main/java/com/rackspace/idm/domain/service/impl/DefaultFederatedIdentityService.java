@@ -9,23 +9,24 @@ import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.federation.v2.FederatedAuthHandlerV2;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.SignatureValidationException;
-import com.rackspace.idm.exception.UnrecoverableIdmException;
+import com.rackspace.idm.domain.service.federation.v2.FederationUtils;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.Transformer;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.core.StatusCode;
+import org.opensaml.saml.security.impl.SAMLSignatureProfileValidator;
 import org.opensaml.xmlsec.signature.Signature;
+import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+
+import static com.rackspace.idm.ErrorCodes.*;
 
 /**
  * This class is responsible for handling identity operations related
@@ -77,6 +80,11 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Autowired
     DomainService domainService;
 
+    @Autowired
+    private FederationUtils federationUtils;
+
+    private SAMLSignatureProfileValidator samlSignatureProfileValidator = new SAMLSignatureProfileValidator();
+
     public static final String ERROR_SERVICE_UNAVAILABLE = "Service Unavailable";
 
     public static final String IDENTITY_PROVIDER_NOT_FOUND_ERROR_MESSAGE = "Identity Provider with id/name: '%s' was not found.";
@@ -105,6 +113,40 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
      * @param logoutRequest
      */
     @Override
+    public void verifyLogoutRequest(LogoutRequest logoutRequest) {
+        LogoutRequestDecorator decoratedLogoutRequest = new LogoutRequestDecorator(logoutRequest);
+
+        // Validate the request hasn't expired (based on issue instant of SAML Request)
+        federationUtils.validateForExpiredRequest(decoratedLogoutRequest);
+
+        // Validate the IDP corresponds to an existing IDP
+        IdentityProvider issuingIdp = identityProviderDao.getIdentityProviderByUri(decoratedLogoutRequest.checkAndGetIssuer());
+
+        // When issueingIdp doesn't have a value for enabled flag is considered "true"
+        if (issuingIdp == null || BooleanUtils.isFalse(issuingIdp.getEnabled())) {
+            throw new BadRequestException("Invalid issuer", ERROR_CODE_FEDERATION2_INVALID_ORIGIN_ISSUER);
+        }
+
+        // Validate the Signature prior to any more in-depth analysis
+        try {
+            log.debug(String.format("Attempting to validate a federated logout request signature for idp '%s'", issuingIdp.getProviderId()));
+            // Validate signature construct
+            samlSignatureProfileValidator.validate(decoratedLogoutRequest.checkAndGetSignature());
+
+            // Validate signature signed by IDP
+            federationUtils.validateSignatureForIdentityProvider(decoratedLogoutRequest.checkAndGetSignature(), issuingIdp);
+        } catch (SignatureException | SignatureValidationException t) {
+            log.debug("Received fed request with invalid signature", t);
+            throw new BadRequestException("Signature could not be validated", ERROR_CODE_FEDERATION2_INVALID_ORIGIN_SIGNATURE, t);
+        }
+    }
+
+    /**
+     * System must also log removal in user deletion log and send a feed event indication
+     * the deletion of the user
+     * @param logoutRequest
+     */
+    @Override
     public SamlLogoutResponse processLogoutRequest(LogoutRequest logoutRequest) {
         LogoutRequestDecorator decoratedLogoutRequest = new LogoutRequestDecorator(logoutRequest);
         SamlLogoutResponse logoutResponse;
@@ -119,8 +161,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
             decoratedLogoutRequest.checkAndGetUsername();
 
             //validate the issueInstant is not older than the configure max age
-            DateTime issueInstant = decoratedLogoutRequest.checkAndGetIssueInstant();
-            validateIssueInstant(issueInstant);
+            federationUtils.validateForExpiredRequest(decoratedLogoutRequest);
 
             //Basic format is good. Now hand off request to handler for the user source
             IdentityProviderFederationTypeEnum providerSource = provider.getFederationTypeAsEnum();
@@ -140,20 +181,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         }
 
         return logoutResponse;
-    }
-
-    private void validateIssueInstant(DateTime issueInstant) {
-        //validate the issueInstant is not older than the configure max age for a saml response
-        DateTime now = new DateTime();
-        int maxResponseAge = identityConfig.getReloadableConfig().getFederatedResponseMaxAge();
-        int maxResponseSkew = identityConfig.getReloadableConfig().getFederatedResponseMaxSkew();
-        int timeDelta = Seconds.secondsBetween(issueInstant, now).getSeconds();
-        if (issueInstant.isAfter(now.plusSeconds(maxResponseSkew))) {
-            throw new BadRequestException("Saml response issueInstant cannot be in the future.");
-        }
-        if (timeDelta > maxResponseAge + maxResponseSkew) {
-            throw new BadRequestException("Saml responses cannot be older than " + maxResponseAge + " seconds.");
-        }
     }
 
     private IdentityProvider getIdentityProviderForLogoutRequest(LogoutRequestDecorator logoutRequestDecorator) {
