@@ -6,9 +6,11 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.event.ApiResourceType;
 import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.util.QueryParamConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -103,9 +105,13 @@ public class CloudUserGroupResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
             @PathParam("groupId") String groupId,
+            @QueryParam("user_type") String userType,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        return userGroupCloudService.getUsersInGroup(uriInfo, authToken, domainId, groupId, new UserSearchCriteria(new PaginationParams(validateMarker(marker), validateLimit(limit))));
+
+        UserSearchCriteria userSearchCriteria = new UserSearchCriteria(new PaginationParams(validateMarker(marker), validateLimit(limit)));
+        userSearchCriteria.setUserType(QueryParamConverter.convertUserTypeParamToEnum(userType));
+        return userGroupCloudService.getUsersInGroup(uriInfo, authToken, domainId, groupId, userSearchCriteria);
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Add user to user group")

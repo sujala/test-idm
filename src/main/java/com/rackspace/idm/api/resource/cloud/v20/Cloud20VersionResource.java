@@ -38,6 +38,7 @@ import com.rackspace.idm.exception.UnsupportedMediaTypeException;
 import com.rackspace.idm.modules.endpointassignment.api.resource.EndpointAssignmentRuleResource;
 import com.rackspace.idm.modules.usergroups.api.resource.CloudUserGroupResource;
 import com.rackspace.idm.domain.entity.User.UserType;
+import com.rackspace.idm.util.QueryParamConverter;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoice;
@@ -708,7 +709,7 @@ public class Cloud20VersionResource {
             @PathParam("domainId") String domainId,
             @QueryParam("enabled") String enabled,
             @QueryParam("user_type") String userType){
-        UserType userTypeEnum = convertUserTypeParamToEnum(userType);
+        UserType userTypeEnum = QueryParamConverter.convertUserTypeParamToEnum(userType);
         return cloud20Service.getUsersByDomainIdAndEnabledFlag(authToken, domainId, enabled, userTypeEnum).build();
     }
 
@@ -1766,18 +1767,6 @@ public class Cloud20VersionResource {
 
     public void setIdentityConfig(IdentityConfig identityConfig) {
         this.identityConfig = identityConfig;
-    }
-
-    private UserType convertUserTypeParamToEnum(String userType){
-
-        if(UserType.ALL.toString().equalsIgnoreCase(userType)){
-            return UserType.ALL;
-        }
-        if(UserType.UNVERIFIED.toString().equalsIgnoreCase(userType)){
-            return UserType.UNVERIFIED;
-        }
-        // By Default return user type as verified if no query param is passed or is not valid input
-        return UserType.VERIFIED;
     }
 }
 
