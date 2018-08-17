@@ -768,7 +768,6 @@
     <simpleType name="TokenFormatEnum">
         <restriction base="xsd:string">
             <enumeration value="DEFAULT"/>
-            <enumeration value="UUID"/>
             <enumeration value="AE"/>
         </restriction>
     </simpleType>

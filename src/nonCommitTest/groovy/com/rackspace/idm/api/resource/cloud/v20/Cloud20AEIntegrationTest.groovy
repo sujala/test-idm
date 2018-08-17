@@ -4,9 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.dao.UUIDScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
-import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
@@ -19,15 +16,11 @@ import testHelpers.RootIntegrationTest
 import javax.ws.rs.core.MediaType
 
 import static org.apache.http.HttpStatus.SC_CREATED
-import static org.apache.http.HttpStatus.SC_OK
 
 class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser, users
     @Shared def domainId
-
-    @Autowired
-    UUIDScopeAccessDao ldapScopeAccessRepository
 
     @Autowired
     IdentityConfig config;
@@ -63,12 +56,8 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "update user - setting token format on user only allowed if ae tokens enabled. Testing with ae tokens enabled: #ae_enabled"() {
+    def "update user - setting token format on user is allowed"() {
         given:
-        //set default token format to opposite of what will be setting user to
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, !ae_enabled ? "AE" : "UUID")
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
 
@@ -83,26 +72,18 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         def retrievedUser = utils.getUserById(userAdmin.id)
 
         then:
-        ae_enabled ? retrievedUser.tokenFormat == TokenFormatEnum.AE : retrievedUser.tokenFormat == null
+        retrievedUser.tokenFormat == TokenFormatEnum.AE
 
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         staticIdmConfiguration.reset()
         reloadableConfiguration.reset()
-
-        where:
-        ae_enabled  | _
-        false       | _
-        true        | _
     }
 
     @Unroll
-    def "create user - setting token format on user creation only allowed if ae tokens enabled. Testing with ae tokens enabled: #ae_enabled"() {
+    def "create user - setting token format on user creation allowed when setting to AE"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, !ae_enabled ? "AE" : "UUID")
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
         utils.resetServiceAdminToken()
 
         def username = testUtils.getRandomUUID()
@@ -115,17 +96,12 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         def user = cloud20.getUserByName(utils.getServiceAdminToken(), username).getEntity(User).value
 
         then:
-        ae_enabled ? user.tokenFormat == TokenFormatEnum.AE : user.tokenFormat == null
+        user.tokenFormat == TokenFormatEnum.AE
 
         cleanup:
         utils.deleteUsers(user)
         staticIdmConfiguration.reset()
         reloadableConfiguration.reset()
-
-        where:
-        ae_enabled  | _
-        false       | _
-        true        | _
     }
 
     def "create user - setting token format only allowed to be set by service or identity admins"() {
@@ -134,54 +110,54 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         when: "service admin create user"
         User userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("identityAdmin"), "display", "email@email.com", true, null, null, "Password1")
-        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        userForCreate.setTokenFormat(TokenFormatEnum.AE)
         def response = cloud20.createUser(utils.getServiceAdminToken(), userForCreate)
         assert response.status == SC_CREATED
         def userResponse = response.getEntity(User).value
         def identityAdmin = cloud20.getUserByName(utils.getServiceAdminToken(), userResponse.username).getEntity(User).value
 
         then:
-        identityAdmin.tokenFormat == TokenFormatEnum.UUID
+        identityAdmin.tokenFormat == TokenFormatEnum.AE
 
         when: "identity admin create user-admin"
         def domainId = utils.createDomain()
         userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, Constants.DEFAULT_PASSWORD)
-        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        userForCreate.setTokenFormat(TokenFormatEnum.AE)
         response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
         assert response.status == SC_CREATED
         userResponse = response.getEntity(User).value
         def userAdmin = cloud20.getUserByName(utils.getIdentityAdminToken(), userResponse.username).getEntity(User).value
 
         then: "token format set"
-        userAdmin.tokenFormat == TokenFormatEnum.UUID
+        userAdmin.tokenFormat == TokenFormatEnum.AE
 
         when: "identity admin create user-manage"
         userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userManage"), "display", "email@email.com", true, null, userAdmin.domainId, Constants.DEFAULT_PASSWORD)
         userForCreate.roles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.USER_MANAGER.getRoleName())].asList())
-        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        userForCreate.setTokenFormat(TokenFormatEnum.AE)
         response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
         assert response.status == SC_CREATED
         userResponse = response.getEntity(User).value
         def userManage = cloud20.getUserByName(utils.getIdentityAdminToken(), userResponse.username).getEntity(User).value
 
         then: "token format set"
-        userManage.tokenFormat == TokenFormatEnum.UUID
+        userManage.tokenFormat == TokenFormatEnum.AE
 
         when: "identity admin create default user"
         userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userManage"), "display", "email@email.com", true, null, userAdmin.domainId, Constants.DEFAULT_PASSWORD)
         userForCreate.roles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())].asList())
-        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        userForCreate.setTokenFormat(TokenFormatEnum.AE)
         response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
         assert response.status == SC_CREATED
         userResponse = response.getEntity(User).value
         def defaultUser = cloud20.getUserByName(utils.getIdentityAdminToken(), userResponse.username).getEntity(User).value
 
         then: "token format set"
-        defaultUser.tokenFormat == TokenFormatEnum.UUID
+        defaultUser.tokenFormat == TokenFormatEnum.AE
 
         when: "user admin create default user"
         userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userManage"), "display", "email@email.com", true, null, userAdmin.domainId, Constants.DEFAULT_PASSWORD)
-        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        userForCreate.setTokenFormat(TokenFormatEnum.AE)
         response = cloud20.createUser(utils.getToken(userAdmin.username), userForCreate)
         assert response.status == SC_CREATED
         userResponse = response.getEntity(User).value
@@ -196,7 +172,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
     def "retrieve AE token for a user"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, null)
         def domainId = utils.createDomain()
 
         def retrievedUser
@@ -207,8 +182,8 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         when: "retrieving an 'null' tokenFormat"
         def nullToken = utils.authenticateUser(userAdmin.username, Constants.DEFAULT_PASSWORD)
 
-        then: "should default to UUID tokens"
-        nullToken.token.id.length() == 32
+        then: "should default to AE tokens"
+        nullToken.token.id.length() > 32
 
         when: "retrieving an 'AE' tokenFormat"
         retrievedUser = utils.getUserById(userAdmin.id)
@@ -216,17 +191,8 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         utils.updateUser(retrievedUser)
         def aeToken = utils.authenticateUser(userAdmin.username, Constants.DEFAULT_PASSWORD)
 
-        then: "should be bigger then 32 characters (UUID tokens)"
+        then: "should be an AE token"
         aeToken.token.id.length() > 32
-
-        when: "retrieving an 'UUID' tokenFormat"
-        retrievedUser = utils.getUserById(userAdmin.id)
-        retrievedUser.tokenFormat = TokenFormatEnum.UUID
-        utils.updateUser(retrievedUser)
-        def uuidToken = utils.authenticateUser(userAdmin.username, Constants.DEFAULT_PASSWORD)
-
-        then: "should return the same original 'null' token"
-        uuidToken.token.id == nullToken.token.id
 
         when: "retrieving an 'DEFAULT' tokenFormat"
         retrievedUser = utils.getUserById(userAdmin.id)
@@ -234,20 +200,14 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         utils.updateUser(retrievedUser)
         def defaultToken = utils.authenticateUser(userAdmin.username, Constants.DEFAULT_PASSWORD)
 
-        then: "should return the same as the 'UUID' token"
-        defaultToken.token.id == uuidToken.token.id
+        then: "should be an AE token"
+        defaultToken.token.id.length() > 32
 
         when: "validating an 'AE' token"
         def aeTokenValidate = utils.validateToken(aeToken.token.id)
 
         then: "should be valid"
         aeTokenValidate.token.id == aeToken.token.id
-
-        when: "validating an 'UUID' token"
-        def uuidTokenValidate = utils.validateToken(uuidToken.token.id)
-
-        then: "should be valid"
-        uuidTokenValidate.token.id == uuidToken.token.id
 
         cleanup:
         utils.deleteUsers(users)
@@ -257,7 +217,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
     def "retrieve and update AE token for a user using JSON"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, null)
         def domainId = utils.createDomain()
         def serviceAdminToken = utils.getServiceAdminToken()
 
@@ -272,8 +231,8 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         retrievedUser = utils.getUserById(userAdmin.id, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
         userList = utils.getUsersByEmail(userAdmin.email, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
 
-        then: "should default to UUID tokens"
-        nullToken.token.id.length() == 32
+        then: "should be AE token"
+        nullToken.token.id.length() > 32
         retrievedUser.tokenFormat == null
         userList.users[0]['RAX-AUTH:tokenFormat'] == null
 
@@ -283,21 +242,10 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         retrievedUser = utils.getUserById(userAdmin.id, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
         userList = utils.getUsersByEmail(userAdmin.email, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
 
-        then: "should be bigger then 32 characters (UUID tokens)"
+        then: "should be bigger then 32 characters"
         aeToken.token.id.length() > 32
         retrievedUser.tokenFormat == TokenFormatEnum.AE
         userList.users[0]['RAX-AUTH:tokenFormat'] == 'AE'
-
-        when: "retrieving an 'UUID' tokenFormat"
-        utils.updateUser('{"user":{"RAX-AUTH:tokenFormat": "UUID"}}', userAdmin.id, MediaType.APPLICATION_JSON_TYPE)
-        def uuidToken = utils.authenticateUser(userAdmin.username, Constants.DEFAULT_PASSWORD)
-        retrievedUser = utils.getUserById(userAdmin.id, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
-        userList = utils.getUsersByEmail(userAdmin.email, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
-
-        then: "should return the same original 'null' token"
-        uuidToken.token.id == nullToken.token.id
-        retrievedUser.tokenFormat == TokenFormatEnum.UUID
-        userList.users[0]['RAX-AUTH:tokenFormat'] == 'UUID'
 
         when: "retrieving an 'DEFAULT' tokenFormat"
         utils.updateUser('{"user":{"RAX-AUTH:tokenFormat": "DEFAULT"}}', userAdmin.id, MediaType.APPLICATION_JSON_TYPE)
@@ -305,8 +253,8 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         retrievedUser = utils.getUserById(userAdmin.id, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
         userList = utils.getUsersByEmail(userAdmin.email, serviceAdminToken, MediaType.APPLICATION_JSON_TYPE)
 
-        then: "should return the same as the 'UUID' token"
-        defaultToken.token.id == uuidToken.token.id
+        then: "should return the same as the 'AE' token"
+        defaultToken.token.id.length() > 32
         retrievedUser.tokenFormat == TokenFormatEnum.DEFAULT
         userList.users[0]['RAX-AUTH:tokenFormat'] == 'DEFAULT'
 
@@ -315,12 +263,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         then: "should be valid"
         aeTokenValidate.token.id == aeToken.token.id
-
-        when: "validating an 'UUID' token"
-        def uuidTokenValidate = utils.validateToken(uuidToken.token.id)
-
-        then: "should be valid"
-        uuidTokenValidate.token.id == uuidToken.token.id
 
         cleanup:
         utils.deleteUsers(users)
@@ -361,20 +303,8 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         where:
         authTokenFormat      | validateTokenFormat  | getTokenVersion
         TokenFormatEnum.AE   | TokenFormatEnum.AE   | GetTokenVersion.v20
-        TokenFormatEnum.AE   | TokenFormatEnum.UUID | GetTokenVersion.v20
-        TokenFormatEnum.UUID | TokenFormatEnum.AE   | GetTokenVersion.v20
-        TokenFormatEnum.UUID | TokenFormatEnum.UUID | GetTokenVersion.v20
-
         TokenFormatEnum.AE   | TokenFormatEnum.AE   | GetTokenVersion.v11
-        TokenFormatEnum.AE   | TokenFormatEnum.UUID | GetTokenVersion.v11
-        TokenFormatEnum.UUID | TokenFormatEnum.AE   | GetTokenVersion.v11
-        TokenFormatEnum.UUID | TokenFormatEnum.UUID | GetTokenVersion.v11
-
         TokenFormatEnum.AE   | TokenFormatEnum.AE   | GetTokenVersion.v10
-        TokenFormatEnum.AE   | TokenFormatEnum.UUID | GetTokenVersion.v10
-        TokenFormatEnum.UUID | TokenFormatEnum.AE   | GetTokenVersion.v10
-        TokenFormatEnum.UUID | TokenFormatEnum.UUID | GetTokenVersion.v10
-
     }
 
     def "auth with AE Token + tenant"() {
@@ -454,7 +384,9 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == 200
-        authTokenFormat == TokenFormatEnum.AE ? authToken.token.id.length() > 32 : authToken.token.id.length() == 32
+        if (authTokenFormat == TokenFormatEnum.AE) {
+            assert authToken.token.id.length() > 32
+        }
 
         when: "user validate v2.0"
         response = cloud20.validateToken(identityAdminToken, authToken.token.id)
@@ -469,7 +401,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
 
         where:
-        authTokenFormat << [TokenFormatEnum.AE, TokenFormatEnum.UUID]
+        authTokenFormat << [TokenFormatEnum.AE]
     }
 
     /**
@@ -557,43 +489,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         }
     }
 
-    def "verify revoke UUID tokens when AE token config is set"() {
-        given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, null)
-        utils.resetServiceAdminToken()
-        def response
-        def authToken
-        def uuidToken
-
-        def domainId = utils.createDomain()
-        def identityAdmin, userAdmin, userManage, defaultUser
-        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        def users = [defaultUser, userManage, userAdmin, identityAdmin]
-        utils.addApiKeyToUser(userAdmin)
-
-        when: "user auth v2.0 (using UUID)"
-        response = cloud20.authenticatePassword(userAdmin.username)
-        authToken = response.getEntity(AuthenticateResponse).value
-        uuidToken = authToken.token.id
-
-        then:
-        response.status == 200
-        uuidToken.length() == 32
-
-        when: "revoking token after setting AE token"
-        setUserTokenFormat(userAdmin, TokenFormatEnum.AE)
-        response = cloud20.revokeUserToken(utils.getIdentityAdminToken(), uuidToken)
-
-        then: "it should still revoke it"
-        response.status == 204
-        ldapScopeAccessRepository.getScopeAccessByAccessToken(uuidToken).accessTokenExpired
-
-        cleanup:
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
-        staticIdmConfiguration.reset()
-    }
-
     def "authenticating with AE token and tenantName"() {
         given:
         def mossoId = testUtils.getRandomInteger()
@@ -610,13 +505,10 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         when:
         def authResponse = cloud20.authenticate(authRequestContent)
         def scopeAccessResponse = authResponse.getEntity(AuthenticateResponse).value
-        def ldapTokens
-        ldapTokens = ldapScopeAccessRepository.getScopeAccessesByUserId(apiUser.id)
 
         then:
         authResponse.status == 200
         compareTwoTokens(scopeAccess, scopeAccessResponse)
-        !ldapTokens.iterator().hasNext()
 
         cleanup:
         cloud20.deleteUser(utils.getServiceAdminToken(), createdUser.id)
@@ -638,8 +530,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         def aeTokenOriginal, uuidToken, aeTokenValidateOriginal, uuidTokenValidate, response
 
         when: "all features are enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
         aeTokenOriginal = utils.authenticateUser(userAdmin.username, Constants.DEFAULT_PASSWORD)
         aeTokenValidateOriginal = utils.validateToken(aeTokenOriginal.token.id)
 
@@ -647,40 +537,9 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         aeTokenOriginal.token.id.length() > 32
         aeTokenValidateOriginal.token.id == aeTokenOriginal.token.id
 
-        when: "creation of ae tokens is disable (but reading is enable)"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, false)
-        uuidToken = utils.authenticateUser(userAdmin.username, Constants.DEFAULT_PASSWORD)
-        uuidTokenValidate = utils.validateToken(uuidToken.token.id)
-        aeTokenValidateOriginal = utils.validateToken(aeTokenOriginal.token.id)
-
-        then: "should be equal to 32 (UUID tokens) but can still validate the original one"
-        uuidToken.token.id.length() == 32
-        uuidTokenValidate.token.id == uuidToken.token.id
-        aeTokenValidateOriginal.token.id == aeTokenOriginal.token.id
-
-        when: "creation and reading of ae tokens is disable"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, false)
-        uuidToken = utils.authenticateUser(userAdmin.username, Constants.DEFAULT_PASSWORD)
-        utils.resetServiceAdminToken()
-        uuidTokenValidate = utils.validateToken(uuidToken.token.id)
-        response = methods.validateToken(utils.getServiceAdminToken(), aeTokenOriginal.token.id)
-
-        then:
-        response.status != SC_OK
-        uuidToken.token.id.length() == 32
-        uuidTokenValidate.token.id == uuidToken.token.id
-
-        when: "when creation is enabled, reading is always enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, false)
-
-        then:
-        config.getReloadableConfig().getFeatureAETokensDecrypt()
-
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         reloadableConfiguration.reset()
     }
-
 }

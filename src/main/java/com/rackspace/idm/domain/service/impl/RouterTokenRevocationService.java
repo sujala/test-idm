@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.TokenRevocationService;
-import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -18,9 +17,6 @@ public class RouterTokenRevocationService implements TokenRevocationService {
     private AETokenRevocationService aeTokenRevocationService;
 
     @Autowired
-    private UUIDTokenRevocationService uuidRevokeTokenService;
-
-    @Autowired
     private TokenFormatSelector tokenFormatSelector;
 
     @Autowired
@@ -28,7 +24,7 @@ public class RouterTokenRevocationService implements TokenRevocationService {
 
     @Override
     public boolean supportsRevokingFor(Token token) {
-        return uuidRevokeTokenService.supportsRevokingFor(token) || aeTokenRevocationService.supportsRevokingFor(token);
+        return aeTokenRevocationService.supportsRevokingFor(token);
     }
 
     private TokenRevocationService getRouteByBaseUser(BaseUser user) {
@@ -52,11 +48,7 @@ public class RouterTokenRevocationService implements TokenRevocationService {
     }
 
     private TokenRevocationService getRouteByTokenFormat(TokenFormat tokenFormat) {
-        if (tokenFormat == TokenFormat.AE) {
-            return aeTokenRevocationService;
-        } else {
-            return uuidRevokeTokenService;
-        }
+        return aeTokenRevocationService;
     }
 
     @Override

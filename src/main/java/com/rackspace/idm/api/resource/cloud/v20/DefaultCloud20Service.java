@@ -1165,8 +1165,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
 
                 // Just identity admins and service admins can update 'tokenFormat', but only when ae tokens are enabled
-                if (!(IdentityUserTypeEnum.SERVICE_ADMIN == callerType || IdentityUserTypeEnum.IDENTITY_ADMIN == callerType) ||
-                        !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
+                if (!(IdentityUserTypeEnum.SERVICE_ADMIN == callerType || IdentityUserTypeEnum.IDENTITY_ADMIN == callerType)) {
                     user.setTokenFormat(null);
                 }
 

@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -39,9 +38,6 @@ import static org.apache.http.HttpStatus.SC_NO_CONTENT
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 class ForgotPasswordIntegrationTest extends RootIntegrationTest {
-    @Autowired(required = false)
-    LdapScopeAccessRepository ldapScopeAccessRepository
-
     @Autowired
     IdentityConfig config;
 

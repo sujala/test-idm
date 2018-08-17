@@ -39,8 +39,7 @@ public class CreateUserAdminService implements CreateUserService {
         userService.configureNewUserAdmin(user, CreateUserUtil.isCreateUserOneCall(userForCreate));
 
         IdentityUserTypeEnum callerUserType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
-        if (!(IdentityUserTypeEnum.IDENTITY_ADMIN.equals(callerUserType) || IdentityUserTypeEnum.SERVICE_ADMIN.equals(callerUserType))
-                || !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
+        if (!(IdentityUserTypeEnum.IDENTITY_ADMIN.equals(callerUserType) || IdentityUserTypeEnum.SERVICE_ADMIN.equals(callerUserType))) {
             user.setTokenFormat(null);
         }
 

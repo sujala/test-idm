@@ -15,7 +15,7 @@ import spock.lang.Shared
  * Tests common error scenarios with generating ae tokens.
  */
 class GlobalAuthAETokenServiceIntegrationTest extends DefaultAETokenServiceBaseIntegrationTest {
-    @Shared User hardCodedUser;
+    @Shared User hardCodedUser
 
     def setupSpec() {
        hardCodedUser = entityFactory.createUser().with {

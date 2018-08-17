@@ -12,7 +12,6 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
-import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -72,9 +71,6 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     UserService userService
-
-    @Autowired
-    ConfigurableTokenFormatSelector configurableTokenFormatSelector
 
     @Autowired
     IdentityConfig identityConfig

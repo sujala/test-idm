@@ -255,9 +255,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     def "Validate Impersonated user's token using a racker where racker uses AE Tokens" () {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
-
         def domainId = utils.createDomain()
         (defaultUser, users) = utils.createDefaultUser(domainId)
 
@@ -351,7 +348,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     def "Previously created impersonation tokens are no longer valid once the impersonated user's domain is disabled" () {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def domainDisable = v1Factory.createDomain().with {
@@ -393,19 +389,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         token != null
         resp.status == SC_OK
 
-        when: "Impersonate with user using UUID impersonation tokens"
-        identityAdmin.tokenFormat = TokenFormatEnum.UUID
-        utils.updateUser(identityAdmin)
-        utils.updateDomain(domainId, domainEnable)
-        response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), defaultUser)
-        token = response.token.id
-        utils.updateDomain(domainId, domainDisable)
-        resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
-
-        then:
-        token != null
-        resp.status == SC_NOT_FOUND
-
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
@@ -437,140 +420,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
-    }
-
-    /**
-     * Note - AE impersonation tokens dynamically generate a new user token each use so it's impossible to revoke
-     * the underlying user token.
-     *
-     * @return
-     */
-    def "trying to validate a UUID impersonation token with deleted provisioned user token returns 404"() {
-        given:
-        def domainId = utils.createDomain()
-        (defaultUser, users) = utils.createDefaultUser(domainId)
-        def identityAdmin = users[2]
-        identityAdmin.tokenFormat = TokenFormatEnum.UUID
-        utils.updateUser(identityAdmin)
-
-        when: "impersonate the user"
-        def response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), defaultUser)
-        def token = response.token.id
-        def resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
-
-        then: "response successful"
-        token != null
-        resp.status == SC_OK
-
-        when: "delete the token being impersonated and validate the impersonation token"
-        def impersontatingTokenEntity = scopeAccessService.getScopeAccessByAccessToken(token)
-        def impersonatedTokenEntity = scopeAccessService.getScopeAccessByAccessToken(impersontatingTokenEntity.impersonatingToken)
-        scopeAccessService.deleteScopeAccess(impersonatedTokenEntity)
-        resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
-
-        then: "validate returns 404"
-        resp.status == SC_NOT_FOUND
-
-        cleanup:
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
-    }
-
-    /**
-     * Note - AE impersonation tokens dynamically generate a new user token each use so it's impossible to revoke
-     * the underlying user token.
-     *
-     * @return
-     */
-    def "trying to validate a UUID impersonation token for deleted federated user token returns 404"() {
-        given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def identityAdmin = users[0]
-        identityAdmin.tokenFormat = TokenFormatEnum.UUID
-        utils.updateUser(identityAdmin)
-
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def federatedUser = utils.getUserById(authResponse.getUser().getId())
-
-        when: "impersonate the user"
-        def response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), federatedUser)
-        def token = response.token.id
-        def resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
-
-        then: "response successful"
-        token != null
-        resp.status == SC_OK
-
-        when: "delete the token being impersonated and validate the impersonation token"
-        def impersontatingTokenEntity = scopeAccessService.getScopeAccessByAccessToken(token)
-        def impersonatedTokenEntity = scopeAccessService.getScopeAccessByAccessToken(impersontatingTokenEntity.impersonatingToken)
-        scopeAccessService.deleteScopeAccess(impersonatedTokenEntity)
-        resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
-
-        then: "validate returns 404"
-        resp.status == SC_NOT_FOUND
-
-        cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
-        staticIdmConfiguration.reset()
-    }
-
-    def "UUID impersonation tokens created before a federated user's domain is disabled are no longer valid"() {
-        given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
-        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, Constants.DEFAULT_IDP_URI), "UUID")
-        utils.resetServiceAdminToken()
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def identityAdmin = users[0]
-        identityAdmin.tokenFormat = TokenFormatEnum.UUID
-        utils.updateUser(identityAdmin)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def federatedUser = utils.getUserById(authResponse.getUser().getId())
-
-        when: "impersonate the user"
-        def response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), federatedUser)
-        def token = response.token.id
-        def resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
-
-        then: "response successful"
-        token != null
-        resp.status == SC_OK
-
-        when: "disable the domain and validate the impersonation token"
-        def domain = v1Factory.createDomain().with {
-            it.id = domainId
-            it.name = domainId
-            it.enabled = false
-            it
-        }
-        utils.updateDomain(domainId, domain)
-        resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
-
-        then: "validate returns 404"
-        resp.status == SC_NOT_FOUND
-
-        cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
-        staticIdmConfiguration.reset()
-        utils.resetServiceAdminToken()
     }
 
     @Unroll

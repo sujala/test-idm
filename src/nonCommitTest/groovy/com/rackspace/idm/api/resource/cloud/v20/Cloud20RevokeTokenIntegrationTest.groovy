@@ -1,20 +1,22 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.TokenRevocationService
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
+import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static org.apache.http.HttpStatus.SC_CREATED
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
-
 
 class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
 
@@ -32,9 +34,8 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Revoke other user's token; tokenFormat: #tokenFormat" () {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
-        def identityAdmin = utils.createIdentityAdmin()
-        def token = utils.getToken(identityAdmin.username)
+        def user = createUserWithFormat(tokenFormat)
+        def token = utils.getToken(user.username)
         def serviceAdminToken = utils.getServiceAdminToken()
         when:
         def response = cloud20.revokeUserToken(serviceAdminToken, token)
@@ -49,18 +50,17 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
         validateResponse.status == SC_NOT_FOUND
 
         cleanup:
-        utils.deleteUsers(identityAdmin)
+        utils.deleteUsers(user)
 
         where:
-        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+        tokenFormat << [TokenFormatEnum.AE]
     }
 
     @Unroll
     def "Revoke my token; tokenFormat: #tokenFormat" () {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
-        def identityAdmin = utils.createIdentityAdmin()
-        def token = utils.getToken(identityAdmin.username)
+        def user = createUserWithFormat(tokenFormat)
+        def token = utils.getToken(user.username)
 
         when:
         def response = cloud20.revokeToken(token)
@@ -75,23 +75,20 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
         validateResponse.status == SC_NOT_FOUND
 
         cleanup:
-        utils.deleteUsers(identityAdmin)
+        utils.deleteUsers(user)
 
         where:
-        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+        tokenFormat << [TokenFormatEnum.AE]
     }
 
     @Unroll
     def "Revoke token of a disabled user; tokenFormat: #tokenFormat" () {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
-
-        def domainId = utils.createDomain()
-        (defaultUser, users) = utils.createDefaultUser(domainId)
+        def user = createUserWithFormat(tokenFormat)
+        def token = utils.getToken(user.username)
 
         when:
-        def token = utils.getToken(defaultUser.username)
-        utils.disableUser(defaultUser)
+        utils.disableUser(user)
         def response = cloud20.revokeUserToken(utils.getServiceAdminToken(), token)
         def revokeTokenResponse = cloud20.revokeToken(token)
 
@@ -100,81 +97,76 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
         revokeTokenResponse.status == SC_UNAUTHORIZED
 
         cleanup:
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
+        utils.deleteUsers(user)
 
         where:
-        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+        tokenFormat << [TokenFormatEnum.AE]
     }
 
-    def "Revoke user's tokens by id when set to UUID/AE" () {
+    @Unroll
+    def "Revoke user's tokens by id when set to #tokenFormat" () {
         given:
-        def identityAdmin = utils.createIdentityAdmin()
-        def serviceAdminToken = utils.getServiceAdminToken()
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
+        def user = createUserWithFormat(tokenFormat)
+        def token = utils.getToken(user.username)
 
-        when: "revoke ae token by userid"
-        def token = utils.getToken(identityAdmin.username)
-        tokenRevocationService.revokeAllTokensForEndUser(identityAdmin.id)
+        def serviceAdminToken = utils.getServiceAdminToken()
+
+        when: "revoke token by userid"
+        tokenRevocationService.revokeAllTokensForEndUser(user.id)
 
         then:
         cloud20.validateToken(serviceAdminToken, token).status == SC_NOT_FOUND
 
         cleanup:
-        utils.deleteUsers(identityAdmin)
+        utils.deleteUsers(user)
 
         where:
-        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+        tokenFormat << [TokenFormatEnum.AE]
     }
 
-    def "Revoke provisioned user's tokens by user when set to UUID/AE" () {
+    @Unroll
+    def "Revoke provisioned user's tokens by user when set to #tokenFormat" () {
         given:
-        def identityAdmin = utils.createIdentityAdmin()
-        def serviceAdminToken = utils.getServiceAdminToken()
-        def user = identityUserService.getProvisionedUserById(identityAdmin.id)
+        def user = createUserWithFormat(tokenFormat)
+        def token = utils.getToken(user.username)
+        def userEntity = identityUserService.getProvisionedUserById(user.id)
 
-        when: "revoke uuid token by userid"
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
-        def token = utils.getToken(identityAdmin.username)
-        tokenRevocationService.revokeAllTokensForEndUser(user)
+        when: "revoke tokens by userid"
+        tokenRevocationService.revokeAllTokensForEndUser(userEntity)
 
         then:
-        cloud20.validateToken(serviceAdminToken, token).status == SC_NOT_FOUND
+        cloud20.validateToken(utils.getIdentityAdminToken(), token).status == SC_NOT_FOUND
 
         cleanup:
-        utils.deleteUsers(identityAdmin)
+        utils.deleteUsers(user)
 
         where:
-        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+        tokenFormat << [TokenFormatEnum.AE]
     }
 
-
-    def "Revoke user token with authenticatedByMethodGroups when set to UUID/AE" () {
+    @Unroll
+    def "Revoke user token with authenticatedByMethodGroups when set to #tokenFormat" () {
         given:
-        def identityAdmin = utils.createIdentityAdmin()
-        def serviceAdminToken = utils.getServiceAdminToken()
-        def user = identityUserService.getProvisionedUserById(identityAdmin.id)
+        def user = createUserWithFormat(tokenFormat)
+        def token = utils.getToken(user.username)
         List<AuthenticatedByMethodGroup> authenticatedByMethodGroups =  Arrays.asList(AuthenticatedByMethodGroup.ALL)
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
 
         when:
-        def token = utils.getToken(user.username)
         tokenRevocationService.revokeTokensForEndUser(user.id, authenticatedByMethodGroups)
 
         then:
-        cloud20.validateToken(serviceAdminToken, token).status == SC_NOT_FOUND
+        cloud20.validateToken(utils.getIdentityAdminToken(), token).status == SC_NOT_FOUND
 
         cleanup:
-        utils.deleteUser(identityAdmin)
+        utils.deleteUser(user)
 
         where:
-        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+        tokenFormat << [TokenFormatEnum.AE]
     }
 
 
     def "Revoke AE token using v1.1" () {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.AE.name())
         def identityAdmin = utils.createIdentityAdmin()
         def aeToken = utils.getToken(identityAdmin.username)
         def serviceAdminToken = utils.getServiceAdminToken()
@@ -190,5 +182,17 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(identityAdmin)
+    }
+
+    User createUserWithFormat(TokenFormatEnum tokenFormat) {
+        def user = v2Factory.createUserForCreate(UUID.randomUUID().toString(), "display", "email@email.com", true, null, UUID.randomUUID().toString(), DEFAULT_PASSWORD).with {
+            it.tokenFormat = tokenFormat
+            it
+        }
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), user)
+        assert (response.status == SC_CREATED)
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
     }
 }

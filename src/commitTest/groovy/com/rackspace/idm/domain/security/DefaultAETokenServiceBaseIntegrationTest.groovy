@@ -48,8 +48,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
 
         staticConfig = new PropertiesConfiguration()
         staticConfig.setProperty(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME, "aaa7cb17b52d4e1ca3cb5c7c5996cc3b")
-        staticConfig.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
-        staticConfig.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
         staticConfig.setProperty(IdentityConfig.CACHED_AE_TOKEN_TTL_SECONDS_PROP, 60)
 
         reloadableConfig = new PropertiesConfiguration()
