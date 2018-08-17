@@ -1172,6 +1172,34 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
+    def "verify unverified users cannot be created in domain with no user admin"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+        def identityAdmin = utils.createIdentityAdmin()
+        def user = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = identityAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(identityAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        when: "providing domain id"
+        def response = cloud20.createUnverifiedUser(utils.getToken(identityAdmin.username), user)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, DefaultCloud20Service.ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS)
+
+        when: "not providing domain id"
+        user.domainId = null
+        response = cloud20.createUnverifiedUser(utils.getToken(identityAdmin.username), user)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, DefaultCloud20Service.ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS)
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
     def getInviteEntity(ClientResponse response) {
         if (response.getType() == MediaType.APPLICATION_XML_TYPE) {
             return response.getEntity(Invite)
