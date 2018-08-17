@@ -181,3 +181,20 @@ add_unverified_user = {
     'required': [const.USER],
     'additionalProperties': False
 }
+
+invite_unverified_user = {
+    'type': 'object', 'properties':
+        {const.RAX_AUTH_INVITE: {
+            'type': 'object',
+            'properties': {
+                const.EMAIL: {'type': 'string', 'format': 'email'},
+                const.REGISTRATION_CODE: {'type': 'string'},
+                const.USER_ID: {'type': 'string'},
+                const.CREATED: {'type': 'string', 'format': 'dateTime'},
+            },
+            'required': [const.EMAIL, const.REGISTRATION_CODE,
+                         const.USER_ID, const.CREATED],
+            'additionalProperties': False}},
+    'required': [const.RAX_AUTH_INVITE],
+    'additionalProperties': False
+}
