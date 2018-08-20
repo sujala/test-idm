@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.federation.v2;
 
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.SignatureValidationException;
@@ -61,6 +62,23 @@ public class FederationUtils {
         });
     }
 
+    /**
+     * Validates that the request did not occur too far in the past based on configured application settings which
+     * control the max "age" of a request. It also allows for separately configured amount of "clock skew" to account for
+     * skew between the system clock on the origin server and the IDM server.
+     */
+    public void validateForExpiredRequest(LogoutRequestDecorator logoutRequest) {
+        // Validate the specified datetime is not older than the configure max age for a saml response
+        Collection<DateTime> issueInstants = new ArrayList<>();
+        issueInstants.add(logoutRequest.checkAndGetIssueInstant());
+        CollectionUtils.forAllDo(issueInstants, new Closure<DateTime>() {
+            @Override
+            public void execute(DateTime issueInstant) {
+                validateIssueInstant(issueInstant);
+            }
+        });
+    }
+
     public void validateSignatureForIdentityProvider(Signature signature, IdentityProvider identityProvider) {
         boolean validated = false;
         SignatureValidationException lastException = null;
@@ -98,7 +116,7 @@ public class FederationUtils {
         }
     }
 
-    public void validateSignature(Signature signature, X509Certificate publicCertificate) {
+    private void validateSignature(Signature signature, X509Certificate publicCertificate) {
         try {
             BasicX509Credential credential = new BasicX509Credential(publicCertificate);
             SignatureValidator.validate(signature, credential);

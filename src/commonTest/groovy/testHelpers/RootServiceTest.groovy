@@ -29,6 +29,7 @@ import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
 import com.rackspace.idm.domain.service.*
+import com.rackspace.idm.domain.service.federation.v2.FederationUtils
 import com.rackspace.idm.domain.service.impl.*
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.exception.IdmExceptionHandler
@@ -45,6 +46,7 @@ import com.rackspace.idm.validation.*
 import com.rackspace.idm.validation.entity.Constants
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
+import org.opensaml.saml.security.impl.SAMLSignatureProfileValidator
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.springframework.context.ApplicationEventPublisher
 import spock.lang.Shared
@@ -198,6 +200,8 @@ class RootServiceTest extends Specification {
     @Shared AuthWithPasswordCredentials authWithPasswordCredentials
     @Shared AuthWithApiKeyCredentials authWithApiKeyCredentials
     @Shared TokenFormatSelector tokenFormatSelector
+    @Shared FederationUtils federationUtils
+    @Shared SAMLSignatureProfileValidator samlSignatureProfileValidator
 
     @Shared RequestContext requestContext
     @Shared AuthenticationContext authenticationContext
@@ -916,6 +920,16 @@ class RootServiceTest extends Specification {
     def mockTokenFormatSelector(service) {
         tokenFormatSelector = Mock()
         service.tokenFormatSelector = tokenFormatSelector
+    }
+
+    def mockFederationUtils(service) {
+        federationUtils = Mock()
+        service.federationUtils = federationUtils
+    }
+
+    def mockSamlSignatureProfileValidator(service) {
+        samlSignatureProfileValidator = Mock()
+        service.samlSignatureProfileValidator = samlSignatureProfileValidator
     }
 
     /*

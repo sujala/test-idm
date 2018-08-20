@@ -29,6 +29,16 @@ public interface Cloud20Service {
 
     ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, byte[] logoutRequest);
 
+    /**
+     * Validates the SAML entity was signed by an appropriate IDP and the request was generated within an acceptable
+     * time period.
+     *
+     * @param httpHeaders
+     * @param requestBytes
+     * @return
+     */
+    ResponseBuilder verifySamlRequest(HttpHeaders httpHeaders, byte[] requestBytes);
+
     ResponseBuilder addIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, IdentityProvider provider);
 
     ResponseBuilder addIdentityProviderUsingMetadata(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, byte[] metadata);

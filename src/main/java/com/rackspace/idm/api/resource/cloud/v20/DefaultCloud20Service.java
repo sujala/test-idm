@@ -158,6 +158,7 @@ import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
@@ -1661,6 +1662,19 @@ public class DefaultCloud20Service implements Cloud20Service {
             return buildFedLogoutResponseBuilder(logoutResponse.getLogoutResponse(), status);
         } catch (Exception e) {
             logger.debug("Error generating error output. Returning 500", e);
+            return exceptionHandler.exceptionResponse(e);
+        }
+    }
+
+    @Override
+    public ResponseBuilder verifySamlRequest(HttpHeaders httpHeaders, byte[] requestBytes) {
+        try {
+            // Currently we only support validating logout requests
+            org.opensaml.saml.saml2.core.LogoutRequest logoutRequest = samlUnmarshaller.unmarshallLogoutRequest(requestBytes);
+            federatedIdentityService.verifyLogoutRequest(logoutRequest);
+            return Response.ok();
+        } catch (Exception e) {
+            logger.debug("SAML request validation failed", e);
             return exceptionHandler.exceptionResponse(e);
         }
     }

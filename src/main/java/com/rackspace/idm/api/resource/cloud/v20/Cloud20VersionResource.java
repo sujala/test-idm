@@ -338,6 +338,25 @@ public class Cloud20VersionResource {
         return response;
     }
 
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Federated SAML validity check")
+    @POST
+    @Path("RAX-AUTH/federation/saml/validate")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response federationSamlValidityCheck(@Context HttpHeaders httpHeaders, @FormParam("SAMLRequest") String request)  {
+        Response response;
+        if (org.apache.commons.lang.StringUtils.isBlank(request)) {
+            response = exceptionHandler.exceptionResponse(new BadRequestException("Missing SAMLRequest field")).build();
+        } else {
+            try {
+                byte[] requestBytes = Base64.decodeBase64(request);
+                response = cloud20Service.verifySamlRequest(httpHeaders, requestBytes).build();
+            } catch (Exception ex) {
+                response = exceptionHandler.exceptionResponse(ex).build();
+            }
+        }
+        return response;
+    }
+
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Create IDP")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
