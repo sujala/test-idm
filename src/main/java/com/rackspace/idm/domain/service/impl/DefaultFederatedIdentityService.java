@@ -107,11 +107,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         }
     }
 
-    /**
-     * System must also log removal in user deletion log and send a feed event indication
-     * the deletion of the user
-     * @param logoutRequest
-     */
     @Override
     public void verifyLogoutRequest(LogoutRequest logoutRequest) {
         LogoutRequestDecorator decoratedLogoutRequest = new LogoutRequestDecorator(logoutRequest);

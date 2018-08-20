@@ -38,6 +38,11 @@ public interface FederatedIdentityService {
      */
     SamlLogoutResponse processLogoutRequest(LogoutRequest logoutRequest);
 
+    /**
+     * Verifies whether the logout request signature validity.
+     *
+     * @param logoutRequest
+     */
     void verifyLogoutRequest(LogoutRequest logoutRequest);
 
     /**

@@ -125,7 +125,7 @@ public class FederationUtils {
         }
     }
 
-    public void validateIssueInstant(DateTime issueInstant) {
+    private void validateIssueInstant(DateTime issueInstant) {
         if (issueInstant == null) {
             throw new BadRequestException("Saml issueInstant is required");
         }
