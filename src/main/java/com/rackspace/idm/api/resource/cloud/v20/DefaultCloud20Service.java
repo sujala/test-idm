@@ -271,6 +271,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ERROR_UNVERIFIED_USERS_REQUIRED_VALID_EMAIL_ADDRESS = "The email specified for the invite user is invalid.";
     public static final String ERROR_DOMAIN_MUST_EXIST_FOR_UNVERIFIED_USERS = "The domain for the user does not exist.";
     public static final String ERROR_DOMAIN_MUST_BE_ENABLED_FOR_UNVERIFIED_USERS = "The domain for the user must be enabled.";
+    public static final String ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS = "Cannot create invite user for domain with no account admin.";
     public static final String ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN = "A user with the provided email already exists in the domain.";
     public static final String UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE = "Unverified user with ID '%s' was not found.";
 
@@ -926,6 +927,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (!domain.getEnabled()) {
                 throw new ForbiddenException(ERROR_DOMAIN_MUST_BE_ENABLED_FOR_UNVERIFIED_USERS, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            if (domain.getUserAdminDN() == null) {
+                throw new ForbiddenException(ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
             List<String> allowedRCNs = identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs();

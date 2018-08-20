@@ -6,8 +6,6 @@ services:
     ports:
       - 127.0.0.1:20389:1389
       - 127.0.0.1:20636:1636
-      - 127.0.0.1:30389:3389
-      - 127.0.0.1:30636:3636
       - 127.0.0.1:8080:8080
       - 127.0.0.1:8180:8180
       - 127.0.0.1:10636:10636
@@ -23,18 +21,8 @@ services:
       POSTFIX_PORT: 10025
     network_mode: "service:network"
 
-  edir:
-    image: docker.artifacts.rackspace.net/edirectory
-    volumes:
-      - ./edir/config:/config
-      - ./edir/ldif:/data
-    network_mode: "service:network"
-
   openldap:
     image: docker.artifacts.rackspace.net/openldap
-    environment:
-      LDAP_PORT: 3389
-      LDAPS_PORT: 3636
     volumes:
       - ./openldap/config:/config
       - ./openldap/ldif:/data

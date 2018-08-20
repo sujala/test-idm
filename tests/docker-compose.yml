@@ -26,11 +26,11 @@ services:
       TOMCAT_SHUTDOWN_PORT: 8105
     network_mode: "service:network"
 
-  edir:
-    image: docker.artifacts.rackspace.net/edirectory
+  openldap:
+    image: docker.artifacts.rackspace.net/openldap
     volumes:
-      - ../edir/config:/config
-      - ../edir/ldif:/data
+      - ../openldap/config:/config
+      - ../openldap/ldif:/data
     network_mode: "service:network"
 
   directory:

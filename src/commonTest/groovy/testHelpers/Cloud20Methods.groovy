@@ -1375,10 +1375,28 @@ class Cloud20Methods {
     def getUsersInUserGroup(String token, String domainId, String groupId, UserSearchCriteria userSearchCriteria = null, MediaType accept = APPLICATION_XML_TYPE) {
         initOnUse()
         WebResource resource = resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(GROUPS).path(groupId).path(USERS)
-        if (userSearchCriteria != null && userSearchCriteria.paginationRequest != null) {
-            resource = resource.queryParams(pageParams(String.valueOf(userSearchCriteria.getPaginationRequest().marker), String.valueOf(userSearchCriteria.getPaginationRequest().limit)))
-        }
+        resource = extractUserSearchCriteriaParams(userSearchCriteria, resource)
         resource.header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
+    }
+
+    private WebResource extractUserSearchCriteriaParams(UserSearchCriteria userSearchCriteria, WebResource resource) {
+        def paramMap = new MultivaluedMapImpl()
+        if (userSearchCriteria != null){
+            if (userSearchCriteria.paginationRequest != null){
+                def markerParam = String.valueOf(userSearchCriteria.getPaginationRequest().marker)
+                if (markerParam != null) {
+                    paramMap.add("marker", markerParam)
+                }
+
+                def limitParam = String.valueOf(userSearchCriteria.getPaginationRequest().limit)
+                if (limitParam != null) {
+                    paramMap.add("limit", limitParam)
+                }
+            }
+            paramMap.add("user_type", userSearchCriteria.getUserType().toString())
+            resource = resource.queryParams(paramMap)
+        }
+        return resource
     }
 
     def grantRoleAssignmentsOnUser(String token, User user, RoleAssignments roleAssignments, MediaType media=MediaType.APPLICATION_XML_TYPE) {

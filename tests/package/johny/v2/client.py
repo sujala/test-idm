@@ -1917,3 +1917,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return self.request(
             'POST', url, request_entity=request_object,
             requestslib_kwargs=requestslib_kwargs)
+
+    def invite_unverified_user(self, user_id, requestslib_kwargs=None):
+        """
+        PUT v2.0/RAX-AUTH/invite/user/{userId}
+        """
+        url = self.url + const.INVITE_UNVERIFIED_USER_URL.format(
+            user_id=user_id)
+        return self.request(
+            'PUT', url, requestslib_kwargs=requestslib_kwargs)

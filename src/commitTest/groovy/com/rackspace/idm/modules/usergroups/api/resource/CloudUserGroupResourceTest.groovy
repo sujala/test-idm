@@ -2,6 +2,7 @@ package com.rackspace.idm.modules.usergroups.api.resource
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.BadRequestException
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Unroll
@@ -206,13 +207,14 @@ class CloudUserGroupResourceTest extends RootServiceTest {
         identityConfig.getStaticConfig().getLdapPagingMaximum() >> 100
 
         when:
-        cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, domainId, groupId, marker, limit)
+        cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, domainId, groupId, "ALL",marker, limit)
 
         then:
         1 * userGroupCloudService.getUsersInGroup(mockUriInfo, token, domainId, groupId, _ as UserSearchCriteria) >> { args ->
             UserSearchCriteria searchCriteria = args[4]
             assert searchCriteria.paginationRequest.marker == ((marker != null) ? marker : 0)
             assert searchCriteria.paginationRequest.limit == ((limit != null) ? limit : 25)
+            assert searchCriteria.getUserType() == User.UserType.ALL
             return
         }
 
@@ -231,13 +233,13 @@ class CloudUserGroupResourceTest extends RootServiceTest {
         identityConfig.getStaticConfig().getLdapPagingMaximum() >> 10
 
         when:
-        cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, "domainId", "groupId", -1, 10)
+        cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, "domainId", "groupId", "ALL", -1, 10)
 
         then:
         thrown(BadRequestException)
 
         when:
-        cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, "domainId", "groupId", 5, -10)
+        cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, "domainId", "groupId", "ALL",5, -10)
 
         then:
         thrown(BadRequestException)

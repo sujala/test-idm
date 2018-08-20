@@ -167,9 +167,20 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
 
     @Override
     public PaginatorContext<EndUser> getEndUsersInUserGroupPaged(UserGroup group, UserSearchCriteria userSearchCriteria) {
-        return (PaginatorContext) getObjectsPaged(searchFilterGetUsersInUserGroup(group, ENDUSER_CLASS_FILTERS),
-                userSearchCriteria.getPaginationRequest().getEffectiveMarker(),
-                userSearchCriteria.getPaginationRequest().getEffectiveLimit());
+
+        int marker = userSearchCriteria.getPaginationRequest().getEffectiveMarker();
+        int limit = userSearchCriteria.getPaginationRequest().getEffectiveLimit();
+        Filter searchFilter = null;
+
+        if (UserType.ALL == userSearchCriteria.getUserType()){
+            searchFilter = searchFilterGetUsersInUserGroup(group, ENDUSER_CLASS_FILTERS);
+        } else if (UserType.UNVERIFIED == userSearchCriteria.getUserType()){
+            searchFilter = searchFilterGetUsersWithTypeFilterInUserGroup(group, ENDUSER_CLASS_FILTERS, true);
+        } else {
+            // default to VERIFIED USERS
+            searchFilter = searchFilterGetUsersWithTypeFilterInUserGroup(group, ENDUSER_CLASS_FILTERS, false);
+        }
+        return (PaginatorContext) getObjectsPaged(searchFilter, marker, limit);
     }
 
     @Override
@@ -358,6 +369,22 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
                     Filter.createEqualityFilter(ATTR_ENABLED, Boolean.toString(true).toUpperCase()),
                     Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_ENABLED))
                 )
+        );
+    }
+
+    private Filter searchFilterGetUsersWithTypeFilterInUserGroup (UserGroup userGroup, List<Filter> userClassFilterList, Boolean isUnverifiedUserType) {
+        Filter unverifiedFilter;
+        if (isUnverifiedUserType) {
+            unverifiedFilter = Filter.createEqualityFilter(ATTR_UNVERIFIED, isUnverifiedUserType.toString().toUpperCase());
+        } else {
+            unverifiedFilter = Filter.createORFilter(Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_UNVERIFIED)),
+                    Filter.createEqualityFilter(ATTR_UNVERIFIED, isUnverifiedUserType.toString().toUpperCase()));
+        }
+
+        return Filter.createANDFilter(
+                Filter.createORFilter(userClassFilterList),
+                unverifiedFilter,
+                Filter.createEqualityFilter(ATTR_USER_GROUP_DNS, userGroup.getUniqueId())
         );
     }
 

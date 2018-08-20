@@ -7,6 +7,7 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
+import com.unboundid.ldap.sdk.DN
 import org.apache.commons.lang3.RandomStringUtils
 import org.opensaml.core.config.InitializationService
 import org.openstack.docs.identity.api.v2.User
@@ -47,7 +48,11 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
             it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
             it
         }
-        domainService.getDomain(_) >> new Domain().with { it.enabled = true; it}
+        domainService.getDomain(_) >> new Domain().with {
+            it.enabled = true
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
         identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs() >> ['*']
         validator.isEmailValid(_) >> true
         userConverter.toUser(_, _) >> user
@@ -81,7 +86,11 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
             it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
             it
         }
-        domainService.getDomain(_) >> new Domain().with { it.enabled = true; it}
+        domainService.getDomain(_) >> new Domain().with {
+            it.enabled = true
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
         identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs() >> ['*']
         validator.isEmailValid(_) >> true
         userConverter.toUser(_, _) >> user
@@ -142,7 +151,11 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
         then:
         1 * identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled() >> true
         if (domainExists) {
-            1 * domainService.getDomain(user.domainId) >> new Domain().with { it.enabled = true; it}
+            1 * domainService.getDomain(user.domainId) >> new Domain().with {
+                it.enabled = true
+                it.userAdminDN = new DN("rsId=id")
+                it
+            }
             0 * exceptionHandler.exceptionResponse(_)
             1 * userService.addUnverifiedUser(_)
         } else {
@@ -177,7 +190,11 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled() >> true
-        1 * domainService.getDomain(user.domainId) >> new Domain().with { it.enabled = domainEnabled; it}
+        1 * domainService.getDomain(user.domainId) >> new Domain().with {
+            it.enabled = domainEnabled
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
         if (domainEnabled) {
             0 * exceptionHandler.exceptionResponse(_)
             1 * userService.addUnverifiedUser(_)
@@ -212,7 +229,12 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled() >> true
-        1 * domainService.getDomain(user.domainId) >> new Domain().with { it.enabled = true; it.rackspaceCustomerNumber = rcn; it}
+        1 * domainService.getDomain(user.domainId) >> new Domain().with {
+            it.enabled = true
+            it.rackspaceCustomerNumber = rcn
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
         if (domainAuthorized) {
             1 * identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs() >> [rcn]
             0 * exceptionHandler.exceptionResponse(_)
@@ -248,7 +270,11 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled() >> true
-        1 * domainService.getDomain(user.domainId) >> new Domain().with { it.enabled = true; it}
+        1 * domainService.getDomain(user.domainId) >> new Domain().with {
+            it.enabled = true
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
         1 * identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs() >> ['*']
         if (emailProvided) {
             0 * exceptionHandler.exceptionResponse(_)
@@ -283,7 +309,11 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled() >> true
-        1 * domainService.getDomain(user.domainId) >> new Domain().with { it.enabled = true; it}
+        1 * domainService.getDomain(user.domainId) >> new Domain().with {
+            it.enabled = true
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
         1 * identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs() >> ['*']
         if (emailValid) {
             1 * validator.isEmailValid(_) >> true
@@ -319,7 +349,12 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled() >> true
-        1 * domainService.getDomain(user.domainId) >> new Domain().with { it.enabled = true; it.domainId = user.domainId; it}
+        1 * domainService.getDomain(user.domainId) >> new Domain().with {
+            it.enabled = true
+            it.domainId = user.domainId
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
         1 * identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs() >> ['*']
         1 * validator.isEmailValid(_) >> true
         if (emailUnique) {
@@ -338,6 +373,31 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
 
         where:
         emailUnique << [true, false]
+    }
+
+    def "add invite user requires the domain specified to have a user admin"() {
+        given:
+        allowUserAccess()
+        def user = new User().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(8)
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it
+        }
+        domainService.getDomain(_) >> new Domain().with {
+            it.enabled = true
+            it
+        }
+
+        when:
+        service.addInviteUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled() >> true
+        1 * exceptionHandler.exceptionResponse(_) >> { args ->
+            def exception = args[0]
+            assert exception.class == ForbiddenException
+            assert exception.message.endsWith(DefaultCloud20Service.ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS)
+        }
     }
 
 }

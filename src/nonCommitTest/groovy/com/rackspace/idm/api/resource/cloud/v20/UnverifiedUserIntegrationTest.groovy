@@ -1,12 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Invite
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import org.openstack.docs.identity.api.v2.UserList
 import com.rackspace.idm.validation.Validator20
 import com.sun.jersey.api.client.ClientResponse
@@ -27,6 +29,9 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
+import static org.apache.http.HttpStatus.SC_CREATED
+import static org.apache.http.HttpStatus.SC_NO_CONTENT
+import static org.apache.http.HttpStatus.SC_OK
 
 class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
@@ -780,6 +785,102 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         !listOnlyVerifiedUsers.user.id.contains(unverifiedUser2.id)
     }
 
+    def "Test listing of Verified and Unverified users in user group of a domain"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def domainId = userAdmin.domainId
+        utils.domainRcnSwitch(domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def unverifiedUser1 = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = userAdmin.domainId
+            it.unverified = true
+            it
+        }
+
+        def unverifiedUser2 = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = userAdmin.domainId
+            it.unverified = true
+            it
+        }
+
+        // Create Verified Users
+        def verifiedUser1 = utils.createUser(utils.getToken(userAdmin.username))
+        def verifiedUser2 = utils.createUser(utils.getToken(userAdmin.username))
+        def verifiedUser3 = utils.createUser(utils.getToken(userAdmin.username))
+
+        // Create unverifeid Users
+        unverifiedUser1 = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), unverifiedUser1).getEntity(User).value
+        unverifiedUser2 = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), unverifiedUser2).getEntity(User).value
+
+        when: "create user group for domain"
+        UserGroup userGroup = new UserGroup().with {
+            it.domainId = userAdmin.domainId
+            it.name = testUtils.getRandomUUID('userGroup')
+            it.description = "desc"
+            it
+        }
+        def response = cloud20.createUserGroup(userAdminToken, userGroup)
+        def userGroupEntity = response.getEntity(UserGroup)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "users are added in the user group"
+        def verifiedUser1Response = cloud20.addUserToUserGroup(userAdminToken, domainId, userGroupEntity.id, verifiedUser1.id)
+        def verifiedUser2Response = cloud20.addUserToUserGroup(userAdminToken, domainId, userGroupEntity.id, verifiedUser2.id)
+        def verifiedUser3Response = cloud20.addUserToUserGroup(userAdminToken, domainId, userGroupEntity.id, verifiedUser3.id)
+        def unverifiedUser1Response = cloud20.addUserToUserGroup(userAdminToken, domainId, userGroupEntity.id, unverifiedUser1.id)
+        def unverifiedUser2Response = cloud20.addUserToUserGroup(userAdminToken, domainId, userGroupEntity.id, unverifiedUser2.id)
+
+        then: "all users should get added to user group"
+        verifiedUser1Response.status == SC_NO_CONTENT
+        verifiedUser2Response.status == SC_NO_CONTENT
+        verifiedUser3Response.status == SC_NO_CONTENT
+        unverifiedUser1Response.status == SC_NO_CONTENT
+        unverifiedUser2Response.status == SC_NO_CONTENT
+
+        when: "list all users in user group"
+        UserSearchCriteria userSearchCriteria = new UserSearchCriteria()
+        userSearchCriteria.setUserType(com.rackspace.idm.domain.entity.User.UserType.ALL)
+        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id, userSearchCriteria)
+        def listAllUsers = response.getEntity(UserList).value
+
+        then: "All 5 users should be listed"
+        response.status == SC_OK
+        listAllUsers.user.size() == 5
+        listAllUsers.user.id.contains(unverifiedUser1.id)
+        listAllUsers.user.id.contains(unverifiedUser2.id)
+        listAllUsers.user.id.contains(verifiedUser1.id)
+        listAllUsers.user.id.contains(verifiedUser2.id)
+        listAllUsers.user.id.contains(verifiedUser3.id)
+
+        when: "filter only verified users in user group"
+        userSearchCriteria.setUserType(com.rackspace.idm.domain.entity.User.UserType.VERIFIED)
+        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id, userSearchCriteria)
+        def onlyVerifiedUsers = response.getEntity(UserList).value
+
+        then: "only 3 verified users should be listed"
+        response.status == SC_OK
+        onlyVerifiedUsers.user.size() == 3
+        onlyVerifiedUsers.user.id.contains(verifiedUser1.id)
+        onlyVerifiedUsers.user.id.contains(verifiedUser2.id)
+        onlyVerifiedUsers.user.id.contains(verifiedUser3.id)
+
+        when: "filter only unverified users in user group"
+        userSearchCriteria.setUserType(com.rackspace.idm.domain.entity.User.UserType.UNVERIFIED)
+        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id, userSearchCriteria)
+        def listOnlyUnVerifiedUsers = response.getEntity(UserList).value
+
+        then: "only 2 unverified users should be listed"
+        response.status == SC_OK
+        listOnlyUnVerifiedUsers.user.size() == 2
+        listOnlyUnVerifiedUsers.user.id.contains(unverifiedUser1.id)
+        listOnlyUnVerifiedUsers.user.id.contains(unverifiedUser2.id)
+    }
+
     @Unroll
     def "accept invite for unverified users: accept = #accept"() {
         given:
@@ -1069,6 +1170,34 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "verify unverified users cannot be created in domain with no user admin"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+        def identityAdmin = utils.createIdentityAdmin()
+        def user = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = identityAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(identityAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        when: "providing domain id"
+        def response = cloud20.createUnverifiedUser(utils.getToken(identityAdmin.username), user)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, DefaultCloud20Service.ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS)
+
+        when: "not providing domain id"
+        user.domainId = null
+        response = cloud20.createUnverifiedUser(utils.getToken(identityAdmin.username), user)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, DefaultCloud20Service.ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS)
+
+        cleanup:
+        reloadableConfiguration.reset()
     }
 
     def getInviteEntity(ClientResponse response) {

@@ -436,6 +436,7 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
             UserSearchCriteria searchParams = args[1]
             assert searchParams.paginationRequest.effectiveMarker == 0
             assert searchParams.paginationRequest.effectiveLimit == 1000
+            assert searchParams.getUserType() == User.UserType.VERIFIED
             def pc = new PaginatorContext<EndUser>()
             pc.update([user].asList(), 0, 1000)
             pc
