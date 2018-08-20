@@ -75,6 +75,8 @@ public final class GlobalConstants {
 
     public static final String ALL_TENANTS_DISABLED_ERROR_MESSAGE = "Forbidden: not allowed for suspended account";
 
+    public static final String RESTRICT_UNVERIFIED_USER_MESSAGE = "Operation not permitted on an unverified user.";
+
     public static final String IDENTITY_ROLE_PREFIX = "identity:";
 
     public static final String ROLE_NAME_RACKER = "Racker";

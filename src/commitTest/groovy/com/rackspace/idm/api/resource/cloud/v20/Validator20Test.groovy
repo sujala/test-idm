@@ -4,9 +4,11 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdpPolicyFormatEnum
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
+import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.helpers.CloudTestUtils
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.validation.JsonValidator
@@ -599,5 +601,23 @@ class Validator20Test extends RootServiceTest {
 
         where:
         value << ["  ", "", null, "\n"]
+    }
+
+    def "validateItsNotUnverifiedUser - restrict unverified user"(){
+        given:
+        User unverifiedUser = entityFactory.createUnverifiedUser()
+        User verifiedUser = entityFactory.createUser()
+
+        when: "unverified users is passed as argument"
+        Validator20.validateItsNotUnverifiedUser(unverifiedUser)
+
+        then: "exception is thrown"
+        thrown(ForbiddenException)
+
+        when: "verified users is passed as argument"
+        Validator20.validateItsNotUnverifiedUser(verifiedUser)
+
+        then: "exception is not thrown"
+        noExceptionThrown()
     }
 }
