@@ -35,6 +35,7 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.DateHelper;
 import com.rackspace.idm.validation.PrecedenceValidator;
+import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
@@ -166,8 +167,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             BaseUser requester = userService.getUserByScopeAccess(token);
 
             User user = requestContextHolder.checkAndGetTargetUser(userId);
-            verifyAccessToOtherUser(token, requester, user);
+            Validator20.validateItsNotUnverifiedUser(user);
 
+            verifyAccessToOtherUser(token, requester, user);
             validateAddPhoneToUserRequest(user, requestMobilePhone);
             Phonenumber.PhoneNumber phoneNumber = parseRequestPhoneNumber(requestMobilePhone.getNumber());
 
@@ -660,11 +662,13 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             final BaseUser requester = userService.getUserByScopeAccess(token);
 
             final User user = requestContextHolder.checkAndGetTargetUser(userId);
-            verifyAccessToOtherUser(token, requester, user);
+            Validator20.validateItsNotUnverifiedUser(user);
 
             if (StringUtils.isBlank(otpDevice.getName())) {
                 throw new BadRequestException(BAD_REQUEST_MSG_INVALID_OTP_DEVICE_NAME);
             }
+
+            verifyAccessToOtherUser(token, requester, user);
 
             final com.rackspace.idm.domain.entity.OTPDevice entity = multiFactorService.addOTPDeviceToUser(userId, otpDevice.getName());
 
@@ -820,12 +824,17 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     }
 
     private void validateModifyUserMfaEnablement(BaseUser requester, ScopeAccess token, User targetUser) {
+        //Can not perform this action on unverified users
+        Validator20.validateItsNotUnverifiedUser(targetUser);
         verifyAccessToOtherUser(token, requester, targetUser);
     }
 
     private void validateUnlockMfaRequest(BaseUser requester, ScopeAccess token, User targetUser, MultiFactor multiFactor) {
         //first verify precedence over user if not a self call
         verifyAccessToOtherUser(token, requester, targetUser);
+
+        //Can not perform this action on unverified users
+        Validator20.validateItsNotUnverifiedUser(targetUser);
 
         //Can not perform action on self
         if (multiFactor.isUnlock()) {

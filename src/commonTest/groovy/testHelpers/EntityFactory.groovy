@@ -358,6 +358,25 @@ class EntityFactory extends Specification {
         return createUser(username, id, "domainId", "region").with {it.uniqueId = null; return it}
     }
 
+    /**
+     * Reusable method to create unverified user
+     * @param id
+     * @param domain
+     * @param email
+     * @return User UnverifiedUser entity with unverified attr as true
+     */
+    def createUnverifiedUser(String id = RandomStringUtils.randomAlphanumeric(10), String domain = "domainx",
+                                   String email = "${RandomStringUtils.randomAlphabetic(8)}@example.com") {
+        return new com.rackspace.idm.domain.entity.User().with{
+            it.id = id
+            it.domainId = domain
+            it.email = email
+            it.enabled = false
+            it.unverified = true
+            it
+        }
+    }
+
     def createFederatedToken(FederatedUser user, String tokenStr=Cloud20Utils.createRandomString(), Date expiration = new Date())   {
         new UserScopeAccess().with {
             it.userRsId = user.id

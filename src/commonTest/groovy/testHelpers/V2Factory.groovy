@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.providers.cloudv20.RAXKSKEY_XMLWriter
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
@@ -810,5 +811,18 @@ class V2Factory {
             it.description = description
             it
         }
+    }
+
+    /**
+     *
+     * @param apiKeyCredentials
+     * @return stringified xml for api key credentials
+     */
+    def createStringifiedXmlBodyforCredentials(CredentialType credentials) {
+        RAXKSKEY_XMLWriter writer = new RAXKSKEY_XMLWriter()
+        writer.setNsPrefixMap(new HashMap<String, String>())
+        ByteArrayOutputStream entityStream = new ByteArrayOutputStream()
+        writer.writeTo(credentials, null, null, null, null, null, entityStream)
+        entityStream.toString()
     }
 }

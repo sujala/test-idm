@@ -1141,6 +1141,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
             }
 
+            // Validate if user is not unverified
+            if (retrievedUser instanceof User &&  ((User)retrievedUser).isUnverified()) {
+                throw new ForbiddenException(GlobalConstants.RESTRICT_UNVERIFIED_USER_MESSAGE, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
             if (retrievedUser instanceof FederatedUser) {
                 FederatedUser fedUser = (FederatedUser) retrievedUser;
 
@@ -1263,12 +1268,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 credentials = getJSONCredentials(body);
             }
 
-            User user;
+            User user = userService.checkAndGetUserById(userId);
+            Validator20.validateItsNotUnverifiedUser(user);
 
             if (credentials.getValue() instanceof PasswordCredentialsBase) {
                 PasswordCredentialsBase userCredentials = (PasswordCredentialsBase) credentials.getValue();
                 validator20.validatePasswordCredentialsForCreateOrUpdate(userCredentials);
-                user = userService.checkAndGetUserById(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
                     String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                     logger.warn(errMsg);
@@ -1281,7 +1286,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 ApiKeyCredentials userCredentials = (ApiKeyCredentials) credentials.getValue();
                 //TODO validate username breaks authenticate call
                 validator20.validateApiKeyCredentials(userCredentials);
-                user = userService.checkAndGetUserById(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
                     String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                     logger.warn(errMsg);
@@ -5264,6 +5268,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
 
             User user = userService.checkAndGetUserById(userId);
+            Validator20.validateItsNotUnverifiedUser(user);
+
             if (!creds.getUsername().equals(user.getUsername())) {
                 String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                 logger.warn(errMsg);
@@ -5297,6 +5303,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User caller = userService.getUserByAuthToken(authToken);
             User credUser = this.userService.checkAndGetUserById(userId);
+            Validator20.validateItsNotUnverifiedUser(credUser);
+
             if (callerIsDefaultUser && !caller.getId().equals(userId)) {
                 throw new ForbiddenException("This user can only reset their own apiKey");
             } else if (callerIsUserAdmin) {
@@ -5332,6 +5340,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             validator.validatePasswordForCreateOrUpdate(creds.getPassword());
 
             User user = userService.checkAndGetUserById(userId);
+            Validator20.validateItsNotUnverifiedUser(user);
+
             if (!creds.getUsername().equals(user.getUsername())) {
                 String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                 logger.warn(errMsg);
@@ -5524,6 +5534,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User promoteUser = (User) promotingEndUser;
             User demoteUser = (User) demotingEndUser;
+
+            Validator20.validateItsNotUnverifiedUser(promoteUser);
+            Validator20.validateItsNotUnverifiedUser(demoteUser);
 
             // Belong to same domain AND the provided domain in the path is the same as the users
             if (StringUtils.isBlank(domainId) || StringUtils.isBlank(promoteUser.getDomainId()) || StringUtils.isBlank(demoteUser.getDomainId())

@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
 import com.rackspace.idm.api.security.RequestContextHolder;
@@ -1137,5 +1138,16 @@ public class Validator20 {
         }
 
         return true;
+    }
+
+    /**
+     * A reusable method to restrict unverified user
+     * and throws ForbiddenException if user is unverified
+     * @param user
+     */
+    public static void validateItsNotUnverifiedUser (User user) {
+        if (user!= null && user.isUnverified()) {
+            throw new ForbiddenException(GlobalConstants.RESTRICT_UNVERIFIED_USER_MESSAGE, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+        }
     }
 }

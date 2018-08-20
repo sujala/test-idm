@@ -24,6 +24,7 @@ import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.DN
+import com.rackspace.idm.domain.config.providers.cloudv20.RAXKSKEY_XMLWriter
 import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang3.RandomStringUtils
@@ -2927,6 +2928,33 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 400
     }
 
+    def "updateUser should not allow unverified user to be updated"() {
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = new UserConverterCloudV20()
+        UserForCreate user = new UserForCreate().with {
+            it.id = "2"
+            it.enabled = false
+            it.email = "someEmail@rackspace.com"
+            it
+        }
+
+        User updateUser = entityFactory.createUnverifiedUser()
+        updateUser.id = 2
+        identityUserService.getEndUserById(_) >> updateUser
+        userService.getUserById(_) >> updateUser
+        def caller = entityFactory.createUser()
+        caller.id = "2"
+        userService.getUserByScopeAccess(_) >> caller
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
+
+        when:
+        def result = service.updateUser(headers, authToken, "2", user).build()
+
+        then:
+        result.status == 403
+    }
+
     def "updateUser validates that user ID in URL matches user ID in updated user"() {
         given:
         allowUserAccess()
@@ -2994,7 +3022,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it
         })
         userService.checkAndGetUserById(_) >> user
-        def body = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><passwordCredentials xmlns="http://docs.openstack.org/identity/api/v2.0" xmlns:ns2="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns5="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns6="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" xmlns:ns7="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" password="SomePassword1" username="someUser"/>'
+        def credentials = v2Factory.createPasswordCredentialsBase()
+        def body = v2Factory.createStringifiedXmlBodyforCredentials(credentials)
 
         when:
         def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body).build()
@@ -3014,7 +3043,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it
         })
         userService.checkAndGetUserById(_) >> user
-        def body = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><apiKeyCredentials xmlns="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" xmlns:ns2="http://docs.openstack.org/identity/api/v2.0" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns5="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns6="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns7="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" apiKey="someApiKey1" username="someUser"/>'
+        def apiKeyCredentials = v2Factory.createApiKeyCredentials("someUser", "someApiKey1")
+        def body = v2Factory.createStringifiedXmlBodyforCredentials(apiKeyCredentials)
 
         when:
         def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body).build()
@@ -3034,7 +3064,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it
         })
         userService.checkAndGetUserById(_) >> user
-        def body = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><apiKeyCredentials xmlns="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" xmlns:ns2="http://docs.openstack.org/identity/api/v2.0" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns5="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns6="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns7="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" apiKey="someApiKey1" username="someUser"/>'
+
+        def apiKeyCredentials = v2Factory.createApiKeyCredentials("someUser", "someApiKey1")
+        def body = v2Factory.createStringifiedXmlBodyforCredentials(apiKeyCredentials)
 
         when:
         def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body).build()
@@ -3044,7 +3076,27 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 201
     }
 
+    def "addUserCredential should restrict unverified users"() {
+        given:
+        allowUserAccess()
+        def mediaType = Mock(MediaType)
+        mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE) >> true
+        headers.getMediaType() >> mediaType
+        def user = new User().with({
+            it.username = "someUser"
+            it.unverified = true
+            it
+        })
+        userService.checkAndGetUserById(_) >> user
+        def apiKeyCredentials = v2Factory.createApiKeyCredentials("someUser", "someApiKey1")
+        def body = v2Factory.createStringifiedXmlBodyforCredentials(apiKeyCredentials)
 
+        when:
+        def result = service.addUserCredential(headers, uriInfo(), authToken, "someUser", body).build()
+
+        then:
+        result.status == 403
+    }
 
     @Unroll("service admin deleting product roles on #userRole returns #expectedResult")
     def "service admin CAN delete a users product roles"() {

@@ -397,6 +397,7 @@ class ObjectConverterTest extends RootServiceTest{
             return it
         }
 
+
         CredentialTypeForValidation resultPwd = converter.convert(passwordCred)
         CredentialTypeForValidation resultApiKey = converter.convert(apiKeyCred)
 

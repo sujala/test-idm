@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainAdministratorChange
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.ImmutableClientRole
@@ -487,6 +488,31 @@ class DomainAdminChangeServiceTest extends Specification {
         [createTenantRole("a", PROPAGATE, ["1","2"] as Set), createTenantRole(USER_MANAGER.roleName)] | [createTenantRole("a", PROPAGATE, ["1"] as Set), createTenantRole(USER_ADMIN.roleName)]
     }
 
+    def "Negative Test : Unverified users should not be allowed "() {
+        given:
+        def callerToken = "atoken"
+        def promoteUser = createUnverifiedUser("promoteUser")
+        def demoteUser = createUnverifiedUser("demoteUser")
+
+        DomainAdministratorChange changeRequest = new DomainAdministratorChange().with{
+            it.promoteUserId = "promoteUser"
+            it.demoteUserId = "demoteUser"
+            it
+        }
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        identityUserService.checkAndGetEndUserById("promoteUser") >> promoteUser
+        identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
+
+        when:
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
+
+        then:
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmAssert.assertIdmExceptionWithMessagePattern(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, GlobalConstants.RESTRICT_UNVERIFIED_USER_MESSAGE)
+            Response.ok()
+        }
+    }
+
     def "Positive Test: Promoting user-manage to user-admin. No RBAC deletions"() {
         given:
         def callerToken = "atoken"
@@ -627,6 +653,16 @@ class DomainAdminChangeServiceTest extends Specification {
             it.id = id
             it.enabled = enabled
             it.domainId = domain
+            it
+        }
+    }
+
+    def createUnverifiedUser(String id = RandomStringUtils.randomAlphanumeric(10), String domain = "domainx") {
+        return new User().with{
+            it.id = id
+            it.enabled = false
+            it.domainId = domain
+            it.unverified = true
             it
         }
     }
