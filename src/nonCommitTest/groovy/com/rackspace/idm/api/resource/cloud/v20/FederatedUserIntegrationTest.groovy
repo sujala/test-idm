@@ -22,6 +22,7 @@ import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.util.SamlUnmarshaller
 import org.apache.commons.codec.binary.Base64
@@ -1021,14 +1022,24 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "verify federated request: Old requests are rejected"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEDERATED_RESPONSE_MAX_AGE, maxAge)
+    def "verify federated request: Old requests are rejected: #requestAge"() {
         reloadableConfiguration.setProperty(IdentityConfig.FEDERATED_RESPONSE_MAX_SKEW, 0)
         def issueInstance = new DateTime().minusSeconds(requestAge)
 
-        when: "verify the logout request"
         def logoutRequest = new SamlFactory().generateLogoutRequestEncoded(Constants.DEFAULT_IDP_URI, "user", Constants.DEFAULT_IDP_PRIVATE_KEY, Constants.DEFAULT_IDP_PUBLIC_KEY, issueInstance)
+
+        when: "When the logout request is not too old"
+        reloadableConfiguration.setProperty(IdentityConfig.FEDERATED_RESPONSE_MAX_AGE, requestAge + 10)
         def validateResponse = cloud20.federatedValidateRequest(logoutRequest)
+
+        then: "Passes"
+        notThrown(BadRequestException)
+        validateResponse.status == SC_OK
+
+        when: "When the logout request is too old"
+        def maxAge = requestAge - 10
+        reloadableConfiguration.setProperty(IdentityConfig.FEDERATED_RESPONSE_MAX_AGE, maxAge)
+        validateResponse = cloud20.federatedValidateRequest(logoutRequest)
 
         then: "Fails"
         IdmAssert.assertOpenStackV2FaultResponse(validateResponse, BadRequestFault, SC_BAD_REQUEST, "Saml issueInstant cannot be older than " + maxAge + " seconds.")
@@ -1037,8 +1048,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
 
         where:
-        maxAge | requestAge
-        1      | 5
+        requestAge << [20, 40]
     }
 
     def "verify federated request: A non-saml entity request body results in error"() {
