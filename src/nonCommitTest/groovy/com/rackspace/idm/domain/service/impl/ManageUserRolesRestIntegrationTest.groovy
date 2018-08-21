@@ -131,7 +131,7 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
 
         and: "verify no update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -149,7 +149,7 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -166,7 +166,7 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -183,7 +183,7 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -200,7 +200,7 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -217,7 +217,7 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 

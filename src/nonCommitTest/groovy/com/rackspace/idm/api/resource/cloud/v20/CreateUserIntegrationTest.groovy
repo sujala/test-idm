@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
@@ -19,6 +20,7 @@ import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
@@ -74,6 +76,41 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(v20CreatedUser)
         utils.deleteUser(v11CreatedUser)
+    }
+
+    def "creating users sends a user CREATE event"() {
+        given:
+        def v20Username = "v20Username" + testUtils.getRandomUUID()
+        def v20User = v2Factory.createUserForCreate(v20Username, "displayName", "testemail@rackspace.com", true, "ORD", testUtils.getRandomUUID(), "Password1")
+        def randomMosso = 10000000 + new Random().nextInt(1000000)
+        def v11Username = "v11Username" + testUtils.getRandomUUID()
+        def v11User = v1Factory.createUser(v11Username, "1234567890", randomMosso, null, true)
+
+        when: "creating the user in v2.0"
+        def response = cloud20.createUser(identityAdminToken, v20User)
+        def createdUserV20 = response.getEntity(User).value
+
+        then: "assert 201 created"
+        response.status == HttpStatus.SC_CREATED
+
+        and: "assert correct event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUserFeedsRequest(createdUserV20, EventType.CREATE),
+                VerificationTimes.exactly(1)
+        )
+
+        when: "creating the user in v1.1"
+        response = cloud11.createUser(v11User)
+        def createdUserV11 = response.getEntity(com.rackspacecloud.docs.auth.api.v1.User)
+
+        then: "assert 201 created"
+        response.status == HttpStatus.SC_CREATED
+
+        and: "assert correct event is sent"
+        cloudFeedsMock.verify(
+                testUtils.createUserFeedsRequest(createdUserV11, EventType.CREATE),
+                VerificationTimes.exactly(1)
+        )
     }
 
     def "tenants ARE NOT created for create user v2.0 calls"() {

@@ -311,6 +311,8 @@ public class AtomHopperClient {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
             } else if (userStatus.equals(AtomHopperConstants.UPDATE)) {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
+            } else if (userStatus.equals(AtomHopperConstants.CREATE)) {
+                entry = createEntryForUser(user, EventType.CREATE, false);
             }
 
             if (entry != null) {

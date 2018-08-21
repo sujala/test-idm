@@ -1087,6 +1087,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             userService.updateUser(retrievedUnverifiedUser);
 
+            atomHopperClient.asyncPost(retrievedUnverifiedUser, AtomHopperConstants.CREATE);
+
             EndUser endUser = identityUserService.getEndUserById(retrievedUnverifiedUser.getId());
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(endUser)).getValue());
         } catch (Exception ex) {

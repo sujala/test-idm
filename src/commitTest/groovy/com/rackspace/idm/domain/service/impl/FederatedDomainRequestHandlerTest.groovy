@@ -343,6 +343,63 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         1 * atomHopperClient.asyncPost(existingUser, AtomHopperConstants.UPDATE) // Reporting on it
     }
 
+    def "processAuthRequestForProvider - assert create user event is sent"() {
+        IdentityProvider idp = new IdentityProvider().with {
+            it.approvedDomainGroup = "GLOBAL"
+            it
+        }
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def groupName = RandomStringUtils.randomAlphanumeric(8)
+        def userGroup = new UserGroup().with {
+            it.uniqueId = "group=${RandomStringUtils.randomAlphanumeric(8)}"
+            it.name = groupName
+            it
+        }
+        FederatedDomainAuthGenerationRequest authGenerationRequest = createValidDomainAuthGenerationRequest().with {
+            it.groupNames = [groupName]
+            it.domainId = domainId
+            it
+        }
+        def samlResponse = sharedDomainRequestGenerator.createSignedSAMLResponse(authGenerationRequest)
+        FederatedDomainAuthRequest authRequest = new FederatedDomainAuthRequest(samlResponse)
+        domainService.getDomain(domainId) >> new Domain().with {
+            it.enabled = true
+            it
+        }
+        def userAdmin = new User().with {
+            it.enabled = true
+            it.domainId = domainId
+            it
+        }
+        domainService.getDomainAdmins(domainId) >> [userAdmin]
+        applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
+        tenantService.getTenantRolesForUser(userAdmin) >> []
+        identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag() >> false
+        scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
+        def userGroupToRemove = new UserGroup().with {
+            it.uniqueId = "group=${RandomStringUtils.randomAlphanumeric(8)}"
+            it
+        }
+        FederatedUser federatedUser = new FederatedUser().with {
+            it.username = authGenerationRequest.username
+            it.email = authGenerationRequest.email
+            it.domainId = domainId
+            it.expiredTimestamp = new DateTime().plusYears(1).toDate()
+            it.userGroupDNs = [userGroupToRemove.getGroupDn()]
+            it
+        }
+        federatedUserDao.getUserByUsernameForIdentityProviderId(authGenerationRequest.username, _) >> null
+        tenantService.getRbacRolesForUser(federatedUser) >> []
+
+        when:
+        service.processAuthRequestForProvider(authRequest, idp, false)
+
+        then:
+        1 * userGroupService.getGroupByNameForDomain(groupName, domainId) >> userGroup
+        1 * federatedUserDao.addUser(_, _);
+        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.CREATE)
+    }
+
     def createValidDomainAuthGenerationRequest(username = UUID.randomUUID()) {
         new FederatedDomainAuthGenerationRequest().with {
             it.domainId = RandomStringUtils.randomAlphanumeric(10)

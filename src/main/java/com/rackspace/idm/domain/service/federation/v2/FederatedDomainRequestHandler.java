@@ -4,7 +4,6 @@ import com.google.common.collect.Sets;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConnectionKeepAliveStrategy;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.api.security.ImmutableClientRole;
@@ -534,6 +533,9 @@ public class FederatedDomainRequestHandler {
         }
 
         federatedUserDao.addUser(originIdp, federatedUser);
+
+        atomHopperClient.asyncPost(federatedUser, AtomHopperConstants.CREATE);
+
         tenantService.addTenantRolesToUser(federatedUser, userRoles);
 
         federatedUser.setRoles(userRoles);

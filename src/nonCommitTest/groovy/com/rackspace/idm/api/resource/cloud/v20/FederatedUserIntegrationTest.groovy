@@ -8,6 +8,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -2251,6 +2252,54 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
         utils.deleteTenant(tenant)
         reloadableConfiguration.reset()
+    }
+
+    def "Authenticating or updating existing federated user does not send CREATE feed event"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        // Create federated user
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        cloud20.samlAuthenticate(samlAssertion)
+        resetCloudFeedsMock()
+
+        when: "saml auth of existing federated user"
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def federatedUser = utils.getUserById(samlAuthResponse.value.user.id)
+
+        then: "assert 200"
+        samlResponse.status == SC_OK
+
+        and: "verify that user CREATE event is not posted"
+        cloudFeedsMock.verify(
+                testUtils.createFedUserFeedsRequest(federatedUser, AtomHopperConstants.CREATE),
+                VerificationTimes.exactly(0)
+        )
+
+        when: "updating federated user email"
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, "test@mail.com");
+        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        federatedUser = utils.getUserById(samlAuthResponse.value.user.id)
+
+        then:
+        samlResponse.status == SC_OK
+        federatedUser.email == "test@mail.com"
+
+        and: "verify that user CREATE event is not posted"
+        cloudFeedsMock.verify(
+                testUtils.createFedUserFeedsRequest(federatedUser, AtomHopperConstants.CREATE),
+                VerificationTimes.exactly(0)
+        )
+
+        cleanup:
+        utils.logoutFederatedUser(federatedUser.username)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
     }
 
     def getFederatedUser(String domainId, mediaType) {

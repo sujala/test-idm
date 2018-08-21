@@ -130,7 +130,7 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(user, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -288,7 +288,7 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(user, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -559,7 +559,7 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUser, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -835,7 +835,7 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent for both add and remove user from user group"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(user, EventType.UPDATE),
                 VerificationTimes.exactly(2)
         )
 
@@ -940,7 +940,7 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent for both add and remove user from user group"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(user, EventType.UPDATE),
                 VerificationTimes.exactly(2)
         )
 

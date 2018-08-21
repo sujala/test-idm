@@ -360,7 +360,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify no update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUser, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -378,7 +378,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUser, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -395,7 +395,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUser, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -412,7 +412,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUser, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -429,7 +429,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUser, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -446,7 +446,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUser, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -552,7 +552,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is not sent for a federated user"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(fedUser, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -570,7 +570,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is not sent for a federated user"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(fedUser, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -587,7 +587,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is not sent for a federated user"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(fedUser, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -604,7 +604,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is not sent for a federated user"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(fedUser, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -621,7 +621,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is not sent for a federated user"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(fedUser, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -632,7 +632,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is not sent for a federated user"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(fedUser, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -1118,7 +1118,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUser, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 

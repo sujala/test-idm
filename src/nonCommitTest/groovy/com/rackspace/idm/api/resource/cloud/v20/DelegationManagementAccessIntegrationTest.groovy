@@ -129,7 +129,7 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userToAdd, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userToAdd, EventType.UPDATE),
                 VerificationTimes.exactly(6) // dasRcnAdminsCanManage has 6 DAs
         )
     }
@@ -205,7 +205,7 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userToAdd, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userToAdd, EventType.UPDATE),
                 VerificationTimes.exactly(3) // dasRcnAdminsCanManage has 3 DAs
         )
     }

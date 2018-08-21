@@ -8,6 +8,7 @@ import com.rackspace.idm.validation.Validator20
 import org.apache.commons.lang3.RandomStringUtils
 import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.User
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
@@ -41,7 +42,7 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
 
         and: "user update feed event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -50,13 +51,13 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
 
         and: "user update feed event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUserWithRcnRole, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUserWithRcnRole, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
         and: "no update feed event was posted for the user w/o an RCN role"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(defaultUserWithoutRcnRole, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(defaultUserWithoutRcnRole, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -104,7 +105,7 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
 
         and: "user update feed event was NOT posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -140,7 +141,7 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
 
         and: "no user update feed event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -179,7 +180,7 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
 
         and: "no update feed event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(null, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(new User(), EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
     }
