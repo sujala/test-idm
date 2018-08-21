@@ -31,7 +31,6 @@ import testHelpers.IdmAssert
 import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
 
-import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends RootConcurrentIntegrationTest {
@@ -253,7 +252,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
         and: "verify that an UPDATE event was posted for the user"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(userById, EventType.UPDATE.name()),
+                testUtils.createUserFeedsRequest(userById, EventType.UPDATE.name()),
                 VerificationTimes.exactly(1)
         )
 

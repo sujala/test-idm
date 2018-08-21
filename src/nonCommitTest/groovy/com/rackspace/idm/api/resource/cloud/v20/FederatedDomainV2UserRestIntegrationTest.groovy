@@ -147,6 +147,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when:
+        resetCloudFeedsMock()
         def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
 
         then: "Response contains appropriate content"
@@ -167,6 +168,12 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
         //just check that the user will expire after the token expires
         fedUser.expiredTimestamp.after(authResponse.token.expires.toGregorianCalendar().getTime())
+
+        and: "assert create user event is sent for federated user"
+        cloudFeedsMock.verify(
+                testUtils.createFedUserFeedsRequest(fedUser, EventType.CREATE),
+                VerificationTimes.exactly(1)
+        )
 
         cleanup:
         try {
@@ -445,7 +452,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
         and: "verify that the UPDATE event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateFedUserFeedsRequest(feedUser, EventType.UPDATE.name()),
+                testUtils.createFedUserFeedsRequest(feedUser, EventType.UPDATE.name()),
                 VerificationTimes.exactly(1)
         )
     }
@@ -480,7 +487,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
         and: "verify that the UPDATE event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateFedUserFeedsRequest(fedUser, EventType.UPDATE.name()),
+                testUtils.createFedUserFeedsRequest(fedUser, EventType.UPDATE.name()),
                 VerificationTimes.exactly(1)
         )
     }

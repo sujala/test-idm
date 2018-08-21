@@ -29,7 +29,7 @@ class UserUpdateCloudFeedsIntegrationTest extends RootIntegrationTest {
 
         and: "verify that the UPDATE event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE.name()),
+                testUtils.createUserFeedsRequest(user, EventType.UPDATE.name()),
                 VerificationTimes.exactly(1)
         )
 
@@ -58,7 +58,7 @@ class UserUpdateCloudFeedsIntegrationTest extends RootIntegrationTest {
 
         and: "verify that the update event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE.name()),
+                testUtils.createUserFeedsRequest(user, EventType.UPDATE.name()),
                 VerificationTimes.exactly(1)
         )
 
@@ -87,13 +87,13 @@ class UserUpdateCloudFeedsIntegrationTest extends RootIntegrationTest {
 
         and: "verify that the UPDATE event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(user, EventType.SUSPEND.name()),
+                testUtils.createUserFeedsRequest(user, EventType.SUSPEND.name()),
                 VerificationTimes.exactly(1)
         )
 
         and: "verify that the SUSPEND event was posted"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(user, EventType.UPDATE.name()),
+                testUtils.createUserFeedsRequest(user, EventType.UPDATE.name()),
                 VerificationTimes.exactly(1)
         )
 

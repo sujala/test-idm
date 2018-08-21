@@ -197,7 +197,7 @@ class Cloud20Methods {
     
     def verifyUserInvite(String userId, String registrationCode) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(INVITE).path(userId).queryParam("registrationCode", registrationCode).head()
+        resource.path(path20).path(RAX_AUTH).path(INVITE).path(USER).path(userId).queryParam("registrationCode", registrationCode).head()
     }
 
     /**

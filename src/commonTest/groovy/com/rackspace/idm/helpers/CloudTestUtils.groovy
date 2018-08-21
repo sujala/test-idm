@@ -105,11 +105,13 @@ class CloudTestUtils {
     }
 
     String getFeedsXPathForUser(user, eventType) {
-        return "//event[@id and @resourceName='${user?.username}' and @type='$eventType']/product[@displayName='${user?.username}' and @resourceType='USER' and @serviceCode='CloudIdentity']"
+        def username = user instanceof com.rackspacecloud.docs.auth.api.v1.User ? user.id : user.username
+        return "//event[@id and @resourceName='${username}' and @type='$eventType']/product[@displayName='${username}' and @resourceType='USER' and @serviceCode='CloudIdentity']"
     }
 
     String getFeedsXPathForFedUser(user, eventType) {
-        return "//event[@id and @resourceName='${user?.username}@${user?.federatedIdpUri}' and @type='$eventType']/product[@displayName='${user?.username}@${user?.federatedIdpUri}' and @resourceType='USER' and @serviceCode='CloudIdentity']"
+        def federatedIdp = user instanceof User ? user.federatedIdp : user?.federatedIdpUri
+        return "//event[@id and @resourceName='${user?.username}@${federatedIdp}' and @type='$eventType']/product[@displayName='${user?.username}@${federatedIdp}' and @resourceType='USER' and @serviceCode='CloudIdentity']"
     }
 
     String getFeedsXPathForUserTRR(user, AuthenticatedByMethodGroup authenticatedByMethodGroup) {
@@ -156,11 +158,11 @@ class CloudTestUtils {
         assert stringPattern.matcher(value).matches()
     }
 
-    HttpRequest createUpdateUserFeedsRequest(user, eventType) {
+    HttpRequest createUserFeedsRequest(user, eventType) {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUser(user, eventType)))
     }
 
-    HttpRequest createUpdateFedUserFeedsRequest(user, eventType) {
+    HttpRequest createFedUserFeedsRequest(user, eventType) {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForFedUser(user, eventType)))
     }
 

@@ -439,6 +439,9 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         }
 
         federatedUserDao.addUser(request.getIdentityProvider(), userToCreate);
+
+        atomHopperClient.asyncPost(userToCreate, AtomHopperConstants.CREATE);
+
         tenantService.addTenantRolesToUser(userToCreate, tenantRoles);
 
         return userToCreate;

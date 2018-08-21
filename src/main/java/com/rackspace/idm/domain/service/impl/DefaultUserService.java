@@ -177,6 +177,8 @@ public class DefaultUserService implements UserService {
 
         userDao.addUser(user);
 
+        atomHopperClient.asyncPost(user, AtomHopperConstants.CREATE);
+
         assignUserRoles(user, false);
 
         // Update domain's userAdminDN after the user has been created.
@@ -252,6 +254,8 @@ public class DefaultUserService implements UserService {
             user.setPhonePin(RandomGeneratorUtil.generateSecureRandomNumber(identityConfig.getReloadableConfig().getUserPhonePinSize()));
         }
         userDao.addUser(user);
+
+        atomHopperClient.asyncPost(user, AtomHopperConstants.CREATE);
 
         assignUserRoles(user, isCreateUserInOneCall);
 

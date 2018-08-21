@@ -5,12 +5,14 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.entity.User.UserType
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
@@ -18,7 +20,6 @@ import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.UserDisabledException
 import com.rackspace.idm.validation.Validator
-import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
@@ -254,6 +255,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * domainService.addTenantToDomain(domainId,domainId)
         1 * domainService.addTenantToDomain(expectedNastTenantId, domainId)
         1 * userDao.addUser(user)
+        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.CREATE);
         1 * tenantService.addTenantRoleToUser(user, _);
         1 * domainService.updateDomainUserAdminDN(user)
         endpointService.doesBaseUrlBelongToCloudRegion(_) >> true
@@ -330,6 +332,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * domainService.getDomainAdmins(domain.domainId) >> []
         1 * userDao.getUsersByDomain(domain.domainId) >> []
         1 * userDao.addUser(user)
+        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.CREATE);
         1 * domainService.updateDomainUserAdminDN(user)
         if (isCreateUserOneCall) {
             2 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole

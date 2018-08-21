@@ -281,7 +281,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(sharedUserAdmin, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
@@ -410,7 +410,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
 
         and: "verify no update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(fedUser, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(fedUser, EventType.UPDATE),
                 VerificationTimes.exactly(0)
         )
 
@@ -714,7 +714,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
 
         and: "verify an update user event is sent"
         cloudFeedsMock.verify(
-                testUtils.createUpdateUserFeedsRequest(groupUserEntity, EventType.UPDATE),
+                testUtils.createUserFeedsRequest(groupUserEntity, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 

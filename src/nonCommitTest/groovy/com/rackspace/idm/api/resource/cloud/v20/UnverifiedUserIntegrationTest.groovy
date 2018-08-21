@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Invite
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
@@ -8,6 +9,7 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import org.mockserver.verify.VerificationTimes
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.validation.Validator20
 import com.sun.jersey.api.client.ClientResponse
@@ -938,6 +940,12 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         and: "assert password and registration code are not returned"
         userEntity.registrationCode == null
         userEntity.password == null
+
+        and: "assert create event is sent when unverified user accept invite"
+        cloudFeedsMock.verify(
+                testUtils.createUserFeedsRequest(userEntity, EventType.CREATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "retrieve secretQA"
         response = cloud20.getSecretQA(utils.identityAdminToken, userEntity.id)

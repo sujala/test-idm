@@ -24,5 +24,6 @@ public final class AtomHopperConstants {
     public static final String IDENTITY_CREDENTIAL_CHANGE_EVENT_TITLE = "Identity Credential Change Event";
     public static final String MULTI_FACTOR = "multiFactorEnabled";
     public static final String UPDATE = "update";
+    public static final String CREATE = "create";
 
 }

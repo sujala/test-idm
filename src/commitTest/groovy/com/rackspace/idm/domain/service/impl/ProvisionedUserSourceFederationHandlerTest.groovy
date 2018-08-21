@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -81,6 +83,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
     @Shared def tenants
     @Shared def theIdentityProvider
     @Shared def mockAuthenticationContext
+    @Shared AtomHopperClient mockAtomHopperClient
 
     def mockAuthorizationService = Mock(AuthorizationService)
 
@@ -132,6 +135,8 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
         mockAuthenticationContext = Mock(AuthenticationContext)
         provisionedUserSourceFederationHandler.authenticationContext = mockAuthenticationContext
+        mockAtomHopperClient = Mock(AtomHopperClient)
+        provisionedUserSourceFederationHandler.atomHopperClient = mockAtomHopperClient
 
         reloadableConfig.getFederatedDomainTokenLifetimeMax() >> IdentityConfig.FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT
 
@@ -600,6 +605,9 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
 
         then:
         noExceptionThrown()
+
+        and: "created user feed event is sent"
+        1 * mockAtomHopperClient.asyncPost(_, AtomHopperConstants.CREATE)
     }
 
     def "validate saml response when role does not exist" (){
