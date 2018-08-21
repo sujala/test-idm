@@ -981,7 +981,7 @@ public class Cloud20VersionResource {
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Validate Invite User")
     @HEAD
-    @Path("RAX-AUTH/invite/{userId}")
+    @Path("RAX-AUTH/invite/user/{userId}")
     public Response validateInviteUser(@Context UriInfo uriInfo,
                                        @Context HttpHeaders httpHeaders,
                                        @QueryParam("registrationCode") String registrationCode,
