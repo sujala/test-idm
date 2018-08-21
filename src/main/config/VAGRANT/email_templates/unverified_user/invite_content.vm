@@ -4,7 +4,7 @@ You've been given access to a Rackspace account
 
 To use this account, register a new username with Rackspace by completing the following steps:
 
-1. Browse to: https://accounts.rackspace.com/users/${user_id}/registration/${registration_code}
+1. Browse to: ${registration_url}
 2. Create a username and password of your choice.
 3. Set a secret question and answer.
 
@@ -12,11 +12,11 @@ After registering, we recommend that you bookmark the following link to access t
 
 If you have any questions, contact your Rackspace Fanatical Support(R) team. (https://www.rackspace.com/support)
 
-Note: This invitation is for you only and expires in ${ttl_hours} hours! Don't share the link and instructions with anyone else. Every registration email is unique and won't work for multiple users. If you need to register another user, either create a new user and invite them, or contact your support team.
+Note: This invitation is only for you and expires in ${ttl_hours} hours! Do not share the link or instructions with anyone else. Each registration email is unique and the link will work for only the original recipient. If you need to register another user, contact the account administrator or your support team.
 
 -------------------------------------------------------
 
-Want to manage your account on-the-go?
+Do you want to manage your account from your smart phone or tablet?
 
 Download our app to quickly view product status and communications from Rackspace.
 

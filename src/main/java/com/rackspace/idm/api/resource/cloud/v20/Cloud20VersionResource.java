@@ -958,8 +958,8 @@ public class Cloud20VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Send unverified user invite")
-    @PUT
-    @Path("RAX-AUTH/invite/user/{userId}")
+    @POST
+    @Path("RAX-AUTH/invite/user/{userId}/send")
     public Response sendUnverifiedUserInvite(@Context UriInfo uriInfo,
                                              @Context HttpHeaders httpHeaders,
                                              @HeaderParam(X_AUTH_TOKEN) String authToken,

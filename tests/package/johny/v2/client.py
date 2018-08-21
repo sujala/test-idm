@@ -1342,22 +1342,16 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return resp
 
     def list_users_in_domain(self, domain_id,
-                             enabled=None, requestslib_kwargs=None):
+                             option=None, requestslib_kwargs=None):
         """Return response object from list users in domain
-        GET '/v2.0//RAX-AUTH/domains/{domain_id}/users{?enabled}
+        GET '/v2.0//RAX-AUTH/domains/{domain_id}/users{?enabled, user_type}
         :param domain_id:
         :param requestslib_kwargs:
         :return:
         """
         url = self.url + const.LIST_USERS_IN_DOMAIN_URL.format(
             domain_id=domain_id)
-        if enabled is True:
-            enabled = {'enabled': True}
-        elif enabled is False:
-            enabled = {'enabled': False}
-        else:
-            enabled = None
-        resp = self.request(method='GET', url=url, params=enabled,
+        resp = self.request(method='GET', url=url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
         if self.deserialize_format == const.XML:
             def json(self):
@@ -1920,9 +1914,9 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
     def invite_unverified_user(self, user_id, requestslib_kwargs=None):
         """
-        PUT v2.0/RAX-AUTH/invite/user/{userId}
+        POST v2.0/RAX-AUTH/invite/user/{userId}/send
         """
         url = self.url + const.INVITE_UNVERIFIED_USER_URL.format(
             user_id=user_id)
         return self.request(
-            'PUT', url, requestslib_kwargs=requestslib_kwargs)
+            'POST', url, requestslib_kwargs=requestslib_kwargs)

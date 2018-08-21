@@ -195,8 +195,10 @@ public class MailTransferAgentClient implements EmailClient {
 
         // Populate the velocity model
         Map<String, Object> model = new HashMap<>();
-        model.put(EmailTemplateConstants.INVITE_USER_ID_PROP, user.getId());
-        model.put(EmailTemplateConstants.INVITE_REGISTRATION_CODE_PROP, user.getRegistrationCode());
+        String registrationUrl = String.format(
+                identityConfig.getReloadableConfig().getUnverifiedUserRegistrationUrlFormat(),
+                user.getId(),user.getRegistrationCode());
+        model.put(EmailTemplateConstants.INVITE_USER_REGISTRATION_URL, registrationUrl);
         model.put(EmailTemplateConstants.INVITE_TTL_HOURS_PROP,
                 identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours());
         model.put(EmailTemplateConstants.INVITE_YEAR_PROP, Calendar.getInstance().get(Calendar.YEAR));

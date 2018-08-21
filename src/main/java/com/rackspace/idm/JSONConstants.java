@@ -141,6 +141,7 @@ public final class JSONConstants {
     public static final String SECRETQA = "secretqa";
     public static final String SECRET_QA = "secretQA";
     public static final String SECRETQAS = "secretqas";
+    public static final String SEND = "send";
     public static final String SERVICE = "service";
     public static final String RAX_AUTH_QUESTION = "RAX-AUTH:question";
     public static final String RAX_AUTH_QUESTIONS = "RAX-AUTH:questions";
