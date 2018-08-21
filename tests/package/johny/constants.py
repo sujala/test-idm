@@ -499,6 +499,7 @@ NS_IMPERSONATION = 'RAX-AUTH:impersonation'
 EXCLUDED_TENANT_TYPES = [TENANT_TYPE_PROTECTED_PREFIX]
 
 '''Query parameters'''
+ALL = 'all'
 PARAM_ROLE_ID = 'roleId'
 PARAM_ROLE_NAME = 'roleName'
 RESPONSE_DETAIL = 'responseDetail'
@@ -513,6 +514,8 @@ USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = 'userMultiFactorEnforcementLevel'
 UA_AUDIT_DATA = 'ua:auditData'
 UA_USER_NAME = 'ua:userName'
 UA_REQUEST_URL = 'ua:requestURL'
+UNVERIFIED = 'unverified'
+VERIFIED = 'verified'
 
 '''Some constants used for namespace'''
 XMLNS_V20 = 'http://docs.openstack.org/identity/api/v2.0'
