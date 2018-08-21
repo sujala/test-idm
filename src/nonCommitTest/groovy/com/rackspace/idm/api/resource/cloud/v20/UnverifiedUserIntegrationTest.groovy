@@ -9,7 +9,6 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
-import org.openstack.docs.identity.api.v2.UserList
 import com.rackspace.idm.validation.Validator20
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
@@ -18,10 +17,7 @@ import org.apache.commons.lang3.RandomUtils
 import org.apache.http.HttpStatus
 import org.codehaus.groovy.runtime.InvokerHelper
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
-import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.ForbiddenFault
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault
-import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -29,9 +25,8 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
-import static org.apache.http.HttpStatus.SC_CREATED
-import static org.apache.http.HttpStatus.SC_NO_CONTENT
-import static org.apache.http.HttpStatus.SC_OK
+
+import static org.apache.http.HttpStatus.*
 
 class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
@@ -408,6 +403,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP, 32)
+        reloadableConfiguration.setProperty(IdentityConfig.UNVERIFIED_USER_INVITES_TTL_HOURS_PROP, 48)
         def userAdmin = utils.createCloudAccount()
         def userAdminToken = utils.getToken(userAdmin.username)
         def userManager = utils.createUser(userAdminToken)
@@ -436,6 +432,8 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         inviteEntity.registrationCode != null
         inviteEntity.registrationCode.size() == 32
         inviteEntity.created != null
+        inviteEntity.expires != null
+        inviteEntity.created.toGregorianCalendar().getTime().equals(inviteEntity.expires.toGregorianCalendar().getTime().minus(2))
 
         and: "email sent"
         wiserWrapper.wiserServer.getMessages() != null
@@ -454,6 +452,8 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         inviteEntity.registrationCode != null
         inviteEntity.registrationCode.size() == 32
         inviteEntity.created != null
+        inviteEntity.expires != null
+        inviteEntity.created.toGregorianCalendar().getTime().equals(inviteEntity.expires.toGregorianCalendar().getTime().minus(2))
 
         and: "email sent"
         wiserWrapper.wiserServer.getMessages() != null
@@ -472,6 +472,8 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         inviteEntity.registrationCode != null
         inviteEntity.registrationCode.size() == 32
         inviteEntity.created != null
+        inviteEntity.expires != null
+        inviteEntity.created.toGregorianCalendar().getTime().equals(inviteEntity.expires.toGregorianCalendar().getTime().minus(2))
 
         and: "email sent"
         wiserWrapper.wiserServer.getMessages() != null
@@ -490,6 +492,8 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         inviteEntity.registrationCode != null
         inviteEntity.registrationCode.size() == 32
         inviteEntity.created != null
+        inviteEntity.expires != null
+        inviteEntity.created.toGregorianCalendar().getTime().equals(inviteEntity.expires.toGregorianCalendar().getTime().minus(2))
 
         and: "email sent"
         wiserWrapper.wiserServer.getMessages() != null
@@ -1211,6 +1215,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         invite.registrationCode = entity["RAX-AUTH:invite"]["registrationCode"]
         invite.email = entity["RAX-AUTH:invite"]["email"]
         invite.created = DatatypeFactory.newInstance().newXMLGregorianCalendar(entity["RAX-AUTH:invite"]["created"])
+        invite.expires = DatatypeFactory.newInstance().newXMLGregorianCalendar(entity["RAX-AUTH:invite"]["expires"])
 
         return invite
     }

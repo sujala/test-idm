@@ -588,6 +588,9 @@ public class IdentityConfig {
     public static final String UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP = "unverified.user.registration.code.size";
     public static final int UNVERIFIED_USER_REGISTRATION_CODE_SIZE_DEFAULT = 32;
 
+    public static final String UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP = "unverified.user.registration.url.format";
+    public static final String UNVERIFIED_USER_REGISTRATION_URL_FORMAT_DEFAULT = "https://account.rackspace.com/users/%s/registration/%s";
+
     /**
      * Identity Repository Properties
      */
@@ -901,6 +904,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_CREATE_INVITES_PROP, FEATURE_ENABLE_CREATE_INVITES_DEFAULT);
         defaults.put(UNVERIFIED_USER_INVITES_TTL_HOURS_PROP, UNVERIFIED_USER_INVITES_TTL_HOURS_DEFAULT);
         defaults.put(UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP, UNVERIFIED_USER_REGISTRATION_CODE_SIZE_DEFAULT);
+        defaults.put(UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP, UNVERIFIED_USER_REGISTRATION_URL_FORMAT_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -2517,6 +2521,11 @@ public class IdentityConfig {
         @IdmProp(key = UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP, versionAdded = "3.25.0", description = "The size of the registration code generated on unverified user invite")
         public int getUnverifiedUserRegistrationCodeSize() {
             return getIntSafely(reloadableConfiguration, UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP);
+        }
+
+        @IdmProp(key = UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP, versionAdded = "3.25.0", description = "The registration url for unverified user invite")
+        public String getUnverifiedUserRegistrationUrlFormat() {
+            return getStringSafely(reloadableConfiguration, UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP);
         }
 
     }

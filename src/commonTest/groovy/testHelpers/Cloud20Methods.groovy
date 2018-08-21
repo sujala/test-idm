@@ -184,7 +184,7 @@ class Cloud20Methods {
 
     def sendUnverifiedUserInvite(String token, String userId, MediaType accept = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(INVITE).path(USER).path(userId).accept(accept).header(X_AUTH_TOKEN, token).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(INVITE).path(USER).path(userId).path(SEND).accept(accept).header(X_AUTH_TOKEN, token).post(ClientResponse)
     }
 
     def acceptUnverifiedUserInvite(UserForCreate user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {

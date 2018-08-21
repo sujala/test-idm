@@ -191,6 +191,7 @@ invite_unverified_user = {
                 const.REGISTRATION_CODE: {'type': 'string'},
                 const.USER_ID: {'type': 'string'},
                 const.CREATED: {'type': 'string', 'format': 'dateTime'},
+                const.EXPIRES: {'type': 'string', 'format': 'dateTime'},
             },
             'required': [const.EMAIL, const.REGISTRATION_CODE,
                          const.USER_ID, const.CREATED],

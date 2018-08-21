@@ -1013,6 +1013,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             invite.setEmail(retrievedUnverifiedUser.getEmail());
             invite.setCreated(DatatypeFactory.newInstance()
                     .newXMLGregorianCalendar(new DateTime(retrievedUnverifiedUser.getInviteSendDate()).toGregorianCalendar()));
+            int expiration = identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours();
+            invite.setExpires(DatatypeFactory.newInstance()
+                    .newXMLGregorianCalendar(new DateTime(retrievedUnverifiedUser.getInviteSendDate()).plusHours(expiration).toGregorianCalendar()));
             invite.setRegistrationCode(retrievedUnverifiedUser.getRegistrationCode());
 
             return Response.ok(invite);

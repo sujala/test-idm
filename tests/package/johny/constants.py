@@ -92,7 +92,7 @@ IDP_METADATA_RUD_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
                         "metadata")
 IMPERSONATION_URL = '/RAX-AUTH/impersonation-tokens'
 INVITE = 'invite'
-INVITE_UNVERIFIED_USER_URL = "/RAX-AUTH/invite/user/{user_id}"
+INVITE_UNVERIFIED_USER_URL = "/RAX-AUTH/invite/user/{user_id}/send"
 LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 LIST_DELEGATION_AGREEMENTS_URL = DELEGATION_AGREEMENTS_URL

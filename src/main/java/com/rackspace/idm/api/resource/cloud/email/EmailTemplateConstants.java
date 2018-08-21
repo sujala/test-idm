@@ -22,8 +22,7 @@ public final class EmailTemplateConstants {
      /*
         Dynamic properties made available to unverified user invite template
      */
-    public static final String INVITE_USER_ID_PROP = "user_id"; // string
-    public static final String INVITE_REGISTRATION_CODE_PROP = "registration_code"; // string
+    public static final String INVITE_USER_REGISTRATION_URL = "registration_url"; // string
     public static final String INVITE_TTL_HOURS_PROP = "ttl_hours"; // string
     public static final String INVITE_YEAR_PROP = "year"; // string
 }
