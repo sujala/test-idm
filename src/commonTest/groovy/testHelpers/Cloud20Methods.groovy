@@ -80,6 +80,9 @@ class Cloud20Methods {
     static def SERVICE_PATH_USERS ="users"
     static def SERVICE_PATH_DA ="delegation-agreements"
     static def SERVICE_PATH_DELEGATES ="delegates"
+    static def SERVICE_PATH_SAML ="saml"
+    static def SERVICE_PATH_FEDERATION ="federation"
+    static def SERVICE_PATH_VALIDATE = "validate"
 
     static def ENDPOINTS = "endpoints"
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
@@ -552,6 +555,23 @@ class Cloud20Methods {
         map.put("SAMLRequest", [request]);
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SAML).path(LOGOUT).accept(accept).type(MediaType.APPLICATION_FORM_URLENCODED).entity(map).post(ClientResponse)
     }
+
+    /**
+     * Generates the request in format "SAMLRequest=<request provided>". As such, only supports sending requests where
+     * the SAML entity is passed via SAMLRequest form attribute. This is valid for logout requests, but not authentication
+     * requests (which use SAMLResponse=)
+     *
+     * @param request
+     * @param accept
+     * @return
+     */
+    def federatedValidateRequest(request, accept = APPLICATION_XML) {
+        initOnUse()
+        MultivaluedMap<String, String> map = new MultivaluedMapImpl()
+        map.put("SAMLRequest", [request])
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_FEDERATION).path(SERVICE_PATH_SAML).path(SERVICE_PATH_VALIDATE).accept(accept).type(MediaType.APPLICATION_FORM_URLENCODED).entity(map).post(ClientResponse)
+    }
+
 
     def createIdentityProvider(token, identityProvider, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()

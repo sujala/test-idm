@@ -626,6 +626,30 @@ class Cloud20Utils {
         return logoutResponse
     }
 
+    /**
+     * Only logout requests are supported at this time.
+     *
+     * @param nameId
+     * @param idpUri
+     * @param samlProducer
+     * @return
+     */
+    def verifyFederationRequest(nameId, idpUri = DEFAULT_IDP_URI, samlProducer = null) {
+        def logoutRequest
+        if (samlProducer) {
+            logoutRequest = new SamlFactory().generateLogoutRequestEncodedForSamlProducer(idpUri, nameId, samlProducer)
+        } else {
+            logoutRequest = new SamlFactory().generateLogoutRequestEncoded(idpUri, nameId)
+        }
+        def response = methods.federatedValidateRequest(logoutRequest)
+        def responseStr = response.getEntity(String.class)
+
+        if (response.status != HttpStatus.SC_OK) {
+            def unencodedRequest = org.apache.xml.security.utils.Base64.decode(logoutRequest)
+            LOG.error(String.format("Failed to verify federation request. Request: '%s', Response: '%s'", unencodedRequest, responseStr))
+        }
+        assert response.status == HttpStatus.SC_OK
+    }
 
     def createUsers(domainId) {
         def identityAdmin = createIdentityAdmin()

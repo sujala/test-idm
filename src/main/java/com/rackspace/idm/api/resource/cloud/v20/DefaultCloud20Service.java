@@ -161,7 +161,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
+import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.io.MarshallingException;
+import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.opensaml.saml.saml2.core.LogoutResponse;
 import org.opensaml.saml.saml2.core.StatusCode;
 import org.opensaml.saml.saml2.core.impl.LogoutResponseMarshaller;
@@ -1674,9 +1676,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder verifySamlRequest(HttpHeaders httpHeaders, byte[] requestBytes) {
         try {
+            XMLObject obj = samlUnmarshaller.unmarshallSamlObject(requestBytes);
+
             // Currently we only support validating logout requests
-            org.opensaml.saml.saml2.core.LogoutRequest logoutRequest = samlUnmarshaller.unmarshallLogoutRequest(requestBytes);
-            federatedIdentityService.verifyLogoutRequest(logoutRequest);
+            if (obj instanceof LogoutRequest) {
+                federatedIdentityService.verifyLogoutRequest((LogoutRequest) obj);
+            } else {
+                throw new BadRequestException("Only logout requests are supported.");
+            }
             return Response.ok();
         } catch (Exception e) {
             logger.debug("SAML request validation failed", e);

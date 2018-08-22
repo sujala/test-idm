@@ -23,6 +23,7 @@ import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.util.SamlUnmarshaller
 import org.apache.commons.codec.binary.Base64
@@ -973,6 +974,100 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         deleteFederatedUserQuietly(username1)
         utils.deleteUsers(users)
         reloadableConfiguration.reset()
+    }
+
+    def "verify federated request: A valid signature is successful when request references an existing user"() {
+        given:
+        def domainId = utils.createDomain()
+        def username1 = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def saToken = utils.getServiceAdminToken()
+
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username1, expSecs, domainId, null)
+
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        assert samlResponse.status == HttpStatus.SC_OK
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def samlAuthToken = authResponse.token.id
+
+        //verify token is good and user can be retrieved
+        utils.getUserById(authResponse.user.id) != null
+        utils.validateToken(samlAuthToken)
+
+        when: "verify the logout request"
+        def logoutRequest = new SamlFactory().generateLogoutRequestEncoded(Constants.DEFAULT_IDP_URI, username1)
+        def validateResponse = cloud20.federatedValidateRequest(logoutRequest)
+
+        then: "the response is a success"
+        validateResponse.status == HttpStatus.SC_OK
+
+        cleanup:
+        deleteFederatedUserQuietly(username1)
+        utils.deleteUsers(users)
+        reloadableConfiguration.reset()
+    }
+
+    @Unroll
+    def "verify federated request: A valid signature is successful regardless of nameId in request: #nameId"() {
+        when: "verify the logout request"
+        def logoutRequest = new SamlFactory().generateLogoutRequestEncoded(Constants.DEFAULT_IDP_URI, nameId)
+        def validateResponse = cloud20.federatedValidateRequest(logoutRequest)
+
+        then: "The response is a success"
+        validateResponse.status == HttpStatus.SC_OK
+
+        where:
+        nameId << ["", "non-exist", null]
+    }
+
+    @Unroll
+    def "verify federated request: Old requests are rejected: #requestAge"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEDERATED_RESPONSE_MAX_SKEW, 0)
+        def issueInstance = new DateTime().minusSeconds(requestAge)
+
+        def logoutRequest = new SamlFactory().generateLogoutRequestEncoded(Constants.DEFAULT_IDP_URI, "user", Constants.DEFAULT_IDP_PRIVATE_KEY, Constants.DEFAULT_IDP_PUBLIC_KEY, issueInstance)
+
+        when: "When the logout request is not too old"
+        reloadableConfiguration.setProperty(IdentityConfig.FEDERATED_RESPONSE_MAX_AGE, requestAge + 10)
+        def validateResponse = cloud20.federatedValidateRequest(logoutRequest)
+
+        then: "Passes"
+        notThrown(BadRequestException)
+        validateResponse.status == SC_OK
+
+        when: "When the logout request is too old"
+        def maxAge = requestAge - 10
+        reloadableConfiguration.setProperty(IdentityConfig.FEDERATED_RESPONSE_MAX_AGE, maxAge)
+        validateResponse = cloud20.federatedValidateRequest(logoutRequest)
+
+        then: "Fails"
+        IdmAssert.assertOpenStackV2FaultResponse(validateResponse, BadRequestFault, SC_BAD_REQUEST, "Saml issueInstant cannot be older than " + maxAge + " seconds.")
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        requestAge << [20, 40]
+    }
+
+    def "verify federated request: A non-saml entity request body results in error"() {
+        when: "Request is not saml entity"
+        def validateResponse = cloud20.federatedValidateRequest("non logout request")
+
+        then: "The request fails"
+        IdmAssert.assertOpenStackV2FaultResponse(validateResponse, BadRequestFault, SC_BAD_REQUEST, "Invalid saml entity. Please check your syntax and try again.")
+    }
+
+    def "verify federated request: A non-logout request body results in error"() {
+        when: "Request is a saml auth response"
+        def samlResponse = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, "user", 60, "anyId", null)
+        def encodedsamlResponse = Base64.encodeBase64URLSafeString(samlResponse.getBytes())
+        def validateResponse = cloud20.federatedValidateRequest(encodedsamlResponse)
+
+        then: "The request fails"
+        IdmAssert.assertOpenStackV2FaultResponse(validateResponse, BadRequestFault, SC_BAD_REQUEST, "Only logout requests are supported.")
     }
 
     /**

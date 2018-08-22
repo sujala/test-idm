@@ -12,6 +12,8 @@ import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.io.Unmarshaller;
 import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.core.xml.io.UnmarshallingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
@@ -26,6 +28,7 @@ import java.io.IOException;
 
 @Component
 public class SamlUnmarshaller {
+    private static final Logger logger = LoggerFactory.getLogger(SamlUnmarshaller.class);
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -55,6 +58,18 @@ public class SamlUnmarshaller {
         }
 
         return (org.opensaml.saml.saml2.core.Response) responseXmlObj;
+    }
+
+    public XMLObject unmarshallSamlObject(byte[] input) {
+        try {
+            return unmarshallSamlObject(new ByteArrayInputStream(input));
+        } catch (SAXException | UnmarshallingException ex) {
+            logger.warn("Error unmarshalling saml entity.", ex);
+            throw new BadRequestException("Invalid saml entity. Please check your syntax and try again.", ex);
+        } catch (Exception t) {
+            logger.warn("Error unmarshalling saml entity for unknown reason.", t);
+            throw new IdmException("Error unmarshalling saml entity.", t);
+        }
     }
 
     private XMLObject unmarshallSamlObject(ByteArrayInputStream is) throws ParserConfigurationException, SAXException, IOException, UnmarshallingException {
