@@ -947,6 +947,13 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
                 VerificationTimes.exactly(1)
         )
 
+        when: "Pull the entity from backend"
+        com.rackspace.idm.domain.entity.User persistedUser = userDao.getUserById(unverifiedUserEntity.id)
+
+        then: "registration/invitesend attributes are now null"
+        persistedUser.registrationCode == null
+        persistedUser.inviteSendDate == null
+
         when: "retrieve secretQA"
         response = cloud20.getSecretQA(utils.identityAdminToken, userEntity.id)
         def secretQAEntity = response.getEntity(SecretQA)

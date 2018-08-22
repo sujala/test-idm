@@ -362,7 +362,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
         try {
             doPreEncode(object);
-            applyModificationsForAttributes(object, true);
+            List<Modification> mods = getModificationsForAttributes(object, true);
+            audit.modify(mods);
+            applyModifictations(object, mods);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating {} - {}", object, ldapEx);
             audit.fail("Error updating");
@@ -385,8 +387,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         Audit audit = Audit.log((Auditable)object).modify();
         try {
             doPreEncode(object);
-            applyModifications(object, false);
-            applyModifications(object, true);
+            List<Modification> mods = new ArrayList<>();
+            mods.addAll(getModifications(object, false));
+            mods.addAll(getModifications(object, true));
+            audit.modify(mods);
+            applyModifictations(object, mods);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating {} - {}", object, ldapEx);
             audit.fail("Error updating");
@@ -423,28 +428,36 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
      * @param attributes
      * @throws LDAPPersistException
      */
-    private void applyModificationsForAttributes(T object, boolean deleteNullAttributes, String... attributes) throws LDAPPersistException {
-        Audit audit = Audit.log((Auditable)object).modify();
+    private List<Modification> getModificationsForAttributes(T object, boolean deleteNullAttributes, String... attributes) throws LDAPPersistException {
         LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
+        return persister.getModifications(object, deleteNullAttributes, attributes);
+    }
 
-        List<Modification> mods = persister.getModifications(object, deleteNullAttributes, attributes);
-        audit.modify(mods);
+    private void applyModifictations(T object, List<Modification> mods) throws LDAPPersistException {
         if (mods.size() > 0) {
-            persister.modify(object, getAppInterface(), null, deleteNullAttributes, attributes);
+            try {
+                final ModifyRequest modifyRequest = new ModifyRequest(object.getUniqueId(), mods);
+                LDAPResult ldapResult = getAppInterface().modify(modifyRequest);
+            }
+            catch (LDAPException le) {
+                throw new LDAPPersistException(le);
+            }
         }
     }
 
-    private void applyModifications(T object, boolean deleteNullAttributes) throws LDAPPersistException {
+    private List<Modification> getModifications(T object, boolean deleteNullAttributes) throws LDAPPersistException {
         String[] attributes = getLDAPFieldAttributes(object, deleteNullAttributes);
         /*
-        This method must only call the applyModificationsForAttributes(object, deleteNullAttributes, attributes); if
+        This method must only call the getModificationsForAttributes(object, deleteNullAttributes, attributes); if
         there is at least one attribute because the purpose of the getLDAPFieldAttributes(object, deleteNullAttributes)
         method is to explicitly limit which attributes should be updated. If that method determines that no attributes
-        should be updated, then none should be. The applyModificationsForAttributes will analyze ALL attributes if
+        should be updated, then none should be. The getModificationsForAttributes will analyze ALL attributes if
         no attributes are provided.
          */
-        if (attributes.length > 0) {
-            applyModificationsForAttributes(object, deleteNullAttributes, attributes);
+        if (attributes.length == 0) {
+            return new ArrayList<>();
+        } else {
+            return getModificationsForAttributes(object, deleteNullAttributes, attributes);
         }
     }
 
