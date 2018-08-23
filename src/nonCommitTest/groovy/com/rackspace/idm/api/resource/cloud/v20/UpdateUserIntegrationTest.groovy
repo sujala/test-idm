@@ -921,6 +921,26 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
     }
 
+    def "updating user with apostrophes in email"() {
+        given:
+        def username = testUtils.getRandomUUID("username" )
+        def email = "'test'email@rackspace.com"
+        def user = utils.createUser(utils.getServiceAdminToken(), username)
+        def userForUpdate = v2Factory.createUser(user.id, user.username)
+        userForUpdate.email = email
+
+        when: "updating the user"
+        def response = cloud20.updateUser(utils.getToken(username), user.id, userForUpdate)
+
+        then: "the email with apostrophes is valid"
+        response.status == 200
+        def updatedUser = response.getEntity(User).value
+        updatedUser.email == email
+
+        cleanup:
+        utils.deleteUser(user)
+    }
+
     void assertUsernameUpdated(response, userUpdates, usernameCanBeUpdated, errorMessage = DefaultCloud20Service.USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE) {
         if (usernameCanBeUpdated) {
             assert response.status == 200

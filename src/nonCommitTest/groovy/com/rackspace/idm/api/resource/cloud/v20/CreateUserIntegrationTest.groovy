@@ -1894,4 +1894,20 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         featureEnabled << [true, false]
     }
 
+    def "creating user with apostrophes in email"() {
+        given:
+        def username = testUtils.getRandomUUID("username" )
+        def email = "'test'email@rackspace.com"
+        def user = v2Factory.createUserForCreate(username, "displayName", email, null, "ORD", testUtils.getRandomUUID(), "Password1")
+
+        when: "creating the user"
+        cloud20.createUser(identityAdminToken, user)
+        def createdUser = utils.getUserByName(username)
+
+        then: "the email with apostrophes is valid"
+        createdUser.email == email
+
+        cleanup:
+        utils.deleteUser(createdUser)
+    }
 }

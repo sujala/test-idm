@@ -41,7 +41,7 @@ class ValidatorTest extends Specification {
         validator = new Validator();
         passwordPattern = pattern("password", "[a-zA-Z0-9-_.@]*","Password has invalid characters.","pattern for invalid characters")
         usernamePattern = pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters")
-        emailPattern = pattern("email", "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","validate email","pattern for invalid characters")
+        emailPattern = pattern("email", "^['a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+","validate email","pattern for invalid characters")
     }
 
     def setup() {
@@ -81,6 +81,17 @@ class ValidatorTest extends Specification {
         result
     }
 
+    def "Validate valid email with apostrophes"() {
+        given:
+        ldapPatternRepository.getPattern(_) >> emailPattern
+
+        when:
+        boolean result = validator.isEmailValid("'joe'.racker@rackspace.com")
+
+        then:
+        result
+    }
+
     def "Validate invalid email"() {
         given:
         ldapPatternRepository.getPattern(_) >> emailPattern
@@ -98,6 +109,17 @@ class ValidatorTest extends Specification {
 
         when:
         validator.assertEmailValid("joe.racker@rackspace.com")
+
+        then:
+        notThrown BadRequestException
+    }
+
+    def "assert valid email with apostrophes"() {
+        given:
+        ldapPatternRepository.getPattern(_) >> emailPattern
+
+        when:
+        validator.assertEmailValid("'joe'.racker@rackspace.com")
 
         then:
         notThrown BadRequestException

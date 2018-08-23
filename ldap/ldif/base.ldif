@@ -3989,7 +3989,7 @@ objectClass: top
 rsId: 5
 cn: email
 errMsg: Expecting valid email address
-pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]+
+pattern: ^['a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]+
 
 dn: ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: organizationalUnit
