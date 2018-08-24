@@ -90,6 +90,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.TokenScopeEnum;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.User.UserType;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
@@ -149,7 +150,6 @@ import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
 import com.rackspace.idm.validation.property.IdentityProviderDefaultPolicyPropertyValidator;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
@@ -158,7 +158,6 @@ import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.XMLObject;
@@ -1128,8 +1127,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
                 user.setContactId(null);
 
-                // Only service and identity admins can update a federated user.
-                if (retrievedUser != null && retrievedUser instanceof FederatedUser) {
+                // Only service and identity admins can update a federated and unverified user.
+                if (retrievedUser != null
+                        && (retrievedUser instanceof FederatedUser
+                        || (retrievedUser instanceof User && ((User) retrievedUser).isUnverified()))) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
@@ -1148,11 +1149,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
             }
 
-            // Validate if user is not unverified
-            if (retrievedUser instanceof User &&  ((User)retrievedUser).isUnverified()) {
-                throw new ForbiddenException(GlobalConstants.RESTRICT_UNVERIFIED_USER_MESSAGE, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
-            }
-
             if (retrievedUser instanceof FederatedUser) {
                 FederatedUser fedUser = (FederatedUser) retrievedUser;
 
@@ -1161,6 +1157,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                     if (!user.getContactId().equalsIgnoreCase(fedUser.getContactId())) {
                         fedUser.setContactId(user.getContactId());
                         identityUserService.updateFederatedUser(fedUser);
+                    }
+                }
+
+                // TODO: add user update feed event for federated user
+            } else if (retrievedUser instanceof User && ((User)retrievedUser).isUnverified()) {
+                User unverifiedUser = (User) retrievedUser;
+
+                // Copy over the attributes allowed to be updated and only update if one is changed.
+                if (StringUtils.isNotBlank(user.getContactId())) {
+                    if (!user.getContactId().equalsIgnoreCase(unverifiedUser.getContactId())) {
+                        unverifiedUser.setContactId(user.getContactId());
+                        userService.updateUser(unverifiedUser);
                     }
                 }
             } else {

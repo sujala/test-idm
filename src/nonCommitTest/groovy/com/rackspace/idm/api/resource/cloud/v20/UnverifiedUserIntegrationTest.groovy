@@ -888,7 +888,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "accept invite for unverified users: accept = #accept"() {
+    def "accept invite for unverified users: mediaType = #mediaType"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
 
@@ -978,7 +978,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "error check: accept invite for unverified users: accept = #accept"() {
+    def "error check: accept invite for unverified users: mediaType = #mediaType"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
 
@@ -1131,7 +1131,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Verify registration code on unverified user is replaced when new invite is sent: accept = #accept"() {
+    def "Verify registration code on unverified user is replaced when new invite is sent: mediaType = #mediaType"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
 
@@ -1217,6 +1217,130 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         reloadableConfiguration.reset()
+    }
+
+    @Unroll
+    def "update unverified user's contactId: mediaType = #mediaType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def email = "${RandomStringUtils.randomAlphabetic(8)}@rackspace.com"
+        def user = new User().with {
+            it.email = email
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        // Create unverified user
+        def response = cloud20.createUnverifiedUser(userAdminToken, user)
+        assert response.status == HttpStatus.SC_CREATED
+        def unverifiedUserEntity = response.getEntity(User).value
+
+        def userForUpdate = new UserForCreate().with {
+            it.contactId = testUtils.getRandomUUID("contactId")
+            it
+        }
+
+        when: "get user"
+        response = cloud20.getUserById(utils.getIdentityAdminToken(), unverifiedUserEntity.id)
+        def userEntity = testUtils.getEntity(response, User)
+
+        then:
+        response.status == SC_OK
+
+        and: "expected attributes"
+        userEntity.id == unverifiedUserEntity.id
+        userEntity.username == null
+        userEntity.domainId == unverifiedUserEntity.domainId
+        userEntity.email == unverifiedUserEntity.email
+        userEntity.unverified
+        !userEntity.enabled
+        userEntity.contactId == null
+
+        when: "update user"
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), unverifiedUserEntity.id, userForUpdate, mediaType, mediaType)
+        userEntity = testUtils.getEntity(response, User)
+
+        then:
+        response.status == SC_OK
+
+        and: "expected attributes"
+        userEntity.id == unverifiedUserEntity.id
+        userEntity.username == null
+        userEntity.domainId == unverifiedUserEntity.domainId
+        userEntity.email == unverifiedUserEntity.email
+        userEntity.unverified
+        !userEntity.enabled
+        userEntity.contactId == userForUpdate.contactId
+
+        when: "update unverified user ignores other attributes"
+        userForUpdate.username = "otherUsername"
+        userForUpdate.contactId = testUtils.getRandomUUID("contactId")
+        userForUpdate.domainId = "otherDomainId"
+        userForUpdate.enabled = true
+        userForUpdate.unverified = false
+        userForUpdate.email = "badEmail@rackspace.com"
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), unverifiedUserEntity.id, userForUpdate, mediaType, mediaType)
+        userEntity = testUtils.getEntity(response, User)
+
+        then:
+        response.status == SC_OK
+
+        and: "expected attributes"
+        userEntity.id == unverifiedUserEntity.id
+        userEntity.username == null
+        userEntity.domainId == unverifiedUserEntity.domainId
+        userEntity.email == unverifiedUserEntity.email
+        userEntity.unverified
+        !userEntity.enabled
+        userEntity.contactId == userForUpdate.contactId
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "error check: update unverified user: mediaType = #mediaType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def email = "${RandomStringUtils.randomAlphabetic(8)}@rackspace.com"
+        def user = new User().with {
+            it.email = email
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        // Create unverified user
+        def response = cloud20.createUnverifiedUser(userAdminToken, user)
+        assert response.status == HttpStatus.SC_CREATED
+        def unverifiedUserEntity = response.getEntity(User).value
+
+        def userForUpdate = new UserForCreate().with {
+            it.contactId = testUtils.getRandomUUID("contactId")
+            it
+        }
+
+        when: "using non admin token"
+        response = cloud20.updateUser(userAdminToken, unverifiedUserEntity.id, userForUpdate, mediaType, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Not Authorized")
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
     def getInviteEntity(ClientResponse response) {

@@ -14,6 +14,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.entity.User.UserType
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -24,8 +25,6 @@ import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.DN
-import com.rackspace.idm.domain.config.providers.cloudv20.RAXKSKEY_XMLWriter
-import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang3.RandomStringUtils
 import org.dozer.DozerBeanMapper
@@ -5244,6 +5243,87 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 0
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             IdmExceptionAssert.assertException(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, "Your registration code has expired, please request a new invite.")
+            return Response.status(SC_FORBIDDEN)
+        }
+    }
+
+    def "updateUser: update unverified user's contactId"() {
+        given:
+        allowUserAccess()
+        mockJAXBObjectFactories(service)
+        def user = entityFactory.createUnverifiedUser()
+        def userForUpdate = new UserForCreate().with {
+            it.contactId = "contactId"
+            it
+        }
+
+        when:
+        def response = service.updateUser(headers, authToken, user.id, userForUpdate)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * identityUserService.getEndUserById(user.id) >> user
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        1 * userService.updateUser(user)
+        1 * identityUserService.getEndUserById(user.id) >> user
+        1 * service.userConverterCloudV20.toUser(user) >> v2Factory.createUser()
+        1 * openStackIdentityV2Factory.createUser(_) >> new JAXBElement<User>(org.openstack.docs.identity.api.v2.ObjectFactory._User_QNAME, User.class, null, v2Factory.createUser())
+    }
+
+    def "updateUser: verify that only the contactId of a unverified user can be updated"() {
+        given:
+        allowUserAccess()
+        mockJAXBObjectFactories(service)
+        def user = entityFactory.createUnverifiedUser()
+        def userForUpdate = new UserForCreate().with {
+            it.contactId = "contactId"
+            it.username = "badUsername"
+            it.email = "email@test.com"
+            it.domainId = "badDomainId"
+            it
+        }
+
+        when:
+        def response = service.updateUser(headers, authToken, user.id, userForUpdate)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * identityUserService.getEndUserById(user.id) >> user
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        1 * userService.updateUser(user) >> { args ->
+            com.rackspace.idm.domain.entity.User userEntity = args[0]
+            assert userEntity.domainId == user.domainId
+            assert userEntity.email == user.email
+            assert userEntity.contactId == userForUpdate.contactId
+            assert userEntity.domainId == user.domainId
+        }
+        1 * identityUserService.getEndUserById(user.id) >> user
+        1 * service.userConverterCloudV20.toUser(user) >> v2Factory.createUser()
+        1 * openStackIdentityV2Factory.createUser(_) >> new JAXBElement<User>(org.openstack.docs.identity.api.v2.ObjectFactory._User_QNAME, User.class, null, v2Factory.createUser())
+    }
+
+    def "updateUser: assert only admins are allowed to update the contactId of a unverified user"() {
+        given:
+        allowUserAccess()
+        mockExceptionHandler(service)
+
+        def user = entityFactory.createUnverifiedUser()
+        def userForUpdate = new UserForCreate().with {
+            it.contactId = "contactId"
+            it
+        }
+
+        when:
+        service.updateUser(headers, authToken, user.id, userForUpdate)
+
+        then:
+
+        1 * identityUserService.getEndUserById(user.id) >> user
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> false
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0], ForbiddenException, null, "Not Authorized")
             return Response.status(SC_FORBIDDEN)
         }
     }
