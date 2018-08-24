@@ -29,7 +29,6 @@ import javax.ws.rs.core.Response
 
 class AuthenticationFilterTest extends RootServiceTest {
     static final String AUTH_URL = "cloud/v2.0/tokens"
-    static final String TOKEN_VALIDATE_URL_UUID = "cloud/v2.0/tokens/12235"
     static final String TOKEN_VALIDATE_URL_AE = "cloud/v2.0/tokens/asdflwqenoiu-wkjnrqwer_nk32jwe"
     static final String TOKEN_ENDPOINT_URL = "cloud/v2.0/tokens/12235/endpoints"
 
@@ -61,76 +60,8 @@ class AuthenticationFilterTest extends RootServiceTest {
         mockIdentityConfig(filter)
     }
 
-    def "filter: MDC audit value set to guid when property 'feature.enable.use.repose.request.id' set to false"() {
-        given:
-        request.getPath() >> AUTH_URL
-        reloadableConfig.isFeatureUseReposeRequestIdEnabled() >> false
-
-        when:
-        filter.filter(request)
-
-        then:
-        0 * request.getHeaderValue(GlobalConstants.X_REQUEST_ID)
-        MDC.get(Audit.GUUID) != null
-        UUID.fromString(MDC.get(Audit.GUUID)) //parsable as GUID
-    }
-
-    def "filter: MDC audit value set to guid when property 'feature.enable.use.repose.request.id' set to true, but no header value"() {
-        given:
-        request.getPath() >> AUTH_URL
-        reloadableConfig.isFeatureUseReposeRequestIdEnabled() >> true
-
-        when:
-        filter.filter(request)
-
-        then:
-        1 * request.getHeaderValue(GlobalConstants.X_REQUEST_ID) >> null
-        MDC.get(Audit.GUUID) != null
-        UUID.fromString(MDC.get(Audit.GUUID)) //parsable as GUID
-    }
-
-    def "filter: MDC audit value uses provided request id header when property 'feature.enable.use.repose.request.id' set to true"() {
-        given:
-        def requestId = "aRequestId"
-        request.getPath() >> AUTH_URL
-        reloadableConfig.isFeatureUseReposeRequestIdEnabled() >> true
-
-        when:
-        filter.filter(request)
-
-        then:
-        1 * request.getHeaderValue(GlobalConstants.X_REQUEST_ID) >> requestId
-        MDC.get(Audit.GUUID) != null
-        MDC.get(Audit.GUUID) == requestId
-    }
-
-    def "filter: MDC audit value truncates x-request-id header as necessary when property 'feature.enable.use.repose.request.id' set to true"() {
-        given:
-        def requestId = "aRequestId"
-        request.getPath() >> AUTH_URL
-        reloadableConfig.isFeatureUseReposeRequestIdEnabled() >> true
-
-        when:
-        filter.filter(request)
-
-        then:
-        1 * request.getHeaderValue(GlobalConstants.X_REQUEST_ID) >> x_request_id
-        MDC.get(Audit.GUUID) != null
-        MDC.get(Audit.GUUID) == expected_audit
-
-        where:
-        x_request_id | expected_audit
-        "a" * 40 | "a" * 40
-        "a" * 65 | "a" * 64
-        "a" * 1000 | "a" * 64
-    }
-
     def "security context tokens not set on auth"() {
         given:
-        def scopeAccess = new UserScopeAccess()
-        SecurityContext capturedSecurityContext
-        securityContext.getEffectiveCallerToken() >> scopeAccess
-        requestContext.setSecurityContext(_) >> {args -> capturedSecurityContext = args[0]}
         request.getPath() >> AUTH_URL
 
         when:
@@ -139,16 +70,13 @@ class AuthenticationFilterTest extends RootServiceTest {
         then:
         0 * scopeAccessService.getScopeAccessByAccessToken(_)
         request == returnedRequest
-        capturedSecurityContext.callerToken == null
+        0 * securityContext.setCallerToken(_)
         noExceptionThrown()
     }
 
     def "security context tokens set on endpoints"() {
         given:
         def scopeAccess = new UserScopeAccess()
-        SecurityContext capturedSecurityContext
-        securityContext.getEffectiveCallerToken() >> scopeAccess
-        requestContext.setSecurityContext(_) >> {args -> capturedSecurityContext = args[0]}
         request.getPath() >> TOKEN_ENDPOINT_URL
 
         when:
@@ -156,42 +84,24 @@ class AuthenticationFilterTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
+        1 * securityContext.setCallerToken(scopeAccess)
         request == returnedRequest
-        capturedSecurityContext.callerToken == scopeAccess
-        capturedSecurityContext.effectiveCallerToken == scopeAccess
 
         noExceptionThrown()
     }
 
     def "security context tokens set on validate"() {
         def scopeAccess = new UserScopeAccess()
-        SecurityContext capturedSecurityContext
-        securityContext.getEffectiveCallerToken() >> scopeAccess
-        requestContext.setSecurityContext(_) >> {args -> capturedSecurityContext = args[0]}
 
         when:
-        request.getPath() >> TOKEN_VALIDATE_URL_UUID
+        request.getPath() >> TOKEN_VALIDATE_URL_AE
         def returnedRequest = filter.filter(request)
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
+        1 * securityContext.setCallerToken(scopeAccess)
+        1 * securityContext.setEffectiveCallerToken(scopeAccess)
         request == returnedRequest
-        capturedSecurityContext.callerToken == scopeAccess
-        capturedSecurityContext.effectiveCallerToken == scopeAccess
-        noExceptionThrown()
-
-        when:
-        request.getPath() >> TOKEN_VALIDATE_URL_AE
-        returnedRequest = filter.filter(request)
-
-        then:
-        1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
-        request == returnedRequest
-        capturedSecurityContext.callerToken == scopeAccess
-        capturedSecurityContext.effectiveCallerToken == scopeAccess
         noExceptionThrown()
     }
-
-
-
 }
