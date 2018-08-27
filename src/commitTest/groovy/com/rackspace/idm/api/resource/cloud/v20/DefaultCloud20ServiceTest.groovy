@@ -25,7 +25,6 @@ import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.DN
-import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang3.RandomStringUtils
 import org.dozer.DozerBeanMapper
@@ -5280,6 +5279,55 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             IdmExceptionAssert.assertException(args[0], ForbiddenException, null, "Not Authorized")
             return Response.status(SC_FORBIDDEN)
+        }
+    }
+
+    def "updateUser: verifies user's contactId can not be empty"() {
+        given:
+        allowUserAccess()
+        mockExceptionHandler(service)
+
+        // Create test users
+        def user = entityFactory.createUser()
+        def unverifiedUser = entityFactory.createUnverifiedUser()
+        def fedUser = entityFactory.createFederatedUser()
+
+        def userForUpdate = new UserForCreate().with {
+            it.contactId = "contactId"
+            it
+        }
+
+        when: "provisioned user update"
+        service.updateUser(headers, authToken, user.id, userForUpdate)
+
+        then:
+        1 * identityUserService.getEndUserById(user.id) >> user
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        1 * validator20.validateAttributeIsNotEmpty("contactId", userForUpdate.contactId) >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            return Response.status(SC_BAD_REQUEST)
+        }
+
+        when: "unverified user update"
+        service.updateUser(headers, authToken, unverifiedUser.id, userForUpdate)
+
+        then:
+        1 * identityUserService.getEndUserById(unverifiedUser.id) >> unverifiedUser
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        1 * validator20.validateAttributeIsNotEmpty("contactId", userForUpdate.contactId) >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            return Response.status(SC_BAD_REQUEST)
+        }
+
+        when: "federated user update"
+        service.updateUser(headers, authToken, fedUser.id, userForUpdate)
+
+        then:
+        1 * identityUserService.getEndUserById(fedUser.id) >> fedUser
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        1 * validator20.validateAttributeIsNotEmpty("contactId", userForUpdate.contactId) >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            return Response.status(SC_BAD_REQUEST)
         }
     }
 

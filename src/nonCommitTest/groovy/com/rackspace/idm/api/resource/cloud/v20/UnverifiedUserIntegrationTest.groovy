@@ -1336,6 +1336,13 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Not Authorized")
 
+        when: "contactId is an empty string"
+        userForUpdate.contactId = ""
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), unverifiedUserEntity.id, userForUpdate, mediaType, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, String.format(Validator20.EMPTY_ATTR_MESSAGE, "contactId"))
+
         cleanup:
         reloadableConfiguration.reset()
 
