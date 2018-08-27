@@ -72,6 +72,37 @@ class TestListVerifiedUnverifedUsersInDomain(base.TestBaseV2):
 
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
+    def test_list_unverified_disabled_users_in_domain(self):
+        """List by identity admin user and verfiy unverified users
+           listed
+        """
+        resp = self.identity_admin_client.list_users_in_domain(
+            self.DOMAIN_ID_TEST,
+            option={'user_type': const.UNVERIFIED,  const.ENABLED: False})
+
+        self.assertEqual(len(resp.json()[const.USERS]), 1)
+
+        self.assertEqual(resp.status_code, 200)
+        for user in resp.json()[const.USERS]:
+            self.assertEqual(user[const.RAX_AUTH_DOMAIN_ID],
+                             self.DOMAIN_ID_TEST)
+            self.assertIn(user[const.ID], self.unverified_user_ids)
+
+    @tags('positive', 'p0', 'smoke')
+    @attr(type='smoke_alpha')
+    def test_list_unverified_enabled_users_in_domain(self):
+        """Verify that list of unverified enabled users is empty
+        """
+        resp = self.identity_admin_client.list_users_in_domain(
+            self.DOMAIN_ID_TEST,
+            option={'user_type': const.UNVERIFIED,  const.ENABLED: True})
+
+        self.assertEqual(len(resp.json()[const.USERS]), 0)
+
+        self.assertEqual(resp.status_code, 200)
+
+    @tags('positive', 'p0', 'smoke')
+    @attr(type='smoke_alpha')
     def test_list_unverified_users_in_domain_by_identity_admin(self):
         """List by identity admin user
         """
@@ -117,6 +148,27 @@ class TestListVerifiedUnverifedUsersInDomain(base.TestBaseV2):
                              self.DOMAIN_ID_TEST)
 
         self.assertNotIn(new_user_id, user_ids)
+
+    @tags('positive', 'p1', 'regression')
+    def test_list_verified_users_in_domain_using_impersonation_token(self):
+        """List verified users in domain using impersonation token
+        """
+        resp = self.identity_admin_client.get_user(
+            self.user_admin_client.default_headers[const.X_USER_ID])
+        ua_username = resp.json()[const.USER][const.USERNAME]
+
+        # Get an impersonation token. Impersonating with identity admin.
+        imp_req = requests.ImpersonateUser(user_name=ua_username)
+        imp_resp = self.identity_admin_client.impersonate_user(
+            request_data=imp_req)
+        self.assertEqual(imp_resp.status_code, 200)
+        impersonation_token = imp_resp.json()[
+            const.ACCESS][const.TOKEN][const.ID]
+        imp_client = self.generate_client(token=impersonation_token)
+        resp = imp_client.list_users_in_domain(
+            self.DOMAIN_ID_TEST, option={'user_type': const.VERIFIED})
+
+        self.assertEqual(resp.status_code, 403)
 
     @tags('positive', 'p0', 'regression')
     @attr(type='regression')
