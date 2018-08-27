@@ -10,7 +10,6 @@ import com.rackspace.idm.helpers.CloudTestUtils
 import com.unboundid.ldap.sdk.LDAPException
 import org.apache.commons.collections4.IteratorUtils
 import org.apache.commons.configuration.Configuration
-import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
@@ -304,7 +303,7 @@ class UserRepositoryIntegrationTest extends Specification {
 
         when:
         userDao.addUser(user1)
-        def user = userDao.getUsersByEmail(email).collect()
+        def user = userDao.getUsersByEmail(email, User.UserType.ALL).collect()
         userDao.deleteUser(user.get(0))
 
         then:

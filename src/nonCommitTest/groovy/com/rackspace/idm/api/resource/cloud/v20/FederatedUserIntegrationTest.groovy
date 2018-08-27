@@ -2096,6 +2096,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username, Constants.DEFAULT_PASSWORD)
 
         def federatedUserId = getFederatedUser(domainId, mediaType)
         def federatedUser = utils.getUserById(federatedUserId)
@@ -2129,22 +2130,19 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         entityUserList.user.find({it.id == federatedUserId}).contactId == contactId
         entityUserList.user.find({it.id == federatedUserId}).federatedIdp == Constants.DEFAULT_IDP_URI
         entityUserList.user.find({it.id == federatedUserId}).domainId == domainId
-        entityUserList.user.find({it.id == federatedUserId}).multiFactorEnabled == false
+        entityUserList.user.find({ it.id == federatedUserId }).multiFactorEnabled == false
 
-        when: "list users"
-        // Using identity admin to list all users for test so need to disable the protection against this.
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, false)
-
-        response = cloud20.listUsers(utils.getIdentityAdminToken(), "0", "1000", mediaType)
+        when:
+        response = cloud20.listUsers(userAdminToken, "0", "1000", mediaType)
         entityUserList = testUtils.getEntity(response, UserList)
 
         then:
         response.status == SC_OK
-        entityUserList.user.find({it.id == federatedUserId}).id == federatedUserId
-        entityUserList.user.find({it.id == federatedUserId}).contactId == contactId
-        entityUserList.user.find({it.id == federatedUserId}).federatedIdp == Constants.DEFAULT_IDP_URI
-        entityUserList.user.find({it.id == federatedUserId}).domainId == domainId
-        entityUserList.user.find({it.id == federatedUserId}).multiFactorEnabled == false
+        entityUserList.user.find({ it.id == federatedUserId }).id == federatedUserId
+        entityUserList.user.find({ it.id == federatedUserId }).contactId == contactId
+        entityUserList.user.find({ it.id == federatedUserId }).federatedIdp == Constants.DEFAULT_IDP_URI
+        entityUserList.user.find({ it.id == federatedUserId }).domainId == domainId
+        entityUserList.user.find({ it.id == federatedUserId }).multiFactorEnabled == false
 
         cleanup:
         utils.logoutFederatedUser(federatedUser.username)

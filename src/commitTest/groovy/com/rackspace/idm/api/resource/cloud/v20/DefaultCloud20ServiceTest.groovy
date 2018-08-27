@@ -25,6 +25,7 @@ import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.DN
+import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang3.RandomStringUtils
 import org.dozer.DozerBeanMapper
@@ -372,11 +373,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     @Unroll
-    def "listUsers (defaultUser caller) verifies token and caller regardless of feature flag: enabled - #enabled"() {
-        reloadableConfig.restrictListUsersToOwnDomain() >> enabled
-
+    def "listUsers (defaultUser caller) verifies token and caller "() {
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, 0, 1).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, 0, 1).build()
 
         then:
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> entityFactory.createUserToken()
@@ -384,41 +383,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.DEFAULT_USER
 
         response.status == 200
-
-        where:
-        enabled << [true, false]
-    }
-
-    @Unroll
-    def "listUsers (identity admin or service admin) gets enabled paged users and returns full list when disabled: #userType"() {
-        given:
-        reloadableConfig.restrictListUsersToOwnDomain() >> false
-        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
-
-        authorizationContext.getIdentityUserType() >> userType
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> userType
-        def userContextMock = Mock(PaginatorContext)
-        userContextMock.getValueList() >> [].asList()
-
-        when:
-        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
-
-        then:
-        1 * identityUserService.getEnabledEndUsersPaged(_, _) >> userContextMock
-        1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
-
-        response.status == 200
-        response.getMetadata().get("Link") != null
-
-        where:
-        userType << [IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.SERVICE_ADMIN]
     }
 
     @Unroll
     def "listUsers (identity admin or service admin) gets own domain users when enabled: #userType"() {
         given:
         reloadableConfig.getTenantDefaultDomainId() >> "default"
-        reloadableConfig.restrictListUsersToOwnDomain() >> true
         User user = entityFactory.createUser()
 
         requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
@@ -429,10 +399,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userContextMock.getValueList() >> [].asList()
 
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, offset, limit).build()
 
         then:
-        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), offset, limit) >> userContextMock
+        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), UserType.VERIFIED, offset, limit) >> userContextMock
         1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
 
         response.status == 200
@@ -442,10 +412,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userType << [IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.SERVICE_ADMIN]
     }
 
-    @Unroll
-    def "listUsers (user-admin) gets own domain users regardless of flag: enabled: #enabled"() {
+    def "listUsers (user-admin) gets own domain users"() {
         given:
-        reloadableConfig.restrictListUsersToOwnDomain() >> enabled
         reloadableConfig.getTenantDefaultDomainId() >> "default"
 
         User user = entityFactory.createUser()
@@ -458,24 +426,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userContextMock.getValueList() >> [].asList()
 
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, offset, limit).build()
 
         then:
-        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), offset, limit) >> userContextMock
+        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), UserType.VERIFIED, offset, limit) >> userContextMock
         1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
 
         and:
         response.status == 200
         response.getMetadata().get("Link").get(0) == "link header"
-
-        where:
-        enabled << [false, true]
     }
 
     @Unroll
     def "listUsers: when caller in default domain, list limited to own user when enabled for caller: #callerType"() {
         given:
-        reloadableConfig.restrictListUsersToOwnDomain() >> true
         reloadableConfig.getTenantDefaultDomainId() >> "default"
 
         User user = entityFactory.createUser().with {
@@ -487,7 +451,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
 
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, offset, limit).build()
 
         then:
         0 * identityUserService.getEndUsersByDomainIdPaged(_, _, _)
@@ -505,11 +469,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
                         IdentityUserTypeEnum.DEFAULT_USER]
     }
 
-    @Unroll
-    def "listUsers (user-manage) gets own domain users regardless of flag: enabled: #enabled"() {
+    def "listUsers (user-manage) gets own domain users"() {
         given:
         reloadableConfig.getTenantDefaultDomainId() >> "default"
-        reloadableConfig.restrictListUsersToOwnDomain() >> enabled
         User user = entityFactory.createUser()
 
         requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
@@ -520,23 +482,19 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userContextMock.getValueList() >> [].asList()
 
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, offset, limit).build()
 
         then:
-        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), offset, limit) >> userContextMock
+        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), UserType.VERIFIED, offset, limit) >> userContextMock
         1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
 
         and:
         response.status == 200
         response.getMetadata().get("Link").get(0) == "link header"
-
-        where:
-        enabled << [false, true]
     }
 
-    def "listUsers handles exceptions when feature: #enabled"() {
+    def "listUsers handles exceptions"() {
         given:
-        reloadableConfig.restrictListUsersToOwnDomain() >> enabled
         reloadableConfig.getTenantDefaultDomainId() >> "default"
 
         scopeAccessMock = Mock()
@@ -544,14 +502,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserConverter(service)
 
         when: "Token not valid"
-        def response1 = service.listUsers(headers, uriInfo(), authToken, null, null).build()
+        def response1 = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, null, null).build()
 
         then:
         securityContext.getAndVerifyEffectiveCallerToken(authToken) >> { throw new NotAuthorizedException()}
         response1.status == 401
 
         when: "Caller not found"
-        def response2 = service.listUsers(headers, uriInfo(), authToken, null, null).build()
+        def response2 = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, null, null).build()
 
         then:
         securityContext.getAndVerifyEffectiveCallerToken(authToken) >> scopeAccessMock
@@ -559,7 +517,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response2.status == 404
 
         when: "Caller not authorized"
-        def response3 = service.listUsers(headers, uriInfo(), authToken, null, null).build()
+        def response3 = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, null, null).build()
 
         then:
         securityContext.getAndVerifyEffectiveCallerToken(authToken) >> scopeAccessMock
@@ -569,16 +527,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
 
         when: "Caller can view all domain users but doesn't have a domain"
-        def response4 = service.listUsers(headers, uriInfo(), authToken, null, null).build()
+        def response4 = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, null, null).build()
 
         then:
         requestContext.getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> scopeAccessMock
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser("username", null, null, "region")
         authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
         response4.status == 400
-
-        where:
-        enabled << [false, true]
     }
 
     def "listUsersWithRole verifies admin level access"() {
@@ -2507,10 +2462,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.IDENTITY_ADMIN
 
         when:
-        def result = service.getUsersByEmail(headers, authToken, "email@email.com").build()
+        def result = service.getUsersByEmail(headers, authToken, "email@email.com", UserType.ALL).build()
 
         then:
-        userService.getUsersByEmail(_) >> [user].asList()
+        userService.getUsersByEmail(_, UserType.ALL) >> [user].asList()
 
         then:
         result.status == 200
@@ -2543,11 +2498,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when:
-        def result = service.getUsersByEmail(headers, authToken, email).build()
+        def result = service.getUsersByEmail(headers, authToken, email, UserType.ALL).build()
 
         then:
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.getUsersByEmail(_) >> [subUser1, subUser2].asList()
+        1 * userService.getUsersByEmail(_, UserType.ALL) >> [subUser1, subUser2].asList()
         1 * authorizationService.hasSameDomain(caller, subUser1) >> true
         1 * authorizationService.hasSameDomain(caller, subUser2) >> false
 
@@ -3788,10 +3743,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User caller = entityFactory.createUser()
 
         when:
-        def result = service.getUsersByEmail(headers, authToken, "test@rackspace.com")
+        def result = service.getUsersByEmail(headers, authToken, "test@rackspace.com", UserType.ALL)
 
         then:
-        1 * userService.getUsersByEmail(_) >> users
+        1 * userService.getUsersByEmail(_, UserType.ALL) >> users
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
         result.build().status == 200

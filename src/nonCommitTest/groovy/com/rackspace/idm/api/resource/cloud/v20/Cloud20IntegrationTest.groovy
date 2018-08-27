@@ -1710,30 +1710,25 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     @Unroll
     def "listUsers caller is identity-admin or higher returns paged results. type: #userType; offset: #offset ; limit: #limit"() {
-        // Using identity admin to list all users to get a paged list so need to disable the protection against this.
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, false)
         def token
         if (userType == "ia") {
             token = identityAdminToken
         } else {
             token = serviceAdminToken
         }
-
         when:
         def response = cloud20.listUsers(token, offset, limit)
-
         then:
         response.status == 200
         response.headers.getFirst("Link") != null
-
         where:
         [userType, offset, limit] << [
                 ["ia", null, null],
                 ["ia", "0", "10"],
-                ["ia", "15", "10"],
+                ["ia", "1", "25"],
                 ["sa", null, null],
                 ["sa", "0", "10"],
-                ["sa", "15", "10"],
+                ["sa", "1", "25"],
         ]
     }
 

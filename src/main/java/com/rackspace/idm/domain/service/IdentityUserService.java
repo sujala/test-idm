@@ -166,11 +166,12 @@ public interface IdentityUserService {
      * Returns a page of federated and provisioned users associated with the specified domain.
      *
      * @param domainId
+     * @param userType
      * @param offset
      * @param limit
      * @return
      */
-    PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit);
+    PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, UserType userType, int offset, int limit);
 
     /**
      * Return all

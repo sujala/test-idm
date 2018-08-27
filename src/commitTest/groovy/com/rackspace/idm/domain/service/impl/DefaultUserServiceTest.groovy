@@ -897,10 +897,10 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        def result = service.getUsersByEmail("email@email.com")
+        def result = service.getUsersByEmail("email@email.com", UserType.ALL)
 
         then:
-        1 * userDao.getUsersByEmail(_) >> [user].asList()
+        1 * userDao.getUsersByEmail(_, UserType.ALL) >> [user].asList()
 
         then:
         result.get(0).username == user.username

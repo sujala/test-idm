@@ -808,14 +808,19 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("email") String email,
             @QueryParam("name") String name,
+            @QueryParam("user_type") String userType,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
+        UserType userTypeEnum = QueryParamConverter.convertUserTypeParamToEnum(userType);
         if (!StringUtils.isBlank(name)) {
+            if (!StringUtils.isBlank(userType)){
+                throw new BadRequestException("The `user_type` parameter can not be used with the `name` parameter.");
+            }
             return cloud20Service.getUserByName(httpHeaders, authToken, name).build();
         } else if (!StringUtils.isBlank(email)) {
-            return cloud20Service.getUsersByEmail(httpHeaders, authToken, email).build();
+            return cloud20Service.getUsersByEmail(httpHeaders, authToken, email, userTypeEnum).build();
         } else {
-            return cloud20Service.listUsers(httpHeaders, uriInfo, authToken, validateMarker(marker), validateLimit(limit)).build();
+            return cloud20Service.listUsers(httpHeaders, uriInfo, authToken, userTypeEnum, validateMarker(marker), validateLimit(limit)).build();
         }
     }
 

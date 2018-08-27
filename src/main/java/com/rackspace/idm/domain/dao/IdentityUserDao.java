@@ -130,26 +130,27 @@ public interface IdentityUserDao {
      * @param userType (pass default as VERIFIED)
      * @return
      */
-    public Iterable<EndUser> getEndUsersByDomainId (String domainId, UserType userType);
+    public Iterable<EndUser> getEndUsersByDomainId(String domainId, UserType userType);
 
     /**
      * Search for end users with the specified domain id and enabled attribute
      *
      * @param domainId
-     * @param userType
+     * @param userType (pass default as VERIFIED)
      * @return
      */
-    Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag (String domainId, boolean enabled, UserType userType);
+    Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled, UserType userType);
 
     /**
      * Search for end users with the specified domain id.
      *
      * @param domainId
+     * @param userType (pass default as VERIFIED)
      * @param offset
      * @param limit
      * @return
      */
-    PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit);
+    PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, UserType userType, int offset, int limit);
 
     /**
      * Search for end users with the specified domain id.

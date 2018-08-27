@@ -3203,12 +3203,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email) {
+    public ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email, UserType userType) {
         try {
             ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserManagedLevelAccess(requesterScopeAccess);
 
-            Iterable<User> users = userService.getUsersByEmail(email);
+            Iterable<User> users = userService.getUsersByEmail(email, userType);
 
             User caller = (User) userService.getUserByScopeAccess(requesterScopeAccess);
 
@@ -5036,7 +5036,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // KSADM Extension User methods
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserType userType, Integer marker, Integer limit) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
@@ -5047,7 +5047,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // Short circuit. If regular default user, only user can return is self. No need to do any search.
             if (userTypeEnum == IdentityUserTypeEnum.DEFAULT_USER) {
-                List<EndUser> users = ImmutableList.of((EndUser)caller);
+                List<EndUser> users = ImmutableList.of((EndUser) caller);
                 return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
@@ -5055,30 +5055,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             Iterable<? extends EndUser> filteredUsers = Collections.emptyList();
             String paginationLinkHeader = null;
             PaginatorContext<EndUser> paginatorContext = null;
-            if (!identityConfig.getReloadableConfig().restrictListUsersToOwnDomain()) {
-                // LEGACY CODE
-                if (userTypeEnum == IdentityUserTypeEnum.SERVICE_ADMIN || userTypeEnum == IdentityUserTypeEnum.IDENTITY_ADMIN) {
-                    // Performance Killer.
-                    NewRelic.setTransactionName(null, NewRelicTransactionNames.V2ListAllUsers.getTransactionName());
-                    paginatorContext = this.identityUserService.getEnabledEndUsersPaged(marker, limit);
-                } else if (caller.getDomainId() != null) {
-                    paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(caller.getDomainId(), marker, limit);
-                } else {
-                    throw new BadRequestException("Caller has no domain");
-                }
+
+
+            // This flow only returns users in the callers domain - regardless of whether they are enabled or not.
+            if (identityConfig.getReloadableConfig().getTenantDefaultDomainId().equalsIgnoreCase(caller.getDomainId())) {
+                // Users in default domain must only show the caller
+                filteredUsers = ImmutableList.of((EndUser) caller);
+            } else if (caller.getDomainId() != null) {
+                paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(caller.getDomainId(), userType, marker, limit);
             } else {
-                /*
-                This flow only returns users in the callers domain - regardless of whether they are enabled or not.
-                 */
-                if (identityConfig.getReloadableConfig().getTenantDefaultDomainId().equalsIgnoreCase(caller.getDomainId())) {
-                    // Users in default domain must only show the caller
-                    filteredUsers = ImmutableList.of((EndUser)caller);
-                } else if (caller.getDomainId() != null) {
-                    paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(caller.getDomainId(), marker, limit);
-                } else {
-                    throw new BadRequestException("Caller has no domain");
-                }
+                throw new BadRequestException("Caller has no domain");
             }
+
 
             ResponseBuilder builder = Response.status(200);
             if (paginatorContext != null) {
@@ -5091,7 +5079,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             builder.entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
-                   .createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
+                    .createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
 
             return builder;
         } catch (Exception ex) {

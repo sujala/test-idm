@@ -661,9 +661,9 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public Iterable<User> getUsersByEmail(String email) {
+    public Iterable<User> getUsersByEmail (String email, User.UserType userType) {
         logger.debug(GETTING_USER, email);
-        return userDao.getUsersByEmail(email);
+        return userDao.getUsersByEmail(email, userType);
     }
 
     @Override
