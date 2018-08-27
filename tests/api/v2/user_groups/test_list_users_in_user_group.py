@@ -3,6 +3,7 @@ import ddt
 from nose.plugins.attrib import attr
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
+from tests.api.utils import func_helper
 from tests.api.v2.models import factory, responses
 from tests.api.v2.schema import users, user_groups
 from tests.api.v2.user_groups import usergroups
@@ -23,6 +24,17 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
     @unless_coverage
     def setUp(self):
         super(ListUsersInUserGroup, self).setUp()
+
+        # Add Domain w/ RCN
+        self.rcn = self.test_config.unverified_user_rcn
+        self.domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
+        dom_req = requests.Domain(
+            domain_name=self.domain_id, domain_id=self.domain_id, rcn=self.rcn)
+        add_dom_resp = self.identity_admin_client.add_domain(dom_req)
+        assert add_dom_resp.status_code == 201, (
+            'domain was not created successfully')
+
         self.user_admin_client = self.generate_client(
             parent_client=self.identity_admin_client,
             additional_input_data={'domain_id': self.domain_id})
@@ -35,6 +47,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
         }
         self.domain_ids = []
         self.domain_ids.append(self.domain_id)
+        self.users = []
 
     @unless_coverage
     @ddt.data('user_admin', 'user_manager')
@@ -251,12 +264,115 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
             group.id,
             user_group_id_list)
 
+    @attr(type='regression')
+    def test_users_in_user_group_with_query_params(self):
+
+        # Adding a sub user client to test if list users in user group with
+        # query params is not callable using sub user's token
+        sub_user_client = self.generate_client(
+            parent_client=self.user_admin_client,
+            additional_input_data={'domain_id': self.domain_id})
+        sub_user_id = sub_user_client.default_headers[const.X_USER_ID]
+        self.users.append(sub_user_id)
+
+        test_email = self.generate_random_string(
+            pattern=const.UNVERIFIED_EMAIL_PATTERN)
+        create_unverified_user_req = requests.UnverifiedUser(
+            email=test_email, domain_id=self.domain_id)
+        create_unverified_resp = \
+            self.user_admin_client.create_unverified_user(
+                request_object=create_unverified_user_req)
+        self.assertEqual(create_unverified_resp.status_code, 201)
+        unverified_user_id = create_unverified_resp.json()[const.USER][
+            const.ID]
+        self.users.append(unverified_user_id)
+
+        group_req = factory.get_add_user_group_request(self.domain_id)
+        create_group_resp = self.user_admin_client.add_user_group_to_domain(
+            domain_id=self.domain_id, request_object=group_req)
+        self.assertEqual(create_group_resp.status_code, 201)
+        group = responses.UserGroup(create_group_resp.json())
+
+        # adding both users to the user group
+        add_user_to_grp_resp = self.user_admin_client.add_user_to_user_group(
+            user_id=sub_user_id,
+            group_id=group.id, domain_id=self.domain_id
+        )
+        self.assertEqual(add_user_to_grp_resp.status_code, 204)
+
+        add_user_to_grp_resp = self.user_admin_client.add_user_to_user_group(
+            user_id=unverified_user_id,
+            group_id=group.id, domain_id=self.domain_id
+        )
+        self.assertEqual(add_user_to_grp_resp.status_code, 204)
+
+        # List unverified users in user group using sub user's client
+        option = {
+            const.QUERY_PARAM_USER_TYPE: const.UNVERIFIED
+        }
+        list_users_resp = (
+            sub_user_client.list_users_in_user_group_for_domain(
+                domain_id=self.domain_id, group_id=group.id, option=option))
+        self.assertEqual(list_users_resp.status_code, 403)
+
+        list_users_resp = (
+            self.user_manager_client.list_users_in_user_group_for_domain(
+                domain_id=self.domain_id, group_id=group.id, option=option))
+        self.verify_list_users_in_group_with_query_params(
+            list_users_resp=list_users_resp, sub_user_id=sub_user_id,
+            unverified_user_id=unverified_user_id, verified_present=False,
+            unverified_present=True)
+
+        # List verified users in user group
+        option = {
+            const.QUERY_PARAM_USER_TYPE: const.VERIFIED
+        }
+        list_users_resp = (
+            self.user_manager_client.list_users_in_user_group_for_domain(
+                domain_id=self.domain_id, group_id=group.id, option=option))
+        self.verify_list_users_in_group_with_query_params(
+            list_users_resp=list_users_resp, sub_user_id=sub_user_id,
+            unverified_user_id=unverified_user_id, verified_present=True,
+            unverified_present=False)
+
+        # List all users in user group
+        option = {
+            const.QUERY_PARAM_USER_TYPE: const.ALL
+        }
+        list_users_resp = (
+            self.user_manager_client.list_users_in_user_group_for_domain(
+                domain_id=self.domain_id, group_id=group.id, option=option))
+        self.verify_list_users_in_group_with_query_params(
+            list_users_resp=list_users_resp, sub_user_id=sub_user_id,
+            unverified_user_id=unverified_user_id, verified_present=True,
+            unverified_present=True)
+
+    def verify_list_users_in_group_with_query_params(
+            self, list_users_resp, sub_user_id, unverified_user_id,
+            verified_present=True, unverified_present=True):
+
+        self.assertEqual(list_users_resp.status_code, 200)
+        users_list = list_users_resp.json()[const.USERS]
+        user_ids_in_list = [user[const.ID] for user in users_list]
+        if verified_present:
+            self.assertIn(sub_user_id, user_ids_in_list)
+        else:
+            self.assertNotIn(sub_user_id, user_ids_in_list)
+        if unverified_present:
+            self.assertIn(unverified_user_id, user_ids_in_list)
+        else:
+            self.assertNotIn(unverified_user_id, user_ids_in_list)
+        self.assertNotIn(self.user_manager_client.default_headers[
+                             const.X_USER_ID], user_ids_in_list)
+
     @unless_coverage
     def tearDown(self):
 
         # Not calling 'log_tearDown_error' as delete_client() method is
         # already wrapped with it. So, any cleanup failures will be caught.
         super(ListUsersInUserGroup, self).tearDown()
+        for user_id in self.users:
+            self.user_admin_client.delete_user(user_id=user_id)
         # Deleting the user manager first, so that domain can be
         # safely deleted in the subsequent user-admin client cleanup
         self.identity_admin_client.delete_user(

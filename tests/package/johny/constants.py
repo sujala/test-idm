@@ -516,6 +516,7 @@ UA_USER_NAME = 'ua:userName'
 UA_REQUEST_URL = 'ua:requestURL'
 UNVERIFIED = 'unverified'
 VERIFIED = 'verified'
+QUERY_PARAM_USER_TYPE = 'user_type'
 
 '''Some constants used for namespace'''
 XMLNS_V20 = 'http://docs.openstack.org/identity/api/v2.0'
