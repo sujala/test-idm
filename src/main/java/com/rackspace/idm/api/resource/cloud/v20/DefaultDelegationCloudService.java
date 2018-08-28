@@ -1,23 +1,18 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.DelegationAgreementConverter;
 import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.audit.DelegationAgreementAuditBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.BaseUserToken;
-import com.rackspace.idm.domain.entity.DelegationDelegate;
-import com.rackspace.idm.domain.entity.DelegationPrincipal;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DelegationService;
 import com.rackspace.idm.domain.service.DomainService;
@@ -37,6 +32,7 @@ import com.unboundid.ldap.sdk.DN;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.openstack.docs.identity.api.v2.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,12 +43,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.math.BigInteger;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Implementation of the delegation API services. Implementation is greatly simplified and standardized by combining
@@ -106,6 +97,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     @Override
     public Response addAgreement(UriInfo uriInfo, String authToken, DelegationAgreement agreementWeb) {
+        Audit audit = null;
         try {
             // Verify token exists and valid
             BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
@@ -218,14 +210,20 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement = delegationAgreementConverter.fromDelegationAgreementWeb(agreementWeb);
             delegationAgreement.setPrincipal(principal);
 
+
             // Add the agreement
-            delegationService.addDelegationAgreement(delegationAgreement);
+            com.rackspace.idm.domain.entity.DelegationAgreement createdDA = delegationService.addDelegationAgreement(delegationAgreement);
+            audit = Audit.log(getDelegationAgreementAuditBuilder(caller, createdDA).build()).add();
 
             URI location = idmPathUtils.createLocationHeaderValue(uriInfo, delegationAgreement.getId());
             Response.ResponseBuilder response = Response.created(location);
             response.entity(delegationAgreementConverter.toDelegationAgreementWeb(delegationAgreement));
+            audit.succeed();
             return response.build();
         } catch (Exception ex) {
+            if (audit != null) {
+                audit.fail();
+            }
             LOG.debug("Error creating delegation agreement", ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
@@ -444,6 +442,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     @Override
     public Response deleteAgreement(String authToken, String agreementId) {
+        Audit audit = null;
         try {
             // Verify token exists and valid
             BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
@@ -467,9 +466,15 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
+            audit = Audit.log(getDelegationAgreementAuditBuilder(caller, delegationAgreement).build()).delete();
+
             delegationService.deleteDelegationAgreement(delegationAgreement);
+            audit.succeed();
             return Response.noContent().build();
         } catch (Exception ex) {
+            if (audit != null) {
+                audit.fail();
+            }
             LOG.debug(String.format("Error deleting delegation agreement '%s'", agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
@@ -477,6 +482,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     @Override
     public Response addDelegate(String authToken, String agreementId, DelegateReference delegateReference) {
+        Audit audit = null;
         try {
             // Verify token exists and valid
             BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
@@ -508,14 +514,20 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             NumberOfDelegatesValidator numberOfDelegatesValidator = new NumberOfDelegatesValidator(identityConfig);
             numberOfDelegatesValidator.verifyMaxNumberOfDelegatesIsNotExceeded(delegationAgreement);
 
+            audit = Audit.log(getDelegationAgreementAuditBuilder(caller, delegationAgreement, delegateReference).build()).add();
+
             if (delegationAgreement.isExplicitDelegate(delegateLookupValidator.delegate)) {
                 throw new DuplicateException("Already a delegate", ErrorCodes.ERROR_CODE_DELEGATE_ALREADY_EXISTS);
             } else {
                 delegationService.addDelegate(delegationAgreement, delegateLookupValidator.delegate);
+                audit.succeed();
                 return Response.noContent().build();
             }
 
         } catch (Exception ex) {
+            if (audit != null) {
+                audit.fail();
+            }
             LOG.debug(String.format("Error deleting delegation agreement '%s'", agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
@@ -523,6 +535,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     @Override
     public Response deleteDelegate(String authToken, String agreementId, DelegateReference delegateReference) {
+        Audit audit = null;
         try {
             // Verify token exists and valid
             BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
@@ -546,14 +559,20 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
+            audit = Audit.log(getDelegationAgreementAuditBuilder(caller, delegationAgreement, delegateReference).build()).delete();
+
             // No validation required for delegate
             boolean wasRemoved = delegationService.deleteDelegate(delegationAgreement, delegateReference);
 
             if (!wasRemoved) {
                 throw new NotFoundException("Delegate does not exist on this agreement");
             }
+            audit.succeed();
             return Response.noContent().build();
         } catch (Exception ex) {
+            if (audit != null) {
+                audit.fail();
+            }
             LOG.debug(String.format("Error deleting delegation agreement '%s'", agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
@@ -602,6 +621,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     @Override
     public Response grantRolesToAgreement(String authToken, String agreementId, RoleAssignments roleAssignments) {
+        Audit audit = null;
         try {
             // Verify token exists and valid
             BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
@@ -612,7 +632,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
             }
 
             // Verify caller is enabled
-            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
@@ -633,13 +653,19 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new BadRequestException("Must supply a set of assignments", ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
             }
 
+            audit = Audit.log(getDelegationAgreementAuditBuilder(caller, delegationAgreement, roleAssignments).build()).add();
+
             delegationService.replaceRoleAssignmentsOnDelegationAgreement(delegationAgreement, roleAssignments);
 
             // Retrieve the first 1000 assigned roles on the user
             PaginatorContext<TenantRole> tenantRolePage = delegationService.getRoleAssignmentsOnDelegationAgreement(delegationAgreement, new DelegationAgreementRoleSearchParams(new PaginationParams(0, 1000)));
 
+            audit.succeed();
             return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
         } catch (Exception ex) {
+            if (audit != null) {
+                audit.fail();
+            }
             LOG.debug(String.format("Error granting roles to delegation agreement '%s'", agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
@@ -686,6 +712,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     @Override
     public Response revokeRoleFromAgreement(String authToken, String agreementId, String roleId) {
+        Audit audit = null;
         try {
             // Verify token exists and valid
             BaseUserToken token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
@@ -695,7 +722,7 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
 
-            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             // Verify caller has appropriate access
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
@@ -707,13 +734,43 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
                 throw new NotFoundException("The specified agreement does not exist for this user", ErrorCodes.ERROR_CODE_NOT_FOUND);
             }
 
-            delegationService.revokeRoleAssignmentOnDelegationAgreement(delegationAgreement, roleId);
+            audit = Audit.log(getDelegationAgreementAuditBuilder(caller, delegationAgreement, roleId).build()).delete();
 
+            delegationService.revokeRoleAssignmentOnDelegationAgreement(delegationAgreement, roleId);
+            audit.succeed();
             return Response.noContent().build();
         } catch (Exception ex) {
+            if (audit != null) {
+                audit.fail();
+            }
             LOG.debug(String.format("Error revoking role '%s' from delegation agreement '%s'", roleId, agreementId), ex);
             return exceptionHandler.exceptionResponse(ex).build();
         }
+    }
+
+    private DelegationAgreementAuditBuilder getDelegationAgreementAuditBuilder(BaseUser caller, com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement) {
+        DelegationAgreementAuditBuilder delegationAgreementAuditBuilder = new DelegationAgreementAuditBuilder()
+                .effectiveCaller(caller.getId())
+                .delegationAgreementId(delegationAgreement.getId());
+
+        if(requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+            delegationAgreementAuditBuilder.caller(((ImpersonatedScopeAccess)requestContextHolder.getRequestContext().getSecurityContext().getCallerToken()).getRackerId());
+        }
+        return delegationAgreementAuditBuilder;
+    }
+
+    private DelegationAgreementAuditBuilder getDelegationAgreementAuditBuilder(EndUser caller, com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement, DelegateReference delegateReference) {
+        return getDelegationAgreementAuditBuilder(caller, delegationAgreement)
+                .delegateId(delegateReference.getId())
+                .delegateType(delegateReference.getDelegateType().value());
+    }
+
+    private DelegationAgreementAuditBuilder getDelegationAgreementAuditBuilder(BaseUser caller, com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement, RoleAssignments roleAssignments) {
+        return getDelegationAgreementAuditBuilder(caller, delegationAgreement).roleAssignments(roleAssignments);
+    }
+
+    private DelegationAgreementAuditBuilder getDelegationAgreementAuditBuilder(BaseUser caller, com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement, String roleId) {
+        return getDelegationAgreementAuditBuilder(caller, delegationAgreement).roleId(roleId);
     }
 
     private class SimplePrincipalValidator {
