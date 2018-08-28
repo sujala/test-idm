@@ -2,12 +2,7 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams
-import com.rackspace.idm.api.resource.cloud.v20.IdentityProviderSearchParams
-import com.rackspace.idm.api.resource.cloud.v20.ListEffectiveRolesForUserParams
-import com.rackspace.idm.api.resource.cloud.v20.ListUsersForTenantParams
-import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
-import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
+import com.rackspace.idm.api.resource.cloud.v20.*
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams
@@ -341,6 +336,30 @@ class Cloud20Methods {
     def listUsers(String token, offset, limit, MediaType mediaType = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
+    }
+
+    /**
+     * @endpoint GET /v2.0/users?user_type=VERIFIED
+     * @param token valid token
+     * @param userType "VERIFIED", "UNVERIFIED" or "ALL"
+     * @param name optional
+     * @param email optional
+     * @param mediaType optional
+     * @return
+     */
+    def listUsersWithFilterOptions(String token, String userType, String name = null, String email= null, MediaType mediaType = APPLICATION_XML_TYPE) {
+        initOnUse()
+        def queryParams = new MultivaluedMapImpl()
+        if (name != null) {
+            queryParams.add("name", name)
+        }
+        if (email != null) {
+            queryParams.add("email", email)
+        }
+        if (userType != null) {
+            queryParams.add("user_type", userType)
+        }
+        resource.path(path20).path(USERS).queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
     }
 
     def listUsersInDomain(String token, String domainId, String userType = null, enabled = null, MediaType mediaType = APPLICATION_XML_TYPE) {

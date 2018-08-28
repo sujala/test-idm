@@ -9,6 +9,7 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import com.rackspace.idm.exception.BadRequestException
 import org.mockserver.verify.VerificationTimes
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.validation.Validator20
@@ -885,6 +886,142 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         listOnlyUnVerifiedUsers.user.size() == 2
         listOnlyUnVerifiedUsers.user.id.contains(unverifiedUser1.id)
         listOnlyUnVerifiedUsers.user.id.contains(unverifiedUser2.id)
+    }
+
+    def "Test that name and user type are mutually exclusive query params"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+        // adding unverified and verified users
+        def unverifiedUser = new User().with {
+            it.email = "aseem.jain@rackspace.com"
+            it.domainId = userAdmin.domainId
+            it.unverified = true
+            it
+        }
+        cloud20.createUnverifiedUser(utils.getServiceAdminToken(), unverifiedUser)
+        utils.createUser(userAdminToken)
+        utils.createUser(userAdminToken)
+
+        when: "list users without passing any param"
+        def response = cloud20.listUsersWithFilterOptions(userAdminToken, "ALL", null, null, MediaType.APPLICATION_XML_TYPE)
+
+        then:
+        then: "status is 200 OK"
+        response.status == 200
+
+        when: "list users with param of only user type is passed"
+        response = cloud20.listUsersWithFilterOptions(userAdminToken, "ALL", null, null, MediaType.APPLICATION_XML_TYPE)
+
+        then: "status is 200 OK"
+        response.status == 200
+
+        when: "list users with param of user type and email is passed"
+        response = cloud20.listUsersWithFilterOptions(userAdminToken, "ALL", null, "aseem@example.com", MediaType.APPLICATION_XML_TYPE)
+
+        then: "status is 200 OK"
+        response.status == 200
+
+        when: "list users with param of user type and name is passed"
+        response = cloud20.listUsersWithFilterOptions(userAdminToken, "VERIFIED", "aseem", null, MediaType.APPLICATION_XML_TYPE)
+
+        then: "status is 400 Bad Request"
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG)
+
+        when: "list users with param of user type, name and email is passed"
+        response = cloud20.listUsersWithFilterOptions(userAdminToken, "VERIFIED", "aseem", "aseem@example.com", MediaType.APPLICATION_XML_TYPE)
+
+        then: "status is 400 Bad Request"
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG)
+    }
+
+    def "Test listing of Verified and Unverified users while listing users"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        def unverifiedUser1 = new User().with {
+            it.email = "aseem@example.com"
+            it.domainId = userAdmin.domainId
+            it.unverified = true
+            it
+        }
+
+        def unverifiedUser2 = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = userAdmin.domainId
+            it.unverified = true
+            it
+        }
+
+        // Create Verified Users
+        def verifiedUser1 = utils.createUser(utils.getToken(userAdmin.username))
+        def verifiedUser2 = utils.createUser(utils.getToken(userAdmin.username))
+        def verifiedUser3 = utils.createUser(utils.getToken(userAdmin.username))
+
+        // Create Unverified Users
+        unverifiedUser1 = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), unverifiedUser1).getEntity(User).value
+        unverifiedUser2 = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), unverifiedUser2).getEntity(User).value
+
+        when: "list users in domain with filter - VERIFIED"
+        def listOnlyVerifiedUsers = cloud20.listUsersWithFilterOptions(userAdminToken, "VERIFIED").getEntity(UserList).value
+
+        then: "only verified users are listed"
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser1.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser2.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser3.id)
+
+        and: "unverified users are not listed"
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser1.id)
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser2.id)
+
+        when: "list users in domain with filter - null value"
+        listOnlyVerifiedUsers = cloud20.listUsersWithFilterOptions(userAdminToken, "unExpectedV&&**&").getEntity(UserList).value
+
+        then: "only by default verified users are listed"
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser1.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser2.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser3.id)
+
+        and: "unverified users are not listed"
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser1.id)
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser2.id)
+
+        when: "list users in domain with filter - ALL"
+        def listAllUsers = cloud20.listUsersWithFilterOptions(userAdminToken, "ALL").getEntity(UserList).value
+
+        then: "both unverified users and verified users are listed"
+        listAllUsers.user.id.contains(unverifiedUser1.id)
+        listAllUsers.user.id.contains(unverifiedUser2.id)
+        listAllUsers.user.id.contains(verifiedUser1.id)
+        listAllUsers.user.id.contains(verifiedUser2.id)
+        listAllUsers.user.id.contains(verifiedUser3.id)
+
+        when: "list users with filter - unexpected value"
+        listOnlyVerifiedUsers = cloud20.listUsersWithFilterOptions(userAdminToken, "unExpectedV&&**&").getEntity(UserList).value
+
+        then: "only verified users are listed (by default)"
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser1.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser2.id)
+        listOnlyVerifiedUsers.user.id.contains(verifiedUser3.id)
+
+        and: "unverified users are not listed"
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser1.id)
+        !listOnlyVerifiedUsers.user.id.contains(unverifiedUser2.id)
+
+        when: "list users with filter - UNVERIFIED"
+        def listOnlyUnverifiedUsers = cloud20.listUsersWithFilterOptions(userAdminToken, "UNVERIFIED").getEntity(UserList).value
+
+        then: "only unverified users are listed"
+        listOnlyUnverifiedUsers.user.id.contains(unverifiedUser1.id)
+        listOnlyUnverifiedUsers.user.id.contains(unverifiedUser2.id)
+
+        and: "unverified users are not listed"
+        !listOnlyUnverifiedUsers.user.id.contains(verifiedUser1.id)
+        !listOnlyUnverifiedUsers.user.id.contains(verifiedUser2.id)
+        !listOnlyUnverifiedUsers.user.id.contains(verifiedUser3.id)
     }
 
     @Unroll

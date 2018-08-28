@@ -154,6 +154,8 @@ public final class ErrorCodes {
 
     public static final String ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER_MSG = "Cannot add the 'identity:user-manage' role to non default-user.";
 
+    public static final String ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG = "The 'user_type' parameter can not be used with the 'name' parameter.";
+
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {
             return String.format("Error code: '%s'; %s", errorCode, message);
