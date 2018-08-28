@@ -1,31 +1,17 @@
 package com.rackspace.idm.api.filter
 
+
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
-import com.rackspace.idm.api.security.RequestContext
-import com.rackspace.idm.api.security.RequestContextHolder
-import com.rackspace.idm.api.security.SecurityContext
-import com.rackspace.idm.audit.Audit
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthenticationService
-import com.rackspace.idm.domain.service.AuthorizationService
-import com.rackspace.idm.domain.service.IdentityUserService
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum
-import com.rackspace.idm.domain.service.ScopeAccessService
-import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.exception.ForbiddenException
 import com.sun.jersey.spi.container.ContainerRequest
-import org.apache.commons.lang.StringUtils
-import org.slf4j.MDC
 import spock.lang.Shared
-import spock.lang.Specification
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import javax.ws.rs.WebApplicationException
-import javax.ws.rs.core.Response
 
 class AuthenticationFilterTest extends RootServiceTest {
     static final String AUTH_URL = "cloud/v2.0/tokens"
@@ -101,7 +87,59 @@ class AuthenticationFilterTest extends RootServiceTest {
         1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
         1 * securityContext.setCallerToken(scopeAccess)
         1 * securityContext.setEffectiveCallerToken(scopeAccess)
+        0 * scopeAccessService.isSetupMfaScopedToken(scopeAccess)
         request == returnedRequest
         noExceptionThrown()
+    }
+
+    /**
+     * This is really just a test that the feature flag encapsulates the existing code. It is not meant to exhaustively
+     * test the MFA code within the AuthenticationFilter.
+     * @return
+     */
+    def "MFA validation occurs when flag disabled"() {
+        reloadableConfig.useAspectForMfaAuthorization() >> false
+        def scopeAccess = new UserScopeAccess().with {
+            it.scope = TokenScopeEnum.SETUP_MFA
+            it
+        }
+
+        when: "A non MFA request is sent using a setup MFA token"
+        request.getPath() >> TOKEN_ENDPOINT_URL
+        filter.filter(request)
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
+        1 * securityContext.setCallerToken(scopeAccess)
+        1 * securityContext.setEffectiveCallerToken(scopeAccess)
+        1 * scopeAccessService.isSetupMfaScopedToken(scopeAccess) >> true
+
+        thrown(ForbiddenException)
+    }
+
+    /**
+     * This is really just a test that the feature flag encapsulates the existing code. It is not meant to exhaustively
+     * test the MFA code within the AuthenticationFilter.
+     * @return
+     */
+    def "MFA validation does not occur when flag enabled"() {
+        reloadableConfig.useAspectForMfaAuthorization() >> true
+
+        def scopeAccess = new UserScopeAccess().with {
+            it.scope = TokenScopeEnum.SETUP_MFA
+            it
+        }
+
+        when: "A non MFA request is sent using a setup MFA token"
+        request.getPath() >> TOKEN_ENDPOINT_URL
+        filter.filter(request)
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
+        1 * securityContext.setCallerToken(scopeAccess)
+        1 * securityContext.setEffectiveCallerToken(scopeAccess)
+        0 * scopeAccessService.isSetupMfaScopedToken(scopeAccess)
+
+        notThrown(ForbiddenException)
     }
 }

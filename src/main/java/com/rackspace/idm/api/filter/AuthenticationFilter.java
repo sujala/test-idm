@@ -150,15 +150,22 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 securityContext.setCallerToken(callerToken);
                 securityContext.setEffectiveCallerToken(effectiveToken);
 
-                if (effectiveToken != null && ((scopeAccessService.isSetupMfaScopedToken(effectiveToken) &&
-                        !path.contains(MULTI_FACTOR_PATH_PART)) || TokenScopeEnum.fromScope(effectiveToken.getScope()) == TokenScopeEnum.MFA_SESSION_ID)) {
-                    //mfa session scope tokens can only be used to auth w/ passcode. SETUP-MFA, only to set up MFA
-                    throwForbiddenErrorForScopedToken();
-                }
+                /*
+                 MFA Setup Token/Session Id Token Authorization Checks. These checks are deprecated per the feature
+                 flag. These checks are now performed in the AuthorizationAdviceAspect class. When the feature flag
+                 is removed in a future release all the corresponding code should be removed from this class.
+                  */
+                if (!identityConfig.getReloadableConfig().useAspectForMfaAuthorization()) {
+                    if (effectiveToken != null && ((scopeAccessService.isSetupMfaScopedToken(effectiveToken) &&
+                            !path.contains(MULTI_FACTOR_PATH_PART)) || TokenScopeEnum.fromScope(effectiveToken.getScope()) == TokenScopeEnum.MFA_SESSION_ID)) {
+                        //mfa session scope tokens can only be used to auth w/ passcode. SETUP-MFA, only to set up MFA
+                        throwForbiddenErrorForScopedToken();
+                    }
 
-                //authorize MFA calls - except for devops services
-                if(path.contains(MULTI_FACTOR_PATH_PART)) {
-                    authorizeMultiFactorServiceCall(path);
+                    //authorize MFA calls - except for devops services
+                    if (path.contains(MULTI_FACTOR_PATH_PART)) {
+                        authorizeMultiFactorServiceCall(path);
+                    }
                 }
             }
 
