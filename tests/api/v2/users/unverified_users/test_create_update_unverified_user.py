@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
+from random import randrange
 from qe_coverage.opencafe_decorators import tags, unless_coverage
-
 
 from tests.api.utils import func_helper
 from tests.api.v2 import base
@@ -36,7 +36,7 @@ class UnverifiedUsersTests(base.TestBaseV2):
         self.users = []
 
     @tags('positive', 'p0', 'regression')
-    def test_create_unverified_user(self):
+    def test_create_and_update_unverified_user(self):
 
         test_email = self.generate_random_string(
             pattern=const.UNVERIFIED_EMAIL_PATTERN)
@@ -49,12 +49,43 @@ class UnverifiedUsersTests(base.TestBaseV2):
                           json_schema=users_json.add_unverified_user)
         self.assertEqual(
             create_unverified_resp.json()[const.USER][const.EMAIL], test_email)
-        self.users.append(create_unverified_resp.json()[const.USER][const.ID])
+        unverified_user_id = create_unverified_resp.json()[const.USER][
+            const.ID]
+        self.users.append(unverified_user_id)
 
         # Re-trying with same email fails for same domain
         create_unverified_resp = self.user_admin_client.create_unverified_user(
             request_object=create_unverified_user_req)
         self.assertEqual(create_unverified_resp.status_code, 409)
+
+        contact_id = randrange(start=const.CONTACT_ID_MIN,
+                               stop=const.CONTACT_ID_MAX)
+        request_object = requests.UserUpdate(contact_id=contact_id)
+
+        # User admin is not allowed to update contact id
+        update_resp = self.user_admin_client.update_user(
+            user_id=unverified_user_id, request_object=request_object
+        )
+        self.assertEqual(update_resp.status_code, 403)
+
+        # Identity admin is allowed to update contact id
+        update_resp = self.identity_admin_client.update_user(
+            user_id=unverified_user_id, request_object=request_object
+        )
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.json()[
+                             const.USER][const.RAX_AUTH_CONTACTID],
+                         str(contact_id))
+
+        # update contact id again.
+        another_contact_id = int(contact_id) - 1
+        request_object = requests.UserUpdate(contact_id=another_contact_id)
+        update_resp = self.identity_admin_client.update_user(
+            user_id=unverified_user_id, request_object=request_object)
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.json()[
+                             const.USER][const.RAX_AUTH_CONTACTID],
+                         str(another_contact_id))
 
     @unless_coverage
     @base.base.log_tearDown_error
