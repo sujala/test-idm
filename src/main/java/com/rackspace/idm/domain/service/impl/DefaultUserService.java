@@ -273,7 +273,12 @@ public class DefaultUserService implements UserService {
         Validate.isTrue(StringUtils.isNotBlank(unverifiedUser.getDomainId()), "Unverified users must have a domain ID.");
         Validate.isTrue(StringUtils.isNotBlank(unverifiedUser.getEmail()), "Unverified users must have an email.");
 
-        DomainSubUserDefaults defaults = createSubUserService.calculateDomainSubUserDefaults(unverifiedUser.getDomainId());
+        DomainSubUserDefaults defaults;
+        try {
+            defaults = createSubUserService.calculateDomainSubUserDefaults(unverifiedUser.getDomainId());
+        } catch (DomainDefaultException ex) {
+            throw new ForbiddenException(ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN);
+        }
         unverifiedUser.setRegion(defaults.getRegion());
         unverifiedUser.setRsGroupId(defaults.getRateLimitingGroupIds());
         Collection<TenantRole> tenantRoles =  CollectionUtils.collect(defaults.getSubUserTenantRoles(), new Transformer<ImmutableTenantRole, TenantRole>() {

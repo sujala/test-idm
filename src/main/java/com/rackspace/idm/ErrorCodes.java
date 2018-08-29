@@ -121,6 +121,9 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_PHONE_PIN_BAD_REQUEST = "PP-001";
     public static final String ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION = "PP-002";
 
+    // Unverified users
+    public static final String ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN = "UU-000";
+    public static final String ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE = "Cannot create invite user for domain with no enabled account admin.";
 
     //Endpoint Assignment
     public static final String ERROR_CODE_EP_MISSING_ENDPOINT = "EP-000";

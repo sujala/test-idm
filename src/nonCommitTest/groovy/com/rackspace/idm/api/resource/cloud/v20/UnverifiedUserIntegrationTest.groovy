@@ -9,8 +9,6 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.impl.DefaultUserService
-import com.rackspace.idm.exception.BadRequestException
-import org.mockserver.verify.VerificationTimes
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.validation.Validator20
 import com.sun.jersey.api.client.ClientResponse
@@ -19,6 +17,7 @@ import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.RandomUtils
 import org.apache.http.HttpStatus
 import org.codehaus.groovy.runtime.InvokerHelper
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
@@ -1343,14 +1342,38 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         def response = cloud20.createUnverifiedUser(utils.getToken(identityAdmin.username), user)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, DefaultCloud20Service.ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS)
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE)
 
         when: "not providing domain id"
         user.domainId = null
         response = cloud20.createUnverifiedUser(utils.getToken(identityAdmin.username), user)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, DefaultCloud20Service.ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS)
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE)
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
+    def "verify unverified users cannot be created in domain with no enabled user admin"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+        def userAdmin = utils.createCloudAccount()
+        def user = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        // Disable userAdmin
+        utils.disableUser(userAdmin)
+
+        when: "providing domain id"
+        def response = cloud20.createUnverifiedUser(utils.identityAdminToken, user)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE)
 
         cleanup:
         reloadableConfiguration.reset()

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -13,6 +14,7 @@ import org.opensaml.core.config.InitializationService
 import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
 class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
@@ -395,8 +397,7 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
         1 * identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled() >> true
         1 * exceptionHandler.exceptionResponse(_) >> { args ->
             def exception = args[0]
-            assert exception.class == ForbiddenException
-            assert exception.message.endsWith(DefaultCloud20Service.ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS)
+            IdmExceptionAssert.assertException(exception, ForbiddenException, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE)
         }
     }
 
