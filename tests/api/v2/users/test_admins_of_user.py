@@ -515,10 +515,6 @@ class TestAdminsOfUser(base.TestBaseV2):
         logout_validate_r = self.identity_admin_client.validate_logout_saml(
             saml=logout_v2_saml)
         self.assertEqual(logout_validate_r.status_code, 200)
-        
-        # # create logout saml for user
-        # logout_saml = saml_helper.create_saml_logout(
-        #     issuer=self.issuer, name_id=subject, base64_url_encode=True)
 
         logout_response = self.identity_admin_client.logout_with_saml(
             saml=logout_v2_saml)
