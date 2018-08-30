@@ -931,7 +931,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-
     def get_admins_for_a_user(self, user_id, requestslib_kwargs=None):
         url = self.url + const.ADMINS_OF_A_USER_URL.format(user_id=user_id)
 
