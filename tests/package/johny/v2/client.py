@@ -915,7 +915,8 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return resp
 
     def validate_logout_saml(self, saml=None,
-                             content_type='application/x-www-form-urlencoded',
+                             content_type=const.CONTENT_TYPE_VALUE.format(
+                                 const.X_WWW_FORM_URLENCODED),
                              requestslib_kwargs=None):
         """
         Returns status whether this is a valid logout saml or not
