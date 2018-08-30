@@ -1917,15 +1917,6 @@
         },
         {
             "defaultValue": true,
-            "name": "feature.enable.list.users.for.own.domain.only",
-            "reloadable": true,
-            "description": "When enabled, list users service call can only be used to list users of own domain regardless of user type",
-            "source": "idm.reloadable.properties",
-            "value": true,
-            "versionAdded": "3.20.0"
-        },
-        {
-            "defaultValue": true,
             "name": "feature.enable.always.return.approved.domainids.for.list.idps",
             "reloadable": true,
             "description": "Whether or not list idps should always return an approvedDomainId attribute for all idps.",

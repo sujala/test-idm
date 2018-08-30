@@ -16,6 +16,8 @@ import com.rackspace.idm.domain.entity.User.UserType
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.DomainDefaultException
+import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.UserDisabledException
@@ -897,10 +899,10 @@ class DefaultUserServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        def result = service.getUsersByEmail("email@email.com")
+        def result = service.getUsersByEmail("email@email.com", UserType.ALL)
 
         then:
-        1 * userDao.getUsersByEmail(_) >> [user].asList()
+        1 * userDao.getUsersByEmail(_, UserType.ALL) >> [user].asList()
 
         then:
         result.get(0).username == user.username
@@ -1546,6 +1548,19 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         where:
         featureEnabled << [true, false]
+    }
+
+    def "addUnverifiedUser: can not create unverified user without an enabled account admin"() {
+        given:
+        mockCreateSubUserService(service)
+        def unverifiedUser = entityFactory.createUnverifiedUser()
+
+        when:
+        service.addUnverifiedUser(unverifiedUser)
+
+        then:
+        1 * createSubUserService.calculateDomainSubUserDefaults(unverifiedUser.domainId) >> {throw new DomainDefaultException("","")}
+        thrown(ForbiddenException)
     }
 
     def createStringPaginatorContext() {

@@ -37,6 +37,7 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.*
 import org.w3._2005.atom.Link
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import javax.xml.datatype.DatatypeFactory
@@ -1153,8 +1154,8 @@ class JSONReaderWriterTest extends RootServiceTest {
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writerForUsers.writeTo(users, UserList.class, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
-        JSONParser parser = new JSONParser();
-        JSONObject outer = (JSONObject) parser.parse(json);
+        JSONParser parser = new JSONParser()
+        JSONObject outer = (JSONObject) parser.parse(json)
 
         then:
         json != null
@@ -1162,8 +1163,56 @@ class JSONReaderWriterTest extends RootServiceTest {
         o.size() == 2
         ((JSONObject)o[0]).get(USERNAME) == "username"
         ((JSONObject)o[0]).get(OS_KSADM_PASSWORD) == "password"
+
+        when: "User name is null for the user"
+        user.username = null
+        users = new UserList().with {
+            it.user = [user, user].asList()
+            it
+        }
+        arrayOutputStream = new ByteArrayOutputStream()
+        writerForUsers.writeTo(users, UserList.class, null, null, null, null, arrayOutputStream)
+        json = arrayOutputStream.toString()
+        parser = new JSONParser()
+        outer = (JSONObject) parser.parse(json)
+
+        then: "attribute is not displayed in json"
+        json != null
+        JSONArray o1 = outer.get(USERS)
+        o1.size() == 2
+        ((JSONObject)o1[0]).get(USERNAME) == null
     }
 
+    @Unroll
+    def "create read/writer for unverified users" () {
+        given:
+        def user = v2Factory.createUserForCreate("username", "displayName", "email", true, "ORD", "domainId", "password")
+
+        when: "unverified user attribute is added with different values like true, false and null"
+        user.unverified = unverifiedAttr
+        def users = new UserList().with {
+            it.user = [user].asList()
+            it
+        }
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForUsers.writeTo(users, UserList.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        JSONParser parser = new JSONParser()
+        JSONObject outer = (JSONObject) parser.parse(json)
+
+        then: "unverified attribute is displayed conditionally"
+        json != null
+        JSONArray o = outer.get(USERS)
+        o.size() == 1
+        ((JSONObject) o[0]).get(USERNAME) == "username"
+        ((JSONObject) o[0]).get(RAX_AUTH_UNVERIFIED_ID) == expectation
+
+        where:
+        unverifiedAttr | expectation
+        true           | true
+        false          | null
+        null           | null
+    }
 
     def "create read/writer for AuthenticateResponse" () {
         given:

@@ -130,8 +130,8 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
-    public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
-        return searchForUsersByDomainIdPaged(domainId, ENDUSER_CLASS_FILTERS, EndUser.class, offset, limit);
+    public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, UserType userType, int offset, int limit) {
+        return searchForUsersByDomainIdPaged(domainId, userType, ENDUSER_CLASS_FILTERS, EndUser.class, offset, limit);
     }
 
     @Override
@@ -217,8 +217,8 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return (Iterable) getObjects(searchFilterGetUserByDomainIdAndUserType(domainId, isUnverifiedUserType, userClassFilterList));
     }
 
-    private <T extends EndUser> PaginatorContext<T> searchForUsersByDomainIdPaged(String domainId, List<Filter> userClassFilterList, Class<T> clazz, int offset, int limit) {
-        return (PaginatorContext) getObjectsPaged(searchFilterGetUserByDomainId(domainId, userClassFilterList), offset, limit);
+    private <T extends EndUser> PaginatorContext<T> searchForUsersByDomainIdPaged(String domainId, UserType userType, List<Filter> userClassFilterList, Class<T> clazz, int offset, int limit) {
+        return (PaginatorContext) getObjectsPaged(searchFilterGetUserByDomainIdAndUserType(domainId, userType,userClassFilterList), offset, limit);
     }
 
     private <T extends EndUser> PaginatorContext<T> searchForEnabledUsersPaged(List<Filter> userClassFilterList, Class<T> clazz, int offset, int limit) {
@@ -308,6 +308,30 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
                 Filter.createORFilter(userClassFilterList),
                 Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId)
         );
+    }
+
+    private Filter searchFilterGetUserByDomainIdAndUserType(String domainId, UserType userType, List<Filter> userClassFilterList) {
+        Filter filter;
+
+        if (UserType.ALL == userType){
+            filter = Filter.createANDFilter(
+                      Filter.createORFilter(userClassFilterList),
+                      Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId));
+        } else if (UserType.UNVERIFIED == userType){
+            filter = Filter.createANDFilter(
+                      Filter.createORFilter(userClassFilterList),
+                      Filter.createEqualityFilter(ATTR_UNVERIFIED, "TRUE"),
+                      Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId));
+        // Defaults to Verified Users
+        } else {
+            filter = Filter.createANDFilter(
+                      Filter.createORFilter(userClassFilterList),
+                      // unverified attr is not present or its value is false
+                      Filter.createORFilter(Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_UNVERIFIED)),
+                            Filter.createEqualityFilter(ATTR_UNVERIFIED, "FALSE")),
+                      Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId));
+        }
+        return filter;
     }
 
     private Filter searchFilterGetEnabledUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {

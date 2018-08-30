@@ -123,7 +123,13 @@ public final class JsonWriterHelper {
     public static JSONObject getUser(User user) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, user.getId());
-        outer.put(JSONConstants.USERNAME, user.getUsername());
+        if (user.getUsername() != null){
+            outer.put(JSONConstants.USERNAME, user.getUsername());
+        }
+        // display "rax-auth:unverified" attr when its value is present and its true in directory data
+        if (user.isUnverified() != null && user.isUnverified()) {
+            outer.put(JSONConstants.RAX_AUTH_UNVERIFIED_ID, user.isUnverified());
+        }
         if (user.getEmail() != null) {
             outer.put(JSONConstants.EMAIL, user.getEmail());
         }
@@ -183,6 +189,7 @@ public final class JsonWriterHelper {
                 outer.put(JSONConstants.OS_KSADM_PASSWORD, password);
             }
         }
+
         return outer;
     }
 

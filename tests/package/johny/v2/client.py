@@ -1707,13 +1707,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             requestslib_kwargs=requestslib_kwargs)
 
     def list_users_in_user_group_for_domain(
-            self, domain_id, group_id, requestslib_kwargs=None):
+            self, domain_id, group_id, option=None, requestslib_kwargs=None):
         """
         GET /v2.0/RAX-AUTH/domains/{domain_id}/groups/{group_id}/users
         """
         url = self.url + const.LIST_USERS_IN_USER_GROUP_FOR_DOMAIN_URL.format(
             domain_id=domain_id, group_id=group_id)
-        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+        return self.request('GET', url, params=option,
+                            requestslib_kwargs=requestslib_kwargs)
 
     def delete_user_from_user_group(
             self, domain_id, group_id, user_id, requestslib_kwargs=None):

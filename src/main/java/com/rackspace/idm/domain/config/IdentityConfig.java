@@ -387,9 +387,6 @@ public class IdentityConfig {
 
     public static final String FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP = "tenant.prefixes.to.exclude.auto.assign.role.from";
 
-    public static final String FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP = "feature.enable.list.users.for.own.domain.only";
-    public static final boolean FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_DEFAULT = true;
-
     public static final String FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP = "feature.enable.delegation.agreement.services";
     public static final boolean FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_DEFAULT = true;
 
@@ -732,7 +729,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_FEDERATION_DELETION_TIMEOUT_PROP, FEATURE_FEDERATION_DELETION_TIMEOUT_DEFAULT);
         defaults.put(FEATURE_SUPPORT_V11_LEGACY_PROP, FEATURE_SUPPORT_V11_LEGACY_DEFAULT);
 
-        defaults.put(FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_DEFAULT);
 
         defaults.put(FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT);
         defaults.put(FORGOT_PWD_VALID_PORTALS_PROP_NAME, FORGOT_PWD_VALID_PORTALS_DEFAULT);
@@ -2108,11 +2104,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_SUPPORT_V11_LEGACY_PROP, versionAdded = "3.1.1", description = "Enable v1.1 legacy calls")
         public boolean getV11LegacyEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_V11_LEGACY_PROP);
-        }
-
-        @IdmProp(key = FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP, versionAdded = "3.20.0", description = "When enabled, list users service call can only be used to list users of own domain regardless of user type")
-        public boolean restrictListUsersToOwnDomain() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LIST_USERS_FOR_OWN_DOMAIN_ONLY_PROP);
         }
 
         @IdmProp(key = FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, versionAdded = "3.2.0", description = "Timeout for forgot password tokens")

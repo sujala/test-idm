@@ -272,7 +272,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ERROR_UNVERIFIED_USERS_REQUIRED_VALID_EMAIL_ADDRESS = "The email specified for the invite user is invalid.";
     public static final String ERROR_DOMAIN_MUST_EXIST_FOR_UNVERIFIED_USERS = "The domain for the user does not exist.";
     public static final String ERROR_DOMAIN_MUST_BE_ENABLED_FOR_UNVERIFIED_USERS = "The domain for the user must be enabled.";
-    public static final String ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS = "Cannot create invite user for domain with no account admin.";
     public static final String ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN = "A user with the provided email already exists in the domain.";
     public static final String UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE = "Unverified user with ID '%s' was not found.";
 
@@ -931,7 +930,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (domain.getUserAdminDN() == null) {
-                throw new ForbiddenException(ERROR_DOMAIN_WITHOUT_ADMIN_FOR_UNVERIFIED_USERS, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+                throw new ForbiddenException(ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN);
             }
 
             List<String> allowedRCNs = identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs();
@@ -1145,9 +1144,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(ID_MISMATCH);
             }
 
-            if (StringUtils.isNotBlank(user.getContactId())) {
-                validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
-            }
+            // Validate contactId
+            validator20.validateAttributeIsNotEmpty("contactId", user.getContactId());
+            validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
 
             if (retrievedUser instanceof FederatedUser) {
                 FederatedUser fedUser = (FederatedUser) retrievedUser;
@@ -3203,12 +3202,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email) {
+    public ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email, UserType userType) {
         try {
             ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserManagedLevelAccess(requesterScopeAccess);
 
-            Iterable<User> users = userService.getUsersByEmail(email);
+            Iterable<User> users = userService.getUsersByEmail(email, userType);
 
             User caller = (User) userService.getUserByScopeAccess(requesterScopeAccess);
 
@@ -5036,7 +5035,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // KSADM Extension User methods
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserType userType, Integer marker, Integer limit) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
@@ -5047,7 +5046,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // Short circuit. If regular default user, only user can return is self. No need to do any search.
             if (userTypeEnum == IdentityUserTypeEnum.DEFAULT_USER) {
-                List<EndUser> users = ImmutableList.of((EndUser)caller);
+                List<EndUser> users = ImmutableList.of((EndUser) caller);
                 return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
@@ -5055,30 +5054,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             Iterable<? extends EndUser> filteredUsers = Collections.emptyList();
             String paginationLinkHeader = null;
             PaginatorContext<EndUser> paginatorContext = null;
-            if (!identityConfig.getReloadableConfig().restrictListUsersToOwnDomain()) {
-                // LEGACY CODE
-                if (userTypeEnum == IdentityUserTypeEnum.SERVICE_ADMIN || userTypeEnum == IdentityUserTypeEnum.IDENTITY_ADMIN) {
-                    // Performance Killer.
-                    NewRelic.setTransactionName(null, NewRelicTransactionNames.V2ListAllUsers.getTransactionName());
-                    paginatorContext = this.identityUserService.getEnabledEndUsersPaged(marker, limit);
-                } else if (caller.getDomainId() != null) {
-                    paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(caller.getDomainId(), marker, limit);
-                } else {
-                    throw new BadRequestException("Caller has no domain");
-                }
+
+
+            // This flow only returns users in the callers domain - regardless of whether they are enabled or not.
+            if (identityConfig.getReloadableConfig().getTenantDefaultDomainId().equalsIgnoreCase(caller.getDomainId())) {
+                // Users in default domain must only show the caller
+                filteredUsers = ImmutableList.of((EndUser) caller);
+            } else if (caller.getDomainId() != null) {
+                paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(caller.getDomainId(), userType, marker, limit);
             } else {
-                /*
-                This flow only returns users in the callers domain - regardless of whether they are enabled or not.
-                 */
-                if (identityConfig.getReloadableConfig().getTenantDefaultDomainId().equalsIgnoreCase(caller.getDomainId())) {
-                    // Users in default domain must only show the caller
-                    filteredUsers = ImmutableList.of((EndUser)caller);
-                } else if (caller.getDomainId() != null) {
-                    paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(caller.getDomainId(), marker, limit);
-                } else {
-                    throw new BadRequestException("Caller has no domain");
-                }
+                throw new BadRequestException("Caller has no domain");
             }
+
 
             ResponseBuilder builder = Response.status(200);
             if (paginatorContext != null) {
@@ -5091,7 +5078,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             builder.entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
-                   .createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
+                    .createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
 
             return builder;
         } catch (Exception ex) {
