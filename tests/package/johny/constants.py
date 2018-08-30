@@ -74,6 +74,7 @@ DOMAIN_URL = '/RAX-AUTH/domains'
 ENDPOINT_TEMPLATE_URL = LIST_ENDPOINT_TEMPLATES_URL = (
     '/OS-KSCATALOG/endpointTemplates')
 FED_LOGOUT_URL = '/RAX-AUTH/federation/saml/logout'
+FED_VALIDATE_LOGOUT_URL = '/RAX-AUTH/federation/saml/validate'
 GET_ROLE_URL = DELETE_ROLE_URL = '/OS-KSADM/roles/{role_id}'
 GET_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/tenants'
 GET_TOKEN_URL = DELETE_TOKEN_URL = '/tokens/{token_id}'

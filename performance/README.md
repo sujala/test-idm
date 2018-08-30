@@ -20,9 +20,9 @@ In order for us to validate any performance characteristics of the target identi
 
 1. Set up all of identity and its dependencies: `PWD=$(pwd) docker-compose up -d`
 
-2. Run `cd identity-perf-agent` and then copy over `identity-saml-generator-*-.jar` from `tests/resources` to `data_generation` directory: `cp ../../tests/resources/identity-saml-generator-* data_generation/'
+2. Run `cd identity-perf-agent` and then copy over `saml-generator-*-.jar` from `tests/resources` to `data_generation` directory: `cp ../../tests/resources/saml-generator-* data_generation/'
 
-3. Generate fed_origin cert: `pushd data_generation && jar xf identity-saml-generator-* sample_keys/fed-origin.crt && popd`
+3. Generate fed_origin cert: `pushd data_generation && jar xf saml-generator-* sample_keys/fed-origin.crt && popd`
 
 4. Generate sample data:
 
