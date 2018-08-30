@@ -1351,7 +1351,22 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE)
 
+        when: "providing domain id different than that of identity admin"
+        def domain = utils.createDomainEntity()
+        user = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = domain.id
+            it
+        }
+        utils.domainRcnSwitch(domain.id, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        response = cloud20.createUnverifiedUser(utils.getToken(identityAdmin.username), user)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE)
+
         cleanup:
+        utils.deleteDomain(domain.id)
         reloadableConfiguration.reset()
     }
 
