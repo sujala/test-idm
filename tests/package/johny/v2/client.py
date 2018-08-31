@@ -914,6 +914,24 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def validate_logout_saml(self, saml=None,
+                             content_type=const.CONTENT_TYPE_VALUE.format(
+                                 const.X_WWW_FORM_URLENCODED),
+                             requestslib_kwargs=None):
+        """
+        Returns status whether this is a valid logout saml or not
+        200 is valid. Everything else is invalid.
+        POST '/v2.0/RAX-AUTH/federation/saml/validate'
+        """
+        url = self.url + const.FED_VALIDATE_LOGOUT_URL
+
+        headers = {
+            'Content-Type': content_type
+        }
+        resp = self.request('POST', url, data=saml, headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def get_admins_for_a_user(self, user_id, requestslib_kwargs=None):
         url = self.url + const.ADMINS_OF_A_USER_URL.format(user_id=user_id)
 

@@ -506,12 +506,18 @@ class TestAdminsOfUser(base.TestBaseV2):
             token_id=fed_user_auth_token)
         self.assertEqual(validate_resp.status_code, 404)
 
-        # create logout saml for user
-        logout_saml = saml_helper.create_saml_logout(
-            issuer=self.issuer, name_id=subject, base64_url_encode=True)
+        # create logoutv2 saml for user
+        logout_v2_saml = saml_helper.create_saml_logout_v2(
+            issuer=self.issuer, name_id=subject
+        )
+
+        # validate logoutv2 saml for user
+        logout_validate_r = self.identity_admin_client.validate_logout_saml(
+            saml=logout_v2_saml)
+        self.assertEqual(logout_validate_r.status_code, 200)
 
         logout_response = self.identity_admin_client.logout_with_saml(
-            saml=logout_saml)
+            saml=logout_v2_saml)
         self.assertEqual(logout_response.status_code, 200)
 
         # Get admins of fed user using identity admin's token
