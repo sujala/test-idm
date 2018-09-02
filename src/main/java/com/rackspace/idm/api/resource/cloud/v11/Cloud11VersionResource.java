@@ -1,10 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.event.ApiResourceType;
-import com.rackspace.idm.event.IdentityApi;
-import com.rackspace.idm.event.NewRelicApiEventListener;
-import com.rackspace.idm.event.SecureResourcePath;
+import com.rackspace.idm.event.*;
 import com.rackspace.idm.exception.ExceptionHandler;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.*;
@@ -44,12 +41,18 @@ public class Cloud11VersionResource {
         return cloud11Service.getVersion(uriInfo).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name = "v1.1 Authenticate")
-    @POST
-    @Path("auth")
-    public Response authenticate(@Context HttpServletRequest request, @Context UriInfo uriInfo, @Context HttpHeaders httpHeaders, String body)
-            throws IOException, JAXBException, URISyntaxException {
-        return cloud11Service.authenticate(request, uriInfo, httpHeaders, body).build();
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "v1.1 List extensions")
+    @GET
+    @Path("extensions")
+    public Response extensions(@Context HttpHeaders httpHeaders) throws IOException {
+        return cloud11Service.extensions(httpHeaders).build();
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "v1.1 Get extension")
+    @GET
+    @Path("extensions/{alias}")
+    public Response extensions(@PathParam("alias") String alias,@Context HttpHeaders httpHeaders) throws IOException {
+        return cloud11Service.getExtension(httpHeaders, alias).build();
     }
 
     // this is not my fault, I promise
@@ -59,6 +62,14 @@ public class Cloud11VersionResource {
     @Path("cloud/auth")
     public Response hack() throws IOException {
         return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name = "v1.1 Authenticate")
+    @POST
+    @Path("auth")
+    public Response authenticate(@Context HttpServletRequest request, @Context UriInfo uriInfo, @Context HttpHeaders httpHeaders, String body)
+            throws IOException, JAXBException, URISyntaxException {
+        return cloud11Service.authenticate(request, uriInfo, httpHeaders, body).build();
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.AUTH, name = "v1.1 Auth-admin")
@@ -71,6 +82,7 @@ public class Cloud11VersionResource {
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Validate token")
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11TokenValidationAbsolutePathPatternRegex)
+    @ReportableQueryParams(unsecuredQueryParams = {"belongsTo", "type"})
     @GET
     @Path("token/{tokenId}")
     public Response validateToken(@Context HttpServletRequest request,
@@ -91,20 +103,6 @@ public class Cloud11VersionResource {
                                 @Context HttpHeaders httpHeaders
     ) throws IOException {
         return cloud11Service.revokeToken(request, tokenId, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "v1.1 List extensions")
-    @GET
-    @Path("extensions")
-    public Response extensions(@Context HttpHeaders httpHeaders) throws IOException {
-        return cloud11Service.extensions(httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "v1.1 Get extension")
-    @GET
-    @Path("extensions/{alias}")
-    public Response extensions(@PathParam("alias") String alias,@Context HttpHeaders httpHeaders) throws IOException {
-        return cloud11Service.getExtension(httpHeaders, alias).build();
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user-admin for tenant")
@@ -128,6 +126,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List endpoint templates")
+    @ReportableQueryParams(unsecuredQueryParams = {"serviceName"})
     @GET
     @Path("baseURLs")
     public Response getBaseURLs(@Context HttpServletRequest request,
@@ -150,6 +149,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get endpoint template")
+    @ReportableQueryParams(unsecuredQueryParams = {"serviceName"})
     @GET
     @Path("baseURLs/{baseURLId}")
     public Response getBaseURLById(@Context HttpServletRequest request,
@@ -161,6 +161,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List enabled endpoints")
+    @ReportableQueryParams(unsecuredQueryParams = {"serviceName"})
     @GET
     @Path("baseURLs/enabled")
     public Response getEnabledBaseURLs(@Context HttpServletRequest request,
@@ -181,6 +182,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserByUsernameAbsolutePathPatternRegex)
     @GET
     @Path("users/{userId}")
     public Response getUser(@Context HttpServletRequest request,
@@ -191,6 +193,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Delete user")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserByUsernameAbsolutePathPatternRegex)
     @DELETE
     @Path("users/{userId}")
     public Response deleteUser(@Context HttpServletRequest request,
@@ -201,6 +204,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserByUsernameAbsolutePathPatternRegex)
     @PUT
     @Path("users/{userId}")
     public Response updateUser(@Context HttpServletRequest request,
@@ -211,6 +215,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user enabled")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @GET
     @Path("users/{userId}/enabled")
     public Response getUserEnabled(@Context HttpServletRequest request, @PathParam("userId") String userId,
@@ -219,6 +224,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user enabled status")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @PUT
     @Path("users/{userId}/enabled")
     public Response setUserEnabled(@Context HttpServletRequest request, @PathParam("userId") String userId,
@@ -227,6 +233,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user api key")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @GET
     @Path("users/{userId}/key")
     public Response getUserKey(@Context HttpServletRequest request,
@@ -237,6 +244,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user api key")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @PUT
     @Path("users/{userId}/key")
     public Response setUserKey(@Context HttpServletRequest request,
@@ -248,6 +256,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user service catalog")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @GET
     @Path("users/{userId}/serviceCatalog")
     public Response getServiceCatalog(@Context HttpServletRequest request,
@@ -258,6 +267,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List user endpoints")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @GET
     @Path("users/{userId}/baseURLRefs")
     public Response getBaseURLRefs(@Context HttpServletRequest request,
@@ -268,6 +278,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Add endpoint to user cloud or files tenant")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @POST
     @Path("users/{userId}/baseURLRefs")
     public Response addBaseURLRef(@Context HttpServletRequest request,
@@ -280,6 +291,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get endpoint for user")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @GET
     @Path("users/{userId}/baseURLRefs/{baseURLId}")
     public Response getBaseURLRef(@Context HttpServletRequest request,
@@ -291,6 +303,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Delete endpoint from user cloud and files tenants")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @DELETE
     @Path("users/{userId}/baseURLRefs/{baseURLId}")
     public Response deleteBaseURLRef(@Context HttpServletRequest request,
@@ -302,6 +315,7 @@ public class Cloud11VersionResource {
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List user legacy groups")
+    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
     @GET
     @Path("users/{userId}/groups")
     public Response getUserGroups(@Context HttpServletRequest request, @PathParam("userId") String userId,

@@ -114,6 +114,13 @@ public interface AuthorizationService {
     boolean authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum identityType, String... roleName);
 
     /**
+     * Whether the effective caller has the specified identity type (or higher).
+     *
+     * @param identityType
+    \     */
+    boolean authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum identityType);
+
+    /**
      * Whether the effective caller has at least one role with the specified role name. This can only be used to check
      * identity RBAC roles.
      *

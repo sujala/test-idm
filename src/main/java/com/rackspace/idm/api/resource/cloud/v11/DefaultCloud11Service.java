@@ -8,6 +8,7 @@ import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.*;
+import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -16,6 +17,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.Validator;
@@ -1299,25 +1301,12 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     void authenticateCloudAdminUserForGetRequests(HttpServletRequest request) {
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        Map<String, String> stringStringMap = null;
+        String msg = "You are not authorized to access this resource.";
+        ScopeAccess token;
         try {
-            stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
+            authenticateAndAuthorizeCloudAdminUser(request);
         } catch (CloudAdminAuthorizationException e) {
-            throw new NotAuthorizedException("You are not authorized to access this resource.", e);
-        }
-        if (stringStringMap == null) {
-            throw new NotAuthorizedException("You are not authorized to access this resource.");
-        } else {
-
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
-                    stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
-            if (!authenticated) {
-                authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
-            } if (!authenticated) {
-                throw new NotAuthorizedException("You are not authorized to access this resource.");
-            }
+            throw new NotAuthorizedException(msg, e);
         }
     }
 
@@ -1327,23 +1316,30 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     ScopeAccess authenticateAndAuthorizeCloudAdminUser(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        // Will throw a CloudAdminAuthorizationException if is null or
         Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         if (stringStringMap == null) {
             throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
-        } else {
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
-                    stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
-            if (!authenticated) {
-                throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
-            }
         }
 
         String adminUsername = stringStringMap.get("username");
         String adminPassword = stringStringMap.get("password");
+
+        // Will throw a NotAuthenticatedException if authentication fails
         UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(adminUsername, adminPassword, getCloudAuthClientId());
 
-        boolean authorized = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
+        boolean authorized;
+        if (identityConfig.getReloadableConfig().migrateV11ServicesToRequestContext()) {
+            // Populate the request/security contexts
+            RequestContext requestContext = requestContextHolder.getRequestContext();
+            requestContext.getSecurityContext().setCallerToken(usa);
+            requestContext.getSecurityContext().setEffectiveCallerToken(usa);
+            authorized = authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+        } else {
+            authorized = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
+        }
+
         if (!authorized) {
             throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
         }

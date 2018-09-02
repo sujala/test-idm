@@ -46,6 +46,8 @@ public class NewRelicApiEventListener implements ApplicationListener<ApiEventSpr
     public static final String v2TokenValidationAbsolutePathPatternRegex = "^.*/cloud/v2.0/tokens/([^/]+)/?$";
     public static final String v2TokenEndpointAbsolutePathPatternRegex = "^.*/cloud/v2.0/tokens/([^/]+)/endpoints/?$";
     public static final String v11TokenValidationAbsolutePathPatternRegex = "^.*/cloud/v1.1/token/([^/]+)/?$";
+    public static final String v11UserByUsernameAbsolutePathPatternRegex = "^.*/cloud/v1.1/users/([^/]+)/?$";
+    public static final String v11UserResourceAbsolutePathPatternRegex = "^.*/cloud/v1.1/users/([^/]+)/.*$";
 
     /**
      * A set of pre-compiled patterns matching the regex constants.
