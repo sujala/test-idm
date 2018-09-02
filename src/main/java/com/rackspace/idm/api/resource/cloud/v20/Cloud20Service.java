@@ -81,7 +81,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) ;
 
-    ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email) ;
+    ResponseBuilder getUsersByEmail (HttpHeaders httpHeaders, String authToken, String email, UserType userType) ;
 
     ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) ;
 
@@ -205,7 +205,7 @@ public interface Cloud20Service {
 
     ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
 
-    ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Integer marker, Integer limit) ;
+    ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserType userType, Integer marker, Integer limit) ;
 
     ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId) ;

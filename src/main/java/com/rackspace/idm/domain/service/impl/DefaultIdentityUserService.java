@@ -218,8 +218,8 @@ public class DefaultIdentityUserService implements IdentityUserService {
     }
 
     @Override
-    public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
-        return identityUserRepository.getEndUsersByDomainIdPaged(domainId, offset, limit);
+    public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, UserType userType, int offset, int limit) {
+        return identityUserRepository.getEndUsersByDomainIdPaged(domainId, userType, offset, limit);
     }
 
     @Override

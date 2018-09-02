@@ -112,6 +112,7 @@ user_item = {
         const.RAX_AUTH_MULTI_FACTOR_STATE: {'type': 'string'},
         const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
         const.RAX_AUTH_CONTACTID: {'type': 'string'},
+        const.RAX_AUTH_UNVERIFIED: {'type': 'boolean'},
         const.RAX_AUTH_DEFAULT_REGION: {
             'type': 'string',
             'enum': const.DC_LIST},
@@ -140,6 +141,7 @@ get_admins_of_user_item = {
             const.ENABLED: {'type': 'boolean'},
             const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
             const.RAX_AUTH_CONTACTID: {'type': 'string'},
+            const.RAX_AUTH_UNVERIFIED: {'type': 'boolean'},
             const.RAX_AUTH_DEFAULT_REGION: {
                 'type': 'string',
                 'enum': const.DC_LIST},

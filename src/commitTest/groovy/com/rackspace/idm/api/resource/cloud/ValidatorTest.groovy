@@ -85,11 +85,15 @@ class ValidatorTest extends Specification {
         given:
         ldapPatternRepository.getPattern(_) >> emailPattern
 
-        when:
-        boolean result = validator.isEmailValid("'joe'.racker@rackspace.com")
-
-        then:
-        result
+        expect:
+        validator.isEmailValid("'joe'.racker@rackspace.com")
+        validator.isEmailValid("j'oe.racker@rackspace.com")
+        validator.isEmailValid("joe.rac'ker@rackspace.com")
+        validator.isEmailValid("j'oe.rac'ker@rackspace.com")
+        validator.isEmailValid("joe.rac''ker@rackspace.com")
+        validator.isEmailValid("'joe.racker@rackspace.com")
+        validator.isEmailValid("joe.racker'@rackspace.com")
+        validator.isEmailValid("'''@rackspace.com")
     }
 
     def "Validate invalid email"() {
@@ -120,6 +124,13 @@ class ValidatorTest extends Specification {
 
         when:
         validator.assertEmailValid("'joe'.racker@rackspace.com")
+        validator.assertEmailValid("j'oe.racker@rackspace.com")
+        validator.assertEmailValid("joe.rac'ker@rackspace.com")
+        validator.assertEmailValid("j'oe.rac'ker@rackspace.com")
+        validator.assertEmailValid("joe.rac''ker@rackspace.com")
+        validator.assertEmailValid("'joe.racker@rackspace.com")
+        validator.assertEmailValid("joe.racker'@rackspace.com")
+        validator.assertEmailValid("'''@rackspace.com")
 
         then:
         notThrown BadRequestException
@@ -142,6 +153,17 @@ class ValidatorTest extends Specification {
 
         when:
         validator.assertEmailValid("joe racker@rackspace.com")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Invalid email with apostrophe in domain"(){
+        given:
+        ldapPatternRepository.getPattern(_) >> emailPattern
+
+        when:
+        validator.assertEmailValid("joe.racker@rack'space.com")
 
         then:
         thrown(BadRequestException)

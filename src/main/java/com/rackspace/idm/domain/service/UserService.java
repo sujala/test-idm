@@ -61,7 +61,7 @@ public interface UserService {
 
     User getUser(String username);
 
-    Iterable<User> getUsersByEmail(String email);
+    Iterable<User> getUsersByEmail (String email, User.UserType userType);
 
     User getUserByAuthToken(String authToken);
 

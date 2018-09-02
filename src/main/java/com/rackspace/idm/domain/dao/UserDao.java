@@ -45,7 +45,7 @@ public interface UserDao {
      */
     User getUserAdminByDomain(Domain domain);
 
-    Iterable<User> getUsersByEmail(String email);
+    Iterable<User> getUsersByEmail(String email, User.UserType userType);
 
     Iterable<User> getUsers(List<String> idList);
 

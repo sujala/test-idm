@@ -26,7 +26,7 @@ def get_params_and_command(public_key_path, private_key_path=None,
         src_path = tests_path.group(1)
     jar_path = os.path.join(
         src_path, 'tests', 'resources',
-        'identity-saml-generator-2.0-1508514835311-all.jar')
+        'saml-generator-2.1.0-1535599910628-all.jar')
     key_path = os.path.join(src_path, 'src',
                             'commonTest', 'resources')
     public_key_path = public_key_path or os.path.join(
@@ -44,6 +44,10 @@ def get_params_and_command(public_key_path, private_key_path=None,
         command_list = [
             java_exec_path, '-jar', jar_path, fed_api,
         ]
+    elif fed_api == 'v2logout':
+        command_list = [
+            java_exec_path, '-jar', jar_path, fed_api,
+        ]
 
     if for_metadata:
         command_list = [
@@ -52,7 +56,7 @@ def get_params_and_command(public_key_path, private_key_path=None,
         ]
         return public_key_path, command_list
 
-    if for_logout:
+    if for_logout and fed_api == 'v1':
         command_list.extend(['-logout', 'true'])
     return public_key_path, private_key_path, command_list
 
@@ -320,6 +324,46 @@ def create_saml_logout(issuer=None, days_to_issue_instant=None,
         command_list.extend([
             '-base64URLEncode', 'true'
         ])
+
+    cert = subprocess.check_output(command_list).strip()
+
+    return cert
+
+
+def create_saml_logout_v2(issuer=None, response_flavor=None,
+                          name_id=None, public_key_path=None,
+                          private_key_path=None,
+                          output_format='formEncode'):
+
+    """
+    issuer: The URI of the issuer for the saml logout request.
+    name_id: The username of the federated user.
+    response_flavor: Which IDP to use (v2DomainOrigin default)
+    public_key_path: The path to the location of the public key to
+                     decrypt assertions.
+    private_key_path: The path to the location of the private key to
+                      use to sign assertions.
+    output_format: The format to output response. xml, base64, form, or
+      formEncode. Default: formEncode
+    """
+
+    public_key_path, private_key_path, command_list = get_params_and_command(
+        public_key_path=public_key_path, private_key_path=private_key_path,
+        for_logout=True, fed_api='v2logout')
+
+    command_list.extend(['-originPublicKey={}'.format(public_key_path)])
+    command_list.extend(['-originPrivateKey={}'.format(private_key_path)])
+
+    if issuer is not None:
+        command_list.extend(['-originIssuer', issuer])
+
+    if name_id is not None:
+        command_list.extend([
+            '-nameId', name_id
+        ])
+
+    if output_format is not None:
+            command_list.extend(['-outputFormat={}'.format(output_format)])
 
     cert = subprocess.check_output(command_list).strip()
 

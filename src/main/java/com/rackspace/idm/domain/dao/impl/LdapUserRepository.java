@@ -233,8 +233,9 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public Iterable<User> getUsersByEmail(String email) {
-        return getObjects(searchFilterGetUserByEmail(email));
+    public Iterable<User> getUsersByEmail(String email, User.UserType userType) {
+        Filter filter = searchFilterGetUserByEmailAndUserType(email, userType);
+        return getObjects(filter);
     }
 
     @Override
@@ -497,6 +498,33 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
                 .addEqualAttribute(ATTR_MAIL, email)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .build();
+    }
+
+    private Filter searchFilterGetUserByEmailAndUserType(String email, User.UserType userType) {
+        Filter searchUserByEmailFilter;
+        if (User.UserType.ALL == userType) {
+            searchUserByEmailFilter = new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_MAIL, email)
+                    .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                    .build();
+
+        } else if (User.UserType.UNVERIFIED == userType) {
+            searchUserByEmailFilter = new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_MAIL, email)
+                    .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                    .addEqualAttribute(ATTR_UNVERIFIED, "TRUE")
+                    .build();
+        } else {
+            List<Filter> orFilterList = new ArrayList<Filter>();
+            orFilterList.add(Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_UNVERIFIED)));
+            orFilterList.add(Filter.createEqualityFilter(ATTR_UNVERIFIED, "FALSE"));
+            searchUserByEmailFilter = new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_MAIL, email)
+                    .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                    .addOrAttributes(orFilterList)
+                    .build();
+        }
+        return searchUserByEmailFilter;
     }
 
     private Filter searchFilterGetUserByDomainIdAndEnabled(String domainId, boolean enabled) {

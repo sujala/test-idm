@@ -16,6 +16,7 @@ import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
+import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
@@ -240,7 +241,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "error check: updating user validates contactId's length"() {
+    def "error check: updating user validates contactId"() {
         given:
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUIDOfLength("contactId", 100)
@@ -251,24 +252,33 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
             it
         }
 
-        when: "update userAdmin's contactId"
-
+        when: "update userAdmin's contactId exceeding max length"
         def response = cloud20.updateUser(utils.getIdentityAdminToken(), userAdmin.id, userForUpdate)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
 
-        when: "update userManage's contactId"
+        when: "update userManage's contactId exceeding max length"
         response = cloud20.updateUser(utils.getIdentityAdminToken(), userManage.id, userForUpdate)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
 
-        when: "update defaultUser's contactId"
+        when: "update defaultUser's contactId exceeding max length"
         response = cloud20.updateUser(utils.getIdentityAdminToken(), defaultUser.id, userForUpdate)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+
+        when: "update contactId with emtpy string"
+        userForUpdate = new UserForCreate().with {
+            it.contactId = ""
+            it
+        }
+        response = cloud20.updateUser(utils.getIdentityAdminToken(), userAdmin.id, userForUpdate)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, String.format(Validator20.EMPTY_ATTR_MESSAGE, "contactId"))
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)

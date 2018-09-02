@@ -914,6 +914,24 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def validate_logout_saml(self, saml=None,
+                             content_type=const.CONTENT_TYPE_VALUE.format(
+                                 const.X_WWW_FORM_URLENCODED),
+                             requestslib_kwargs=None):
+        """
+        Returns status whether this is a valid logout saml or not
+        200 is valid. Everything else is invalid.
+        POST '/v2.0/RAX-AUTH/federation/saml/validate'
+        """
+        url = self.url + const.FED_VALIDATE_LOGOUT_URL
+
+        headers = {
+            'Content-Type': content_type
+        }
+        resp = self.request('POST', url, data=saml, headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def get_admins_for_a_user(self, user_id, requestslib_kwargs=None):
         url = self.url + const.ADMINS_OF_A_USER_URL.format(user_id=user_id)
 
@@ -1707,13 +1725,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             requestslib_kwargs=requestslib_kwargs)
 
     def list_users_in_user_group_for_domain(
-            self, domain_id, group_id, requestslib_kwargs=None):
+            self, domain_id, group_id, option=None, requestslib_kwargs=None):
         """
         GET /v2.0/RAX-AUTH/domains/{domain_id}/groups/{group_id}/users
         """
         url = self.url + const.LIST_USERS_IN_USER_GROUP_FOR_DOMAIN_URL.format(
             domain_id=domain_id, group_id=group_id)
-        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+        return self.request('GET', url, params=option,
+                            requestslib_kwargs=requestslib_kwargs)
 
     def delete_user_from_user_group(
             self, domain_id, group_id, user_id, requestslib_kwargs=None):

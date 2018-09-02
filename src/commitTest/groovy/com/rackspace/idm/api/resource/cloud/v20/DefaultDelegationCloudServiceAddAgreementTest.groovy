@@ -136,6 +136,7 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
             it
         }
 
+        delegationService.addDelegationAgreement(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
         domainService.getDomain(callerDomain.domainId) >> callerDomain
         requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
 
@@ -283,6 +284,8 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
             it
         }
 
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        delegationService.addDelegationAgreement(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
         domainService.getDomain(callerDomain.domainId) >> callerDomain
         requestContextHolder.getRequestContext().getEffectiveCallerDomain() >> callerDomain
 
@@ -627,7 +630,7 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
         1 * parentAgreement.getDomainId() >> callerDomain.getDomainId()
         (1.._) * parentAgreement.getSubAgreementNestLevelNullSafe() >> 2 // sub agreement setting to 1, so this must be >1
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
-        1 * delegationService.addDelegationAgreement(_)
+        1 * delegationService.addDelegationAgreement(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
 
         and: "Principal defaults to caller when not specified"
         daExplicitDelegate.principalType == PrincipalType.USER
@@ -643,7 +646,7 @@ class DefaultDelegationCloudServiceAddAgreementTest extends RootServiceTest {
         1 * parentAgreement.getDomainId() >> callerDomain.getDomainId()
         (1.._) * parentAgreement.getSubAgreementNestLevelNullSafe() >> 2 // sub agreement setting to 1, so this must be >1
         1 * delegationAgreementConverter.fromDelegationAgreementWeb(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
-        1 * delegationService.addDelegationAgreement(_)
+        1 * delegationService.addDelegationAgreement(_) >> new com.rackspace.idm.domain.entity.DelegationAgreement()
     }
 
     @Unroll
