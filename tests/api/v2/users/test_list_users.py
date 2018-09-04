@@ -145,6 +145,30 @@ class TestListUsers(base.TestBaseV2):
                              self.DOMAIN_ID_TEST)
 
     @tags('positive', 'p1', 'regression')
+    def test_list_users_using_impersonation_token(self):
+        """List users using impersonation token
+        """
+        resp = self.identity_admin_client.get_user(
+            self.user_admin_client.default_headers[const.X_USER_ID])
+        ua_username = resp.json()[const.USER][const.USERNAME]
+
+        # Get an impersonation token. Impersonating with identity admin.
+        imp_req = requests.ImpersonateUser(user_name=ua_username)
+        imp_resp = self.identity_admin_client.impersonate_user(
+            request_data=imp_req)
+        self.assertEqual(imp_resp.status_code, 200)
+        impersonation_token = imp_resp.json()[
+            const.ACCESS][const.TOKEN][const.ID]
+        imp_client = self.generate_client(token=impersonation_token)
+        resp = imp_client.list_users()
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.json()[const.USERS]), 4)
+        for user in resp.json()[const.USERS]:
+            self.assertEqual(user[const.RAX_AUTH_DOMAIN_ID],
+                             self.DOMAIN_ID_TEST)
+
+    @tags('positive', 'p1', 'regression')
     def test_list_user_email_by_user_admin(self):
         """List by admin user filter by email
         """

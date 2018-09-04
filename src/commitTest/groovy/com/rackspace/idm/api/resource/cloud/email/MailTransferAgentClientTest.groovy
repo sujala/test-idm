@@ -32,12 +32,13 @@ class MailTransferAgentClientTest extends RootServiceTest {
 
         then:
         result
-
+        1 * reloadableConfig.getUnverifiedUserInvitesTTLHours() >> 1
+        1 * reloadableConfig.getUnverifiedUserRegistrationUrlFormat() >> "registration url"
         1 * emailConfigBuilder.buildEmailConfig(Arrays.asList(user.email), MailTransferAgentClient.UNVERIFIED_USER_EMAIL_BASE_DIR, MailTransferAgentClient.INVITE_PREFIX) >> emailConfig
         1 * emailService.sendTemplatedMultiPartMimeEmail(emailConfig, _ as Map) >> { args ->
             Map<String, Object> model = args[1]
-            assert model.get(EmailTemplateConstants.INVITE_USER_ID_PROP) == user.id
-            assert model.get(EmailTemplateConstants.INVITE_REGISTRATION_CODE_PROP) == user.registrationCode
+            assert model.get(EmailTemplateConstants.INVITE_TTL_HOURS_PROP) == 1
+            assert model.get(EmailTemplateConstants.INVITE_YEAR_PROP) == Calendar.getInstance().get(Calendar.YEAR)
         }
     }
 
@@ -56,7 +57,7 @@ class MailTransferAgentClientTest extends RootServiceTest {
 
         then:
         !result
-
+        1 * reloadableConfig.getUnverifiedUserRegistrationUrlFormat() >> "registration url"
         1 * emailConfigBuilder.buildEmailConfig(Arrays.asList(user.email), MailTransferAgentClient.UNVERIFIED_USER_EMAIL_BASE_DIR, MailTransferAgentClient.INVITE_PREFIX) >> emailConfig
         1 * emailService.sendTemplatedMultiPartMimeEmail(emailConfig, _) >> {throw new Exception()}
 
