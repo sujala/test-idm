@@ -3,8 +3,6 @@ package com.rackspace.idm.api.resource.cloud.email;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.DocumentService;
-import lombok.Setter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
@@ -14,25 +12,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
-import javax.annotation.PostConstruct;
-import javax.mail.Session;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 @Component
 public class MailTransferAgentClient implements EmailClient {
-
-    private static final String MAIL_SMTP_HOST = "mail.smtp.host";
-    private static final String MAIL_SMTP_TIMEOUT = "mail.smtp.timeout";
-    private static final String MAIL_SMTP_CONNECTIONTIMEOUT = "smtp.connectiontimeout";
-    private static final String MAIL_SMTP_PORT = "mail.smtp.port";
 
     /**
      * Path where we store all the email templates within the config directory
@@ -59,9 +44,6 @@ public class MailTransferAgentClient implements EmailClient {
     private IdentityConfig identityConfig;
 
     @Autowired
-    private DocumentService documentService;
-
-    @Autowired
     private EmailConfigBuilder emailConfigBuilder;
 
     @Autowired
@@ -75,40 +57,6 @@ public class MailTransferAgentClient implements EmailClient {
     private static final String ENABLED_ERROR_MSG = "Error sending mfa enabled email to user '%s'";
     private static final String DISABLED_ERROR_MSG = "Error sending mfa disabled email to user '%s'";
     private static final Logger logger = LoggerFactory.getLogger(MailTransferAgentClient.class);
-
-    private Properties properties;
-
-    @Setter
-    private Session session;
-
-    private String lockedOutEmail;
-    private String lockedOutEmailSubject;
-    private String enabledEmail;
-    private String enabledEmailSubject;
-    private String disabledEmail;
-    private String disabledEmailSubject;
-
-    @PostConstruct
-    private void postConstruct() {
-        properties = getSessionProperties();
-        session = Session.getInstance(properties);
-
-        lockedOutEmail = documentService.getMFALockedOutEmail();
-        lockedOutEmailSubject = identityConfig.getEmailLockedOutSubject();
-
-        enabledEmail = documentService.getMFAEnabledEmail();
-        enabledEmailSubject = identityConfig.getEmailMFAEnabledSubject();
-
-        disabledEmail = documentService.getMFADisabledEmail();
-        disabledEmailSubject = identityConfig.getEmailMFADisabledSubject();
-
-        Assert.notNull(lockedOutEmail);
-        Assert.notNull(lockedOutEmailSubject);
-        Assert.notNull(enabledEmail);
-        Assert.notNull(enabledEmailSubject);
-        Assert.notNull(disabledEmail);
-        Assert.notNull(disabledEmailSubject);
-    }
 
     @Override
     @Async
@@ -222,14 +170,6 @@ public class MailTransferAgentClient implements EmailClient {
         sendUnverifiedUserInviteMessage(user);
     }
 
-    /**
-     *
-     * @param user
-     * @param errorMsg
-     * @return
-     * @deprecated Should use new velocity mechanism and email service to send email
-     */
-    @Deprecated
     private boolean sendMfaEmail(User user, String errorMsg, String prefix) {
         //put everything in try block as failure sending email should not be considered failure.
         try {
@@ -244,19 +184,5 @@ public class MailTransferAgentClient implements EmailClient {
             logger.error(String.format(errorMsg, user.getUsername()), ex);
             return false;
         }
-    }
-
-    /**
-     *
-     * @deprecated Should use email service to send email
-     */
-    @Deprecated
-    private Properties getSessionProperties() {
-        Properties properties = System.getProperties();
-        properties.setProperty(MAIL_SMTP_HOST, identityConfig.getStaticConfig().getEmailHost());
-        properties.setProperty(MAIL_SMTP_TIMEOUT, ONE_MINUTE);
-        properties.setProperty(MAIL_SMTP_CONNECTIONTIMEOUT, ONE_MINUTE);
-        properties.setProperty(MAIL_SMTP_PORT, String.valueOf(identityConfig.getStaticConfig().getEmailPort()));
-        return properties;
     }
 }
