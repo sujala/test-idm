@@ -1,9 +1,7 @@
 package com.rackspace.idm.api.filter;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.security.SecurityContext;
-import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -19,7 +17,6 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +26,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -46,7 +42,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     public static final String DOMAINS_PATH_PART = "domains";
     public static final String DEVOPS_SERVICE_PATH_PART = "devops";
 
-    public static final int X_REQUEST_ID_MAX_LENGTH = 64;
     /**
      * Pattern to recognize validate call against AE or UUID tokens
      */
@@ -85,27 +80,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     //TODO: Refactor this method. It's way too complex
     @Override
     public ContainerRequest filter(ContainerRequest request) {
-        //immediately replace the security context. Will be populated as appropriate later on
-        final SecurityContext securityContext = new SecurityContext();
-        requestContextHolder.getRequestContext().setSecurityContext(securityContext);
-        requestContextHolder.getRequestContext().setContainerRequest(request);
-
+        final SecurityContext securityContext = requestContextHolder.getRequestContext().getSecurityContext();
         String path = request.getPath();
         final String method = request.getMethod();
-
-        //TODO: Transition this to use the provided ContainerRequest rather than raw HttpServletRequest
-        if (req != null) {
-            MDC.put(Audit.REMOTE_IP, req.getRemoteAddr());
-            MDC.put(Audit.HOST_IP, req.getLocalAddr());
-            MDC.put(Audit.PATH, path);
-            MDC.put(Audit.GUUID, calculateAuditGuuid(request));
-            String xForwardedFor = req.getHeader("X-Forwarded-For");
-            if(StringUtils.isNotBlank(xForwardedFor)){
-                MDC.put(Audit.X_FORWARDED_FOR, xForwardedFor);
-            }else {
-                MDC.put(Audit.X_FORWARDED_FOR, req.getRemoteAddr());
-            }
-        }
 
         // skip token authentication for any url that ends with public.
         // convention for public documentation is /*/*/public
@@ -239,21 +216,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         logger.warn("Authentication Failed for {} ", authHeader);
         throw new NotAuthenticatedException("Authentication Failed.");
 
-    }
-
-    private String calculateAuditGuuid(ContainerRequest request) {
-        String requestId = null;
-        if (identityConfig.getReloadableConfig().isFeatureUseReposeRequestIdEnabled()) {
-            requestId = request.getHeaderValue(GlobalConstants.X_REQUEST_ID);
-        }
-
-        if (StringUtils.isBlank(requestId)) {
-            requestId = UUID.randomUUID().toString();
-        } else if (requestId.length() > X_REQUEST_ID_MAX_LENGTH) {
-            requestId = StringUtils.substring(requestId, 0, X_REQUEST_ID_MAX_LENGTH);
-        }
-
-        return requestId;
     }
 
     /**
