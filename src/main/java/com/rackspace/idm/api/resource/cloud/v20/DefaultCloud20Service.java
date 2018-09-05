@@ -965,7 +965,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             org.openstack.docs.identity.api.v2.User responseUser = this.userConverterCloudV20.toUser(unverifiedUser, false);
 
-            return Response.created(uriInfo.getBaseUriBuilder().path("v2.0").path("users").path(unverifiedUser.getId()).build()).entity(responseUser);
+            return Response.created(idmPathUtils.createLocationHeaderValue(uriInfo, "v2.0", "users", unverifiedUser.getId())).entity(responseUser);
         } catch (Exception ex) {
             logger.debug("Error creating unverified user.", ex);
             return exceptionHandler.exceptionResponse(ex);

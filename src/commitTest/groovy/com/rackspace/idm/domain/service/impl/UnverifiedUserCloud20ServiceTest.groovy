@@ -39,6 +39,7 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
         mockIdentityConfig(service)
         mockExceptionHandler(service)
         mockValidator(service)
+        mockIdmPathUtils(service)
     }
 
     @Unroll
@@ -67,6 +68,7 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
         if (featureEnabled) {
             0 * exceptionHandler.exceptionResponse(_)
             1 * userService.addUnverifiedUser(_)
+            1 * idmPathUtils.createLocationHeaderValue(_, _)
         } else {
             0 * userService.addUnverifiedUser(_)
             1 * exceptionHandler.exceptionResponse(_) >> { args ->

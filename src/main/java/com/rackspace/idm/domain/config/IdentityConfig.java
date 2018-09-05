@@ -430,6 +430,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_PROP = "feature.enable.scInfo.accessible.domains.endpoints.for.user";
     public static final boolean FEATURE_ENABLE_SCINFO_DOMAINS_ENDPOINTS_FOR_USER_DEFAULT = true;
 
+    public static final String FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP = "feature.identity.deployment.environment";
+    public static final String FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_DEFAULT = "DEV";
+
     /**
      * Required static prop
      */
@@ -898,6 +901,7 @@ public class IdentityConfig {
         defaults.put(UNVERIFIED_USER_INVITES_TTL_HOURS_PROP, UNVERIFIED_USER_INVITES_TTL_HOURS_DEFAULT);
         defaults.put(UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP, UNVERIFIED_USER_REGISTRATION_CODE_SIZE_DEFAULT);
         defaults.put(UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP, UNVERIFIED_USER_REGISTRATION_URL_FORMAT_DEFAULT);
+        defaults.put(FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP, FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -968,7 +972,6 @@ public class IdentityConfig {
         verifyAndLogReloadableProperty(IDENTITY_ROLE_TENANT_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(ENDPOINT_REGIONID_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(EMAIL_FROM_EMAIL_ADDRESS, OPTIONAL);
-
 
         /**
          * OpenTracing properties
@@ -1719,6 +1722,7 @@ public class IdentityConfig {
         public boolean getActiveDirectorySearchForUserBeforeBind() {
             return getBooleanSafely(staticConfiguration, AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP);
         }
+
     }
 
     /**
@@ -2496,6 +2500,11 @@ public class IdentityConfig {
         @IdmProp(key = UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP, versionAdded = "3.25.0", description = "The registration url for unverified user invite")
         public String getUnverifiedUserRegistrationUrlFormat() {
             return getStringSafely(reloadableConfiguration, UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP);
+        }
+
+        @IdmProp(key = FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP, versionAdded = "3.26.0", description = "Deployment environment property for identity")
+        public String getIdentityDeploymentEnvironment() {
+            return getStringSafely(reloadableConfiguration, FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP);
         }
 
     }

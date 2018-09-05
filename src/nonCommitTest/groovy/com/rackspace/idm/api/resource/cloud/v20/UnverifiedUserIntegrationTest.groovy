@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.api.resource.IdmPathUtils
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.impl.DefaultUserService
@@ -15,6 +16,7 @@ import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.RandomUtils
+import org.apache.http.HttpHeaders
 import org.apache.http.HttpStatus
 import org.codehaus.groovy.runtime.InvokerHelper
 import org.mockserver.verify.VerificationTimes
@@ -62,6 +64,40 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         where:
         featureEnabled << [true, false]
+    }
+
+    @Unroll
+    def "verify location header for created unverified users: feature.identity.deployment.environment == #environment"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP, environment)
+        def userAdmin = utils.createCloudAccount()
+        def user = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        when:
+        def response = cloud20.createUnverifiedUser(utils.getToken(userAdmin.username), user)
+
+        then:
+        User unverifiedUser = response.getEntity(User).value
+        response.status == SC_CREATED
+        if (environment.equals(IdmPathUtils.Environment.STAGING.name())
+            || environment.equals(IdmPathUtils.Environment.PROD.name())) {
+            assert response.getHeaders().get(HttpHeaders.LOCATION).get(0) ==~ /http:\/\/localhost:\d+\/v2.0\/users\/${unverifiedUser.id}/
+        } else {
+            assert response.getHeaders().get(HttpHeaders.LOCATION).get(0) ==~ /http:\/\/localhost:\d+\/cloud\/v2.0\/users\/${unverifiedUser.id}/
+        }
+
+        cleanup:
+        staticIdmConfiguration.reset()
+        reloadableConfiguration.reset()
+
+        where:
+        environment << IdmPathUtils.Environment.values()
     }
 
     @Unroll
