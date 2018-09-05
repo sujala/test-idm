@@ -47,9 +47,6 @@ public class IdentityConfig {
     public static final String EMAIL_FROM_EMAIL_ADDRESS = "email.return.email.address";
     public static final String EMAIL_FROM_EMAIL_ADDRESS_DEFAULT = "no-reply@rackspace.com";
 
-    private static final String EMAIL_MFA_ENABLED_SUBJECT = "email.mfa.enabled.subject";
-    private static final String EMAIL_MFA_DISABLED_SUBJECT = "email.mfa.disabled.subject";
-    private static final String EMAIL_LOCKED_OUT_SUBJECT = "email.locked.out.email.subject";
     public static final String EMAIL_HOST = "email.host";
     public static final String EMAIL_HOST_DEFAULT = "localhost";
     public static final String EMAIL_PORT = "email.port";
@@ -951,9 +948,6 @@ public class IdentityConfig {
         // Verify and Log Required Values
         verifyAndLogStaticProperty(GA_USERNAME, REQUIRED);
 
-        verifyAndLogStaticProperty(EMAIL_LOCKED_OUT_SUBJECT, REQUIRED);
-        verifyAndLogStaticProperty(EMAIL_MFA_ENABLED_SUBJECT, REQUIRED);
-        verifyAndLogStaticProperty(EMAIL_MFA_DISABLED_SUBJECT, REQUIRED);
         verifyAndLogStaticProperty(EMAIL_HOST, OPTIONAL);
         verifyAndLogStaticProperty(EMAIL_PORT, OPTIONAL);
         verifyAndLogStaticProperty(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, OPTIONAL);
@@ -1335,21 +1329,6 @@ public class IdentityConfig {
         @IdmProp(key = MAX_NUM_USERS_IN_DOMAIN, description = "The max number of users allowed in a domain.", versionAdded = "1.0.14.8")
         public int getMaxNumberOfUsersInDomain() {
             return getIntSafely(staticConfiguration, MAX_NUM_USERS_IN_DOMAIN);
-        }
-
-        @IdmProp(key = EMAIL_LOCKED_OUT_SUBJECT, description = "Subject to use when sending MFA locked out email to customer.", versionAdded = "2.5.0")
-        public String getEmailLockedOutSubject() {
-            return getStringSafely(staticConfiguration, EMAIL_LOCKED_OUT_SUBJECT);
-        }
-
-        @IdmProp(key=EMAIL_MFA_ENABLED_SUBJECT, description = "Subject to use when sending MFA enabled email to customer.", versionAdded = "2.5.0")
-        public String getEmailMFAEnabledSubject() {
-            return getStringSafely(staticConfiguration, EMAIL_MFA_ENABLED_SUBJECT);
-        }
-
-        @IdmProp(key=EMAIL_MFA_DISABLED_SUBJECT, description = "Subject to use when sending MFA disabled email to customer.", versionAdded = "2.5.0")
-        public String getEmailMFADisabledSubject() {
-            return getStringSafely(staticConfiguration, EMAIL_MFA_DISABLED_SUBJECT);
         }
 
         @IdmProp(key=EMAIL_HOST, description = "Email host to use when sending emails.", versionAdded = "2.5.0")
@@ -2656,21 +2635,6 @@ public class IdentityConfig {
     @Deprecated
     public String getGaUsername() {
         return getStaticConfig().getGaUsername();
-    }
-
-    @Deprecated
-    public String getEmailLockedOutSubject() {
-        return getStaticConfig().getEmailLockedOutSubject();
-    }
-
-    @Deprecated
-    public String getEmailMFAEnabledSubject() {
-        return getStaticConfig().getEmailMFAEnabledSubject();
-    }
-
-    @Deprecated
-    public String getEmailMFADisabledSubject() {
-        return getStaticConfig().getEmailMFADisabledSubject();
     }
 
     @Deprecated
