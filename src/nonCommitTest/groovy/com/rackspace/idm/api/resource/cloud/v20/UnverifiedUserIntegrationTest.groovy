@@ -1190,7 +1190,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.acceptUnverifiedUserInvite(invalidUserForCreate, mediaType, mediaType)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, "invalid"))
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE)
 
         when: "provisioned user id"
         invalidUserForCreate = new UserForCreate()
@@ -1199,7 +1199,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.acceptUnverifiedUserInvite(invalidUserForCreate, mediaType, mediaType)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, userAdmin.id))
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE)
 
         when: "invalid registration code"
         invalidUserForCreate = new UserForCreate()
@@ -1208,7 +1208,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.acceptUnverifiedUserInvite(invalidUserForCreate, mediaType, mediaType)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, inviteEntity.userId))
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE)
 
         when: "missing username"
         invalidUserForCreate = new UserForCreate()
@@ -1303,6 +1303,55 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "error check: accepting or verifying invite for unverified user before send an invite: mediaType = #mediaType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def email = "${RandomStringUtils.randomAlphabetic(8)}@rackspace.com"
+        def user = new User().with {
+            it.email = email
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        // Create unverified user
+        def response = cloud20.createUnverifiedUser(userAdminToken, user)
+        assert response.status == HttpStatus.SC_CREATED
+        def unverifiedUserEntity = response.getEntity(User).value
+
+        def username = testUtils.getRandomUUID("user")
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = unverifiedUserEntity.id
+            it.username = username
+            it.password = Constants.DEFAULT_PASSWORD
+            it.registrationCode = "code"
+            it.secretQA = v2Factory.createSecretQA()
+            it
+        }
+
+        when: "accepting invite"
+        response = cloud20.acceptUnverifiedUserInvite(userForCreate, mediaType, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE)
+
+        when: "verifying invite "
+        response = cloud20.verifyUserInvite(unverifiedUserEntity.id, "code")
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
     def "Verify registration code on unverified user is replaced when new invite is sent: mediaType = #mediaType"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
@@ -1347,7 +1396,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.acceptUnverifiedUserInvite(userForCreate, mediaType, mediaType)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, inviteEntity.userId))
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE)
 
         when: "accepting invite with new registration code"
         userForCreate.registrationCode = inviteEntity.registrationCode
