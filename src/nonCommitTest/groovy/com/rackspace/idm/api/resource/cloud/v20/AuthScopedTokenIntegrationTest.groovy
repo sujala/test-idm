@@ -300,7 +300,7 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
         def entity = response.getEntity(AuthenticateResponse).value
         assert (entity != null)
 
-        def nonMfaResponse = cloud20.addDomain(entity.token.id, null)
+        def nonMfaResponse = cloud20.addDomain(entity.token.id, v2Factory.createDomain(domainId))
 
         then:
         nonMfaResponse.status == SC_FORBIDDEN

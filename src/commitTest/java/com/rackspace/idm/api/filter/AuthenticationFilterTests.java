@@ -68,6 +68,7 @@ public class AuthenticationFilterTests {
         reloadableConfig = mock(IdentityConfig.ReloadableConfig.class);
         when(identityConfig.getReloadableConfig()).thenReturn(reloadableConfig);
         authFilter.setIdentityConfig(identityConfig);
+        authenticationFilterWithMock.setIdentityConfig(identityConfig);
 
         authenticationFilterWithMock.setRequestContextHolder(requestContextHolderMock);
         authFilter.setRequestContextHolder(requestContextHolderMock);
@@ -130,6 +131,7 @@ public class AuthenticationFilterTests {
         impersonatedScopeAccess.setImpersonatingToken("impToken");
         impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusMinutes(10).toDate());
         when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new ScopeAccess());
+        when(reloadableConfig.useAspectForMfaAuthorization()).thenReturn(IdentityConfig.FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT);
         authenticationFilterWithMock.filter(requestMock);
     }
 

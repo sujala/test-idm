@@ -203,6 +203,9 @@ public class IdentityConfig {
     public static final String FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP = "feature.maintain.password.history";
     public static final boolean FEATURE_MAINTAIN_PASSWORD_HISTORY_DEFAULT = true;
 
+    public static final String FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP= "feature.enable.use.aspect.for.mfa.authorization";
+    public static final boolean FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT = true;
+
     public static final String PASSWORD_HISTORY_MAX_PROP = "password.history.max";
     public static final int PASSWORD_HISTORY_MAX_DEFAULT = 10;
 
@@ -902,6 +905,8 @@ public class IdentityConfig {
         defaults.put(UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP, UNVERIFIED_USER_REGISTRATION_CODE_SIZE_DEFAULT);
         defaults.put(UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP, UNVERIFIED_USER_REGISTRATION_URL_FORMAT_DEFAULT);
         defaults.put(FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP, FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP, FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -2370,6 +2375,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, versionAdded = "3.20.0", description = "Whether to enable the grant multiple roles to user service.")
         public boolean isGrantRolesToUserServiceEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP, versionAdded = "3.26.0", description = "Whether to use aspect logic to enforce MFA setup and sessionId use authorization or to continue to use the filter.")
+        public boolean useAspectForMfaAuthorization() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP);
         }
 
         @IdmProp(key = FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, versionAdded = "3.21.0", description = "Specifies whether to generate and store a user's phone PIN when the user is created. Phone PINs are generated for provisioned users created through v2.0 create user calls and Domain federated users.")
