@@ -273,7 +273,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ERROR_DOMAIN_MUST_EXIST_FOR_UNVERIFIED_USERS = "The domain for the user does not exist.";
     public static final String ERROR_DOMAIN_MUST_BE_ENABLED_FOR_UNVERIFIED_USERS = "The domain for the user must be enabled.";
     public static final String ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN = "A user with the provided email already exists in the domain.";
-    public static final String UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE = "Unverified user with ID '%s' was not found.";
 
     public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
 
@@ -965,7 +964,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             org.openstack.docs.identity.api.v2.User responseUser = this.userConverterCloudV20.toUser(unverifiedUser, false);
 
-            return Response.created(uriInfo.getBaseUriBuilder().path("v2.0").path("users").path(unverifiedUser.getId()).build()).entity(responseUser);
+            return Response.created(idmPathUtils.createLocationHeaderValue(uriInfo, "v2.0", "users", unverifiedUser.getId())).entity(responseUser);
         } catch (Exception ex) {
             logger.debug("Error creating unverified user.", ex);
             return exceptionHandler.exceptionResponse(ex);
@@ -1037,9 +1036,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (retrievedUnverifiedUser == null
                     || !retrievedUnverifiedUser.isUnverified()
+                    || retrievedUnverifiedUser.getRegistrationCode() == null
                     || !retrievedUnverifiedUser.getRegistrationCode().equalsIgnoreCase(user.getRegistrationCode())) {
-                throw new NotFoundException(String.format(UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, user.getId()),
-                        ErrorCodes.ERROR_CODE_NOT_FOUND);
+                throw new NotFoundException(ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE,
+                        ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND);
             }
 
             // Validate TTL of invite
@@ -1089,10 +1089,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             atomHopperClient.asyncPost(retrievedUnverifiedUser, AtomHopperConstants.CREATE);
 
-            EndUser endUser = identityUserService.getEndUserById(retrievedUnverifiedUser.getId());
-            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(endUser)).getValue());
+            User userEntity = identityUserService.getProvisionedUserById(retrievedUnverifiedUser.getId());
+            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userEntity)).getValue());
         } catch (Exception ex) {
-            logger.debug(String.format("Error accepting invite for unverified user '%s'.", user.getId()), ex);
+            logger.warn(String.format("Error accepting invite for unverified user '%s'.", user.getId()), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }
@@ -1100,16 +1100,22 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder verifyInviteUser(HttpHeaders httpHeaders, UriInfo uriInfo, String userId, String registrationCode) {
         User user = userService.getUserById(userId);
         int expiration = identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours();
-        if (user != null && user.isUnverified() && user.getRegistrationCode().equalsIgnoreCase(registrationCode)) {
+        if (user != null
+                && user.isUnverified()
+                && user.getRegistrationCode() != null
+                && user.getRegistrationCode().equalsIgnoreCase(registrationCode)) {
             if (!new DateTime(user.getInviteSendDate()).plusHours(expiration).isBeforeNow()) {
                 return Response.ok();
             } else {
-                return exceptionHandler.exceptionResponse(new ForbiddenException("Your registration code has expired, please request a new invite.", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION));
+                Exception ex = new ForbiddenException("Your registration code has expired, please request a new invite.", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+                logger.warn(String.format("Error verifying invite for unverified user '%s'.", userId), ex);
+                return exceptionHandler.exceptionResponse(ex);
             }
         }
-        String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
-        logger.warn(errMsg);
-        return exceptionHandler.exceptionResponse(new NotFoundException(errMsg, ErrorCodes.ERROR_CODE_NOT_FOUND));
+        // Head request do not return a body, but populating the message and error code for logging purposes
+        Exception ex = new NotFoundException(ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND);
+        logger.warn(String.format("Error verifying invite for unverified user '%s'.", userId), ex);
+        return exceptionHandler.exceptionResponse(ex);
     }
 
     @Override

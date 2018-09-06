@@ -1,21 +1,13 @@
 package com.rackspace.idm.api.resource
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.User
-import com.sun.jersey.spi.container.ContainerRequest
-import org.apache.commons.lang3.RandomStringUtils
-import org.junit.Test
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.ws.rs.HttpMethod
 import javax.ws.rs.core.UriBuilder
 import javax.ws.rs.core.UriInfo
-
-import static org.hamcrest.Matchers.equalTo
-import static org.hamcrest.Matchers.equalToIgnoringCase
-import static org.junit.Assert.assertThat
-import static org.junit.Assert.assertThat
 
 class IdmPathUtilsTest extends Specification {
 
@@ -151,6 +143,49 @@ class IdmPathUtilsTest extends Specification {
         prevLink.equalsIgnoreCase(firstLink)
     }
 
+    @Unroll
+    def "createLocationHeader: build correct path - feature.identity.deployment.environment = #environment"() {
+        given:
+        // Setup mocks
+        def path = "http://localhost:8080/idm/cloud/v2.0/users/id"
+        def builderMock = Mock(UriBuilder)
+        def uriInfo = Mock(UriInfo)
+
+        builderMock.path(_ as String) >> { String arg1 ->
+            path = path + "/" + arg1
+            return builderMock
+        }
+        builderMock.path(null) >> builderMock
+        builderMock.build() >> new URI(path)
+        uriInfo.getRequestUriBuilder() >> builderMock
+        uriInfo.getAbsolutePath() >> new URI(path)
+        uriInfo.getBaseUri() >> new URI("idm")
+
+        IdentityConfig identityConfig = Mock()
+        IdentityConfig.ReloadableConfig reloadableConfig = Mock()
+        idmPathUtils.identityConfig = identityConfig
+        identityConfig.getReloadableConfig() >> reloadableConfig
+
+        identityConfig.getReloadableConfig().getIdentityDeploymentEnvironment() >> environment
+
+
+        when:
+        idmPathUtils.createLocationHeaderValue(uriInfo, "v2.0", "users")
+
+        then:
+        1 * builderMock.replacePath("idm")
+        if (environment.equals(IdmPathUtils.Environment.PROD)
+            || environment.equals(IdmPathUtils.Environment.STAGING)) {
+            1 * builderMock.replacePath("/idm/v2.0/users/id")
+        } else {
+            0 * builderMock.replacePath(_)
+            assert builderMock.build().path == "/idm/cloud/v2.0/users/id"
+        }
+
+        where:
+        environment << IdmPathUtils.Environment.values()
+    }
+
     def createContext(int offset, int limit, int totalRecords) {
         return new PaginatorContext<Object>().with {
             it.offset = offset
@@ -182,6 +217,7 @@ class IdmPathUtilsTest extends Specification {
         }
         uriInfo.getRequestUriBuilder() >> builderMock
         uriInfo.getAbsolutePath() >> new URI(absolutePath)
+        uriInfo.getBaseUri() >> new URI("idm")
 
         return uriInfo
     }
