@@ -1822,7 +1822,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + (
             const.ADD_USER_DELEGATE_TO_DELEGATION_AGREEMENT_URL.format(
-              da_id=da_id, user_id=user_id))
+                da_id=da_id, user_id=user_id))
 
         return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)
 
@@ -1834,7 +1834,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + (
             const.DELETE_USER_DELEGATE_FROM_DELEGATION_AGREEMENT_URL.format(
-              da_id=da_id, user_id=user_id))
+                da_id=da_id, user_id=user_id))
 
         return self.request('DELETE', url,
                             requestslib_kwargs=requestslib_kwargs)
@@ -1847,7 +1847,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + (
             const.ADD_USER_GROUP_DELEGATE_TO_DELEGATION_AGREEMENT_URL.format(
-              da_id=da_id, user_group_id=user_group_id))
+                da_id=da_id, user_group_id=user_group_id))
 
         return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)
 
@@ -1939,3 +1939,26 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             user_id=user_id)
         return self.request(
             'POST', url, requestslib_kwargs=requestslib_kwargs)
+
+    def verify_unverified_user_invite(
+            self, user_id, registration_code, requestslib_kwargs=None):
+        """
+        HEAD v2.0/RAX-AUTH/invite/user/{userId}?registrationCode=XXX
+        """
+        url = self.url + const.UNVERIFIED_USER_URL.format(
+            user_id=user_id)
+        registration_code = {const.REGISTRATION_CODE: registration_code}
+
+        return self.request('HEAD', url, params=registration_code,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def accept_unverified_user_invite(
+            self, user_id, request_object, requestslib_kwargs=None):
+        """
+        PUT v2.0/RAX-AUTH/invite/user/{userId}
+        """
+        url = self.url + const.UNVERIFIED_USER_ACCEPT_INVITE_URL.format(
+            user_id=user_id)
+
+        return self.request('PUT', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)

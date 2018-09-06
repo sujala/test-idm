@@ -73,6 +73,7 @@ class AuthenticateAsTenantWithToken(base.AutoMarshallingModel):
     """Marshalling for Authentications requests as tenant with token.
         auth token with either tenant_id of tenant_name or none but noth both
     """
+
     def __init__(self, token_id, tenant_id=None, tenant_name=None):
         self.token_id = token_id
         self.tenant_id = tenant_id
@@ -98,6 +99,7 @@ class AuthenticateAsTenantWithToken(base.AutoMarshallingModel):
 
 class AuthenticateWithMFA(base.AutoMarshallingModel):
     """Marshalling for Authentication request with MFA cred"""
+
     def __init__(self, pass_code, tenant_id=None, tenant_name=None):
         self.pass_code = pass_code
         self.tenant_id = tenant_id
@@ -358,6 +360,7 @@ class UserUpdate(base.AutoMarshallingModel):
 #  TODO: insert update user request xml part
 class PasswordCredentialsAdd(base.AutoMarshallingModel):
     """Marshalling for Add Credentials Request"""
+
     def __init__(self, username, password):
         self.username = username
         self.password = password
@@ -374,6 +377,7 @@ class PasswordCredentialsAdd(base.AutoMarshallingModel):
 
 class ApiKeyCredentialsUpdate(base.AutoMarshallingModel):
     """Marshalling for Update Api key Request"""
+
     def __init__(self, username, apikey):
         self.username = username
         self.apikey = apikey
@@ -390,6 +394,7 @@ class ApiKeyCredentialsUpdate(base.AutoMarshallingModel):
 
 class GroupAdd(base.AutoMarshallingModel):
     """Marshalling for Adding a group"""
+
     def __init__(self, group_name, group_desc):
         self.group_name = group_name
         self.group_desc = group_desc
@@ -405,6 +410,7 @@ class GroupAdd(base.AutoMarshallingModel):
 
 class UserUpgrade(base.AutoMarshallingModel):
     """Marshalling for Upgrade User Request."""
+
     def __init__(self, user_id, domain_id, secret_q, secret_a, groups, roles):
         self.user_id = user_id
         self.domain_id = domain_id
@@ -753,6 +759,7 @@ class AddEndpointToTenant(base.AutoMarshallingModel):
 
 class Tenant(base.AutoMarshallingModel):
     """Marshalling for Add/ Update Tenant Request."""
+
     def __init__(self, tenant_name, tenant_id, description=None, enabled=None,
                  tenant_types=None, display_name=None, domain_id=None):
         self.tenant_name = tenant_name
@@ -896,6 +903,7 @@ class TenantTypeToEndpointMappingRule(base.AutoMarshallingModel):
 
 class OTPDeviceAdd(base.AutoMarshallingModel):
     """Marshalling for Add OTP Devive request"""
+
     def __init__(self, device_name):
         self.device_name = device_name
 
@@ -910,6 +918,7 @@ class OTPDeviceAdd(base.AutoMarshallingModel):
 
 class OTPDeviceVerify(base.AutoMarshallingModel):
     """Marshalling for Verify OTP Device request"""
+
     def __init__(self, code):
         self.code = code
 
@@ -921,6 +930,7 @@ class OTPDeviceVerify(base.AutoMarshallingModel):
 
 class MFAUpdate(base.AutoMarshallingModel):
     """Marshalling for MFA Update request"""
+
     def __init__(self, enabled=None, mfa_enforce_level=None, unlock=None):
         self.enabled = enabled
         self.mfa_enforce_level = mfa_enforce_level
@@ -1039,6 +1049,7 @@ class ChangePassword(base.AutoMarshallingModel):
     """
     Marshalling for change password request
     """
+
     def __init__(self, user_name, current_password, new_password):
         self.user_name = user_name
         self.current_password = current_password
@@ -1059,6 +1070,7 @@ class PasswordPolicy(base.AutoMarshallingModel):
     """
     Marshalling for password policy requests
     """
+
     def __init__(self, duration=None, history_restriction=None):
         self.duration = duration
         self.history_restriction = history_restriction
@@ -1076,6 +1088,7 @@ class ImpersonateUser(base.AutoMarshallingModel):
     """
     Marshalling for impersonation request
     """
+
     def __init__(self, user_name, idp=None, expire_in_seconds=None):
         self.user_name = user_name
         self.expire_in_seconds = expire_in_seconds
@@ -1098,6 +1111,7 @@ class ImpersonateUser(base.AutoMarshallingModel):
 
 
 class DevopsProp(base.AutoMarshallingModel):
+
     def __init__(self, prop_name=None, prop_value=None, prop_description=None,
                  prop_version=None, prop_reloadable=None, prop_searchable=None,
                  prop_value_type=None):
@@ -1121,6 +1135,7 @@ class DevopsProp(base.AutoMarshallingModel):
 
 
 class DomainAdministratorChange(base.AutoMarshallingModel):
+
     def __init__(self, promote_user_id, demote_user_id):
         self.promote_user_id = promote_user_id
         self.demote_user_id = demote_user_id
@@ -1140,6 +1155,7 @@ class DomainAdministratorChange(base.AutoMarshallingModel):
 
 
 class domainUserGroup(base.AutoMarshallingModel):
+
     def __init__(self, group_name=None, domain_id=None, description=None):
         self.group_name = group_name
         self.description = description
@@ -1162,6 +1178,7 @@ class domainUserGroup(base.AutoMarshallingModel):
 
 
 class TenantRoleAssignments(base.AutoMarshallingModel):
+
     def __init__(self, *tenant_assignments):
         self.tenant_assignments = tenant_assignments
 
@@ -1175,6 +1192,7 @@ class TenantRoleAssignments(base.AutoMarshallingModel):
 
 
 class DelegationAgreements(base.AutoMarshallingModel):
+
     def __init__(self, da_name, principal_id=None,
                  principal_type=None, description=None,
                  sub_agreement_nest_level=None,
@@ -1209,6 +1227,7 @@ class DelegationAgreements(base.AutoMarshallingModel):
 
 
 class UnverifiedUser(base.AutoMarshallingModel):
+
     def __init__(self, email=None, domain_id=None):
         self.email = email
         self.domain_id = domain_id
@@ -1224,3 +1243,23 @@ class UnverifiedUser(base.AutoMarshallingModel):
                 self.domain_id
             )
         return json.dumps(unverified_user_request)
+
+
+class AcceptInviteUnverifiedUser(base.AutoMarshallingModel):
+
+    def __init__(self, registration_code, user_name, password):
+        self.registration_code = registration_code
+        self.user_name = user_name
+        self.password = password
+
+    def _obj_to_json(self):
+        register_user_request = {
+            const.USER: {
+                const.RAX_AUTH_REGISTRATION_CODE: self.registration_code,
+                const.OS_KSADM_PASSWORD: self.password,
+                const.USERNAME: self.user_name,
+                const.NS_SECRETQA: {
+                    const.SECRET_ANSWER: "Zorba",
+                    const.SECRET_QUESTION: "Who are you??"}
+            }}
+        return json.dumps(register_user_request)
