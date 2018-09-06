@@ -5093,7 +5093,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         1 * identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 48
         1 * userService.updateUser(entityUser)
-        1 * identityUserService.getEndUserById(user.id) >> entityUser
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> entityUser
         1 * service.userConverterCloudV20.toUser(entityUser) >> v2Factory.createUser()
         1 * openStackIdentityV2Factory.createUser(_) >> new JAXBElement<User>(org.openstack.docs.identity.api.v2.ObjectFactory._User_QNAME, User.class, null, v2Factory.createUser())
     }
@@ -5136,7 +5136,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * identityUserService.getProvisionedUserById(user.getId()) >> null
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
-            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, user.id))
+            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE)
             return Response.status(SC_NOT_FOUND)
         }
 
@@ -5146,7 +5146,18 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * identityUserService.getProvisionedUserById(user.getId()) >> invalidUser
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
-            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, user.id))
+            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE)
+            return Response.status(SC_NOT_FOUND)
+        }
+
+        when: "invite has not been sent"
+        user.registrationCode = null
+        service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE)
             return Response.status(SC_NOT_FOUND)
         }
 
@@ -5157,7 +5168,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * identityUserService.getProvisionedUserById(user.getId()) >> entityUser
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
-            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_NOT_FOUND, String.format(DefaultCloud20Service.UNVERIFIED_USER_NOT_FOUND_ERROR_MESSAGE, user.id))
+            IdmExceptionAssert.assertException(args[0], NotFoundException, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE)
             return Response.status(SC_NOT_FOUND)
         }
 

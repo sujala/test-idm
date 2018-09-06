@@ -124,6 +124,8 @@ public final class ErrorCodes {
     // Unverified users
     public static final String ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN = "UU-000";
     public static final String ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE = "Cannot create invite user for domain with no enabled account admin.";
+    public static final String ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND = "UU-001";
+    public static final String ERROR_CODE_UNVERIFIED_USERS_INVITE_NOT_FOUND_MESSAGE = "The specified invitation was not found.";
 
     //Endpoint Assignment
     public static final String ERROR_CODE_EP_MISSING_ENDPOINT = "EP-000";
