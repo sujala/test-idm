@@ -117,7 +117,7 @@ public interface AuthorizationService {
      * Whether the effective caller has the specified identity type (or higher).
      *
      * @param identityType
-    \     */
+     */
     boolean authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum identityType);
 
     /**
