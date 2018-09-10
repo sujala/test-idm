@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.modules.usergroups.Constants;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -84,7 +85,15 @@ public class DefaultUserGroupAuthorizationService implements UserGroupAuthorizat
                 }
             }
         }
+        verifyTargetDomainIsNotDefaultDomain(targetDomainId);
         verifyAreUserGroupsEnabledForDomain(targetDomainId);
+    }
+
+    private void verifyTargetDomainIsNotDefaultDomain(String targetDomainId) {
+        String defaultDomainId = identityConfig.getReloadableConfig().getGroupDefaultDomainId();
+        if (StringUtils.isBlank(targetDomainId) || targetDomainId.equalsIgnoreCase(defaultDomainId)) {
+            throw new ForbiddenException(ErrorCodes.ERROR_CODE_USER_GROUP_CANNOT_BE_CREATED_IN_DEFAULT_DOMAIN_MSG, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+        }
     }
 
     @Override

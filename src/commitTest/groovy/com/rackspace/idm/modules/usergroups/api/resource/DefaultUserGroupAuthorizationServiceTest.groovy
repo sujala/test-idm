@@ -363,4 +363,37 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
         notThrown()
         1 * reloadableConfig.areUserGroupsGloballyEnabled() >> true
     }
+
+    def "verify user group cannot be created in default domain"() {
+        setup:
+        reloadableConfig.areUserGroupsGloballyEnabled() >> true
+        def defaultDomain = "741981"
+        reloadableConfig.getGroupDefaultDomainId() >> defaultDomain
+        def domainId = "123"
+        domainService.checkAndGetDomain(domainId) >> new Domain().with {
+            it.domainId = domainId
+            it
+        }
+        requestContext.getEffectiveCaller() >> new User().with {
+            it.domainId
+            it
+        }
+
+        when: "user group is created in default domain"
+        defaultUserGroupCloudAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(defaultDomain)
+
+        then: "403 ForbiddenException is thrown"
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, IdentityRole.RCN_ADMIN.getRoleName())
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        ForbiddenException ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, ErrorCodes.ERROR_CODE_USER_GROUP_CANNOT_BE_CREATED_IN_DEFAULT_DOMAIN_MSG)
+
+        when: "user group is created other then default domain"
+        defaultUserGroupCloudAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
+
+        then: "Exception is not thrown"
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, IdentityRole.RCN_ADMIN.getRoleName())
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        notThrown()
+    }
 }
