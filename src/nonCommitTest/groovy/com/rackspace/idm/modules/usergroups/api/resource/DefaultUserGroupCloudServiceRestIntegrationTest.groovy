@@ -548,4 +548,42 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
     }
+
+    @Unroll
+    def "Create user group: user group should not be allowed to create in default domain ; #mediaType"() {
+        given:
+        def domainEntity = utils.createDomainEntity()
+        def domainEntity1 = utils.createDomainEntity()
+        def defaultDomain = domainEntity1.id
+
+        reloadableConfiguration.setProperty(IdentityConfig.GROUP_DOMAINID_DEFAULT, defaultDomain)
+
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainEntity.id
+            it.name = "listTest_" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+
+        UserGroup groupInDefaultDomain = new UserGroup().with {
+            it.domainId = defaultDomain
+            it.name = "listTest_" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+
+        when: "Create user group not using default domain "
+        def response = cloud20.createUserGroup(sharedIdentityAdminToken, group, mediaType)
+
+        then: "Assert success"
+        response.status == HttpStatus.SC_CREATED
+
+        when: "Create user group in default domain"
+        response = cloud20.createUserGroup(sharedIdentityAdminToken, groupInDefaultDomain, mediaType)
+
+        then: "Assert 403"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN,
+                "Error code: 'GEN-006'; The user group cannot be created in default domain")
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
 }

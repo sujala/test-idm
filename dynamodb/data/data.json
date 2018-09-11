@@ -1,0 +1,31 @@
+{
+  "pwd_blacklist": [
+    {
+      "PutRequest": {
+        "Item": {
+          "desc": { "S": "The entry for Pa$$w0rd1" },
+          "pwd_hash": { "S": "3121C16A7F4A97832DB9FF399CCECC778DA07602" },
+          "count": { "N": "5" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "desc": { "S": "The entry for Asdf1234" },
+          "pwd_hash": { "S": "1798A15D09FD38EAAA10AF3E06CD39C98C484501" },
+          "count": { "N": "10" }
+        }
+      }
+    },
+    {
+      "PutRequest" : {
+        "Item": {
+          "desc": { "S": "The entry for mySuperSecretKey0!" },
+          "pwd_hash": { "S": "2CCBD670FB801B73DF8208B23EF8A112C62B1E3E" },
+          "count": { "N": "3" }
+        }
+      }
+    }
+  ]
+}

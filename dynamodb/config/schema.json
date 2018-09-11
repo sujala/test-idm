@@ -1,0 +1,19 @@
+{
+    "AttributeDefinitions": [
+        {
+            "AttributeName": "pwd_hash",
+            "AttributeType": "S"
+        }
+    ],
+    "TableName": "pwd_blacklist",
+    "KeySchema": [
+        {
+            "AttributeName": "pwd_hash",
+            "KeyType": "HASH"
+        }
+    ],
+    "ProvisionedThroughput": {
+        "ReadCapacityUnits": 1,
+        "WriteCapacityUnits": 1
+    }
+}

@@ -371,6 +371,16 @@ task zipRepose(type: Zip) {
     from "repose"
 }
 
+task zipDynamoDbConfig(type: Zip) {
+    classifier = 'dynamodb-config'
+    from "dynamodb/config"
+}
+
+task zipDynamoDbData(type: Zip) {
+    classifier = 'dynamodb-data'
+    from "dynamodb/data"
+}
+
 idea {
     module {
         sourceDirs += file(generatedSrc)
@@ -419,6 +429,8 @@ artifacts {
     archives zipOpenLdapConfig
     archives zipResources
     archives zipRepose
+    archives zipDynamoDbConfig
+    archives zipDynamoDbData
     archives jar
 }
 
@@ -522,6 +534,8 @@ war.dependsOn zipEdirConfig
 war.dependsOn zipOpenLdapLdif
 war.dependsOn zipOpenLdapConfig
 war.dependsOn zipRepose
+war.dependsOn zipDynamoDbConfig
+war.dependsOn zipDynamoDbData
 war.dependsOn copyBuildInfo
 clean.dependsOn deleteBuildInfo
 
@@ -694,6 +708,8 @@ publishing {
             artifact zipOpenLdapConfig
             artifact zipResources
             artifact zipRepose
+            artifact zipDynamoDbConfig
+            artifact zipDynamoDbData
             artifact jar
             artifact war
         }
