@@ -206,6 +206,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP= "feature.enable.use.aspect.for.mfa.authorization";
     public static final boolean FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT = true;
 
+    public static final String FEATURE_ENABLE_MIGRATE_V11_SERVICES_TO_REQUEST_CONTEXT_PROP = "feature.enable.migrate.v11.services.to.request.context";
+    public static final boolean FEATURE_ENABLE_MIGRATE_V11_SERVICES_TO_REQUEST_CONTEXT_DEFAULT = true;
+
     public static final String PASSWORD_HISTORY_MAX_PROP = "password.history.max";
     public static final int PASSWORD_HISTORY_MAX_DEFAULT = 10;
 
@@ -841,6 +844,8 @@ public class IdentityConfig {
         defaults.put(LDAP_PAGING_LIMIT_DEFAULT_PROP, LDAP_PAGING_LIMIT_DEFAULT_VALUE);
         defaults.put(LDAP_PAGING_LIMIT_MAX_PROP, LDAP_PAGING_LIMIT_MAX_DEFAULT);
         defaults.put(FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_MIGRATE_V11_SERVICES_TO_REQUEST_CONTEXT_PROP, FEATURE_ENABLE_MIGRATE_V11_SERVICES_TO_REQUEST_CONTEXT_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_DEFAULT);
         defaults.put(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT);
@@ -2006,6 +2011,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, versionAdded = "3.16.0", description = "Whether or not user groups are supported for all domains for management and considered during effective role calculation")
         public boolean areUserGroupsGloballyEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_MIGRATE_V11_SERVICES_TO_REQUEST_CONTEXT_PROP, versionAdded = "3.26.0", description = "Modifies v11 services to use the request context and effective caller logic for authorization.")
+        public boolean migrateV11ServicesToRequestContext() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_MIGRATE_V11_SERVICES_TO_REQUEST_CONTEXT_PROP);
         }
 
         @IdmProp(key = FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP, versionAdded = "3.20.0", description = "Whether or not delegation agreement services are enabled")

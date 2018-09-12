@@ -94,6 +94,12 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
         //Cloud v1.0/v1.1/v2.0 checks
         if (path.startsWith("cloud") || path.startsWith("devops")) {
+
+            if (path.startsWith("cloud/v1.1") && identityConfig.getReloadableConfig().migrateV11ServicesToRequestContext()) {
+                logger.debug("Bypassing authentication filter for v11 request as v11 services populate the security context");
+                return request;
+            }
+
             // Return if call is authentication or validation
             if (tokenValidationPathPattern.matcher(path).matches() && (!tokenEndpointPathPattern.matcher(path).matches())) {
                 //validate call. Don't replace impersonation token

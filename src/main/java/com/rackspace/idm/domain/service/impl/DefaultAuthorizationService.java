@@ -579,6 +579,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(rolesToSearch);
     }
 
+    @Override
+    public boolean authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum identityType) {
+        List<String> rolesToSearch = new ArrayList<>(getIdentityRolesForLevel(identityType));
+        return authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(rolesToSearch);
+    }
+
     /**
      * Identity "user type" roles have a hierarchy. Service Admins < Identity Admins < User Admins < User Managers < Default Users
      *
