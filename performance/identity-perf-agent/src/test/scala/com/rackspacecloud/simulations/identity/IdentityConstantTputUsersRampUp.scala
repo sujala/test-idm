@@ -36,12 +36,12 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val V20_AUTHENTICATE_SAML_INTERNAL_REPL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_saml_internal_repl.users_per_sec")
   val V20_SAME_USER_SAML_AUTH_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_same_user_authenticate_saml.users_per_sec")
 
-//  val v20_saml_auth_scn = Identity.v20_saml_auth
-//  val v20_saml_auth_scn_repl = Identity.v20_saml_auth_repl
-//  val v20_saml_auth_scn_internal = Identity.v20_saml_auth_internal
-//  val v20_saml_auth_scn_internal_repl = Identity.v20_saml_auth_internal_repl
-//  val v20_saml_auth_same_user_scn = Identity.v20_saml_auth_same_user
-//  val v20_saml_auth_same_user_old_endpoint_scn = Identity.v20_saml_auth_same_user_old_endpoint
+  val v20_saml_auth_scn = Identity.v20_saml_auth
+  val v20_saml_auth_scn_repl = Identity.v20_saml_auth_repl
+  val v20_saml_auth_scn_internal = Identity.v20_saml_auth_internal
+  val v20_saml_auth_scn_internal_repl = Identity.v20_saml_auth_internal_repl
+  val v20_saml_auth_same_user_scn = Identity.v20_saml_auth_same_user
+  val v20_saml_auth_same_user_old_endpoint_scn = Identity.v20_saml_auth_same_user_old_endpoint
 
   // V20 Impersonate
   val V20_IMPERSONATE_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_impersonate.users_per_sec")
@@ -172,9 +172,9 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val MAX_DURATION_FOR_DAS_SECS: Int = conf.getInt("simulation.max_duration_secs_for_das")
 
   val v20_create_user_scn = Identity.v20_create_user
-  // val v20_create_user_repl_scn = Identity.v20_create_user_repl
-  // val v20_create_user_internal_scn = Identity.v20_create_user_internal
-  // val v20_create_user_internal_repl_scn = Identity.v20_create_user_internal_repl
+//   val v20_create_user_repl_scn = Identity.v20_create_user_repl
+//   val v20_create_user_internal_scn = Identity.v20_create_user_internal
+//   val v20_create_user_internal_repl_scn = Identity.v20_create_user_internal_repl
 
   val v20_apikey_auth_default_user_scn = Identity.v20_apikey_auth_default_user
   val v20_validate_default_user_token_scn = Identity.v20_token_validate_default_user
@@ -251,12 +251,12 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     scn_wrapper(v20_apikey_auth_scn_internal_repl, V20_AUTHENTICATE_APIKEY_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
     scn_wrapper(v20_apikey_auth_default_user_scn, V20_AUTHENTICATE_APIKEY_DEFAULT_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
     // V20 SAML Authenticate
-//    scn_wrapper(v20_saml_auth_scn, V20_AUTHENTICATE_SAML_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
-//    scn_wrapper(v20_saml_auth_scn_repl, V20_AUTHENTICATE_SAML_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
-//    scn_wrapper(v20_saml_auth_scn_internal, V20_AUTHENTICATE_SAML_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainInternalConf),
-//    scn_wrapper(v20_saml_auth_scn_internal_repl, V20_AUTHENTICATE_SAML_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
-//    scn_wrapper(v20_saml_auth_same_user_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
-//    scn_wrapper(v20_saml_auth_same_user_old_endpoint_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+    scn_wrapper(v20_saml_auth_scn, V20_AUTHENTICATE_SAML_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+    scn_wrapper(v20_saml_auth_scn_repl, V20_AUTHENTICATE_SAML_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
+    scn_wrapper(v20_saml_auth_scn_internal, V20_AUTHENTICATE_SAML_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainInternalConf),
+    scn_wrapper(v20_saml_auth_scn_internal_repl, V20_AUTHENTICATE_SAML_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
+    scn_wrapper(v20_saml_auth_same_user_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+    scn_wrapper(v20_saml_auth_same_user_old_endpoint_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 
     // V20 Impersonate
     scn_wrapper(v20_impersonate_scn, V20_IMPERSONATE_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
@@ -319,15 +319,15 @@ class IdentityConstantTputUsersRampUp extends Simulation {
 
     scn_wrapper(v20_create_user_scn, V20_CREATE_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 
-    scn_wrapper(v20_list_all_roles_scn, V20_LIST_ROLES_FOR_IDENTITY_ADMIN_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+    scn_wrapper(v20_list_all_roles_scn, V20_LIST_ROLES_FOR_IDENTITY_ADMIN_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf)
 //    scn_wrapper(v20_create_user_repl_scn, V20_CREATE_USER_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 //    scn_wrapper(v20_create_user_internal_scn, V20_CREATE_USER_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
 //    scn_wrapper(v20_create_user_internal_repl_scn, V20_CREATE_USER_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf)
 
-      scn_wrapper(create_da_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, 0),
-       scn_wrapper(add_user_delegate_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, MAX_DURATION_FOR_DAS_SECS/4),
-       scn_wrapper(create_nested_da_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, 2 * MAX_DURATION_FOR_DAS_SECS/4),
-       scn_wrapper(delete_parent_da_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, 3 * MAX_DURATION_FOR_DAS_SECS/4)
+//      scn_wrapper(create_da_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, 0),
+//       scn_wrapper(add_user_delegate_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, MAX_DURATION_FOR_DAS_SECS/4),
+//       scn_wrapper(create_nested_da_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, 2 * MAX_DURATION_FOR_DAS_SECS/4),
+//       scn_wrapper(delete_parent_da_scn, DAS_PER_SEC, MAX_DURATION_FOR_DAS_SECS/4, httpMainExternalConf, 3 * MAX_DURATION_FOR_DAS_SECS/4)
 
      )
 

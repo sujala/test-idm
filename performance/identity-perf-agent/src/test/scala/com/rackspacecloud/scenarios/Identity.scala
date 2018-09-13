@@ -41,13 +41,13 @@ object Identity {
   val v20_apikey_auth_internal_repl    = scenario("V2.0_Authenticate_Internal_Replication").exec(Tokens.v20_authenticate).exitHereIfFailed
 
   // V20 SAML Authenticate
-//  val v20_saml_auth                  = scenario("V2.0_SAML_Authenticate_External").exec(Tokens.v20_saml_authenticate).exitHereIfFailed
-//  val v20_saml_auth_repl             = scenario("V2.0_SAML_Authenticate_External_Replication").exec(Tokens.v20_saml_authenticate).exitHereIfFailed
-//  val v20_saml_auth_internal         = scenario("V2.0_SAML_Authenticate_Internal").exec(Tokens.v20_saml_authenticate).exitHereIfFailed
-//  val v20_saml_auth_internal_repl    = scenario("V2.0_SAML_Authenticate_Internal_Replication").exec(Tokens.v20_saml_authenticate).exitHereIfFailed
-//  val v20_saml_auth_same_user        = scenario("V2.0_SAML_Authenticate_External_Same_User").exec(Tokens.v20_saml_authenticate_same_user).exitHereIfFailed
-//  val v20_saml_auth_same_user_old_endpoint  = scenario(
-//    "V2.0_SAML_Authenticate_External_Same_User_Old_endpoint").exec(Tokens.v20_saml_authenticate_same_user_old_endpoint).exitHereIfFailed
+  val v20_saml_auth                  = scenario("V2.0_SAML_Authenticate_External").exec(Tokens.v20_saml_authenticate).exitHereIfFailed
+  val v20_saml_auth_repl             = scenario("V2.0_SAML_Authenticate_External_Replication").exec(Tokens.v20_saml_authenticate).exitHereIfFailed
+  val v20_saml_auth_internal         = scenario("V2.0_SAML_Authenticate_Internal").exec(Tokens.v20_saml_authenticate).exitHereIfFailed
+  val v20_saml_auth_internal_repl    = scenario("V2.0_SAML_Authenticate_Internal_Replication").exec(Tokens.v20_saml_authenticate).exitHereIfFailed
+  val v20_saml_auth_same_user        = scenario("V2.0_SAML_Authenticate_External_Same_User").exec(Tokens.v20_saml_authenticate_same_user).exitHereIfFailed
+  val v20_saml_auth_same_user_old_endpoint  = scenario(
+    "V2.0_SAML_Authenticate_External_Same_User_Old_endpoint").exec(Tokens.v20_saml_authenticate_same_user_old_endpoint).exitHereIfFailed
 
   // V20 Impersonate
   val v20_impersonate                  = scenario("V2.0_Impersonate_External").exec(Tokens.v20_impersonate).exitHereIfFailed

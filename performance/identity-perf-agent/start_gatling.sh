@@ -8,7 +8,11 @@ echo "view application.properties"
 cat src/test/resources/application.properties
 IDM_ENDPOINT=$(cat src/test/resources/application.properties | grep main_internal_auth_url | awk -F'=' '{print $2}')
 echo "viewed application.properties"
+mkdir -p lib
 cd data_generation
+cp ../../../tests/resources/saml-generator-* ../lib/.
+mkdir -p sample_keys
+jar xf ../lib/saml-generator-* sample_keys/fed-origin.crt
 echo "create users against $IDM_ENDPOINT"
 ./create_users.sh $IDM_ENDPOINT 1 10 5 1
 echo "create admins"
@@ -17,7 +21,8 @@ echo "create admins"
 ./generate_files.py -u default_users -c default_user_file_config.json -o ../localhost/data/identity
 USERS_FILE_NAME=$(ls users)
 ./add_rcn_to_domain.py -i users/${USERS_FILE_NAME} -s ${IDM_ENDPOINT}
-#./create_users_in_domain.py -p 10 -n 20 -i users -m 1
+./create_users_in_domain.py -p 10 -n 20 -i users -m 1 -s ${IDM_ENDPOINT}
+./create_idp_data.py -f ../localhost/data/identity/dom_users_for_fed.dat
 #./generate_files.py -u users_in_dom -c users_in_domain.json -o ../localhost/data/identity -i true
 cd ..
 #rm -rf target/*
@@ -36,7 +41,7 @@ sbt "gatling:testOnly com.rackspacecloud.simulations.identity.IdentityConstantTp
 # Delete users
 sbt "gatling:testOnly com.rackspacecloud.simulations.identity.IdentityConstantTputUserDeletions"
 
-mv gatling.log target/gatling/.
+[ -f gatling.log ] && mv gatling.log target/gatling/.
 echo "copy only simulation log to target/gatling/results"
 mv results/identityconstanttputusersrampup* target/gatling/results/
 #mv gatling_console.log target/gatling/.

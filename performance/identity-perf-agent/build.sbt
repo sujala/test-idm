@@ -23,5 +23,5 @@ javaOptions in Gatling := overrideDefaultJavaOptions("-Xms512m", "-Xmx768m")
 libraryDependencies += "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.2.2" % "test,it"
 libraryDependencies += "io.gatling"            % "gatling-test-framework"    % "2.2.2" % "test,it"
 libraryDependencies += "mysql"                 % "mysql-connector-java"      % "5.1.34" % "test,it"
-//libraryDependencies += "org.opensaml"          % "opensaml-core"             % "3.2.0"  % "test,it"
-//libraryDependencies += "com.rackspace"         % "saml-generator"   % "2.1.0-1535599910628" % "test,it"
+libraryDependencies += "org.opensaml"          % "opensaml-core"             % "3.2.0"  % "test,it"
+libraryDependencies += "com.rackspace"         % "saml-generator"   % "2.1.0-1535599910628" % "test,it" from "file://"+baseDirectory.value+"/lib/saml-generator-2.1.0-1535599910628-all.jar"
