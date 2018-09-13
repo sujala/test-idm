@@ -59,7 +59,7 @@ public class RequestContext {
     /**
      * Stores information about the user making the request
      */
-    private SecurityContext securityContext;
+    private SecurityContext securityContext = new SecurityContext();
 
     /**
      * The request (should make immutable)
