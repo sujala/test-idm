@@ -25,8 +25,8 @@ class TestMPCWhitelistFilterForDAToken(delegation.TestBaseDelegation):
         cls.sub_user_id = cls.sub_user_client.default_headers[const.X_USER_ID]
         cls.users = []
 
-        cls.hierarchical_observer_role_id = cls.get_role_id_by_name(
-            role_name=const.HIERARCHICAL_OBSERVER_ROLE_NAME)
+        cls.hierarchical_billing_observer_role_id = cls.get_role_id_by_name(
+            role_name=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME)
 
     @unless_coverage
     def setUp(self):
@@ -110,7 +110,7 @@ class TestMPCWhitelistFilterForDAToken(delegation.TestBaseDelegation):
 
         # Now, assign a role from whitelist to DA and re-check DA auth
         tenant_assignment_req_3 = self.generate_tenants_assignment_dict(
-            self.hierarchical_observer_role_id, tenant_1.id)
+            self.hierarchical_billing_observer_role_id, tenant_1.id)
         tenants_role_assignment_req = requests.TenantRoleAssignments(
             tenant_assignment_req_3)
 
