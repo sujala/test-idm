@@ -20,6 +20,7 @@ public class CacheConfiguration {
     public final static String CLIENT_ROLE_CACHE_BY_ID = "clientRoleCacheById";
     public final static String CLIENT_ROLE_CACHE_BY_NAME = "clientRoleCacheByName";
     public final static String USER_LOCKOUT_CACHE_BY_NAME = "userLockout";
+    public final static String REPOSITORY_PROPERTY_CACHE_BY_NAME = "repositoryPropertyCache";
 
     @Autowired
     IdentityConfig identityConfig;
@@ -29,7 +30,8 @@ public class CacheConfiguration {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
         cacheManager.setCaches(Arrays.asList(getClientRoleCache(CLIENT_ROLE_CACHE_BY_ID)
                 , getClientRoleCache(CLIENT_ROLE_CACHE_BY_NAME)
-                , new GuavaCache(USER_LOCKOUT_CACHE_BY_NAME, createUserLockOutCacheBuilder().build()))
+                , new GuavaCache(USER_LOCKOUT_CACHE_BY_NAME, createUserLockOutCacheBuilder().build())
+                , new GuavaCache(REPOSITORY_PROPERTY_CACHE_BY_NAME, createRepositoryPropertyCacheBuilder().build()))
         );
         return cacheManager;
     }
@@ -62,4 +64,14 @@ public class CacheConfiguration {
                 .maximumSize(size)
                 .expireAfterWrite(ttl.toMillis(), TimeUnit.MILLISECONDS);
     }
+
+    private CacheBuilder createRepositoryPropertyCacheBuilder() {
+        Duration ttl = identityConfig.getStaticConfig().getRepositoryPropertyCacheTtl();
+        int size = identityConfig.getStaticConfig().getRepositoryPropertyCacheSize();
+
+        return CacheBuilder.newBuilder()
+                .maximumSize(size)
+                .expireAfterWrite(ttl.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
 }

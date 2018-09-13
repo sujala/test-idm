@@ -98,4 +98,51 @@ class CacheConfigurationTest extends Specification {
         cache.get("hi") == null
     }
 
+    @Unroll
+    def "Repository property cache configured via properties. test size: #size; test ttl: #ttl"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.CACHE_REPOSITORY_PROPERTY_SIZE_PROP, size)
+        staticIdmConfiguration.setProperty(IdentityConfig.CACHE_REPOSITORY_PROPERTY_TTL_PROP, ttl)
+
+        when:
+        CacheBuilder builder = cacheConfiguration.createRepositoryPropertyCacheBuilder()
+
+        then:
+        builder.maximumSize == size
+        builder.expireAfterWriteNanos == Duration.parse(ttl).toNanos()
+
+        where:
+        size | ttl
+        10 | "PT5M"
+        30 | "P1DT1H"
+        5 | "PT1H5.5S"
+        500 | "PT0S"
+    }
+
+    /**
+     * Tests supplying invalid values to size and ttl properties to verify code will override to use hardcoded values.
+     * The durations are invalid because durations can't contain an imprecise datapoint such as months or years (e.g does
+     * the month have 28, 29, 30, or 31 days)
+     * @return
+     */
+    @Unroll
+    def "Repository property cache uses hardcoded values when supplied properties are invalid. size: #size; ttl: #ttl"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.CACHE_REPOSITORY_PROPERTY_SIZE_PROP, size)
+        staticIdmConfiguration.setProperty(IdentityConfig.CACHE_REPOSITORY_PROPERTY_TTL_PROP, ttl)
+
+        when:
+        CacheBuilder builder = cacheConfiguration.createRepositoryPropertyCacheBuilder()
+
+        then:
+        builder.maximumSize == IdentityConfig.CACHE_REPOSITORY_PROPERTY_SIZE_DEFAULT
+        builder.expireAfterWriteNanos == IdentityConfig.CACHE_REPOSITORY_PROPERTY_TTL_DEFAULT.toNanos()
+
+        where:
+        size | ttl
+        "a" | "P1MT5M"
+        "1/2" | "P1Y"
+        "*" | "abc"
+    }
+
 }

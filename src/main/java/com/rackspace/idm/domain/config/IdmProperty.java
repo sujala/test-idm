@@ -15,6 +15,7 @@ public class IdmProperty implements Comparable<IdmProperty> {
     private Object value;
     private String valueType;
     private Object defaultValue;
+    private Object asConfiguredValue;
     private String versionAdded;
     private String source;
     private boolean reloadable;

@@ -123,6 +123,7 @@ class RootServiceTest extends Specification {
     @Shared AuthorizationService authorizationService
     @Shared UserService userService
     @Shared TenantTypeWhitelistFilter tenantTypeWhitelistFilter
+    @Shared IdentityPropertyService identityPropertyService
 
     /**
      * New classes should use the IdmExceptionHandler interface rather than the concrete ExceptionHandler class
@@ -202,6 +203,7 @@ class RootServiceTest extends Specification {
     @Shared TokenFormatSelector tokenFormatSelector
     @Shared FederationUtils federationUtils
     @Shared SAMLSignatureProfileValidator samlSignatureProfileValidator
+    @Shared IdentityPropertyDao identityPropertyDao
 
     @Shared RequestContext requestContext
     @Shared AuthenticationContext authenticationContext
@@ -712,6 +714,11 @@ class RootServiceTest extends Specification {
         service.phonePinService = phonePinService
     }
 
+    def mockIdentityPropertyService(service) {
+        identityPropertyService = Mock()
+        service.identityPropertyService = identityPropertyService
+    }
+
     /*
         Mock Dao
     */
@@ -779,6 +786,11 @@ class RootServiceTest extends Specification {
     def mockDelegationAgreementDao(service) {
         delegationAgreementDao = Mock()
         service.delegationAgreementDao = delegationAgreementDao
+    }
+
+    def mockIdentityPropertyDao(service) {
+        identityPropertyDao = Mock()
+        service.identityPropertyDao = identityPropertyDao
     }
 
     /*

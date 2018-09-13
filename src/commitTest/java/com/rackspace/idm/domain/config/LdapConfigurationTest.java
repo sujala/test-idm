@@ -32,8 +32,8 @@ public class LdapConfigurationTest {
     public void connection_callsConfigMethodGetStringArray() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:123", "two:345"});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max",100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
@@ -47,8 +47,8 @@ public class LdapConfigurationTest {
     public void connection_portIsNot389AndUsingSSLAndThrowsLdapException_throwsIllegalStateException() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:123", "two:345"});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max",100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(true);
@@ -63,8 +63,8 @@ public class LdapConfigurationTest {
     public void connection_portIsNot389AndNotUsingSSLAndThrowsLdapException_throwsIllegalStateException() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:123", "two:345"});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max",100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(false);
@@ -79,8 +79,8 @@ public class LdapConfigurationTest {
     public void connection_portIs389AndUsingSSLAndThrowsLdapException_throwsIllegalStateException() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:389", "two:389"});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max",100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(true);
@@ -95,8 +95,8 @@ public class LdapConfigurationTest {
     public void connection_portIs389AndNotUsingSSLAndThrowsLdapException_throwsIllegalStateException() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:389", "two:389"});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max",100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(false);
@@ -111,8 +111,8 @@ public class LdapConfigurationTest {
     public void connection_noPortNumberAndThrowsLdapException_throwsIllegalStateException() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one: ", "two: "});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max",100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
@@ -126,8 +126,8 @@ public class LdapConfigurationTest {
     public void connection_noHostsAndThrowsLdapException_throwsIllegalStateException() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{":123", ":456"});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max", 100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max", 100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
@@ -140,8 +140,8 @@ public class LdapConfigurationTest {
     @Test (expected = LDAPSDKUsageException.class)
     public void connection_emptyServerList_throwsLdapUsageException() throws Exception {
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max", 100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max", 100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
@@ -151,14 +151,14 @@ public class LdapConfigurationTest {
     public void connection_getsInitPoolSizeFromConfig() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max", 100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max", 100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
             fail("should throw exception");
         }catch (LDAPSDKUsageException ex){
-            verify(configuration).getInt("ldap.server.pool.size.init",1);
+            verify(configuration).getInteger("ldap.server.pool.size.init",1);
         }
     }
 
@@ -166,14 +166,14 @@ public class LdapConfigurationTest {
     public void connection_getsMaxPoolSizeFromConfig() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max", 100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max", 100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
             fail("should throw exception");
         }catch (LDAPSDKUsageException ex){
-            verify(configuration).getInt("ldap.server.pool.size.max",100);
+            verify(configuration).getInteger("ldap.server.pool.size.max",100);
         }
     }
 
@@ -181,8 +181,8 @@ public class LdapConfigurationTest {
     public void connection_getsBindDnFromConfig() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max", 100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max", 100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();
@@ -196,8 +196,8 @@ public class LdapConfigurationTest {
     public void connection_getsPasswordFromConfig() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{});
-            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
-            when(configuration.getInt("ldap.server.pool.size.max", 100)).thenReturn(100);
+            when(configuration.getInteger("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInteger("ldap.server.pool.size.max", 100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
             ldapConfiguration.connection();

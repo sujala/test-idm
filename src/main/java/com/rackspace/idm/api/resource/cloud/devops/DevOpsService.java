@@ -61,8 +61,8 @@ public interface DevOpsService {
     Response.ResponseBuilder purgeObsoleteTrrs(String authToken, TokenRevocationRecordDeletionRequest request);
 
     /**
-     * Searches and returns all IdentityProperty entries found that match the identity property versions
-     * and property name. The search by name and IDM version are case-insensitive. Both name and idmVersions
+     * Returns all IdentityProperty entries found that match one of the specified versions
+     * and the specified name. The search by name and IDM version are case-insensitive. Both name and idmVersions
      * params are optional. If both are provided the property must match both name AND idmVersions. The idmVersions
      * are OR'd in the query if multiple versions are provided.
      *

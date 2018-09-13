@@ -21,6 +21,7 @@ private static final Logger logger = LoggerFactory.getLogger(JsonWriterForIdmPro
     public static final String JSON_PROP_DESCRIPTION = "description";
     public static final String JSON_PROP_VERSION_ADDED = "versionAdded";
     public static final String JSON_PROP_VALUE = "value";
+    public static final String JSON_PROP_AS_CONFIGURED_VALUE = "asConfiguredValue";
     public static final String JSON_PROP_VALUE_TYPE = "valueType";
     public static final String JSON_PROP_DEFAULT_VALUE = "defaultValue";
     public static final String JSON_PROP_RELOADABLE = "reloadable";
@@ -60,6 +61,10 @@ private static final Logger logger = LoggerFactory.getLogger(JsonWriterForIdmPro
 
                 Object convertedValue = valueToAddToJSON(idmProperty.getValue());
                 prop.put(JSON_PROP_VALUE, convertedValue);
+
+                Object asConfiguredValue = valueToAddToJSON(idmProperty.getAsConfiguredValue());
+                prop.put(JSON_PROP_AS_CONFIGURED_VALUE, asConfiguredValue);
+
 
                 if (idmProperty.getValueType() != null) {
                     prop.put(JSON_PROP_VALUE_TYPE, idmProperty.getValueType());
