@@ -51,6 +51,8 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
             const.X_USER_ID]
         cls.role_ids = []
         cls.tenant_ids = []
+        cls.hierarchical_billing_observer_role_id = cls.get_role_id_by_name(
+            role_name=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME)
 
     @unless_coverage
     def setUp(self):
@@ -318,15 +320,15 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
     def validate_da_roles_on_tenant_update(self, da_id, fed_user_token):
 
         role_1 = self.create_role()
-        role_2 = self.create_role()
         # create tenants, 1 of them is faws
         tenant_1 = self.create_tenant(faws=True)
         tenant_2 = self.create_tenant()
 
         tenant_assignment_req_1 = self.generate_tenants_assignment_dict(
-            role_1.id, tenant_1.id, tenant_2.id)
+            self.hierarchical_billing_observer_role_id,
+            tenant_1.id, tenant_2.id)
         tenant_assignment_req_2 = self.generate_tenants_assignment_dict(
-            role_2.id, "*")
+            role_1.id, "*")
         tenants_role_assignment_req = requests.TenantRoleAssignments(
             tenant_assignment_req_1, tenant_assignment_req_2)
 
@@ -346,10 +348,14 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         role_to_tenant_map = defaultdict(list)
         for role_ in resp_parsed.access.user.roles:
             role_to_tenant_map[role_.id].append(role_[const.TENANT_ID])
+        self.assertIn(
+            tenant_1.id,
+            role_to_tenant_map[self.hierarchical_billing_observer_role_id])
+        self.assertIn(
+            tenant_2.id,
+            role_to_tenant_map[self.hierarchical_billing_observer_role_id])
         self.assertIn(tenant_1.id, role_to_tenant_map[role_1.id])
         self.assertIn(tenant_2.id, role_to_tenant_map[role_1.id])
-        self.assertIn(tenant_1.id, role_to_tenant_map[role_2.id])
-        self.assertIn(tenant_2.id, role_to_tenant_map[role_2.id])
 
         # remove tenant 1 from domain
         self.identity_admin_client.delete_tenant_from_domain(
@@ -362,9 +368,10 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         list_resp_parsed = Munch.fromDict(list_resp.json())
         for role_assignment_ in list_resp_parsed[
                 const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]:
-            if role_assignment_.onRole == role_1.id:
+            if role_assignment_.onRole == \
+                            self.hierarchical_billing_observer_role_id:
                 self.assertEqual(role_assignment_.forTenants, [tenant_2.id])
-            if role_assignment_.onRole == role_2.id:
+            if role_assignment_.onRole == role_1.id:
                 self.assertEqual(role_assignment_.forTenants, ['*'])
 
         # check delegation auth after a tenant removal from domain
@@ -376,10 +383,14 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         role_to_tenant_map = defaultdict(list)
         for role_ in resp_parsed.access.user.roles:
             role_to_tenant_map[role_.id].append(role_[const.TENANT_ID])
+        self.assertNotIn(
+            tenant_1.id,
+            role_to_tenant_map[self.hierarchical_billing_observer_role_id])
+        self.assertIn(
+            tenant_2.id,
+            role_to_tenant_map[self.hierarchical_billing_observer_role_id])
         self.assertNotIn(tenant_1.id, role_to_tenant_map[role_1.id])
         self.assertIn(tenant_2.id, role_to_tenant_map[role_1.id])
-        self.assertNotIn(tenant_1.id, role_to_tenant_map[role_2.id])
-        self.assertIn(tenant_2.id, role_to_tenant_map[role_2.id])
 
     @federation.base.base.log_tearDown_error
     @unless_coverage

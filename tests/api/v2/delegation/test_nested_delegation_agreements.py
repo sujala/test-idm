@@ -145,7 +145,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.assertSchema(nested_da_resp, modified_schema)
 
     @tags('positive', 'p0', 'regression')
-    @attr('regression')
+    @attr(type='regression')
     def test_auth_under_nested_da(self):
 
         parent_nest_level = 2
