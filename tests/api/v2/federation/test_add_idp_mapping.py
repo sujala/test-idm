@@ -133,7 +133,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         fed_token, _, _ = self.parse_auth_response(fed_auth)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    # @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
     ))
@@ -156,8 +156,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.validate_fed_user_auth_bad_request(
             cert_path, domain_id, issuer, key_path, self.identity_admin_client)
 
-    @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @tags('positive', 'p0')
+    # @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
     ))
@@ -187,8 +187,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path, self.domain_id, self.issuer, key_path,
             self.idp_user_admin_client)
 
-    @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @tags('positive', 'p0')
+    # @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
     ))
@@ -326,8 +326,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                               const.JSON))
         self.assertEquals(resp_get_ro.json(), mapping)
 
-    @tags('negative', 'p0', 'regression')
-    @attr(type='regression')
+    @tags('negative', 'p0')
+    # @attr(type='regression')
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_invalid_policy.yaml",
     ))
