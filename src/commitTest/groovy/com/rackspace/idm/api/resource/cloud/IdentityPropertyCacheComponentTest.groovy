@@ -147,8 +147,7 @@ class IdentityPropertyCacheComponentTest extends Specification {
     @SingleTestConfiguration
     @EnableCaching
     static class TestConfig {
-
-        // Specifying duration and then converting to millis to remaain consistent with how ttl is specified
+        // Specify duration and convert to millis to remain consistent with how ttl is specified in prop file
         static int cacheTtl = Duration.parse("PT0.01S").toMillis()
         static int cacheSize = 10
 
@@ -177,9 +176,6 @@ class IdentityPropertyCacheComponentTest extends Specification {
         }
 
         private CacheBuilder createRepositoryPropertyCacheBuilder() {
-            // set the TTL to 100 ms to allow for
-            int size = 10
-
             return CacheBuilder.newBuilder()
                     .maximumSize(cacheSize)
                     .expireAfterWrite(cacheTtl, TimeUnit.MILLISECONDS)
