@@ -148,7 +148,7 @@ class IdentityPropertyCacheComponentTest extends Specification {
     @EnableCaching
     static class TestConfig {
         // Specify duration and convert to millis to remain consistent with how ttl is specified in prop file
-        static int cacheTtl = Duration.parse("PT0.01S").toMillis()
+        static int cacheTtl = Duration.parse("PT0.1S").toMillis()
         static int cacheSize = 10
 
         def factory = new DetachedMockFactory()
