@@ -152,8 +152,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
                 doPostEncode(entity);
                 objects.add(entity);
             } catch (LDAPPersistException e) {
-                String loggerMsg = String.format("Error converting entity for %s - {}", entityType.toString());
-                getLogger().error(loggerMsg);
+                String dn = entry != null ? entry.getDN() : null;
+                String loggerMsg = String.format("Error converting entity with DN '%s' to class '%s'", dn, entityType.toString());
+                getLogger().error(loggerMsg, e);
             }
         }
 
