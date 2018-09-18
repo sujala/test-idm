@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
+import com.rackspace.idm.domain.entity.ReadableIdentityProperty;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,7 +15,7 @@ public class IdentityPropertyValueConverter {
      * @throws NumberFormatException - thrown if the property is an INT property but the value is not parseable to an int
      * @return
      */
-    public Object convertPropertyValue(IdentityProperty identityProperty) {
+    public Object convertPropertyValue(ReadableIdentityProperty identityProperty) {
         if (identityProperty == null || identityProperty.getValue() == null || identityProperty.getValueType() == null) {
             return null;
         }

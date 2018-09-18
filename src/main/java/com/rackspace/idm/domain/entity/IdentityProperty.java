@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 @Getter
 @Setter
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_IDENTITY_PROPERTY)
-public class IdentityProperty implements Auditable, UniqueId {
+public class IdentityProperty implements Auditable, UniqueId, ReadableIdentityProperty {
 
     @LDAPDNField
     private String uniqueId;
@@ -77,6 +77,7 @@ public class IdentityProperty implements Auditable, UniqueId {
         }
     }
 
+    @Override
     public String getValueAsString() {
         if (this.value != null) {
             return new String(this.value, StandardCharsets.UTF_8);

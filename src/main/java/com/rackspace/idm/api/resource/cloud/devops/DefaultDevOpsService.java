@@ -26,6 +26,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -182,11 +183,10 @@ public class DefaultDevOpsService implements DevOpsService {
     public Response.ResponseBuilder getIdmPropsByQuery(String authToken, final List<String> versions, final String name) {
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_QUERY_PROPS.getRoleName(), IdentityRole.IDENTITY_PROPERTY_ADMIN.getRoleName());
-
-        return filterIdmProps(versions, name);
+        return filterAsUsedIdmProps(versions, name);
     }
 
-    private Response.ResponseBuilder filterIdmProps(final List<String> versions, final String name) {
+    private Response.ResponseBuilder filterAsUsedIdmProps(final List<String> versions, final String name) {
         Predicate<IdmProperty> reloadablePredicate = new Predicate<IdmProperty>() {
             @Override
             public boolean evaluate(IdmProperty object) {
@@ -209,6 +209,17 @@ public class DefaultDevOpsService implements DevOpsService {
             }
         };
 
+        Predicate<IdmProperty> directoryPredicate =  new Predicate<IdmProperty>() {
+            @Override
+            public boolean evaluate(IdmProperty object) {
+                if (object.getType() != IdmPropertyType.DIRECTORY) return false;
+                if (StringUtils.isNotBlank(name) && !StringUtils.containsIgnoreCase(object.getName(), name)) return false;
+                if (CollectionUtils.isNotEmpty(versions) && !versions.contains(object.getVersionAdded())) return false;
+
+                return true;
+            }
+        };
+
         List<IdmProperty> idmPropertyList = identityConfig.getPropertyInfoList();
 
         List<IdmProperty> queriedReloadableIdmPropertyList = new ArrayList<>();
@@ -217,14 +228,13 @@ public class DefaultDevOpsService implements DevOpsService {
         List<IdmProperty> queriedStaticIdmPropertyList = new ArrayList<>();
         CollectionUtils.select(idmPropertyList, staticPredicate, queriedStaticIdmPropertyList);
 
-        Iterable<com.rackspace.idm.domain.entity.IdentityProperty> directoryIdentityProps =
-                identityPropertyService.getIdentityPropertyByNameAndVersions(name, versions);
-        List<IdmProperty> directoryIdmProperties = convertIdentityPropertyToIdmProperty(directoryIdentityProps);
+        List<IdmProperty> queriedDirectoryIdmPropertyList = new ArrayList<>();
+        CollectionUtils.select(idmPropertyList, directoryPredicate, queriedDirectoryIdmPropertyList);
 
         List<IdmProperty> allPropertiesList = new ArrayList<>();
         allPropertiesList.addAll(queriedReloadableIdmPropertyList);
         allPropertiesList.addAll(queriedStaticIdmPropertyList);
-        allPropertiesList.addAll(directoryIdmProperties);
+        allPropertiesList.addAll(queriedDirectoryIdmPropertyList);
         Collections.sort(allPropertiesList);
 
         return Response.ok().entity(jsonWriterForIdmProperty.toJsonString(allPropertiesList));
@@ -540,27 +550,9 @@ public class DefaultDevOpsService implements DevOpsService {
 
         if (directoryIdentityProps != null) {
             for (com.rackspace.idm.domain.entity.IdentityProperty identityProperty : directoryIdentityProps) {
-                IdmProperty idmProperty = new IdmProperty();
-                idmProperty.setId(identityProperty.getId());
-                idmProperty.setType(IdmPropertyType.DIRECTORY);
-                idmProperty.setName(identityProperty.getName());
-                idmProperty.setDescription(identityProperty.getDescription());
-                try {
-                    // try to parse the value into a primitive type
-                    idmProperty.setValue(propertyValueConverter.convertPropertyValue(identityProperty));
-                } catch (Exception e) {
-                    // but fall back to a String if not parseable
-                    idmProperty.setValue(identityProperty.getValue());
-                }
-                idmProperty.setValueType(identityProperty.getValueType());
-                idmProperty.setVersionAdded(identityProperty.getIdmVersion());
-                idmProperty.setSource(IDENTITY_PROPERTY_SOURCE);
-                idmProperty.setReloadable(identityProperty.isReloadable());
-
-                idmProps.add(idmProperty);
+                idmProps.add(identityPropertyService.convertIdentityPropertyToIdmProperty(identityProperty));
             }
         }
-
         return idmProps;
     }
 

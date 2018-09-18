@@ -7,14 +7,16 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdRe
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
+import com.rackspace.idm.domain.entity.ImmutableIdentityProperty;
+import com.rackspace.idm.domain.entity.ReadableIdentityProperty;
 import com.rackspace.idm.domain.service.IdentityPropertyService;
 import com.rackspace.idm.event.NewRelicCustomAttributesEnum;
 import com.rackspace.idm.exception.MissingRequiredConfigIdmException;
+import lombok.AllArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.ws.rs.core.MediaType;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -315,6 +318,15 @@ public class IdentityConfig {
 
     public static final String CACHE_USER_LOCKOUT_SIZE_PROP = "ldap.auth.password.lockout.cache.size";
     public static final int CACHE_USER_LOCKOUT_SIZE_DEFAULT = 200;
+
+    public static final String FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP = "feature.enable.cache.repository.properties";
+    public static final boolean FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_DEFAULT = false;
+
+    public static final String CACHE_REPOSITORY_PROPERTY_TTL_PROP = "repository.property.cache.ttl";
+    public static final Duration CACHE_REPOSITORY_PROPERTY_TTL_DEFAULT = Duration.parse("PT1S");
+
+    public static final String CACHE_REPOSITORY_PROPERTY_SIZE_PROP = "repository.property.cache.size";
+    public static final int CACHE_REPOSITORY_PROPERTY_SIZE_DEFAULT = 200;
 
     public static final String FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP = "feature.force.standard.v2.exceptions.end.user.services";
     public static final boolean FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT = true;
@@ -817,6 +829,10 @@ public class IdentityConfig {
         defaults.put(CACHE_USER_LOCKOUT_TTL_PROP, CACHE_USER_LOCKOUT_TTL_DEFAULT);
         defaults.put(CACHE_USER_LOCKOUT_SIZE_PROP, CACHE_USER_LOCKOUT_SIZE_DEFAULT);
 
+        defaults.put(FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP, FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_DEFAULT);
+        defaults.put(CACHE_REPOSITORY_PROPERTY_TTL_PROP, CACHE_REPOSITORY_PROPERTY_TTL_DEFAULT);
+        defaults.put(CACHE_REPOSITORY_PROPERTY_SIZE_PROP, CACHE_REPOSITORY_PROPERTY_SIZE_DEFAULT);
+
         defaults.put(FEATURE_INFER_DEFAULT_TENANT_TYPE_PROP, FEATURE_INFER_DEFAULT_TENANT_TYPE_DEFAULT);
 
         defaults.put(FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT);
@@ -1049,7 +1065,7 @@ public class IdentityConfig {
         Object defaultValue = propertyDefaults.get(prop);
         try {
             if (defaultValue == null) {
-                return config.getDouble(prop);
+                return config.getDouble(prop, null);
             } else {
                 return config.getDouble(prop, (Double) defaultValue);
             }
@@ -1066,9 +1082,9 @@ public class IdentityConfig {
         Object defaultValue = propertyDefaults.get(prop);
         try {
             if (defaultValue == null) {
-                return config.getInt(prop);
+                return config.getInteger(prop, null);
             } else {
-                return config.getInt(prop, (Integer) defaultValue);
+                return config.getInteger(prop, (Integer) defaultValue);
             }
         } catch (NumberFormatException e) {
             logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
@@ -1083,7 +1099,7 @@ public class IdentityConfig {
         Object defaultValue = propertyDefaults.get(prop);
         try {
             if (defaultValue == null) {
-                return config.getLong(prop);
+                return config.getLong(prop, null);
             } else {
                 return config.getLong(prop, (Long) defaultValue);
             }
@@ -1097,7 +1113,7 @@ public class IdentityConfig {
         Object defaultValue = propertyDefaults.get(prop);
         try {
             if (defaultValue == null) {
-                return config.getBigInteger(prop);
+                return config.getBigInteger(prop, null);
             } else {
                 return config.getBigInteger(prop, (BigInteger) defaultValue);
             }
@@ -1151,7 +1167,7 @@ public class IdentityConfig {
     private Boolean getRepositoryBooleanSafely(String propertyName) {
         Object defaultValue = propertyDefaults.get(propertyName);
         try {
-            IdentityProperty identityProperty = identityPropertyService.getIdentityPropertyByName(propertyName);
+            ReadableIdentityProperty identityProperty = retrieveRepositoryIdentityProperty(propertyName);
             if (identityProperty != null) {
                 return (Boolean) propertyValueConverter.convertPropertyValue(identityProperty);
             } else {
@@ -1166,7 +1182,7 @@ public class IdentityConfig {
     private String getRepositoryStringSafely(String propertyName) {
         Object defaultValue = propertyDefaults.get(propertyName);
         try {
-            IdentityProperty identityProperty = identityPropertyService.getIdentityPropertyByName(propertyName);
+            ReadableIdentityProperty identityProperty = retrieveRepositoryIdentityProperty(propertyName);
             if (identityProperty != null) {
                 return (String) propertyValueConverter.convertPropertyValue(identityProperty);
             } else {
@@ -1176,6 +1192,17 @@ public class IdentityConfig {
             logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, propertyName));
             return (String) defaultValue;
         }
+    }
+
+    private ReadableIdentityProperty retrieveRepositoryIdentityProperty(String propertyName) {
+        ReadableIdentityProperty identityProperty;
+        if (reloadableConfig.useCachedRepositoryProperties()) {
+            identityProperty = identityPropertyService.getImmutableIdentityPropertyByName(propertyName);
+        } else {
+            identityProperty = identityPropertyService.getIdentityPropertyByName(propertyName);
+        }
+
+        return identityProperty;
     }
 
     /**
@@ -1269,52 +1296,10 @@ public class IdentityConfig {
      * @return JSONObject properties
      */
     public List<IdmProperty> getPropertyInfoList() {
-        List<IdmProperty> props = getPropertyInfoList(staticConfig, IdmPropertyType.STATIC);
-        props.addAll(getPropertyInfoList(reloadableConfig, IdmPropertyType.RELOADABLE));
+        List<IdmProperty> props = staticConfig.listIdmProperties();
+        props.addAll(reloadableConfig.listIdmProperties());
+        props.addAll(repositoryConfig.listIdmProperties());
 
-        return props;
-    }
-
-    private List<IdmProperty> getPropertyInfoList(Object obj, IdmPropertyType propertyType) {
-        Validate.isTrue(propertyType == IdmPropertyType.STATIC || propertyType == IdmPropertyType.RELOADABLE);
-
-        List<IdmProperty> props = new ArrayList<>();
-
-        String propFileLocation;
-        boolean reloadable;
-        if (propertyType == IdmPropertyType.STATIC) {
-            propFileLocation = PropertyFileConfiguration.CONFIG_FILE_NAME;
-            reloadable = false;
-        } else {
-            propFileLocation = PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME;
-            reloadable = true;
-        }
-
-        for (Method m : obj.getClass().getDeclaredMethods()) {
-            if (m.isAnnotationPresent(IdmProp.class)) {
-                final IdmProp a = m.getAnnotation(IdmProp.class);
-                final String msg = String.format("error getting the value of '%s'", a.key());
-                try {
-                    String description = a.description();
-                    String versionAdded = a.versionAdded();
-                    Object defaultValue = propertyDefaults.get(a.key());
-                    Object value = m.invoke(obj);
-                    String name = a.key();
-                    IdmProperty idmProperty = new IdmProperty();
-                    idmProperty.setType(propertyType);
-                    idmProperty.setName(name);
-                    idmProperty.setDescription(description);
-                    idmProperty.setValue(value);
-                    idmProperty.setDefaultValue(defaultValue);
-                    idmProperty.setVersionAdded(versionAdded);
-                    idmProperty.setSource(propFileLocation);
-                    idmProperty.setReloadable(reloadable);
-                    props.add(idmProperty);
-                } catch (Exception e) {
-                    logger.error(msg, e);
-                }
-            }
-        }
         return props;
     }
 
@@ -1322,7 +1307,12 @@ public class IdentityConfig {
      * Wrapper around the static configuration properties. Users of these properties may cache the value between requests
      * as the value of these properties will remain constant throughout the lifetime of the running application.
      */
-    public class StaticConfig {
+    public class StaticConfig extends ConfigMetaLookup {
+        @Override
+        protected PropertyMeta getPropertyMeta(String propertyName) {
+            ReadableIdentityProperty prop = retrieveRepositoryIdentityProperty(propertyName);
+            return new PropertyMeta(PropertyFileConfiguration.CONFIG_FILE_NAME, false, null, IdmPropertyType.STATIC);
+        }
 
         @IdmProp(key = GA_USERNAME, description = "Cloud Identity Admin user", versionAdded = "1.0.14.8")
         public String getGaUsername() {
@@ -1623,6 +1613,16 @@ public class IdentityConfig {
             return getIntSafely(staticConfiguration, CACHE_USER_LOCKOUT_SIZE_PROP);
         }
 
+        @IdmProp(key = CACHE_REPOSITORY_PROPERTY_TTL_PROP, versionAdded = "3.26.0" , description = "The ttl of entries in the repository cache. A ttl of 0 means no cache.")
+        public Duration getRepositoryPropertyCacheTtl() {
+            return getDurationSafely(staticConfiguration, CACHE_REPOSITORY_PROPERTY_TTL_PROP);
+        }
+
+        @IdmProp(key = CACHE_REPOSITORY_PROPERTY_SIZE_PROP, versionAdded = "3.26.0" , description = "The max size of the repository cache.")
+        public int getRepositoryPropertyCacheSize() {
+            return getIntSafely(staticConfiguration, CACHE_REPOSITORY_PROPERTY_SIZE_PROP);
+        }
+
         @IdmProp(key = NAST_TENANT_PREFIX_PROP, versionAdded = "1.0.14.8"
                 , description = "The prefix to append to nast tenant ids")
         public String getNastTenantPrefix() {
@@ -1739,7 +1739,40 @@ public class IdentityConfig {
      * Wrapper around the reloadable configuration properties. Users of these properties must ensure that they always
      * lookup up the property each time before use and must NOT store the value of the property.
      */
-    public class ReloadableConfig {
+    public class ReloadableConfig extends ConfigMetaLookup {
+
+        @Override
+        protected PropertyMeta getPropertyMeta(String propertyName) {
+            return new PropertyMeta(PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME, true, null, IdmPropertyType.RELOADABLE);
+        }
+
+        @Override
+        protected List<IdmProperty> calculateDynamicProperties() {
+
+            // Determine the existing tenant type whitelist filter's dynamic properties
+            Map<String, Set<String>> tenantTypeRoleWhitelistFilterProperties = getTenantTypeRoleWhitelistFilterProperties();
+            List<IdmProperty> dynProps = new ArrayList<>();
+            String description = String.format("The whitelisted roles for the tenant type whitelist filter. Properties are dynamically added via naming convention %s.<tenanttype>", TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX);
+            for (Map.Entry<String, Set<String>> entry : tenantTypeRoleWhitelistFilterProperties.entrySet()) {
+                String propertyName = entry.getKey();
+                Object propertyValue = entry.getValue();
+
+                PropertyMeta meta = getPropertyMeta(propertyName);
+                IdmProperty idmProperty = new IdmProperty();
+                idmProperty.setId(meta.id);
+                idmProperty.setType(meta.idmPropertyType);
+                idmProperty.setSource(meta.configSource);
+                idmProperty.setReloadable(meta.reloadable);
+                idmProperty.setName(propertyName);
+                idmProperty.setDescription(description);
+                idmProperty.setValue(propertyValue);
+                idmProperty.setDefaultValue(null);
+                idmProperty.setVersionAdded("3.24.0");
+                dynProps.add(idmProperty);
+            }
+
+            return dynProps;
+        }
 
         public String getTestPing() {
             return reloadableConfiguration.getString("reload.test");
@@ -1944,6 +1977,11 @@ public class IdentityConfig {
         @IdmProp(key = CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, versionAdded = "3.0.3", description = "Whether the AE Token cache will record stats.")
         public boolean cachedAETokenCacheRecordStats() {
             return getBooleanSafely(reloadableConfiguration, CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP, versionAdded = "3.26.0", description = "Whether or not to use cached repository properties. When false, every request for a repository property will hit the repository.")
+        public boolean useCachedRepositoryProperties() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP);
         }
 
         @IdmProp(key = FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, versionAdded = "3.20.1", description = "Whether or not list idps should always return an approvedDomainId attribute for all idps.")
@@ -2466,13 +2504,8 @@ public class IdentityConfig {
             return nestedDARoleHierarchyMap;
         }
 
-        /**
-         * Due to how Apache Configuration works with determining lists from a string value
-         * @return
-         */
-        @IdmProp(key = TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX, versionAdded = "3.24.0", description = "Set of whitelisted roles per tenant type")
         public Map<String, Set<String>> getTenantTypeRoleWhitelistFilterMap() {
-            Map<String, Set<String>> result = new HashMap<>();
+            Map<String, Set<String>> result = getTenantTypeRoleWhitelistFilterProperties();
 
             Iterator<String> propKeys = reloadableConfiguration.getKeys(TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX);
 
@@ -2482,6 +2515,25 @@ public class IdentityConfig {
                 Set<String> visibilityRoles = getSetSafely(reloadableConfiguration, key);
                 visibilityRoles.removeIf(String::isEmpty);
                 result.put(tenantType, visibilityRoles);
+            }
+
+            return result;
+        }
+
+        /**
+         * Due to how Apache Configuration works with determining lists from a string value care needs to be taken to
+         * ensure there are no invalid values in the delimiated list (e.g. "role1,role2," would result in ["role1", "role2,"])
+         */
+        public Map<String, Set<String>> getTenantTypeRoleWhitelistFilterProperties() {
+            Map<String, Set<String>> result = new HashMap<>();
+
+            Iterator<String> propKeys = reloadableConfiguration.getKeys(TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX);
+
+            while (propKeys.hasNext()) {
+                String key = propKeys.next();
+                Set<String> visibilityRoles = getSetSafely(reloadableConfiguration, key);
+                visibilityRoles.removeIf(String::isEmpty);
+                result.put(key, visibilityRoles);
             }
 
             return result;
@@ -2529,7 +2581,72 @@ public class IdentityConfig {
 
     }
 
-    public class RepositoryConfig {
+    public class RepositoryConfig extends ConfigMetaLookup {
+
+        @Override
+        protected PropertyMeta getPropertyMeta(String propertyName) {
+            ReadableIdentityProperty prop = retrieveRepositoryIdentityProperty(propertyName);
+            return new PropertyMeta("directory", prop.isReloadable(), prop.getId(), IdmPropertyType.DIRECTORY);
+        }
+
+        /**
+         * All repository based properties are calculated dynamically since all the information for them is included
+         * in the directory so don't generated IdmProperty based on @IdmProp annotation.
+         *
+         * @return
+         */
+        @Override
+        protected List<IdmProperty> calculateIdmPropAnnotatedProperties() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        protected List<IdmProperty> calculateDynamicProperties() {
+            List<Method> idmAnnoatedMethods = listIdmPropAnnotatedMethods();
+            Map<String, Method> taggedAsUsedMethods = new HashMap<>();
+            for (Method idmAnnoatedMethod : idmAnnoatedMethods) {
+                IdmProp annotation = idmAnnoatedMethod.getAnnotation(IdmProp.class);
+                if (annotation != null) {
+                    taggedAsUsedMethods.put(annotation.key(), idmAnnoatedMethod);
+                }
+            }
+
+            List<IdmProperty> dynamicProps = new ArrayList<>();
+
+            // Load the properties from the directory to determine the set of properties that exist
+            Iterable<IdentityProperty> asConfiguredIdentityPropertyIterable = identityPropertyService.getIdentityPropertyByNameAndVersions(null, Collections.EMPTY_LIST);
+
+            for (IdentityProperty asConfiguredIdentityProperty : asConfiguredIdentityPropertyIterable) {
+                // Load the "as used" value
+                Method taggedMethod = taggedAsUsedMethods.get(asConfiguredIdentityProperty.getName());
+
+                IdmProperty idmProperty = null;
+                if (taggedMethod != null) {
+                    // Call the method to convert the property to the "as used" form
+                    Object asUsedValue = null;
+                    try {
+                        if (taggedMethod.getParameterCount() == 0) {
+                            asUsedValue = taggedMethod.invoke(this);
+                        } else {
+                            logger.info(String.format("Can't use reflection to retrieve prop '%s'. Tagged method requires at least one parameter", asConfiguredIdentityProperty.getName()));
+                            asUsedValue = "<Error Retrieving value from tagged method>";
+                        }
+                    } catch (Exception e) {
+                        logger.error(String.format("Error using reflection to retrieve as configured value for prop '%s'. Requires at least one parameter", asConfiguredIdentityProperty.getName()));
+                        asUsedValue = "<Error Retrieving value from tagged method>";
+                    }
+
+                    idmProperty = identityPropertyService.convertIdentityPropertyToIdmProperty(asConfiguredIdentityProperty);
+                    idmProperty.setValue(asUsedValue);
+                } else {
+                    ReadableIdentityProperty asUsedIdentityProperty = retrieveRepositoryIdentityProperty(asConfiguredIdentityProperty.getName());
+                    idmProperty = identityPropertyService.convertIdentityPropertyToIdmProperty(asConfiguredIdentityProperty, asUsedIdentityProperty);
+                }
+
+                dynamicProps.add(idmProperty);
+            }
+            return dynamicProps;
+        }
 
         public IdentityProperty getIdentityProviderDefaultPolicy() {
             return identityPropertyService.getIdentityPropertyByName(FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP);
@@ -2554,7 +2671,7 @@ public class IdentityConfig {
          *
          * @return
          */
-        @IdmProp(key = ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, versionAdded = "3.16.0", description = "A comma delimited list of domains for which user groups will be allowed")
+        @IdmProp(key = ENABLED_DOMAINS_FOR_USER_GROUPS_PROP)
         public List<String> getExplicitUserGroupEnabledDomains() {
             String rawValue = getRepositoryStringSafely(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP);
             List<String> domainIds = Collections.emptyList();
@@ -2583,7 +2700,7 @@ public class IdentityConfig {
          *
          * @return
          */
-        @IdmProp(key = ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP, versionAdded = "3.20.0", description = "A comma delimited list of rcns for which delegation agreements will be allowed")
+        @IdmProp(key = ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP)
         public List<String> getRCNsExplicitlyEnabledForDelegationAgreements() {
             String rawValue = getRepositoryStringSafely(ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP);
             return splitStringPropIntoList(rawValue);
@@ -2606,7 +2723,7 @@ public class IdentityConfig {
          *
          * @return
          */
-        @IdmProp(key = INVITES_SUPPORTED_FOR_RCNS_PROP, versionAdded = "3.24.0", description = "A comma delimited list of RCNs for which the creation of invite users will be allowed")
+        @IdmProp(key = INVITES_SUPPORTED_FOR_RCNS_PROP)
         public List<String> getInvitesSupportedForRCNs() {
             String rawValue = getRepositoryStringSafely(INVITES_SUPPORTED_FOR_RCNS_PROP);
             return splitStringPropIntoList(rawValue);
@@ -2693,5 +2810,101 @@ public class IdentityConfig {
 
     public String getConfigRoot() {
         return System.getProperty(CONFIG_FOLDER_SYS_PROP_NAME);
+    }
+
+    private abstract class ConfigMetaLookup {
+        /**
+         * Determine meta information about the property. How this is determined is different based on the where the
+         * property is stored.
+         *
+         * @param propertyName
+         * @return
+         */
+        protected abstract PropertyMeta getPropertyMeta(String propertyName);
+
+        public List<IdmProperty> listIdmProperties() {
+            List<IdmProperty> props = new ArrayList<>();
+            props.addAll(calculateIdmPropAnnotatedProperties());
+            props.addAll(calculateDynamicProperties());
+            return props;
+        }
+
+        /**
+         * Calculate the set of configuration properties that can't (or should't) be automatically generated via the @IdmProp annotation. For example,
+         * properties that are based on a naming convention where new ones can be dynamically added or repository props
+         * where all the description, version, etc info is in the repository.
+         *
+         * @return
+         */
+        protected List<IdmProperty> calculateDynamicProperties() {
+            return Collections.emptyList();
+        }
+
+        protected List<IdmProperty> calculateIdmPropAnnotatedProperties() {
+            List<IdmProperty> props = new ArrayList<>();
+
+            List<Method> propMethods =  listIdmPropAnnotatedMethods();
+            for (Method propertyMethod : propMethods) {
+                final IdmProp a = propertyMethod.getAnnotation(IdmProp.class);
+                final String msg = String.format("error getting the value of '%s'", a.key());
+
+                try {
+                    // Pull from the annotation
+                    String description = a.description();
+                    String versionAdded = a.versionAdded();
+                    String name = a.key();
+
+                    Object defaultValue = propertyDefaults.get(a.key());
+
+                    Object value = null;
+                    if (propertyMethod.getParameterCount() > 0) {
+                        logger.info(String.format("Can't use reflection to retrieve prop '%s'. Requires at least one parameter", name));
+                    } else {
+                        value = propertyMethod.invoke(this);
+                    }
+
+                    PropertyMeta meta = getPropertyMeta(name);
+                    String source = meta.configSource;
+                    boolean reloadable = meta.reloadable;
+                    String id = meta.id;
+                    IdmPropertyType propertyType = meta.idmPropertyType;
+
+                    IdmProperty idmProperty = new IdmProperty();
+                    idmProperty.setId(id);
+                    idmProperty.setType(propertyType);
+                    idmProperty.setName(name);
+                    idmProperty.setDescription(description);
+                    idmProperty.setValue(value);
+                    idmProperty.setAsConfiguredValue(value); // By default use same value for value and asConfiguredValue
+                    idmProperty.setDefaultValue(defaultValue);
+                    idmProperty.setVersionAdded(versionAdded);
+                    idmProperty.setSource(source);
+                    idmProperty.setReloadable(reloadable);
+                    props.add(idmProperty);
+                } catch (Exception e) {
+                    logger.error(msg, e);
+                }
+            }
+            return props;
+        }
+
+        protected List<Method> listIdmPropAnnotatedMethods() {
+            List<Method> propMethods = new ArrayList<>();
+            for (Method m : this.getClass().getDeclaredMethods()) {
+                if (m.isAnnotationPresent(IdmProp.class)) {
+                    propMethods.add(m);
+                }
+            }
+            return propMethods;
+        }
+    }
+
+    @AllArgsConstructor
+    private class PropertyMeta {
+        String configSource;
+        boolean reloadable;
+        String id;
+        IdmPropertyType idmPropertyType;
+
     }
 }

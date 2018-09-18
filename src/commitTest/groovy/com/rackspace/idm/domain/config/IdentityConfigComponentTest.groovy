@@ -3,20 +3,20 @@ package com.rackspace.idm.domain.config
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
 import com.rackspace.idm.domain.entity.IdentityProperty
-import com.rackspace.idm.domain.security.TokenFormat
+import com.rackspace.idm.domain.entity.ImmutableIdentityProperty
 import com.rackspace.idm.domain.service.IdentityPropertyService
 import com.rackspace.test.SingleTestConfiguration
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy
 import org.apache.commons.lang.StringUtils
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
+import spock.mock.DetachedMockFactory
 import testHelpers.SingletonConfiguration
 import testHelpers.SingletonReloadableConfiguration
 import testHelpers.SingletonTestFileConfiguration
@@ -162,13 +162,15 @@ class IdentityConfigComponentTest extends Specification {
     @Unroll
     def "getExplicitUserGroupEnabledDomains properly parses value retrieved from repo: value: #repoValue"() {
         given:
-        def identityProp = repoValue != null ? new IdentityProperty().with {
+
+        def identityProp = repoValue != null ? new ImmutableIdentityProperty(new IdentityProperty().with {
             it.value = repoValue.bytes
             it.valueType = "String"
             it
-        } : null
+        }) : null
 
-        Mockito.when(identityPropertyService.getIdentityPropertyByName(IdentityConfig.ENABLED_DOMAINS_FOR_USER_GROUPS_PROP)).thenReturn(identityProp)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP, true)
+        identityPropertyService.getImmutableIdentityPropertyByName(IdentityConfig.ENABLED_DOMAINS_FOR_USER_GROUPS_PROP) >> identityProp
 
         expect:
         config.getRepositoryConfig().getExplicitUserGroupEnabledDomains() == expectedList
@@ -185,14 +187,14 @@ class IdentityConfigComponentTest extends Specification {
 
     @Unroll
     def "areDelegationAgreementsEnabledForRcn: rcnAllowedProp: '#rcnsAllowed' ; domainRcn: '#domainRcn' ; expectedResponse: '#expected'"() {
-        def identityProp = rcnsAllowed != null ? new IdentityProperty().with {
+        def identityProp = rcnsAllowed != null ? new ImmutableIdentityProperty(new IdentityProperty().with {
             it.value = rcnsAllowed.bytes
             it.valueType = "String"
             it
-        } : null
+        }) : null
 
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_DELEGATION_AGREEMENTS_FOR_ALL_RCNS_PROP, false)
-        Mockito.when(identityPropertyService.getIdentityPropertyByName(IdentityConfig.ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP)).thenReturn(identityProp)
+        identityPropertyService.getImmutableIdentityPropertyByName(IdentityConfig.ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP) >> identityProp
 
         when: "RCNs not globally allowed"
         boolean allowed = config.getReloadableConfig().areDelegationAgreementsEnabledForRcn(domainRcn)
@@ -292,15 +294,37 @@ class IdentityConfigComponentTest extends Specification {
         CollectionUtils.isEqualCollection(whitelist, expectedRoles)
     }
 
+    def "retrievingRepository properties from cache is feature flagged"() {
+
+        when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP, false)
+        config.getRepositoryConfig().getExplicitUserGroupEnabledDomains()
+
+        then:
+        0 * identityPropertyService.getImmutableIdentityPropertyByName(_)
+        1 * identityPropertyService.getIdentityPropertyByName(_)
+
+        when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP, true)
+        config.getRepositoryConfig().getExplicitUserGroupEnabledDomains()
+
+        then:
+        1 * identityPropertyService.getImmutableIdentityPropertyByName(_)
+        0 * identityPropertyService.getIdentityPropertyByName(_)
+    }
+
     @SingleTestConfiguration
     static class MockServiceProvider {
+        private DetachedMockFactory factory = new DetachedMockFactory()
+
         @Bean
         public IdentityPropertyValueConverter identityPropertyValueConverter () {
             return  new IdentityPropertyValueConverter()
         }
+
         @Bean
         public IdentityPropertyService identityPropertyService () {
-            return  Mockito.mock(IdentityPropertyService.class)
+            return  factory.Mock(IdentityPropertyService)
         }
     }
 }

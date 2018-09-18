@@ -56,7 +56,7 @@ public class Cloud11VersionResource {
     }
 
     // this is not my fault, I promise
-    @IdentityApi(apiResourceType = ApiResourceType.AUTH, name = "v1.1 hack")
+    @IdentityApi(apiResourceType = ApiResourceType.PUBLIC, name = "v1.1 hack")
     @Deprecated
     @GET
     @Path("cloud/auth")
