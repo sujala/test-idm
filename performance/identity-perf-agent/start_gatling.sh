@@ -39,7 +39,7 @@ sbt "gatling:testOnly com.rackspacecloud.simulations.identity.IdentityConstantTp
 # echo "admin_token,user_id,username" |cat - $DATA_DIR/created_users.dat > /tmp/out && mv /tmp/out $DATA_DIR/created_users.dat
 
 # Delete users
-sbt "gatling:testOnly com.rackspacecloud.simulations.identity.IdentityConstantTputUserDeletions"
+# sbt "gatling:testOnly com.rackspacecloud.simulations.identity.IdentityConstantTputUserDeletions"
 
 [ -f gatling.log ] && mv gatling.log target/gatling/.
 echo "copy only simulation log to target/gatling/results"
