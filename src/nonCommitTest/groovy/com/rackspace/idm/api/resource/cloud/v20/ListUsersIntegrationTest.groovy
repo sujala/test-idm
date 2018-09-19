@@ -550,7 +550,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
             def listUsersResponse = cloud20.listUsers(token, acceptContentType)
             listUsersResponse.status == 200
             def userList = getUsersFromListUsers(listUsersResponse)
-            for(def usr : userList) {
+            for(def usr : userList.user) {
                 if (acceptContentType == MediaType.APPLICATION_JSON_TYPE){
                     assert usr["RAX-AUTH:contactId"] == contactId
                 } else {
@@ -796,18 +796,20 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
 
     def getUsersFromListUsers(response) {
         if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
-            def returnedUsers = response.getEntity(UserList).value
-            return returnedUsers.user
-        } else {
-            return new JsonSlurper().parseText(response.getEntity(String)).users
+            return response.getEntity(UserList).value
         }
+
+        UserList userList = new UserList()
+        userList.user.addAll(new JsonSlurper().parseText(response.getEntity(String))["users"])
+
+        return userList
     }
 
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
             if (federatedUser != null) {
-                federatedUserRepository.deleteObject(federatedUser)
+                federatedUserRepository.deleteUser(federatedUser)
             }
         } catch (Exception e) {
             //eat but log

@@ -14,6 +14,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.User.UserType
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.FederatedIdentityService
@@ -373,13 +374,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     @Unroll
     def "listUsers (defaultUser caller) verifies token and caller "() {
+        given:
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.DEFAULT_USER
+
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, 0, 1).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams()).build()
 
         then:
-        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> entityFactory.createUserToken()
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
-        1 * authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.DEFAULT_USER
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
 
         response.status == 200
     }
@@ -390,18 +393,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         reloadableConfig.getTenantDefaultDomainId() >> "default"
         User user = entityFactory.createUser()
 
-        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> user
+        requestContext.getEffectiveCallersUserType() >> userType
 
-        authorizationContext.getIdentityUserType() >> userType
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> userType
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams()).build()
 
         then:
-        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), UserType.VERIFIED, offset, limit) >> userContextMock
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
+        1 * reloadableConfig.getTenantDefaultDomainId() >> "123"
+        1 * identityUserService.getEndUsersPaged(_) >> userContextMock
         1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
 
         response.status == 200
@@ -419,16 +424,19 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
 
-        authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
+        ListUsersSearchParams params = new ListUsersSearchParams().with {
+            it.userType = UserType.VERIFIED.name()
+            it
+        }
 
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, params).build()
 
         then:
-        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), UserType.VERIFIED, offset, limit) >> userContextMock
+        1 * identityUserService.getEndUsersPaged(params) >> userContextMock
         1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
 
         and:
@@ -447,13 +455,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
-        authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
 
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams()).build()
 
         then:
-        0 * identityUserService.getEndUsersByDomainIdPaged(_, _, _)
+        0 * identityUserService.getEndUsersPaged(_, _)
         0 * idmPathUtils.createLinkHeader(_, _) >> "link header"
         1 * userConverter.toUserList(_) >> { args ->
             def userList = args[0]
@@ -475,16 +483,18 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
 
-        authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_MANAGER
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
         when:
-        def response = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, offset, limit).build()
+        def response = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams()).build()
 
         then:
-        1 * identityUserService.getEndUsersByDomainIdPaged(user.getDomainId(), UserType.VERIFIED, offset, limit) >> userContextMock
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
+        1 * reloadableConfig.getTenantDefaultDomainId() >> "123"
+        1 * identityUserService.getEndUsersPaged(_) >> userContextMock
         1 * idmPathUtils.createLinkHeader(_, _) >> "link header"
 
         and:
@@ -496,42 +506,43 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         reloadableConfig.getTenantDefaultDomainId() >> "default"
 
-        scopeAccessMock = Mock()
-        scopeAccessMock.getUniqueId() >> "accessToken=token,cn=TOKENS,rsId=id,ou=users"
         mockUserConverter(service)
+        def callerToken = entityFactory.createUserToken()
+
 
         when: "Token not valid"
-        def response1 = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, null, null).build()
+        def response1 = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams()).build()
 
         then:
-        securityContext.getAndVerifyEffectiveCallerToken(authToken) >> { throw new NotAuthorizedException()}
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> { throw new NotAuthorizedException()}
         response1.status == 401
 
         when: "Caller not found"
-        def response2 = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, null, null).build()
+        def response2 = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams()).build()
 
         then:
-        securityContext.getAndVerifyEffectiveCallerToken(authToken) >> scopeAccessMock
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> callerToken
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> { throw new NotFoundException()}
         response2.status == 404
 
         when: "Caller not authorized"
-        def response3 = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, null, null).build()
+        def response3 = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams()).build()
 
         then:
-        securityContext.getAndVerifyEffectiveCallerToken(authToken) >> scopeAccessMock
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> callerToken
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> {entityFactory.createUser()}
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(_) >> {throw new ForbiddenException()}
         response3.status == 403
 
 
         when: "Caller can view all domain users but doesn't have a domain"
-        def response4 = service.listUsers(headers, uriInfo(), authToken, UserType.VERIFIED, null, null).build()
+        def response4 = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams()).build()
 
         then:
-        requestContext.getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> scopeAccessMock
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> callerToken
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser("username", null, null, "region")
-        authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        reloadableConfig.getTenantDefaultDomainId() >> "123"
         response4.status == 400
     }
 
@@ -2453,18 +2464,22 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authConverter.toRackerAuthenticationResponse(_, _, _, _) >> new AuthenticateResponse()
     }
 
-    def "calling getUserByEmail returns the user"() {
+    def "calling getUsers with email query param returns the user"() {
         given:
-        def user = entityFactory.createUser()
         allowUserAccess()
-
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        ListUsersSearchParams params = new ListUsersSearchParams().with {
+            it.email = "test@rackspace.com"
+            it.userType = "ALL"
+            it
+        }
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
 
         when:
-        def result = service.getUsersByEmail(headers, authToken, "email@email.com", UserType.ALL).build()
+        def result = service.listUsers(headers, uriInfo(), authToken, params).build()
 
         then:
-        userService.getUsersByEmail(_, UserType.ALL) >> [user].asList()
+        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * userService.getUsersByEmail('test@rackspace.com', UserType.ALL) >> [entityFactory.createUser()].asList()
 
         then:
         result.status == 200
@@ -2474,7 +2489,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
 
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
 
         def converter = new UserConverterCloudV20()
         converter.mapper = new DozerBeanMapper()
@@ -2495,9 +2510,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.email = email
             it
         }
+        ListUsersSearchParams params = new ListUsersSearchParams().with {
+            it.email = "email@test.com"
+            it.userType = "ALL"
+            it
+        }
+        PaginatorContext context = new PaginatorContext()
+        context.update(Arrays.asList(subUser1, subUser2), params.paginationRequest.effectiveMarker, params.paginationRequest.effectiveLimit)
 
         when:
-        def result = service.getUsersByEmail(headers, authToken, email, UserType.ALL).build()
+        def result = service.listUsers(headers, uriInfo(), authToken, params).build()
 
         then:
         1 * userService.getUserByScopeAccess(_) >> caller
@@ -3730,7 +3752,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.getUser(_) >> user
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * authorizationService.hasSameDomain(caller, user) >> true
-        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
         result.build().status == 200
     }
 
@@ -3740,14 +3762,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User user = entityFactory.createUser()
         def users = [user].asList()
         User caller = entityFactory.createUser()
+        ListUsersSearchParams params = new ListUsersSearchParams().with {
+            it.email = "test@rackspace.com"
+            it.userType = "ALL"
+            it
+        }
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
 
         when:
-        def result = service.getUsersByEmail(headers, authToken, "test@rackspace.com", UserType.ALL)
+        def result = service.listUsers(headers, uriInfo(), authToken, params)
 
         then:
         1 * userService.getUsersByEmail(_, UserType.ALL) >> users
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
         result.build().status == 200
     }
 
@@ -3898,7 +3926,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         EndUser caller = entityFactory.createUser()
         def pwdExpiration = new DateTime()
         userService.getUserByScopeAccess(_, false) >> caller
-        authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         userService.getUserByScopeAccess(_) >> caller
 
         when: "get a provisioned user by ID"

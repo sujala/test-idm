@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersSearchParams;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
@@ -163,15 +164,12 @@ public interface IdentityUserService {
     Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag (String domainId, boolean enabled, UserType userType);
 
     /**
-     * Returns a page of federated and provisioned users associated with the specified domain.
+     * Returns a page of federated and provisioned users associated with the specified search params.
      *
-     * @param domainId
-     * @param userType
-     * @param offset
-     * @param limit
+     * @param listUsersSearchParams
      * @return
      */
-    PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, UserType userType, int offset, int limit);
+    PaginatorContext<EndUser> getEndUsersPaged(ListUsersSearchParams listUsersSearchParams);
 
     /**
      * Return all

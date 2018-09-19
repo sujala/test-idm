@@ -159,7 +159,7 @@ public final class ErrorCodes {
 
     public static final String ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER_MSG = "Cannot add the 'identity:user-manage' role to non default-user.";
 
-    public static final String ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG = "The 'user_type' parameter can not be used with the 'name' parameter.";
+    public static final String ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN = "The '%s' parameter can not be used with the '%s' parameter.";
     public static final String ERROR_CODE_USER_GROUP_CANNOT_BE_CREATED_IN_DEFAULT_DOMAIN_MSG = "The user group cannot be created in default domain";
 
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {

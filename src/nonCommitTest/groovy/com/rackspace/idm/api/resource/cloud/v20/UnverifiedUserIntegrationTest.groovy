@@ -962,13 +962,13 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.listUsersWithFilterOptions(userAdminToken, "VERIFIED", "aseem", null, MediaType.APPLICATION_XML_TYPE)
 
         then: "status is 400 Bad Request"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG)
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, String.format(ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN, "user_type", "name"))
 
         when: "list users with param of user type, name and email is passed"
         response = cloud20.listUsersWithFilterOptions(userAdminToken, "VERIFIED", "aseem", "aseem@example.com", MediaType.APPLICATION_XML_TYPE)
 
         then: "status is 400 Bad Request"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG)
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, String.format(ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN, "user_type", "name"))
     }
 
     def "Test listing of Verified and Unverified users while listing users"() {

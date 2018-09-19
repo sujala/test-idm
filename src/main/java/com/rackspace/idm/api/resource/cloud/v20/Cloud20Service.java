@@ -205,7 +205,17 @@ public interface Cloud20Service {
 
     ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
 
-    ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserType userType, Integer marker, Integer limit) ;
+    /**
+     * Returns a list of users. Optionally filtered by a set of parameters.
+     *
+     * @param httpHeaders
+     * @param uriInfo
+     * @param authToken
+     * @param listUsersSearchParams
+     *
+     * @return
+     */
+    ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, ListUsersSearchParams listUsersSearchParams) ;
 
     ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId) ;

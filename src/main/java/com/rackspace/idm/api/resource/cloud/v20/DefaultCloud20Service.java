@@ -3,50 +3,19 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.google.common.collect.ImmutableList;
 import com.newrelic.api.agent.NewRelic;
 import com.rackspace.docs.core.event.EventType;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ChangePasswordCredentials;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationCredentials;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainAdministratorChange;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Invite;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordReset;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypes;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.SecretQAConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.TenantTypeConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.NewRelicTransactionNames;
@@ -61,86 +30,26 @@ import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.BaseUserToken;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.DelegationAgreement;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.EndUserDelegate;
-import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.IdentityProperty;
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.entity.PasswordPolicy;
-import com.rackspace.idm.domain.entity.PhonePinProtectedUser;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.SamlAuthResponse;
-import com.rackspace.idm.domain.entity.SamlLogoutResponse;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.SourcedRoleAssignments;
 import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.TokenScopeEnum;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.User.UserType;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthenticationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.CloudRegionService;
-import com.rackspace.idm.domain.service.CreateSubUserService;
-import com.rackspace.idm.domain.service.DelegationService;
-import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.FederatedIdentityService;
-import com.rackspace.idm.domain.service.GroupService;
-import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
-import com.rackspace.idm.domain.service.IdpPolicyFormatEnum;
-import com.rackspace.idm.domain.service.PhonePinService;
-import com.rackspace.idm.domain.service.QuestionService;
-import com.rackspace.idm.domain.service.RoleLevelEnum;
-import com.rackspace.idm.domain.service.RoleService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.SecretQAService;
-import com.rackspace.idm.domain.service.ServiceCatalogInfo;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TenantTypeService;
-import com.rackspace.idm.domain.service.TokenRevocationService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.CreateIdentityAdminService;
 import com.rackspace.idm.domain.service.impl.CreateUserAdminService;
 import com.rackspace.idm.domain.service.impl.CreateUserUtil;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.ExceptionHandler;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.IdmException;
-import com.rackspace.idm.exception.InvalidPasswordPolicyException;
-import com.rackspace.idm.exception.MultiFactorNotEnabledException;
-import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.SizeLimitExceededException;
-import com.rackspace.idm.exception.UnrecoverableIdmException;
-import com.rackspace.idm.exception.UnsupportedMediaTypeException;
-import com.rackspace.idm.exception.UserPasswordExpiredException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
+import com.rackspace.idm.util.QueryParamConverter;
 import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlUnmarshaller;
@@ -172,16 +81,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-import org.openstack.docs.identity.api.v2.AuthenticateResponse;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.CredentialListType;
-import org.openstack.docs.identity.api.v2.CredentialType;
-import org.openstack.docs.identity.api.v2.EndpointList;
-import org.openstack.docs.identity.api.v2.IdentityFault;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
-import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.VersionForService;
+import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -213,19 +113,10 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
+
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
@@ -3242,7 +3133,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private Iterable<? extends EndUser> filterOutUsersInaccessibleByCaller(Iterable<? extends EndUser> users, EndUser caller) {
         Iterable<? extends EndUser> result;
 
-        IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+        IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
         if (callerType.isDomainBasedAccessLevel()) {
             List<EndUser> domainUsers = new ArrayList<EndUser>();
 
@@ -5039,41 +4930,68 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    // KSADM Extension User methods
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserType userType, Integer marker, Integer limit) {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, ListUsersSearchParams listUsersSearchParams) {
+        // In order to be avoid a contract change, getting user by name or email will work with legacy logic if not
+        // combined with new query params.
+        if (StringUtils.isBlank(listUsersSearchParams.domainId)
+                && StringUtils.isBlank(listUsersSearchParams.tenantId)
+                && listUsersSearchParams.adminOnly == null) {
+            if (StringUtils.isNotBlank(listUsersSearchParams.name) && StringUtils.isBlank(listUsersSearchParams.getUserType())) {
+                return getUserByName(httpHeaders, authToken, listUsersSearchParams.name);
+            } else if (StringUtils.isNotBlank(listUsersSearchParams.email) && StringUtils.isBlank(listUsersSearchParams.name)) {
+                UserType userTypeEnum = QueryParamConverter.convertUserTypeParamToEnum(listUsersSearchParams.userType);
+                return getUsersByEmail(httpHeaders, authToken, listUsersSearchParams.email, userTypeEnum);
+            }
+        }
+
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum.DEFAULT_USER);
 
-            // Get user type
-            IdentityUserTypeEnum userTypeEnum = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+
+            // Verify access to query params
+            if (!callerType.hasAtLeastIdentityAdminAccessLevel()
+                    && (StringUtils.isNotBlank(listUsersSearchParams.domainId)
+                    || StringUtils.isNotBlank(listUsersSearchParams.tenantId)
+                    || listUsersSearchParams.adminOnly != null)) {
+                throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
 
             // Short circuit. If regular default user, only user can return is self. No need to do any search.
-            if (userTypeEnum == IdentityUserTypeEnum.DEFAULT_USER) {
+            if (callerType == IdentityUserTypeEnum.DEFAULT_USER) {
                 List<EndUser> users = ImmutableList.of((EndUser) caller);
                 return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
 
-            Iterable<? extends EndUser> filteredUsers = Collections.emptyList();
-            String paginationLinkHeader = null;
-            PaginatorContext<EndUser> paginatorContext = null;
+            // Validate query params
+            if (!StringUtils.isBlank(listUsersSearchParams.name) && StringUtils.isNotBlank(listUsersSearchParams.userType)) {
+                String errorMsg = String.format(ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN, "user_type", "name");
+                throw new BadRequestException(errorMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            }
+            if (!StringUtils.isBlank(listUsersSearchParams.tenantId) && StringUtils.isNotBlank(listUsersSearchParams.domainId)) {
+                String errorMsg = String.format(ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN, "tenant_id", "domain_id");
+                throw new BadRequestException(errorMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            }
 
+            Iterable<? extends EndUser> filteredUsers = Collections.emptyList();
+            String paginationLinkHeader;
+            PaginatorContext<EndUser> paginatorContext = null;
 
             // This flow only returns users in the callers domain - regardless of whether they are enabled or not.
             if (identityConfig.getReloadableConfig().getTenantDefaultDomainId().equalsIgnoreCase(caller.getDomainId())) {
                 // Users in default domain must only show the caller
                 filteredUsers = ImmutableList.of((EndUser) caller);
             } else if (caller.getDomainId() != null) {
-                paginatorContext = this.identityUserService.getEndUsersByDomainIdPaged(caller.getDomainId(), userType, marker, limit);
+                paginatorContext = this.identityUserService.getEndUsersPaged(listUsersSearchParams);
             } else {
                 throw new BadRequestException("Caller has no domain");
             }
 
-
-            ResponseBuilder builder = Response.status(200);
+            ResponseBuilder builder = Response.status(HttpStatus.SC_OK);
             if (paginatorContext != null) {
                 paginationLinkHeader = idmPathUtils.createLinkHeader(uriInfo, paginatorContext);
                 builder.header("Link", paginationLinkHeader);
@@ -5083,11 +5001,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 filteredUsers = filterOutUsersInaccessibleByCaller(paginatorContext.getValueList(), (EndUser) caller);
             }
 
-            builder.entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
+            return builder.entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
                     .createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
-
-            return builder;
         } catch (Exception ex) {
+            logger.warn("Error occur while listing users.");
             return exceptionHandler.exceptionResponse(ex);
         }
     }

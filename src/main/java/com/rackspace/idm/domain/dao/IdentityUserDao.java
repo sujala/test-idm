@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersSearchParams;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
@@ -142,15 +143,12 @@ public interface IdentityUserDao {
     Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled, UserType userType);
 
     /**
-     * Search for end users with the specified domain id.
+     * Search for end users with the specified search params.
      *
-     * @param domainId
-     * @param userType (pass default as VERIFIED)
-     * @param offset
-     * @param limit
+     * @param listUsersSearchParams
      * @return
      */
-    PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, UserType userType, int offset, int limit);
+    PaginatorContext getEndUsersPaged(ListUsersSearchParams listUsersSearchParams);
 
     /**
      * Search for end users with the specified domain id.

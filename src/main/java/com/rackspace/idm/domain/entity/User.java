@@ -278,7 +278,15 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
     /* This user_type enum will be used to filter user based on their type.
      * Enum will help to avoid typo in the code */
     public enum UserType {
-        ALL, VERIFIED, UNVERIFIED
+        ALL, VERIFIED, UNVERIFIED;
+
+        public static UserType fromValue(String userType){
+            try {
+                return valueOf(userType.toUpperCase());
+            } catch (Exception ex) {
+                return null;
+            }
+        }
     }
 
     public User() {

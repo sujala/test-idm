@@ -1,15 +1,14 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.dao.IdentityUserDao
-import com.rackspace.idm.domain.entity.FederatedUser
-import com.rackspace.idm.domain.entity.SourcedRoleAssignments
-import com.rackspace.idm.domain.entity.SourcedRoleAssignmentsLegacyAdapter
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.domain.service.TenantEndpointMeta
+import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
@@ -43,10 +42,13 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         service.deleteUserLogger = deleteUserLogger
         mockIdentityConfig(service)
         mockRuleService(service)
+        mockUserService(service)
         mockTenantService(service)
+        mockDomainService(service)
         mockAuthorizationService(service)
         mockEndpointService(service)
         mockDelegationService(service)
+        mockRequestContextHolder(service)
     }
 
     def "Add Group to user includes feed event"() {
@@ -383,6 +385,193 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         then:
         1 * tenantService.getTenantRolesForUser(user) >> []
         1 * delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(user)
+    }
+
+    def "getEndUsersPaged: calls correct services and dao"() {
+        given:
+        Domain domain = entityFactory.createDomain("domainId")
+        Tenant tenant = entityFactory.createTenant().with {
+            it.domainId = "tenant_domain_id"
+            it
+        }
+        ListUsersSearchParams params
+
+        def caller =  entityFactory.createUser()
+
+        when: "providing 'tenant_id' param"
+        params = new ListUsersSearchParams()
+        params.tenantId = tenant.tenantId
+        service.getEndUsersPaged(params)
+
+        then:
+        1 * tenantService.checkAndGetTenant(tenant.tenantId) >> tenant
+        1 * domainService.checkAndGetDomain(tenant.domainId) >> domain
+        1 * identityUserRepository.getEndUsersPaged(_) >> { args ->
+            ListUsersSearchParams usersSearchParams = args[0]
+            assert usersSearchParams.domainId == tenant.domainId
+        }
+
+        when: "providing 'domain_id' param"
+        params = new ListUsersSearchParams()
+        params.domainId = domain.domainId
+        service.getEndUsersPaged(params)
+
+        then:
+        0 * tenantService.checkAndGetTenant(tenant.tenantId)
+        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
+        1 * identityUserRepository.getEndUsersPaged(_) >> { args ->
+            ListUsersSearchParams usersSearchParams = args[0]
+            assert usersSearchParams.domainId == domain.domainId
+        }
+
+        when: "default to callers domain"
+        params = new ListUsersSearchParams()
+        params.domainId =  null
+        service.getEndUsersPaged(params)
+
+        then:
+        0 * tenantService.checkAndGetTenant(tenant.tenantId)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
+        1 * identityUserRepository.getEndUsersPaged(_) >> { args ->
+            ListUsersSearchParams usersSearchParams = args[0]
+            assert usersSearchParams.domainId == domain.domainId
+        }
+    }
+
+    def "getEndUsersPaged with 'admin_only' param set to true: calls correct services and dao"() {
+        given:
+        Domain domain = entityFactory.createDomain("domainId")
+        Tenant tenant = entityFactory.createTenant().with {
+            it.domainId = domain.domainId
+            it
+        }
+        ListUsersSearchParams params
+
+        def caller = entityFactory.createUser()
+        def user = entityFactory.createUser()
+
+        when: "providing 'tenant_id' param"
+        params = new ListUsersSearchParams()
+        params.adminOnly = true
+        params.tenantId = tenant.tenantId
+        PaginatorContext paginatorContext = service.getEndUsersPaged(params)
+
+        then:
+        1 * tenantService.checkAndGetTenant(tenant.tenantId) >> tenant
+        1 * domainService.checkAndGetDomain(tenant.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> user
+
+        paginatorContext.valueList.size() == 1
+
+        when: "providing 'domain_id' param"
+        params = new ListUsersSearchParams()
+        params.adminOnly = true
+        params.domainId = domain.domainId
+        paginatorContext = service.getEndUsersPaged(params)
+
+        then:
+        0 * tenantService.checkAndGetTenant(tenant.tenantId)
+        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> user
+
+        paginatorContext.valueList.size() == 1
+
+        when: "default to callers domain"
+        params = new ListUsersSearchParams()
+        params.adminOnly = true
+        params.domainId =  null
+        paginatorContext = service.getEndUsersPaged(params)
+
+        then:
+        0 * tenantService.checkAndGetTenant(tenant.tenantId)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> user
+
+        paginatorContext.valueList.size() == 1
+    }
+
+    def "empty list cases: getEndUsersPaged with 'admin_only' param set to true"() {
+        given:
+        Domain domain = entityFactory.createDomain("domainId")
+        Tenant tenant = entityFactory.createTenant().with {
+            it.domainId = domain.domainId
+            it
+        }
+        ListUsersSearchParams params
+
+        def user = entityFactory.createUser().with {
+            it.unverified = false
+            it
+        }
+
+        when: "invalid name param"
+        params = new ListUsersSearchParams()
+        params.adminOnly = true
+        params.name = "otherName"
+        params.domainId = domain.domainId
+        PaginatorContext paginatorContext = service.getEndUsersPaged(params)
+
+        then:
+        1 * domainService.checkAndGetDomain(tenant.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> user
+
+        paginatorContext.valueList.size() == 0
+
+        when: "searching for unverified users"
+        params = new ListUsersSearchParams()
+        params.adminOnly = true
+        params.userType = "UNVERIFIED"
+        params.domainId = domain.domainId
+        paginatorContext = service.getEndUsersPaged(params)
+
+        then:
+        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> user
+
+        paginatorContext.valueList.size() == 0
+
+        when: "invalid email"
+        params = new ListUsersSearchParams()
+        params.adminOnly = true
+        params.email = "invalid@email.com"
+        params.domainId =  domain.domainId
+        paginatorContext = service.getEndUsersPaged(params)
+
+        then:
+        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
+        1 * userService.getUserAdminByDomain(domain) >> user
+
+        paginatorContext.valueList.size() == 0
+    }
+
+    def "error check: getEndUsersPaged"() {
+        given:
+        Domain domain = entityFactory.createDomain("domainId")
+        Tenant tenant = entityFactory.createTenant().with {
+            it.domainId = "tenant_domain_id"
+            it
+        }
+        ListUsersSearchParams params
+
+        when: "tenant not found"
+        params = new ListUsersSearchParams()
+        params.tenantId = tenant.tenantId
+        service.getEndUsersPaged(params)
+
+        then:
+        1 * tenantService.checkAndGetTenant(tenant.tenantId) >> {throw new NotFoundException()}
+        thrown(NotFoundException)
+
+        when: "domain not found"
+        params = new ListUsersSearchParams()
+        params.domainId = domain.domainId
+        service.getEndUsersPaged(params)
+
+        then:
+        1 * domainService.checkAndGetDomain(domain.domainId) >> {throw new NotFoundException()}
+        thrown(NotFoundException)
     }
 
 }

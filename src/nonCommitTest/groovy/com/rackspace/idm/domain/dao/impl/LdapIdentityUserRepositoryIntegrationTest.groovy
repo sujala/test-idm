@@ -1,17 +1,10 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.dao.DomainDao
-import com.rackspace.idm.domain.dao.FederatedUserDao
-import com.rackspace.idm.domain.dao.GroupDao
-import com.rackspace.idm.domain.dao.IdentityProviderDao
-import com.rackspace.idm.domain.dao.IdentityUserDao
-import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.entity.Application
-import com.rackspace.idm.domain.entity.EndUser
-import com.rackspace.idm.domain.entity.FederatedUser
-import com.rackspace.idm.domain.entity.IdentityProvider
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersSearchParams
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
+import com.rackspace.idm.domain.dao.*
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.helpers.CloudTestUtils
 import com.unboundid.ldap.sdk.LDAPInterface
 import com.unboundid.ldap.sdk.persist.LDAPPersister
@@ -109,12 +102,12 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
     def "Verify retrieving a provisioned user"() {
         setup:
         User user = entityFactory.createUser().with {
+            it.id = null
             it.readOnlyEntry = null
             it.uniqueId = null
             it.passwordHistory = new ArrayList<>(Arrays.asList("newPassword1", "test124"))
             it
         }
-        def User retrievedUser = entityFactory.createUser()
         provisionedUserDao.addUser(user)
         String expectedDn =  getExpectedProvisionedUserDn(user)
 
@@ -158,6 +151,7 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         }
         def expectedFederatedUserDn =  getExpectedFederatedUserDn(commonIdentityProvider, fedUser)
         def provisionedUser = entityFactory.createUser().with {
+            it.id = null
             it.domainId = domainId
             it.readOnlyEntry = null
             it.uniqueId = null
@@ -246,6 +240,82 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         }
         groupDao.deleteGroup(group.groupId)
         domainDao.deleteDomain(domainId)
+    }
+
+    def "get users by search params"() {
+        given:
+        def username = "testUser" + utils.getRandomUUID()
+        def domainId = utils.getRandomIntegerString()
+        def email = "email@rackspace.com"
+        def unverified = false
+        User user = entityFactory.createUser().with {
+            it.id = null
+            it.username = username
+            it.domainId = domainId
+            it.email = email
+            it.unverified = unverified
+            it.readOnlyEntry = null
+            it.uniqueId = null
+            it
+        }
+        provisionedUserDao.addUser(user)
+        List<ListUsersSearchParams> listUsersSearchParams = [
+                new ListUsersSearchParams(username, null, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
+                new ListUsersSearchParams(username, email, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
+                new ListUsersSearchParams(null, email, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
+                new ListUsersSearchParams(null, null, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
+        ]
+        List<PaginatorContext> responses = []
+
+        when: "filter by search params"
+        listUsersSearchParams.each { params ->
+            responses << identityUserDao.getEndUsersPaged(params)
+        }
+
+        then:
+        responses.each { response ->
+            assert response.valueList.size() == 1
+            EndUser retrievedUser = response.valueList.get(0)
+            assert retrievedUser.username ==  username
+            assert retrievedUser.email == email
+            assert retrievedUser.domainId == domainId
+        }
+    }
+
+    def "empty list cases - get users by search params"() {
+        given:
+        def username = "testUser" + utils.getRandomUUID()
+        def domainId = utils.getRandomIntegerString()
+        def email = "email@rackspace.com"
+        def unverified = false
+        User user = entityFactory.createUser().with {
+            it.id = null
+            it.username = username
+            it.domainId = domainId
+            it.email = email
+            it.unverified = unverified
+            it.readOnlyEntry = null
+            it.uniqueId = null
+            it
+        }
+        provisionedUserDao.addUser(user)
+        List<ListUsersSearchParams> listUsersSearchParams = [
+                new ListUsersSearchParams("badName", null, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
+                new ListUsersSearchParams(username, email, null, "badDomain", false, User.UserType.ALL.name(), new PaginationParams()),
+                new ListUsersSearchParams(null, "badEmail", null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
+                new ListUsersSearchParams(null, null, null, domainId, false, User.UserType.UNVERIFIED.name(), new PaginationParams()),
+        ]
+        List<PaginatorContext> responses = []
+
+        when: "filter by search params"
+        listUsersSearchParams.each { params ->
+            responses << identityUserDao.getEndUsersPaged(params)
+        }
+
+        then:
+        responses.each { response ->
+            assert response.valueList.size() == 0
+        }
     }
 
     def "Verify searches returns null when id does not exist at all"() {

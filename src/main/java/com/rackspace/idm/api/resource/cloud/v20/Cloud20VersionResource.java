@@ -17,7 +17,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
@@ -25,6 +24,7 @@ import com.rackspace.idm.api.resource.cloud.XMLReader;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.entity.User.UserType;
 import com.rackspace.idm.event.ApiKeyword;
 import com.rackspace.idm.event.ApiResourceType;
 import com.rackspace.idm.event.IdentityApi;
@@ -38,7 +38,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.UnsupportedMediaTypeException;
 import com.rackspace.idm.modules.endpointassignment.api.resource.EndpointAssignmentRuleResource;
 import com.rackspace.idm.modules.usergroups.api.resource.CloudUserGroupResource;
-import com.rackspace.idm.domain.entity.User.UserType;
 import com.rackspace.idm.util.QueryParamConverter;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
@@ -803,27 +802,21 @@ public class Cloud20VersionResource {
     @ReportableQueryParams(unsecuredQueryParams = {"marker","limit"}, securedQueryParams = {"email","name"})
     @GET
     @Path("users")
-    public Response getUserByName(
+    public Response getUsers(
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @QueryParam("email") String email,
             @QueryParam("name") String name,
+            @QueryParam("email") String email,
+            @QueryParam("tenant_id") String tenantId,
+            @QueryParam("domain_id") String domainId,
+            @QueryParam("admin_only") Boolean adminOnly,
             @QueryParam("user_type") String userType,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        UserType userTypeEnum = QueryParamConverter.convertUserTypeParamToEnum(userType);
-        if (!StringUtils.isBlank(name)) {
-            if (!StringUtils.isBlank(userType)){
-                String errorMessage = ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG);
-                return exceptionHandler.exceptionResponse(new BadRequestException(errorMessage)).build();
-            }
-            return cloud20Service.getUserByName(httpHeaders, authToken, name).build();
-        } else if (!StringUtils.isBlank(email)) {
-            return cloud20Service.getUsersByEmail(httpHeaders, authToken, email, userTypeEnum).build();
-        } else {
-            return cloud20Service.listUsers(httpHeaders, uriInfo, authToken, userTypeEnum, validateMarker(marker), validateLimit(limit)).build();
-        }
+        ListUsersSearchParams listUsersSearchParams = new ListUsersSearchParams(
+                name, email, tenantId, domainId, adminOnly, userType, new PaginationParams(marker, limit));
+        return cloud20Service.listUsers(httpHeaders, uriInfo, authToken, listUsersSearchParams).build();
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name=GlobalConstants.V2_GET_USER_BY_ID)

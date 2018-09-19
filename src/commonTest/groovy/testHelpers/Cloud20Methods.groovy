@@ -338,6 +338,38 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
     }
 
+    def listUsersWithSearchParams(String token, ListUsersSearchParams params = new ListUsersSearchParams(), MediaType mediaType = APPLICATION_XML_TYPE) {
+        initOnUse()
+        def queryParams = new MultivaluedMapImpl()
+        if (StringUtils.isNotBlank(params.name)) {
+            queryParams.add("name", params.name)
+        }
+        if (StringUtils.isNotBlank(params.email)) {
+            queryParams.add("email", params.email)
+        }
+        if (StringUtils.isNotBlank(params.domainId)) {
+            queryParams.add("domain_id", params.domainId)
+        }
+        if (StringUtils.isNotBlank(params.tenantId)) {
+            queryParams.add("tenant_id", params.tenantId)
+        }
+        if (StringUtils.isNotBlank(params.userType)) {
+            queryParams.add("user_type", params.userType)
+        }
+        if (params.adminOnly) {
+            queryParams.add("admin_only", params.adminOnly)
+        }
+        def pageParams = params.paginationRequest
+        if (pageParams != null && pageParams.limit != null) {
+            queryParams.add("limit", pageParams.limit)
+        }
+        if (pageParams != null && pageParams.marker != null) {
+            queryParams.add("marker", pageParams.marker)
+        }
+
+        resource.path(path20).path(USERS).queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
+    }
+
     /**
      * @endpoint GET /v2.0/users?user_type=VERIFIED
      * @param token valid token

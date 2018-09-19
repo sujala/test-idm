@@ -1,13 +1,30 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.LDAPComponent;
-import com.rackspace.idm.domain.dao.*;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersSearchParams;
+import com.rackspace.idm.domain.dao.DaoGetEntityType;
+import com.rackspace.idm.domain.dao.FederatedUserDao;
+import com.rackspace.idm.domain.dao.GroupDao;
+import com.rackspace.idm.domain.dao.IdentityUserDao;
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.Racker;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.User.UserType;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
-import com.rackspace.idm.domain.entity.User.UserType;
-import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -130,8 +147,46 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
-    public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, UserType userType, int offset, int limit) {
-        return searchForUsersByDomainIdPaged(domainId, userType, ENDUSER_CLASS_FILTERS, EndUser.class, offset, limit);
+    public PaginatorContext<EndUser> getEndUsersPaged(ListUsersSearchParams listUsersSearchParams) {
+        Validate.notNull(listUsersSearchParams);
+        Validate.notNull(listUsersSearchParams.getDomainId());
+        Validate.notNull(listUsersSearchParams.getPaginationRequest());
+
+        return (PaginatorContext) getObjectsPaged(
+                searchFilterGetEndUsers(listUsersSearchParams),
+                listUsersSearchParams.getPaginationRequest().getEffectiveMarker(),
+                listUsersSearchParams.getPaginationRequest().getEffectiveLimit());
+    }
+
+    private Filter searchFilterGetEndUsers(ListUsersSearchParams listUsersSearchParams) {
+        LdapSearchBuilder ldapSearchBuilder = new LdapSearchBuilder();
+
+        // Required attributes
+        ldapSearchBuilder.addOrAttributes(ENDUSER_CLASS_FILTERS);
+        ldapSearchBuilder.addEqualAttribute(ATTR_DOMAIN_ID, listUsersSearchParams.getDomainId());
+
+        // Optional attributes
+        if (StringUtils.isNotBlank(listUsersSearchParams.getName())) {
+            ldapSearchBuilder.addEqualAttribute(ATTR_UID, listUsersSearchParams.getName());
+        }
+        if (StringUtils.isNotBlank(listUsersSearchParams.getEmail())) {
+            ldapSearchBuilder.addEqualAttribute(ATTR_MAIL, listUsersSearchParams.getEmail());
+        }
+
+        /*
+         * Logic to retrieve users bases on 'user_type'
+         * ALL - returns all verified(provisioned and federated) and unverified
+         * VERIFIED - returns all provisioned and federated users
+         * UNVERIFIED - returns all unverified users
+         */
+        UserType userTypeEnum = UserType.fromValue(listUsersSearchParams.getUserType());
+        if (userTypeEnum == null || UserType.VERIFIED.equals(userTypeEnum)) {
+            ldapSearchBuilder.addOrAttributes(Arrays.asList(Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_UNVERIFIED)),
+                    Filter.createEqualityFilter(ATTR_UNVERIFIED, Boolean.FALSE.toString())));
+        } else if (UserType.UNVERIFIED.equals(userTypeEnum)) {
+            ldapSearchBuilder.addEqualAttribute(ATTR_UNVERIFIED, Boolean.TRUE.toString());
+        }
+        return ldapSearchBuilder.build();
     }
 
     @Override
@@ -215,10 +270,6 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
 
     private <T extends EndUser> Iterable<T> searchForUsersByDomainIdAndUserType (String domainId, Boolean isUnverifiedUserType, List<Filter> userClassFilterList, Class<T> clazz) {
         return (Iterable) getObjects(searchFilterGetUserByDomainIdAndUserType(domainId, isUnverifiedUserType, userClassFilterList));
-    }
-
-    private <T extends EndUser> PaginatorContext<T> searchForUsersByDomainIdPaged(String domainId, UserType userType, List<Filter> userClassFilterList, Class<T> clazz, int offset, int limit) {
-        return (PaginatorContext) getObjectsPaged(searchFilterGetUserByDomainIdAndUserType(domainId, userType,userClassFilterList), offset, limit);
     }
 
     private <T extends EndUser> PaginatorContext<T> searchForEnabledUsersPaged(List<Filter> userClassFilterList, Class<T> clazz, int offset, int limit) {
@@ -308,30 +359,6 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
                 Filter.createORFilter(userClassFilterList),
                 Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId)
         );
-    }
-
-    private Filter searchFilterGetUserByDomainIdAndUserType(String domainId, UserType userType, List<Filter> userClassFilterList) {
-        Filter filter;
-
-        if (UserType.ALL == userType){
-            filter = Filter.createANDFilter(
-                      Filter.createORFilter(userClassFilterList),
-                      Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId));
-        } else if (UserType.UNVERIFIED == userType){
-            filter = Filter.createANDFilter(
-                      Filter.createORFilter(userClassFilterList),
-                      Filter.createEqualityFilter(ATTR_UNVERIFIED, "TRUE"),
-                      Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId));
-        // Defaults to Verified Users
-        } else {
-            filter = Filter.createANDFilter(
-                      Filter.createORFilter(userClassFilterList),
-                      // unverified attr is not present or its value is false
-                      Filter.createORFilter(Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_UNVERIFIED)),
-                            Filter.createEqualityFilter(ATTR_UNVERIFIED, "FALSE")),
-                      Filter.createEqualityFilter(ATTR_DOMAIN_ID, domainId));
-        }
-        return filter;
     }
 
     private Filter searchFilterGetEnabledUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {

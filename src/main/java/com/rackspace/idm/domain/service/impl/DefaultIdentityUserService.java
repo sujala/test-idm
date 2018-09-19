@@ -5,34 +5,14 @@ import com.google.common.collect.Lists;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersSearchParams;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.DelegationConsumer;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.idm.domain.entity.Group;
-import com.rackspace.idm.domain.entity.IdentityProvider;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.entity.ProvisionedUserDelegate;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.SourcedRoleAssignments;
-import com.rackspace.idm.domain.entity.SourcedRoleAssignmentsLegacyAdapter;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.CreateSubUserService;
-import com.rackspace.idm.domain.service.DelegationService;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
-import com.rackspace.idm.domain.service.ServiceCatalogInfo;
-import com.rackspace.idm.domain.service.TenantEndpointMeta;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.User.UserType;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
@@ -40,9 +20,9 @@ import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.unboundid.ldap.sdk.DN;
-import com.rackspace.idm.domain.entity.User.UserType;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +31,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,6 +51,9 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private DomainService domainService;
 
     @Autowired
     private RuleService ruleService;
@@ -94,6 +78,9 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
     @Autowired
     private DelegationService delegationService;
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     @Lazy
     @Autowired
@@ -218,8 +205,51 @@ public class DefaultIdentityUserService implements IdentityUserService {
     }
 
     @Override
-    public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, UserType userType, int offset, int limit) {
-        return identityUserRepository.getEndUsersByDomainIdPaged(domainId, userType, offset, limit);
+    public PaginatorContext<EndUser> getEndUsersPaged(ListUsersSearchParams listUsersSearchParams) {
+        Validate.notNull(listUsersSearchParams);
+        Validate.notNull(listUsersSearchParams.getPaginationRequest());
+
+        PaginatorContext<EndUser> paginatorContext;
+
+        Tenant tenant = null;
+        // Determine correct domainId to use on search
+        if (StringUtils.isNotBlank(listUsersSearchParams.getTenantId())) {
+            tenant = tenantService.checkAndGetTenant(listUsersSearchParams.getTenantId());
+            listUsersSearchParams.setDomainId(tenant.getDomainId());
+        } else if (StringUtils.isNotBlank(listUsersSearchParams.getDomainId())) {
+            listUsersSearchParams.setDomainId(listUsersSearchParams.getDomainId());
+        } else {
+            listUsersSearchParams.setDomainId(requestContextHolder.getRequestContext().getEffectiveCaller().getDomainId());
+        }
+        Domain domain = domainService.checkAndGetDomain(listUsersSearchParams.getDomainId());
+
+        // Avoid searching all users when query param "admin_only" is provided.
+        if (listUsersSearchParams.getAdminOnly() != null &&  listUsersSearchParams.getAdminOnly()) {
+            paginatorContext = new PaginatorContext<>();
+            User user = userService.getUserAdminByDomain(domain);
+
+            List<EndUser> endUsers = new ArrayList<>();
+            // Verify other query params
+            if (user != null
+                    && (StringUtils.isBlank(listUsersSearchParams.getName())
+                    || listUsersSearchParams.getName().equalsIgnoreCase(user.getUsername()))
+                    && (StringUtils.isBlank(listUsersSearchParams.getUserType())
+                    || Arrays.asList(UserType.VERIFIED.name(), UserType.ALL.name()).contains(listUsersSearchParams.getUserType().toUpperCase()))
+                    && (StringUtils.isBlank(listUsersSearchParams.getEmail())
+                    || listUsersSearchParams.getEmail().equalsIgnoreCase(user.getEmail()))
+                    && (tenant == null || tenant.getDomainId().equalsIgnoreCase(user.getDomainId()))
+                    && domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                endUsers.add(user);
+            }
+            paginatorContext.update(
+                    endUsers,
+                    listUsersSearchParams.getPaginationRequest().getEffectiveMarker(),
+                    listUsersSearchParams.getPaginationRequest().getEffectiveLimit());
+        } else {
+            paginatorContext = identityUserRepository.getEndUsersPaged(listUsersSearchParams);
+        }
+
+        return paginatorContext;
     }
 
     @Override
