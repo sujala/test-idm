@@ -48,6 +48,7 @@ import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
+import java.security.Identity
 
 import static com.rackspace.idm.Constants.*
 import static com.rackspace.idm.SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
@@ -757,8 +758,12 @@ class Cloud20Utils {
         def response = methods.listRoles(token, null, null, null, roleName)
         assert (response.status == SC_OK)
         def roles = response.getEntity(RoleList).value
-        assert roles.role.size() == 1
-        roles.role[0]
+        Role role = null
+        if (roles.role.size > 0) {
+            assert roles.role.size() == 1
+            role = roles.role[0]
+        }
+        return role
     }
 
     def listRoles(token, serviceId, marker, limit) {
@@ -1573,6 +1578,12 @@ class Cloud20Utils {
         def idmProperty = factory.createIdentityProperty(name, value, valueType)
         def response = devOpsMethods.createIdentityProperty(getIdentityAdminToken(), idmProperty)
         assert response.status == SC_CREATED
+        response.getEntity(IdentityProperty)
+    }
+
+    def updateIdentityProperty(String propertyId, IdentityProperty property) {
+        def response = devOpsMethods.updateIdentityProperty(getIdentityAdminToken(), propertyId, property)
+        assert response.status == SC_OK
         response.getEntity(IdentityProperty)
     }
 

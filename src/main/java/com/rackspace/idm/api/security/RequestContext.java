@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
+import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.spi.container.ContainerRequest;
@@ -65,6 +66,11 @@ public class RequestContext {
      * The request (should make immutable)
      */
     private ContainerRequest containerRequest;
+
+    /**
+     * The identityApi annotation on the service being called.
+     */
+    private IdentityApi identityApi;
 
     /**
      * Used for requests targeting a specific user (../users/{userId}/multi-factor/...).

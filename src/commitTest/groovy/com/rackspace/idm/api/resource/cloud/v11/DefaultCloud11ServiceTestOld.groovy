@@ -351,15 +351,15 @@ public class DefaultCloud11ServiceTestOld extends Specification {
 
     def revokeToken_scopeAccessServiceReturnsNull_returnsNotFoundResponse() {
         given:
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(null);
-        DefaultCloud11Service spy1 = PowerMockito.spy(defaultCloud11Service);
-        PowerMockito.doReturn(new UserScopeAccess()).when(spy1, "authenticateAndAuthorizeCloudAdminUser", request);
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(null)
+        DefaultCloud11Service spy1 = PowerMockito.spy(defaultCloud11Service)
+        PowerMockito.doReturn(new UserScopeAccess()).when(spy1, "authenticateAndAuthorizeCloudAdminUser", request)
 
         when:
-        Response.ResponseBuilder returnedResponse = spy1.revokeToken(request, "test", null);
+        Response.ResponseBuilder returnedResponse = spy1.revokeToken(request, "test", null)
 
         then:
-        assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
+        assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404))
     }
 
     def revokeToken_scopeAccessServiceReturnsNonUserAccess_returnsNotFoundResponse() {

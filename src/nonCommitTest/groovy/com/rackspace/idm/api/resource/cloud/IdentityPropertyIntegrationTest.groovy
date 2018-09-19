@@ -74,6 +74,7 @@ class IdentityPropertyIntegrationTest extends RootIntegrationTest {
 
         when: "call w/ query props role"
         def roleResponse = utils.getRoleByName(role.roleName)
+        assert roleResponse != null
         utils.addRoleToUser(idmAdmin, roleResponse.id)
         idmAdminToken = utils.getToken(idmAdmin.username)
         def responseWRole = devops.getIdmProps(idmAdminToken)
@@ -131,6 +132,7 @@ class IdentityPropertyIntegrationTest extends RootIntegrationTest {
 
         when: "call CREATE w/ prop manage role"
         def propManageRole = utils.getRoleByName(IdentityRole.IDENTITY_PROPERTY_ADMIN.roleName)
+        assert propManageRole != null
         utils.addRoleToUser(idmAdmin, propManageRole.id)
         idmAdminToken = utils.getToken(idmAdmin.username)
         response = devops.createIdentityProperty(idmAdminToken, idmProperty)

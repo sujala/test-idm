@@ -11,6 +11,7 @@ import com.rackspace.idm.api.resource.cloud.v20.*;
 import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspace.idm.domain.config.Cloud11AuthorizationLevel;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.*;
@@ -1300,6 +1301,10 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
+    /**
+     For some reason v1.1 throws a NotAuthorizedException on get requests, but a CloudAdminAuthorizationException
+     on Post/Puts. Need to swtich to the NotAuthorizedException.
+     */
     void authenticateCloudAdminUserForGetRequests(HttpServletRequest request) {
         String msg = "You are not authorized to access this resource.";
         ScopeAccess token;
@@ -1310,10 +1315,15 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    public void setAuthorizationService(AuthorizationService authorizationService) {
-        this.authorizationService = authorizationService;
-    }
-
+    /**
+     * Returns a token (scopeaccess) if the user is authenticated and authorized to make the request. Returns "null"
+     * if the user either fails authentication, or is not authorized.
+     *
+     * @param request
+     * @throws CloudAdminAuthorizationException If auth header is not formatted correctly or authorization for the user failed
+     * @throws NotAuthorizedException If the supplied username/password is not valid for the user
+     * @return
+     */
     ScopeAccess authenticateAndAuthorizeCloudAdminUser(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
@@ -1335,7 +1345,20 @@ public class DefaultCloud11Service implements Cloud11Service {
             RequestContext requestContext = requestContextHolder.getRequestContext();
             requestContext.getSecurityContext().setCallerToken(usa);
             requestContext.getSecurityContext().setEffectiveCallerToken(usa);
-            authorized = authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
+            IdentityApi identityApi = requestContext.getIdentityApi();
+            Cloud11AuthorizationLevel authorizationLevel = identityConfig.getRepositoryConfig().getAuthorizationLevelForService(identityApi.name());
+            if (authorizationLevel == Cloud11AuthorizationLevel.LEGACY) {
+                authorized = authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            } else if (authorizationLevel == Cloud11AuthorizationLevel.ROLE) {
+                logger.debug("Authorizing via dynamic roles");
+                String authorizedRoleName = calculateAuthorizationRoleNameForService(identityApi);
+                authorized = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(authorizedRoleName);
+            } else {
+                BaseUser caller = requestContext.getEffectiveCaller();
+                logger.warn(String.format("User '%s' attempted to call '%s'. Access to this service has been forbidden for all users", caller == null ? "<UNKNOWN>" : caller.getUsername(), identityApi.name()));
+                authorized = false;
+            }
         } else {
             authorized = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
         }
@@ -1345,6 +1368,19 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
 
         return usa;
+    }
+
+    public void setAuthorizationService(AuthorizationService authorizationService) {
+        this.authorizationService = authorizationService;
+    }
+
+    private String calculateAuthorizationRoleNameForService(IdentityApi identityApi) {
+        String authorizedRoleName = null;
+        if (StringUtils.isNotBlank(identityApi.name())) {
+            authorizedRoleName = identityApi.name().replaceAll("\\s+", "_").replaceAll("\\.", "_").toLowerCase();
+            return String.format("identity:%s", authorizedRoleName);
+        }
+        return authorizedRoleName;
     }
 
     public void setCredentialUnmarshaller(CredentialUnmarshaller credentialUnmarshaller) {

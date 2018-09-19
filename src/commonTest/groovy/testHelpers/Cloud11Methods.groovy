@@ -64,9 +64,9 @@ class Cloud11Methods {
         resource.path(path11).path(SERVICE_PATH_MOSSO).path(mossoId).header("Authorization", getBasicAuth()).accept(mediaType).get(ClientResponse)
     }
 
-    def getServiceCatalog(String username) {
+    def getServiceCatalog(String username, String basicAuth = getBasicAuth()) {
         initOnUse()
-        resource.path(path11).path(USERS).path(username).path(SERVICECATALOG).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path11).path(USERS).path(username).path(SERVICECATALOG).header("Authorization", basicAuth).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createUser(user) {
@@ -94,9 +94,9 @@ class Cloud11Methods {
         resource.path(path11).path(USERS).path(username).path(KEY).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
     }
 
-    def addBaseUrl(baseUrl) {
+    def addBaseUrl(baseUrl, String basicAuth = getBasicAuth()) {
         initOnUse()
-        resource.path(path11).path(BASE_URLS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrl).post(ClientResponse)
+        resource.path(path11).path(BASE_URLS).header("Authorization", basicAuth).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrl).post(ClientResponse)
     }
 
     def addBaseUrlRefs(String username, baseUrlRefs) {

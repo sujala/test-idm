@@ -169,7 +169,6 @@ class IdentityConfigComponentTest extends Specification {
             it
         }) : null
 
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP, true)
         identityPropertyService.getImmutableIdentityPropertyByName(IdentityConfig.ENABLED_DOMAINS_FOR_USER_GROUPS_PROP) >> identityProp
 
         expect:

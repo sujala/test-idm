@@ -14,6 +14,7 @@ import com.rackspace.idm.event.NewRelicCustomAttributesEnum;
 import com.rackspace.idm.exception.MissingRequiredConfigIdmException;
 import lombok.AllArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.lang.StringUtils;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.MediaType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -2505,18 +2507,15 @@ public class IdentityConfig {
         }
 
         public Map<String, Set<String>> getTenantTypeRoleWhitelistFilterMap() {
-            Map<String, Set<String>> result = getTenantTypeRoleWhitelistFilterProperties();
+            Map<String, Set<String>> propMap = getTenantTypeRoleWhitelistFilterProperties();
 
-            Iterator<String> propKeys = reloadableConfiguration.getKeys(TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX);
-
-            while (propKeys.hasNext()) {
-                String key = propKeys.next();
+            // Need to extract the tenant type from the key
+            Map<String, Set<String>> result = new HashMap<>(propMap.size());
+            for (Map.Entry<String, Set<String>> propertyEntry : propMap.entrySet()) {
+                String key = propertyEntry.getKey();
                 String tenantType = StringUtils.removeStart(key, TENANT_ROLE_WHITELIST_VISIBILITY_FILTER_PREFIX + ".");
-                Set<String> visibilityRoles = getSetSafely(reloadableConfiguration, key);
-                visibilityRoles.removeIf(String::isEmpty);
-                result.put(tenantType, visibilityRoles);
+                result.put(tenantType, propertyEntry.getValue());
             }
-
             return result;
         }
 
@@ -2578,7 +2577,6 @@ public class IdentityConfig {
         public String getIdentityDeploymentEnvironment() {
             return getStringSafely(reloadableConfiguration, FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP);
         }
-
     }
 
     public class RepositoryConfig extends ConfigMetaLookup {
@@ -2646,6 +2644,28 @@ public class IdentityConfig {
                 dynamicProps.add(idmProperty);
             }
             return dynamicProps;
+        }
+
+        /**
+         * In order to limit performance and maintenance impact, the ability to set a non-legacy value is only allowed if the feature '
+         * 'feature.enable.migrate.v11.services.to.request.context'
+         * is set to true.
+         *
+         * @param serviceName
+         * @return
+         */
+        public Cloud11AuthorizationLevel getAuthorizationLevelForService(String serviceName) {
+            Cloud11AuthorizationLevel level = Cloud11AuthorizationLevel.LEGACY;
+
+            if (reloadableConfig.migrateV11ServicesToRequestContext()) {
+                String propertizedServiceName = serviceName.replaceAll("\\s+","_").replaceAll("\\.", "_").toLowerCase();
+                String conventionBasedPropName = String.format("authorization.level.%s", propertizedServiceName);
+
+                String rawPropValue = getRepositoryStringSafely(conventionBasedPropName);
+                level = Cloud11AuthorizationLevel.fromValue(rawPropValue);
+            }
+
+            return level;
         }
 
         public IdentityProperty getIdentityProviderDefaultPolicy() {
