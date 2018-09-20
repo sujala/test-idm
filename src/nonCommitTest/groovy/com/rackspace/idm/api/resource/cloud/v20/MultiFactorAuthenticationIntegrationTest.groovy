@@ -273,6 +273,37 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         response.status == HttpStatus.SC_NOT_FOUND
     }
 
+    def "AE Restricted Token sessionId can be revoked"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, true)
+        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
+        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+
+        when: "revoke own sessionId"
+        def auth20ResponseCorrectPwd = cloud20.authenticate(finalUserAdmin.getUsername(), Constants.DEFAULT_PASSWORD)
+        def sessionId = utils.extractSessionIdFromFirstWwwAuthenticateHeader(auth20ResponseCorrectPwd.getHeaders())
+        def response = cloud20.revokeToken(sessionId)
+
+        then: "get 204"
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "revoke own sessionId w/ user revocation"
+        auth20ResponseCorrectPwd = cloud20.authenticate(finalUserAdmin.getUsername(), Constants.DEFAULT_PASSWORD)
+        sessionId = utils.extractSessionIdFromFirstWwwAuthenticateHeader(auth20ResponseCorrectPwd.getHeaders())
+        response = cloud20.revokeUserToken(sessionId, sessionId)
+
+        then: "get 204"
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "authorized user revokes other user's sessionId"
+        auth20ResponseCorrectPwd = cloud20.authenticate(finalUserAdmin.getUsername(), Constants.DEFAULT_PASSWORD)
+        sessionId = utils.extractSessionIdFromFirstWwwAuthenticateHeader(auth20ResponseCorrectPwd.getHeaders())
+        response = cloud20.revokeUserToken(utils.getServiceAdminToken(), sessionId)
+
+        then: "get 204"
+        response.status == HttpStatus.SC_NO_CONTENT
+    }
+
     def setUpAndEnableMultiFactor(def factorType = FactorTypeEnum.SMS) {
         setUpMultiFactorWithoutEnable(factorType)
         utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))

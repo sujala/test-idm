@@ -97,6 +97,18 @@ public class AuthorizationAdviceAspect {
         ContainerRequest request = requestContextHolder.getRequestContext().getContainerRequest();
         String path = request.getPath();
 
+        /* Don't check if authentication or validation/revoke (legacy). Use exact same check as what was done in AuthenticationFilter
+        for now. Eventually should modify this to use the API name (set on IdentityApi annotation), but for now sticking
+        with legacy means to determine the method.
+         */
+        if (AuthenticationFilter.tokenValidationPathPattern.matcher(path).matches() && (!AuthenticationFilter.tokenEndpointPathPattern.matcher(path).matches())) {
+            //validate call.
+            return;
+        } else if (path.startsWith("cloud/v2.0/tokens") && (!AuthenticationFilter.tokenEndpointPathPattern.matcher(path).matches())) {
+            //auth call
+            return;
+        }
+
         /*
          MFA Setup tokens can only be used with MFA services. Session Ids can't be used as X-Auth-Tokens at all
          */
