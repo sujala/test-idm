@@ -58,14 +58,14 @@ class HttpClientSettingsTest extends Specification {
 
         when: "use configurable client"
         client.init()
-        CloseableHttpClient httpClient = client.httpClient
+        AtomHopperLogger httpClient = client.httpClient
 
         then:
         assert httpClient != null
         !(httpClient instanceof DefaultHttpClient) //uses builder so exact type is impl dependant
 
         and: "pool is properly configured"
-        PoolingHttpClientConnectionManager pcm = (PoolingHttpClientConnectionManager) httpClient.connManager
+        PoolingHttpClientConnectionManager pcm = (PoolingHttpClientConnectionManager) httpClient.client.connManager
         pcm instanceof PoolingHttpClientConnectionManager
         pcm.getMaxTotal() == 12
         pcm.getDefaultMaxPerRoute() == 5
@@ -73,7 +73,7 @@ class HttpClientSettingsTest extends Specification {
         pcm.getDefaultSocketConfig().getSoTimeout() == 1250
 
         and: "default request config is configured"
-        RequestConfig reqConfig = ((Configurable)httpClient).getConfig()
+        RequestConfig reqConfig = ((Configurable)httpClient.client).getConfig()
         reqConfig.connectionRequestTimeout == 1111
         reqConfig.connectTimeout == 2222
         reqConfig.socketTimeout == 3333

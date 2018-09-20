@@ -82,7 +82,7 @@ public class AtomHopperClient {
     @Autowired
     private IdentityConfig identityConfig;
 
-    private CloseableHttpClient httpClient;
+    private AtomHopperLogger httpClient;
     private IdleConnectionMonitorThread idleConnectionMonitorThread;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -113,7 +113,7 @@ public class AtomHopperClient {
      */
     @PostConstruct
     public void init() {
-        httpClient = createHttpClient();
+        httpClient = new AtomHopperLogger(createHttpClient());
     }
 
     /**

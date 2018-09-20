@@ -47,7 +47,7 @@ class AtomHopperClientGroovyTest extends Specification {
     @Shared DefaultTenantService defaultTenantService
     @Shared Configuration config
     @Shared IdentityConfig identityConfig
-    @Shared CloseableHttpClient httpClient
+    @Shared AtomHopperLogger httpClient
     @Shared org.openstack.docs.identity.api.v2.ObjectFactory objectFactory;
     @Shared CryptHelper cryptHelper
     @Shared AtomHopperHelper atomHopperHelper
