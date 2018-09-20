@@ -15,6 +15,7 @@ import com.typesafe.config.ConfigFactory
 class IdentityConstantTputUsersRampUp extends Simulation {
   val conf = ConfigFactory.load()
 
+
   // V20 Authenticate
   val V20_AUTHENTICATE_APIKEY_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_apikey.users_per_sec")
   val V20_AUTHENTICATE_APIKEY_REPL_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_authenticate_apikey_repl.users_per_sec")
@@ -190,6 +191,7 @@ class IdentityConstantTputUsersRampUp extends Simulation {
 
   // Not method or version specific.
   val MAX_DURATION_SECS: Int = conf.getInt("simulation.max_duration_secs")
+  val MAX_DURATION_FOR_SAML_SECS: Int = conf.getInt("simulation.max_duration_for_saml_secs")
   val OS_MAIN_EXTERNAL_AUTH_URL = conf.getString("main_external_auth_url")
   val OS_MAIN_INTERNAL_AUTH_URL = conf.getString("main_internal_auth_url")
   val OS_REPL_EXTERNAL_AUTH_URL = conf.getString("repl_external_auth_url")
@@ -251,12 +253,12 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     scn_wrapper(v20_apikey_auth_scn_internal_repl, V20_AUTHENTICATE_APIKEY_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
     scn_wrapper(v20_apikey_auth_default_user_scn, V20_AUTHENTICATE_APIKEY_DEFAULT_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
     // V20 SAML Authenticate
-    scn_wrapper(v20_saml_auth_scn, V20_AUTHENTICATE_SAML_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+    scn_wrapper(v20_saml_auth_scn, V20_AUTHENTICATE_SAML_USERS_PER_SEC, MAX_DURATION_FOR_SAML_SECS, httpMainExternalConf),
     scn_wrapper(v20_saml_auth_scn_repl, V20_AUTHENTICATE_SAML_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
-    scn_wrapper(v20_saml_auth_scn_internal, V20_AUTHENTICATE_SAML_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainInternalConf),
+    scn_wrapper(v20_saml_auth_scn_internal, V20_AUTHENTICATE_SAML_INTERNAL_USERS_PER_SEC, MAX_DURATION_FOR_SAML_SECS, httpMainInternalConf),
     scn_wrapper(v20_saml_auth_scn_internal_repl, V20_AUTHENTICATE_SAML_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
-    scn_wrapper(v20_saml_auth_same_user_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
-    scn_wrapper(v20_saml_auth_same_user_old_endpoint_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+    scn_wrapper(v20_saml_auth_same_user_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_FOR_SAML_SECS, httpMainExternalConf),
+    scn_wrapper(v20_saml_auth_same_user_old_endpoint_scn, V20_SAME_USER_SAML_AUTH_USERS_PER_SEC, MAX_DURATION_FOR_SAML_SECS, httpMainExternalConf),
 
     // V20 Impersonate
     scn_wrapper(v20_impersonate_scn, V20_IMPERSONATE_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
