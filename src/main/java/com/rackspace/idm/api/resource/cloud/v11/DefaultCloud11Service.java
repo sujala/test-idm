@@ -1347,7 +1347,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             requestContext.getSecurityContext().setEffectiveCallerToken(usa);
 
             IdentityApi identityApi = requestContext.getIdentityApi();
-            Cloud11AuthorizationLevel authorizationLevel = identityConfig.getRepositoryConfig().getAuthorizationLevelForService(identityApi.name());
+            Cloud11AuthorizationLevel authorizationLevel = Cloud11AuthorizationLevel.LEGACY;
+            if (identityApi != null) {
+                authorizationLevel = identityConfig.getRepositoryConfig().getAuthorizationLevelForService(identityApi.name());
+            }
             if (authorizationLevel == Cloud11AuthorizationLevel.LEGACY) {
                 authorized = authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
             } else if (authorizationLevel == Cloud11AuthorizationLevel.ROLE) {

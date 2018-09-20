@@ -3,19 +3,15 @@ package com.rackspace.idm.api.resource.cloud.v11
 import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
-import com.rackspacecloud.docs.auth.api.v1.BaseURLList
-import com.rackspacecloud.docs.auth.api.v1.UserType
-import groovy.json.JsonSlurper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.web.WebAppConfiguration
-import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import javax.servlet.http.HttpServletRequest
 import javax.ws.rs.core.HttpHeaders
-import javax.ws.rs.core.MediaType
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock
+import static org.mockito.Mockito.when
 
 @WebAppConfiguration
 class Cloud11BaseURLIntegrationTest extends RootIntegrationTest {

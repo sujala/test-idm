@@ -19,25 +19,11 @@ import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 
 class Cloud11AuthorizationLevelIntegrationTest extends RootIntegrationTest {
 
-    @Shared def identityAdmin
-    @Shared def identityAdminToken
-    @Shared def userAdmin
-    @Shared def userAdminToken
-    @Shared def defaultUser
-    @Shared def defaultUserToken
-
-    @Shared def callerBasicAuth
+    @Shared def serviceAdminToken
 
     def setupSpec() {
         Cloud20Utils cloud20Utils = new Cloud20Utils(cloud20)
-        def serviceAdminToken = cloud20Utils.getServiceAdminToken()
-
-        //create identity admin
-        def identityAdminUsername = "identityAdmin" + RandomStringUtils.randomAlphabetic(8)
-        identityAdmin = cloud20Utils.createUser(serviceAdminToken, identityAdminUsername, DEFAULT_PASSWORD)
-        identityAdminToken = cloud20Utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
-
-        callerBasicAuth = cloud11.getBasicAuth(identityAdminUsername, DEFAULT_PASSWORD)
+        serviceAdminToken = cloud20Utils.getServiceAdminToken()
     }
 
     /**
@@ -47,6 +33,10 @@ class Cloud11AuthorizationLevelIntegrationTest extends RootIntegrationTest {
      */
     def "Validate authorization level settings on v11 get service catalog service" () {
         given:
+        def identityAdminUsername = "identityAdmin" + RandomStringUtils.randomAlphabetic(8)
+        def identityAdmin = utils.createUser(serviceAdminToken, identityAdminUsername, DEFAULT_PASSWORD)
+        def callerBasicAuth = cloud11.getBasicAuth(identityAdminUsername, DEFAULT_PASSWORD)
+
         def propertyName = "authorization.level.v1_1_get_user_service_catalog"
         def roleName = "identity:v1_1_get_user_service_catalog"
         Role role = getOrCreateRole(roleName)
@@ -110,6 +100,10 @@ class Cloud11AuthorizationLevelIntegrationTest extends RootIntegrationTest {
      */
     def "Validate authorization level settings on v11 " () {
         given:
+        def identityAdminUsername = "identityAdmin" + RandomStringUtils.randomAlphabetic(8)
+        def identityAdmin = utils.createUser(serviceAdminToken, identityAdminUsername, DEFAULT_PASSWORD)
+        def callerBasicAuth = cloud11.getBasicAuth(identityAdminUsername, DEFAULT_PASSWORD)
+
         def propertyName = "authorization.level.v1_1_add_endpoint_template"
         def roleName = "identity:v1_1_add_endpoint_template"
         Role role = getOrCreateRole(roleName)
