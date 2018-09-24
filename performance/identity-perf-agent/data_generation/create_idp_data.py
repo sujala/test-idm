@@ -44,12 +44,17 @@ if __name__ == '__main__':
         default="Auth1234",
         help="service admin password")
 
+    parser.add_argument("-o", "--output_file_name",
+                        default="../localhost/data/identity/issuers_of_fed_test.dat",
+                        help="File with issuers")
+
     args = parser.parse_args()
 
     file_name = args.file_name
     server_url = args.server_url
     s_user_name = args.identity_service_user_name
     s_password = args.identity_service_user_password
+    output_file_name = args.output_file_name
 
     result = []
     cert_file = "sample_keys/fed-origin.crt"
@@ -66,45 +71,50 @@ if __name__ == '__main__':
     au_token = get_token(au["username"], au["password"],
                          alt_url="{0}".format(server_url))
     already_processed_list = []
+
     with open(file_name, 'r') as read_data:
         with open(cert_file, 'r') as read_cert:
-            a_reader = csv.DictReader(read_data)
-            print cert_file
-            print os.path.isfile(cert_file)
-            cert = ''.join(map(lambda s: s.strip(),
-                               read_cert.readlines()[1:-1]))
-            print(cert)
-            idp_url = (server_url + "/v2.0/RAX-AUTH/federation"
-                                    "/identity-providers")
-            for row in a_reader:
-                headers = {'Accept': 'application/json',
-                           'Content-Type': 'application/json',
-                           'X-AUTH-TOKEN': au_token}
-                if row["domainid"] not in already_processed_list:
-                    create_idp_data = {"RAX-AUTH:identityProvider": {
-                        "name": "perf-idp-" + row["domainid"],
-                        "issuer": "https://perf-{0}.issuer.com".format(row["domainid"]),
-                        "description": "Performance Test IDP, Domain is in issuer and auth url",
-                        "federationType": "DOMAIN",
-                        "authenticationUrl": "https://perf-{0}.login.url".format(row["domainid"]),
-                        "approvedDomainIds": [
-                            "{0}".format(row["domainid"])
-                        ],
-                        "publicCertificates": [{
-                            "pemEncoded": "{0}".format(cert)}]}}
-                    print "raw dict: {0}".format(create_idp_data)
-                    print "simplejson: {0}".format(simplejson.dumps(create_idp_data))
-                    print "json: {0}".format(json.dumps(create_idp_data))
-                    print "simplejson: {0}, no ascii".format(simplejson.dumps(create_idp_data, ensure_ascii=False))
-                    print headers, create_idp_data
-                    r = requests.post(url=idp_url, json=create_idp_data,
-                                      headers=headers, verify=False)
-                    print idp_url
-                    print r
-                    print r.text
+            with open(output_file_name, 'w') as write_data:
+                a_reader = csv.DictReader(read_data)
+                print cert_file
+                print os.path.isfile(cert_file)
+                cert = ''.join(map(lambda s: s.strip(),
+                                   read_cert.readlines()[1:-1]))
+                print(cert)
+                idp_url = (server_url + "/v2.0/RAX-AUTH/federation"
+                                        "/identity-providers")
+                for row in a_reader:
+                    headers = {'Accept': 'application/json',
+                               'Content-Type': 'application/json',
+                               'X-AUTH-TOKEN': au_token}
+                    if row["domainid"] not in already_processed_list:
+                        issuer = "https://perf-{0}.issuer.com".format(row["domainid"])
+                        create_idp_data = {"RAX-AUTH:identityProvider": {
+                            "name": "perf-idp-" + row["domainid"],
+                            "issuer": issuer,
+                            "description": "Performance Test IDP, Domain is in issuer and auth url",
+                            "federationType": "DOMAIN",
+                            "authenticationUrl": "https://perf-{0}.login.url".format(row["domainid"]),
+                            "approvedDomainIds": [
+                                "{0}".format(row["domainid"])
+                            ],
+                            "publicCertificates": [{
+                                "pemEncoded": "{0}".format(cert)}]}}
+                        print "raw dict: {0}".format(create_idp_data)
+                        print "simplejson: {0}".format(simplejson.dumps(create_idp_data))
+                        print "json: {0}".format(json.dumps(create_idp_data))
+                        print "simplejson: {0}, no ascii".format(simplejson.dumps(create_idp_data, ensure_ascii=False))
+                        print headers, create_idp_data
+                        r = requests.post(url=idp_url, json=create_idp_data,
+                                          headers=headers, verify=False)
+                        print idp_url
+                        print r
+                        print r.text
+                        if r.status_code == 201:
+                            write_data.write(issuer + "\n")
 
-                    # adding domain to already processed list....so that this
-                    # script won't try to add idp with same issuer again.
-                    # This is needed because domainids are repeated in the
-                    # data file
-                    already_processed_list.append(row["domainid"])
+                        # adding domain to already processed list....so that this
+                        # script won't try to add idp with same issuer again.
+                        # This is needed because domainids are repeated in the
+                        # data file
+                        already_processed_list.append(row["domainid"])
