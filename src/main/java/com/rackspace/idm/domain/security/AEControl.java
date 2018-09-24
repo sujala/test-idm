@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.security;
 
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
+import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +12,8 @@ import org.springframework.stereotype.Component;
 public class AEControl implements AEControlMethods {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired(required = false)
-    private CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator;
+    @Autowired
+    private KeyCzarCrypterLocator keyCzarCrypterLocator;
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -23,9 +24,10 @@ public class AEControl implements AEControlMethods {
      * built in scheduler via xml configuration was trivial, and did the job.
      */
     public void reloadKeys() {
-        if (cacheableKeyCzarCrypterLocator != null
-                && identityConfig.getReloadableConfig().getAutoReloadOfAEKeys()) {
-            cacheableKeyCzarCrypterLocator.resetCache();
+        if (keyCzarCrypterLocator != null
+                && identityConfig.getReloadableConfig().getAutoReloadOfAEKeys()
+        && keyCzarCrypterLocator instanceof CacheableKeyCzarCrypterLocator) {
+            ((CacheableKeyCzarCrypterLocator)keyCzarCrypterLocator).resetCache();
         }
     }
 }

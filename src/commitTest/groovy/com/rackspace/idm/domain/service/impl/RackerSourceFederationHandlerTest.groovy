@@ -68,7 +68,6 @@ class RackerSourceFederationHandlerTest extends Specification {
         staticConfig.getCloudAuthClientId() >> CLOUD_AUTH_CLIENT_ID
         
         federationHandler.identityConfig = identityConfig
-        federationHandler.federatedRackerDao = federatedRackerDao
         federationHandler.userService = userService
         federationHandler.scopeAccessService = scopeAccessService
         federationHandler.tenantService = tenantService

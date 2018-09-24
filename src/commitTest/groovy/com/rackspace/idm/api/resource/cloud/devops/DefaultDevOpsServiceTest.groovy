@@ -41,7 +41,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
         then:
         1 * authorizationService.verifyServiceAdminLevelAccess(_)
-        1 * cacheableKeyCzarCrypterLocator.resetCache()
+        1 * keyCzarCrypterLocator.resetCache()
     }
 
     def "verify analyze token"() {

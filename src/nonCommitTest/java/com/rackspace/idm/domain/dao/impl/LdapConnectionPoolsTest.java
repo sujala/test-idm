@@ -30,9 +30,6 @@ import static org.junit.Assert.assertTrue;
 @ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapConnectionPoolsTest {
 
-    @Autowired(required = false)
-    Configuration config;
-
     @Autowired
     IdentityConfig identityConfig;
 

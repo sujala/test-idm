@@ -28,6 +28,7 @@ import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
+import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator
 import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.domain.service.federation.v2.FederationUtils
 import com.rackspace.idm.domain.service.impl.*
@@ -166,7 +167,7 @@ class RootServiceTest extends Specification {
     @Shared RoleService roleService
     @Shared DefaultRequestContextHolder requestContextHolder
     @Shared TokenRevocationService tokenRevocationService
-    @Shared CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator
+    @Shared KeyCzarCrypterLocator keyCzarCrypterLocator
     @Shared DefaultAuthenticateResponseService authenticateResponseService
     @Shared AETokenService aeTokenService
     @Shared AETokenRevocationService aeTokenRevocationService
@@ -459,8 +460,13 @@ class RootServiceTest extends Specification {
     }
 
     def mockCacheableKeyCzarCrypterLocator(service) {
-        cacheableKeyCzarCrypterLocator = Mock()
-        service.cacheableKeyCzarCrypterLocator = cacheableKeyCzarCrypterLocator
+        keyCzarCrypterLocator = Mock(CacheableKeyCzarCrypterLocator)
+        service.keyCzarCrypterLocator = keyCzarCrypterLocator
+    }
+
+    def mockKeyCzarCrypterLocator(service) {
+        keyCzarCrypterLocator = Mock()
+        service.keyCzarCrypterLocator = keyCzarCrypterLocator
     }
 
     def mockUserService(service) {

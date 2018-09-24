@@ -18,6 +18,7 @@ import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
+import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
@@ -90,8 +91,8 @@ public class DefaultDevOpsService implements DevOpsService {
     @Autowired
     private ExceptionHandler exceptionHandler;
 
-    @Autowired(required = false)
-    private CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator;
+    @Autowired
+    private KeyCzarCrypterLocator keyCzarCrypterLocator;
 
     @Autowired
     private TokenRevocationService tokenRevocationService;
@@ -154,23 +155,24 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     public Response.ResponseBuilder getKeyMetadata(String authToken) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        if (cacheableKeyCzarCrypterLocator == null) {
+        if (!(keyCzarCrypterLocator instanceof CacheableKeyCzarCrypterLocator)) {
             return Response.noContent();
         } else {
             final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
-            return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
+            return Response.ok().entity(factory.createMetadata(((CacheableKeyCzarCrypterLocator)keyCzarCrypterLocator).getCacheInfo()));
         }
     }
 
     @Override
     public Response.ResponseBuilder resetKeyMetadata(String authToken) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        if (cacheableKeyCzarCrypterLocator == null) {
+        if (!(keyCzarCrypterLocator instanceof CacheableKeyCzarCrypterLocator)) {
             return Response.noContent();
         } else {
-            cacheableKeyCzarCrypterLocator.resetCache();
+            CacheableKeyCzarCrypterLocator cacheLocator = (CacheableKeyCzarCrypterLocator) keyCzarCrypterLocator;
+            cacheLocator.resetCache();
             final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
-            return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
+            return Response.ok().entity(factory.createMetadata(cacheLocator.getCacheInfo()));
         }
     }
 
