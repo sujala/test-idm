@@ -21,7 +21,7 @@ import static org.junit.Assert.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegrationTest {
+public class LdapEndpointRepositoryIntegrationTestOld {
 
     @Autowired
     private EndpointDao endpointRepository;

@@ -1,10 +1,8 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.domain.dao.impl.InMemoryLdapIntegrationTest;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
 import com.sun.jersey.test.framework.AppDescriptor;
 import com.sun.jersey.test.framework.JerseyTest;
@@ -28,7 +26,7 @@ import javax.ws.rs.ext.Provider;
  * Date: Jun 17, 2010
  * Time: 11:21:24 AM
  */
-abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrationTest{
+abstract public class AbstractAroundClassJerseyTest {
 
     private static JerseyTest jerseyTest;
     private static WebResource resource;
