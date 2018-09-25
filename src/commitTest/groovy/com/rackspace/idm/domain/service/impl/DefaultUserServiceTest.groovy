@@ -122,7 +122,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockApplicationService(service)
         mockConfiguration(service)
         mockUserDao(service)
-        mockRackerDao(service)
         mockTenantService(service)
         mockEndpointService(service)
         mockAuthorizationService(service)

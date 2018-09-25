@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocat
 import com.rackspace.idm.domain.dao.KeyCzarKeyMetadataDao
 import com.rackspace.idm.domain.dao.KeyCzarKeyVersionDao
 import com.rackspace.idm.domain.entity.LdapKeyMetadata
+import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator
 import com.rackspace.idm.domain.security.encrypters.RepositoryKeyCzarCrypterLocator
 import com.rackspace.idm.domain.dao.KeyCzarAPINodeSignoffDao
 import org.joda.time.DateTime
@@ -24,7 +25,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
     def bad_meta_version= '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"PRIMARY","versionNumber":12023}],"encrypted":false}'
 
     @Autowired
-    CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator
+    CacheableKeyCzarCrypterLocator keyCzarCrypterLocator
 
     @Autowired
     KeyCzarKeyVersionDao keyCzarKeyVersionDao
@@ -46,7 +47,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         given:
         def response = devops.getInfo(utils.getServiceAdminToken())
         Thread.sleep(1000)
-        def info = cacheableKeyCzarCrypterLocator.getCacheInfo()
+        def info = keyCzarCrypterLocatorAsCacheable().getCacheInfo()
 
         when:
         def data = new ObjectMapper().readValue(response.getEntity(String), Map).get('metadata')
@@ -77,7 +78,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
     def "test encryption and decryption"() {
         given:
-        Crypter crypter = cacheableKeyCzarCrypterLocator.getCrypter()
+        Crypter crypter = keyCzarCrypterLocator.getCrypter()
 
         when:
         def encrypt = crypter.encrypt('foobar')
@@ -122,9 +123,9 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         metadata.data = first_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
-        cacheableKeyCzarCrypterLocator.resetCache()
-        info = cacheableKeyCzarCrypterLocator.getCacheInfo()
-        crypter = cacheableKeyCzarCrypterLocator.getCrypter()
+        keyCzarCrypterLocatorAsCacheable().resetCache()
+        info = keyCzarCrypterLocatorAsCacheable().getCacheInfo()
+        crypter = keyCzarCrypterLocator.getCrypter()
 
         encrypt1 = crypter.encrypt('foobar')
         decrypt1 = crypter.decrypt(encrypt1)
@@ -141,9 +142,9 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         metadata.data = second_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
-        cacheableKeyCzarCrypterLocator.resetCache()
-        info = cacheableKeyCzarCrypterLocator.getCacheInfo()
-        crypter = cacheableKeyCzarCrypterLocator.getCrypter()
+        keyCzarCrypterLocatorAsCacheable().resetCache()
+        info = keyCzarCrypterLocatorAsCacheable().getCacheInfo()
+        crypter = keyCzarCrypterLocator.getCrypter()
 
         encrypt2 = crypter.encrypt('foobar')
         decrypt2 = crypter.decrypt(encrypt2)
@@ -166,9 +167,9 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         metadata.data = two_keys_first_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
-        cacheableKeyCzarCrypterLocator.resetCache()
-        info = cacheableKeyCzarCrypterLocator.getCacheInfo()
-        crypter = cacheableKeyCzarCrypterLocator.getCrypter()
+        keyCzarCrypterLocatorAsCacheable().resetCache()
+        info = keyCzarCrypterLocatorAsCacheable().getCacheInfo()
+        crypter = keyCzarCrypterLocator.getCrypter()
 
         decrypt2 = crypter.decrypt(encrypt2)
         decrypt1 = crypter.decrypt(encrypt1)
@@ -185,9 +186,9 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         metadata.data = two_keys_second_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
-        cacheableKeyCzarCrypterLocator.resetCache()
-        info = cacheableKeyCzarCrypterLocator.getCacheInfo()
-        crypter = cacheableKeyCzarCrypterLocator.getCrypter()
+        keyCzarCrypterLocatorAsCacheable().resetCache()
+        info = keyCzarCrypterLocatorAsCacheable().getCacheInfo()
+        crypter = keyCzarCrypterLocator.getCrypter()
 
         decrypt2 = crypter.decrypt(encrypt2)
         decrypt1 = crypter.decrypt(encrypt1)
@@ -217,11 +218,11 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         metadata.data = first_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
-        cacheableKeyCzarCrypterLocator.resetCache()
-        originalCache = cacheableKeyCzarCrypterLocator.getCacheInfo()
+        keyCzarCrypterLocatorAsCacheable().resetCache()
+        originalCache = keyCzarCrypterLocatorAsCacheable().getCacheInfo()
 
         //test encrypting/decrypting
-        crypter = cacheableKeyCzarCrypterLocator.getCrypter()
+        crypter = keyCzarCrypterLocator.getCrypter()
         encrypt1 = crypter.encrypt('foobar')
         decrypt1 = crypter.decrypt(encrypt1)
 
@@ -241,8 +242,8 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         keyMetadataLdapGenericRepository.updateObject(metadata)
 
         //try to reload
-        cacheableKeyCzarCrypterLocator.resetCache()
-        afterResetCache = cacheableKeyCzarCrypterLocator.getCacheInfo()
+        keyCzarCrypterLocatorAsCacheable().resetCache()
+        afterResetCache = keyCzarCrypterLocatorAsCacheable().getCacheInfo()
 
         then: "cache wasn't updated"
         originalCache.created == afterResetCache.created
@@ -251,7 +252,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         originalCache.getKey().get(0).version == afterResetCache.getKey().get(0).version
 
         and: "and can still decrypt previously generated keys"
-        cacheableKeyCzarCrypterLocator.getCrypter().decrypt(encrypt1) == 'foobar'
+        keyCzarCrypterLocator.getCrypter().decrypt(encrypt1) == 'foobar'
 
         and: "signoff exists for the old version of key"
         verifyKeySignoff(currentMetaData)
@@ -260,12 +261,12 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         metadata.data = original
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
-        cacheableKeyCzarCrypterLocator.resetCache()
+        keyCzarCrypterLocatorAsCacheable().resetCache()
     }
 
     def "disable of signoff causes updates not to happen"() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, true)
-        cacheableKeyCzarCrypterLocator.resetCache()
+        keyCzarCrypterLocatorAsCacheable().resetCache()
 
         def metadata = keyCzarKeyMetadataDao.getKeyMetadataByName('meta')
         assert metadata != null
@@ -289,7 +290,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
         when:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, false)
-        cacheableKeyCzarCrypterLocator.resetCache()
+        keyCzarCrypterLocatorAsCacheable().resetCache()
 
         then: "signoff is not updated"
         verifyKeySignoff(metadata) //compare to original
@@ -304,5 +305,9 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         assert signoffObj != null
         assert signoffObj.cachedMetaCreatedDate != null
         assert new DateTime(signoffObj.cachedMetaCreatedDate).equals(new DateTime(metadata.created))
+    }
+
+    CacheableKeyCzarCrypterLocator keyCzarCrypterLocatorAsCacheable() {
+        return (CacheableKeyCzarCrypterLocator) keyCzarCrypterLocator
     }
 }

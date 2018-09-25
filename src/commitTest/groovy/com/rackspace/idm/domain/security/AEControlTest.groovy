@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.security
 
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
+import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator
 import spock.lang.Specification
 
 class AEControlTest extends Specification {
@@ -16,18 +17,18 @@ class AEControlTest extends Specification {
         identityConfig.getStaticConfig() >> staticConfig
 
         aeControl = new AEControl()
-        aeControl.cacheableKeyCzarCrypterLocator = locator
+        aeControl.keyCzarCrypterLocator = locator
         aeControl.identityConfig = identityConfig
     }
 
     def "No-Op when no cachable locator"() {
-        aeControl.cacheableKeyCzarCrypterLocator = null
+        aeControl.keyCzarCrypterLocator = Mock(KeyCzarCrypterLocator)
 
         when:
         aeControl.reloadKeys()
 
         then:
-        notThrown(NullPointerException)
+        notThrown(Exception)
     }
 
     def "No-Op when ae key reload disabled"() {

@@ -47,14 +47,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private Configuration config;
     @Autowired
     private RSAClient rsaClient;
-    @Autowired
-    private IdentityUserService identityUserService;
-    @Autowired
-    private IdentityConfig identityConfig;
-    @Autowired
-    private AuthorizationService authorizationService;
-    @Autowired(required = false)
-    private RackerDao rackerDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

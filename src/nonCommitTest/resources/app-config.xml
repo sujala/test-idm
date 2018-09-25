@@ -39,9 +39,11 @@
     <!--<task:annotation-driven/>-->
 
     <!-- set the crypter to load the keys from the classpath location -->
+<!--
     <bean id="classpathLoadingAETokenCrypter" class="com.rackspace.idm.domain.security.ClasspathKeyCzarCrypterLocator" primary="true">
         <property name="keysClassPathLocation" value="/com/rackspace/idm/api/resource/cloud/v20/keys"/>
     </bean>
+-->
 
     <import resource="namespaces.xml"/>
 

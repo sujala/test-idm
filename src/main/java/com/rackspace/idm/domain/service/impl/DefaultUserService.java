@@ -94,9 +94,6 @@ public class DefaultUserService implements UserService {
     @Autowired
     private UserDao userDao;
 
-    @Autowired(required = false)
-    private RackerDao rackerDao;
-
     @Autowired
     private FederatedUserDao federatedUserDao;
 
