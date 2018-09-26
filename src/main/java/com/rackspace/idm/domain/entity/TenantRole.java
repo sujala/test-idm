@@ -21,8 +21,9 @@ import java.util.Set;
 @Data
 @EqualsAndHashCode(exclude={"uniqueId"})
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_TENANT_ROLE,
+        auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA,
         postEncodeMethod="doPostEncode")
-public class TenantRole implements Auditable, UniqueId {
+public class TenantRole implements Auditable, UniqueId, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -40,6 +41,20 @@ public class TenantRole implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_USER_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String userId;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+            objectClass=LdapRepository.OBJECTCLASS_METADATA,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    @Override
+    public Set<String> getMetadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     private String name;
     private String description;
@@ -102,5 +117,4 @@ public class TenantRole implements Auditable, UniqueId {
         }
         return null;
     }
-
 }

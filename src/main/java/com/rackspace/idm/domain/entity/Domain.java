@@ -16,10 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DOMAIN)
-public class Domain implements Auditable, UniqueId {
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DOMAIN, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class Domain implements Auditable, UniqueId, Metadata {
     private static final Logger logger = LoggerFactory.getLogger(Domain.class);
 
     @LDAPDNField
@@ -57,6 +59,19 @@ public class Domain implements Auditable, UniqueId {
     @DeleteNullValues
     @LDAPField(attribute=LdapRepository.ATTR_USER_ADMIN_DN, objectClass=LdapRepository.OBJECTCLASS_DOMAIN, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     private DN userAdminDN;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     public void setTenantIds(String[] tenantIDs) {
         if (tenantIDs == null) {

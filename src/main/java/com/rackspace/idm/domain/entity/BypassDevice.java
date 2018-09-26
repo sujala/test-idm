@@ -10,12 +10,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 @Getter
 @Setter
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_BYPASS_DEVICE)
-public class BypassDevice implements UniqueId, Auditable {
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_BYPASS_DEVICE, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class BypassDevice implements UniqueId, Auditable, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -50,6 +51,19 @@ public class BypassDevice implements UniqueId, Auditable {
             objectClass=LdapRepository.OBJECTCLASS_BYPASS_DEVICE,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private Integer iterations;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     @Override
     public String getAuditContext() {

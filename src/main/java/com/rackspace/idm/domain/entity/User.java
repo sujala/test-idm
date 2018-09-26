@@ -28,8 +28,8 @@ import javax.validation.constraints.Pattern;
 import java.util.*;
 
 @Data
-@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
-public class User implements EndUser, DelegationPrincipal, DelegationDelegate, PhonePinProtectedUser {
+@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class User implements EndUser, DelegationPrincipal, DelegationDelegate, PhonePinProtectedUser, Metadata {
     private static final Logger log = LoggerFactory.getLogger(User.class);
 
     @LDAPEntryField
@@ -270,6 +270,19 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private Date inviteSendDate;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     private List<TenantRole> roles;
 

@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
@@ -21,8 +20,8 @@ import static com.rackspace.idm.GlobalConstants.TENANT_ALIAS_PATTERN;
 
 @Data
 @EqualsAndHashCode(exclude={"uniqueId"})
-@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_BASEURL)
-public class CloudBaseUrl implements Auditable, UniqueId {
+@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_BASEURL, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class CloudBaseUrl implements Auditable, UniqueId, Metadata {
     @LDAPDNField
     private String uniqueId;
 
@@ -131,6 +130,19 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             objectClass=LdapRepository.OBJECTCLASS_BASEURL,
             filterUsage= FilterUsage.CONDITIONALLY_ALLOWED)
     private String clientId;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     @Override
     public String getAuditContext() {

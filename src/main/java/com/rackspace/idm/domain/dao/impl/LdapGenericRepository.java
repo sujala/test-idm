@@ -1,12 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.DeleteNullValues;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.DaoGetEntityType;
 import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
-import com.rackspace.idm.domain.entity.Auditable;
-import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.StalePasswordException;
@@ -20,14 +20,13 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class LdapGenericRepository<T extends UniqueId> extends LdapRepository implements GenericDao<T> {
 
@@ -44,6 +43,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Autowired
     protected LdapPaginatorSearcher<T> paginator;
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     @Override
     public Iterable<T> getObjects(Filter searchFilter) {
@@ -175,6 +177,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().info("Adding object: {}", object);
         Audit audit = Audit.log((Auditable)object).add();
         try {
+            addMetadata(object);
             final LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
             doPreEncode(object);
 
@@ -191,6 +194,30 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
                 default:
                     throw new IllegalStateException(e);
             }
+        }
+    }
+
+    private void addMetadata(T object) {
+        if (object instanceof Metadata) {
+            HashSet<String> metadata = new HashSet<String>();
+            metadata.add("modifiersId: rsId=" + getCallerId());
+            metadata.add("requestId: " + MDC.get(Audit.GUUID));
+            ((Metadata)object).setMetadata(metadata);
+        } else {
+            String errMsg = String.format("Object is not an instance of Metadata: %s", entityType.getClass());
+            getLogger().warn(errMsg);
+        }
+    }
+
+    private String getCallerId() {
+        if (requestContextHolder != null &&
+                requestContextHolder.getRequestContext() != null &&
+                requestContextHolder.getRequestContext().getSecurityContext() != null &&
+                requestContextHolder.getRequestContext().getSecurityContext().getCallerToken() != null) {
+            ScopeAccess callerToken = requestContextHolder.getRequestContext().getSecurityContext().getCallerToken();
+            return ((BaseUserToken) callerToken).getIssuedToUserId();
+        } else {
+            return "not-available";
         }
     }
 
@@ -362,6 +389,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         Audit audit = Audit.log((Auditable)object).modify();
 
         try {
+            addMetadata(object);
             doPreEncode(object);
             List<Modification> mods = getModificationsForAttributes(object, true);
             audit.modify(mods);
@@ -387,6 +415,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug(loggerMsg);
         Audit audit = Audit.log((Auditable)object).modify();
         try {
+            addMetadata(object);
             doPreEncode(object);
             List<Modification> mods = new ArrayList<>();
             mods.addAll(getModifications(object, false));
@@ -437,8 +466,16 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     private void applyModifictations(T object, List<Modification> mods) throws LDAPPersistException {
         if (mods.size() > 0) {
             try {
-                final ModifyRequest modifyRequest = new ModifyRequest(object.getUniqueId(), mods);
-                LDAPResult ldapResult = getAppInterface().modify(modifyRequest);
+                if (object instanceof Metadata) {
+                    List<Modification> allMods = new ArrayList<>();
+                    allMods.addAll(mods);
+                    allMods.addAll(getObjectClassModification(object, mods));
+                    final ModifyRequest modifyRequest = new ModifyRequest(object.getUniqueId(), allMods);
+                    LDAPResult ldapResult = getAppInterface().modify(modifyRequest);
+                } else {
+                    final ModifyRequest modifyRequest = new ModifyRequest(object.getUniqueId(), mods);
+                    LDAPResult ldapResult = getAppInterface().modify(modifyRequest);
+                }
             }
             catch (LDAPException le) {
                 throw new LDAPPersistException(le);
@@ -505,6 +542,22 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             }
         }
         return attributes.toArray(new String[attributes.size()]);
+    }
+
+    private List<Modification> getObjectClassModification(T object, List<Modification> mods) {
+        List<Modification> result = new ArrayList<>();
+        Set<String> objectClass = new HashSet<>();
+        for (Field field : getDeclaredFields(object.getClass())) {
+            for (Annotation annotation : field.getAnnotations()) {
+                if (annotation.annotationType() == LDAPField.class) {
+                    LDAPField ldapField = (LDAPField) annotation;
+                    objectClass.addAll(Arrays.asList(ldapField.objectClass()));
+                }
+            }
+        }
+        //TODO: allow adding and removing auxiliary objectClasses baded on mods and readOnlyEntry
+        result.add(new Modification(ModificationType.REPLACE, ATTR_OBJECT_CLASS, objectClass.toArray(new String[objectClass.size()])));
+        return result;
     }
 
     private List<Field> getDeclaredFields(Class<?> type) {

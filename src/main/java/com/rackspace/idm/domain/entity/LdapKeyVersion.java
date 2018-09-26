@@ -8,11 +8,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Setter
 @Getter
-@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_KEY_DESCRIPTOR)
-public class LdapKeyVersion implements KeyVersion, UniqueId {
+@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_KEY_DESCRIPTOR, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class LdapKeyVersion implements KeyVersion, UniqueId, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -39,4 +41,16 @@ public class LdapKeyVersion implements KeyVersion, UniqueId {
     )
     private String data;
 
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 }

@@ -24,8 +24,8 @@ import java.util.Set;
 @Getter
 @Setter
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT, superiorClass={ "groupOfNames", "top" },
-        postEncodeMethod="doPostEncode")
-public class DelegationAgreement implements Auditable, UniqueId {
+        postEncodeMethod="doPostEncode", auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class DelegationAgreement implements Auditable, UniqueId, Metadata {
     private static final Logger log = LoggerFactory.getLogger(DelegationAgreement.class);
 
     @LDAPDNField
@@ -67,6 +67,19 @@ public class DelegationAgreement implements Auditable, UniqueId {
             objectClass=LdapRepository.OBJECTCLASS_DELEGATION_AGREEMENT,
             filterUsage=FilterUsage.ALWAYS_ALLOWED)
     private String principalDomainId;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     public int getSubAgreementNestLevelNullSafe() {
         return subAgreementNestLevel != null ? subAgreementNestLevel : 0;

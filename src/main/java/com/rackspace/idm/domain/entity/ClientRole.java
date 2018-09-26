@@ -11,10 +11,11 @@ import org.dozer.Mapping;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.HashSet;
+import java.util.Set;
 
 @Data
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, postEncodeMethod="doPostEncode")
-public class ClientRole implements Auditable, UniqueId {
+@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, postEncodeMethod="doPostEncode", auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class ClientRole implements Auditable, UniqueId, Metadata {
 
 	public static final String SUPER_ADMIN_ROLE = "3";
 	public static final String RACKER = "RackerVirtualRole";
@@ -45,6 +46,19 @@ public class ClientRole implements Auditable, UniqueId {
 
     @LDAPField(attribute=LdapRepository.ATTR_RS_TENANT_TYPE, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private HashSet<String> tenantTypes;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     public RoleTypeEnum getRoleType() {
         RoleTypeEnum result = RoleTypeEnum.STANDARD;

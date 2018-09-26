@@ -11,11 +11,13 @@ import lombok.Setter;
 import org.dozer.Mapping;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_IDENTITY_PROPERTY)
-public class IdentityProperty implements Auditable, UniqueId, ReadableIdentityProperty {
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_IDENTITY_PROPERTY, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class IdentityProperty implements Auditable, UniqueId, ReadableIdentityProperty, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -63,6 +65,19 @@ public class IdentityProperty implements Auditable, UniqueId, ReadableIdentityPr
             objectClass = LdapRepository.OBJECTCLASS_IDENTITY_PROPERTY,
             filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private boolean reloadable;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     @Override
     public String getAuditContext() {

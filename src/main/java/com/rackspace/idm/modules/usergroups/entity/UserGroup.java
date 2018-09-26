@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Auditable;
 import com.rackspace.idm.domain.entity.DelegationDelegate;
 import com.rackspace.idm.domain.entity.DelegationPrincipal;
+import com.rackspace.idm.domain.entity.Metadata;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
@@ -20,6 +21,9 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Represents a user group within the LDAP directory. Extending groupOfNames LDAP class for future expansion options when
  * delegation is introduced. Not currently using as group membership (users) is set on the rsPerson/rsFederatedPerson
@@ -27,8 +31,8 @@ import org.slf4j.LoggerFactory;
  */
 @Getter
 @Setter
-@LDAPObject(structuralClass = Constants.OBJECTCLASS_USER_GROUP, superiorClass={ "groupOfNames", "top" })
-public class UserGroup implements Auditable, UniqueId, DelegationPrincipal, DelegationDelegate {
+@LDAPObject(structuralClass = Constants.OBJECTCLASS_USER_GROUP, superiorClass={ "groupOfNames", "top" }, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class UserGroup implements Auditable, UniqueId, DelegationPrincipal, DelegationDelegate, Metadata {
 
     public static final String INVALID_GROUP_DN = "Group dn could not be parsed";
 
@@ -48,6 +52,19 @@ public class UserGroup implements Auditable, UniqueId, DelegationPrincipal, Dele
 
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = Constants.OBJECTCLASS_USER_GROUP, inRDN = false, filterUsage = FilterUsage.CONDITIONALLY_ALLOWED, requiredForEncode = false)
     private String description;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     @Override
     public String getAuditContext() {
