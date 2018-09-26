@@ -9,10 +9,13 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Getter
 @Setter
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_OTP_DEVICE)
-public class OTPDevice implements UniqueId, Auditable, MultiFactorDevice {
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_OTP_DEVICE, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class OTPDevice implements UniqueId, Auditable, MultiFactorDevice, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -41,6 +44,19 @@ public class OTPDevice implements UniqueId, Auditable, MultiFactorDevice {
             objectClass=LdapRepository.OBJECTCLASS_OTP_DEVICE,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private byte[] key;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     @Override
     public String getAuditContext() {

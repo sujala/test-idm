@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.APINodeSignoff;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Auditable;
+import com.rackspace.idm.domain.entity.Metadata;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPDNField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
@@ -12,11 +13,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Setter
 @Getter
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_API_NODE_SIGNOFF)
-public class LdapAPINodeSignoff implements APINodeSignoff, UniqueId, Auditable {
+@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_API_NODE_SIGNOFF, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class LdapAPINodeSignoff implements APINodeSignoff, UniqueId, Auditable, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -49,6 +52,19 @@ public class LdapAPINodeSignoff implements APINodeSignoff, UniqueId, Auditable {
             requiredForEncode=false
     )
     private Date loadedDate;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     /**
      * The link to the meta data. In LDAP the metadata does not have an rsId. However, the cn is unique so just storing

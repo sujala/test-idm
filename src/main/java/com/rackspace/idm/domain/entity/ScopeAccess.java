@@ -8,14 +8,12 @@ import lombok.Data;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_SCOPEACCESS,
-        postEncodeMethod="doPostEncode")
-public class ScopeAccess implements Auditable, UniqueId, Token {
+        postEncodeMethod="doPostEncode", auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class ScopeAccess implements Auditable, UniqueId, Token, Metadata {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @LDAPDNField
@@ -41,6 +39,19 @@ public class ScopeAccess implements Auditable, UniqueId, Token {
 
     @LDAPField(attribute = LdapRepository.ATTR_SCOPE, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String scope;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     public ScopeAccess() {}
 

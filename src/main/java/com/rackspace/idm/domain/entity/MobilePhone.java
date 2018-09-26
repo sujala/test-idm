@@ -23,8 +23,8 @@ import java.util.Set;
 @Getter
 @Setter
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE, superiorClass={ "groupOfNames",
-        "top" })
-public class MobilePhone implements Auditable, UniqueId, MultiFactorDevice {
+        "top" }, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class MobilePhone implements Auditable, UniqueId, MultiFactorDevice, Metadata {
     @LDAPDNField
     private String uniqueId;
 
@@ -48,6 +48,19 @@ public class MobilePhone implements Auditable, UniqueId, MultiFactorDevice {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED,
             requiredForEncode=true)
     private String cn;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     @Override
     public String getAuditContext() {

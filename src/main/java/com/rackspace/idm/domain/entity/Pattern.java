@@ -8,9 +8,12 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Data
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_PATTERN)
-public class Pattern implements UniqueId {
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_PATTERN, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class Pattern implements UniqueId, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -30,4 +33,16 @@ public class Pattern implements UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_PATTERN, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
 
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 }

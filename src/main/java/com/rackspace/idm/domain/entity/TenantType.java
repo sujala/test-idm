@@ -9,10 +9,13 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Data
 @EqualsAndHashCode(exclude={"uniqueId"})
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_TENANT_TYPE)
-public class TenantType implements Auditable, UniqueId {
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_TENANT_TYPE, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class TenantType implements Auditable, UniqueId, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -22,6 +25,19 @@ public class TenantType implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_TENANT_TYPE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     @Override
     public String getAuditContext() {

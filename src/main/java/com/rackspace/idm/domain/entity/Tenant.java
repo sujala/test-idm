@@ -10,12 +10,13 @@ import org.dozer.Mapping;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @EqualsAndHashCode(exclude={"uniqueId"})
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_TENANT,
-        postEncodeMethod="doPostEncode")
-public class Tenant implements Auditable, UniqueId {
+        postEncodeMethod="doPostEncode", auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class Tenant implements Auditable, UniqueId, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -48,6 +49,19 @@ public class Tenant implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_TYPE, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private HashSet<String> types;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     @Override
     public String getAuditContext() {

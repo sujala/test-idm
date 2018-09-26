@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Auditable;
 import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.Metadata;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.modules.endpointassignment.Constants;
 import com.rackspace.idm.validation.Validator20;
@@ -29,8 +30,8 @@ import java.util.*;
 @Getter
 @Setter
 @LDAPObject(structuralClass = TenantTypeRule.OBJECT_CLASS, superiorClass={ "groupOfNames",
-        "top" })
-public class TenantTypeRule implements Auditable, UniqueId, Rule {
+        "top" }, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class TenantTypeRule implements Auditable, UniqueId, Rule, Metadata {
 
     public static final String OBJECT_CLASS = "rsTenantTypeEndpointAssignmentRule";
     public static final String LDAP_ATTRIBUTE_TYPE = LdapRepository.ATTR_RS_TYPE;
@@ -57,6 +58,19 @@ public class TenantTypeRule implements Auditable, UniqueId, Rule {
             objectClass = OBJECT_CLASS,
             filterUsage= FilterUsage.CONDITIONALLY_ALLOWED)
     private Set<String> endpointTemplateMembers;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

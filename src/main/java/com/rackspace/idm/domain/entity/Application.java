@@ -11,12 +11,14 @@ import org.dozer.Mapping;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION)
-public class Application implements Auditable, UniqueId {
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class Application implements Auditable, UniqueId, Metadata {
     private static final long serialVersionUID = -3160754818606772239L;
 
     // TODO: Remove those as soon as we remove the LDAP dependencies.
@@ -49,6 +51,19 @@ public class Application implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_USE_FOR_DEFAULT_REGION, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private Boolean useForDefaultRegion;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     private List<TenantRole> roles;
 

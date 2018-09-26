@@ -1,18 +1,21 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Data
-@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKER)
-public class Racker implements BaseUser, FederatedBaseUser {
+@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKER, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class Racker implements BaseUser, FederatedBaseUser, Metadata {
 
     @LDAPDNField
     private String uniqueId;
@@ -24,6 +27,19 @@ public class Racker implements BaseUser, FederatedBaseUser {
             filterUsage= FilterUsage.ALWAYS_ALLOWED,
             requiredForEncode=true)
     private String rackerId;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     private Boolean enabled;
 

@@ -26,8 +26,8 @@ import javax.validation.constraints.NotNull;
 import java.util.*;
 
 @Data
-@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON)
-public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrincipal, DelegationDelegate, PhonePinProtectedUser {
+@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrincipal, DelegationDelegate, PhonePinProtectedUser, Metadata {
     private static final Logger log = LoggerFactory.getLogger(FederatedUser.class);
 
     @LDAPDNField
@@ -125,6 +125,19 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
     )
     private Set<DN> userGroupDNs;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     public FederatedUser() {
     }

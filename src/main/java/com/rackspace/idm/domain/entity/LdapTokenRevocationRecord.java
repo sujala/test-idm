@@ -13,8 +13,8 @@ import java.util.*;
 @Setter
 @Getter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_TOKEN_REVOCATION_RECORD,
-        postEncodeMethod="doPostEncode")
-public class LdapTokenRevocationRecord implements Auditable, UniqueId, TokenRevocationRecord  {
+        postEncodeMethod="doPostEncode", auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class LdapTokenRevocationRecord implements Auditable, UniqueId, TokenRevocationRecord, Metadata {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @Setter
@@ -65,6 +65,19 @@ public class LdapTokenRevocationRecord implements Auditable, UniqueId, TokenRevo
             internalTargetAuthenticatedBy =  new ArrayList<String>();
         }
         return internalTargetAuthenticatedBy;
+    }
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
     }
 
     @Override

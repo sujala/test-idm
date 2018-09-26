@@ -9,6 +9,9 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 import org.dozer.Mapping;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Created with IntelliJ IDEA.
  * User: wmendiza
@@ -18,8 +21,8 @@ import org.dozer.Mapping;
  */
 
 @Data
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_REGION)
-public class Region implements Auditable, UniqueId {
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_REGION, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
+public class Region implements Auditable, UniqueId, Metadata {
     @LDAPDNField()
     private String uniqueId;
 
@@ -36,6 +39,19 @@ public class Region implements Auditable, UniqueId {
     @Mapping("isDefault")
     @LDAPField(attribute = LdapRepository.ATTR_USE_FOR_DEFAULT_REGION, objectClass = LdapRepository.OBJECTCLASS_REGION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private Boolean isDefault;
+
+    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
+               objectClass=LdapRepository.OBJECTCLASS_METADATA,
+               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<String> metadata;
+
+    public Set<String> getMedatadata() {
+        if (metadata == null) {
+            metadata = new HashSet<String>();
+        }
+        return metadata;
+    }
 
     @Override
     public String getAuditContext() {
