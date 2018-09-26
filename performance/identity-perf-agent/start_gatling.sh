@@ -22,7 +22,7 @@ echo "create admins"
 USERS_FILE_NAME=$(ls users)
 ./add_rcn_to_domain.py -i users/${USERS_FILE_NAME} -s ${IDM_ENDPOINT}
 ./create_users_in_domain.py -p 10 -n 20 -i users -m 1 -s ${IDM_ENDPOINT}
-./create_idp_data.py -f ../localhost/data/identity/dom_users_for_fed.dat
+./create_idp_data.py -f ../localhost/data/identity/dom_users_for_fed.dat -s ${IDM_ENDPOINT}
 #./generate_files.py -u users_in_dom -c users_in_domain.json -o ../localhost/data/identity -i true
 cd ..
 #rm -rf target/*
@@ -45,3 +45,6 @@ sbt "gatling:testOnly com.rackspacecloud.simulations.identity.IdentityConstantTp
 echo "copy only simulation log to target/gatling/results"
 mv results/identityconstanttputusersrampup* target/gatling/results/
 #mv gatling_console.log target/gatling/.
+
+cd data_generation
+./remove_idps.py -s ${IDM_ENDPOINT}
