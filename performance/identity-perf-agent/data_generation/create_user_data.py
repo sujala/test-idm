@@ -125,7 +125,6 @@ def add_user(number):
         print(r.text)
 
         user_name = name_generator()
-        region = "ORD"
         create_user_data = {"user": {
                             "enabled": True,
                             "RAX-KSGRP:groups": [{"name": group_name}],
@@ -136,8 +135,7 @@ def add_user(number):
                             "username": user_name,
                             "OS-KSADM:password": "Password1",
                             "email": "identity_perf_test_{0}@rackspace.com"
-                            "".format(domain_id),
-                            "RAX-AUTH:defaultRegion": region}}
+                            "".format(domain_id)}}
         u_url = "{0}/v2.0/users".format(baseurl)
         r = requests.post(url=u_url,
                           json=create_user_data, headers=headers, verify=False)
@@ -186,8 +184,7 @@ def add_admin_user(number, alt_url=None):
                             "username": user_name,
                             "OS-KSADM:password": "Password1",
                             "email": "identity_perf_test_{0}@rackspace.com"
-                            "".format(user_name),
-                            "RAX-AUTH:defaultRegion": region}}
+                            "".format(user_name)}}
         admin_token = get_token(user_name="keystone_service_admin",
                                 password="Auth1234", alt_url=baseurl)
         print(admin_token)
