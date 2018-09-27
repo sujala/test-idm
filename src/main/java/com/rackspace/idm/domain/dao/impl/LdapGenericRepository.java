@@ -198,14 +198,18 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     private void addMetadata(T object) {
-        if (object instanceof Metadata) {
-            HashSet<String> metadata = new HashSet<String>();
-            metadata.add("modifiersId: rsId=" + getCallerId());
-            metadata.add("requestId: " + MDC.get(Audit.GUUID));
-            ((Metadata)object).setMetadata(metadata);
-        } else {
-            String errMsg = String.format("Object is not an instance of Metadata: %s", entityType.getClass());
-            getLogger().warn(errMsg);
+        try {
+            if (object instanceof Metadata) {
+                HashSet<String> metadata = new HashSet<String>();
+                metadata.add("modifiersId: rsId=" + getCallerId());
+                metadata.add("requestId: " + MDC.get(Audit.GUUID));
+                ((Metadata)object).setMetadata(metadata);
+            } else {
+                String errMsg = String.format("Object is not an instance of Metadata: %s", entityType.getClass());
+                getLogger().warn(errMsg);
+            }
+        } catch (Exception ex) {
+            getLogger().warn("An error was encountered adding metadata to entry being created/modificed. Skipping adding the metadata.", ex);
         }
     }
 

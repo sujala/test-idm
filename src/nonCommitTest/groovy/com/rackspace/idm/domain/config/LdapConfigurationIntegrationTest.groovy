@@ -5,11 +5,13 @@ import com.unboundid.ldap.sdk.RoundRobinServerSet
 import com.unboundid.ldap.sdk.SimpleBindRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.net.ssl.SSLSocketFactory
 
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapConfigurationIntegrationTest  extends Specification {
 

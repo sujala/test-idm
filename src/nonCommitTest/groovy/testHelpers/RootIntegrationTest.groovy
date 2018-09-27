@@ -14,6 +14,7 @@ import org.mockserver.model.HttpRequest
 import org.mockserver.model.HttpResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -21,6 +22,7 @@ import javax.ws.rs.core.MediaType
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer
 
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class RootIntegrationTest extends Specification {
 

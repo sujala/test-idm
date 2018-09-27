@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.Tenant
 import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -15,6 +16,7 @@ import spock.lang.Specification
  * Time: 2:27 PM
  * To change this template use File | Settings | File Templates.
  */
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapTenantRepositoryIntegrationTest extends Specification {
     @Autowired

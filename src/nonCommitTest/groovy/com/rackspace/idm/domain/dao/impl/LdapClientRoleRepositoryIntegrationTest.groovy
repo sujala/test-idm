@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl
 import com.rackspace.idm.domain.entity.ClientSecret
 import com.unboundid.ldap.sdk.Entry
 import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Specification
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -21,6 +22,7 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao
  * To change this template use File | Settings | File Templates.
  */
 
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapClientRoleRepositoryIntegrationTest extends Specification {
 

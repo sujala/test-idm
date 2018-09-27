@@ -10,6 +10,7 @@ import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Specification
 import testHelpers.Cloud20Utils
 import testHelpers.ConcurrentStageTaskRunner
@@ -21,6 +22,7 @@ import testHelpers.MultiStageTaskFactory
  * persisted object for tests. Tests attempt to clean up after themselves.
  *
  */
+@WebAppConfiguration
 @ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/domain/dao/impl/LdapGenericRepositoryUpdateIntegrationTest-context.xml"])
 class LdapGenericRepositoryUpdateIntegrationTest extends Specification {
 

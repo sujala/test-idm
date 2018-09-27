@@ -5,9 +5,11 @@ import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientSecret
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class ApplicationRepositoryIntegrationTest extends Specification {
     @Autowired
