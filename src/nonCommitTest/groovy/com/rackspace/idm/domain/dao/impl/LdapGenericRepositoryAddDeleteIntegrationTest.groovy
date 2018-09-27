@@ -15,6 +15,7 @@ import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.when
  * persisted object for tests. Tests attempt to clean up after themselves.
  *
  */
+@WebAppConfiguration
 @ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/domain/dao/impl/LdapGenericRepositoryAddDeleteIntegrationTest-context.xml"])
 class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
 

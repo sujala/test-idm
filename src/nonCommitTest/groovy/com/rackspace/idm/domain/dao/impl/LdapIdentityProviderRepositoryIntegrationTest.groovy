@@ -12,6 +12,7 @@ import org.junit.Rule
 import org.opensaml.security.credential.Credential
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
@@ -19,6 +20,7 @@ import testHelpers.saml.SamlCredentialUtils
 
 import java.security.cert.X509Certificate
 
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
     @Autowired

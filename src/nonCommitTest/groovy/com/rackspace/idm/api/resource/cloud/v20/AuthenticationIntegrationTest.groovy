@@ -209,8 +209,8 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         authResponse.status == HttpStatus.OK.value()
 
         cleanup:
-        utils.deleteUsers(users)
-        utils.deleteRole(roleEntity)
+        utils.deleteUsersQuietly(users)
+        utils.deleteRoleQuietly(roleEntity)
         utils.deleteService(v1Factory.createService(application.clientId, application.clientId))
     }
 

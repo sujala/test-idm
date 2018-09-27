@@ -16,6 +16,7 @@ import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -24,6 +25,7 @@ import testHelpers.EntityFactory
 /**
  * Integration tests from the revocation down using CA storage. Token retrieval is mocked.
  */
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
 

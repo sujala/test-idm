@@ -5,10 +5,12 @@ import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.helpers.CloudTestUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Specification
 
 import static com.rackspace.idm.GlobalConstants.*
 
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class EndpointRepositoryIntegrationTest extends Specification {
 

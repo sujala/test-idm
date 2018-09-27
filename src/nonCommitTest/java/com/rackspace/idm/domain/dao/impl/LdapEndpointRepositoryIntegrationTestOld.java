@@ -13,12 +13,14 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.util.Random;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
+@WebAppConfiguration
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapEndpointRepositoryIntegrationTestOld {

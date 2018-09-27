@@ -12,10 +12,12 @@ import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.collections4.IteratorUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
 
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapIdentityUserRepositoryIntegrationTest extends Specification {
 

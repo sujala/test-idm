@@ -9,6 +9,7 @@ import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
@@ -112,9 +113,17 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         multiFactorCloud20Service.requestContextHolder = requestContextHolder//reset to original service
     }
 
+    /**
+     * The unexpected error in this case is that the specified token will not be the same as the token in the security
+     * context. This will cause an illegalstateexception to be thrown.
+     */
     def "sendVerification: Fail with 500 when unexpected exception"() {
         setup:
         addPhone()
+
+        UserScopeAccess token = entityFactory.createUserToken()
+        requestContextHolder.getRequestContext().getSecurityContext().setCallerToken(token)
+        requestContextHolder.getRequestContext().getSecurityContext().setEffectiveCallerToken(token)
 
         MobilePhoneVerification mockedMobilePhoneVerification = Mock(MobilePhoneVerification)
         mockedMobilePhoneVerification.sendPin(_) >> {throw new RuntimeException("Error")}

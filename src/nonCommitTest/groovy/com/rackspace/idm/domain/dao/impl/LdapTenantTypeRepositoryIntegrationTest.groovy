@@ -4,9 +4,11 @@ package com.rackspace.idm.domain.dao.impl
 import com.rackspace.idm.domain.entity.TenantType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapTenantTypeRepositoryIntegrationTest extends Specification {
     @Autowired

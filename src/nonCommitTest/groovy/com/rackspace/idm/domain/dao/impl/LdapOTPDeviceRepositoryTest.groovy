@@ -7,8 +7,10 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.util.OTPHelper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Specification
 
+@WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapOTPDeviceRepositoryTest extends Specification {
 
