@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
  * To change this template use File | Settings | File Templates.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class LdapEndpointRepositoryDepTest extends InMemoryLdapIntegrationTest {
+public class LdapEndpointRepositoryDepTest {
     @InjectMocks
     LdapEndpointRepository ldapEndpointRepository = new LdapEndpointRepository();
     LDAPInterface ldapInterface;
