@@ -4,7 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
@@ -24,11 +23,7 @@ import org.apache.commons.lang.math.RandomUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.joda.time.DateTime
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.EndpointList
-import org.openstack.docs.identity.api.v2.Token
-import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Shared
@@ -40,7 +35,6 @@ import javax.ws.rs.core.MediaType
 import java.util.regex.Pattern
 
 import static com.rackspace.idm.Constants.*
-
 /**
  * Impersonation tests.
  */
@@ -126,6 +120,19 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+    }
+
+    def "get user by id with impersonated token of disabled user returns 404"() {
+        given:
+        def localDefaultUser = utils.createUser(userAdminToken)
+        def impersonatedToken = utils.getImpersonatedToken(specificationIdentityAdmin, localDefaultUser)
+        utils.disableUser(localDefaultUser)
+
+        when:
+        def response = cloud20.getUserById(impersonatedToken, localDefaultUser.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "User not found")
     }
 
     def "impersonate - impersonation request greater than max service user token lifetime throws exception"() {

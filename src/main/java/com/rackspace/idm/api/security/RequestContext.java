@@ -1,10 +1,19 @@
 package com.rackspace.idm.api.security;
 
 import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -197,5 +206,17 @@ public class RequestContext {
         }
 
         return authorizationContext;
+    }
+
+    /**
+     * Helper method to verify the effective caller is not a federated user
+     *
+     * @return
+     */
+    public void verifyEffectiveCallerIsNotAFederatedUser() {
+        BaseUser caller = getEffectiveCaller();
+        if (caller != null && caller instanceof FederatedUser) {
+            throw new ForbiddenException("Not Authorized");
+        }
     }
 }

@@ -156,6 +156,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 securityContext.setCallerToken(callerToken);
                 securityContext.setEffectiveCallerToken(effectiveToken);
 
+                // Set effective caller's authorization context
+                if (securityContext.getEffectiveCallerToken() != null) {
+                    requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext();
+                }
+
                 /*
                  MFA Setup Token/Session Id Token Authorization Checks. These checks are deprecated per the feature
                  flag. These checks are now performed in the AuthorizationAdviceAspect class. When the feature flag

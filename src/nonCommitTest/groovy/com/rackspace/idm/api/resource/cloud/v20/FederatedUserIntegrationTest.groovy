@@ -1714,6 +1714,37 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "getting user api key credentials using a federated user's token returns 403: #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token : samlAuthResponse.token
+        def samlAuthTokenId = samlAuthToken.id
+        def userId = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user.id : samlAuthResponse.user.id
+
+        when: "get api key for user"
+        def response = cloud20.getUserApiKey(samlAuthTokenId, userId)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Not Authorized")
+
+        cleanup:
+        utils.deleteUsers(users)
+
+        where:
+        mediaType             | _
+        APPLICATION_XML_TYPE  | _
+        APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
     def "The same precedence rules that apply to deleting provisioned subusers apply to deleting federated subusers"() {
         given:
         def domainId = utils.createDomain()

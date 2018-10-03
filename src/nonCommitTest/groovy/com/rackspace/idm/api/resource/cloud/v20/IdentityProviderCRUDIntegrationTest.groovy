@@ -1581,7 +1581,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response = cloud20.createIdentityProviderWithMetadata(userWithNoDomainToken, metadata)
 
         then: "Assert forbidden"
-        assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, ErrorCodes.ERROR_CODE_INVALID_DOMAIN_FOR_USER, DefaultCloud20Service.NOT_AUTHORIZED)
+        IdmAssert.assertRackspaceCommonFaultResponse(response, com.rackspace.api.common.fault.v1.ForbiddenFault, SC_FORBIDDEN, ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_INVALID_DOMAIN_FOR_USER,DefaultCloud20Service.NOT_AUTHORIZED))
+
 
         when: "Creating IDP using user admin user w/ 'rax_status_restricted' group"
         def raxStatusRestrictedGroup = v2Factory.createGroup(Constants.RAX_STATUS_RESTRICTED_GROUP_NAME).with {

@@ -54,7 +54,7 @@ class ListUserGlobalRolesServiceTest extends RootServiceTest {
         service.listUserGlobalRoles(mockHttpHeaders, token, userId, applyRcnRoles)
 
         then:
-        1 * securityContext.getAndVerifyEffectiveCallerToken(token) >> new UserScopeAccess()
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token)
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER) >> {throw new ForbiddenException()}
         1 * exceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
     }

@@ -2921,7 +2921,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
             Tenant tenant = tenantService.getTenantByName(name);
             if (tenant == null) {
@@ -2940,32 +2943,35 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            //legacy code assumed User and did not check for disabled. We're expanding to Fed, and still won't check for disabled
-            EndUser caller = (EndUser) userService.getUserByScopeAccess(scopeAccessByAccessToken, false);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
 
-            //if caller has default user role
-            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken) &&
-                    !authorizationService.hasUserManageRole(caller)) {
-                if (caller.getId().equals(userId)) {
-                    return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(caller)).getValue());
-                } else {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
+            /* Allowed access by caller:
+               1. Self can retrieve own user
+               2. Service admin and identity admin can retrieve any user
+               3. Domains are verified for user-admin and user-manage callers
+             */
+            EndUser user = null;
+            if (caller.getId().equals(userId)) {
+                user = (EndUser) caller;
+            } else if (callerType.hasAtLeastUserManagedAccessLevel()) {
+                user = identityUserService.getEndUserById(userId);
+                if (user != null && !callerType.hasAtLeastIdentityAdminAccessLevel()) {
+                    authorizationService.verifyDomain(caller, user);
                 }
+            } else {
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
-            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
-            EndUser user = this.identityUserService.getEndUserById(userId);
+
             if (user == null) {
                 String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
             setEmptyUserValues(user);
-            if (authorizationService.authorizeUserManageRole(scopeAccessByAccessToken) ||
-                    authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-                authorizationService.verifyDomain(caller, user);
-            }
 
             org.openstack.docs.identity.api.v2.User userResponse = this.userConverterCloudV20.toUser(user);
             if (user instanceof User && identityConfig.getReloadableConfig().isIncludePasswordExpirationDateForGetUserResponsesEnabled()) {
@@ -3188,8 +3194,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUser();
+
+            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             if (identityConfig.getReloadableConfig().preventRackerImpersonationApiKeyAccess() &&
                     requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
@@ -3197,7 +3207,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = this.userService.checkAndGetUserById(userId);
-            User caller = getUser(scopeAccessByAccessToken);
 
             if (user == null) {
                 String errMsg = String.format("User with id: %s does not exist", userId);
@@ -3208,7 +3217,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             if(!authorizationService.isSelf(caller, user)){
                 precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
 
-                if(!(authorizationService.hasIdentityAdminRole(caller) || authorizationService.hasServiceAdminRole(caller))){
+                IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+                if(!callerType.hasAtLeastIdentityAdminAccessLevel()){
                     authorizationService.verifyDomain(caller, user);
                 }
             }
@@ -3623,7 +3633,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId, boolean applyRcnRoles) {
         try {
             // Verify token is valid and user is enabled
-            ScopeAccess callersScopeAccess = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             EndUser user =  identityUserService.checkAndGetEndUserById(userId);
@@ -4162,7 +4172,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUsersByDomainIdAndEnabledFlag (String authToken, String domainId, String enabled, UserType userType) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
         domainService.checkAndGetDomain(domainId);
         Iterable<EndUser> users;
         if (enabled == null) {

@@ -1,6 +1,10 @@
 package com.rackspace.idm.api.security;
 
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.BaseUserToken;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.UnrecoverableIdmException;
 import lombok.Getter;
