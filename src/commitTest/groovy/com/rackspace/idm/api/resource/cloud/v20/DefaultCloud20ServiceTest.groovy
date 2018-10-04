@@ -1371,7 +1371,24 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 204
     }
 
-    def "getSecretQA returns 200"() {
+    def "getSecretQA - return valid response"() {
+        given:
+        mockSecretQAConverter(service)
+        def user = entityFactory.createUser()
+
+        when:
+        def response = service.getSecretQA(headers, authToken, "id").build()
+
+        then:
+        response.status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled();
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+        1 * userService.checkAndGetUserById(_) >> user
+    }
+
+    def "getSecretQAs returns 200"() {
         given:
         mockSecretQAConverter(service)
         allowUserAccess()
@@ -4135,6 +4152,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         response.build().status == SC_OK
 
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+
         where:
         policy                         | type
         '{"policy": {"name":"name"}"}' | "JSON"
@@ -4347,6 +4366,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.getIdentityProviders(headers, authToken, new IdentityProviderSearchParams())
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getEffectiveCaller() >> caller
         1 * userService.getGroupsForUser(_) >> []
         1 * identityProviderConverterCloudV20.toIdentityProviderList(_) >> { args ->
@@ -4375,6 +4395,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.getIdentityProviders(headers, authToken, identityProviderSearchParams)
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getEffectiveCaller() >> caller
         1 * userService.getGroupsForUser(_) >> []
         1 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
@@ -4399,6 +4420,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.getIdentityProviders(headers, authToken, identityProviderSearchParams)
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getEffectiveCaller() >> caller
         1 * userService.getGroupsForUser(_) >> []
         1 * federatedIdentityService.getIdentityProviderByEmailDomain(_)
@@ -4435,6 +4457,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.getIdentityProviders(headers, authToken, identityProviderSearchParams)
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getEffectiveCaller() >> caller
         1 * userService.getGroupsForUser(_) >> []
         response.build().status == 400
@@ -5435,6 +5458,67 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
             return Response.status(SC_BAD_REQUEST)
         }
+    }
+
+    def "getTenantById - returns valid response"() {
+        given:
+        mockTenantConverter(service)
+        mockJAXBObjectFactories(service)
+
+        when:
+        def response = service.getTenantById(headers, authToken, "tenantId").build()
+
+        then:
+        response.status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
+        1 * jaxbObjectFactories.getOpenStackIdentityV2Factory().createTenant(_) >> Mock(JAXBElement)
+        1 * tenantConverter.toTenant(_)
+    }
+
+    def "getDomainTenants - returns valid response"() {
+        given:
+        mockTenantConverter(service)
+        mockJAXBObjectFactories(service)
+
+        when:
+        def response = service.getDomainTenants(authToken, "tenantId", "true").build()
+
+        then:
+        response.status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * domainService.checkAndGetDomain(_) >> entityFactory.createDomain()
+        1 * tenantService.getTenantsByDomainId(_) >> []
+        1 * jaxbObjectFactories.getOpenStackIdentityV2Factory().createTenants(_) >> Mock(JAXBElement)
+        1 * tenantConverter.toTenantList(_)
+    }
+
+    def "updateTenant - returns valid response"() {
+        given:
+        mockTenantConverter(service)
+        mockJAXBObjectFactories(service)
+        def tenant = v2Factory.createTenant()
+
+        when:
+        def response = service.updateTenant(headers, authToken, "tenantId", tenant).build()
+
+        then:
+        response.status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * validator20.validateTenantType(tenant)
+        1 * tenantService.checkAndGetTenant(_)  >> entityFactory.createTenant()
+        1 * tenantService.updateTenant(_)
+        1 * jaxbObjectFactories.getOpenStackIdentityV2Factory().createTenant(_) >> Mock(JAXBElement)
+        1 * tenantConverter.toTenant(_)
     }
 
     def mockServices() {
