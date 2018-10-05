@@ -52,6 +52,10 @@ configurations {
     ajInpath
     jaxb
     wadl.extendsFrom compile
+
+    grettyRunnerTomcat7 {
+        exclude group: 'org.slf4j', module: 'log4j-over-slf4j'
+    }
 }
 
 repositories {

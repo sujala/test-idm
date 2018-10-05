@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.security;
 
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.BaseUserToken;
 import com.rackspace.idm.domain.entity.Domain;
@@ -13,6 +14,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * Stores security related information about the current request.
@@ -20,7 +22,6 @@ import org.slf4j.LoggerFactory;
  * Not thread safe
  */
 @Getter
-@Setter
 public class SecurityContext {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -43,17 +44,42 @@ public class SecurityContext {
     /**
      * The user associated with the effective token.
      */
+    @Setter
     private BaseUser effectiveCaller;
 
     /**
      * The domain of the effectiveCaller
      */
+    @Setter
     private Domain effectiveCallerDomain;
 
     /**
      * The authorization context of the effective caller
      */
+    @Setter
     private AuthorizationContext effectiveCallerAuthorizationContext;
+
+
+    /**
+     * Sets the /callereffective caller tokens. When the effective token is set the effectiveCaller, effectiveCallerDomain, and
+     * effectiveCallerAuthorizationContext are all reset to null as well.
+     * @param effectiveCallerToken
+     */
+    public void setCallerTokens(ScopeAccess callerToken, ScopeAccess effectiveCallerToken) {
+        logger.debug("Setting effective caller token for request.");
+        this.callerToken = callerToken;
+        this.effectiveCallerToken = effectiveCallerToken;
+        effectiveCaller = null;
+        effectiveCallerDomain = null;
+        effectiveCallerAuthorizationContext = null;
+
+        // Update the caller info in the MDC for logging purposes
+        if (callerToken != null) {
+            MDC.put(Audit.WHO, callerToken.getAuditContext());
+        } else {
+            MDC.remove(Audit.WHO);
+        }
+    }
 
     /**
      * A request is impersonated if the caller token is not the same as the effective token

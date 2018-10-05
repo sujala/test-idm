@@ -750,12 +750,8 @@ public class DefaultDelegationCloudService implements DelegationCloudService {
 
     private DelegationAgreementAuditBuilder getDelegationAgreementAuditBuilder(BaseUser caller, com.rackspace.idm.domain.entity.DelegationAgreement delegationAgreement) {
         DelegationAgreementAuditBuilder delegationAgreementAuditBuilder = new DelegationAgreementAuditBuilder()
-                .effectiveCaller(caller.getId())
                 .delegationAgreementId(delegationAgreement.getId());
 
-        if(requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
-            delegationAgreementAuditBuilder.caller(((ImpersonatedScopeAccess)requestContextHolder.getRequestContext().getSecurityContext().getCallerToken()).getRackerId());
-        }
         return delegationAgreementAuditBuilder;
     }
 

@@ -119,8 +119,7 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         addPhone()
 
         UserScopeAccess token = entityFactory.createUserToken()
-        requestContextHolder.getRequestContext().getSecurityContext().setCallerToken(token)
-        requestContextHolder.getRequestContext().getSecurityContext().setEffectiveCallerToken(token)
+        requestContextHolder.getRequestContext().getSecurityContext().setCallerTokens(token, token)
 
         MobilePhoneVerification mockedMobilePhoneVerification = Mock(MobilePhoneVerification)
         mockedMobilePhoneVerification.sendPin(_) >> {throw new RuntimeException("Error")}

@@ -153,8 +153,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 }
 
                 //set the tokens in the security context
-                securityContext.setCallerToken(callerToken);
-                securityContext.setEffectiveCallerToken(effectiveToken);
+                securityContext.setCallerTokens(callerToken, effectiveToken);
 
                 // Set effective caller's authorization context
                 if (securityContext.getEffectiveCallerToken() != null) {
@@ -253,9 +252,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         if (authToken != null) {
             ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
 
-            //set the tokens in the security context
-            securityContext.setCallerToken(callerToken);
-            securityContext.setEffectiveCallerToken(callerToken);
+            //set the tokens in the security context. The effective caller and caller are the same.
+            securityContext.setCallerTokens(callerToken, callerToken);
         }
     }
 

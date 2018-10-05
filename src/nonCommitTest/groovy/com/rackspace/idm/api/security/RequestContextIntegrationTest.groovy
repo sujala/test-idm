@@ -50,14 +50,14 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         thrown(IllegalStateException)
 
         when: "try to load effective user with only caller token set"
-        ctx.setCallerToken(scopeAccessService.getScopeAccessByAccessToken(iaToken))
+        ctx.setCallerTokens(scopeAccessService.getScopeAccessByAccessToken(iaToken), null)
         requestContext.getEffectiveCaller()
 
         then:
         thrown(IllegalStateException)
 
         when: "set the effective token and then try to load the effective caller"
-        ctx.setEffectiveCallerToken(scopeAccessService.getScopeAccessByAccessToken(uaToken))
+        ctx.setCallerTokens(scopeAccessService.getScopeAccessByAccessToken(iaToken), scopeAccessService.getScopeAccessByAccessToken(uaToken))
         BaseUser effectiveCaller = requestContext.getEffectiveCaller()
 
         then: "get the appropriate user"
@@ -93,14 +93,14 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         thrown(IllegalStateException)
 
         when: "try to load domain with only caller token set"
-        ctx.setCallerToken(scopeAccessService.getScopeAccessByAccessToken(iaToken))
+        ctx.setCallerTokens(scopeAccessService.getScopeAccessByAccessToken(iaToken), null)
         requestContext.getEffectiveCaller()
 
         then:
         thrown(IllegalStateException)
 
         when: "load the domain via the request context after setting effective token"
-        ctx.setEffectiveCallerToken(scopeAccessService.getScopeAccessByAccessToken(uaToken))
+        ctx.setCallerTokens(scopeAccessService.getScopeAccessByAccessToken(iaToken), scopeAccessService.getScopeAccessByAccessToken(uaToken))
         Domain domain = requestContext.getEffectiveCallerDomain()
 
         then: "get the appropriate user"
@@ -136,14 +136,14 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         thrown(IllegalStateException)
 
         when: "try to load authorization context with only caller token set"
-        ctx.setCallerToken(scopeAccessService.getScopeAccessByAccessToken(uaToken))
+        ctx.setCallerTokens(scopeAccessService.getScopeAccessByAccessToken(uaToken), null)
         requestContext.getEffectiveCallerAuthorizationContext()
 
         then:
         thrown(IllegalStateException)
 
         when: "load the authorization context via the request context after setting effective token"
-        ctx.setEffectiveCallerToken(scopeAccessService.getScopeAccessByAccessToken(uaToken))
+        ctx.setCallerTokens(scopeAccessService.getScopeAccessByAccessToken(uaToken), scopeAccessService.getScopeAccessByAccessToken(uaToken))
         AuthorizationContext authCtx = requestContext.getEffectiveCallerAuthorizationContext()
 
         then: "get the authCtx"
@@ -205,8 +205,7 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
 
     def createSecurityContext(ScopeAccess callerToken, ScopeAccess effectiveCallerToken) {
         SecurityContext ctx = new SecurityContext()
-        ctx.setCallerToken(callerToken)
-        ctx.setEffectiveCallerToken(effectiveCallerToken)
+        ctx.setCallerTokens(callerToken, effectiveCallerToken)
         return ctx
     }
 

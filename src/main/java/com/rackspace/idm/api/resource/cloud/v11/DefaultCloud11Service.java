@@ -1343,8 +1343,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (identityConfig.getReloadableConfig().migrateV11ServicesToRequestContext()) {
             // Populate the request/security contexts
             RequestContext requestContext = requestContextHolder.getRequestContext();
-            requestContext.getSecurityContext().setCallerToken(usa);
-            requestContext.getSecurityContext().setEffectiveCallerToken(usa);
+            requestContext.getSecurityContext().setCallerTokens(usa, usa);
 
             IdentityApi identityApi = requestContext.getIdentityApi();
             Cloud11AuthorizationLevel authorizationLevel = Cloud11AuthorizationLevel.LEGACY;

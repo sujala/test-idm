@@ -10,46 +10,38 @@ class DelegationAgreementAuditBuilderTest extends Specification {
     def "DelegationAgreementAuditBuilder creates correct text"() {
         when:
         DelegationAgreementAuditBuilder builder = new DelegationAgreementAuditBuilder();
-        builder.caller("joe.racker")
-        builder.effectiveCaller("12345")
 
         then:
-        builder.build() == "caller=joe.racker effectiveCaller=12345"
+        builder.build() == ""
 
         when:
         builder = new DelegationAgreementAuditBuilder();
-        builder.caller("joe.racker")
-        builder.effectiveCaller("12345")
         builder.delegationAgreementId("da_id")
 
         then:
-        builder.build() == "caller=joe.racker effectiveCaller=12345 DelegationAgreement(id=da_id)"
+        builder.build() == "DelegationAgreement(id=da_id)"
 
         when:
         builder = new DelegationAgreementAuditBuilder();
-        builder.caller("joe.racker")
-        builder.effectiveCaller("12345")
         builder.delegationAgreementId("da_id")
         builder.delegateId("d_id")
         builder.delegateType("d_type")
 
         then:
-        builder.build() == "caller=joe.racker effectiveCaller=12345 DelegationAgreement(id=da_id) DelegateReference(id=d_id,type=d_type)"
+        builder.build() == "DelegationAgreement(id=da_id) DelegateReference(id=d_id,type=d_type)"
 
         when:
         builder = new DelegationAgreementAuditBuilder();
-        builder.effectiveCaller("12345")
         builder.delegationAgreementId("da_id")
         RoleAssignments roleAssignments = getRoleAssignments()
         roleAssignments.tenantAssignments.tenantAssignment.add(getTenantAssignment("role_id", ["1", "2"]))
         builder.roleAssignments(roleAssignments)
 
         then:
-        builder.build() == "effectiveCaller=12345 DelegationAgreement(id=da_id) Role(id=role_id,tenants=[1,2])"
+        builder.build() == "DelegationAgreement(id=da_id) Role(id=role_id,tenants=[1,2])"
 
         when:
         builder = new DelegationAgreementAuditBuilder();
-        builder.effectiveCaller("12345")
         builder.delegationAgreementId("da_id")
         roleAssignments = getRoleAssignments()
         roleAssignments.tenantAssignments.tenantAssignment.add(getTenantAssignment("role_id", ["1", "2"]))
@@ -57,16 +49,15 @@ class DelegationAgreementAuditBuilderTest extends Specification {
         builder.roleAssignments(roleAssignments)
 
         then:
-        builder.build() == "effectiveCaller=12345 DelegationAgreement(id=da_id) Role(id=role_id,tenants=[1,2]) Role(id=role_id2,tenants=[3,4])"
+        builder.build() == "DelegationAgreement(id=da_id) Role(id=role_id,tenants=[1,2]) Role(id=role_id2,tenants=[3,4])"
 
         when:
         builder = new DelegationAgreementAuditBuilder();
-        builder.effectiveCaller("12345")
         builder.delegationAgreementId("da_id")
         builder.roleId("role_id")
 
         then:
-        builder.build() == "effectiveCaller=12345 DelegationAgreement(id=da_id) Role(id=role_id)"
+        builder.build() == "DelegationAgreement(id=da_id) Role(id=role_id)"
     }
 
     private RoleAssignments getRoleAssignments() {

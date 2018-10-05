@@ -6,21 +6,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
 public class DelegationAgreementAuditBuilder {
         String delegateId;
         String delegateType;
-        String caller;
-        String effectiveCaller;
         String delegationAgreementId;
         String roleId;
         RoleAssignments roleAssignments;
-
-        public DelegationAgreementAuditBuilder caller(String caller) {
-            this.caller = caller;
-            return this;
-        }
-
-        public DelegationAgreementAuditBuilder effectiveCaller(String effectiveCaller) {
-            this.effectiveCaller = effectiveCaller;
-            return this;
-        }
 
         public DelegationAgreementAuditBuilder delegationAgreementId(String delegationAgreementId) {
             this.delegationAgreementId = delegationAgreementId;
@@ -49,19 +37,6 @@ public class DelegationAgreementAuditBuilder {
 
         public String build() {
             StringBuilder stringBuilder = new StringBuilder();
-
-            if (caller != null) {
-                stringBuilder.append("caller=");
-                stringBuilder.append(caller);
-            }
-
-            if (effectiveCaller != null) {
-                if (stringBuilder.length() > 0) {
-                    stringBuilder.append(" ");
-                }
-                stringBuilder.append("effectiveCaller=");
-                stringBuilder.append(effectiveCaller);
-            }
 
             if (delegationAgreementId != null) {
                 if (stringBuilder.length() > 0) {

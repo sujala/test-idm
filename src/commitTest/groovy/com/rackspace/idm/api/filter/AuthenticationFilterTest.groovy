@@ -70,7 +70,7 @@ class AuthenticationFilterTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
-        1 * securityContext.setCallerToken(scopeAccess)
+        1 * securityContext.setCallerTokens(scopeAccess, scopeAccess)
         request == returnedRequest
 
         noExceptionThrown()
@@ -85,8 +85,7 @@ class AuthenticationFilterTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
-        1 * securityContext.setCallerToken(scopeAccess)
-        1 * securityContext.setEffectiveCallerToken(scopeAccess)
+        1 * securityContext.setCallerTokens(scopeAccess, scopeAccess)
         0 * scopeAccessService.isSetupMfaScopedToken(scopeAccess)
         request == returnedRequest
         noExceptionThrown()
@@ -110,8 +109,7 @@ class AuthenticationFilterTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
-        1 * securityContext.setCallerToken(scopeAccess)
-        1 * securityContext.setEffectiveCallerToken(scopeAccess)
+        1 * securityContext.setCallerTokens(scopeAccess, scopeAccess)
         1 * scopeAccessService.isSetupMfaScopedToken(scopeAccess) >> true
 
         thrown(ForbiddenException)
@@ -136,8 +134,7 @@ class AuthenticationFilterTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken(authTokenString) >> scopeAccess
-        1 * securityContext.setCallerToken(scopeAccess)
-        1 * securityContext.setEffectiveCallerToken(scopeAccess)
+        1 * securityContext.setCallerTokens(scopeAccess, scopeAccess)
         0 * scopeAccessService.isSetupMfaScopedToken(scopeAccess)
 
         notThrown(ForbiddenException)
