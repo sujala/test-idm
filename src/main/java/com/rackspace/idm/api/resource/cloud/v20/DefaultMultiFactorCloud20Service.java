@@ -19,11 +19,7 @@ import com.rackspace.idm.api.converter.cloudv20.OTPDeviceConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.NewRelicTransactionNames;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
 import com.rackspace.idm.api.security.RequestContextHolder;
-import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
@@ -128,9 +124,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Autowired
     private JAXBObjectFactories objFactories;
-
-    @Autowired
-    private SessionIdReaderWriter sessionIdReaderWriter;
 
     @Autowired
     private AuthorizationService authorizationService;
@@ -356,27 +349,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         DateTime created = new DateTime();
 
         int sessionIdLifetimeMinutes = identityConfig.getReloadableConfig().getMfaSessionIdLifetime();
-        String encodedSessionId;
-        if (identityConfig.getReloadableConfig().issueRestrictedTokenSessionIds()) {
-            ScopeAccess sa = scopeAccessService.addScopedScopeAccess(user,
-                    identityConfig.getCloudAuthClientId(),
-                    alreadyAuthenticatedBy,
-                    sessionIdLifetimeMinutes * 60,
-                    TokenScopeEnum.MFA_SESSION_ID.getScope());
-            encodedSessionId = sa.getAccessTokenString();
-        } else {
-            DateTime expiration = created.plusMinutes(sessionIdLifetimeMinutes);
-
-            V1SessionId sessionId = new V1SessionId();
-            sessionId.setVersion(getPrimarySessionIdVersion());
-            sessionId.setUserId(user.getId());
-            sessionId.setCreatedDate(created);
-            sessionId.setExpirationDate(expiration);
-            sessionId.setAuthenticatedBy(alreadyAuthenticatedBy);
-
-            //generate the new sessionId
-            encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
-        }
+        ScopeAccess sa = scopeAccessService.addScopedScopeAccess(user,
+                identityConfig.getCloudAuthClientId(),
+                alreadyAuthenticatedBy,
+                sessionIdLifetimeMinutes * 60,
+                TokenScopeEnum.MFA_SESSION_ID.getScope());
+        String encodedSessionId = sa.getAccessTokenString();
 
         //now send the passcode (if SMS used)
         String secondFactor;
@@ -425,45 +403,27 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
         //first try to decode as an AE token. If fails, try session id
         ScopeAccess restrictedToken = scopeAccessService.unmarshallScopeAccess(encodedSessionId);
-        if (restrictedToken != null) {
-            //if resolves as an unrevoked AE token must validate as "correct" restricted token for this use
-            if (!(restrictedToken instanceof UserScopeAccess)) {
-                LOG.debug("Invalid sessionid. Not a user scope restricted token!");
-                throw new ForbiddenException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
-            } else if (TokenScopeEnum.fromScope(restrictedToken.getScope()) != TokenScopeEnum.MFA_SESSION_ID) {
-                LOG.debug("Invalid sessionid. Not a MFA SessionId restricted token!");
-                throw new ForbiddenException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
-            } else if (restrictedToken.isAccessTokenExpired()) {
-                LOG.debug("Invalid sessionid. Expired restricted token sessionid!");
-                throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);
-            }
-
-            //is valid restricted token.
-            UserScopeAccess token = (UserScopeAccess)restrictedToken;
-            authenticatedBy = restrictedToken.getAuthenticatedBy();
-            userId = token.getIssuedToUserId();
+        if (restrictedToken == null) {
+            LOG.debug("Invalid sessionId");
+            throw new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
         }
-        else {
-            /*
-            if session id did not resolve to unrevoked AE token, try to resolve as legacy sessionId. A
-            sessionId could be a revoked token, at which point we'd try to decode as sessionId - which would fail
-             */
-            SessionId sessionId;
-            try {
-                sessionId = sessionIdReaderWriter.readEncoded(encodedSessionId);
-            }
-            catch (Exception ex) {
-                LOG.debug("Invalid sessionId", ex);
-                throw new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
-            }
-            if (sessionId.getExpirationDate() == null || sessionId.getExpirationDate().isBefore(new DateTime())) {
-                throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);
-            }
 
-            //is valid legacy sessionId
-            authenticatedBy = sessionId.getAuthenticatedBy();
-            userId = sessionId.getUserId();
+        //if resolves as an unrevoked AE token must validate as "correct" restricted token for this use
+        if (!(restrictedToken instanceof UserScopeAccess)) {
+            LOG.debug("Invalid sessionid. Not a user scope restricted token!");
+            throw new ForbiddenException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+        } else if (TokenScopeEnum.fromScope(restrictedToken.getScope()) != TokenScopeEnum.MFA_SESSION_ID) {
+            LOG.debug("Invalid sessionid. Not a MFA SessionId restricted token!");
+            throw new ForbiddenException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+        } else if (restrictedToken.isAccessTokenExpired()) {
+            LOG.debug("Invalid sessionid. Expired restricted token sessionid!");
+            throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);
         }
+
+        //is valid restricted token.
+        UserScopeAccess token = (UserScopeAccess)restrictedToken;
+        authenticatedBy = restrictedToken.getAuthenticatedBy();
+        userId = token.getIssuedToUserId();
 
         LOG.debug("Session ID Validated");
 

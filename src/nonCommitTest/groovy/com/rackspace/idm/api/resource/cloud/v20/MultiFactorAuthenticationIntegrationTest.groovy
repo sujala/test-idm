@@ -8,8 +8,7 @@ import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
+
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
@@ -49,9 +48,6 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
 
     @Autowired
     private OTPHelper otpHelper
-
-    @Autowired
-    private SessionIdReaderWriter sessionIdReaderWriter;
 
     @Autowired
     private ScopeAccessService scopeAccessService
@@ -204,24 +200,8 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.OTP
     }
 
-    def "Legacy sessionId generated when so configured"() {
+    def "AE Restricted Token sessionId generated"() {
         setup:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, false)
-        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
-        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
-
-        when: "auth via 2.0 with correct pwd"
-        def auth20ResponseCorrectPwd = cloud20.authenticate(finalUserAdmin.getUsername(), Constants.DEFAULT_PASSWORD)
-
-        then: "Get a legacy sessionId"
-        def sessionId = utils.extractSessionIdFromFirstWwwAuthenticateHeader(auth20ResponseCorrectPwd.getHeaders())
-        sessionId != null
-        sessionIdReaderWriter.readEncoded(sessionId) //verify is legacy sessionid by decrypting as legacy and doesn't throw exception
-    }
-
-    def "AE Restricted Token sessionId generated when so configured"() {
-        setup:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, true)
         setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
 
@@ -242,7 +222,6 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
 
     def "AE Restricted Token sessionId can not be validated or used to get endpoints"() {
         setup:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, true)
         setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
         def auth20ResponseCorrectPwd = cloud20.authenticate(finalUserAdmin.getUsername(), Constants.DEFAULT_PASSWORD)
@@ -275,7 +254,6 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
 
     def "AE Restricted Token sessionId can be revoked"() {
         setup:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, true)
         setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
 

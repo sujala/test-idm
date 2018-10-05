@@ -3,18 +3,15 @@ package com.rackspace.idm.domain.config;
 import com.google.common.base.Splitter;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
-import com.rackspace.idm.domain.entity.ImmutableIdentityProperty;
 import com.rackspace.idm.domain.entity.ReadableIdentityProperty;
 import com.rackspace.idm.domain.service.IdentityPropertyService;
 import com.rackspace.idm.event.NewRelicCustomAttributesEnum;
 import com.rackspace.idm.exception.MissingRequiredConfigIdmException;
 import lombok.AllArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.lang.StringUtils;
@@ -27,10 +24,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.ws.rs.core.MediaType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -164,8 +159,9 @@ public class IdentityConfig {
     public static final String AE_TOKEN_STORAGE_TYPE_PROP = "feature.KeyCzarCrypterLocator.storage";
     public static final AEKeyStorageType AE_TOKEN_STORAGE_TYPE_DEFAULT_VALUE = AEKeyStorageType.FILE;
 
-    public static final String SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME = EncryptedSessionIdReaderWriter.MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME;
-    public static final String SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT = EncryptedSessionIdReaderWriter.MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT;
+    // The prop name is a misnomer, but it's due to legacy reasons when the file based keys were used for MFA
+    public static final String SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME = "multifactor.key.location";
+    public static final String SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT = "/etc/idm/config/keys";
 
     public static final String AE_NODE_NAME_FOR_SIGNOFF_PROP = "ae.node.name.for.signoff"; //no default
 
@@ -243,9 +239,6 @@ public class IdentityConfig {
 
     public static final String FEATURE_SUPPORT_V11_LEGACY_PROP = "feature.support.v11.legacy";
     public static final boolean FEATURE_SUPPORT_V11_LEGACY_DEFAULT = false;
-
-    public static final String FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP = "feature.issue.restricted.token.session.ids";
-    public static final boolean FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_DEFAULT = false;
 
     public static final String SESSION_ID_LIFETIME_PROP = "multifactor.sessionid.lifetime";
     public static final Integer SESSION_ID_LIFETIME_DEFAULT = 5;
@@ -758,8 +751,6 @@ public class IdentityConfig {
         defaults.put(EMAIL_HOST_PASSWORD_PROP, EMAIL_HOST_PASSWORD_DEFAULT);
 
         defaults.put(FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_DEFAULT);
-
-        defaults.put(FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_DEFAULT);
         defaults.put(SESSION_ID_LIFETIME_PROP, SESSION_ID_LIFETIME_DEFAULT);
 
         defaults.put(MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT);
@@ -2162,11 +2153,6 @@ public class IdentityConfig {
         @IdmProp(key = EMAIL_FROM_EMAIL_ADDRESS, description = "Return email address to use when sending emails to customers. Was added as a static property in version 2.5.0, but was migrated to be a reloadable in this version.", versionAdded = "3.2.0")
         public String getEmailFromAddress() {
             return getStringSafely(reloadableConfiguration, EMAIL_FROM_EMAIL_ADDRESS);
-        }
-
-        @IdmProp(key = FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, versionAdded = "3.4.0", description = "Whether or not to issued restricted AE Tokens w/ a sessionid scope for MFA X-Session-Ids")
-        public boolean issueRestrictedTokenSessionIds() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP);
         }
 
         @IdmProp(key = SESSION_ID_LIFETIME_PROP, versionAdded = "3.4.0", description = "Lifetime, in minutes, of MFA sessionIds. Was added as static prop in 2.2.0, but switched from to reloadable prop in version 3.4.0")

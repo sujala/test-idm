@@ -4,7 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.identity.multifactor.providers.duo.domain.FailureResult
 import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutException
 import com.rackspace.idm.Constants
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
+
 import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.UserDao
@@ -56,9 +56,6 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
 
     @Autowired
     private RequestContextHolder requestContextHolder
-
-    @Autowired
-    private SessionIdReaderWriter sessionIdReaderWriter
 
     @Autowired
     private DefaultMultiFactorCloud20Service multiFactorCloud20Service
@@ -147,10 +144,6 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         BasicMultiFactorService mockedBasicMultiFactorService = Mock(BasicMultiFactorService)
         multiFactorCloud20Service.multiFactorService = mockedBasicMultiFactorService
 
-        SessionIdReaderWriter mockedSessionIdReaderWriter = Mock(SessionIdReaderWriter)
-        mockedSessionIdReaderWriter.writeEncoded(_) >> "dummy"
-        multiFactorCloud20Service.sessionIdReaderWriter = mockedSessionIdReaderWriter
-
         UserService mockUserService = Mock(UserService)
         User user = new User()
         multiFactorCloud20Service.userService = mockUserService
@@ -166,7 +159,6 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
 
         cleanup:
         multiFactorCloud20Service.multiFactorService = multiFactorService
-        multiFactorCloud20Service.sessionIdReaderWriter = sessionIdReaderWriter
         multiFactorCloud20Service.userService = userService
     }
 

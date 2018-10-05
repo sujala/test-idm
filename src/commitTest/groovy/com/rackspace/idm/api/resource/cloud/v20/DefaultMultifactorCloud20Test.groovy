@@ -1,12 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
 import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId
+
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.api.security.SecurityContext
@@ -15,10 +13,8 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
-import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.multifactor.service.MultiFactorService
 import com.rackspace.idm.validation.PrecedenceValidator
@@ -41,7 +37,6 @@ class DefaultMultifactorCloud20Test extends Specification {
     def rolesWithMfaBetaRole
     def scopeAccessService
     def userService
-    def sessionIdReaderWriter
     MultiFactorService multiFactorService
     def defaultCloud20Service
     def precedenceValidator
@@ -72,8 +67,6 @@ class DefaultMultifactorCloud20Test extends Specification {
         service.scopeAccessService = scopeAccessService
         userService = Mock(UserService)
         service.userService = userService
-        sessionIdReaderWriter = Mock(SessionIdReaderWriter)
-        service.sessionIdReaderWriter = sessionIdReaderWriter
         multiFactorService = Mock(MultiFactorService)
         service.multiFactorService = multiFactorService
         defaultCloud20Service = Mock(DefaultCloud20Service)
@@ -149,20 +142,4 @@ class DefaultMultifactorCloud20Test extends Specification {
         then:
         thrown(ForbiddenException)
     }
-
-    def setupForMfaAuth(encodedSessionId, userRoles) {
-        def userId = "userId"
-        user.id = userId
-        config.getString("cloudAuth.multiFactorBetaRoleName") >> betaRoleName
-        def decodedSessionId = new V1SessionId().with {
-            it.expirationDate = new DateTime().plusYears(1)
-            it.userId = userId
-            it
-        }
-        sessionIdReaderWriter.readEncoded(encodedSessionId) >> decodedSessionId
-        userService.getUserById(userId) >> user
-        def mfaAuthResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, "", "")
-        multiFactorService.verifyPasscode(_, _) >> mfaAuthResponse
-    }
-
 }
