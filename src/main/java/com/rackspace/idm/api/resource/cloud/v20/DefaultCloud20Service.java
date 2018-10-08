@@ -115,9 +115,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
@@ -733,9 +730,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.User usr) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
-            User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
+
+            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             //ignore the mfa attributes
             usr.setMultiFactorEnabled(null);
@@ -1012,8 +1010,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             //update user call can not be used to update the domainId. Use addUserToDomain calls
             user.setDomainId(null);
@@ -1069,8 +1071,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             } else {
                 // Update provisioned user
-                BaseUser caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
-
                 if (user.getPassword() != null) {
                     validator.validatePasswordForCreateOrUpdate(user.getPassword());
                 }
@@ -3201,7 +3201,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUser();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
 
             User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
@@ -3283,8 +3283,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, Integer marker, Integer limit) {
         try {
-            ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(callerScopeAccess);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+
+            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             if (identityConfig.getReloadableConfig().preventRackerImpersonationApiKeyAccess() &&
                     requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
@@ -3292,12 +3296,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = userService.checkAndGetUserById(userId);
-            User caller = (User) userService.getUserByScopeAccess(callerScopeAccess);
 
             if(!authorizationService.isSelf(caller, user)){
                 precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
 
-                if(!(authorizationService.hasIdentityAdminRole(caller) || authorizationService.hasServiceAdminRole(caller))){
+                IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+                if(!(callerType.hasAtLeastIdentityAdminAccessLevel())){
                     authorizationService.verifyDomain(caller, user);
                 }
             }
@@ -4579,7 +4583,24 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getSecretQAs(String authToken, String userId) {
         try {
-            isUserAllowed(authToken, userId);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+
+            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            User user = userService.checkAndGetUserById(userId);
+
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+
+            if (!authorizationService.isSelf(caller, user)) {
+                if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
+                    authorizationService.verifyDomain(caller, user);
+                } else if (!callerType.hasAtLeastIdentityAdminAccessLevel()) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
 
             com.rackspace.idm.domain.entity.SecretQAs secretQAsEntity = secretQAService.getSecretQAs(userId);
             SecretQAs secretQAs = secretQAConverterCloudV20.toSecretQAs(secretQAsEntity.getSecretqa()).getValue();
@@ -4591,8 +4612,26 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA) {
-        try{
-            isUserAllowed(authToken, userId);
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+
+            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            User user = userService.checkAndGetUserById(userId);
+
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+
+            if (!authorizationService.isSelf(caller, user)) {
+                if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
+                    authorizationService.verifyDomain(caller, user);
+                } else if (!callerType.hasAtLeastIdentityAdminAccessLevel()) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
+
             com.rackspace.idm.domain.entity.SecretQA secretQAEntity = secretQAConverterCloudV20.fromSecretQA(secretQA);
             secretQAService.addSecretQA(userId, secretQAEntity);
             return Response.ok();
@@ -4689,28 +4728,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    private void isUserAllowed(String authToken, String userId) {
-        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-        authorizationService.verifyUserLevelAccess(scopeAccess);
-        User caller = getUser(scopeAccess);
-        User user = userService.checkAndGetUserById(userId);
-        boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
-        Boolean access = false;
-        if (userId.equals(caller.getId())) {
-            access = true;
-        } else if (callerIsUserAdmin) {
-            if (caller.getDomainId().equals(user.getDomainId())) {
-                access = true;
-            }
-        } else {
-            authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
-            access = true;
-        }
-        if (!access) {
-            throw new ForbiddenException(NOT_AUTHORIZED);
         }
     }
 

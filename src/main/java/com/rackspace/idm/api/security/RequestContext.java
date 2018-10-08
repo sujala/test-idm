@@ -204,14 +204,17 @@ public class RequestContext {
     }
 
     /**
-     * Helper method to verify the effective caller is not a federated user
+     * Helper method to verify the effective caller is not a federated user or racker
      *
      * @return
      */
-    public void verifyEffectiveCallerIsNotAFederatedUser() {
+    public void verifyEffectiveCallerIsNotAFederatedUserOrRacker() {
         BaseUser caller = getEffectiveCaller();
-        if (caller != null && caller instanceof FederatedUser) {
+        if (caller != null
+                && (caller instanceof FederatedUser
+                || caller instanceof Racker)) {
             throw new ForbiddenException("Not Authorized");
         }
     }
+
 }

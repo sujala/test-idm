@@ -24,6 +24,7 @@ import com.rackspace.idm.exception.*
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
+import com.rackspace.idm.validation.Cloud20CreateUserValidator
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.DN
 import org.apache.commons.configuration.Configuration
@@ -1396,16 +1397,19 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         user.id = "id"
 
-        userService.getUser(_) >> user
-        userService.checkAndGetUserById(_) >> user
-        identityUserService.getProvisionedUserById(_) >> user
-
         when:
         def response = service.getSecretQAs(authToken,"id").build()
 
         then:
-        1 * secretQAService.getSecretQAs(_) >> entityFactory.createSecretQAs()
         response.status == 200
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> user
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.isSelf(_, _) >> true
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * secretQAService.getSecretQAs(_) >> entityFactory.createSecretQAs()
     }
 
     def "createSecretQA returns 200"() {
@@ -1424,8 +1428,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.createSecretQA(authToken,"1", v1Factory.createSecretQA()).build()
 
         then:
-        1 * secretQAService.addSecretQA("1", _)
         response.status == 200
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> user
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.isSelf(_, _) >> true
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * secretQAService.addSecretQA("1", _)
     }
 
 
@@ -1572,7 +1583,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUser()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
         1 * requestContextHolder.getRequestContext().getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
         1 * authorizationService.verifyDomain(caller, user)
     }
@@ -1629,7 +1640,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUser()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
         1 * userService.checkAndGetUserById(_) >> user
         1 * requestContextHolder.getRequestContext().getEffectiveCallersUserType() >> IdentityUserTypeEnum.SERVICE_ADMIN
         0 * authorizationService.verifyDomain(_, _)
@@ -1795,114 +1806,128 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.listCredentials(headers, authToken, "userId", null, null).build()
 
         then:
-        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess()
-        1 * authorizationService.verifyUserLevelAccess(_) >> { throw new NotAuthorizedException() }
         result.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER) >> { throw new NotAuthorizedException() }
     }
 
-    def "listCredentials gets caller from scopeAccess and user from path parameter"() {
-        given:
-        allowUserAccess()
-
+    def "listCredentials gets caller from requestContext and user from path parameter"() {
         when:
         service.listCredentials(headers, authToken, "userId", null, null)
 
         then:
-        1 * userService.getUserByScopeAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * userService.checkAndGetUserById("userId")
     }
 
-    def "listCredentials verifies self when caller is user-admin"() {
+    @Unroll
+    def "listCredentials: #userType can retrieve credentials for users within same"() {
         given:
-        allowUserAccess()
-
-        def user = entityFactory.createUser()
-        def caller = entityFactory.createUser()
-        def tenantRole = entityFactory.createTenantRole("identity:user-admin").with {
-            it.roleRsId = "roleRsId"
-            it.userId = "userId"
-            return it
+        def user = entityFactory.createUser().with {
+            it.apiKey = "apiKey"
+            it
         }
-        def userAdminTenantList = [ tenantRole ].asList()
-
-        tenantService.getTenantRolesForUser(_) >>  userAdminTenantList
+        def caller = entityFactory.createUser()
 
         when:
-        service.listCredentials(headers, authToken, "userId", null, null)
+        def response = service.listCredentials(headers, authToken, "userId", null, null)
 
         then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * userService.checkAndGetUserById("userId") >> user
-        1 * userService.getUserByScopeAccess(_) >> caller
         1 * authorizationService.isSelf(caller, user) >> false
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * requestContext.getEffectiveCallersUserType() >> userType
+        1 * authorizationService.verifyDomain(caller, user)
+
+        where:
+        userType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
     }
 
-    def "listCredentials verifies self when caller is default user"() {
+    def "listCredentials allows all user types to retrieve own credentials"() {
         given:
-        allowUserAccess()
-
-        def user = entityFactory.createUser()
-        def caller = entityFactory.createUser()
-        def tenantRole = entityFactory.createTenantRole("identity:default").with {
-            it.roleRsId = "roleRsId"
-            it.userId = "userId"
-            return it
+        def user = entityFactory.createUser().with {
+            it.apiKey = "apiKey"
+            it
         }
-        def defaultuserTenantList = [ tenantRole ].asList()
-
-        tenantService.getTenantRolesForUser(_) >>> [
-                [].asList(),
-                defaultuserTenantList
-        ]
+        def caller = entityFactory.createUser()
 
         when:
-        service.listCredentials(headers, authToken, "userId", null, null)
+        def response = service.listCredentials(headers, authToken, "id", null, null)
 
         then:
-        1 * userService.checkAndGetUserById("userId") >> user
-        1 * userService.getUserByScopeAccess(_) >> caller
-        1 * authorizationService.isSelf(caller, user) >>  false
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * userService.checkAndGetUserById("id") >> user
+        1 * authorizationService.isSelf(caller, user) >> true
+
+        0 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        0 * requestContext.getEffectiveCallersUserType()
+        0 * authorizationService.verifyDomain(caller, user)
     }
 
-    def "listCredentials authorizes service admin and checks for password"() {
+    def "listCredentials authorizes service admin"() {
         given:
-        allowUserAccess()
-
-        def user = Mock(User)
+        def user = entityFactory.createUser().with {
+            it.apiKey = "apiKey"
+            it
+        }
         def caller = entityFactory.createUser()
-        def tenantList = [ entityFactory.createTenantRole() ].asList()
 
-        tenantService.getTenantRolesForUser(_) >> tenantList
-        userService.checkAndGetUserById("userId") >> user
-        userService.getUserByScopeAccess(_) >> caller
 
         when:
-        def result = service.listCredentials(headers, authToken, "userId", null, null).build()
+        def response = service.listCredentials(headers, authToken, "userId", null, null)
 
         then:
-        result.status == 200
-        1 * user.getApiKey() >> ""
-        0 * user.getPassword()
-        0 * authorizationService.authorizeCloudServiceAdmin(_)
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * userService.checkAndGetUserById("userId") >> user
+        1 * authorizationService.isSelf(caller, user) >> false
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.SERVICE_ADMIN
+
+        0 * authorizationService.verifyDomain(caller, user)
     }
 
     def "listCredentials checks for apikey"() {
         given:
-        allowUserAccess()
-
         def user = Mock(User)
         def caller = entityFactory.createUser()
-        def tenantList = [ entityFactory.createTenantRole() ].asList()
-
-        tenantService.getTenantRolesForUser(_) >> tenantList
-        userService.checkAndGetUserById("userId") >> user
-        userService.getUserByScopeAccess(_) >> caller
-        authorizationService.authorizeCloudServiceAdmin(_) >> false
 
         when:
-        def result = service.listCredentials(headers, authToken, "userId", null, null).build()
+        def response = service.listCredentials(headers, authToken, "userId", null, null)
 
         then:
-        result.status == 200
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * userService.checkAndGetUserById("userId") >> user
+        1 * authorizationService.isSelf(caller, user) >> false
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(caller, user)
         2 * user.getApiKey() >> "apiKey"
         1 * user.getUsername() >> "username"
     }
@@ -2389,7 +2414,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUser()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
         1 * userService.checkAndGetUserById(_) >> user
         1 * requestContextHolder.getRequestContext().getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         0 * authorizationService.verifyDomain(_, _)
@@ -2583,7 +2608,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.enabled = true
         updateUser.id = 2
         identityUserService.getEndUserById(_) >> updateUser
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
@@ -2610,7 +2635,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         caller.getId() >> "123"
 
         userService.checkAndGetUserById("2") >> user
-        userService.getUserByAuthToken(authToken) >> caller
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
 
         when:
         service.updateUser(headers, authToken, "2", userInput)
@@ -2635,7 +2660,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         caller.getId() >> "123"
 
         userService.checkAndGetUserById("2") >> user
-        userService.getUserByAuthToken(authToken) >> caller
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
 
         when:
         service.updateUser(headers, authToken, "2", userInput)
@@ -2661,7 +2686,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         caller.getId() >> "123"
 
         identityUserService.getEndUserById("2") >> user
-        userService.getUserByScopeAccess(_) >> caller
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
 
         when:
         service.updateUser(headers, authToken, "2", userInput)
@@ -2686,7 +2711,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.enabled = false
         updateUser.id = 2
         userService.checkAndGetUserById(_) >> updateUser
-        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
 
         when:
@@ -2712,7 +2737,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.enabled = true
         updateUser.id = 2
         userService.checkAndGetUserById(_) >> updateUser
-        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
 
         when:
@@ -2837,7 +2862,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.id = 2
 
         identityUserService.getEndUserById(_) >> updateUser
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         service.userConverterCloudV20.fromUser(_) >> updatedUser
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
@@ -2869,7 +2894,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.id = 2
 
         identityUserService.getEndUserById(_) >> updateUser
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         service.userConverterCloudV20.fromUser(_) >> updatedUser
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
@@ -2923,7 +2948,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         identityUserService.getEndUserById(_) >> updateUser
         def caller = entityFactory.createUser()
         caller.id = "2"
-        userService.getUserByScopeAccess(_) >> caller
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
         when:
@@ -3002,7 +3027,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         identityUserService.getEndUserById(_) >> updateUser
         def caller = entityFactory.createUser()
         caller.id = userId
-        userService.getUserByScopeAccess(_) >> caller
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         authorizationService.authorizeCloudUser(_) >> true
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.DEFAULT_USER
         precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> {
@@ -3571,6 +3596,32 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.addTenantRoleToUser(_, _)
     }
 
+    def "addUser - calls correct services"() {
+        // Setup mocks
+        mockCreateSubUserService(service)
+        def createUserValidatorMock = Mock(Cloud20CreateUserValidator)
+        service.createUserValidator = createUserValidatorMock
+        def userForCreate = v2Factory.createUser()
+        service.userConverterCloudV20 = userConverter
+
+        def caller = entityFactory.createUser()
+
+        when:
+        def response = service.addUser(headers, uriInfo(), authToken, userForCreate)
+
+        then:
+        response.build().status == SC_CREATED
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >>  caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+        1 * createUserValidatorMock.validateCreateUserAndGetUserForDefaults(userForCreate, caller) >> entityFactory.createUser()
+        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * createSubUserService.setDefaultsAndCreateUser(_, _) >> entityFactory.createUser()
+        1 * userConverter.toUser(_, true) >> v2Factory.createUser()
+    }
+
     def "add new user when user is not authorized returns 403 response" () {
         given:
         allowUserAccess()
@@ -3581,7 +3632,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.addUser(headers, uriInfo(), authToken, user).build()
 
         then:
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null) >> { throw new ForbiddenException()}
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER) >> { throw new ForbiddenException()}
         result.status == 403
     }
 
@@ -3653,7 +3704,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             return it
         }
 
-        userService.getUserByScopeAccess(_) >> caller
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         identityUserService.getEndUserById(_) >> retrievedUser
         def expectedStatus = IdentityUserTypeEnum.DEFAULT_USER == userType ? 200 : 403
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
@@ -3844,7 +3895,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUser()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
         1 * requestContextHolder.getRequestContext().getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.isSelf(caller, user) >> false
@@ -3865,7 +3916,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 403
 
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUser() >> { throw new ForbiddenException() }
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker() >> { throw new ForbiddenException() }
         0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         0 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled()
     }
@@ -3885,7 +3936,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUser()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.isSelf(caller, user) >> false
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> { throw  new ForbiddenException() }
@@ -4607,6 +4658,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then:
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
         2 * identityUserService.getEndUserById(userId) >> federatedUser
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
         1 * validator20.validateStringMaxLength("contactId", contactId, Validator20.MAX_LENGTH_64)
@@ -4620,7 +4672,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         2 * identityUserService.getEndUserById(userId) >> user
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
         1 * validator20.validateStringMaxLength("contactId", contactId, Validator20.MAX_LENGTH_64)
-        1 * userService.getUserByScopeAccess(_) >> entityFactory.createUser()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
         1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
         1 * userService.updateUser(_)
 
@@ -4648,7 +4700,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         (0..1) * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_UPDATE_USERNAME.getRoleName()) >> userHasRole
         1 * identityConfig.getReloadableConfig().isUsernameUpdateAllowed() >> updateUsernameFeatureEnabled
         1 * userService.isUsernameUnique(userForCreate.username) >> true
-        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.SERVICE_ADMIN
         if (usernameCanBeUpdated) {
             1 * userService.updateUser(_)
