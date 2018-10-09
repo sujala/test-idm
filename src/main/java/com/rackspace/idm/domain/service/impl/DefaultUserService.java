@@ -342,7 +342,8 @@ public class DefaultUserService implements UserService {
 
     private void createTenantsIfNecessary(User user) {
         Domain domain = domainService.getDomain(user.getDomainId());
-        List<String> domainTenants = domain.getTenantIds() != null ? new ArrayList<String>(Arrays.asList(domain.getTenantIds())) : new ArrayList<String>();
+        String[] tenantIds = tenantService.getTenantIdsForDomain(domain);
+        List<String> domainTenants = tenantIds != null ? new ArrayList<String>(Arrays.asList(tenantIds)) : new ArrayList<String>();
 
         for (TenantRole role : user.getRoles()) {
             for (String tenantId : role.getTenantIds()) {

@@ -446,6 +446,9 @@ public class IdentityConfig {
     public static final String FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP = "feature.identity.deployment.environment";
     public static final String FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_DEFAULT = "DEV";
 
+    public static final String FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_PROP = "feature.enable.only.use.tenant.domain.pointers";
+    public static final boolean FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -919,6 +922,7 @@ public class IdentityConfig {
         defaults.put(UNVERIFIED_USER_REGISTRATION_CODE_SIZE_PROP, UNVERIFIED_USER_REGISTRATION_CODE_SIZE_DEFAULT);
         defaults.put(UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP, UNVERIFIED_USER_REGISTRATION_URL_FORMAT_DEFAULT);
         defaults.put(FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP, FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_DEFAULT);
+        defaults.put(FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_PROP, FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP, FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT);
 
@@ -2563,6 +2567,12 @@ public class IdentityConfig {
         public String getIdentityDeploymentEnvironment() {
             return getStringSafely(reloadableConfiguration, FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP);
         }
+
+        @IdmProp(key = FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_PROP, versionAdded = "3.27.0", description = "Whether to only use tenant-domain pointers or use both domain-tenant pointers and tenant-domain pointers")
+        public boolean isOnlyUseTenantDomainPointersEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_PROP);
+        }
+
     }
 
     public class RepositoryConfig extends ConfigMetaLookup {

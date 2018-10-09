@@ -63,6 +63,11 @@ public class LdapTenantRepository extends LdapGenericRepository<Tenant> implemen
     }
 
     @Override
+    public Iterable<Tenant> getTenantsByDomainId(String domainId) {
+        return getObjects(searchFilterGetTenantByDomainId(domainId));
+    }
+
+    @Override
     public String getSortAttribute() {
         return ATTR_ID;
     }
@@ -97,6 +102,12 @@ public class LdapTenantRepository extends LdapGenericRepository<Tenant> implemen
     private Filter searchFilterGetTenantByBaseUrlId(String baseUrlId) {
         return new LdapRepository.LdapSearchBuilder()
                 .addEqualAttribute(ATTR_BASEURL_ID, baseUrlId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT).build();
+    }
+
+    private Filter searchFilterGetTenantByDomainId(String domainId) {
+        return new LdapRepository.LdapSearchBuilder()
+                .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT).build();
     }
 

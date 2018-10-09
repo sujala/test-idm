@@ -67,6 +67,9 @@ public class DefaultTenantService implements TenantService {
     UserGroupService userGroupService;
 
     @Autowired
+    private TenantService tenantService;
+
+    @Autowired
     private TenantDao tenantDao;
 
     @Autowired
@@ -157,7 +160,7 @@ public class DefaultTenantService implements TenantService {
         if(!StringUtils.isBlank(tenant.getDomainId())) {
             Domain domain = domainService.getDomain(tenant.getDomainId());
             if(domain != null) {
-                List<String> tenantIds = new ArrayList<String>(Arrays.asList(domain.getTenantIds()));
+                List<String> tenantIds = new ArrayList<String>(Arrays.asList(getTenantIdsForDomain(domain)));
                 tenantIds.remove(tenant.getTenantId());
                 domain.setTenantIds(tenantIds.toArray(new String[0]));
                 domainService.updateDomain(domain);
@@ -381,7 +384,7 @@ public class DefaultTenantService implements TenantService {
         // Retrieve all the tenants within these domains
         for (Domain myDomain : domainsToApply) {
             // Retrieve all the tenants in the domains
-            String[] tenantIds = myDomain.getTenantIds();
+            String[] tenantIds = getTenantIdsForDomain(myDomain);
             if (tenantIds != null) {
                 for (String tenantId : tenantIds) {
                     Tenant tenant = getTenant(tenantId);
@@ -501,7 +504,7 @@ public class DefaultTenantService implements TenantService {
                  */
             Domain domain = domainService.getDomain(user.getDomainId());
             if (domain != null) {
-                String[] tenantIds = domain.getTenantIds();
+                String[] tenantIds = getTenantIdsForDomain(domain);
                 if (ArrayUtils.isNotEmpty(tenantIds)) {
                     // Load the auto-assigned role from cache
                     ImmutableClientRole autoAssignedRole = getAutoAssignedRole();
@@ -546,7 +549,7 @@ public class DefaultTenantService implements TenantService {
         // If enabled, auto-assign access role to all tenants within user's domain
         if (domain != null
                 && !domain.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
-            String[] tenantIds = domain.getTenantIds();
+            String[] tenantIds = getTenantIdsForDomain(domain);
             if (ArrayUtils.isNotEmpty(tenantIds)) {
                 // Load the auto-assigned role from cache
                 ImmutableClientRole autoAssignedRole = getAutoAssignedRole();
@@ -1497,19 +1500,42 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<Tenant> getTenantsByDomainId(String domainId) {
-        //TODO: This should probably return an empty list as opposed to throwing an exception
-        Domain domain = domainService.getDomain(domainId);
-        if(domain.getTenantIds() == null || domain.getTenantIds().length == 0) {
-            throw new NotFoundException(GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN);
-        }
         List<Tenant> tenantList = new ArrayList<Tenant>();
-        for (String tenantId : domain.getTenantIds()){
-            Tenant tenant = getTenant(tenantId);
-            if(tenant != null){
-                tenantList.add(tenant);
+        if (identityConfig.getReloadableConfig().isOnlyUseTenantDomainPointersEnabled()) {
+            tenantDao.getTenantsByDomainId(domainId).forEach(tenantList::add);
+            if (tenantList.size() == 0) {
+                throw new NotFoundException(GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN);
+            }
+        } else {
+            //TODO: This should probably return an empty list as opposed to throwing an exception
+            Domain domain = domainService.getDomain(domainId);
+            String[] tenantIds = domain.getTenantIds();
+            if (tenantIds == null || tenantIds.length == 0) {
+                throw new NotFoundException(GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN);
+            }
+            for (String tenantId : tenantIds) {
+                Tenant tenant = getTenant(tenantId);
+                if (tenant != null) {
+                    tenantList.add(tenant);
+                }
             }
         }
         return tenantList;
+    }
+
+    @Override
+    public String[] getTenantIdsForDomain(Domain domain) {
+        List<String> tenantList = new ArrayList<String>();
+
+        if (domain != null) {
+            if (identityConfig.getReloadableConfig().isOnlyUseTenantDomainPointersEnabled()) {
+                tenantDao.getTenantsByDomainId(domain.getDomainId()).forEach(t -> tenantList.add(t.getTenantId()));
+            } else {
+                return domain.getTenantIds();
+            }
+        }
+
+        return tenantList.toArray(new String[0]);
     }
 
     @Override
@@ -1706,10 +1732,14 @@ public class DefaultTenantService implements TenantService {
         @Getter
         private Domain userDomain;
 
+        @Getter
+        private String[] tenantIds;
+
         public CachedUserRoleLookupService(EndUser user) {
             this.user = user;
             if (StringUtils.isNotBlank(user.getDomainId())) {
                 this.userDomain = domainService.getDomain(user.getDomainId());
+                this.tenantIds = tenantService.getTenantIdsForDomain(this.userDomain);
             }
         }
 
@@ -1821,10 +1851,14 @@ public class DefaultTenantService implements TenantService {
         @Getter
         private Domain userDomain;
 
+        @Getter
+        private String[] tenantIds;
+
         public DelegateUserRoleLookupService(ProvisionedUserDelegate provisionedUserDelegate) {
             this.provisionedUserDelegate = provisionedUserDelegate;
             if (StringUtils.isNotBlank(provisionedUserDelegate.getDomainId())) {
                 this.userDomain = domainService.getDomain(provisionedUserDelegate.getDomainId());
+                this.tenantIds = tenantService.getTenantIdsForDomain(this.userDomain);
             }
         }
 

@@ -81,6 +81,11 @@ public class Domain implements Auditable, UniqueId, Metadata {
         }
     }
 
+    @Deprecated
+    public String[] getTenantIds() {
+        return this.tenantIds;
+    }
+
     @Override
     public String getAuditContext() {
         String format = "domainId=%s";

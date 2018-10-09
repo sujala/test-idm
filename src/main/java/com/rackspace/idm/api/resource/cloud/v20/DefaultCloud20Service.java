@@ -4141,7 +4141,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(GlobalConstants.ERROR_MSG_DELETE_DOMAIN_WITH_USERS);
             }
 
-            String[] associatedTenants = domain.getTenantIds();
+            String[] associatedTenants = tenantService.getTenantIdsForDomain(domain);
             if (ArrayUtils.isNotEmpty(associatedTenants)) {
                 /*
                 assign tenants to default domain. Since we're deleting the domain, there's no need to update
@@ -4257,7 +4257,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getEndpointsByDomainId(String authToken, String domainId) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         Domain domain = domainService.checkAndGetDomain(domainId);
-        List<Tenant> tenantList = tenantService.getTenantsFromNameList(domain.getTenantIds());
+        List<Tenant> tenantList = tenantService.getTenantsFromNameList(tenantService.getTenantIdsForDomain(domain));
         List<OpenstackEndpoint> endpoints = endpointService.getEndpointsFromTenantList(tenantList);
         EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
         return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
@@ -4268,22 +4268,24 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         Tenant tenant = tenantService.checkAndGetTenant(tenantId);
         Domain domain = domainService.checkAndGetDomain(domainId);
-        if ((tenant.getDomainId() == null || !tenant.getDomainId().equalsIgnoreCase(domainId)) &&
-                (domain.getTenantIds() == null || domain.getTenantIds().length == 0 || !Arrays.asList(domain.getTenantIds()).contains(tenant.getTenantId()))) {
-            // Roles need to be removed if the tenant was part of a domain other than the one it is being added to.
-            // For this service, that means that the tenant either has a domain ID that does not match the domain ID
-            // used in the request or is null AND the the domain specified in the request does not contain the tenant.
-            Iterable<TenantRole> daRoles = delegationService.getTenantRolesForDelegationAgreementsForTenant(tenantId);
-            if (daRoles != null && daRoles.iterator().hasNext()) {
-                for (TenantRole role : daRoles) {
-                    tenantService.deleteTenantFromTenantRole(role, tenantId);
+        if ((tenant.getDomainId() == null || !tenant.getDomainId().equalsIgnoreCase(domainId))) {
+            String[] tenantIds = tenantService.getTenantIdsForDomain(domain);
+            if  (tenantIds == null || tenantIds.length == 0 || !Arrays.asList(tenantIds).contains(tenant.getTenantId())) {
+                // Roles need to be removed if the tenant was part of a domain other than the one it is being added to.
+                // For this service, that means that the tenant either has a domain ID that does not match the domain ID
+                // used in the request or is null AND the the domain specified in the request does not contain the tenant.
+                Iterable<TenantRole> daRoles = delegationService.getTenantRolesForDelegationAgreementsForTenant(tenantId);
+                if (daRoles != null && daRoles.iterator().hasNext()) {
+                    for (TenantRole role : daRoles) {
+                        tenantService.deleteTenantFromTenantRole(role, tenantId);
+                    }
                 }
-            }
-            if (identityConfig.getReloadableConfig().getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain()) {
-                List<TenantRole> tenantRoles = tenantService.getTenantRolesForTenant(tenantId);
-                if (tenantRoles != null) {
-                    for (TenantRole tenantRole : tenantRoles) {
-                        tenantService.deleteTenantFromTenantRole(tenantRole, tenantId);
+                if (identityConfig.getReloadableConfig().getDeleteAllTenantRolesWhenTenantIsRemovedFromDomain()) {
+                    List<TenantRole> tenantRoles = tenantService.getTenantRolesForTenant(tenantId);
+                    if (tenantRoles != null) {
+                        for (TenantRole tenantRole : tenantRoles) {
+                            tenantService.deleteTenantFromTenantRole(tenantRole, tenantId);
+                        }
                     }
                 }
             }

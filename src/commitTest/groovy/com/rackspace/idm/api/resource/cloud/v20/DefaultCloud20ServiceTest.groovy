@@ -4957,6 +4957,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             0 * tenantService.deleteTenantFromTenantRole(tenantRole, tenantId)
         }
 
+        tenantService.getTenantIdsForDomain(_) >> domainTenantIds
+
         when: "add tenant to domain where tenant already points to that domain"
         service.addTenantToDomain(authToken, domainId, tenantId)
 

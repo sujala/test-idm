@@ -151,7 +151,7 @@ public class DefaultDomainService implements DomainService {
         String tenantId = tenant.getTenantId();
         String domainId = newDomain.getDomainId();
 
-        String[] curDomainTenantIds = newDomain.getTenantIds();
+        String[] curDomainTenantIds = tenantService.getTenantIdsForDomain(newDomain);
         if (!ArrayUtils.contains(curDomainTenantIds, tenantId)) {
             final List<String> tenantIds = setTenantIdList(newDomain, tenantId);
             tenantIds.add(tenantId);
@@ -195,7 +195,7 @@ public class DefaultDomainService implements DomainService {
             ref integrity. Don't need to account for case where tenant points to invalid domain because can just add
             tenant to new domain
              */
-            String[] curDomainTenantIds = domain.getTenantIds();
+            String[] curDomainTenantIds = tenantService.getTenantIdsForDomain(domain);
             if (ArrayUtils.contains(curDomainTenantIds, tenantId)) {
                 List<String> tenantIds = setTenantIdList(domain, tenantId);
                 domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
@@ -224,7 +224,7 @@ public class DefaultDomainService implements DomainService {
         }
 
         //remove tenant from specified domain
-        String[] curDomainTenantIds = domain.getTenantIds();
+        String[] curDomainTenantIds = tenantService.getTenantIdsForDomain(domain);
         if (ArrayUtils.contains(curDomainTenantIds, tenantId)) {
             List<String> tenantIds = setTenantIdList(domain, tenantId);
             domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
@@ -438,15 +438,16 @@ public class DefaultDomainService implements DomainService {
     }
 
     List<String> setTenantIdList(Domain domain, String tenantId) {
-        List<String> tenantIds = new ArrayList<String>();
-        if(domain.getTenantIds() != null){
-            for(String tenant : domain.getTenantIds()){
+        List<String> result = new ArrayList<String>();
+        String[] tenantIds = tenantService.getTenantIdsForDomain(domain);
+        if(tenantIds != null){
+            for(String tenant : tenantIds){
                 if(!tenant.equals(tenantId)){
-                    tenantIds.add(tenant);
+                    result.add(tenant);
                 }
             }
         }
-        return tenantIds;
+        return result;
     }
 
     private void verifyDomain(Domain domain) {

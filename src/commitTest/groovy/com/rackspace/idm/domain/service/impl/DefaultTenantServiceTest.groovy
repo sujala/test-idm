@@ -45,6 +45,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockIdentityConfig(service)
         mockDomainService(service)
         mockTenantDao(service)
+        mockTenantService(service)
         mockTenantRoleDao(service)
         mockApplicationService(service)
         mockAuthorizationService(service)
@@ -1158,6 +1159,88 @@ class DefaultTenantServiceTest extends RootServiceTest {
         shouldContainRole | roleId
         true              | "id"
         false             | "id2"
+    }
+
+    def "getTenantsByDomainId only uses tenants when feature flag getOnlyUseTenantDomainPointers is enabled"() {
+        given:
+        def domainId = "domainId"
+        def tenant = entityFactory.createTenant()
+
+        identityConfig.getReloadableConfig().isOnlyUseTenantDomainPointersEnabled() >> true
+
+        when:
+        def result = service.getTenantsByDomainId(domainId)
+
+        then:
+        1 * tenantDao.getTenantsByDomainId(domainId) >> [tenant]
+        0 * domainService.getDomain(domainId)
+        result.size() == 1
+        result.get(0) == tenant
+    }
+
+    def "getTenantsByDomainId uses domains when feature flag getOnlyUseTenantDomainPointers is disabled"() {
+        given:
+        def domainId = "domainId"
+        def tenant = entityFactory.createTenant()
+        def tenantId = tenant.tenantId
+        def domain = entityFactory.createDomain().with {
+            it.tenantIds = [tenantId]
+            it
+        }
+
+        identityConfig.getReloadableConfig().isOnlyUseTenantDomainPointersEnabled() >> false
+
+        when:
+        def result = service.getTenantsByDomainId(domainId)
+
+        then:
+        0 * tenantDao.getTenantsByDomainId(domainId)
+        1 * domainService.getDomain(domainId) >> domain
+        1 * tenantDao.getTenant(tenantId) >> tenant
+        result.size() == 1
+        result.get(0) == tenant
+    }
+
+    def "getTenantIdsForDomain only uses tenants when feature flag getOnlyUseTenantDomainPointers is enabled"() {
+        given:
+        def domainId = "domainId"
+        def tenant = entityFactory.createTenant()
+        def tenantId = tenant.tenantId
+        def domain = entityFactory.createDomain().with {
+            it.tenantIds = [tenantId]
+            it
+        }
+
+        identityConfig.getReloadableConfig().isOnlyUseTenantDomainPointersEnabled() >> true
+
+        when:
+        def result = service.getTenantIdsForDomain(domain)
+
+        then:
+        1 * tenantDao.getTenantsByDomainId(domainId) >> [tenant]
+        result.size() == 1
+        result[0] == tenantId
+    }
+
+    def "getTenantIdsForDomain uses domains when feature flag getOnlyUseTenantDomainPointers is disabled"() {
+        given:
+        def domainId = "domainId"
+        def tenant = entityFactory.createTenant()
+        def tenantId = tenant.tenantId
+        def domain = entityFactory.createDomain().with {
+            it.tenantIds = [tenantId]
+            it
+        }
+
+        identityConfig.getReloadableConfig().isOnlyUseTenantDomainPointersEnabled() >> false
+
+        when:
+        def result = service.getTenantIdsForDomain(domain)
+
+        then:
+        0 * tenantDao.getTenantsByDomainId(domainId)
+        result.size() == 1
+        result[0] == tenantId
     }
 
     def createImmutableClientRole(String name, int weight = 1000) {

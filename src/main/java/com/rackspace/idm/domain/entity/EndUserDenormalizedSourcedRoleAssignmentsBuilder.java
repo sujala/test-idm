@@ -292,7 +292,7 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
         Set<String> tenantIdsToReceiveDomainRoles = new HashSet<>();
 
         if (userRoleLookupService.getUserDomain() != null) {
-            String[] domainTenantIds = userRoleLookupService.getUserDomain().getTenantIds();
+            String[] domainTenantIds = userRoleLookupService.getTenantIds();
 
             if (ArrayUtils.isNotEmpty(domainTenantIds)) {
                 tenantIdsToReceiveDomainRoles = new HashSet<>(Arrays.asList(domainTenantIds));

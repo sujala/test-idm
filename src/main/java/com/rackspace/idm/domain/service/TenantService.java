@@ -548,6 +548,15 @@ public interface TenantService {
      */
     List<Tenant> getTenantsByDomainId(String domainId);
 
+    /**
+     * Return all the tenant ids that belong to the specified domainId based on the list of tenants linked to within the domain
+     * entity.
+     *
+     * @param domain
+     * @return
+     */
+    String[] getTenantIdsForDomain(Domain domain);
+
     List<Tenant> getTenantsFromNameList(String[] tenants);
 
     /**

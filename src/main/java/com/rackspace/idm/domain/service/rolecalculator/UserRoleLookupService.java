@@ -22,6 +22,12 @@ public interface UserRoleLookupService {
     Domain getUserDomain();
 
     /**
+     * Retrieve the tenantIds for the domain
+     * @return
+     */
+    String[] getTenantIds();
+
+    /**
      * Retrieves the set of tenants within the domains RCN. If the domain doesn't have an RCN, just returns the tenants
      * within the domain.
      *

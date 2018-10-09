@@ -167,12 +167,14 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
     @Unroll
     def "build: users of type #identityUserType receive domain assigned roles on every tenant in domain when no tenants are hidden"() {
         given:
+        def tenantIds = ["p1:t1", "p2:t2", "1234"] as String[]
         def domain = defaultDomain().with {
-            it.tenantIds = ["p1:t1", "p2:t2", "1234"] as String[]
+            it.tenantIds = tenantIds
             it
         }
         userRoleLookupService.getUserDomain() >> domain
         userRoleLookupService.getUser() >> defaultUser()
+        userRoleLookupService.getTenantIds() >> tenantIds
 
         EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
         addUserSourceDomainRoles(identityUserType.roleName)
@@ -201,12 +203,14 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
     @Unroll
     def "build: users of type #identityUserType receive domain assigned roles on every tenant in domain even for hidden tenants"() {
         given:
+        def tenantIds = ["p1:t1", "p2:t2", "1234"] as String[]
         def domain = defaultDomain().with {
-            it.tenantIds = ["p1:t1", "p2:t2", "1234"] as String[]
+            it.tenantIds = tenantIds
             it
         }
         userRoleLookupService.getUserDomain() >> domain
         userRoleLookupService.getUser() >> defaultUser()
+        userRoleLookupService.getTenantIds() >> tenantIds
 
         EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
         addUserSourceDomainRoles(identityUserType.roleName)
@@ -236,12 +240,14 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
     @Unroll
     def "build: users of type #identityUserType do not receive domain assigned roles on hidden tenants when do not have explicit assignment on it"() {
         given:
+        def tenantIds = ["p1:t1", "p2:t2", "1234", "p1:t2", "p3:t1"] as String[]
         def domain = defaultDomain().with {
-            it.tenantIds = ["p1:t1", "p2:t2", "1234", "p1:t2", "p3:t1"] as String[]
+            it.tenantIds = tenantIds
             it
         }
         userRoleLookupService.getUserDomain() >> domain
         userRoleLookupService.getUser() >> defaultUser()
+        userRoleLookupService.getTenantIds() >> tenantIds
 
         EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
         addUserSourceDomainRoles(identityUserType.roleName)
@@ -277,12 +283,14 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
     @Unroll
     def "build: users of type #identityUserType receive domain assigned roles on hidden tenants when have explicit assignment on it"() {
         given:
+        def tenantIds = ["p1:t1", "p2:t2", "1234", "p1:t2", "p3:t1"] as String[]
         def domain = defaultDomain().with {
-            it.tenantIds = ["p1:t1", "p2:t2", "1234", "p1:t2", "p3:t1"] as String[]
+            it.tenantIds = tenantIds
             it
         }
         userRoleLookupService.getUserDomain() >> domain
         userRoleLookupService.getUser() >> defaultUser()
+        userRoleLookupService.getTenantIds() >> tenantIds
 
         EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
         builder.setHiddenTenantPrefixes(["p1", "p3"] as Set)
@@ -323,12 +331,14 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
     @Unroll
     def "build: users of type #identityUserType receive domain assigned roles on all hidden tenants when have explicit assignment on it"() {
         given:
+        def tenantIds = ["p1:t1", "p2:t2", "1234", "p1:t2", "p3:t1"] as String[]
         def domain = defaultDomain().with {
-            it.tenantIds = ["p1:t1", "p2:t2", "1234", "p1:t2", "p3:t1"] as String[]
+            it.tenantIds = tenantIds
             it
         }
         userRoleLookupService.getUserDomain() >> domain
         userRoleLookupService.getUser() >> defaultUser()
+        userRoleLookupService.getTenantIds() >> tenantIds
 
         EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
         builder.setHiddenTenantPrefixes(["p1", "p3"] as Set)
@@ -370,13 +380,15 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
 
     def "build: Adding multiple tenant assigned assignments for same role unions the tenants and creates appropriate sources"() {
         given:
+        def tenantIds = ["p1:t1", "p1:t2", "p2:t1"] as String[]
         def user = defaultUser()
         def domain = defaultDomain().with {
-            it.tenantIds = ["p1:t1", "p1:t2", "p2:t1"] as String[]
+            it.tenantIds = tenantIds
             it
         }
         userRoleLookupService.getUserDomain() >> domain
         userRoleLookupService.getUser() >> user
+        userRoleLookupService.tenantIds() >> tenantIds
 
         EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
 
@@ -431,13 +443,15 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
 
     def "Mixing global source and tenant source results in role on all domain tenants"() {
         given:
+        def tenantIds = ["p1:t1", "p1:t2", "p2:t1"] as String[]
         def user = defaultUser()
         def domain = defaultDomain().with {
-            it.tenantIds = ["p1:t1", "p1:t2", "p2:t1"] as String[]
+            it.tenantIds = tenantIds
             it
         }
         userRoleLookupService.getUserDomain() >> domain
         userRoleLookupService.getUser() >> user
+        userRoleLookupService.getTenantIds() >> tenantIds
 
         EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
 

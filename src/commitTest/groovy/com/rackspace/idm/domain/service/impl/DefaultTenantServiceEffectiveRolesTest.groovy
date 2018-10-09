@@ -31,6 +31,7 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         mockDomainService(service)
         mockTenantDao(service)
         mockTenantRoleDao(service)
+        mockTenantService(service)
         mockApplicationService(service)
         mockAuthorizationService(service)
         mockUserService(service)
@@ -224,6 +225,7 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         }
         domainService.checkAndGetDomain(user.domainId) >> domain
         domainService.getDomain(user.getDomainId()) >> domain // Called by logic for created tenant access
+        tenantService.getTenantIdsForDomain(domain) >> tenantIds
         def tenantRole = createTenantRole("roleId")
         def icr = createImmutableCrFromTenantRole(IdentityUserTypeEnum.DEFAULT_USER.roleName, tenantRole)
 
@@ -258,6 +260,7 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
     @Unroll
     def "getSourcedRoleAssignmentsForUser: Retrieves roles assigned to groups to which user is member"() {
         given:
+        def tenantIds = ["tenant1"]
         def user = new User().with {
             it.id = "id"
             it.domainId = "domainId"
@@ -265,11 +268,13 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         }
         def domain = new Domain().with {
             it.domainId = user.domainId
-            it.tenantIds = ["tenant1"]
+            it.tenantIds = tenantIds
             it
         }
         domainService.checkAndGetDomain(user.domainId) >> domain
         domainService.getDomain(user.getDomainId()) >> domain // Called by logic for created tenant access
+        tenantService.getTenantIdsForDomain(domain) >> tenantIds
+
         def tenantRole = createTenantRole("roleId")
         def icr = createImmutableCrFromTenantRole(IdentityUserTypeEnum.DEFAULT_USER.roleName, tenantRole)
 

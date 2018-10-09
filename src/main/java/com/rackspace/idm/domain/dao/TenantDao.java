@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.dao;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
 
-import java.util.List;
-
 public interface TenantDao {
 
     void addTenant(Tenant tenant);
@@ -16,11 +14,18 @@ public interface TenantDao {
     void updateTenant(Tenant tenant);
     void updateTenantAsIs(Tenant tenant);
 
+
     /**
      * Returns a list of tenants associated with a baseUrl
      * @return
      */
     Iterable<Tenant> getTenantsByBaseUrlId(String baseUrlId);
+
+    /**
+     * Returns a list of tenants associated with a domainId
+     * @return
+     */
+    Iterable<Tenant> getTenantsByDomainId(String domainId);
 
     /**
      * Returns the total number of tenants
