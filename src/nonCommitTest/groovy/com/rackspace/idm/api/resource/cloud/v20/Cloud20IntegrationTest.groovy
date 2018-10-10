@@ -2871,7 +2871,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.addTenant(rackerToken, new Tenant()),
                 cloud20.addUserToGroup(rackerToken, "groupId", "userId"),
                 cloud20.addEndpoint(rackerToken, "tenantId", new EndpointTemplate()),
-                cloud20.createUser(rackerToken, new User())
+                cloud20.createUser(rackerToken, new User()),
+                cloud20.listTenants(rackerToken)
         ]
     }
 

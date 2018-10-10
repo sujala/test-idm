@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
@@ -13,12 +12,7 @@ import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.RoleList
-import org.openstack.docs.identity.api.v2.Tenant
-import org.openstack.docs.identity.api.v2.Tenants
-import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -1218,6 +1212,26 @@ class TenantIntegrationTest extends RootIntegrationTest {
         accept                          | _
         MediaType.APPLICATION_XML_TYPE  | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def "list tenants using a federated user's token returns valid reponse"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        AuthenticateResponse fedUserAuthResponse = utils.createFederatedUserForAuthResponse(userAdmin.domainId)
+        def fedUserToken = fedUserAuthResponse.token.id
+
+        when:
+        def response = cloud20.listTenants(fedUserToken)
+        def tenants = getTenantsFromResponse(response)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        tenants.tenant.size() == 2
+        tenants.tenant.find {it.id == userAdmin.domainId} != null
+        tenants.tenant.find {it.id == utils.getNastTenant(userAdmin.domainId)} != null
+
+        cleanup:
+        utils.deleteUser(userAdmin)
     }
 
     def getTenant(response) {

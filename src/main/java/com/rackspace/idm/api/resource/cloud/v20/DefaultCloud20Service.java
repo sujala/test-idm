@@ -3065,9 +3065,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) {
         try {
-            ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
 
-            authorizationService.verifyUserLevelAccess(requesterScopeAccess);
+            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             User user = userService.getUser(name);
 
@@ -3077,15 +3080,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
 
-            User requester = (User) userService.getUserByScopeAccess(requesterScopeAccess);
-
             /*
                 By time we get here we know the specified user exists and the caller is a User. Only check left is to
                 make sure the caller has access to the specified user.
              */
             List<User> userList = new ArrayList<>();
             userList.add(user);
-            Iterable<? extends EndUser> result = filterOutUsersInaccessibleByCaller(userList, requester);
+            Iterable<? extends EndUser> result = filterOutUsersInaccessibleByCaller(userList, caller);
             if (!result.iterator().hasNext()) {
                 // If the user was filtered, the caller doesn't have access to that user
                 throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
@@ -3619,17 +3620,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, boolean applyRcnRoles, Integer marker, Integer limit) {
         try {
-            ScopeAccess access = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(access);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            //safe cast as only enduser would pass verify check
-            EndUser user = (EndUser) userService.getUserByScopeAccess(access);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            // If it got to this point, we can assume the caller is an endUser.
+            EndUser endUserCaller = (EndUser) caller;
 
             List<Tenant> tenants;
             if (applyRcnRoles) {
-                tenants = tenantService.getTenantsForUserByTenantRolesApplyRcnRoles(user);
+                tenants = tenantService.getTenantsForUserByTenantRolesApplyRcnRoles(endUserCaller);
             } else {
-                tenants = this.tenantService.getTenantsForUserByTenantRoles(user);
+                tenants = this.tenantService.getTenantsForUserByTenantRoles(endUserCaller);
             }
 
             return Response.ok(
@@ -3702,7 +3705,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                                           String userId, String serviceId, boolean applyRcnRoles) {
         try {
             // Verify token is valid and user is enabled
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
             EndUser user =  identityUserService.checkAndGetEndUserById(userId);
@@ -3753,8 +3756,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) {
         try {
-            ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
-            BaseUser impersonator = userService.getUserByScopeAccess(callerScopeAccess);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser impersonator = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            ScopeAccess callerScopeAccess = requestContextHolder.getRequestContext().getSecurityContext().getEffectiveCallerToken();
+
             authorizationService.verifyCallerCanImpersonate(impersonator, callerScopeAccess);
 
             ImpersonatorType impersonatorType = null;
@@ -4644,7 +4650,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserAdminsForUser(String authToken, String userId) {
-        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
         BaseUser caller =  requestContextHolder.getRequestContext().getEffectiveCaller();
@@ -5056,7 +5062,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, ListUsersForTenantParams params) {
         try {
-            ScopeAccess scopeAccess = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            ScopeAccess scopeAccess =  requestContextHolder.getRequestContext().getSecurityContext().getEffectiveCallerToken();
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
