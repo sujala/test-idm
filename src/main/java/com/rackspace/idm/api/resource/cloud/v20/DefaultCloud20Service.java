@@ -3011,57 +3011,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    /**
-     * This feature was developed, but never enabled as it hasn't been fully tested by QE.
-     *
-     * It is no more efficient than the existing v1.1 version of the same
-     * name. The purpose was simply to allow users to use a 'v2.0' branded service rather than a 'v1.1'. Don't enable
-     * this service unless for a very good reason...
-     *
-     * @param httpHeaders
-     * @param authToken
-     * @param tenantId
-     * @return
-     * @deprecated
-     */
-    @Deprecated
-    @Override
-    public ResponseBuilder getUserByTenantId(HttpHeaders httpHeaders, String authToken, String tenantId) {
-        try {
-            if (identityConfig.getReloadableConfig().getV11LegacyEnabled()) {
-                final ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
-                authorizationService.verifyIdentityAdminLevelAccess(requesterScopeAccess);
-
-                User user = null;
-                if (identityConfig.getReloadableConfig().isUserAdminLookUpByDomain()) {
-                    user = userService.getUserAdminByTenantId(tenantId);
-                }
-                // Fallback to current mechanism if user-admin lookup by domain feature is disabled or no user-admin was
-                // set on the domain.
-                if (user == null){
-                    user = userService.getUserByTenantId(tenantId);
-                }
-                if (user == null) {
-                    throw new NotFoundException(String.format("User with tenantId %s not found", tenantId));
-                }
-
-                final org.openstack.docs.identity.api.v2.User jaxbUser = userConverterCloudV20.toUser(user);
-                if (user.getNastId() != null) {
-                    jaxbUser.getOtherAttributes().put(new QName(V11_API_QNAME, "nastId"), user.getNastId());
-                }
-                if (user.getMossoId() != null) {
-                    jaxbUser.getOtherAttributes().put(new QName(V11_API_QNAME, "mossoId"), String.valueOf(user.getMossoId()));
-                }
-
-                return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(jaxbUser).getValue());
-            } else {
-                return Response.status(Response.Status.SERVICE_UNAVAILABLE);
-            }
-        } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) {
         try {

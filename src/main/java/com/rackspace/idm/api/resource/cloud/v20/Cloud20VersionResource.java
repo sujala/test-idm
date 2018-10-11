@@ -915,16 +915,6 @@ public class Cloud20VersionResource {
         return cloud20Service.getTenantById(httpHeaders, authToken, tenantsId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List tenant user admin")
-    @GET
-    @Path("tenants/{tenantId}/RAX-AUTH/admins")
-    public Response listUserAdminsOnTenant(
-            @Context HttpHeaders httpHeaders,
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("tenantId") String tenantId) {
-        return cloud20Service.getUserByTenantId(httpHeaders, authToken, tenantId).build();
-    }
-
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List user roles on tenant")
     @ReportableQueryParams(unsecuredQueryParams = {"apply_rcn_roles"})
     @GET

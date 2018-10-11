@@ -743,31 +743,6 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "list user admins on tenant: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
-        def userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
-
-        when:
-        def response = cloud20.listUserAdminsOnTenant(utils.identityAdminToken, userAdmin.domainId)
-        User user = response.getEntity(User).value
-
-        then:
-        response.status == SC_OK
-        user.id == userAdmin.id
-
-        cleanup:
-        utils.deleteUserQuietly(userAdmin)
-        utils.deleteTenantQuietly(userAdmin.domainId)
-        utils.deleteTenantQuietly(utils.getNastTenant(userAdmin.domainId))
-        utils.deleteTestDomainQuietly(userAdmin.domainId)
-        reloadableConfiguration.reset()
-
-        where:
-        featureEnabled << [true, false]
-    }
-
-    @Unroll
     def "get admins for user: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)

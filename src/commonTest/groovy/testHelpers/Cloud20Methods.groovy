@@ -764,11 +764,6 @@ class Cloud20Methods {
         resource.path(path20).path(TENANTS).path(tenantId).path(USERS).queryParams(params).header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
     }
 
-    def listUserAdminsOnTenant(String token, String tenantId, MediaType mediaType = APPLICATION_XML_TYPE) {
-        initOnUse()
-        resource.path(path20).path(TENANTS).path(tenantId).path(RAX_AUTH).path(ADMINS).header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
-    }
-
     def listUsersWithTenantIdAndRole(String token, tenantId, roleId, offset = "0", limit = "1000") {
         initOnUse()
         MultivaluedMap<String, String> pageParams = pageParams(offset, limit)
@@ -1315,11 +1310,6 @@ class Cloud20Methods {
     def getEndpointsForToken(String authToken, String token) {
         initOnUse()
         resource.path(path20).path(TOKENS).path(token).path(ENDPOINTS).header(X_AUTH_TOKEN, authToken).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def getUserByTenantId(String token, String tenantId, MediaType mediaType = APPLICATION_XML_TYPE) {
-        initOnUse()
-        resource.path(path20).path(TENANTS).path(tenantId).path(RAX_AUTH).path(ADMINS).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def forgotPassword(ForgotPasswordCredentials forgotPasswordCredentials, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
