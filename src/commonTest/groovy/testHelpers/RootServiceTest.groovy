@@ -179,7 +179,6 @@ class RootServiceTest extends Specification {
     @Shared ApplicationDao applicationDao
     @Shared ScopeAccessDao scopeAccessDao
     @Shared UserDao userDao
-    @Shared RackerDao rackerDao
     @Shared TenantDao tenantDao
     @Shared EndpointDao endpointDao
     @Shared TenantRoleDao tenantRoleDao
@@ -737,11 +736,6 @@ class RootServiceTest extends Specification {
     def mockUserDao(service) {
         userDao = Mock()
         service.userDao = userDao
-    }
-
-    def mockRackerDao(service) {
-        rackerDao = Mock()
-        service.rackerDao = rackerDao
     }
 
     def mockTenantDao(service) {

@@ -94,6 +94,24 @@ memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
 memberOf: cn=cloud-identity-ae-tokens,ou=Groups,o=rackspace,dc=rackspace,dc=com
 userPassword:: cGFzc3dvcmQ=
 
+dn: cn=dup.uid.one,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: top
+sn: uid.one
+cn: dup.uid.one
+uid: dup.uid
+userPassword:: cGFzc3dvcmQ=
+
+dn: cn=dup.uid.two,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: top
+sn: uid.two
+cn: dup.uid.two
+uid: dup.uid
+userPassword:: cGFzc3dvcmQ=
+
 dn: ou=Groups,o=rackspace,dc=rackspace,dc=com
 ou: Groups
 objectClass: organizationalUnit

@@ -104,6 +104,14 @@ public class ExceptionHandler implements IdmExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createIdentityFault(fault).getValue());
     }
 
+    @Override
+    public Response.ResponseBuilder gatewayExceptionResponse(String message) {
+        IdentityFault fault = objFactories.getOpenStackIdentityV2Factory().createIdentityFault();
+        fault.setCode(HttpServletResponse.SC_BAD_GATEWAY);
+        fault.setMessage(message);
+        return Response.status(HttpServletResponse.SC_BAD_GATEWAY).entity(
+                objFactories.getOpenStackIdentityV2Factory().createIdentityFault(fault).getValue());
+    }
 
     @Override
     public Response.ResponseBuilder serviceExceptionResponse() {
@@ -135,6 +143,8 @@ public class ExceptionHandler implements IdmExceptionHandler {
             return serviceUnavailableExceptionResponse(ex.getMessage());
         } else if (ex instanceof UnrecoverableIdmException) {
             return unrecoverableExceptionResponse(ex.getMessage());
+        } else if (ex instanceof GatewayException) {
+            return gatewayExceptionResponse(ex.getMessage());
         } else {
             LOGGER.error("Unexpected exception:", ex);
             return serviceExceptionResponse();

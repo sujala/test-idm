@@ -1,9 +1,11 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
+import com.rackspace.idm.exception.GatewayException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
@@ -36,15 +38,22 @@ public class LdapAuthRepository implements AuthDao {
         logger.debug("Authenticating racker {}", userName);
         Audit audit = Audit.authRacker(userName);
 
-        String userDn = getBindDn(userName);
+        String userDn;
 
         if (identityConfig.getStaticConfig().getActiveDirectorySearchForUserBeforeBind()) {
             try {
                 SearchResultEntry rackerEntry = getRackerEntry(userName);
                 userDn = rackerEntry.getDN();
             } catch (NotFoundException e) {
+                audit.fail("User not found in gateway");
                 return false;
+            } catch (GatewayException e) {
+                // A gateway exception means a problem hitting AD
+                audit.fail("Error searching gateway");
+                throw e; // Rethrow the exception
             }
+        } else {
+            userDn = getBindDn(userName);
         }
 
         BindResult result = null;
@@ -64,8 +73,9 @@ public class LdapAuthRepository implements AuthDao {
                 return false;
             }
         }
+
         if (result == null) {
-            audit.fail();
+            audit.fail("Could not get bind result.");
             throw new IllegalStateException("Could not get bind result.");
         }
         logger.debug(result.toString());
@@ -81,6 +91,7 @@ public class LdapAuthRepository implements AuthDao {
         } else {
             logger.error("Bind operation on username " + userName + " failed.", e);
             logger.error(e.getMessage());
+            audit.fail("Bind operation failed");
         }
     }
 
@@ -108,6 +119,7 @@ public class LdapAuthRepository implements AuthDao {
     private SearchResultEntry getRackerEntry(String username) {
         SearchResultEntry entry = null;
         try {
+            // We expect a single entry to exist in AD with the UID. Could get a size limit exceeded exception if multiple entries with same UID exist.
             final Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_UID, username).build();
             entry = getLdapInterface().searchForEntry(getBaseDn(), getSearchScope(), searchFilter, getMembershipAttribute());
             if (entry == null) {
@@ -115,7 +127,8 @@ public class LdapAuthRepository implements AuthDao {
                 entry = getAliasEntry(username);
             }
         } catch (LDAPException ldapEx) {
-            throw new IllegalStateException(ldapEx);
+            logger.error(String.format("Encountered exception searching racker repository for user '%s'.", username), ldapEx);
+            throw new GatewayException("Encountered error retrieving user.", ErrorCodes.ERROR_CODE_RACKER_PROXY_SEARCH);
         }
 
         if (entry == null) {

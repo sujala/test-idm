@@ -143,6 +143,8 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT = "ROLE-000";
     public static final String ERROR_CODE_USER_MANAGE_ON_NON_DEFAULT_USER = "ROLE-001";
 
+    public static final String ERROR_CODE_RACKER_PROXY_SEARCH = "RACK-000";
+
     public static final String ERROR_CODE_DUP_ROLE_ASSIGNMENT_MSG = "A given role can only be specified once";
 
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG = "All role assignments must include 'forTenants' field";
@@ -161,6 +163,7 @@ public final class ErrorCodes {
 
     public static final String ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN = "The '%s' parameter can not be used with the '%s' parameter.";
     public static final String ERROR_CODE_USER_GROUP_CANNOT_BE_CREATED_IN_DEFAULT_DOMAIN_MSG = "The user group cannot be created in default domain";
+
 
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {

@@ -7,7 +7,6 @@ import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;

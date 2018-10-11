@@ -18,6 +18,7 @@ class Constants {
     static def IDENTITY_ADMIN_API_KEY = "thisismykey"
 
     static def USER_WITH_NO_DOMAIN_USERNAME = "userWithNoDomain"
+    static def TEST_USER_USER_ADMIN_USERNAME = "testUserAdmin_doNotDelete"
 
     static def DEFAULT_PASSWORD = "Password1"
     static def DEFAULT_API_KEY = "Password1"
@@ -81,6 +82,12 @@ class Constants {
 
     static String RACKER_NOGROUP = "test.nogroup"
     static String RACKER_NOGROUP_PASSWORD = "password"
+
+    /**
+     * This "username" is the uid associated with multiple entries in LDAP
+     */
+    static String RACKER_DUP_UID = "dup.uid"
+    static String RACKER_DUP_UID_PASSWORD = "password"
 
     static def CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221"
     static def CLIENT_SECRET = "Password1"

@@ -21,6 +21,13 @@ public interface IdmExceptionHandler {
 
     Response.ResponseBuilder unrecoverableExceptionResponse(String message);
 
+    /**
+     * Returns a 502 fault
+     * @param message
+     * @return
+     */
+    Response.ResponseBuilder gatewayExceptionResponse(String message);
+
     Response.ResponseBuilder serviceExceptionResponse();
 
     Response.ResponseBuilder exceptionResponse(Exception ex);
