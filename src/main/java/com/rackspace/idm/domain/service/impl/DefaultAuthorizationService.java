@@ -20,7 +20,6 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DelegationService;
@@ -377,18 +376,19 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(authScopeAccess);
+    public void verifyEffectiveCallerHasTenantAccess(String tenantId) {
+        BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+        IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
 
         // High level admins have implicit access to all tenants
-        if (authorizeRoleAccess(user, authScopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole()))) {
+        if (callerType.hasAtLeastIdentityAdminAccessLevel()) {
             return;
         }
 
         List<Tenant> adminTenants = new ArrayList<>();
-        if (user instanceof EndUser) {
+        if (caller instanceof EndUser) {
             // Only EndUsers will ever have access to tenants.
-            adminTenants = tenantService.getTenantsForUserByTenantRoles((EndUser)user);
+            adminTenants = tenantService.getTenantsForUserByTenantRoles((EndUser) caller);
         }
 
         for (Tenant tenant : adminTenants) {

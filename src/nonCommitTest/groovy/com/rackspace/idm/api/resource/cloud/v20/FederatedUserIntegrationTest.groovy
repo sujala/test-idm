@@ -2448,6 +2448,29 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(userAdmin)
     }
 
+    def "federated user can revoke own token"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def domainId = userAdmin.domainId
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = samlAuthResponse.value.token
+        def samlAuthTokenId = samlAuthToken.id
+
+        when: "revoke token"
+        def response = cloud20.revokeUserToken(samlAuthTokenId, samlAuthTokenId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+    }
+
     def getFederatedUser(String domainId, mediaType) {
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def username = testUtils.getRandomUUID("samlUser")

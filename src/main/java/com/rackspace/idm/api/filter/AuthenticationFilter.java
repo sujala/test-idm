@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import java.util.Arrays;
@@ -102,11 +103,15 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
             // Return if call is authentication or validation
             if (tokenValidationPathPattern.matcher(path).matches() && (!tokenEndpointPathPattern.matcher(path).matches())) {
-                //validate call. Don't replace impersonation token
-                populateSecurityContextForValidateCall(request, securityContext);
+                // Validate or delete token call. Don't replace impersonation token
+                populateSecurityContextForValidateOrRevokeCall(request, securityContext);
+                return request;
+            } else if (HttpMethod.DELETE.equals(method) && path.startsWith("cloud/v2.0/tokens") && (!tokenEndpointPathPattern.matcher(path).matches())) {
+                // Revoke own token
+                populateSecurityContextForValidateOrRevokeCall(request, securityContext);
                 return request;
             } else if (path.startsWith("cloud/v2.0/tokens") && (!tokenEndpointPathPattern.matcher(path).matches())) {
-                //auth call
+                // Auth call
                 return request;
             }
 
@@ -242,7 +247,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
      * @param request
      * @param securityContext
      */
-    private void populateSecurityContextForValidateCall(ContainerRequest request, SecurityContext securityContext) {
+    private void populateSecurityContextForValidateOrRevokeCall(ContainerRequest request, SecurityContext securityContext) {
         final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
             /*
              We only do checks here when authToken is provided. Underlying service implementations are expected to throw

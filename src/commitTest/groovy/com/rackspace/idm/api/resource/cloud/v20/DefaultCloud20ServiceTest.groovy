@@ -1128,248 +1128,317 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response1.status == 403
     }
 
-    def "addRolesToUserOnTenant verifies user-admin level access"() {
-        given:
-        allowUserAccess()
-
+    def "addRolesToUserOnTenant verifies user-manage level access"() {
         when:
         service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
     }
 
     def "addRolesToUserOnTenant verifies tenant access"() {
-        given:
-        allowUserAccess()
-
         when:
         service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
 
         then:
-        1 * authorizationService.verifyTokenHasTenantAccess(_, _)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
     }
 
     def "addRolesToUserOnTenant verifies tenant"() {
-        given:
-        allowUserAccess()
-
         when:
         service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
 
         then:
-        1 * tenantService.checkAndGetTenant(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId")
     }
 
     def "addRolesToUserOnTenant verifies user"() {
-        given:
-        allowUserAccess()
-
         when:
         service.addRolesToUserOnTenant(headers, authToken, "tenantId", "userId", "roleId")
 
         then:
-        1 * userService.checkAndGetUserById(_)
-        1 * userService.getUserByAuthToken(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId")
+        1 * userService.checkAndGetUserById("userId")
     }
 
     def "addRolesToUserOnTenant verifies that user to modify is within callers domain when caller is user-admin"() {
         given:
-        allowUserAccess()
-
         def user = entityFactory.createUser()
-        def caller = Mock(User)
-
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-
-        authorizationService.authorizeCloudUserAdmin(_) >> true
+        def caller = entityFactory.createUser()
 
         when:
-        def response = service.addRolesToUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        def response = service.addRolesToUserOnTenant(headers, authToken, "tenantId", "id", "role1").build()
 
         then:
-        1 * caller.getDomainId() >> entityFactory.createUser("username", null, "unique", "region")
         response.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >>  caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId")
+        1 * userService.checkAndGetUserById("id") >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller) >> {throw new ForbiddenException()}
     }
 
     def "addRolesToUserOnTenant verifies role is not a user type role"() {
         given:
-        allowUserAccess()
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser()
 
         when:
-        def response = service.addRolesToUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        def response = service.addRolesToUserOnTenant(headers, authToken, "tenantId", "id", "role1").build()
 
         then:
-        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole("identity:user-admin")
         response.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >>  caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId")
+        1 * userService.checkAndGetUserById("id") >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
+        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole("identity:user-admin")
     }
 
     def "addRolesToUserOnTenant verifies callers precedence"() {
         given:
-        allowUserAccess()
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser()
+        def role = entityFactory.createClientRole()
 
-        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
 
         when:
-        service.addRolesToUserOnTenant(headers, authToken, "tenatn1", "user1", "role1").build()
+        service.addRolesToUserOnTenant(headers, authToken, "tenantId", "id", "role1").build()
 
         then:
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
-        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(_, _)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >>  caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId")
+        1 * userService.checkAndGetUserById("id") >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
+        1 * applicationService.getClientRoleById(_) >> role
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role)
     }
 
     def "addRolesToUserOnTenant adds role to user on tenant"() {
         given:
         allowUserAccess()
 
+        def caller = entityFactory.createUser()
         def user = entityFactory.createUser()
-
-        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> entityFactory.createUser()
-        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+        def role = entityFactory.createClientRole()
 
         when:
-        def response = service.addRolesToUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        def response = service.addRolesToUserOnTenant(headers, authToken, "tenantId", "id", "role1").build()
 
         then:
-        1 * tenantService.addTenantRoleToUser(user, _)
         response.status == 200
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >>  caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId") >> entityFactory.createTenant()
+        1 * userService.checkAndGetUserById("id") >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
+        1 * applicationService.getClientRoleById(_) >> role
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role)
+        1 * tenantService.addTenantRoleToUser(user, _)
     }
 
-    def "deleteRoleFromUserOnTenant verifies user admin level access"() {
-        given:
-        allowUserAccess()
-
+    def "deleteRoleFromUserOnTenant verifies user manage level access"() {
         when:
         def response1 = service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+
+        then:
+        response1.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
+
+        when:
         def response2 = service.deleteRoleFromUserOnTenant(headers, "1$authToken", "tenant1", "user1", "role1").build()
 
         then:
-        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> { throw new NotAuthorizedException() }
-        response1.status == 401
-
-        then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_) >> { throw new ForbiddenException() }
         response2.status == 403
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER) >> { throw new ForbiddenException() }
     }
 
     def "deleteRoleFromUserOnTenant verifies tenant access"() {
-        given:
-        allowUserAccess()
-
         when:
-        service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1")
+        service.deleteRoleFromUserOnTenant(headers, authToken, "tenantId", "user1", "role1")
 
         then:
-        1 * authorizationService.verifyTokenHasTenantAccess(_, _)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
     }
 
     def "deleteRoleFromUserOnTenant verifies user"() {
-        given:
-        allowUserAccess()
-
         when:
-        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenantId", "user1", "role1").build()
 
         then:
-        1 * userService.checkAndGetUserById("user1") >> { throw new NotFoundException() }
         response.status == 404
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * userService.checkAndGetUserById("user1") >> { throw new NotFoundException() }
     }
 
     def "deleteRoleFromUserOnTenant verifies tenant"() {
-        given:
-        allowUserAccess()
-
         when:
-        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenantId", "user1", "role1").build()
 
         then:
-        1 * tenantService.checkAndGetTenant(_) >> { throw new NotFoundException() }
         response.status == 404
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant(_) >> { throw new NotFoundException() }
     }
 
     def "deleteRoleFromUserOnTenant verifies user belongs to callers domain when caller is user admin"() {
         given:
-        allowUserAccess()
-
-        def caller = Mock(User)
+        def caller = entityFactory.createUser()
         def user = entityFactory.createUser()
 
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-
         when:
-        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenantId", "id", "role1").build()
 
         then:
-        1 * caller.getDomainId() >> "1$user.domainId"
         response.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId")
+        1 * userService.checkAndGetUserById("id") >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller) >> {throw new ForbiddenException()}
     }
 
     def "deleteRoleFromUserOnTenant verifies role"() {
         given:
-        allowUserAccess()
-
         def caller = entityFactory.createUser()
         def user = entityFactory.createUser()
 
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-
         when:
-        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenantId", "id", "roleId").build()
 
         then:
-        1 * applicationService.getClientRoleById(_) >> { throw new NotFoundException() }
         response.status == 404
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId")
+        1 * userService.checkAndGetUserById("id") >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
+        1 * applicationService.getClientRoleById("roleId") >> {throw new NotFoundException()}
     }
 
     def "deleteRoleFromUserOnTenant verifies caller precedence"() {
         given:
-        allowUserAccess()
-
         def caller = entityFactory.createUser()
         def user = entityFactory.createUser()
 
-        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
-
         when:
-        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        service.deleteRoleFromUserOnTenant(headers, authToken, "tenantId", "id", "roleId").build()
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId")
+        1 * userService.checkAndGetUserById("id") >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
+        1 * applicationService.getClientRoleById("roleId") >> entityFactory.createClientRole()
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
     }
 
     def "deleteRoleFromUserOnTenant deletes role from user"() {
         given:
-        allowUserAccess()
-
         def caller = entityFactory.createUser()
         def user = entityFactory.createUser()
-        def tenant = entityFactory.createTenant()
+        def tenant = entityFactory.createTenant().with {
+            it.tenantId = "tenantId"
+            it
+        }
         def clientRole = entityFactory.createClientRole()
-        def tenantRole = entityFactory.createTenantRole()
-
-        tenantService.checkAndGetTenant(_) >> tenant
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-        applicationService.getClientRoleById(_) >> clientRole
-        tenantService.checkAndGetTenantRoleForUserById(_, _) >> tenantRole
-        tenantRole.tenantIds << tenant.tenantId
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.tenantIds.add("tenantId")
+            it
+        }
 
         when:
-        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
+        def response = service.deleteRoleFromUserOnTenant(headers, authToken, "tenantId", "id", "roleId").build()
 
         then:
-        1 * tenantService.deleteTenantOnRoleForUser(user, _, _)
         response.status == 204
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess("tenantId")
+        1 * tenantService.checkAndGetTenant("tenantId") >> tenant
+        1 * userService.checkAndGetUserById("id") >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
+        1 * applicationService.getClientRoleById("roleId") >> clientRole
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
+        1 * tenantService.checkAndGetTenantRoleForUserById(user, "roleId") >>  tenantRole
+        1 * tenantService.deleteTenantOnRoleForUser(user, _, _)
     }
 
     def "getSecretQA - return valid response"() {
@@ -4527,15 +4596,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "listUsersForTenant: test with contactId query param"() {
         def tenantId = "tenantId"
         def contactId = "contactId"
-        def scopeAccess = new ScopeAccess()
 
         when:
         service.listUsersForTenant(headers, uriInfo(), authToken, tenantId, new ListUsersForTenantParams(null, contactId, new PaginationParams()))
 
         then:
         1 * requestContext.securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * securityContext.getEffectiveCallerToken() >> scopeAccess
-        1 * authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess)
+        1 * authorizationService.verifyEffectiveCallerHasTenantAccess(tenantId)
         1 * tenantService.getEnabledUsersWithContactIdForTenant(tenantId, contactId)
     }
 
@@ -4770,8 +4837,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "adding role to user on tenant with existing global role throw 400 BadRequest"() {
         given:
-        allowUserAccess()
-
         def roleId = "roleId"
         def tenantId = "tenantId"
         def user = entityFactory.createUser()
@@ -4785,8 +4850,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.addRolesToUserOnTenant(headers, authToken, tenantId, user.id, roleId).build()
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         1 * userService.checkAndGetUserById(user.id) >> user
-        1 * userService.getUserByAuthToken(authToken) >> caller
         1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole()
         1 * tenantService.getTenantRoleForUserById(user, roleId) >> tenantRole
 

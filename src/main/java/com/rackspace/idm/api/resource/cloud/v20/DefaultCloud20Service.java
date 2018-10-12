@@ -571,20 +571,22 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
-            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserManagedLevelAccess(scopeAccess);
-            authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+
+            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
+            authorizationService.verifyEffectiveCallerHasTenantAccess(tenantId);
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             User user = userService.checkAndGetUserById(userId);
-            User caller = userService.getUserByAuthToken(authToken);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)
-                    || authorizationService.authorizeUserManageRole(scopeAccess)) {
-                if (!caller.getDomainId().equals(user.getDomainId())) {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
-                }
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            // Checking for domain base level here since default user don't have access to this resource.
+            if (callerType.isDomainBasedAccessLevel()) {
+                authorizationService.verifyDomain(user, caller);
             }
 
             ClientRole role = checkAndGetClientRole(roleId);
@@ -2465,20 +2467,22 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
-            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserManagedLevelAccess(scopeAccess);
-            authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+
+            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
+            authorizationService.verifyEffectiveCallerHasTenantAccess(tenantId);
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             User user = userService.checkAndGetUserById(userId);
-            User caller = userService.getUserByAuthToken(authToken);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)
-                    || authorizationService.authorizeUserManageRole(scopeAccess)) {
-                if (!caller.getDomainId().equals(user.getDomainId())) {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
-                }
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            // Checking for domain base level here since default user don't have access to this resource.
+            if (callerType.isDomainBasedAccessLevel()) {
+                authorizationService.verifyDomain(user, caller);
             }
 
             ClientRole role = checkAndGetClientRole(roleId);
@@ -3815,12 +3819,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getDomain(String authToken, String domainId) {
-        authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
 
-        ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-        User caller = (User) userService.getUserByScopeAccess(token);
-        ClientRole requesterIdentityClientRole = applicationService.getUserIdentityRole(caller);
-        IdentityUserTypeEnum requesterIdentityRole = authorizationService.getIdentityTypeRoleAsEnum(requesterIdentityClientRole);
+        User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+        IdentityUserTypeEnum requesterIdentityRole = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+
         if (requesterIdentityRole.isDomainBasedAccessLevel() && (caller.getDomainId() == null || !caller.getDomainId().equalsIgnoreCase(domainId))) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
@@ -5012,7 +5019,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String tenantId, ListUsersForTenantParams params) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            ScopeAccess scopeAccess =  requestContextHolder.getRequestContext().getSecurityContext().getEffectiveCallerToken();
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
@@ -5022,7 +5028,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             regardless of whether the tenant is in the user-admin's domain or overall RCN. Issue https://jira.rax.io/browse/CID-1285
             was created for this.
              */
-            authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
+            authorizationService.verifyEffectiveCallerHasTenantAccess(tenantId);
 
             // TODO: Could optimize this more. The previous call already retrieves the tenant for user-admins.
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
@@ -5394,15 +5400,18 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) throws IOException, JAXBException {
-        ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-        authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
         scopeAccessService.expireAccessToken(authToken);
         return Response.status(204);
     }
 
     @Override
     public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException, JAXBException {
-        ScopeAccess scopeAccessAdmin = getScopeAccessForValidToken(authToken);
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+
+        ScopeAccess scopeAccessAdmin = requestContextHolder.getRequestContext().getSecurityContext().getEffectiveCallerToken();
 
         //can expire your own token - regardless of type
         if (authToken.equals(tokenId)) {
@@ -5415,18 +5424,19 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
         }
 
-        authorizationService.verifyUserAdminLevelAccess(scopeAccessAdmin);
+        BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
+        IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
         if (scopeAccess == null) {
             throw new NotFoundException("Token not found");
         }
 
-        if (authorizationService.authorizeCloudUserAdmin(scopeAccessAdmin)) {
-            User caller = userService.getUserByAuthToken(authToken);
+        if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
             User user = userService.getUserByAuthToken(tokenId);
             authorizationService.verifyDomain(caller, user);
-            scopeAccessService.expireAccessToken(tokenId);
-            return Response.status(204);
         }
 
         scopeAccessService.expireAccessToken(tokenId);
