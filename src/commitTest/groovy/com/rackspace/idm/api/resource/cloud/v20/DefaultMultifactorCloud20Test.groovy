@@ -1,10 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
-import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
-import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
-import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
-
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.api.security.SecurityContext
@@ -12,6 +8,7 @@ import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthorizationService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
@@ -20,7 +17,6 @@ import com.rackspace.idm.multifactor.service.MultiFactorService
 import com.rackspace.idm.validation.PrecedenceValidator
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
-import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.V2Factory
@@ -104,12 +100,12 @@ class DefaultMultifactorCloud20Test extends Specification {
         def response = service.updateMultiFactorSettings(uriInfo, authToken, targetUser.id, settings).build()
 
         then:
-        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken) >> token
-        1 * userService.getUserByScopeAccess(token) >> caller
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> token
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * requestContextHolder.checkAndGetTargetUser(_) >> targetUser
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_)
-        1 * authorizationService.authorizeCloudUserAdmin(_) >> false
-        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        2 * requestContext.getEffectiveCaller() >> caller
         1 * authorizationService.verifyDomain(_,_)
         1 * multiFactorService.updateMultiFactorSettings(_,_)
         response.status == HttpStatus.SC_NO_CONTENT
@@ -127,17 +123,17 @@ class DefaultMultifactorCloud20Test extends Specification {
             it
         }
 
-        def token = new UserScopeAccess()
+        requestContext.getEffectiveCaller() >> caller
         MultiFactor unlockSettings = v2Factory.createMultiFactorSettings(null, true)
 
         when:
-        service.validateUpdateMultiFactorSettingsRequest(caller, token, target, null)
+        service.validateUpdateMultiFactorSettingsRequest(target, null)
 
         then:
         thrown(BadRequestException)
 
         when:
-        service.validateUpdateMultiFactorSettingsRequest(caller, token, caller, unlockSettings)
+        service.validateUpdateMultiFactorSettingsRequest(caller, unlockSettings)
 
         then:
         thrown(ForbiddenException)

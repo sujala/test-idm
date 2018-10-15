@@ -53,8 +53,8 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         MultiFactor settings = v2Factory.createMultiFactorSettings().with{it.userMultiFactorEnforcementLevel = UserMultiFactorEnforcementLevelEnum.DEFAULT; return it}
         def capturedException
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(target.id) >> target
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
@@ -88,8 +88,8 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         MultiFactor settings = v2Factory.createMultiFactorSettings().with{it.userMultiFactorEnforcementLevel = UserMultiFactorEnforcementLevelEnum.DEFAULT; return it}
         def capturedException
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(target.id) >> target
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
@@ -156,8 +156,8 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         UserScopeAccess callerToken = entityFactory.createUserToken()
         MultiFactor settings = v2Factory.createMultiFactorSettings().with{it.userMultiFactorEnforcementLevel = UserMultiFactorEnforcementLevelEnum.DEFAULT; return it}
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(target.id) >> target
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
@@ -201,8 +201,8 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         UserScopeAccess callerToken = entityFactory.createUserToken()
         MultiFactor settings = v2Factory.createMultiFactorSettings().with{it.userMultiFactorEnforcementLevel = UserMultiFactorEnforcementLevelEnum.DEFAULT; return it}
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(caller.id) >> caller
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
@@ -232,18 +232,17 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
     @Unroll
     def "updateMultiFactorDomainSettings() - Should #callerUserIdentityRoleType be able to change own domain when user MFA enforcement level set to #userEnforcementLevel? #allowed"() {
         User caller = entityFactory.createUser().with{it.id = "caller"; it.userMultiFactorEnforcementLevel = userEnforcementLevel; return it}
-        ClientRole callerRole = entityFactory.createClientRole(callerUserIdentityRoleType.name())
 
         UserScopeAccess callerToken = entityFactory.createUserToken()
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
 
         MultiFactorDomain settings = v2Factory.createMultiFactorDomainSettings()
 
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken.accessTokenString) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
-        applicationService.getUserIdentityRole(caller) >> callerRole
-        authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
-        1 * authorizationService.verifyUserManagedLevelAccess(callerUserIdentityRoleType) >>  {if (!roleIsUserManagerOrHigher) throw new ForbiddenException()}
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(callerToken.accessTokenString) >> callerToken
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        requestContext.getEffectiveCaller() >> caller
+        1 * requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER) >>  {if (!roleIsUserManagerOrHigher) throw new ForbiddenException()}
 
         def capturedException
         exceptionHandler.exceptionResponse(_) >> {args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN)}
@@ -288,18 +287,15 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
     @Unroll
     def "updateMultiFactorDomainSettings() - Should #callerUserIdentityRoleType be able to change OTHER domain when user MFA enforcement level set to #userEnforcementLevel? #allowed"() {
         User caller = entityFactory.createUser().with{it.id = "caller"; it.userMultiFactorEnforcementLevel = userEnforcementLevel; return it}
-        ClientRole callerRole = entityFactory.createClientRole(callerUserIdentityRoleType.name())
 
         UserScopeAccess callerToken = entityFactory.createUserToken()
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
 
         MultiFactorDomain settings = v2Factory.createMultiFactorDomainSettings()
 
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken.accessTokenString) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
-        applicationService.getUserIdentityRole(caller) >> callerRole
-        authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> callerUserIdentityRoleType
-        1 * authorizationService.verifyUserManagedLevelAccess(callerUserIdentityRoleType) >>  {if (!roleIsUserManagerOrHigher) throw new ForbiddenException()}
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(callerToken.accessTokenString) >> callerToken
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER) >>  {if (!roleIsUserManagerOrHigher) throw new ForbiddenException()}
 
         def capturedException
         exceptionHandler.exceptionResponse(_) >> {args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN)}
@@ -345,8 +341,8 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         given:
         BaseUser caller = entityFactory.createFederatedUser().with { it.id = "caller"; return it }
         ScopeAccess callerToken = entityFactory.createFederatedToken()
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         requestContextHolder.checkAndGetTargetUser(caller.id) >> { throw new NotFoundException() }
         exceptionHandler.exceptionResponse(_ as NotFoundException) >> Response.status(HttpServletResponse.SC_NOT_FOUND)
 
@@ -370,7 +366,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
             it.id = RandomStringUtils.randomAlphanumeric(8)
             it
         }
-        userService.getUserByScopeAccess(_) >> caller
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         requestContextHolder.checkAndGetTargetUser(userId) >> user
         def otpDevice = new com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice().with {
             it.name = deviceName
@@ -401,9 +397,9 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         service.listOTPDevicesForUser(null, callerToken.accessTokenString, targetUser.id)
 
         then:
-        1 * securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken //validates caller provided token
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) //validates caller provided token
         1 * userService.checkUserDisabled(caller) //validates caller user state
-        1 * requestContext.getEffectiveCaller() >> caller
+        2 * requestContext.getEffectiveCaller() >> caller
         1 * requestContextHolder.checkAndGetTargetUser(targetUser.id) >> targetUser
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, targetUser)
     }
@@ -418,12 +414,12 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         service.listOTPDevicesForUser(null, callerToken.accessTokenString, targetUser.id)
 
         then:
-        1 * securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken //validates caller provided token
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) //validates caller provided token
         1 * userService.checkUserDisabled(caller) //validates caller user state
-        1 * requestContext.getEffectiveCaller() >> caller
+        2 * requestContext.getEffectiveCaller() >> caller
         1 * requestContextHolder.checkAndGetTargetUser(targetUser.id) >> targetUser
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, targetUser)
-        1 * authorizationService.authorizeCloudUserAdmin(callerToken) >> true
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
         1 * authorizationService.verifyDomain(caller, targetUser)
     }
 
@@ -436,9 +432,9 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         service.listOTPDevicesForUser(null, callerToken.accessTokenString, caller.id)
 
         then:
-        1 * securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken //validates caller provided token
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) //validates caller provided token
         1 * userService.checkUserDisabled(caller) //validates caller user state
-        1 * requestContext.getEffectiveCaller() >> caller
+        2 * requestContext.getEffectiveCaller() >> caller
         0 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, _)
         0 * authorizationService.authorizeCloudUserAdmin(callerToken)
         0 * authorizationService.verifyDomain(caller, _)
@@ -473,15 +469,13 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         uriBuilder.path(_) >> uriBuilder
         uriBuilder.build() >> uri
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(caller.id) >> caller
         requestContextHolder.checkAndGetTargetUser(user.id) >> user
+        requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
 
-        if (allowed) {
-            authorizationService.authorizeCloudUserAdmin(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_ADMIN)
-            authorizationService.authorizeUserManageRole(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_MANAGER)
-        } else {
+        if (!allowed) {
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> {throw new ForbiddenException()}
         }
 
@@ -562,17 +556,15 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         uriBuilder.path(_) >> uriBuilder
         uriBuilder.build() >> uri
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(caller.id) >> caller
         requestContextHolder.checkAndGetTargetUser(user.id) >> user
+        requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
 
         multiFactorService.addOTPDeviceToUser(user.id, device.getName()) >> entity
 
-        if (allowed) {
-            authorizationService.authorizeCloudUserAdmin(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_ADMIN)
-            authorizationService.authorizeUserManageRole(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_MANAGER)
-        } else {
+        if (!allowed) {
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> {throw new ForbiddenException()}
         }
 
@@ -640,8 +632,8 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         VerificationCode code = new VerificationCode()
         code.setCode("123")
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(caller.id) >> caller
         requestContextHolder.checkAndGetTargetUser(user.id) >> user
 
@@ -690,12 +682,10 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         uriBuilder.path(_) >> uriBuilder
         uriBuilder.build() >> uri
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
         requestContext.getEffectiveCaller() >> caller
         requestContextHolder.getAndCheckTargetEndUser(user.id) >> user
-
-        authorizationService.authorizeCloudUserAdmin(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_ADMIN)
-        authorizationService.authorizeUserManageRole(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_MANAGER)
+        requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
 
         when:
         service.deletePhoneFromUser(uriInfo, callerToken.accessTokenString, user.id, "blah")
@@ -734,9 +724,10 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         uriBuilder.path(_) >> uriBuilder
         uriBuilder.build() >> uri
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
         requestContext.getEffectiveCaller() >> caller
         requestContextHolder.getAndCheckTargetEndUser(user.id) >> user
+        requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
 
         when:
         service.deletePhoneFromUser(uriInfo, callerToken.accessTokenString, user.id, "blah")
@@ -771,12 +762,10 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         uriBuilder.path(_) >> uriBuilder
         uriBuilder.build() >> uri
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
         requestContext.getEffectiveCaller() >> caller
         requestContextHolder.getAndCheckTargetEndUser(user.id) >> user
-
-        authorizationService.authorizeCloudUserAdmin(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_ADMIN)
-        authorizationService.authorizeUserManageRole(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_MANAGER)
+        requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
 
         when:
         service.getPhoneFromUser(uriInfo, callerToken.accessTokenString, user.id, "blah")

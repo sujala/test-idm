@@ -86,8 +86,8 @@ class RestrictUnverifiedUsersTest extends RootServiceTest {
         MultiFactor settings = v2Factory.createMultiFactorSettings()
         settings.setUnlock(true)
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(target.id) >> target
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> IdentityUserTypeEnum.DEFAULT_USER
@@ -109,8 +109,8 @@ class RestrictUnverifiedUsersTest extends RootServiceTest {
         MultiFactor settings = v2Factory.createMultiFactorSettings()
         settings.setEnabled(true)
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(target.id) >> target
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> IdentityUserTypeEnum.DEFAULT_USER
@@ -132,8 +132,8 @@ class RestrictUnverifiedUsersTest extends RootServiceTest {
         MultiFactor settings = new MultiFactor()
         settings.setUserMultiFactorEnforcementLevel(UserMultiFactorEnforcementLevelEnum.DEFAULT)
 
-        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
-        userService.getUserByScopeAccess(callerToken) >> caller
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(target.id) >> target
         applicationService.getUserIdentityRole(caller) >> callerRole
         authorizationService.getIdentityTypeRoleAsEnum(callerRole) >> IdentityUserTypeEnum.SERVICE_ADMIN

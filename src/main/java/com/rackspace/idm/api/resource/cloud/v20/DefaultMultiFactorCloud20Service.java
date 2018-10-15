@@ -144,10 +144,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         return caller.getId().equals(user.getId());
     }
 
-    private void verifyAccessToOtherUser(ScopeAccess token, BaseUser requester, BaseUser user) {
+    private void verifyEffectiveCallerAccessToTargetUser(BaseUser user) {
+        BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
         if (!isSelfCall(requester, user)) {
             precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
-            if (authorizationService.authorizeCloudUserAdmin(token) || authorizationService.authorizeUserManageRole(token)) {
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            if (callerType == IdentityUserTypeEnum.USER_ADMIN || callerType == IdentityUserTypeEnum.USER_MANAGER) {
                 authorizationService.verifyDomain(requester, user);
             }
         }
@@ -156,13 +158,13 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            BaseUser requester = userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             User user = requestContextHolder.checkAndGetTargetUser(userId);
             Validator20.validateItsNotUnverifiedUser(user);
 
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
             validateAddPhoneToUserRequest(user, requestMobilePhone);
             Phonenumber.PhoneNumber phoneNumber = parseRequestPhoneNumber(requestMobilePhone.getNumber());
 
@@ -183,7 +185,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder getPhoneFromUser(UriInfo uriInfo, String authToken, String userId, String mobilePhoneId) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             // Verify if the user is valid
@@ -198,7 +200,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 throw new BadRequestException("Federated users do not store multi-factor information within Identity");
             }
             User user = (User) endUser;
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             MobilePhone phone = multiFactorService.checkAndGetMobilePhoneFromUser(user, mobilePhoneId);
             return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhoneWebIncludingVerifiedFlag(phone, user));
@@ -213,7 +215,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder deletePhoneFromUser(UriInfo uriInfo, String authToken, String userId, String mobilePhoneId) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             // Verify if the user is valid
@@ -228,7 +230,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 throw new BadRequestException("Federated users do not store multi-factor information within Identity");
             }
             User user = (User) endUser;
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             multiFactorService.deleteMobilePhoneFromUser(user, mobilePhoneId);
             return Response.status(Response.Status.NO_CONTENT);
@@ -246,11 +248,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder sendVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            BaseUser requester = userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
             User user = requestContextHolder.checkAndGetTargetUser(userId);
 
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             validateSendVerificationCodeRequest(deviceId);
             multiFactorService.sendVerificationPin(userId, deviceId);
@@ -272,10 +275,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder verifyVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId, VerificationCode verificationCode) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            BaseUser requester = userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
             User user = requestContextHolder.checkAndGetTargetUser(userId);
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
             validateVerifyVerificationCodeRequest(user, deviceId, verificationCode);
             multiFactorService.verifyPhoneForUser(userId, deviceId, new BasicPin(verificationCode.getCode()));
             return Response.status(Response.Status.NO_CONTENT);
@@ -295,11 +299,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder updateMultiFactorSettings(UriInfo uriInfo, String authToken, String userId, MultiFactor multiFactor) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken); //will throw NotAuthorizedException if not found or expired
-            BaseUser requester = userService.getUserByScopeAccess(token); //will throw NotFoundException if not found
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken); //will throw NotAuthorizedException if not found or expired
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled(); //will throw NotFoundException if not found
             User user = requestContextHolder.checkAndGetTargetUser(userId); //will throw NotFoundException if not found
 
-            validateUpdateMultiFactorSettingsRequest(requester, token, user, multiFactor);
+            validateUpdateMultiFactorSettingsRequest(user, multiFactor);
             multiFactorService.updateMultiFactorSettings(userId, multiFactor);
             return Response.status(Response.Status.NO_CONTENT);
         } catch (IllegalStateException ex) {
@@ -313,11 +317,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder deleteMultiFactor(UriInfo uriInfo, String authToken, String userId) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            User requester = (User) userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             User user = requestContextHolder.checkAndGetTargetUser(userId);
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             multiFactorService.removeMultiFactorForUser(userId);
             return Response.status(Response.Status.NO_CONTENT);
@@ -513,13 +517,14 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder listMobilePhoneDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            BaseUser requester = userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
             EndUser user = requestContextHolder.getAndCheckTargetEndUser(userId);
             if (user instanceof FederatedUser) {
                 throw new ForbiddenException("Cannot target federated user");
             }
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             List<MobilePhone> phoneList = multiFactorService.getMobilePhonesForUser((User)user);
             return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWebIncludingVerifiedFlag(phoneList, (User)user));
@@ -535,11 +540,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder generateBypassCodes(UriInfo uriInfo, String authToken, String userId, BypassCodes bypassCodes) {
         try {
-            final User user = (User)requestContextHolder.checkAndGetTargetUser(userId);
-            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            final BaseUser requester = userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            final BaseUser requester = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            validateGenerateBypassCodesRequest(user, token, requester);
+            final User user = requestContextHolder.checkAndGetTargetUser(userId);
+
+            validateGenerateBypassCodesRequest(user);
             final boolean isSelfService = isSelfCall(requester, user) && !requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest();
 
             final Integer validSecs = getValidSecs(bypassCodes.getValidityDuration(), isSelfService);
@@ -572,12 +578,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             }
 
             //get the token
-            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
             /*
             this throws a NotFoundException (token not found) if the associated user or domain is disabled.
              */
-            final BaseUser requester = userService.getUserByScopeAccess(token);
+            final BaseUser requester = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             User caller;
             if (requester instanceof User) {
@@ -587,9 +593,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             }
 
             // Verify user level
-            ClientRole requesterIdentityClientRole = applicationService.getUserIdentityRole(caller);
-            IdentityUserTypeEnum requesterIdentityRole = authorizationService.getIdentityTypeRoleAsEnum(requesterIdentityClientRole);
-            authorizationService.verifyUserManagedLevelAccess(requesterIdentityRole);
+            IdentityUserTypeEnum requesterIdentityRole = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
 
             //if necessary, verify domain being changed is appropriate for user
             if (requesterIdentityRole.isDomainBasedAccessLevel() && (caller.getDomainId() == null || !caller.getDomainId().equalsIgnoreCase(domainId))) {
@@ -618,8 +623,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder addOTPDeviceToUser(UriInfo uriInfo, String authToken, String userId, OTPDevice otpDevice) {
         try {
-            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            final BaseUser requester = userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             final User user = requestContextHolder.checkAndGetTargetUser(userId);
             Validator20.validateItsNotUnverifiedUser(user);
@@ -628,7 +633,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 throw new BadRequestException(BAD_REQUEST_MSG_INVALID_OTP_DEVICE_NAME);
             }
 
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             final com.rackspace.idm.domain.entity.OTPDevice entity = multiFactorService.addOTPDeviceToUser(userId, otpDevice.getName());
 
@@ -648,12 +653,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder listOTPDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
             userService.checkUserDisabled(requester); //must verify user/domain is enabled
             User user = requestContextHolder.checkAndGetTargetUser(userId);
 
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             List<com.rackspace.idm.domain.entity.OTPDevice> otpList = multiFactorService.getOTPDevicesForUser(user);
             return Response.ok().entity(otpDeviceConverterCloudV20.toOTPDevicesForWeb(otpList));
@@ -668,10 +673,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder getOTPDeviceFromUser(UriInfo uriInfo, String authToken, String userId, String deviceId) {
         try {
-            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            final BaseUser requester = userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             User user = requestContextHolder.checkAndGetTargetUser(userId);
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             final com.rackspace.idm.domain.entity.OTPDevice entity = multiFactorService.checkAndGetOTPDeviceFromUserById(userId, deviceId);
             return Response.ok().entity(otpDeviceConverterCloudV20.toOTPDeviceForWeb(entity));
@@ -686,10 +691,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder deleteOTPDeviceFromUser(UriInfo uriInfo, String authToken, String userId, String deviceId) {
         try {
-            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            final BaseUser requester = userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             User user = requestContextHolder.checkAndGetTargetUser(userId);
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
             multiFactorService.deleteOTPDeviceForUser(userId, deviceId);
             return Response.status(Response.Status.NO_CONTENT);
         } catch (Exception ex) {
@@ -706,10 +711,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder verifyOTPCode(String authToken, String userId, String deviceId, VerificationCode verificationCode) {
         try {
-            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            final BaseUser requester = userService.getUserByScopeAccess(token);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             final User user = requestContextHolder.checkAndGetTargetUser(userId);
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             validateVerifyRequest(deviceId, verificationCode);
             multiFactorService.verifyOTPDeviceForUserById(userId, deviceId, verificationCode.getCode());
@@ -730,12 +735,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder listMultiFactorDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
             userService.checkUserDisabled(requester); //must verify caller user/domain is enabled
             User user = requestContextHolder.checkAndGetTargetUser(userId);
 
-            verifyAccessToOtherUser(token, requester, user);
+            verifyEffectiveCallerAccessToTargetUser(user);
 
             List<MultiFactorDevice> deviceList = multiFactorService.getMultiFactorDevicesForUser(user);
             return Response.ok().entity(multiFactorDeviceConverterCloudV20.toMultiFactorDevicesForWeb(deviceList, user));
@@ -749,15 +754,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     /**
      * Validates the 3 types of update settings on a user.
-     *
-     * @param requester
-     * @param token
      * @param targetUser
      * @param multiFactor
      */
-    private void validateUpdateMultiFactorSettingsRequest(BaseUser requester, ScopeAccess token, User targetUser, MultiFactor multiFactor) {
-        Validate.notNull(requester);
-        Validate.notNull(token);
+    private void validateUpdateMultiFactorSettingsRequest(User targetUser, MultiFactor multiFactor) {
         Validate.notNull(targetUser);
 
         if (multiFactor == null) {
@@ -771,31 +771,32 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         boolean isUserEnforcementLevelRequest = multiFactor.getUserMultiFactorEnforcementLevel() != null;
 
         if (isUserUnlockRequest) {
-            validateUnlockMfaRequest(requester, token, targetUser, multiFactor);
+            validateUnlockMfaRequest(targetUser, multiFactor);
         }
 
         if (isUserMfaEnableRequest) {
-            validateModifyUserMfaEnablement(requester, token, targetUser);
+            validateModifyUserMfaEnablement(targetUser);
         }
 
         if (isUserEnforcementLevelRequest) {
-            validateUpdateUserEnforcementLevelRequest(requester, targetUser);
+            validateUpdateUserEnforcementLevelRequest(targetUser);
         }
     }
 
-    private void validateModifyUserMfaEnablement(BaseUser requester, ScopeAccess token, User targetUser) {
+    private void validateModifyUserMfaEnablement(User targetUser) {
         //Can not perform this action on unverified users
         Validator20.validateItsNotUnverifiedUser(targetUser);
-        verifyAccessToOtherUser(token, requester, targetUser);
+        verifyEffectiveCallerAccessToTargetUser(targetUser);
     }
 
-    private void validateUnlockMfaRequest(BaseUser requester, ScopeAccess token, User targetUser, MultiFactor multiFactor) {
+    private void validateUnlockMfaRequest(User targetUser, MultiFactor multiFactor) {
         //first verify precedence over user if not a self call
-        verifyAccessToOtherUser(token, requester, targetUser);
+        verifyEffectiveCallerAccessToTargetUser(targetUser);
 
         //Can not perform this action on unverified users
         Validator20.validateItsNotUnverifiedUser(targetUser);
 
+        BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
         //Can not perform action on self
         if (multiFactor.isUnlock()) {
             if (requester.getId().equals(targetUser.getId())) {
@@ -805,7 +806,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
-    private void validateUpdateUserEnforcementLevelRequest(BaseUser requester, User targetUser) {
+    private void validateUpdateUserEnforcementLevelRequest(User targetUser) {
+        BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
         EndUser caller;
         if (requester instanceof EndUser) {
             caller = (EndUser) requester;
@@ -928,14 +930,15 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
-    private void validateGenerateBypassCodesRequest(User user, ScopeAccess token, BaseUser requester) {
+    private void validateGenerateBypassCodesRequest(User user) {
         if (user == null) {
             throw new BadRequestException(BAD_REQUEST_MSG_INVALID_USER);
         }
 
+        BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
         if (!isSelfCall(requester, user)) {
-            authorizationService.verifyUserManagedLevelAccess(token);
-            verifyAccessToOtherUser(token, requester, user);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
+            verifyEffectiveCallerAccessToTargetUser(user);
         }
 
         // Verify if the user is valid
