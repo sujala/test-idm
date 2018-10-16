@@ -264,6 +264,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
             group.id,
             user_group_id_list)
 
+    @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_users_in_user_group_with_query_params(self):
 

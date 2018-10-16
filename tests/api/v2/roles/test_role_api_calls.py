@@ -31,6 +31,10 @@ class TestRoleApiCalls(base.TestBaseV2):
     @unless_coverage
     def setUpClass(cls):
         super(TestRoleApiCalls, cls).setUpClass()
+        domain_id = cls.generate_random_string(pattern='[\d]{7}')
+        cls.user_admin_client = cls.generate_client(
+            parent_client=cls.identity_admin_client,
+            additional_input_data={'domain_id': domain_id})
 
     @unless_coverage
     def setUp(self):
@@ -39,6 +43,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.service_ids = []
         self.user_ids = []
         self.domain_ids = []
+        self.sub_user_ids = []
 
     def create_service(self):
         request_object = factory.get_add_service_object()
@@ -73,6 +78,15 @@ class TestRoleApiCalls(base.TestBaseV2):
         role_id = resp.json()[const.ROLE][const.ID]
         self.role_ids.append(role_id)
         return role_id
+
+    def create_default_user(self):
+        # create sub user to test
+        sub_username = "sub_" + self.generate_random_string()
+        request_object = requests.UserAdd(sub_username)
+        resp = self.user_admin_client.add_user(request_object=request_object)
+        sub_user_id = resp.json()[const.USER][const.ID]
+        self.sub_user_ids.append(sub_user_id)
+        return sub_user_id
 
     @unless_coverage
     @ddt.file_data('data_add_role.json')
@@ -159,6 +173,28 @@ class TestRoleApiCalls(base.TestBaseV2):
             self.assertLessEqual(len(resp.json()[const.ROLES]),
                                  option['limit'])
 
+    @tags('negative', 'p1', 'regression')
+    def test_list_roles_by_name_and_negative_limit(self):
+        """Verify limit must not be negative
+        """
+        role_name = self.generate_random_string(
+            pattern=const.ROLE_NAME_PATTERN)
+
+        requests_object = requests.RoleAdd(role_name=role_name)
+        resp = self.identity_admin_client.add_role(
+            request_object=requests_object)
+
+        self.assertEqual(resp.status_code, 201)
+        role_id = resp.json()[const.ROLE][const.ID]
+        self.role_ids.append(role_id)
+
+        resp = self.identity_admin_client.list_roles(
+                option={'roleName': role_name, 'limit': -10})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(
+            resp.json()[const.BAD_REQUEST][const.MESSAGE],
+            "Limit must be non negative")
+
     @tags('positive', 'p1', 'smoke')
     @attr(type='smoke_alpha')
     def test_get_roles_for_identity_admin(self):
@@ -182,6 +218,53 @@ class TestRoleApiCalls(base.TestBaseV2):
         """
         role_id = self.create_role()
         user_id = self.create_admin_user()
+
+        # add role to user
+        resp = self.identity_admin_client.add_role_to_user(
+            role_id=role_id, user_id=user_id)
+        self.assertEqual(resp.status_code, 200)
+
+        # verify get roles for user
+        resp = self.identity_admin_client.list_roles_for_user(
+            user_id=user_id
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(role_id, str(resp.json()[const.ROLES]))
+
+        # Delete role from user
+        resp = self.identity_admin_client.delete_role_from_user(
+            role_id=role_id, user_id=user_id
+        )
+        self.assertEqual(resp.status_code, 204)
+
+        # verify role is removed from list
+        resp = self.identity_admin_client.list_roles_for_user(
+            user_id=user_id
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn(role_id, str(resp.json()[const.ROLES]))
+
+    @tags('positive', 'p1', 'regression')
+    def test_add_and_delete_role_from_default_user(self):
+        """
+        Test Add role to Default User and Delete role from user
+        """
+        role_name = self.generate_random_string(
+            pattern=const.ROLE_NAME_PATTERN)
+
+        # create role with propagate=false
+        requests_object = requests.RoleAdd(
+            role_name=role_name,
+            administrator_role=const.USER_MANAGE_ROLE_NAME,
+            propagate=False)
+        resp = self.identity_admin_client.add_role(
+            request_object=requests_object)
+
+        self.assertEqual(resp.status_code, 201)
+        role_id = resp.json()[const.ROLE][const.ID]
+
+        # create default user
+        user_id = self.create_default_user()
 
         # add role to user
         resp = self.identity_admin_client.add_role_to_user(
@@ -264,6 +347,11 @@ class TestRoleApiCalls(base.TestBaseV2):
     @base.base.log_tearDown_error
     @unless_coverage
     def tearDown(self):
+        for id_ in self.sub_user_ids:
+            resp = self.identity_admin_client.delete_user(user_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(id_))
         for id_ in self.user_ids:
             resp = self.identity_admin_client.delete_user(user_id=id_)
             self.assertEqual(

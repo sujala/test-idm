@@ -19,6 +19,8 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
+import testHelpers.IdmAssert
+import org.openstack.docs.identity.api.v2.BadRequestFault
 
 import javax.ws.rs.core.MediaType
 
@@ -522,12 +524,14 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         utils.deleteService(service)
     }
 
-    def "list roles returns 400 when you query with serviceId and roleId together"() {
+    def "list roles returns 400 when you query with serviceId and roleName together"() {
         when:
         def response = cloud20.listRoles(utils.getServiceAdminToken(), IDENTITY_SERVICE_ID, null, null, "roleName")
 
         then:
         response.status == 400
+        String errMsg = "Cannot specify serviceId and roleName together"
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, errMsg)
     }
 
     @Unroll
