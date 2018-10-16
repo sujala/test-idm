@@ -141,15 +141,17 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "question create verifies Identity admin level access and adds Question"() {
         given:
         mockQuestionConverter(service)
-        allowUserAccess()
 
         when:
         def response = service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion()).build()
 
         then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-        1 * questionService.addQuestion(_) >> "questionId"
         response.getStatus() == 201
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * questionService.addQuestion(_) >> "questionId"
         response.getMetadata().get("location")[0] != null
     }
 
@@ -157,131 +159,183 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
-
-        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
-
-        questionService.addQuestion(_) >> { throw new BadRequestException() }
-
         when:
         def response1 = service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
-        def response2 = service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
-        def response3 = service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
 
         then:
         response1.build().status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
+        0 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+
+        when:
+        def response2 = service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
+
+        then:
         response2.build().status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN) >> {throw new ForbiddenException()}
+
+        when:
+        def response3 = service.addQuestion(uriInfo(), authToken, entityFactory.createJAXBQuestion())
+
+        then:
         response3.build().status == 400
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * questionService.addQuestion(_) >> {throw new BadRequestException()}
     }
 
     def "question delete verifies Identity admin level access and deletes question"() {
         given:
         mockQuestionConverter(service)
-        allowUserAccess()
 
         when:
         def response = service.deleteQuestion(authToken, questionId).build()
 
         then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-        1 * questionService.deleteQuestion(questionId)
-
         response.getStatus() == 204
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * questionService.deleteQuestion(questionId)
     }
 
     def "question delete handles exceptions"() {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
-        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
-        questionService.deleteQuestion(questionId) >> { throw new NotFoundException() }
-
-        questionService.deleteQuestion(questionId) >> { throw new NotFoundException() }
-
         when:
         def response1 = service.deleteQuestion(authToken, questionId).build()
-        def response2 = service.deleteQuestion(authToken, questionId).build()
-        def response3 = service.deleteQuestion(authToken, questionId).build()
 
         then:
         response1.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
+        0 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+
+        when:
+        def response2 = service.deleteQuestion(authToken, questionId).build()
+
+        then:
         response2.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN) >> {throw new ForbiddenException()}
+
+        when:
+        def response3 = service.deleteQuestion(authToken, questionId).build()
+
+        then:
         response3.status == 404
 
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * questionService.deleteQuestion(questionId) >> { throw new NotFoundException() }
     }
 
     def "question update verifies Identity admin level access"() {
         given:
         mockQuestionConverter(service)
-        allowUserAccess()
 
         when:
         def response = service.updateQuestion(authToken, questionId, entityFactory.createJAXBQuestion())
 
         then:
-        1 *  authorizationService.verifyIdentityAdminLevelAccess(_)
         response.build().status == 204
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
     def "question update updates question"() {
         given:
         mockQuestionConverter(service)
-        allowUserAccess()
 
         when:
         def response = service.updateQuestion(authToken, questionId, entityFactory.createJAXBQuestion()).build()
 
         then:
-        1 * questionService.updateQuestion(questionId, _)
         response.status == 204
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * questionService.updateQuestion(questionId, _)
     }
 
     def "question update handles exceptions"() {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
-
-        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
-
-
-        questionService.updateQuestion(sharedRandom, _) >> { throw new BadRequestException() }
-        questionService.updateQuestion("1$sharedRandom", _) >> { throw new NotFoundException() }
-
         when:
         def response1 = service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
-        def response2 = service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
-        def response3 = service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
-        def response4 = service.updateQuestion(authToken, "1$sharedRandom", entityFactory.createJAXBQuestion())
 
         then:
         response1.build().status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
+        0 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+
+        when:
+        def response2 = service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
+
+        then:
         response2.build().status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN) >> {throw new ForbiddenException()}
+
+        when:
+        def response3 = service.updateQuestion(authToken, sharedRandom, entityFactory.createJAXBQuestion())
+
+        then:
         response3.build().status == 400
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * questionService.updateQuestion(sharedRandom, _) >> {throw new BadRequestException()}
+
+        when:
+        def response4 = service.updateQuestion(authToken, "1$sharedRandom", entityFactory.createJAXBQuestion())
+
+        then:
         response4.build().status == 404
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * questionService.updateQuestion("1$sharedRandom", _) >> { throw new NotFoundException() }
     }
 
     def "question(s) get verifies user level access"() {
         given:
         mockQuestionConverter(service)
-        allowUserAccess()
 
         when:
         service.getQuestion(authToken, questionId)
         service.getQuestions(authToken)
 
         then:
-        2 * authorizationService.verifyUserLevelAccess(_)
+        2 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
     }
 
     def "question(s) get gets question and returns it (them)"() {
         given:
         mockQuestionConverter(service)
-        allowUserAccess()
 
         def questionList = [
                 entityFactory.createQuestion("1", "question1"),
@@ -322,38 +376,63 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockQuestionConverter(service)
 
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(authToken) >>> [ null, mock, Mock(ScopeAccess) ]
-        authorizationService.verifyUserLevelAccess(mock) >> { throw new ForbiddenException() }
-        questionService.getQuestion("1$questionId") >> {throw new NotFoundException() }
-
         when:
         def questionResponse1 = service.getQuestion(authToken, questionId).build()
-        def questionResponse2 = service.getQuestion(authToken, questionId).build()
-        def questionResponse3 = service.getQuestion(authToken, "1$questionId").build()
 
         then:
         questionResponse1.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
+        0 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        0 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+
+        when:
+        def questionResponse2 = service.getQuestion(authToken, questionId).build()
+
+        then:
         questionResponse2.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER) >> {throw new ForbiddenException()}
+
+        when:
+        def questionResponse3 = service.getQuestion(authToken, "1$questionId").build()
+
+        then:
         questionResponse3.status == 404
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * questionService.getQuestion("1$questionId") >> {throw new NotFoundException()}
     }
 
     def "questions get handles exceptions"() {
-        given:
-        mockQuestionConverter(service)
-
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken("1$authToken") >>> [ null, mock ]
-        authorizationService.verifyUserLevelAccess(mock) >> { throw new ForbiddenException() }
-        questionService.getQuestion("1$questionId") >> {throw new NotFoundException() }
-
         when:
-        def questionsResponse1 = service.getQuestions("1$authToken").build()
-        def questionsResponse2 = service.getQuestions("1$authToken").build()
+        def questionsResponse1 = service.getQuestions(authToken).build()
 
         then:
         questionsResponse1.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
+        0 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        0 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+
+        when:
+        def questionsResponse2 = service.getQuestions(authToken).build()
+
+        then:
         questionsResponse2.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER) >> {throw new ForbiddenException()}
     }
 
     def "assignRoleToUser provisions role and adds role to user"() {
@@ -793,80 +872,72 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     def "deleteUserRole verifies userAdmin level access"() {
-        given:
-        allowUserAccess()
-
         when:
         service.deleteUserRole(headers, authToken, userId, roleId)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
     }
 
     def "deleteUserRole verifies user to modify is within callers domain when caller is user-admin"() {
         given:
-        allowUserAccess()
-
         def user = entityFactory.createUser()
         def caller = Mock(User)
-
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> true
 
         when:
         service.deleteUserRole(headers, authToken, userId, roleId)
 
         then:
-        1 * caller.getDomainId() >> user.getDomainId()
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
     }
 
     def "deleteUserRole gets users globalRoles"() {
         given:
-        allowUserAccess()
-
         def user = entityFactory.createUser()
         user.id = "someotherid"
         def caller = entityFactory.createUser()
 
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-
         when:
-        service.deleteUserRole(headers, authToken, userId, roleId)
+        service.deleteUserRole(headers, authToken, user.id, roleId)
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         1 * tenantService.getGlobalRolesForUser(user) >> [ entityFactory.createTenantRole("name") ].asList()
 
     }
 
-    def "deleteUserRole prevents a user from deleting their own identity:* role"() {
+    def "deleteUserRole prevents a user from deleting their own role"() {
         given:
-        allowUserAccess()
-
         def user = entityFactory.createUser()
-        def tenantRole = entityFactory.createTenantRole("identity:serviceAdmin").with {
-            it.roleRsId = roleId
-            return it
-        }
-
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> user
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-
-        tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
 
         when:
-        def response = service.deleteUserRole(headers, authToken, userId, roleId).build()
+        def response = service.deleteUserRole(headers, authToken, user.id, roleId).build()
 
         then:
         response.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCaller() >> user
+        1 * userService.checkAndGetUserById(user.id) >> user
     }
 
     def "deleteUserRole verifies callers precedence over user and role to be deleted"() {
         given:
-        allowUserAccess()
         def tenantRole = entityFactory.createTenantRole("name").with {
             it.roleRsId = roleId
             return it
@@ -874,24 +945,25 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def user = entityFactory.createUser()
         user.id = "differentid"
-
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> entityFactory.createUser()
-
-        tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
+        def caller = entityFactory.createUser()
 
         when:
-        service.deleteUserRole(headers, authToken, userId, roleId)
+        service.deleteUserRole(headers, authToken, user.id, roleId)
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        1 * tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
         1 * precedenceValidator.verifyCallerRolePrecedence(_, _)
     }
 
     def "deleteUserRole deletes role"() {
         given:
-        allowUserAccess()
-
         def tenantRole = entityFactory.createTenantRole().with {
             it.roleRsId = roleId
             return it
@@ -899,65 +971,80 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def user = entityFactory.createUser()
         user.id = "differentid"
-
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> entityFactory.createUser()
-
-        tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
+        def caller = entityFactory.createUser()
 
         when:
-        def response = service.deleteUserRole(headers, authToken, userId, roleId).build()
+        def response = service.deleteUserRole(headers, authToken, user.id, roleId).build()
 
         then:
-        1 * tenantService.deleteTenantRoleForUser(_, _)
         response.status == 204
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        1 * tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
+        1 * precedenceValidator.verifyCallerRolePrecedence(_, _)
+        1 * tenantService.deleteTenantRoleForUser(_, _)
     }
 
     def "deleteUserRole handles exceptions"() {
         given:
-        def mockedScopeAccess = Mock(ScopeAccess)
-        def user1 = entityFactory.createUser()
-        user1.id = "someotherid"
-        def user2 = entityFactory.createUser("user2", null, "domain2", "region")
-        def user3 = entityFactory.createUser()
-        user3.id = "someotherid"
-        def caller1 = entityFactory.createUser()
-        def caller2 = entityFactory.createUser("caller2", null, "domain", "region")
-        def caller3 = user3
+        def user = entityFactory.createUser()
+        user.id = "someotherid"
+        def caller = entityFactory.createUser()
         def tenantRole = entityFactory.createTenantRole("identity:role").with {
             it.roleRsId = roleId
             return it
         }
 
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mockedScopeAccess ] >> Mock(ScopeAccess)
-        authorizationService.verifyUserManagedLevelAccess(mockedScopeAccess) >> { throw new ForbiddenException() }
-        userService.checkAndGetUserById("1$userId") >> { throw new NotFoundException() }
-
-        userService.checkAndGetUserById(_) >>> [ user2, user1, user3 ]
-        userService.getUserByAuthToken(_) >>> [ caller2, caller1, caller3 ]
-
-        authorizationService.authorizeCloudUserAdmin(_) >> [ true ] >> false
-
-        tenantService.getGlobalRolesForUser(_) >>> [
-                [].asList(),
-                [ tenantRole ].asList()
-        ]
-
         when:
         def response1 = service.deleteUserRole(headers, authToken, userId, roleId).build()
-        def response2 = service.deleteUserRole(headers, authToken, userId, roleId).build()
-        def response3 = service.deleteUserRole(headers, authToken, "1$userId", roleId).build()
-        def response4 = service.deleteUserRole(headers, authToken, userId, roleId).build()
-        def response5 = service.deleteUserRole(headers, authToken, userId, roleId).build()
-        def response6 = service.deleteUserRole(headers, authToken, userId, roleId).build()
 
         then:
         response1.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
+
+        when:
+        def response2 = service.deleteUserRole(headers, authToken, userId, roleId).build()
+
+        then:
         response2.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER) >> {throw new ForbiddenException()}
+
+        when:
+        def response3 = service.deleteUserRole(headers, authToken, "1$userId", roleId).build()
+
+        then:
         response3.status == 404
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.checkAndGetUserById(_) >> {throw new NotFoundException()}
+
+        when:
+        def response4 = service.deleteUserRole(headers, authToken, userId, roleId).build()
+
+        then:
         response4.status == 403
-        response5.status == 404
-        response6.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        1 * tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> {throw new ForbiddenException()}
     }
 
 
@@ -1722,7 +1809,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addDomain(authToken, uriInfo(), v1Factory.createDomain())
 
         then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
 
@@ -3713,9 +3800,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.deleteUser(headers, authToken, "userId")
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * identityUserService.checkAndGetUserById(_) >> user
-        1 * authorizationService.hasUserAdminRole(user) >> true
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.USER_ADMIN
         1 * domainService.removeDomainUserAdminDN(user)
         1 * identityUserService.deleteUser(_)
     }
@@ -3729,9 +3819,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.deleteUser(headers, authToken, "userId")
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * identityUserService.checkAndGetUserById(_) >> user
-        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
         1 * authorizationService.verifyDomain(_, _)
         1 * identityUserService.deleteUser(_)
     }
@@ -3745,11 +3838,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.deleteUser(headers, authToken, "userId")
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
-        1 * identityUserService.checkAndGetUserById(_) >> user
-        1 * authorizationService.authorizeUserManageRole(_) >> true
-        1 * authorizationService.hasUserManageRole(_) >> true
         result.build().status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * identityUserService.checkAndGetUserById(_) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.USER_MANAGER
     }
 
     @Unroll

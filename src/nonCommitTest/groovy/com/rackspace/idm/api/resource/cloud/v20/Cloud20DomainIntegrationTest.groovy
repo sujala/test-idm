@@ -18,20 +18,20 @@ import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
-import org.openstack.docs.identity.api.v2.*
+import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault
+import org.openstack.docs.identity.api.v2.Tenants
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
-import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.UriInfo
 import javax.xml.datatype.DatatypeFactory
 import java.time.Duration
 
 import static javax.servlet.http.HttpServletResponse.*
-import static org.mockito.Mockito.mock
 import static testHelpers.IdmAssert.*
 
 class Cloud20DomainIntegrationTest extends RootIntegrationTest {
@@ -278,7 +278,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         when:
         def tenant = v2Factory.createTenant(tenantName, tenantName)
-        cloud20Service.addTenant(mock(HttpHeaders), mock(UriInfo), token, tenant)
+        cloud20.addTenant(token, tenant)
         def result = tenantService.getTenantByName(tenantName)
         def defaultDomain = domainService.getDomain(defaultDomainId)
 

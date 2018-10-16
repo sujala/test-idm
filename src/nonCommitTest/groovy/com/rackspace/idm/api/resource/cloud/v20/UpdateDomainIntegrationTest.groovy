@@ -29,6 +29,7 @@ class UpdateDomainIntegrationTest extends RootServiceTest {
         mockScopeAccessService(service)
         mockUserService(service)
         mockDomainConverter(service)
+        mockRequestContextHolder(service)
 
         service.jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory() >> Mock(ObjectFactory)
     }

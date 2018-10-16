@@ -105,7 +105,6 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.DatatypeFactory;
-import javax.xml.namespace.QName;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
@@ -114,6 +113,9 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
@@ -406,7 +408,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
             CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(Integer.toString(endpoint.getId()));
@@ -670,8 +675,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
                                      org.openstack.docs.identity.api.v2.Tenant tenant) {
         try {
-            final ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
             if (StringUtils.isBlank(tenant.getName())) {
                 String errMsg = "Expecting name";
@@ -1219,7 +1226,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder grantRolesToUser(HttpHeaders httpHeaders, String authToken, String userId, RoleAssignments roleAssignments) {
         try {
             // Verify token is valid and user is enabled
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             // Verify caller has access to modify target user
@@ -1901,7 +1908,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId) {
         try {
             //verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             // Verify user has appropriate role
@@ -2530,8 +2537,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
+
             EndUser user = identityUserService.checkAndGetUserById(userId);
 
             if (!(user instanceof User) && !(user instanceof FederatedUser)) {
@@ -2541,24 +2551,22 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             //is same domain?
-            boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
-
-            if (callerIsUserAdmin || callerHasUserManageRole) {
-                User caller = userService.getUserByAuthToken(authToken);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            if (callerType.isDomainBasedAccessLevel()) {
                 authorizationService.verifyDomain(caller, user);
             }
 
-            boolean hasUserAdminRole = authorizationService.hasUserAdminRole(user);
-            if (hasUserAdminRole && userService.hasSubUsers(userId)) {
+            // NOTE: This logic will allow user-admins to self delete, but not user-managers.
+            IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(user);
+            if (userType == IdentityUserTypeEnum.USER_ADMIN && userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
             }
-            if(callerHasUserManageRole && authorizationService.hasUserManageRole(user)) {
+            if(callerType == IdentityUserTypeEnum.USER_MANAGER && userType == IdentityUserTypeEnum.USER_MANAGER) {
                 throw new NotAuthorizedException("Cannot delete user with same access level");
             }
             identityUserService.deleteUser(user);
 
-            if (user instanceof User && hasUserAdminRole) {
+            if (user instanceof User && userType == IdentityUserTypeEnum.USER_ADMIN) {
                 // Remove the userAdminDN on a provisioned user's domain is conditional whether the user is registered
                 // on the domain as the user-admin.
                 domainService.removeDomainUserAdminDN((User) user);
@@ -2664,21 +2672,21 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
+
+            User caller = (User) requestContextHolder.getRequestContext().getEffectiveCaller();
             User user = userService.checkAndGetUserById(userId);
-            User caller = userService.getUserByAuthToken(authToken);
 
             if (user.getId().equals(caller.getId())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) ||
-                    authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
-                if (!caller.getDomainId().equals(user.getDomainId())) {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
-                }
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            if (callerType.isDomainBasedAccessLevel()) {
+                authorizationService.verifyDomain(user, caller);
             }
 
             List<TenantRole> globalRoles = this.tenantService.getGlobalRolesForUser(user);
@@ -3413,11 +3421,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String roleName, Integer marker, Integer limit) {
         try {
-            authorizationService.verifyUserManagedLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
 
             PaginatorContext<ClientRole> context;
-            User caller = userService.getUserByAuthToken(authToken);
-            ClientRole userIdentityRole = applicationService.getUserIdentityRole(caller);
+            ClientRole userIdentityRole = applicationService.getUserIdentityRole((EndUser) caller);
 
             if (StringUtils.isNotBlank(serviceId) && StringUtils.isNotBlank(roleName)) {
                 throw new BadRequestException("Cannot specify serviceId and roleName together");
@@ -3800,7 +3810,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addDomain(String authToken, UriInfo uriInfo, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             validator20.validateDomainForCreation(domain);
             Domain savedDomain = this.domainConverterCloudV20.fromDomain(domain);
             this.domainService.addDomain(savedDomain);
@@ -3847,9 +3861,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateDomain(String authToken, String domainId, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         try {
-            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            BaseUser caller = userService.getUserByScopeAccess(scopeAccess);
-            authorizationService.verifyUserManagedLevelAccess(scopeAccess);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
 
             IdentityUserTypeEnum callersUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
             if (IdentityUserTypeEnum.IDENTITY_ADMIN == callersUserType) {
@@ -3991,7 +4006,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
             // Verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
@@ -4227,7 +4242,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addTenantToDomain(String authToken, String domainId, String tenantId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
         Tenant tenant = tenantService.checkAndGetTenant(tenantId);
         Domain domain = domainService.checkAndGetDomain(domainId);
         if ((tenant.getDomainId() == null || !tenant.getDomainId().equalsIgnoreCase(domainId))) {
@@ -4491,7 +4510,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addQuestion(UriInfo uriInfo, String authToken, Question question) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             String questionId = questionService.addQuestion(questionConverter.fromQuestion(question));
 
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
@@ -4505,7 +4528,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getQuestion(String authToken, String questionId) {
         try {
-            authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
             return Response.ok().entity(questionConverter.toQuestion(questionService.getQuestion(questionId)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -4515,7 +4543,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getQuestions(String authToken) {
         try {
-            authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
             return Response.ok().entity(questionConverter.toQuestions(questionService.getQuestions()).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -4525,7 +4558,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateQuestion(String authToken, String questionId, Question question) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             questionService.updateQuestion(questionId, questionConverter.fromQuestion(question));
             return Response.noContent();
         } catch (Exception ex) {
@@ -4536,7 +4573,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteQuestion(String authToken, String questionId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
             questionService.deleteQuestion(questionId);
             return Response.noContent();
         } catch (Exception ex) {
@@ -5107,9 +5147,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken, String userId, SecretQA secrets) {
-
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
             if (StringUtils.isBlank(secrets.getAnswer())) {
                 throw new BadRequestException("Excpeting answer");
@@ -5601,7 +5643,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder switchDomainRcn(String authToken, String domainId, String destinationRcn) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.DOMAIN_RCN_SWITCH.getRoleName());
             requestContextHolder.getRequestContext().getEffectiveCaller();
 

@@ -103,7 +103,7 @@ class DomainRcnSwitchCommitTests extends Specification {
         cloud20Service.switchDomainRcn(token, domainId, destinationRcn)
 
         then: "verified that a valid token for a user with the rcn switch role is provided"
-        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(token)
         1 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.DOMAIN_RCN_SWITCH.getRoleName())
 
         and: "the RCN is validated"
