@@ -1216,6 +1216,16 @@ cn: identity:internal
 description: Identity internal role.
 rsWeight: 50
 
+dn: rsId=18,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 18
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:rs-tenant-admin
+description: Whether a given user is authorized to Create, Delete or Add te
+ nant to domain
+rsWeight: 50
+
 dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
  4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole

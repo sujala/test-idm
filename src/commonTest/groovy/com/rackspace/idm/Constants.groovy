@@ -36,6 +36,7 @@ class Constants {
     static def DEFAULT_USER_ROLE_ID = "2"
     static def DEFAULT_USER_ROLE_NAME = "identity:default"
     static def IDENTITY_INTERNAL_ROLE_ID = "17"
+    static def IDENTITY_RS_TENANT_ADMIN_ROLE_ID = "18"
 
     static def IDENTITY_PROVIDER_MANAGER_ROLE_ID = "8470c459cfa043ef989976a66ba4d74e"
     static def IDENTITY_PROVIDER_MANAGER_ROLE_NAME = "identity:identity-provider-manager"

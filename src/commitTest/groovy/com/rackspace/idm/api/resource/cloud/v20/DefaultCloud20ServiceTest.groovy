@@ -5742,6 +5742,105 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantConverter.toTenant(_)
     }
 
+    def "addTenant uses identity admin when feature flag is disabled"() {
+        given:
+        allowUserAccess()
+        mockTenantConverter(service)
+        domainService.getDomain(_) >> entityFactory.createDomain("defaultDomain")
+        def tenant = new org.openstack.docs.identity.api.v2.Tenant()
+        tenantConverter.toTenant(_) >> entityFactory.createTenant()
+        tenant.name = "name"
+        service.jaxbObjectFactories = new JAXBObjectFactories()
+
+        when:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> false
+        def response = service.addTenant(headers, uriInfo(), authToken, tenant).build()
+
+        then:
+        response.status == SC_CREATED
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+    }
+
+    def "addTenant uses service service-admin or rs-tenant-admin role when feature flag is enabled"() {
+        given:
+        allowUserAccess()
+        mockTenantConverter(service)
+        domainService.getDomain(_) >> entityFactory.createDomain("defaultDomain")
+        def tenant = new org.openstack.docs.identity.api.v2.Tenant()
+        tenant.name = "name"
+        service.jaxbObjectFactories = new JAXBObjectFactories()
+
+        when:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> true
+        def response = service.addTenant(headers, uriInfo(), authToken, tenant).build()
+
+        then:
+        response.status == SC_CREATED
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+    }
+
+    def "addTenantToDomain uses identity admin when feature flag is disabled"() {
+        given:
+        allowUserAccess()
+        domainService.checkAndGetDomain(_) >> entityFactory.createDomain()
+        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
+
+        when:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> false
+        def response = service.addTenantToDomain(authToken, "domainId", "tenantId").build()
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+    }
+
+    def "addTenantToDomain uses service service-admin or rs-tenant-admin role when feature flag is enabled"() {
+        given:
+        allowUserAccess()
+        domainService.checkAndGetDomain(_) >> entityFactory.createDomain()
+        tenantService.checkAndGetTenant(_) >> entityFactory.createTenant()
+
+        when:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> true
+        def response = service.addTenantToDomain(authToken, "domainId", "tenantId").build()
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+    }
+
+    def "deleteTenant uses identity admin when feature flag is disabled"() {
+        given:
+        allowUserAccess()
+
+        when:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> false
+        def response = service.deleteTenant(headers, authToken, "tenantId").build()
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "deleteTenant uses service service-admin or rs-tenant-admin role when feature flag is enabled"() {
+        given:
+        allowUserAccess()
+
+        when:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> true
+        def response = service.deleteTenant(headers, authToken, "tenantId").build()
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)

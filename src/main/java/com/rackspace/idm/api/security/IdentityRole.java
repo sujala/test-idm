@@ -34,6 +34,7 @@ public enum IdentityRole {
     , IDENTITY_PHONE_PIN_ADMIN("identity:phone-pin-admin")
     , IDENTITY_MIGRATE_DOMAIN_ADMIN("identity:migrate-domain-admin")
     , IDENTITY_UPDATE_USERNAME("identity:allow-update-user-username")
+    , IDENTITY_RS_TENANT_ADMIN("identity:rs-tenant-admin")
     ;
 
     @Getter

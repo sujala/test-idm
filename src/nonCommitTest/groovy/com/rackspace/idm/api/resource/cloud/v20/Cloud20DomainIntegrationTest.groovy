@@ -1827,6 +1827,215 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         featureEnabled << [true, false]
     }
 
+    @Unroll
+    def "Protect Create/Delete/Add tenant to domain w/ role - serviceAdmin is allowed when feature flag is set to #useRoleForTenantManagement"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, useRoleForTenantManagement)
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def serviceAdminToken = utils.getServiceAdminToken()
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenantToCreate = v2Factory.createTenant(tenantId, tenantId)
+
+        when:
+        def response = cloud20.addTenant(serviceAdminToken, tenantToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.addTenantToDomain(serviceAdminToken, domainId, tenantId)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+        assertDomainContainsTenant(domainId, tenantId)
+
+        when:
+        response = cloud20.deleteTenant(serviceAdminToken, tenantId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        domainService.deleteDomain(domainId)
+
+        where:
+        useRoleForTenantManagement << [true , false]
+    }
+
+    @Unroll
+    def "Protect Create/Delete/Add tenant to domain w/ role - userAdmin is not allowed when feature flag is set to #useRoleForTenantManagement"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, useRoleForTenantManagement)
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def userAdmin
+        (userAdmin) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def tenantToCreate = v2Factory.createTenant(tenantId, tenantId)
+
+        when:
+        def response = cloud20.addTenant(userAdminToken, tenantToCreate)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.addTenantToDomain(userAdminToken, domainId, tenantId)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.deleteTenant(userAdminToken, tenantId)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+        domainService.deleteDomain(domainId)
+
+        where:
+        useRoleForTenantManagement << [true , false]
+    }
+
+    def "Protect Create/Delete/Add tenant to domain w/ role - identityAdmin is allowed when feature flag is off"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, false)
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def identityAdminToken = utils.getIdentityAdminToken()
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenantToCreate = v2Factory.createTenant(tenantId, tenantId)
+
+        when:
+        def response = cloud20.addTenant(identityAdminToken, tenantToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.addTenantToDomain(identityAdminToken, domainId, tenantId)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+        assertDomainContainsTenant(domainId, tenantId)
+
+        when:
+        response = cloud20.deleteTenant(identityAdminToken, tenantId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        domainService.deleteDomain(domainId)
+    }
+
+    def "Protect Create/Delete/Add tenant to domain w/ role - identityAdmin is not allowed when feature flag is on"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def identityAdminToken = utils.getIdentityAdminToken()
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenantToCreate = v2Factory.createTenant(tenantId, tenantId)
+
+        when:
+        def response = cloud20.addTenant(identityAdminToken, tenantToCreate)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.addTenantToDomain(identityAdminToken, domainId, tenantId)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.deleteTenant(identityAdminToken, tenantId)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        domainService.deleteDomain(domainId)
+    }
+
+    def "Protect Create/Delete/Add tenant to domain w/ role - identityAdmin is allowed when feature flag is on and role is assigned"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenantToCreate = v2Factory.createTenant(tenantId, tenantId)
+
+        when:
+        def response = cloud20.addTenant(identityAdminToken, tenantToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.addTenantToDomain(identityAdminToken, domainId, tenantId)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+        assertDomainContainsTenant(domainId, tenantId)
+
+        when:
+        response = cloud20.deleteTenant(identityAdminToken, tenantId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        domainService.deleteDomain(domainId)
+        utils.deleteUser(identityAdmin)
+    }
+
+    def "Protect Create/Delete/Add tenant to domain w/ role - userAdmin is allowed when feature flag is on and role is assigned"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def userAdmin
+        (userAdmin) = utils.createUserAdmin(domainId)
+        utils.addRoleToUser(userAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenantToCreate = v2Factory.createTenant(tenantId, tenantId)
+
+        when:
+        def response = cloud20.addTenant(userAdminToken, tenantToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.addTenantToDomain(userAdminToken, domainId, tenantId)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+        assertDomainContainsTenant(domainId, tenantId)
+
+        when:
+        response = cloud20.deleteTenant(userAdminToken, tenantId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        domainService.deleteDomain(domainId)
+        utils.deleteUser(userAdmin)
+    }
+
+
     def removeDomainFromUser(username) {
         def user = userService.checkAndGetUserByName(username)
         user.setDomainId(null)

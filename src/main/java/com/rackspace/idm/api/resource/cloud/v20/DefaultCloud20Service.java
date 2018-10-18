@@ -678,7 +678,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            if (identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled()) {
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+            } else {
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            }
 
             if (StringUtils.isBlank(tenant.getName())) {
                 String errMsg = "Expecting name";
@@ -2525,7 +2529,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            if (identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled()) {
+                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+                requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+            } else {
+                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            }
+
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
             tenantService.deleteTenant(tenant);
             return Response.noContent();
@@ -4245,7 +4256,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
         requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+        if (identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled()) {
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+        } else {
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+        }
 
         Tenant tenant = tenantService.checkAndGetTenant(tenantId);
         Domain domain = domainService.checkAndGetDomain(domainId);
