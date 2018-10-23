@@ -283,6 +283,9 @@ dependencies {
 
     compile 'com.newrelic.agent.java:newrelic-api:3.29.0'
 
+    // Aws Dynamodb dependency added for password blacklist
+    compile 'com.amazonaws:aws-java-sdk-dynamodb:1.11.288'
+
     // Add all source for common to commit/nonCommitTest path to allow to share common utils and allow Intellij to
     // actually find usages across commonTest/commit/nonCommit code
     commitTestCompile sourceSets.commonTest.output

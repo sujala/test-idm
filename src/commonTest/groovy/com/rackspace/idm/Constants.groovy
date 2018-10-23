@@ -21,6 +21,8 @@ class Constants {
     static def TEST_USER_USER_ADMIN_USERNAME = "testUserAdmin_doNotDelete"
 
     static def DEFAULT_PASSWORD = "Password1"
+    static def BLACKLISTED_PASSWORD = "blackListedPassword1"
+    static def BLACKLISTED_PASSWORD_1 = "blackListedPassword11"
     static def DEFAULT_API_KEY = "Password1"
 
     static def SCOPE_SETUP_MFA = "SETUP-MFA"

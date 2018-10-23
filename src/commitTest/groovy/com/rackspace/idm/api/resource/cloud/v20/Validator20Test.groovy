@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdpPolicyFormatEnum
@@ -35,6 +36,7 @@ class Validator20Test extends RootServiceTest {
         service.jsonValidator = jsonValidator
         mockIdentityConfig(service)
         mockFederatedIdentityService(service)
+        mockPasswordBlacklistService(service)
         testUtils = new CloudTestUtils()
     }
 
@@ -619,5 +621,30 @@ class Validator20Test extends RootServiceTest {
 
         then: "exception is not thrown"
         noExceptionThrown()
+    }
+
+    def "validatePasswordIsNotBlacklisted - when password is not blacklisted"() {
+        given:
+        identityConfig.getReloadableConfig().getDynamoDBPasswordBlacklistCountMaxAllowed() >> 12
+
+        when:
+        passwordBlacklistService.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD) >> false
+        service.validatePasswordIsNotBlacklisted(Constants.BLACKLISTED_PASSWORD)
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "validatePasswordIsNotBlacklisted - when password is blacklisted"() {
+        given:
+        identityConfig.getReloadableConfig().getDynamoDBPasswordBlacklistCountMaxAllowed() >> 12
+
+        when:
+        passwordBlacklistService.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD) >> true
+        service.validatePasswordIsNotBlacklisted(Constants.BLACKLISTED_PASSWORD)
+
+        then:
+        BadRequestException ex = thrown()
+        IdmExceptionAssert.assertException(ex, BadRequestException, ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD, ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD_MSG)
     }
 }

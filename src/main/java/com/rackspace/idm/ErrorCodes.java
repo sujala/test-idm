@@ -164,8 +164,11 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN = "The '%s' parameter can not be used with the '%s' parameter.";
     public static final String ERROR_CODE_USER_GROUP_CANNOT_BE_CREATED_IN_DEFAULT_DOMAIN_MSG = "The user group cannot be created in default domain";
 
+    //Password Blacklist
+    public static final String ERROR_CODE_BLACKLISTED_PASSWORD = "PB-000";
+    public static final String ERROR_CODE_BLACKLISTED_PASSWORD_MSG = "Password provided is blacklisted and had been publicly compromised before. Please try a different password.";
 
-    public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
+   public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {
             return String.format("Error code: '%s'; %s", errorCode, message);
         } else {

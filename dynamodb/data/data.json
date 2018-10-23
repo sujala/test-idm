@@ -3,6 +3,24 @@
     {
       "PutRequest": {
         "Item": {
+          "desc": { "S": "The entry for blackListedPassword1" },
+          "pwd_hash": { "S": "F367EA9046AA8EBB1D8BEAF6DEF43C701B6381BE" },
+          "count": { "N": "51" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "desc": { "S": "The entry for blackListedPassword11" },
+          "pwd_hash": { "S": "88A15E0B1BC575D45DD7163D99FF3EC2D62C3BDC" },
+          "count": { "N": "51" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
           "desc": { "S": "The entry for Pa$$w0rd1" },
           "pwd_hash": { "S": "3121C16A7F4A97832DB9FF399CCECC778DA07602" },
           "count": { "N": "5" }

@@ -1,12 +1,16 @@
 package com.rackspace.idm.api.resource.cloud
 
+import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.Pattern
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.GroupService
+import com.rackspace.idm.domain.service.PasswordBlacklistService
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
@@ -16,6 +20,8 @@ import com.rackspacecloud.docs.auth.api.v1.User
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.IdmExceptionAssert
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,6 +42,9 @@ class ValidatorTest extends Specification {
     @Shared Pattern usernamePattern
     @Shared Pattern emailPattern
     @Shared Configuration config
+    @Shared IdentityConfig identityConfig
+    @Shared PasswordBlacklistService passwordBlacklistService
+
 
     def setupSpec(){
         validator = new Validator();
@@ -513,6 +522,31 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
+    def "validatePasswordIsNotBlacklisted - when password is not blacklisted"() {
+        given:
+        identityConfig.getReloadableConfig().getDynamoDBPasswordBlacklistCountMaxAllowed() >> 12
+
+        when:
+        passwordBlacklistService.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD) >> false
+        validator.validatePasswordIsNotBlacklisted(Constants.BLACKLISTED_PASSWORD)
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "validatePasswordIsNotBlacklisted - when password is blacklisted"() {
+        given:
+        identityConfig.getReloadableConfig().getDynamoDBPasswordBlacklistCountMaxAllowed() >> 12
+
+        when:
+        passwordBlacklistService.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD) >> true
+        validator.validatePasswordIsNotBlacklisted(Constants.BLACKLISTED_PASSWORD)
+
+        then:
+        BadRequestException ex = thrown()
+        IdmExceptionAssert.assertException(ex, BadRequestException, ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD, ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD_MSG)
+    }
+
     def setupMock(){
         ldapPatternRepository = Mock()
         userService = Mock()
@@ -520,6 +554,10 @@ class ValidatorTest extends Specification {
         roleService = Mock()
         groupService = Mock()
         config = Mock()
+        identityConfig = Mock()
+        IdentityConfig.ReloadableConfig reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        passwordBlacklistService = Mock()
 
 
         validator.ldapPatternRepository = ldapPatternRepository
@@ -528,6 +566,8 @@ class ValidatorTest extends Specification {
         validator.groupService = groupService
         validator.defaultRegionService = defaultRegionService
         validator.config = config
+        validator.identityConfig = identityConfig
+        validator.passwordBlacklistService = passwordBlacklistService
     }
 
     def pattern (String name, String regex, String errMsg, String description){

@@ -1,11 +1,14 @@
 package com.rackspace.idm.validation;
 
 
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.PatternDao;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.GroupService;
+import com.rackspace.idm.domain.service.PasswordBlacklistService;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
@@ -55,6 +58,12 @@ public class Validator {
 
     @Autowired
     Configuration config;
+
+    @Autowired
+    IdentityConfig identityConfig;
+
+    @Autowired
+    PasswordBlacklistService passwordBlacklistService;
 
     static final String USERNAME="username";
     static final String ALPHANUMERIC="alphanumeric";
@@ -138,8 +147,15 @@ public class Validator {
         return false;
     }
 
-    public boolean validatePasswordForCreateOrUpdate(String password){
-        return checkPattern(PASSWORD, password);
+    public boolean validatePasswordForCreateOrUpdate(String password) {
+        boolean isPatternCheckOk = checkPattern(PASSWORD, password);
+
+        // Before setting password ensure password is not blacklisted
+        // which mean it is not a publicly compromised password.
+        if (identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled()) {
+            validatePasswordIsNotBlacklisted(password);
+        }
+        return isPatternCheckOk;
     }
 
     private boolean checkPattern(String pattern, String value) {
@@ -209,6 +225,10 @@ public class Validator {
         if (!isEmpty(password)) {
             checkPattern(PASSWORD, password);
         }
+
+        if (identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled()) {
+            validatePasswordIsNotBlacklisted(password);
+        }
     }
 
     private void validateRoles(List<TenantRole> roles) {
@@ -263,6 +283,14 @@ public class Validator {
             String errMsg = "'publicURL' is a required attribute";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
+        }
+    }
+
+    public void validatePasswordIsNotBlacklisted(String password){
+        if (passwordBlacklistService.isPasswordInBlacklist(password)) {
+
+            throw new BadRequestException(ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD_MSG,
+                    ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD);
         }
     }
 }

@@ -667,6 +667,23 @@ public class IdentityConfig {
     public static final String AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP = "auth.ldap.search.for.user.before.bind";
     public static final boolean AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_DEFAULT = false;
 
+    public static final String DYNAMO_DB_SERVICE_ENDPOINT_PROP = "dynamo.db.service.endpoint";
+    public static final String DYNAMO_DB_SERVICE_ENDPOINT_DEFAULT = "http://localhost:8000";
+
+    public static final String DYNAMO_DB_REGION_PROP = "dynamo.db.region";
+    public static final String DYNAMO_DB_REGION_DEFAULT = "us-west-2";
+
+    public static final String DYNAMO_DB_CREDENTIALS_KEY_ID_PROP = "dynamo.db.credentials.key.id";
+    public static final String DYNAMO_DB_CREDENTIALS_SECRET_PROP = "dynamo.db.credentials.secret";
+
+    public static final String DYNAMO_DB_REQUEST_TIMEOUT_PROP = "dynamo.db.request.timeout.duration";
+    public static final Duration DYNAMO_DB_REQUEST_TIMEOUT_DEFAULT = Duration.parse("PT1.001S");
+
+    public static final String DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_PROP = "dynamo.db.password.blacklist.count.max.allowed";
+    public static final int DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_DEFAULT = 10;
+
+    public static final String FEATURE_ENABLED_PASSWORD_BLACKLIST_PROP = "feature.enable.password.blacklist";
+    public static final boolean FEATURE_ENABLED_PASSWORD_BLACKLIST_DEFAULT = false;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -939,6 +956,13 @@ public class IdentityConfig {
         defaults.put(OPENTRACING_LOGGING_ENABLED_PROP, OPENTRACING_LOGGING_ENABLED_DEFAULT);
         defaults.put(OPENTRACING_FLUSH_INTERVAL_MS_PROP, OPENTRACING_MAX_BUFFER_SIZE_DEFAULT);
         defaults.put(OPENTRACING_MAX_BUFFER_SIZE_PROP, OPENTRACING_MAX_BUFFER_SIZE_DEFAULT);
+
+        // Password black list Dynamodb defaults
+        defaults.put(FEATURE_ENABLED_PASSWORD_BLACKLIST_PROP, FEATURE_ENABLED_PASSWORD_BLACKLIST_DEFAULT);
+        defaults.put(DYNAMO_DB_SERVICE_ENDPOINT_PROP, DYNAMO_DB_SERVICE_ENDPOINT_DEFAULT);
+        defaults.put(DYNAMO_DB_REGION_PROP, DYNAMO_DB_REGION_DEFAULT);
+        defaults.put(DYNAMO_DB_REQUEST_TIMEOUT_PROP, DYNAMO_DB_REQUEST_TIMEOUT_DEFAULT);
+        defaults.put(DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_PROP, DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_DEFAULT);
 
         return defaults;
     }
@@ -1731,6 +1755,32 @@ public class IdentityConfig {
         @IdmProp(key = AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP, versionAdded = "3.25.0", description = "Specify ActiveDirectory to search for user before trying to bind")
         public boolean getActiveDirectorySearchForUserBeforeBind() {
             return getBooleanSafely(staticConfiguration, AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP);
+        }
+
+        @IdmProp(key = DYNAMO_DB_SERVICE_ENDPOINT_PROP, versionAdded = "3.27.0", description = "Specifies the endpoint to use for dynamoDB connections.")
+        public String getDynamoDbEndpoint() {
+            return getStringSafely(staticConfiguration, DYNAMO_DB_SERVICE_ENDPOINT_PROP);
+        }
+
+        @IdmProp(key = DYNAMO_DB_REGION_PROP, versionAdded = "3.27.0", description = "Specifies the region to use for dynamoDB connections.")
+        public String getDynamoDbRegion() {
+            return getStringSafely(staticConfiguration, DYNAMO_DB_REGION_PROP);
+        }
+
+        @IdmProp(key = DYNAMO_DB_CREDENTIALS_KEY_ID_PROP, versionAdded = "3.27.0", description = "Specifies the credentials key to use for dynamoDB connections.")
+        public String getDynamoDbCredentialsKeyId() {
+            return getStringSafely(staticConfiguration, DYNAMO_DB_CREDENTIALS_KEY_ID_PROP);
+        }
+
+        // TODO - A "TODO" item is to support marking properties as "protected" or something such that the value is or asterisk'd out when returning in the props service.
+        // @IdmProp(key = DYNAMO_DB_CREDENTIALS_SECRET_PROP, versionAdded = "3.27.0", description = "Specifies the credentials secret to use for dynamoDB connections.")
+        public String getDynamoDbCredentialsSecret() {
+            return getStringSafely(staticConfiguration, DYNAMO_DB_CREDENTIALS_SECRET_PROP);
+        }
+
+        @IdmProp(key = DYNAMO_DB_REQUEST_TIMEOUT_PROP, versionAdded = "3.27.0", description = "Specifies the request timeout to use for connecting to dynamoDB.")
+        public Duration getDynamoDbRequestTimeout() {
+            return getDurationSafely(staticConfiguration, DYNAMO_DB_REQUEST_TIMEOUT_PROP);
         }
 
     }
@@ -2579,6 +2629,17 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, versionAdded = "3.27.0", description = "Control whether a given user is authorized to Create or Delete domains with a role")
         public boolean isUseRoleForDomainManagementEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLED_PASSWORD_BLACKLIST_PROP, versionAdded = "3.27.0", description = "Whether to validate password with blacklisted passwords.")
+        public boolean isPasswordBlacklistValidationEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLED_PASSWORD_BLACKLIST_PROP);
+        }
+
+        @IdmProp(key = DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_PROP, versionAdded = "3.27.0", description = "Specifies the max count, the number of time a password has " +
+                "been publicly compromised, before a user is no longer allowed to use a given password.")
+        public int getDynamoDBPasswordBlacklistCountMaxAllowed() {
+            return getIntSafely(reloadableConfiguration, DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_PROP);
         }
 
     }

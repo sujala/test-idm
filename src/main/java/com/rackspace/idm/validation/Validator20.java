@@ -166,6 +166,9 @@ public class Validator20 {
     @Autowired
     IdentityProviderConverterCloudV20 identityProviderConverterCloudV20;
 
+    @Autowired
+    PasswordBlacklistService passwordBlacklistService;
+
     public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
             String errorMsg = "Expecting username";
@@ -230,6 +233,7 @@ public class Validator20 {
     public void validatePasswordCredentialsForCreateOrUpdate(PasswordCredentialsBase passwordCredentials) {
         validatePasswordCredentials(passwordCredentials);
         validatePasswordForCreateOrUpdate(passwordCredentials.getPassword());
+        validatePasswordIsNotBlacklisted(passwordCredentials.getPassword());
     }
 
     public void validateApiKeyCredentials(ApiKeyCredentials apiKeyCredentials) {
@@ -1148,6 +1152,18 @@ public class Validator20 {
     public static void validateItsNotUnverifiedUser (User user) {
         if (user!= null && user.isUnverified()) {
             throw new ForbiddenException(GlobalConstants.RESTRICT_UNVERIFIED_USER_MESSAGE, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+        }
+    }
+
+    /**
+     * A reusable method to validate password is not in password blacklist data set.
+     * @param password
+     */
+    public void validatePasswordIsNotBlacklisted(String password){
+        if (passwordBlacklistService.isPasswordInBlacklist(password)) {
+
+            throw new BadRequestException(ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD_MSG,
+                    ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD);
         }
     }
 }

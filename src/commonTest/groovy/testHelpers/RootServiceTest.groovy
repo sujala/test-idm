@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
@@ -117,6 +118,7 @@ class RootServiceTest extends Specification {
     @Shared QuestionService questionService
     @Shared ScopeAccessService scopeAccessService
     @Shared PasswordComplexityService passwordComplexityService
+    @Shared PasswordBlacklistService passwordBlacklistService
     @Shared TenantService tenantService
     @Shared TenantTypeService tenantTypeService
     @Shared SecretQAService secretQAService
@@ -209,6 +211,7 @@ class RootServiceTest extends Specification {
     @Shared AuthenticationContext authenticationContext
     @Shared SecurityContext securityContext
     @Shared AuthorizationContext authorizationContext
+    @Shared AmazonDynamoDB dynamoDB
 
     @Shared def jaxbMock
 
@@ -614,6 +617,11 @@ class RootServiceTest extends Specification {
         service.defaultPasswordComplexityService = defaultPasswordComplexityService
     }
 
+    def mockPasswordBlacklistService(service) {
+        passwordBlacklistService = Mock()
+        service.passwordBlacklistService = passwordBlacklistService
+    }
+
     def mockDefaultDomainService(service) {
         defaultDomainService = Mock()
         service.defaultDomainService = defaultDomainService
@@ -942,6 +950,11 @@ class RootServiceTest extends Specification {
     def mockSamlSignatureProfileValidator(service) {
         samlSignatureProfileValidator = Mock()
         service.samlSignatureProfileValidator = samlSignatureProfileValidator
+    }
+
+    def mockDynamoDB(service) {
+        dynamoDB = Mock()
+        service.dynamoDB = dynamoDB
     }
 
     /*
