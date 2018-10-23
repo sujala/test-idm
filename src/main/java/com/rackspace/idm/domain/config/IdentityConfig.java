@@ -449,6 +449,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP = "feature.enable.use.role.for.tenant.management";
     public static final boolean FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP = "feature.enable.use.role.for.domain.management";
+    public static final boolean FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -922,6 +925,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP, FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_DEFAULT);
         defaults.put(FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_PROP, FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_DEFAULT);
         defaults.put(FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_DEFAULT);
+        defaults.put(FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP, FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT);
 
@@ -2570,6 +2574,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, versionAdded = "3.27.0", description = "Control whether a given user is authorized to Create, Delete or Add tenant to domain with a role")
         public boolean isUseRoleForTenantManagementEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, versionAdded = "3.27.0", description = "Control whether a given user is authorized to Create or Delete domains with a role")
+        public boolean isUseRoleForDomainManagementEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP);
         }
 
     }

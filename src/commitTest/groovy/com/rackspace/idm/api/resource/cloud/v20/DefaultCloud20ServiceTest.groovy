@@ -5762,7 +5762,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
     }
 
-    def "addTenant uses service service-admin or rs-tenant-admin role when feature flag is enabled"() {
+    def "addTenant uses service-admin or rs-tenant-admin role when feature flag is enabled"() {
         given:
         allowUserAccess()
         mockTenantConverter(service)
@@ -5797,7 +5797,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
     }
 
-    def "addTenantToDomain uses service service-admin or rs-tenant-admin role when feature flag is enabled"() {
+    def "addTenantToDomain uses service-admin or rs-tenant-admin role when feature flag is enabled"() {
         given:
         allowUserAccess()
         domainService.checkAndGetDomain(_) >> entityFactory.createDomain()
@@ -5827,7 +5827,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
     }
 
-    def "deleteTenant uses service service-admin or rs-tenant-admin role when feature flag is enabled"() {
+    def "deleteTenant uses service-admin or rs-tenant-admin role when feature flag is enabled"() {
         given:
         allowUserAccess()
 
@@ -5839,6 +5839,86 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == SC_NO_CONTENT
 
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+    }
+
+    def "addDomain uses identity admin when feature flag is disabled"() {
+        given:
+        allowUserAccess()
+        mockDomainConverter(service)
+        def domain = v1Factory.createDomain()
+        domainConverter.toDomain(_) >> entityFactory.createDomain()
+
+        when:
+        reloadableConfig.isUseRoleForDomainManagementEnabled() >> false
+        def response = service.addDomain(authToken, uriInfo(), domain).build()
+
+        then:
+        response.status == SC_CREATED
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+    }
+
+    def "addDomain uses service-admin or rs-domain-admin role when feature flag is enabled"() {
+        given:
+        allowUserAccess()
+        mockDomainConverter(service)
+        domainService.getDomain(_) >> entityFactory.createDomain("defaultDomain")
+        def domain = v1Factory.createDomain()
+
+        when:
+        reloadableConfig.isUseRoleForDomainManagementEnabled() >> true
+        def response = service.addDomain(authToken, uriInfo(), domain).build()
+
+        then:
+        response.status == SC_CREATED
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
+    }
+
+    def "deleteDomain uses identity admin when feature flag is disabled"() {
+        given:
+        allowUserAccess()
+        def domainId = "domainId"
+        def domain = entityFactory.createDomain(domainId).with {
+            it.enabled = false
+            it
+        }
+        reloadableConfig.getTenantDefaultDomainId() >> "default"
+        domainService.checkAndGetDomain(_) >> domain
+        identityUserService.getEndUsersByDomainId(domainId, UserType.ALL) >> [].asList()
+        userGroupService.getGroupsForDomain(domainId) >> [].asList()
+
+        when:
+        reloadableConfig.isUseRoleForDomainManagementEnabled() >> false
+        def response = service.deleteDomain(authToken, "domainId").build()
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "deleteDomain uses service-admin or rs-domain-admin role when feature flag is enabled"() {
+        given:
+        allowUserAccess()
+        def domainId = "domainId"
+        def domain = entityFactory.createDomain(domainId).with {
+            it.enabled = false
+            it
+        }
+        reloadableConfig.getTenantDefaultDomainId() >> "default"
+        domainService.checkAndGetDomain(_) >> domain
+        identityUserService.getEndUsersByDomainId(domainId, UserType.ALL) >> [].asList()
+        userGroupService.getGroupsForDomain(domainId) >> [].asList()
+
+        when:
+        reloadableConfig.isUseRoleForDomainManagementEnabled() >> true
+        def response = service.deleteDomain(authToken, "domainId").build()
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
     }
 
     def mockServices() {

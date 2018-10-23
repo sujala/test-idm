@@ -3824,7 +3824,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()) {
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
+            } else {
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            }
 
             validator20.validateDomainForCreation(domain);
             Domain savedDomain = this.domainConverterCloudV20.fromDomain(domain);
@@ -4112,7 +4116,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteDomain(String authToken, String domainId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()) {
+                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+                requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
+            } else {
+                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            }
 
             String defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
             if (defaultDomainId.equals(domainId)) {

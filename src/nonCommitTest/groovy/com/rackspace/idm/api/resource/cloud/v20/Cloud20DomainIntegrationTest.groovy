@@ -2035,6 +2035,152 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(userAdmin)
     }
 
+    @Unroll
+    def "Protect Create/Delete domain w/ role - serviceAdmin is allowed when feature flag is set to #useRoleForDomainManagement"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, useRoleForDomainManagement)
+        def domainId = utils.createDomain()
+        def serviceAdminToken = utils.getServiceAdminToken()
+        def domainToCreate = v2Factory.createDomain(domainId, domainId, false)
+
+        when:
+        def response = cloud20.addDomain(serviceAdminToken, domainToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.deleteDomain(serviceAdminToken, domainId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        where:
+        useRoleForDomainManagement << [true , false]
+    }
+
+    @Unroll
+    def "Protect Create/Delete domain w/ role - userAdmin is not allowed when feature flag is set to #useRoleForDomainManagement"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, useRoleForDomainManagement)
+        def domainId = utils.createDomain()
+        def userAdmin
+        (userAdmin) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def domainToCreate = v2Factory.createDomain(domainId, domainId, false)
+
+        when:
+        def response = cloud20.addDomain(userAdminToken, domainToCreate)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.deleteDomain(userAdminToken, domainId)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+        utils.deleteDomain(domainId)
+
+        where:
+        useRoleForDomainManagement << [true , false]
+    }
+
+    def "Protect Create/Delete domain w/ role - identityAdmin is allowed when feature flag is off"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, false)
+        def domainId = utils.createDomain()
+        def identityAdminToken = utils.getIdentityAdminToken()
+        def domainToCreate = v2Factory.createDomain(domainId, domainId, false)
+
+        when:
+        def response = cloud20.addDomain(identityAdminToken, domainToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.deleteDomain(identityAdminToken, domainId)
+
+        then:
+        response.status == SC_NO_CONTENT
+    }
+
+    def "Protect Create/Delete domain w/ role - identityAdmin is not allowed when feature flag is on"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
+        def domainId = utils.createDomain()
+        def identityAdminToken = utils.getIdentityAdminToken()
+        def domainToCreate = v2Factory.createDomain(domainId, domainId, false)
+
+        when:
+        def response = cloud20.addDomain(identityAdminToken, domainToCreate)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.deleteDomain(identityAdminToken, domainId)
+
+        then:
+        response.status == SC_FORBIDDEN
+    }
+
+    def "Protect Create/Delete domain w/ role - identityAdmin is allowed when feature flag is on and role is assigned"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
+        def domainId = utils.createDomain()
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def domainToCreate = v2Factory.createDomain(domainId, domainId, false)
+
+        when:
+        def response = cloud20.addDomain(identityAdminToken, domainToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.deleteDomain(identityAdminToken, domainId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUser(identityAdmin)
+    }
+
+    def "Protect Create/Delete domain w/ role - userAdmin is allowed when feature flag is on and role is assigned"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
+        def userAdminDomainId = utils.createDomain()
+        def domainId = utils.createDomain()
+        def userAdmin
+        (userAdmin) = utils.createUserAdmin(userAdminDomainId)
+        utils.addRoleToUser(userAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def domainToCreate = v2Factory.createDomain(domainId, domainId, false)
+
+        when:
+        def response = cloud20.addDomain(userAdminToken, domainToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.deleteDomain(userAdminToken, domainId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+        utils.deleteDomain(userAdminDomainId)
+    }
 
     def removeDomainFromUser(username) {
         def user = userService.checkAndGetUserByName(username)
