@@ -299,11 +299,6 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         validator20.validateTenantIdInRoles(tenantId, roles);
         authenticateResponse.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
 
-        if(!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
-            // Only service or identity admins can see the core contact ID on a user
-            authenticateResponse.getUser().setContactId(null);
-        }
-
         UserForAuthenticateResponse userForAuthenticateResponse = null;
 
         // NOT applying RCN roles for impersonator, just the user being impersonated

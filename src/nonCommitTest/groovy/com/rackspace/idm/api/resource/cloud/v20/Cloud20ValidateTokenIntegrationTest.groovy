@@ -488,7 +488,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     }
 
     @Unroll
-    def "validate token returns contact ID for service and Identity Admins, userType = #userType, accept = #accept, request = #request"() {
+    def "validate token returns contact ID: mediaType = #mediaType"() {
         given:
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
@@ -499,54 +499,66 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         }
         def user = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate).getEntity(User).value
 
-        when: "validate the token"
-        def token
-        switch(userType) {
-            case IdentityUserTypeEnum.SERVICE_ADMIN:
-                token = utils.getServiceAdminToken()
-                break
-            case IdentityUserTypeEnum.IDENTITY_ADMIN:
-                token = utils.getIdentityAdminToken()
-                break
-        }
-        def validateTokenResponse = cloud20.validateToken(token, utils.getToken(user.username), accept)
+        def userToken =  utils.getToken(user.username)
+        def tokenSa = utils.getServiceAdminToken()
+        def tokenIa = utils.getIdentityAdminToken()
+        def impTokenIA = utils.impersonateWithToken(tokenIa, user).token.id
+        def impTokenRacker = utils.impersonateWithRacker(user).token.id
+
+        when: "user validates own token"
+        def validateTokenResponse = cloud20.validateToken(userToken, userToken, mediaType)
 
         then:
         validateTokenResponse.status == 200
-        def returnedContactId = getContactIdFromValidateResponse(validateTokenResponse)
-        if(attributeSet) {
-            assert returnedContactId == contactId
-        } else {
-            assert returnedContactId == null
-        }
+        getContactIdFromValidateResponse(validateTokenResponse) == contactId
 
-        when: "impersonate the user and validate token"
-        def impersonateToken = utils.impersonateWithToken(utils.getIdentityAdminToken(), user).token.id
-        def impersonateResponse = cloud20.validateToken(token, impersonateToken, accept)
+        when: "validate the user token using service-admin"
+        validateTokenResponse = cloud20.validateToken(tokenSa, userToken, mediaType)
 
         then:
-        impersonateResponse.status == 200
-        def impersonateContactId = getContactIdFromValidateResponse(impersonateResponse)
-        if(attributeSet) {
-            assert impersonateContactId == contactId
-        } else {
-            assert impersonateContactId == null
-        }
+        validateTokenResponse.status == 200
+        getContactIdFromValidateResponse(validateTokenResponse) == contactId
+
+        when: "validate the user token using identity-admin"
+        validateTokenResponse = cloud20.validateToken(tokenIa, userToken, mediaType)
+
+        then:
+        validateTokenResponse.status == 200
+        getContactIdFromValidateResponse(validateTokenResponse) == contactId
+
+        when: "validate impersonation token of the user token using identity-admin"
+        validateTokenResponse = cloud20.validateToken(tokenIa, impTokenIA, mediaType)
+
+        then:
+        validateTokenResponse.status == 200
+        getContactIdFromValidateResponse(validateTokenResponse) == contactId
+
+        when: "self validate impersonation token of the user token using identity-admin"
+        validateTokenResponse = cloud20.validateToken(impTokenIA, impTokenIA, mediaType)
+
+        then:
+        validateTokenResponse.status == 200
+        getContactIdFromValidateResponse(validateTokenResponse) == contactId
+
+        when: "validate impersonation token of the user token using racker"
+        validateTokenResponse = cloud20.validateToken(tokenIa, impTokenRacker, mediaType)
+
+        then:
+        validateTokenResponse.status == 200
+        getContactIdFromValidateResponse(validateTokenResponse) == contactId
+
+        when: "self validate impersonation token of the user token using racker"
+        validateTokenResponse = cloud20.validateToken(impTokenRacker, impTokenRacker, mediaType)
+
+        then:
+        validateTokenResponse.status == 200
+        getContactIdFromValidateResponse(validateTokenResponse) == contactId
 
         cleanup:
         utils.deleteUser(user)
 
         where:
-        userType                            | attributeSet | accept                          | request
-        IdentityUserTypeEnum.SERVICE_ADMIN  | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        IdentityUserTypeEnum.SERVICE_ADMIN  | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        IdentityUserTypeEnum.SERVICE_ADMIN  | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
-        IdentityUserTypeEnum.SERVICE_ADMIN  | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-
-        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
-        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
     @Unroll
