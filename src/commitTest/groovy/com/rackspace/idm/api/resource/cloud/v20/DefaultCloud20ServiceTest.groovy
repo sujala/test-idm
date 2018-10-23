@@ -5921,6 +5921,135 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
     }
 
+    def "addEndpointTemplate uses identity admin when feature flag is disabled"() {
+        given:
+        allowUserAccess()
+        mockEndpointConverter(service)
+        def endpointTemplate = v1Factory.createEndpointTemplate().with {
+            it.serviceId = "serviceId"
+            it
+        }
+        endpointConverter.toCloudBaseUrl(_) >> entityFactory.createEndpointTemplate(endpointTemplate.name)
+
+        when:
+        reloadableConfig.isUseRoleForEndpointManagementEnabled() >> false
+        def response = service.addEndpointTemplate(headers, uriInfo(), authToken, endpointTemplate).build()
+
+        then:
+        response.status == SC_CREATED
+
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_);
+    }
+
+    def "addEndpointTemplate uses service-admin or rs-endpoint-admin role when feature flag is enabled"() {
+        given:
+        allowUserAccess()
+        mockEndpointConverter(service)
+        def endpointTemplate = v1Factory.createEndpointTemplate().with {
+            it.serviceId = "serviceId"
+            it
+        }
+        endpointConverter.toCloudBaseUrl(_) >> entityFactory.createEndpointTemplate(endpointTemplate.name)
+
+        when:
+        reloadableConfig.isUseRoleForEndpointManagementEnabled() >> true
+        def response = service.addEndpointTemplate(headers, uriInfo(), authToken, endpointTemplate).build()
+
+        then:
+        response.status == SC_CREATED
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
+    }
+
+    def "deleteEndpointTemplate uses identity admin when feature flag is disabled"() {
+        given:
+        allowUserAccess()
+        def endpointTemplate = entityFactory.createCloudBaseUrl().with {
+            it.enabled = false
+            it
+        }
+        endpointService.checkAndGetEndpointTemplate(_) >> endpointTemplate
+        tenantService.getTenantsForEndpoint(_) >> [].asList()
+
+        when:
+        reloadableConfig.isUseRoleForEndpointManagementEnabled() >> false
+        def response = service.deleteEndpointTemplate(headers, authToken, "endpointId").build()
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "deleteEndpointTemplate uses service-admin or rs-endpoint-admin role when feature flag is enabled"() {
+        given:
+        allowUserAccess()
+        def endpointTemplate = entityFactory.createCloudBaseUrl().with {
+            it.enabled = false
+            it
+        }
+        endpointService.checkAndGetEndpointTemplate(_) >> endpointTemplate
+        tenantService.getTenantsForEndpoint(_) >> [].asList()
+
+
+        when:
+        reloadableConfig.isUseRoleForEndpointManagementEnabled() >> true
+        def response = service.deleteEndpointTemplate(headers, authToken, "endpointId").build()
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
+    }
+
+    def "updateEndpointTemplate uses service admin when feature flag is disabled"() {
+        given:
+        allowUserAccess()
+        mockEndpointConverter(service)
+        def endpointTemplateId = "100"
+        def endpointTemplate = v1Factory.createEndpointTemplate().with {
+            it.id = 100
+            it.serviceId = "serviceId"
+            it
+        }
+        endpointConverter.toCloudBaseUrl(_) >> entityFactory.createEndpointTemplate(endpointTemplate.name)
+        endpointService.checkAndGetEndpointTemplate(_) >> entityFactory.createCloudBaseUrl()
+
+        when:
+        reloadableConfig.isUseRoleForEndpointManagementEnabled() >> false
+        def response = service.updateEndpointTemplate(headers, uriInfo(), authToken, endpointTemplateId, endpointTemplate).build()
+
+        then:
+        response.status == SC_OK
+
+        1 * authorizationService.verifyServiceAdminLevelAccess(_);
+    }
+
+    def "updateEndpointTemplate uses service-admin or rs-endpoint-admin role when feature flag is enabled"() {
+        given:
+        allowUserAccess()
+        mockEndpointConverter(service)
+        def endpointTemplateId = "100"
+        def endpointTemplate = v1Factory.createEndpointTemplate().with {
+            it.id = 100
+            it.serviceId = "serviceId"
+            it
+        }
+        endpointConverter.toCloudBaseUrl(_) >> entityFactory.createEndpointTemplate(endpointTemplate.name)
+        endpointService.checkAndGetEndpointTemplate(_) >> entityFactory.createCloudBaseUrl()
+
+        when:
+        reloadableConfig.isUseRoleForEndpointManagementEnabled() >> true
+        def response = service.updateEndpointTemplate(headers, uriInfo(), authToken, endpointTemplateId, endpointTemplate).build()
+
+        then:
+        response.status == SC_OK
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
+    }
+
+
+
     def mockServices() {
         mockEndpointConverter(service)
         mockAuthenticationService(service)

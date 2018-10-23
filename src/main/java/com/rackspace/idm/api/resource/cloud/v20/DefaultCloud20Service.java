@@ -427,7 +427,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            if (identityConfig.getReloadableConfig().isUseRoleForEndpointManagementEnabled()) {
+                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+                requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
+            } else {
+                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            }
 
             validator20.validateEndpointTemplate(endpoint);
 
@@ -490,7 +496,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String endpointTemplateId, EndpointTemplate endpoint) {
         try {
-            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            if (identityConfig.getReloadableConfig().isUseRoleForEndpointManagementEnabled()) {
+                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+                requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
+            } else {
+                authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            }
 
             if(endpoint.getId() != null &&  !endpointTemplateId.equals(endpoint.getId().toString())) {
                 throw new BadRequestException("Endpoint template ID in request must mach ID in the path");
@@ -2427,7 +2439,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            if (identityConfig.getReloadableConfig().isUseRoleForEndpointManagementEnabled()) {
+                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+                requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
+            } else {
+                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            }
+
             CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
 
             if (baseUrl.getEnabled() || !tenantService.getTenantsForEndpoint(endpointTemplateId).isEmpty()) {

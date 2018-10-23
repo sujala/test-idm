@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.DelegationAgreement
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 
 import com.rackspace.idm.domain.dao.EndpointDao
@@ -457,5 +458,213 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         where:
         apply_rcn_roles << [true, false]
+    }
+
+    @Unroll
+    def "Protect v2.0 Add/Update endpoint template w/ role - serviceAdmin is allowed when feature flag is set to #useRoleForEndpointManagement"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, useRoleForEndpointManagement)
+        def serviceAdminToken = utils.getServiceAdminToken()
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def endpointTemplateToCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute")
+        def endpointTemplateToUpdate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute").with {
+            it.enabled = false
+            it
+        }
+
+        when:
+        def response = cloud20.addEndpointTemplate(serviceAdminToken, endpointTemplateToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.updateEndpointTemplate(serviceAdminToken, endpointTemplateId, endpointTemplateToUpdate)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        when:
+        response = cloud20.deleteEndpointTemplate(serviceAdminToken, endpointTemplateId)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        where:
+        useRoleForEndpointManagement << [true , false]
+    }
+
+    @Unroll
+    def "Protect v2.0 Add/Update endpoint template w/ role - userAdmin is not allowed when feature flag is set to #useRoleForEndpointManagement"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, useRoleForEndpointManagement)
+        def domainId = utils.createDomain()
+        def userAdmin
+        (userAdmin) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def endpointTemplateToCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute")
+        def endpointTemplateToUpdate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute").with {
+            it.enabled = false
+            it
+        }
+
+        when:
+        def response = cloud20.addEndpointTemplate(userAdminToken, endpointTemplateToCreate)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.updateEndpointTemplate(userAdminToken, endpointTemplateId, endpointTemplateToUpdate)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.deleteEndpointTemplate(userAdminToken, endpointTemplateId)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+        utils.deleteDomain(domainId)
+
+        where:
+        useRoleForEndpointManagement << [true , false]
+    }
+
+    def "Protect v2.0 Add/Delete endpoint template w/ role - identityAdmin is allowed when feature flag is off"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, false)
+        def identityAdminToken = utils.getIdentityAdminToken()
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def endpointTemplateToCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute")
+        def endpointTemplateToUpdate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute").with {
+            it.enabled = false
+            it
+        }
+
+        when:
+        def response = cloud20.addEndpointTemplate(identityAdminToken, endpointTemplateToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.updateEndpointTemplate(identityAdminToken, endpointTemplateId, endpointTemplateToUpdate)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.deleteEndpointTemplate(identityAdminToken, endpointTemplateId)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+    }
+
+    def "Protect v2.0 Add/Update endpoint template w/ role - identityAdmin is not allowed when feature flag is on"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, true)
+        def identityAdminToken = utils.getIdentityAdminToken()
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def endpointTemplateToCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute")
+        def endpointTemplateToUpdate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute").with {
+            it.enabled = false
+            it
+        }
+
+        when:
+        def response = cloud20.addEndpointTemplate(identityAdminToken, endpointTemplateToCreate)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.updateEndpointTemplate(identityAdminToken, endpointTemplateId, endpointTemplateToUpdate)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when:
+        response = cloud20.deleteEndpointTemplate(identityAdminToken, endpointTemplateId)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+    }
+
+    def "Protect v2.0 Add/Update endpoint template w/ role - identityAdmin is allowed when feature flag is on and role is assigned"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, true)
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_ENDPOINT_ADMIN_ROLE_ID)
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def endpointTemplateToCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute")
+        def endpointTemplateToUpdate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute").with {
+            it.enabled = false
+            it
+        }
+
+        when:
+        def response = cloud20.addEndpointTemplate(identityAdminToken, endpointTemplateToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.updateEndpointTemplate(identityAdminToken, endpointTemplateId, endpointTemplateToUpdate)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        when:
+        response = cloud20.deleteEndpointTemplate(identityAdminToken, endpointTemplateId)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUser(identityAdmin)
+    }
+
+    def "Protect v2.0 Add/Update endpoint template w/ role - userAdmin is allowed when feature flag is on and role is assigned"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, true)
+        def domainId = utils.createDomain()
+        def userAdmin
+        (userAdmin) = utils.createUserAdmin(domainId)
+        utils.addRoleToUser(userAdmin, Constants.IDENTITY_RS_ENDPOINT_ADMIN_ROLE_ID)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def endpointTemplateToCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute")
+        def endpointTemplateToUpdate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute").with {
+            it.enabled = false
+            it
+        }
+
+        when:
+        def response = cloud20.addEndpointTemplate(userAdminToken, endpointTemplateToCreate)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when:
+        response = cloud20.updateEndpointTemplate(userAdminToken, endpointTemplateId, endpointTemplateToUpdate)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        when:
+        response = cloud20.deleteEndpointTemplate(userAdminToken, endpointTemplateId)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+        utils.deleteDomain(domainId)
     }
 }

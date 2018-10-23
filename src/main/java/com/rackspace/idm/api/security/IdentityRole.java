@@ -36,6 +36,7 @@ public enum IdentityRole {
     , IDENTITY_UPDATE_USERNAME("identity:allow-update-user-username")
     , IDENTITY_RS_TENANT_ADMIN("identity:rs-tenant-admin")
     , IDENTITY_RS_DOMAIN_ADMIN("identity:rs-domain-admin")
+    , IDENTITY_RS_ENDPOINT_ADMIN("identity:rs-endpoint-admin")
     ;
 
     @Getter
