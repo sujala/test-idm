@@ -60,6 +60,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_FEDERATION2_INVALID_ORIGIN_SIGNATURE = "FED2-012";
 
     public static final String ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP = "FED2-013";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP_MSG = "Token expiration cannot exceed '%s' seconds.";
     public static final String ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE = "FED2-014";
     public static final String ERROR_CODE_FEDERATION2_INVALID_ATTRIBUTE = "FED2-015";
     public static final String ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE = "FED2-016";
@@ -167,6 +168,12 @@ public final class ErrorCodes {
     //Password Blacklist
     public static final String ERROR_CODE_BLACKLISTED_PASSWORD = "PB-000";
     public static final String ERROR_CODE_BLACKLISTED_PASSWORD_MSG = "Password provided is blacklisted and had been publicly compromised before. Please try a different password.";
+
+    /**
+     * PLEASE ADD REUSABLE ERROR MESSAGES HERE.
+     */
+    public static final String ERROR_MESSAGE_ONLY_ONE_USER_ADMIN_ALLOWED = "The domain %s has more than one user admin. Only one user admin can exist per domain.";
+    public static final String ERROR_MESSAGE_IDP_CANNOT_ASSIGN_ROLE_TO_TENANT = "Identity provider cannot assign role to tenant '%s'.";
 
    public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {

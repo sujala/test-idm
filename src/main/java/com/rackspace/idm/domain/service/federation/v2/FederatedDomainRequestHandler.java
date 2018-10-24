@@ -46,7 +46,7 @@ public class FederatedDomainRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(FederatedDomainRequestHandler.class);
     private static final BigDecimal NUMBER_SEC_IN_HOUR = BigDecimal.valueOf(3600);
     public static final String DISABLED_DOMAIN_ERROR_MESSAGE = "Domain %s is disabled.";
-    public static final String DUPLICATE_USERNAME_ERROR_MSG = "The username already exists under a different domainId for this identity provider";
+    public static final String DUPLICATE_USERNAME_ERROR_MSG = "The username already exists under a different domainId for this Identity provider.";
     public static final String INVALID_GROUP_FOR_DOMAIN_ERROR_MSG = "Invalid group with name '%s' for domain '%s'.";
 
     @Autowired
@@ -105,7 +105,7 @@ public class FederatedDomainRequestHandler {
         directory search when IDP isn't authorized even if the domain existed
          */
         if (!(originIdentityProvider.isApprovedForDomain(authRequest.getDomainId()))) {
-            throw new ForbiddenException(String.format("Not authorized for domain '%s'", authRequest.getDomainId()), ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
+            throw new ForbiddenException(String.format("Identity provider issuing the SAML response is not authorized for domain '%s'", authRequest.getDomainId()), ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
         }
 
         /*
@@ -149,14 +149,11 @@ public class FederatedDomainRequestHandler {
         DateTime now = new DateTime();
 
         // TODO: Eventually may want to allow for some clock skew from originating system
-        int maxTokenLifetime = identityConfig.getReloadableConfig().getFederatedDomainTokenLifetimeMax();
         int timeDelta = Seconds.secondsBetween(now, requestedExp).getSeconds();
+        int maxTokenLifetime = identityConfig.getReloadableConfig().getFederatedDomainTokenLifetimeMax();
         if (timeDelta > maxTokenLifetime) {
-            // Convert max lifetime in seconds to hours for error message
-            BigDecimal maxSec = BigDecimal.valueOf(maxTokenLifetime);
-            BigDecimal maxD = maxSec.divide(NUMBER_SEC_IN_HOUR, 1, BigDecimal.ROUND_DOWN);
-            throw new BadRequestException(String.format("Invalid requested token expiration. " +
-                    "Tokens cannot be requested with an expiration of more than '%s' hours.", maxD.toPlainString()), ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP);
+            throw new BadRequestException(String.format(
+                    ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP_MSG, maxTokenLifetime), ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP);
         }
     }
 
@@ -183,12 +180,13 @@ public class FederatedDomainRequestHandler {
         List<User> userAdmins = domainService.getDomainAdmins(domainId);
         if(userAdmins.size() == 0) {
             log.error("Unable to get roles for saml assertion due to no user admin for domain {}", domainId);
-            throw new ForbiddenException("The specified domain can not be used for federation. It does not have an owner", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
+            throw new ForbiddenException(String.format("The domain %s cannot be used for federation because it does not have a user admin.", domainId), ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
         }
 
         if(userAdmins.size() > 1 && identityConfig.getStaticConfig().getDomainRestrictedToOneUserAdmin()) {
-            log.error("Unable to get roles for saml assertion due to more than one user admin for domain {}", domainId);
-            throw new IllegalStateException(String.format("More than one user admin exists for domain %s", domainId));
+            String errorMessage = String.format(ERROR_MESSAGE_ONLY_ONE_USER_ADMIN_ALLOWED, domainId);
+            log.error(errorMessage);
+            throw new IllegalStateException(errorMessage);
         }
 
         User firstEnabledUserAdmin = org.apache.commons.collections4.CollectionUtils.find(userAdmins, new UserEnabledPredicate());
@@ -211,18 +209,18 @@ public class FederatedDomainRequestHandler {
                 ClientRole role = roleService.getRoleByName(roleName);
                 // Verify role is non-null and assignable by user
                 if (role == null || role.getRsWeight() != PrecedenceValidator.RBAC_ROLES_WEIGHT) {
-                    throw new BadRequestException(String.format("Invalid role '%s'", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
+                    throw new BadRequestException(String.format("Role '%s' is either invalid or unknown.", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
                 }
 
                 // Verify role can be assigned in the manner requested
                 Set<String> assignedTenants = requestedRoles.get(roleName);
                 boolean assignGlobally = assignedTenants == null || CollectionUtils.isEmpty(assignedTenants);
                 if (assignGlobally && role.getAssignmentTypeAsEnum() == RoleAssignmentEnum.TENANT) {
-                    throw new BadRequestException(String.format("Role '%s' can not be assigned as a global role", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
+                    throw new BadRequestException(String.format("Role %s cannot be assigned as a global role.", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
                 }
 
                 if (!assignGlobally && role.getAssignmentTypeAsEnum() == RoleAssignmentEnum.GLOBAL) {
-                    throw new BadRequestException(String.format("Role '%s' can not be assigned as a tenant role", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
+                    throw new BadRequestException(String.format("Role '%s' is a domain role and cannot be assigned on a tenant.", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
                 }
 
                 Set<String> assignedTenantIds = new HashSet<String>();
@@ -236,7 +234,7 @@ public class FederatedDomainRequestHandler {
                             tenant = tenantService.getTenantByName(assignedTenantName);
                             if (tenant == null) {
                                 log.debug(String.format("Invalid request. Tenant '%s' not found. ", assignedTenantName));
-                                throw new BadRequestException(String.format("IDP can not assign role to tenant '%s'", assignedTenantName), ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT);
+                                throw new BadRequestException(String.format(ERROR_MESSAGE_IDP_CANNOT_ASSIGN_ROLE_TO_TENANT, assignedTenantName), ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT);
                             }
 
                             if (!globalIdp) {
@@ -252,7 +250,7 @@ public class FederatedDomainRequestHandler {
                                     } else {
                                         log.debug(String.format("Invalid request. IDP forbidden to assign roles to tenant '%s' on domain '%s'", tenant.getTenantId(), tenant.getDomainId()));
                                     }
-                                    throw new BadRequestException(String.format("IDP can not assign role to tenant '%s'", assignedTenantName), ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT);
+                                    throw new BadRequestException(String.format(ERROR_MESSAGE_IDP_CANNOT_ASSIGN_ROLE_TO_TENANT, assignedTenantName), ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT);
                                 }
                             }
                             validatedTenantNames.put(assignedTenantName.toLowerCase(), tenant);
@@ -331,7 +329,7 @@ public class FederatedDomainRequestHandler {
         If there is an existing user, must verify that the domains are the same.
          */
         if (!authRequest.getDomainId().equalsIgnoreCase(existingUser.getDomainId())) {
-            throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG);
+            throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG, ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
         }
 
         /*

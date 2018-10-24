@@ -1560,7 +1560,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else if (GlobalConstants.FEDERATION_API_V2_0.equalsIgnoreCase(apiVersion)) {
                 samlAuthResponse = federatedIdentityService.processV2SamlResponse(samlResponse, applyRcnRoles);
             } else {
-                exceptionHandler.badRequestExceptionResponse(String.format("Unsupported %s version", GlobalConstants.HEADER_IDENTITY_API_VERSION));
+                exceptionHandler.badRequestExceptionResponse("Unsupported API version");
             }
             AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(samlAuthResponse);
 
@@ -1569,7 +1569,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
         } catch (BadRequestException ex) {
-            logger.debug("Received invalid Federation auth request", ex);
+            logger.debug("Federation authentication request received is invalid.", ex);
             return exceptionHandler.exceptionResponse(ex);
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

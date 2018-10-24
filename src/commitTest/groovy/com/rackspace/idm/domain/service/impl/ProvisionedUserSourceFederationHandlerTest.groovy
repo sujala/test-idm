@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest
@@ -42,7 +43,10 @@ import org.opensaml.saml.saml2.core.Response
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
+import testHelpers.IdmExceptionAssert
 import testHelpers.saml.SamlFactory
+
+import static com.rackspace.idm.ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE
 
 class ProvisionedUserSourceFederationHandlerTest extends Specification {
     @Shared ProvisionedUserSourceFederationHandler provisionedUserSourceFederationHandler
@@ -832,7 +836,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         0 * mockFederatedUserDao.addUser(_,_)
 
         DuplicateUsernameException ex = thrown()
-        ex.getMessage() == ProvisionedUserSourceFederationHandler.DUPLICATE_USERNAME_ERROR_MSG
+        IdmExceptionAssert.assertException(ex, DuplicateUsernameException, ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE, ProvisionedUserSourceFederationHandler.DUPLICATE_USERNAME_ERROR_MSG)
     }
 
 

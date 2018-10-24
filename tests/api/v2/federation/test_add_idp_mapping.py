@@ -112,7 +112,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             auth_client=api_client)
         self.assertEqual(fed_auth.status_code, 400)
         self.assertEqual(fed_auth.json()['badRequest']['message'],
-                         "Error code: 'FED2-016'; Invalid role 'lbaas:admin'")
+                         ("Error code: 'FED2-016'; Role 'lbaas:admin'"
+                         " is either invalid or unknown."))
 
     def validate_fed_auth_success(
             self, cert_path, domain_id, issuer, key_path, api_client):

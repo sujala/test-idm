@@ -96,7 +96,7 @@ public class FederatedAuthHandlerV1 {
         } else if (IdentityProviderFederationTypeEnum.RACKER == federationType) {
             authResponse = rackerSourceFederationHandler.processRequestForProvider(decoratedSamlResponse, provider);
         } else {
-            throw new UnsupportedOperationException(String.format("Provider user source '%s' not supported", federationType));
+            throw new UnsupportedOperationException(String.format(" '%s' is not supported", federationType));
         }
 
         Audit.logSuccessfulFederatedAuth(authResponse.getUser());

@@ -38,15 +38,17 @@ import org.springframework.util.Assert;
 
 import java.util.*;
 
+import static com.rackspace.idm.ErrorCodes.*;
+
 /**
  * Handles SAML authentication requests against provisioned users. This means against a particular domain.
  */
 @Component
 public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFederationHandler {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
-    public static final String DUPLICATE_USERNAME_ERROR_MSG = "The username already exists under a different domainId for this identity provider";
-    public static final String DISABLED_DOMAIN_ERROR_MESSAGE = "Domain %s is disabled.";
-    public static final String NO_USER_ADMIN_FOR_DOMAIN_ERROR_MESSAGE = "The specified domain can not be used for federation. It does not have an owner.";
+    public static final String DUPLICATE_USERNAME_ERROR_MSG = "The username already exists under a different domainId for this Identity provider.";
+    public static final String DISABLED_DOMAIN_ERROR_MESSAGE = "The user admin for domain %s is disabled.";
+    public static final String NO_USER_ADMIN_FOR_DOMAIN_ERROR_MESSAGE = "The domain %s cannot be used for federation because it does not have a user admin.";
 
     @Autowired
     SamlSignatureValidator samlSignatureValidator;
@@ -192,11 +194,11 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         request.getUser().setUsername(samlResponseDecorator.checkAndGetUsername());
         DateTime requestedExp = samlResponseDecorator.checkAndGetSubjectConfirmationNotOnOrAfterDate();
         DateTime now = new DateTime();
-        int maxTokenLifetime = identityConfig.getReloadableConfig().getFederatedDomainTokenLifetimeMax();
+        Integer maxTokenLifetime = identityConfig.getReloadableConfig().getFederatedDomainTokenLifetimeMax();
         int timeDelta = Seconds.secondsBetween(now, requestedExp).getSeconds();
         if (timeDelta > maxTokenLifetime) {
-            throw new BadRequestException("Invalid requested token expiration. " +
-                    "Tokens cannot be requested with an expiration of more than " + maxTokenLifetime + "seconds.");
+            throw new BadRequestException(String.format(
+                    ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP_MSG, maxTokenLifetime), ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP);
         }
         request.setRequestedTokenExpirationDate(requestedExp);
 
@@ -252,8 +254,9 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         }
 
         if(userAdmins.size() > 1 && identityConfig.getStaticConfig().getDomainRestrictedToOneUserAdmin()) {
-            log.error("Unable to get roles for saml assertion due to more than one user admin for domain {}", domain.getDomainId());
-            throw new IllegalStateException("more than one user admin exists for domain " + domain.getDomainId());
+            String errorMessage = String.format(ERROR_MESSAGE_ONLY_ONE_USER_ADMIN_ALLOWED, domain.getDomainId());
+            log.error(errorMessage);
+            throw new IllegalStateException(errorMessage);
         }
 
         boolean enabledUserAdmin = org.apache.commons.collections4.CollectionUtils.exists(userAdmins, new UserEnabledPredicate());
@@ -330,7 +333,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         if (resultUser == null) {
             resultUser = createUserForRequest(request);
         } else if (!request.getUser().getDomainId().equalsIgnoreCase(resultUser.getDomainId())) {
-            throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG);
+            throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG, ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
         } else {
             boolean updateUser = false;
 

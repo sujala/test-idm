@@ -132,7 +132,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
             federationUtils.validateSignatureForIdentityProvider(decoratedLogoutRequest.checkAndGetSignature(), issuingIdp);
         } catch (SignatureException | SignatureValidationException t) {
             log.debug("Received fed request with invalid signature", t);
-            throw new BadRequestException("Signature could not be validated", ERROR_CODE_FEDERATION2_INVALID_ORIGIN_SIGNATURE, t);
+            throw new BadRequestException("Signature could not be validated.", ERROR_CODE_FEDERATION2_INVALID_ORIGIN_SIGNATURE, t);
         }
     }
 

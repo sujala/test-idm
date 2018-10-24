@@ -127,7 +127,7 @@ public class FederationUtils {
 
     private void validateIssueInstant(DateTime issueInstant) {
         if (issueInstant == null) {
-            throw new BadRequestException("Saml issueInstant is required");
+            throw new BadRequestException("SAML issueInstant is missing.");
         }
 
         DateTime now = new DateTime();
@@ -135,10 +135,10 @@ public class FederationUtils {
         int maxResponseSkew = identityConfig.getReloadableConfig().getFederatedResponseMaxSkew();
         int timeDelta = Seconds.secondsBetween(issueInstant, now).getSeconds();
         if (issueInstant.isAfter(now.plusSeconds(maxResponseSkew))) {
-            throw new BadRequestException("Saml issueInstant cannot be in the future.");
+            throw new BadRequestException("SAML issueInstant cannot be in the future.");
         }
         if (timeDelta > maxResponseAge + maxResponseSkew) {
-            throw new BadRequestException("Saml issueInstant cannot be older than " + maxResponseAge + " seconds.");
+            throw new BadRequestException("SAML issueInstant cannot be older than " + maxResponseAge + " seconds.");
         }
     }
 

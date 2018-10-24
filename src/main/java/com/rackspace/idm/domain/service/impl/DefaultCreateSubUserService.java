@@ -25,6 +25,8 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.rackspace.idm.ErrorCodes.ERROR_MESSAGE_ONLY_ONE_USER_ADMIN_ALLOWED;
+
 
 @Component
 public class DefaultCreateSubUserService implements CreateSubUserService {
@@ -102,8 +104,9 @@ public class DefaultCreateSubUserService implements CreateSubUserService {
         }
 
         if(userAdmins.size() > 1 && identityConfig.getStaticConfig().getDomainRestrictedToOneUserAdmin()) {
-            log.error("Unable to determine defaults due to multiple user admins in domain {}", domainId);
-            throw new IllegalStateException(String.format("More than one user admin exists for domain %s", domainId));
+            String errorMessage = String.format(ERROR_MESSAGE_ONLY_ONE_USER_ADMIN_ALLOWED, domainId);
+            log.error(errorMessage);
+            throw new IllegalStateException(errorMessage);
         }
 
         User firstEnabledUserAdmin = org.apache.commons.collections4.CollectionUtils.find(userAdmins, new UserEnabledPredicate());

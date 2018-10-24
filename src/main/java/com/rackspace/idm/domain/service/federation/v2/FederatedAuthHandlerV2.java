@@ -74,7 +74,7 @@ public class FederatedAuthHandlerV2 {
             federationUtils.validateSignatureForIdentityProvider(federatedAuthRequest.getBrokerSignature(), brokerIdp);
         } catch (SignatureException|SignatureValidationException t) {
             log.debug("Received fed request with invalid signature", t);
-            throw new BadRequestException("Signature could not be validated", ERROR_CODE_FEDERATION_INVALID_BROKER_SIGNATURE, t);
+            throw new BadRequestException("Signature could not be validated.", ERROR_CODE_FEDERATION_INVALID_BROKER_SIGNATURE, t);
         }
 
         // Signature is valid. Verify the signer is a broker
@@ -92,7 +92,7 @@ public class FederatedAuthHandlerV2 {
         // Only DOMAIN IDPs are currently allowed to be disabled
         if (originIdp.getEnabled() != null && !originIdp.getEnabled()
                 && IdentityProviderFederationTypeEnum.DOMAIN == originIdp.getFederationTypeAsEnum()) {
-            throw new ForbiddenException("Disabled issuer", ERROR_CODE_FEDERATION2_DISABLED_ORIGIN_ISSUER);
+            throw new ForbiddenException("Issuer is disabled.", ERROR_CODE_FEDERATION2_DISABLED_ORIGIN_ISSUER);
         }
 
         // Validate the Signature on each origin assertion prior to any more in-depth analysis
@@ -103,7 +103,7 @@ public class FederatedAuthHandlerV2 {
                 federationUtils.validateSignatureForIdentityProvider(originAssertion.getSignature(), originIdp);
             } catch (SignatureException|SignatureValidationException t) {
                 log.debug("Received fed request with invalid origin assertion signature", t);
-                throw new BadRequestException("Signature could not be validated", ERROR_CODE_FEDERATION2_INVALID_ORIGIN_SIGNATURE, t);
+                throw new BadRequestException("Signature could not be validated.", ERROR_CODE_FEDERATION2_INVALID_ORIGIN_SIGNATURE, t);
             }
         }
 
