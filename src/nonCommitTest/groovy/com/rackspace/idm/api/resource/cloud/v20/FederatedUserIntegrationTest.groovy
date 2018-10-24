@@ -1044,7 +1044,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         validateResponse = cloud20.federatedValidateRequest(logoutRequest)
 
         then: "Fails"
-        IdmAssert.assertOpenStackV2FaultResponse(validateResponse, BadRequestFault, SC_BAD_REQUEST, "Saml issueInstant cannot be older than " + maxAge + " seconds.")
+        IdmAssert.assertOpenStackV2FaultResponse(validateResponse, BadRequestFault, SC_BAD_REQUEST, "SAML issueInstant cannot be older than " + maxAge + " seconds.")
 
         cleanup:
         reloadableConfiguration.reset()
