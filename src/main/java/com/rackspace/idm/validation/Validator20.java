@@ -233,7 +233,9 @@ public class Validator20 {
     public void validatePasswordCredentialsForCreateOrUpdate(PasswordCredentialsBase passwordCredentials) {
         validatePasswordCredentials(passwordCredentials);
         validatePasswordForCreateOrUpdate(passwordCredentials.getPassword());
-        validatePasswordIsNotBlacklisted(passwordCredentials.getPassword());
+        if (identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled()) {
+            validatePasswordIsNotBlacklisted(passwordCredentials.getPassword());
+        }
     }
 
     public void validateApiKeyCredentials(ApiKeyCredentials apiKeyCredentials) {

@@ -14,6 +14,7 @@ import com.rackspace.idm.helpers.CloudTestUtils
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.validation.JsonValidator
 import com.rackspace.idm.validation.Validator20
+import org.openstack.docs.identity.api.v2.PasswordCredentialsBase
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmExceptionAssert
@@ -646,5 +647,30 @@ class Validator20Test extends RootServiceTest {
         then:
         BadRequestException ex = thrown()
         IdmExceptionAssert.assertException(ex, BadRequestException, ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD, ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD_MSG)
+    }
+
+    def "test validatePasswordCredentialsForCreateOrUpdate method for password blacklist feature flag #passwordFeatureFlag"() {
+        given:
+        PasswordCredentialsBase passwordCredentialsBase = new PasswordCredentialsBase().with {
+            it.username = "testUser"
+            it.password = Constants.BLACKLISTED_PASSWORD
+            it
+        }
+
+        when: "password blacklist feature if turn off"
+
+        service.validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsBase)
+
+        then: "password blacklist service is not invoked"
+        1 * identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled() >> passwordFeatureFlag
+
+        if (passwordFeatureFlag) {
+            1 * passwordBlacklistService.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+        } else {
+            0 * passwordBlacklistService.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+        }
+
+        where:
+        passwordFeatureFlag << [true, false]
     }
 }
