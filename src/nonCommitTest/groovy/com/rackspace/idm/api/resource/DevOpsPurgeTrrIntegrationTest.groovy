@@ -7,19 +7,27 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy
 import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.domain.dao.impl.LdapTokenRevocationRecordRepository
+import com.rackspace.idm.domain.dao.AEScopeAccessDao
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.LdapTokenRevocationRecord
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AETokenRevocationService
+import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.unboundid.ldap.sdk.Filter
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.ForbiddenFault
+import org.openstack.docs.identity.api.v2.IdentityFault
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import testHelpers.IdmAssert
+
+import static org.apache.http.HttpStatus.SC_NO_CONTENT
 
 /**
  * These tests depend upon creating obsolete TRRs for testing purposes. As such, it deletes all TRRs prior to every test.
@@ -34,6 +42,10 @@ class DevOpsPurgeTrrIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired
     AETokenRevocationService aeTokenRevocationService
+
+    @Autowired
+    @Qualifier("aeScopeAccessDao")
+    AEScopeAccessDao aeScopeAccessRepository
 
     def TRR_TOKEN_NAME = "devOpsPurgeTrr_"
     def TRR_USER_ID_PREFIX = "devOpsPurgeTrrUser_"
@@ -184,6 +196,98 @@ class DevOpsPurgeTrrIntegrationTest extends RootConcurrentIntegrationTest {
         dr2.deleted == 2
         dr2.errors == 0
         dr2.id != null
+    }
+
+    def "Purge process will remove expired individual token TRRs" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.PURGE_TRRS_OBSOLETE_AFTER_PROP, 0)
+        def aeToken = utils.getToken(specificationIdentityAdmin.username)
+
+        UserScopeAccess identityAdminScopeAccess = (UserScopeAccess)aeScopeAccessRepository.getScopeAccessByAccessToken(aeToken)
+
+        when: "revoke token, verify the trr exists and purge trr"
+        def resp = cloud20.revokeToken(aeToken)
+        resp.status == SC_NO_CONTENT
+
+        assert CollectionUtils.isNotEmpty(aeTokenRevocationService.findTokenRevocationRecordsMatchingToken(identityAdminScopeAccess))
+        def response = devops.purgeObsoleteTrrs(specificationIdentityAdminToken)
+
+        then:
+        response.status == HttpStatus.SC_OK
+        TokenRevocationRecordDeletionResponse dr = response.getEntity(TokenRevocationRecordDeletionResponse)
+        dr.deleted == 1
+        dr.errors == 0
+        dr.id != null
+
+        and:"Obsolete trr appropriately deleted"
+        assert CollectionUtils.isEmpty(aeTokenRevocationService.findTokenRevocationRecordsMatchingToken(identityAdminScopeAccess))
+
+    }
+
+    def "Purge process will remove expired individual trrs on user disable" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.PURGE_TRRS_OBSOLETE_AFTER_PROP, 0)
+        def user = utils.createIdentityAdmin()
+        def token = utils.getToken(user.username)
+        UserScopeAccess userScopeAccess = (UserScopeAccess)aeScopeAccessRepository.getScopeAccessByAccessToken(token)
+
+        when: "disable user, verify the trr exists and purge trr"
+        utils.disableUser(user)
+
+        assert CollectionUtils.isNotEmpty(aeTokenRevocationService.findTokenRevocationRecordsMatchingToken(userScopeAccess))
+
+        def resp = devops.purgeObsoleteTrrs(specificationIdentityAdminToken)
+
+        then:
+        resp.status == HttpStatus.SC_OK
+        TokenRevocationRecordDeletionResponse dr = resp.getEntity(TokenRevocationRecordDeletionResponse)
+        dr.deleted == 1
+        dr.errors == 0
+        dr.id != null
+
+        and:"Obsolete trr appropriately deleted"
+        assert CollectionUtils.isEmpty(aeTokenRevocationService.findTokenRevocationRecordsMatchingToken(userScopeAccess))
+
+        cleanup:
+        utils.deleteUsers(user)
+    }
+
+    def "Purge process will remove expired individual trrs on password change"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.PURGE_TRRS_OBSOLETE_AFTER_PROP, 0)
+        User user = utils.createGenericUserAdmin()
+
+        def passwordOriginal = Constants.DEFAULT_PASSWORD
+        def passworda = Constants.DEFAULT_PASSWORD + "a"
+
+        def userUpdateA = new User().with {
+            it.password = passworda
+            it
+        }
+        def response1 = cloud20.authenticatePassword(user.username, passwordOriginal)
+        def token1 = response1.getEntity(AuthenticateResponse).value.token.id
+
+        UserScopeAccess userScopeAccess1 = (UserScopeAccess)aeScopeAccessRepository.getScopeAccessByAccessToken(token1)
+
+        when: "update user to change password, verify the trr exists and purge trr"
+        def updateUserresp = cloud20.updateUser(utils.getIdentityAdminToken(), user.id, userUpdateA)
+        updateUserresp.status == 200
+
+        assert CollectionUtils.isNotEmpty(aeTokenRevocationService.findTokenRevocationRecordsMatchingToken(userScopeAccess1))
+        def resp = devops.purgeObsoleteTrrs(specificationIdentityAdminToken)
+
+        then:
+        resp.status == HttpStatus.SC_OK
+        TokenRevocationRecordDeletionResponse dr = resp.getEntity(TokenRevocationRecordDeletionResponse)
+        dr.deleted == 1
+        dr.errors == 0
+        dr.id != null
+
+        and:"Obsolete trr appropriately deleted"
+        assert CollectionUtils.isEmpty(aeTokenRevocationService.findTokenRevocationRecordsMatchingToken(userScopeAccess1))
+
+        cleanup:
+        utils.deleteUsers(user)
     }
 
     def createTokenTrrWithCreationDate(DateTime dateTime) {

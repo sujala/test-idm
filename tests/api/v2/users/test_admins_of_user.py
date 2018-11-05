@@ -32,6 +32,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         cls.test_email = "random@rackspace.com"
         cls.issuer = 'http://identityqe.rackspace.com'
         cls.idp_id = 'identityqe'
+        cls.racker_issuer = 'http://racker.rackspace.com'
 
     @unless_coverage
     @data_file_iterator.data_file_provider((
@@ -642,6 +643,16 @@ class TestAdminsOfUser(base.TestBaseV2):
         validate_resp = self.identity_admin_client.validate_token(
             token_id=fed_user_auth_token)
         self.assertEqual(validate_resp.status_code, 404)
+
+    def test_racker_saml_logout(self):
+        #  Logging out federated rackers is not supported
+        logout_v2_saml = saml_helper.create_saml_logout_v2(
+            issuer=self.racker_issuer,
+            name_id=self.identity_config.racker_username
+        )
+        logout_response = self.identity_admin_client.logout_with_saml(
+            saml=logout_v2_saml)
+        self.assertEqual(logout_response.status_code, 400)
 
     @unless_coverage
     def tearDown(self):
