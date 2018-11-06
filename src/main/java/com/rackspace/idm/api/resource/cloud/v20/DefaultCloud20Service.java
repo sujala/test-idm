@@ -3868,11 +3868,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getDomain(String authToken, String domainId) {
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-        requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
-
-        User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+        EndUser caller = (EndUser) requestContextHolder.getRequestContext().getEffectiveCaller();
 
         IdentityUserTypeEnum requesterIdentityRole = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
 

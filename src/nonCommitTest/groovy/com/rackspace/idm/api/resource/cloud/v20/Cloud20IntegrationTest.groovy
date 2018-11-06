@@ -2873,7 +2873,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
                 cloud20.addEndpoint(rackerToken, "tenantId", new EndpointTemplate()),
                 cloud20.createUser(rackerToken, new User()),
                 cloud20.listTenants(rackerToken),
-                cloud20.addRoleToUserOnTenant(rackerToken, "tenantId", "userId", "roleId")
+                cloud20.addRoleToUserOnTenant(rackerToken, "tenantId", "userId", "roleId"),
+                cloud20.getDomain(rackerToken, "domainId")
         ]
     }
 

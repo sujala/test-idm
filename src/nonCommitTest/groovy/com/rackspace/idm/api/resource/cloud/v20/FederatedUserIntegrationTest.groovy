@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
@@ -2466,6 +2467,32 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+    }
+
+    def "federated user can retrieve own domain"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def domainId = userAdmin.domainId
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = samlAuthResponse.value.token
+        def samlAuthTokenId = samlAuthToken.id
+
+        when: "get domain"
+        def response = cloud20.getDomain(samlAuthTokenId, domainId)
+        def domainEntity = response.getEntity(Domain)
+
+        then:
+        response.status == SC_OK
+
+        domainEntity.id == domainId
 
         cleanup:
         utils.deleteUser(userAdmin)
