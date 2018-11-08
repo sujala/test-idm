@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
-import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest
@@ -270,7 +269,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderIdCount(_, _) >> 0
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(_, _) >> null
         def idp = createIdentityProvider()
-        mockTenantService.getTenantsByDomainId(_) >> tenants
+        mockTenantService.getTenantsByDomainId(_, Boolean.toString(true)) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [new User()].asList()
@@ -594,7 +593,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderIdCount(_, _) >> 0
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(_, _) >> null
         def idp = createIdentityProvider()
-        mockTenantService.getTenantsByDomainId(_) >> tenants
+        mockTenantService.getTenantsByDomainId(_, Boolean.toString(true)) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [new User()].asList()
@@ -757,7 +756,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
 
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(USERNAME, IDP_ID) >> null
-        mockTenantService.getTenantsByDomainId(_) >> tenants
+        mockTenantService.getTenantsByDomainId(_, Boolean.toString(true)) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
@@ -787,7 +786,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
 
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> theIdentityProvider
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(USERNAME, IDP_ID) >> user
-        mockTenantService.getTenantsByDomainId(DOMAIN_ID) >> tenants
+        mockTenantService.getTenantsByDomainId(DOMAIN_ID, Boolean.toString(true)) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()

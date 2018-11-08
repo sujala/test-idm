@@ -1524,6 +1524,13 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public List<Tenant> getTenantsByDomainId(String domainId, boolean enabled) {
+        List<Tenant> tenants = getTenantsByDomainId(domainId);
+        tenants.removeIf(tenant -> !tenant.getEnabled().equals(enabled));
+        return tenants;
+    }
+
+    @Override
     public String[] getTenantIdsForDomain(Domain domain) {
         List<String> tenantList = new ArrayList<String>();
 

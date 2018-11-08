@@ -42,6 +42,7 @@ import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import com.rackspace.idm.multifactor.service.MultiFactorService
 import com.rackspace.idm.util.AuthHeaderHelper
 import com.rackspace.idm.util.CryptHelper
+import com.rackspace.idm.util.IdmCommonUtils
 import com.rackspace.idm.util.RSAClient
 import com.rackspace.idm.util.SamlUnmarshaller
 import com.rackspace.idm.validation.*
@@ -88,6 +89,7 @@ class RootServiceTest extends Specification {
     @Shared ObjectFactory openStackIdentityV2Factory
     @Shared IdmPathUtils idmPathUtils
     @Shared ApplicationEventPublisher applicationEventPublisher;
+    @Shared IdmCommonUtils idmCommonUtils
 
     // converters
     @Shared AuthConverterCloudV20 authConverter
@@ -955,6 +957,11 @@ class RootServiceTest extends Specification {
     def mockDynamoDB(service) {
         dynamoDB = Mock()
         service.dynamoDB = dynamoDB
+    }
+
+    def mockIdmCommonUtils(service) {
+        idmCommonUtils = Mock()
+        service.idmCommonUtils = idmCommonUtils
     }
 
     /*

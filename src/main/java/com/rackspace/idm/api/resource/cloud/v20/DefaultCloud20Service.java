@@ -49,6 +49,7 @@ import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
+import com.rackspace.idm.util.IdmCommonUtils;
 import com.rackspace.idm.util.QueryParamConverter;
 import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
@@ -113,9 +114,6 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
@@ -394,6 +392,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private EmailClient emailClient;
+
+    @Autowired
+    private IdmCommonUtils idmCommonUtils;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -4193,9 +4194,16 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
-            // NOTE: enabled query param is not being used. Defect created: https://jira.rax.io/browse/CID-1765
             domainService.checkAndGetDomain(domainId);
-            List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
+
+            Boolean enabledArg = idmCommonUtils.getBoolean(enabled) ;
+
+            List<Tenant> tenants;
+            if (enabledArg != null) {
+                tenants = tenantService.getTenantsByDomainId(domainId, enabledArg);
+            } else {
+                tenants = tenantService.getTenantsByDomainId(domainId);
+            }
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

@@ -1185,9 +1185,13 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def getDomainTenants(String token, String domainId, boolean enabled = true, accept = APPLICATION_XML_TYPE) {
+    def getDomainTenants(String token, String domainId, enabled = true, accept = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).queryParam(ENABLED, enabled.toString()).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
+        def queryParams = new MultivaluedMapImpl()
+        if (enabled != null) {
+            queryParams.add(ENABLED, enabled.toString())
+        }
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
     def getEndpointsByDomain(String token, String domainId) {

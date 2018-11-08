@@ -6,14 +6,7 @@ import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.api.security.ImmutableTenantRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
-import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.DelegationAgreement
-import com.rackspace.idm.domain.entity.Domain
-import com.rackspace.idm.domain.entity.EndUserDenormalizedSourcedRoleAssignmentsBuilder
-import com.rackspace.idm.domain.entity.ProvisionedUserDelegate
-import com.rackspace.idm.domain.entity.Tenant
-import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.DomainSubUserDefaults
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.domain.service.rolecalculator.UserRoleLookupService
@@ -1176,6 +1169,69 @@ class DefaultTenantServiceTest extends RootServiceTest {
         0 * domainService.getDomain(domainId)
         result.size() == 1
         result.get(0) == tenant
+    }
+
+    @Unroll
+    def "getTenantsByDomainId with enabled filter; enabled = #enabled, getOnlyUseTenantDomainPointers = false"() {
+        given:
+        def domainId = "domainId"
+        def tenant = entityFactory.createTenant().with {
+            it.domainId = domainId
+            it.tenantId = "tenantId"
+            it.enabled = enabled
+            it
+        }
+        def domain = entityFactory.createDomain().with {
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+
+        identityConfig.getReloadableConfig().isOnlyUseTenantDomainPointersEnabled() >> false
+
+        when:
+        def result = service.getTenantsByDomainId(domainId, enabled)
+
+        then:
+        result.size() == 1
+        result.get(0) == tenant
+
+        0 * tenantDao.getTenantsByDomainId(domainId)
+        1 * domainService.getDomain(domainId) >> domain
+        1 * tenantDao.getTenant(tenant.tenantId) >> tenant
+
+
+        where:
+        enabled << [true, false]
+    }
+
+    @Unroll
+    def "getTenantsByDomainId with enabled filter; enabled = #enabled, getOnlyUseTenantDomainPointers = true"() {
+        given:
+        def domainId = "domainId"
+        def tenant = entityFactory.createTenant().with {
+            it.domainId = domainId
+            it.tenantId = "tenantId"
+            it.enabled = enabled
+            it
+        }
+        def domain = entityFactory.createDomain().with {
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+
+        identityConfig.getReloadableConfig().isOnlyUseTenantDomainPointersEnabled() >> true
+
+        when:
+        def result = service.getTenantsByDomainId(domain.domainId, enabled)
+
+        then:
+        result.size() == 1
+        result.get(0) == tenant
+
+        1 * tenantDao.getTenantsByDomainId(domainId) >> [tenant]
+
+        where:
+        enabled << [true, false]
     }
 
     def "getTenantsByDomainId uses domains when feature flag getOnlyUseTenantDomainPointers is disabled"() {

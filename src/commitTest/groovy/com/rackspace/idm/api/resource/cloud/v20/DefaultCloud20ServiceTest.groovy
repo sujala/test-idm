@@ -5704,6 +5704,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockTenantConverter(service)
         mockJAXBObjectFactories(service)
+        mockIdmCommonUtils(service)
 
         when:
         def response = service.getDomainTenants(authToken, "tenantId", "true").build()
@@ -5715,7 +5716,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
         1 * domainService.checkAndGetDomain(_) >> entityFactory.createDomain()
-        1 * tenantService.getTenantsByDomainId(_) >> []
+        1 * idmCommonUtils.getBoolean("true") >> true
+        1 * tenantService.getTenantsByDomainId(_, true) >> []
         1 * jaxbObjectFactories.getOpenStackIdentityV2Factory().createTenants(_) >> Mock(JAXBElement)
         1 * tenantConverter.toTenantList(_)
     }

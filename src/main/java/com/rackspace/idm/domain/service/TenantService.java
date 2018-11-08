@@ -549,6 +549,16 @@ public interface TenantService {
     List<Tenant> getTenantsByDomainId(String domainId);
 
     /**
+     * Return the tenants with enabled status that belong to the specified domainId.
+     *
+     * @param domainId
+     * @param enabled
+     * @return
+     * @throws NotFoundException if the domain does not include any tenants
+     */
+    List<Tenant> getTenantsByDomainId(String domainId, boolean enabled);
+
+    /**
      * Return all the tenant ids that belong to the specified domainId based on the list of tenants linked to within the domain
      * entity.
      *
