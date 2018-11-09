@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.cache.CacheBuilder
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
 import com.rackspace.idm.domain.config.CacheConfiguration
@@ -15,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
-import org.springframework.cache.guava.GuavaCache
+import org.springframework.cache.caffeine.CaffeineCache
 import org.springframework.cache.support.SimpleCacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.ContextConfiguration
@@ -170,13 +171,13 @@ class IdentityPropertyCacheComponentTest extends Specification {
         CacheManager cacheManager() {
             SimpleCacheManager cacheManager = new SimpleCacheManager()
             cacheManager.setCaches(Arrays.asList(
-                    new GuavaCache(CacheConfiguration.REPOSITORY_PROPERTY_CACHE_BY_NAME, createRepositoryPropertyCacheBuilder().build()))
+                    new CaffeineCache(CacheConfiguration.REPOSITORY_PROPERTY_CACHE_BY_NAME, createRepositoryPropertyCacheBuilder().build()))
             )
             return cacheManager
         }
 
-        private CacheBuilder createRepositoryPropertyCacheBuilder() {
-            return CacheBuilder.newBuilder()
+        private Caffeine createRepositoryPropertyCacheBuilder() {
+            return Caffeine.newBuilder()
                     .maximumSize(cacheSize)
                     .expireAfterWrite(cacheTtl, TimeUnit.MILLISECONDS)
         }

@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.config
 
-import com.google.common.cache.CacheBuilder
-import org.springframework.cache.guava.GuavaCache
+import com.github.benmanes.caffeine.cache.Caffeine
+import org.springframework.cache.caffeine.CaffeineCache
 import spock.lang.Specification
 import spock.lang.Unroll
 import testHelpers.SingletonConfiguration
@@ -32,7 +32,7 @@ class CacheConfigurationTest extends Specification {
         staticIdmConfiguration.setProperty(IdentityConfig.CACHE_CLIENT_ROLES_BY_ID_TTL_PROP, ttl)
 
         when:
-        CacheBuilder builder = cacheConfiguration.createClientRoleCacheBuilder()
+        Caffeine builder = cacheConfiguration.createClientRoleCacheBuilder()
 
         then:
         builder.maximumSize == size
@@ -59,7 +59,7 @@ class CacheConfigurationTest extends Specification {
         staticIdmConfiguration.setProperty(IdentityConfig.CACHE_CLIENT_ROLES_BY_ID_TTL_PROP, ttl)
 
         when:
-        CacheBuilder builder = cacheConfiguration.createClientRoleCacheBuilder()
+        Caffeine builder = cacheConfiguration.createClientRoleCacheBuilder()
 
         then:
         builder.maximumSize == IdentityConfig.CACHE_CLIENT_ROLES_BY_ID_SIZE_DEFAULT
@@ -72,11 +72,11 @@ class CacheConfigurationTest extends Specification {
         "*" | "abc"
     }
 
-    def "verify 0 ttl guava cache never caches"() {
+    def "verify 0 ttl caffeine cache never caches"() {
         staticIdmConfiguration.setProperty(IdentityConfig.CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP, 5)
         staticIdmConfiguration.setProperty(IdentityConfig.CACHE_CLIENT_ROLES_BY_ID_TTL_PROP, "PT0S")
 
-        GuavaCache cache = cacheConfiguration.getClientRoleCache("hello")
+        CaffeineCache cache = cacheConfiguration.getClientRoleCache("hello")
 
         when:
         cache.putIfAbsent("hi", "val")
@@ -85,17 +85,32 @@ class CacheConfigurationTest extends Specification {
         cache.get("hi") == null
     }
 
-    def "verify 0 size guava cache never caches"() {
+    def "verify 0 size cache never caches even if TTL set high"() {
         staticIdmConfiguration.setProperty(IdentityConfig.CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP, 0)
         staticIdmConfiguration.setProperty(IdentityConfig.CACHE_CLIENT_ROLES_BY_ID_TTL_PROP, "PT10M")
+        def propName = "hi"
+        def propValue = "val"
 
-        GuavaCache cache = cacheConfiguration.getClientRoleCache("hello")
+        CaffeineCache cache = cacheConfiguration.getClientRoleCache("hello")
 
         when:
-        cache.putIfAbsent("hi", "val")
+        cache.putIfAbsent(propName, propValue)
+        def cacheVal = cache.get(propName)
+
+        // Get the value of the cache. Since Caffeine evicts entries in s separate processing thread, there could
+        // be a slight delay before the entry is evicted even with a 0 sized cache. This is normal and expected behavior.
+        // However, all entries are automatically scheduled for eviction for caches with max size set to 0.
+        def timeout = 1000 // 1 sec
+        def step = 100 // 100 ms
+        def waitedFor = 0
+        while (cacheVal != null && waitedFor < timeout) {
+            sleep(step)
+            waitedFor += step
+            cacheVal = cache.get(propName)
+        }
 
         then:
-        cache.get("hi") == null
+        cacheVal == null
     }
 
     @Unroll
@@ -105,7 +120,7 @@ class CacheConfigurationTest extends Specification {
         staticIdmConfiguration.setProperty(IdentityConfig.CACHE_REPOSITORY_PROPERTY_TTL_PROP, ttl)
 
         when:
-        CacheBuilder builder = cacheConfiguration.createRepositoryPropertyCacheBuilder()
+        Caffeine builder = cacheConfiguration.createRepositoryPropertyCacheBuilder()
 
         then:
         builder.maximumSize == size
@@ -132,7 +147,7 @@ class CacheConfigurationTest extends Specification {
         staticIdmConfiguration.setProperty(IdentityConfig.CACHE_REPOSITORY_PROPERTY_TTL_PROP, ttl)
 
         when:
-        CacheBuilder builder = cacheConfiguration.createRepositoryPropertyCacheBuilder()
+        Caffeine builder = cacheConfiguration.createRepositoryPropertyCacheBuilder()
 
         then:
         builder.maximumSize == IdentityConfig.CACHE_REPOSITORY_PROPERTY_SIZE_DEFAULT
