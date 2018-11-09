@@ -67,7 +67,7 @@ public class DefaultCloud20ServiceOldTest {
     private JAXBObjectFactories jaxbObjectFactories;
     private ScopeAccessService scopeAccessService;
     private AuthorizationService authorizationService;
-    private AuthenticationService authenticationService;
+    private RackerAuthenticationService authenticationService;
     private TenantService tenantService;
     private EndpointService endpointService;
     private ApplicationService clientService;
@@ -130,7 +130,7 @@ public class DefaultCloud20ServiceOldTest {
         jaxbObjectFactories = mock(JAXBObjectFactories.class);
         scopeAccessService = mock(ScopeAccessService.class);
         authorizationService = mock(AuthorizationService.class);
-        authenticationService = mock(AuthenticationService.class);
+        authenticationService = mock(RackerAuthenticationService.class);
         userConverterCloudV20 = mock(UserConverterCloudV20.class);
         tenantConverterCloudV20 = mock(TenantConverterCloudV20.class);
         tokenConverterCloudV20 = mock(TokenConverterCloudV20.class);
@@ -180,7 +180,7 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.setDefaultRegionService(defaultRegionService);
         defaultCloud20Service.setDomainService(domainService);
         defaultCloud20Service.setDomainConverterCloudV20(domainConverterCloudV20);
-        defaultCloud20Service.setAuthenticationService(authenticationService);
+        defaultCloud20Service.setRackerAuthenticationService(authenticationService);
         defaultCloud20Service.setApplicationRolePaginator(clientRolePaginator);
         defaultCloud20Service.setUserPaginator(userPaginator);
         defaultCloud20Service.setQuestionService(questionService);

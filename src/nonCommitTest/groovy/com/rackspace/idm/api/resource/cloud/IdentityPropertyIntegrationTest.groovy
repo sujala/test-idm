@@ -54,10 +54,10 @@ class IdentityPropertyIntegrationTest extends RootIntegrationTest {
         def data = new JsonSlurper().parseText(response.getEntity(String))
 
         and: "eDir bind DN visible"
-        data[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == IdentityConfig.EDIR_BIND_DN} != null
+        data[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == IdentityConfig.RACKER_AUTH_BIND_DN} != null
 
         and: "eDir password is not visible"
-        data[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == IdentityConfig.EDIR_BIND_PASSWORD} == null
+        data[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == IdentityConfig.RACKER_AUTH_BIND_PASSWORD} == null
     }
 
     @Unroll

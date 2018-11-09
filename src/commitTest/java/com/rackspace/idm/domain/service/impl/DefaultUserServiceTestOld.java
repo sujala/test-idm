@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerAuthDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
 import com.rackspace.idm.domain.entity.*;
@@ -40,7 +40,7 @@ public class DefaultUserServiceTestOld {
     @Mock
     private UserDao userDao;
     @Mock
-    private AuthDao authDao;
+    private RackerAuthDao authDao;
     @Mock
     private ApplicationService applicationService;
     @Mock

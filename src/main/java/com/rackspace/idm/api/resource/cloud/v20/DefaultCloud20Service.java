@@ -188,7 +188,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private AuthConverterCloudV20 authConverterCloudV20;
 
     @Autowired
-    private AuthenticationService authenticationService;
+    private RackerAuthenticationService rackerAuthenticationService;
 
     @Autowired
     private AuthorizationService authorizationService;
@@ -1346,7 +1346,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             creds.setUsername(creds.getUsername().trim());
             validator20.validatePasswordCredentials(creds);
             Domain domainDO = domainConverterCloudV20.fromDomain(domain);
-            UserAuthenticationResult result = authenticationService.authenticateDomainUsernamePassword(creds.getUsername(), creds.getPassword(), domainDO);
+            UserAuthenticationResult result = rackerAuthenticationService.authenticateDomainUsernamePassword(creds.getUsername(), creds.getPassword(), domainDO);
             racker = (Racker) result.getUser();
             authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
         } else if (authenticationRequest.getCredential().getValue() instanceof RsaCredentials) {
@@ -1355,7 +1355,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             creds.setUsername(creds.getUsername().trim());
             validator20.validateUsername(creds.getUsername());
             Domain domainDO = domainConverterCloudV20.fromDomain(domain);
-            UserAuthenticationResult result = authenticationService.authenticateDomainRSA(creds.getUsername(), creds.getTokenKey(), domainDO);
+            UserAuthenticationResult result = rackerAuthenticationService.authenticateDomainRSA(creds.getUsername(), creds.getTokenKey(), domainDO);
             racker = (Racker) result.getUser();
             authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_RSAKEY);
         }
@@ -5953,8 +5953,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.authorizationService = authorizationService;
     }
 
-    public void setAuthenticationService(AuthenticationService authenticationService) {
-        this.authenticationService = authenticationService;
+    public void setRackerAuthenticationService(RackerAuthenticationService rackerAuthenticationService) {
+        this.rackerAuthenticationService = rackerAuthenticationService;
     }
 
     public void setTenantConverterCloudV20(TenantConverterCloudV20 tenantConverterCloudV20) {

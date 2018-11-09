@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
-import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerAuthDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -23,7 +23,7 @@ public class UserServiceTests {
     UserService userService;
     UserService trustedUserService;
     DomainService mockDomainService;
-    AuthDao mockRackerDao;
+    RackerAuthDao mockRackerDao;
     ApplicationService mockClientService;
     ScopeAccessService mockScopeAccessService;
     PasswordComplexityService mockPasswordComplexityService;
@@ -67,7 +67,7 @@ public class UserServiceTests {
     public void setUp() throws Exception {
 
         mockUserDao = EasyMock.createMock(UserDao.class);
-        mockRackerDao = EasyMock.createMock(AuthDao.class);
+        mockRackerDao = EasyMock.createMock(RackerAuthDao.class);
         mockClientService = EasyMock.createMock(ApplicationService.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         mockDomainService = EasyMock.createMock(DomainService.class);

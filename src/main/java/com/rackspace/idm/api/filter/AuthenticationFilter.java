@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.filter;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.security.SecurityContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -115,7 +116,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 return request;
             }
 
-            final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+            final String authToken = request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN);
 
             /*
              We only do checks here when authToken is provided and results in a found auth token (UUID exists, AE can be
@@ -148,7 +149,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                     // Swap token out and Log
                     final ImpersonatedScopeAccess tk = (ImpersonatedScopeAccess) callerToken;
                     final String impersonatedTokenStr = tk.getImpersonatingToken();
-                    request.getRequestHeaders().putSingle(AuthenticationService.AUTH_TOKEN_HEADER.toLowerCase(), impersonatedTokenStr);
+                    request.getRequestHeaders().putSingle(GlobalConstants.X_AUTH_TOKEN.toLowerCase(), impersonatedTokenStr);
                     logger.info("Impersonating token {} with token {} ", authToken, impersonatedTokenStr);
 
                     /*
@@ -221,7 +222,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             return request;
         }
 
-        final String authHeader = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+        final String authHeader = request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN);
         if (StringUtils.isBlank(authHeader)) {
             throw new NotAuthenticatedException("The request for the resource must include the Authorization header.");
         }
@@ -248,7 +249,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
      * @param securityContext
      */
     private void populateSecurityContextForValidateOrRevokeCall(ContainerRequest request, SecurityContext securityContext) {
-        final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+        final String authToken = request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN);
             /*
              We only do checks here when authToken is provided. Underlying service implementations are expected to throw
              exception if no auth token is provided and it's required.
