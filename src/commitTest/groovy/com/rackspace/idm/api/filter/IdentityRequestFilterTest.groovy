@@ -1,11 +1,9 @@
 package com.rackspace.idm.api.filter
 
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.SecurityContext
 import com.rackspace.idm.audit.Audit
-import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.domain.service.AuthenticationService
+import com.rackspace.idm.domain.service.RackerAuthenticationService
 import com.sun.jersey.spi.container.ContainerRequest
 import org.slf4j.MDC
 import spock.lang.Shared
@@ -33,7 +31,7 @@ class IdentityRequestFilterTest extends RootServiceTest {
         filter = new IdentityRequestFilter()
 
         request = Mock(ContainerRequest)
-        request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER) >> authTokenString
+        request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN) >> authTokenString
 
         httpServletRequest = Mock(HttpServletRequest)
         httpServletRequest.getRemoteAddr() >> "remoteIp"

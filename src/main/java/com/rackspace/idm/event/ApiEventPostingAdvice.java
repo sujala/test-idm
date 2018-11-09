@@ -1,5 +1,6 @@
 package com.rackspace.idm.event;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.AuthorizationContext;
 import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.api.security.RequestContextHolder;
@@ -8,7 +9,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.BaseUserToken;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.service.AuthenticationService;
+import com.rackspace.idm.domain.service.RackerAuthenticationService;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.sun.jersey.spi.container.ContainerRequest;
 import org.apache.commons.lang.StringUtils;
@@ -23,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -214,7 +214,7 @@ public class ApiEventPostingAdvice {
         if (callerToken == null) {
             // Retrieve v2.0 auth header (which is how security context gets populated in v2.0 requests. This will allow us to provide token
             // even if can't be decrypted (e.g. invalid token)
-            String headerToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+            String headerToken = request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN);
             if (headerToken != null) {
                 ScopeAccess sa = new ScopeAccess();
                 sa.setAccessTokenString(headerToken);

@@ -553,9 +553,6 @@ public class IdentityConfig {
     public static final String LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP = "ldap.auth.password.lockout.duration";
     public static final Duration LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_DEFAULT = Duration.parse("PT1S"); // In seconds
 
-    private static final String EDIR_BIND_DN = "edir.bind.dn";
-    private static final String EDIR_BIND_PASSWORD = "edir.bind.password";
-
     public static final String FEEDS_DEAMON_EVICTION_ENABLED_PROP = "feeds.daemon.eviction.enabled";
     public static final boolean FEEDS_DEAMON_ENABLED_DEFAULT = false;
 
@@ -665,11 +662,6 @@ public class IdentityConfig {
     public static final String OPENTRACING_MAX_BUFFER_SIZE_PROP = "opentracing.max.buffer.size";
     public static final Integer OPENTRACING_MAX_BUFFER_SIZE_DEFAULT = 10000; // 10k
 
-    public static final String AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP = "auth.ldap.use.active.directory";
-    public static final boolean AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_DEFAULT = false;
-    public static final String AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP = "auth.ldap.search.for.user.before.bind";
-    public static final boolean AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_DEFAULT = false;
-
     public static final String DYNAMO_DB_SERVICE_ENDPOINT_PROP = "dynamo.db.service.endpoint";
     public static final String DYNAMO_DB_SERVICE_ENDPOINT_DEFAULT = "http://localhost:8000";
 
@@ -687,6 +679,35 @@ public class IdentityConfig {
 
     public static final String FEATURE_ENABLED_PASSWORD_BLACKLIST_PROP = "feature.enable.password.blacklist";
     public static final boolean FEATURE_ENABLED_PASSWORD_BLACKLIST_DEFAULT = false;
+
+
+    /* ************************************
+       Racker Auth Configuration Properties
+     * ************************************ */
+    public static final String RACKER_AUTH_LDAP_SERVER_PROP = "racker.auth.ldap.server";
+
+    private static final String RACKER_AUTH_BIND_DN = "racker.auth.bind.dn";
+
+    private static final String RACKER_AUTH_BIND_PASSWORD = "racker.auth.bind.password";
+
+    public static final String RACKER_AUTH_LDAP_SERVER_PORT_PROP = "racker.auth.ldap.server.port";
+    public static final int RACKER_AUTH_LDAP_SERVER_PORT_DEFAULT = 636;
+
+    public static final String RACKER_AUTH_LDAP_SERVER_POOL_SIZE_INIT_PROP = "racker.auth.ldap.server.pool.size.init";
+    public static final int RACKER_AUTH_LDAP_SERVER_POOL_SIZE_INIT_DEFAULT = 1;
+
+    public static final String RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_PROP = "racker.auth.ldap.server.pool.size.max";
+    public static final int RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_DEFAULT = 100;
+
+    public static final String RACKER_AUTH_LDAP_BASE_DN_PROP = "racker.auth.ldap.base.dn";
+    public static final String RACKER_AUTH_LDAP_BASE_DN_DEFAULT = "ou=users,o=rackspace";
+
+    public static final String RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP = "racker.auth.ldap.use.active.directory";
+    public static final boolean RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_DEFAULT = false;
+
+    public static final String RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP = "racker.auth.ldap.search.for.user.before.bind";
+    public static final boolean RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_DEFAULT = false;
+
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -813,8 +834,6 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
         defaults.put(LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP, LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_DEFAULT);
         defaults.put(LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_PROP, LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_DEFAULT);
-        defaults.put(AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP, AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_DEFAULT);
-        defaults.put(AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP, AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_PROP, FEATURE_ENABLE_LDAP_AUTH_PASSWORD_LOCKOUT_CACHE_DEFAULT);
 
@@ -967,6 +986,17 @@ public class IdentityConfig {
         defaults.put(DYNAMO_DB_REGION_PROP, DYNAMO_DB_REGION_DEFAULT);
         defaults.put(DYNAMO_DB_REQUEST_TIMEOUT_PROP, DYNAMO_DB_REQUEST_TIMEOUT_DEFAULT);
         defaults.put(DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_PROP, DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_DEFAULT);
+
+
+        /* *****************************
+        RACKER Auth Defaults
+        ******************************** */
+        defaults.put(RACKER_AUTH_LDAP_SERVER_PORT_PROP, RACKER_AUTH_LDAP_SERVER_PORT_DEFAULT);
+        defaults.put(RACKER_AUTH_LDAP_SERVER_POOL_SIZE_INIT_PROP, RACKER_AUTH_LDAP_SERVER_POOL_SIZE_INIT_DEFAULT);
+        defaults.put(RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_PROP, RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_DEFAULT);
+        defaults.put(RACKER_AUTH_LDAP_BASE_DN_PROP, RACKER_AUTH_LDAP_BASE_DN_DEFAULT);
+        defaults.put(RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP, RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_DEFAULT);
+        defaults.put(RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP, RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_DEFAULT);
 
         return defaults;
     }
@@ -1606,16 +1636,6 @@ public class IdentityConfig {
             return getBooleanSafely(staticConfiguration, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP);
         }
 
-        @IdmProp(key = EDIR_BIND_DN, versionAdded = "3.15.0", description = "The bind DN for eDir authenticated connections.")
-        public String getEdirBindDn() {
-            return getStringSafely(staticConfiguration, EDIR_BIND_DN);
-        }
-
-        // Intentionally did not include an @IdmProp annotation here. That would cause this property to be exposed in the Identity props API in plain text
-        public String getEdirBindPassword() {
-            return getStringSafely(staticConfiguration, EDIR_BIND_PASSWORD);
-        }
-
         @IdmProp(key = FEEDS_DEAMON_EVICTION_ENABLED_PROP, versionAdded = "3.11.0", description = "Specifies whether to enable feeds deamon to evict expired connections from connection pool.")
         public boolean getFeedsDeamonEnabled() {
             return getBooleanSafely(staticConfiguration, FEEDS_DEAMON_EVICTION_ENABLED_PROP);
@@ -1751,14 +1771,49 @@ public class IdentityConfig {
             return getIntSafely(staticConfiguration, OPENTRACING_MAX_BUFFER_SIZE_PROP);
         }
 
-        @IdmProp(key = AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP, versionAdded = "3.25.0", description = "This must be set to 'true' if the property auth.ldap.server points to an ADFS racker server, false if configured for an eDir racker server")
-        public boolean useActiveDirectory() {
-            return getBooleanSafely(staticConfiguration, AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP);
+        @IdmProp(key = RACKER_AUTH_LDAP_SERVER_PROP, versionAdded = "3.28.0", description = "The ldap server to connect to for Racker auth. This was renamed from 'auth.ldap.server'")
+        public String getRackerAuthServer() {
+            return getStringSafely(staticConfiguration, RACKER_AUTH_LDAP_SERVER_PROP);
         }
 
-        @IdmProp(key = AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP, versionAdded = "3.25.0", description = "Specify ActiveDirectory to search for user before trying to bind")
-        public boolean getActiveDirectorySearchForUserBeforeBind() {
-            return getBooleanSafely(staticConfiguration, AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP);
+        @IdmProp(key = RACKER_AUTH_LDAP_SERVER_PORT_PROP, versionAdded = "3.28.0", description = "The port to connect to for Racker auth. This was renamed from 'auth.ldap.server.port'")
+        public int getRackerAuthServerPort() {
+            return getIntSafely(staticConfiguration, RACKER_AUTH_LDAP_SERVER_PORT_PROP);
+        }
+
+        @IdmProp(key = RACKER_AUTH_LDAP_SERVER_POOL_SIZE_INIT_PROP, versionAdded = "3.28.0", description = "The initial connection pool size for Racker auth connection pool. This was renamed from 'auth.ldap.server.pool.size.init'")
+        public int getRackerAuthPoolInitialSize() {
+            return getIntSafely(staticConfiguration, RACKER_AUTH_LDAP_SERVER_POOL_SIZE_INIT_PROP);
+        }
+
+        @IdmProp(key = RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_PROP, versionAdded = "3.28.0", description = "The max connection pool size for Racker auth connection pool. This was renamed from 'auth.ldap.server.pool.size.max'")
+        public int getRackerAuthPoolMaxSize() {
+            return getIntSafely(staticConfiguration, RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_PROP);
+        }
+
+        @IdmProp(key = RACKER_AUTH_LDAP_BASE_DN_PROP, versionAdded = "3.28.0", description = "The base DN to search under for Racker auth. This was renamed from 'auth.ldap.base.dn'")
+        public String getRackerAuthBaseDn() {
+            return getStringSafely(staticConfiguration, RACKER_AUTH_LDAP_BASE_DN_PROP);
+        }
+
+        @IdmProp(key = RACKER_AUTH_BIND_DN, versionAdded = "3.28.0", description = "The bind DN for Racker auth connections. This was renamed from 'edir.bind.dn'")
+        public String getRackerAuthBindDn() {
+            return getStringSafely(staticConfiguration, RACKER_AUTH_BIND_DN);
+        }
+
+        // Intentionally did not include an @IdmProp annotation here. That would cause this property to be exposed in the Identity props API in plain text
+        public String getRackerAuthBindPassword() {
+            return getStringSafely(staticConfiguration, RACKER_AUTH_BIND_PASSWORD);
+        }
+
+        @IdmProp(key = RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP, versionAdded = "3.28.0", description = "This must be set to 'true' if the property auth.ldap.server points to an ADFS racker server, false if configured for an eDir racker server. Renamed from 'auth.ldap.use.active.directory'")
+        public boolean useActiveDirectoryForRackerAuth() {
+            return getBooleanSafely(staticConfiguration, RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP);
+        }
+
+        @IdmProp(key = RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP, versionAdded = "3.28.0", description = "Search for the user with a uid equal to the specified username and use the DN of the resultant user to bind against. Otherwise attempts to dynamically generate the DN based on the username. Renamed from 'auth.ldap.search.for.user.before.bind'")
+        public boolean searchForUserBeforeRackerAuthBind() {
+            return getBooleanSafely(staticConfiguration, RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP);
         }
 
         @IdmProp(key = DYNAMO_DB_SERVICE_ENDPOINT_PROP, versionAdded = "3.27.0", description = "Specifies the endpoint to use for dynamoDB connections.")

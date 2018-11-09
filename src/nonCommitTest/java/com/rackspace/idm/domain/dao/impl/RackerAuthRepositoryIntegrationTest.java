@@ -2,28 +2,23 @@ package com.rackspace.idm.domain.dao.impl;
 
 import org.junit.runner.RunWith;
 
-import org.junit.runners.JUnit4;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.test.context.ContextConfiguration;
 
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.rackspace.idm.domain.config.AuthRepositoryLdapConfiguration;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.*;
 
 import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-public class LdapAuthRepositoryIntegrationTest {
+public class RackerAuthRepositoryIntegrationTest {
 
     @Autowired
-    private LdapAuthRepository repo;
+    private RackerAuthRepository repo;
 
     @Test
     public void authenticateTestRacker() {

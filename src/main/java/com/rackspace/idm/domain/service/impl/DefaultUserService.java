@@ -80,7 +80,7 @@ public class DefaultUserService implements UserService {
     private ScopeAccessService scopeAccessService;
 
     @Autowired
-    private AuthDao authDao;
+    private RackerAuthDao authDao;
 
     @Autowired
     private ApplicationService applicationService;
@@ -817,7 +817,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void setAuthDao(AuthDao authDao) {
+    public void setAuthDao(RackerAuthDao authDao) {
         this.authDao = authDao;
     }
 

@@ -9,7 +9,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerAuthDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.util.RSAClient;
 import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
@@ -48,10 +48,10 @@ public class DefaultAuthenticationServiceTestOld {
     @Mock
     RSAClient rsaClient;
     @Mock
-    AuthDao authDao;
+    RackerAuthDao authDao;
 
     @InjectMocks
-    DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService();
+    DefaultRackerAuthenticationService defaultAuthenticationService = new DefaultRackerAuthenticationService();
 
     @Test
     public void validateCredentials_credentialsNull_throwsBadRequestException() throws Exception {

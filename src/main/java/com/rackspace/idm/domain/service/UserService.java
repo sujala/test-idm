@@ -4,7 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionReq
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
-import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerAuthDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
@@ -123,7 +123,7 @@ public interface UserService {
 
     void setUserDao(UserDao userDao);
 
-    void setAuthDao(AuthDao rackerDao);
+    void setAuthDao(RackerAuthDao rackerDao);
 
     void setApplicationService(ApplicationService clientService);
 

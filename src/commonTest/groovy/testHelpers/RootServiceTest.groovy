@@ -137,7 +137,7 @@ class RootServiceTest extends Specification {
     @Shared ExceptionHandler exceptionHandler
 
     @Shared IdmExceptionHandler idmExceptionHandler
-    @Shared AuthenticationService authenticationService
+    @Shared RackerAuthenticationService authenticationService
     @Shared GroupService groupService
     @Shared UserGroupService userGroupService
     @Shared DelegationService delegationService
@@ -155,7 +155,7 @@ class RootServiceTest extends Specification {
     @Shared DefaultPasswordComplexityService defaultPasswordComplexityService
     @Shared DefaultDomainService defaultDomainService
     @Shared DefaultCloudRegionService defaultCloudRegionService
-    @Shared DefaultAuthenticationService defaultAuthenticationService
+    @Shared DefaultRackerAuthenticationService defaultAuthenticationService
     @Shared Cloud11Service cloud11Service
     @Shared DefaultCloud11Service defaultCloud11Service
     @Shared DefaultRegionService defaultRegionService
@@ -187,7 +187,7 @@ class RootServiceTest extends Specification {
     @Shared EndpointDao endpointDao
     @Shared TenantRoleDao tenantRoleDao
     @Shared ApplicationRoleDao applicationRoleDao
-    @Shared AuthDao authDao
+    @Shared RackerAuthDao authDao
     @Shared DomainDao domainDao
     @Shared MobilePhoneDao mobilePhoneDao
     @Shared IdentityUserDao identityUserDao
