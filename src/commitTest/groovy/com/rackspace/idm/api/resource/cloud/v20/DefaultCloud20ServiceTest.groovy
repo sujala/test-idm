@@ -14,7 +14,6 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
-import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.User.UserType
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.FederatedIdentityService
@@ -1664,7 +1663,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * validator20.validatePasswordCredentials(_)
         1 * domainConverter.fromDomain(domain)
-        1 * authenticationService.authenticateDomainUsernamePassword(_, _, _) >> authResult
+        1 * rackerAuthenticationService.authenticateDomainUsernamePassword(_, _, _) >> authResult
         1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
         1 * tenantService.getEphemeralRackerTenantRoles(racker.id)
     }
@@ -1685,7 +1684,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * validator20.validateUsername(_)
         1 * domainConverter.fromDomain(domain)
-        1 * authenticationService.authenticateDomainRSA(_, _, _) >> authResult
+        1 * rackerAuthenticationService.authenticateDomainRSA(_, _, _) >> authResult
         1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
         1 * tenantService.getEphemeralRackerTenantRoles(racker.id)
     }
@@ -2639,7 +2638,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.authenticateFederatedDomain(authenticationRequest, domain)
 
         then:
-        1 * authenticationService.authenticateDomainUsernamePassword(_, _, _) >> authResult
+        1 * rackerAuthenticationService.authenticateDomainUsernamePassword(_, _, _) >> authResult
         1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> { arg1, arg2, List<String> arg3 ->
             assert (arg3.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
             createRackerScopeAcccss()
@@ -2666,7 +2665,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.authenticateFederatedDomain(authenticationRequest, domain)
 
         then:
-        1 * authenticationService.authenticateDomainRSA(_, _, _) >> authResult
+        1 * rackerAuthenticationService.authenticateDomainRSA(_, _, _) >> authResult
         1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> { arg1, arg2, List<String> arg4 ->
             assert (arg4.contains(GlobalConstants.AUTHENTICATED_BY_RSAKEY))
             createRackerScopeAcccss()
@@ -6054,7 +6053,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def mockServices() {
         mockEndpointConverter(service)
-        mockAuthenticationService(service)
+        mockRackerAuthenticationService(service)
         mockAuthorizationService(service)
         mockApplicationService(service)
         mockScopeAccessService(service)

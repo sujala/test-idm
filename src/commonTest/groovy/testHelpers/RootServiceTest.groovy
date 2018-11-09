@@ -137,7 +137,7 @@ class RootServiceTest extends Specification {
     @Shared ExceptionHandler exceptionHandler
 
     @Shared IdmExceptionHandler idmExceptionHandler
-    @Shared RackerAuthenticationService authenticationService
+    @Shared RackerAuthenticationService rackerAuthenticationService
     @Shared GroupService groupService
     @Shared UserGroupService userGroupService
     @Shared DelegationService delegationService
@@ -519,9 +519,9 @@ class RootServiceTest extends Specification {
         service.otpDeviceConverterCloudV20 = otpDeviceConverterCloudV20
     }
 
-    def mockAuthenticationService(service) {
-        authenticationService = Mock()
-        service.authenticationService = authenticationService
+    def mockRackerAuthenticationService(service) {
+        rackerAuthenticationService = Mock()
+        service.rackerAuthenticationService = rackerAuthenticationService
     }
 
     def mockGroupService(service) {
