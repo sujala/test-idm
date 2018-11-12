@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerAuthDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
 import com.rackspace.idm.exception.GatewayException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -18,16 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class LdapAuthRepository implements AuthDao {
+public class RackerAuthRepository implements RackerAuthDao {
 
-    private static final String BASE_DN = "ou=users,o=rackspace";
     private static final String ATTR_ALIASEDOBJECTNAME = "aliasedobjectname";
 
     @Autowired
     private LDAPConnectionPool connPool;
-
-    @Autowired
-    private Configuration config;
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -40,7 +36,7 @@ public class LdapAuthRepository implements AuthDao {
 
         String userDn;
 
-        if (identityConfig.getStaticConfig().getActiveDirectorySearchForUserBeforeBind()) {
+        if (identityConfig.getStaticConfig().searchForUserBeforeRackerAuthBind()) {
             try {
                 SearchResultEntry rackerEntry = getRackerEntry(userName);
                 userDn = rackerEntry.getDN();
@@ -141,7 +137,7 @@ public class LdapAuthRepository implements AuthDao {
     }
 
     private String getBaseDn() {
-        return config.getString("auth.ldap.base.dn", BASE_DN);
+        return identityConfig.getStaticConfig().getRackerAuthBaseDn();
     }
 
     protected LDAPInterface getLdapInterface() {
@@ -177,7 +173,7 @@ public class LdapAuthRepository implements AuthDao {
     }
 
     private String getMembershipAttribute() {
-        if (identityConfig.getStaticConfig().useActiveDirectory()) {
+        if (identityConfig.getStaticConfig().useActiveDirectoryForRackerAuth()) {
             return "memberOf";
         } else {
             return "groupMembership";
@@ -185,7 +181,7 @@ public class LdapAuthRepository implements AuthDao {
     }
 
     private String getBindDn(String userName) {
-        if (identityConfig.getStaticConfig().useActiveDirectory()) {
+        if (identityConfig.getStaticConfig().useActiveDirectoryForRackerAuth()) {
             return String.format("%s@rackspace.corp", userName);
         } else {
             return String.format("cn=%s,", userName) + getBaseDn();
@@ -193,7 +189,7 @@ public class LdapAuthRepository implements AuthDao {
     }
 
     SearchScope getSearchScope() {
-        if (identityConfig.getStaticConfig().useActiveDirectory()) {
+        if (identityConfig.getStaticConfig().useActiveDirectoryForRackerAuth()) {
             return SearchScope.SUB;
         } else {
             return SearchScope.ONE;

@@ -1456,12 +1456,12 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUserGroup(userGroup)
-        utils.deleteTenant(tenant)
-        utils.deleteUser(user)
-        utils.deleteRole(role)
-        utils.deleteDomain(domainId)
-        utils.deleteUser(user2)
-        utils.deleteDomain(domainId2)
+        utils.deleteTenantQuietly(tenant)
+        utils.deleteUserQuietly(user)
+        utils.deleteRoleQuietly(role)
+        utils.deleteTestDomainQuietly(domainId)
+        utils.deleteUserQuietly(user2)
+        utils.deleteTestDomainQuietly(domainId2)
     }
 
 }

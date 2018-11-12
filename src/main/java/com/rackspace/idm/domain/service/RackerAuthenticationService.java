@@ -1,12 +1,12 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerAuthDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.validation.InputValidator;
 import org.apache.commons.configuration.Configuration;
 
-public interface AuthenticationService {
+public interface RackerAuthenticationService {
     
 	String AUTH_TOKEN_HEADER = "X-Auth-Token";
 	
@@ -14,7 +14,7 @@ public interface AuthenticationService {
 
     UserAuthenticationResult authenticateDomainRSA(String username, String tokenkey, Domain domain);
 
-    void setAuthDao(AuthDao authDao);
+    void setRackerAuthDao(RackerAuthDao authDao);
 
     void setTenantService(TenantService tenantService);
 

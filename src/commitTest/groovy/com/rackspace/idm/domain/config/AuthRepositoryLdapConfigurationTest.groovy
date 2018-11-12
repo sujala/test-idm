@@ -7,57 +7,57 @@ import spock.lang.Unroll
 
 class AuthRepositoryLdapConfigurationTest extends Specification {
 
-    AuthRepositoryLdapConfiguration edirConfiguration;
+    RackerAuthRepositoryLdapConfiguration rackerAuthRepositoryLdapConfiguration
     IdentityConfig.StaticConfig staticConfig = Mock(IdentityConfig.StaticConfig)
     Configuration legacyConfig = Mock(Configuration)
-    EdirConnectionFactory edirConnectionFactory = Mock(EdirConnectionFactory)
+    RackerConnectionFactory rackerConnectionFactory = Mock(RackerConnectionFactory)
 
     def setup() {
-        edirConfiguration = new AuthRepositoryLdapConfiguration()
-        edirConfiguration.config = legacyConfig
-        edirConfiguration.identityConfig = Mock(IdentityConfig)
-        edirConfiguration.identityConfig.getStaticConfig() >> staticConfig
-        edirConfiguration.edirConnectionFactory = edirConnectionFactory
+        rackerAuthRepositoryLdapConfiguration = new RackerAuthRepositoryLdapConfiguration()
+        rackerAuthRepositoryLdapConfiguration.identityConfig = Mock(IdentityConfig)
+        rackerAuthRepositoryLdapConfiguration.identityConfig.getStaticConfig() >> staticConfig
+
+        rackerAuthRepositoryLdapConfiguration.rackerConnectionFactory = rackerConnectionFactory
 
         // set the defaults for the configs
-        legacyConfig.getString("auth.ldap.server") >> "not.an.actual.edir.server"
-        legacyConfig.getInt("auth.ldap.server.port", AuthRepositoryLdapConfiguration.DEFAULT_SERVER_PORT) >> AuthRepositoryLdapConfiguration.DEFAULT_SERVER_PORT
+        staticConfig.getRackerAuthServer() >> "not.an.actual.edir.server"
+        staticConfig.getRackerAuthServerPort() >> IdentityConfig.RACKER_AUTH_LDAP_SERVER_PORT_DEFAULT
     }
 
     @Unroll
-    def "eDir config returns a null connection pool for non-trusted servers - trusted == #trusted"() {
+    def "Racker config returns a null connection pool for non-trusted servers - trusted == #trusted"() {
         given:
-        edirConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _) >> GroovyMock(LDAPConnection)
+        rackerConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _) >> GroovyMock(LDAPConnection)
         staticConfig.getEDirServerTrusted() >> trusted
         legacyConfig.getBoolean("auth.ldap.useSSL") >> false
         if (trusted) {
-            edirConnectionFactory.createAuthenticatedEncryptedConnection(_, _) >> null
+            rackerConnectionFactory.createAuthenticatedEncryptedConnection(_, _) >> null
         }
 
         when:
-        edirConfiguration.connection()
+        rackerAuthRepositoryLdapConfiguration.connection()
 
         then:
         if (trusted) {
-            1 * edirConnectionFactory.createConnectionPool(_, _, _)
+            1 * rackerConnectionFactory.createConnectionPool(_, _, _)
         } else {
-            0 * edirConnectionFactory.createConnectionPool(_, _, _)
+            0 * rackerConnectionFactory.createConnectionPool(_, _, _)
         }
 
         where:
         trusted << [true, false]
     }
 
-    def "eDir config creates authenticated connections"() {
+    def "Racker config creates authenticated connections"() {
         given:
         staticConfig.getEDirServerTrusted() >> true
 
         when: "try to create a connection WITH SSL/TLS and WITHOUT authentication"
         legacyConfig.getBoolean("auth.ldap.useSSL") >> true
-        edirConfiguration.connection()
+        rackerAuthRepositoryLdapConfiguration.connection()
 
         then:
-        1 * edirConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _) >> GroovyMock(LDAPConnection)
-        1 * edirConnectionFactory.createConnectionPool(_, _, _)
+        1 * rackerConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _) >> GroovyMock(LDAPConnection)
+        1 * rackerConnectionFactory.createConnectionPool(_, _, _)
     }
 }

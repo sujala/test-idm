@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.filter;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.DefaultRequestContextHolder;
 import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.api.security.SecurityContext;
@@ -8,7 +9,7 @@ import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.AuthenticationService;
+import com.rackspace.idm.domain.service.RackerAuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -125,7 +126,7 @@ public class AuthenticationFilterTests {
     public void shouldCloudUrls_withNonImpersonationToken_throwsNotAuthenticatedException() throws Exception {
         when(requestMock.getMethod()).thenReturn("GET");
         when(requestMock.getPath()).thenReturn("cloud/Any/General/Path");
-        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(requestMock.getHeaderValue(GlobalConstants.X_AUTH_TOKEN)).thenReturn("authToken");
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setAccessTokenString("authToken");
         impersonatedScopeAccess.setImpersonatingToken("impToken");
@@ -139,7 +140,7 @@ public class AuthenticationFilterTests {
     public void shouldCloudUrls_withExpiredToken_throwsNotAuthorizedException() throws Exception {
         when(requestMock.getMethod()).thenReturn("GET");
         when(requestMock.getPath()).thenReturn("cloud/Any/General/Path");
-        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(requestMock.getHeaderValue(GlobalConstants.X_AUTH_TOKEN)).thenReturn("authToken");
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setAccessTokenString("authToken");
         impersonatedScopeAccess.setImpersonatingToken("impToken");
@@ -152,7 +153,7 @@ public class AuthenticationFilterTests {
     public void shouldCloudUrls_withImpersonationToken_returnsAlteredRequest() throws Exception {
         when(requestMock.getMethod()).thenReturn("GET");
         when(requestMock.getPath()).thenReturn("cloud/Any/General/Path");
-        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(requestMock.getHeaderValue(GlobalConstants.X_AUTH_TOKEN)).thenReturn("authToken");
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setAccessTokenString("authToken");
         impersonatedScopeAccess.setImpersonatingToken("impToken");
@@ -171,7 +172,7 @@ public class AuthenticationFilterTests {
     public void shouldMigrateUrl_withNonRackerToken_throwsNotAuthenticatedException() throws Exception {
         when(requestMock.getMethod()).thenReturn("GET");
         when(requestMock.getPath()).thenReturn("migration/some/path");
-        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(requestMock.getHeaderValue(GlobalConstants.X_AUTH_TOKEN)).thenReturn("authToken");
         when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new ScopeAccess());
         authenticationFilterWithMock.filter(requestMock);
     }
@@ -180,7 +181,7 @@ public class AuthenticationFilterTests {
     public void shouldMigrateUrl_withNoMigrationAdminRole_throwsNotAuthenticatedException() throws Exception {
         when(requestMock.getMethod()).thenReturn("GET");
         when(requestMock.getPath()).thenReturn("migration/some/path");
-        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(requestMock.getHeaderValue(GlobalConstants.X_AUTH_TOKEN)).thenReturn("authToken");
         when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
         when(userService.getRackerEDirRoles(anyString())).thenReturn(new ArrayList<String >());
         authenticationFilterWithMock.filter(requestMock);
@@ -190,7 +191,7 @@ public class AuthenticationFilterTests {
     public void shouldMigrateUrl_withNullRoles_throwsNotAuthenticatedException() throws Exception {
         when(requestMock.getMethod()).thenReturn("GET");
         when(requestMock.getPath()).thenReturn("migration/some/path");
-        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(requestMock.getHeaderValue(GlobalConstants.X_AUTH_TOKEN)).thenReturn("authToken");
         when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
         when(userService.getRackerEDirRoles(anyString())).thenReturn(null);
         authenticationFilterWithMock.filter(requestMock);
@@ -266,7 +267,7 @@ public class AuthenticationFilterTests {
         "v1.0/customers/RCN-000-000-000/users/foobar/password");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         final String tokenString = "hiiamatoken";
-        EasyMock.expect(request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER))
+        EasyMock.expect(request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN))
         .andReturn(tokenString);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
@@ -279,7 +280,7 @@ public class AuthenticationFilterTests {
         EasyMock.expect(request.getPath()).andReturn("v1.0/foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         final String tokenString = "hiiamatoken";
-        EasyMock.expect(request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER))
+        EasyMock.expect(request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN))
         .andReturn(tokenString);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
@@ -413,7 +414,7 @@ public class AuthenticationFilterTests {
         EasyMock.expect(request.getPath()).andReturn("v1.0/foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         final String tokenString = "hiiamatoken";
-        EasyMock.expect(request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER))
+        EasyMock.expect(request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN))
         .andReturn(tokenString);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 false);

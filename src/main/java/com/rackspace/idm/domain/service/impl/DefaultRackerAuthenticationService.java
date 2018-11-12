@@ -1,12 +1,8 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Trace;
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerAuthDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -16,19 +12,15 @@ import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
 import org.apache.commons.configuration.Configuration;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.validation.groups.Default;
-import java.util.List;
-import java.util.UUID;
 
 @Component
-public class DefaultAuthenticationService implements AuthenticationService {
+public class DefaultRackerAuthenticationService implements RackerAuthenticationService {
 
     @Autowired
     private ApplicationService applicationService;
@@ -37,7 +29,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     @Autowired
     private ScopeAccessService scopeAccessService;
     @Autowired
-    private AuthDao authDao;
+    private RackerAuthDao authDao;
     @Autowired
     private UserService userService;
     @Autowired
@@ -70,7 +62,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public void setAuthDao(AuthDao authDao) {
+    public void setRackerAuthDao(RackerAuthDao authDao) {
         this.authDao = authDao;
     }
 

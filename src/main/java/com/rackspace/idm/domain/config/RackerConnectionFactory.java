@@ -12,7 +12,7 @@ import javax.net.ssl.SSLSocketFactory;
  * more readable and easier to test.
  */
 @Component
-public class EdirConnectionFactory {
+public class RackerConnectionFactory {
 
     @Autowired
     IdentityConfig identityConfig;
