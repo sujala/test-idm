@@ -217,6 +217,8 @@ dependencies {
     
     compile 'org.eclipse.persistence:eclipselink:2.5.0'
 
+    compile group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '2.6.2'
+
     compile group: 'com.google.guava', name: 'guava', version: '17.0'
     compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '7.4.2'
     compile group: 'com.offbytwo.keyczar', name: 'keyczar', version: '0.71g'

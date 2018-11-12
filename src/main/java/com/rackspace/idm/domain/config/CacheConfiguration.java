@@ -1,15 +1,15 @@
 package com.rackspace.idm.domain.config;
 
-import com.google.common.cache.CacheBuilder;
-import java.time.Duration;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.guava.GuavaCache;
+import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -30,15 +30,14 @@ public class CacheConfiguration {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
         cacheManager.setCaches(Arrays.asList(getClientRoleCache(CLIENT_ROLE_CACHE_BY_ID)
                 , getClientRoleCache(CLIENT_ROLE_CACHE_BY_NAME)
-                , new GuavaCache(USER_LOCKOUT_CACHE_BY_NAME, createUserLockOutCacheBuilder().build())
-                , new GuavaCache(REPOSITORY_PROPERTY_CACHE_BY_NAME, createRepositoryPropertyCacheBuilder().build()))
+                , new CaffeineCache(USER_LOCKOUT_CACHE_BY_NAME, createUserLockOutCacheBuilder().build())
+                , new CaffeineCache(REPOSITORY_PROPERTY_CACHE_BY_NAME, createRepositoryPropertyCacheBuilder().build()))
         );
         return cacheManager;
     }
 
-    public GuavaCache getClientRoleCache(String name) {
-        CacheBuilder builder = createClientRoleCacheBuilder();
-        return new GuavaCache(name, builder.build());
+    public CaffeineCache getClientRoleCache(String name) {
+        return new CaffeineCache(name, createClientRoleCacheBuilder().build());
     }
 
     /**
@@ -47,31 +46,30 @@ public class CacheConfiguration {
      *
      * @return
      */
-    private CacheBuilder createClientRoleCacheBuilder() {
+    private Caffeine createClientRoleCacheBuilder() {
         Duration ttl = identityConfig.getStaticConfig().getClientRoleByIdCacheTtl();
         int size = identityConfig.getStaticConfig().getClientRoleByIdCacheSize();
 
-        return CacheBuilder.newBuilder()
+        return Caffeine.newBuilder()
                 .maximumSize(size)
                 .expireAfterWrite(ttl.toMillis(), TimeUnit.MILLISECONDS);
     }
 
-    private CacheBuilder createUserLockOutCacheBuilder() {
+    private Caffeine createUserLockOutCacheBuilder() {
         Duration ttl = identityConfig.getStaticConfig().getUserLockoutCacheTtl();
         int size = identityConfig.getStaticConfig().getUserLockoutCacheSize();
 
-        return CacheBuilder.newBuilder()
+        return Caffeine.newBuilder()
                 .maximumSize(size)
                 .expireAfterWrite(ttl.toMillis(), TimeUnit.MILLISECONDS);
     }
 
-    private CacheBuilder createRepositoryPropertyCacheBuilder() {
+    private Caffeine createRepositoryPropertyCacheBuilder() {
         Duration ttl = identityConfig.getStaticConfig().getRepositoryPropertyCacheTtl();
         int size = identityConfig.getStaticConfig().getRepositoryPropertyCacheSize();
 
-        return CacheBuilder.newBuilder()
+        return Caffeine.newBuilder()
                 .maximumSize(size)
                 .expireAfterWrite(ttl.toMillis(), TimeUnit.MILLISECONDS);
     }
-
 }
