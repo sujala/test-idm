@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
@@ -14,6 +15,7 @@ import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static org.apache.http.HttpStatus.SC_CREATED
+import static org.apache.http.HttpStatus.SC_FORBIDDEN
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
@@ -182,6 +184,86 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(identityAdmin)
+    }
+
+    def "allow racker to revoke own token"() {
+        given:
+        def authResponse = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
+        String rackerToken = authResponse.token.id
+
+        when: "revoke token"
+        def response = cloud20.revokeToken(rackerToken)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "validate token"
+        response = cloud20.validateToken(utils.getIdentityAdminToken(), rackerToken)
+
+        then:
+        response.status == SC_NOT_FOUND
+
+        when: "revoke token by id"
+        authResponse = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
+        rackerToken = authResponse.token.id
+        response = cloud20.revokeUserToken(rackerToken, rackerToken)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "validate token"
+        response = cloud20.validateToken(utils.getIdentityAdminToken(), rackerToken)
+
+        then:
+        response.status == SC_NOT_FOUND
+    }
+
+    def "admin can revoke a racker's token"() {
+        given:
+        def authResponse = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
+        String rackerToken = authResponse.token.id
+
+        when: "revoke token by id - identity admin"
+        def response = cloud20.revokeUserToken(utils.getIdentityAdminToken(), rackerToken)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "validate token"
+        response = cloud20.validateToken(utils.getIdentityAdminToken(), rackerToken)
+
+        then:
+        response.status == SC_NOT_FOUND
+
+        when: "revoke token by id - service admin"
+        authResponse = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
+        rackerToken = authResponse.token.id
+        response = cloud20.revokeUserToken(utils.getServiceAdminToken(), rackerToken)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "validate token"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), rackerToken)
+
+        then:
+        response.status == SC_NOT_FOUND
+    }
+
+    def "racker token error check"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def authResponse = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
+        String rackerToken = authResponse.token.id
+
+        when: "revoke token - user admin"
+        def response = cloud20.revokeUserToken(userAdminToken, rackerToken)
+
+        then:
+        response.status == SC_FORBIDDEN
+
     }
 
     User createUserWithFormat(TokenFormatEnum tokenFormat) {

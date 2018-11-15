@@ -214,7 +214,7 @@ public class Cloud20VersionResource {
         return cloud20Service.revokeToken(httpHeaders, authToken).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Revoke token")
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Revoke token by id")
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v2TokenValidationAbsolutePathPatternRegex)
     @DELETE
     @Path("tokens/{tokenId}")

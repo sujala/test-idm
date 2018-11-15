@@ -5495,7 +5495,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) throws IOException, JAXBException {
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.DEFAULT_USER, GlobalConstants.ROLE_NAME_RACKER);
 
         scopeAccessService.expireAccessToken(authToken);
         return Response.status(204);
@@ -5529,6 +5529,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
+            if (scopeAccess instanceof RackerScopeAccess) {
+                throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
+            }
             User user = userService.getUserByAuthToken(tokenId);
             authorizationService.verifyDomain(caller, user);
         }
