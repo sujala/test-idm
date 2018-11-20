@@ -515,7 +515,8 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    def list_tenants_in_domain(self, domain_id, requestslib_kwargs=None):
+    def list_tenants_in_domain(
+            self, domain_id, option=None, requestslib_kwargs=None):
         """Return response object from the list tenants in domain call
         @todo:
         In case of XML response, add a json() method to the response object
@@ -523,7 +524,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + const.LIST_TENANTS_IN_DOMAIN_URL.format(
             domainId=domain_id)
-        resp = self.request('GET', url,
+        resp = self.request('GET', url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
 
         return resp
