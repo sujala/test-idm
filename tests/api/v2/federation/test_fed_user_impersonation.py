@@ -85,6 +85,11 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         self.validate_auth_by_in_auth_with_token_and_tenant(
             imp_token=impersonation_token)
 
+        # CID-1789 check that token obtained by impersonating fed user
+        # using racker can get fed user's domain
+        racker_imp_client = self.generate_client(token=impersonation_token)
+        self.validate_get_domain_by_imp_client(client=racker_imp_client)
+
         # Impersonate with identity admin client
         resp = self.identity_admin_client.impersonate_user(
             request_data=impersonation_request_obj)
@@ -94,6 +99,17 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         impersonation_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
         self.validate_auth_by_in_auth_with_token_and_tenant(
             imp_token=impersonation_token)
+
+        # CID-1789 check that token obtained by impersonating fed user
+        # using identity admin can get fed user's domain
+        idadmin_imp_client = self.generate_client(token=impersonation_token)
+        self.validate_get_domain_by_imp_client(client=idadmin_imp_client)
+
+    def validate_get_domain_by_imp_client(self, client):
+        get_dom_resp = client.get_domain(domain_id=self.domain_id)
+        self.assertEqual(get_dom_resp.status_code, 200)
+        self.assertEqual(get_dom_resp.json()[const.RAX_AUTH_DOMAIN][const.ID],
+                         self.domain_id)
 
     def validate_auth_by_in_auth_with_token_and_tenant(self, imp_token):
 

@@ -31,7 +31,8 @@ class TestRoleApiCalls(base.TestBaseV2):
     @unless_coverage
     def setUpClass(cls):
         super(TestRoleApiCalls, cls).setUpClass()
-        domain_id = cls.generate_random_string(pattern='[\d]{7}')
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client, pattern='[\d]{7}')
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': domain_id})
