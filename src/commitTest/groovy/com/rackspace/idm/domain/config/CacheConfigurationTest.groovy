@@ -158,6 +158,7 @@ class CacheConfigurationTest extends Specification {
         "a" | "P1MT5M"
         "1/2" | "P1Y"
         "*" | "abc"
+        null | null
     }
 
 }

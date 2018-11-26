@@ -112,17 +112,16 @@ user_item = {
         const.RAX_AUTH_MULTI_FACTOR_STATE: {'type': 'string'},
         const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
         const.RAX_AUTH_CONTACTID: {'type': 'string'},
-        const.RAX_AUTH_UNVERIFIED: {'type': 'boolean'},
         const.RAX_AUTH_DEFAULT_REGION: {
             'type': 'string',
             'enum': const.DC_LIST},
-        const.ID: {'type': 'string'}
+        const.ID: {'type': 'string'},
+        const.RAX_AUTH_TOKEN_FORMAT: {'type': 'string'}
     },
     "required": [const.USERNAME, const.ENABLED,
                  const.RAX_AUTH_DEFAULT_REGION,
                  const.ID, const.RAX_AUTH_DOMAIN_ID,
                  const.RAX_AUTH_MULTI_FACTOR_ENABLED],
-    'additionalProperties': False
 }
 
 list_users = {

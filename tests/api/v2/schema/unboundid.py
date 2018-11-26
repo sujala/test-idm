@@ -28,14 +28,30 @@ config_list = {
                     },
                     const.DEFAULT_VALUE: {
                         "type": ["boolean", "null", "number", "string"]
+                    },
+                    const.PROP_VALUE_TYPE: {
+                        "type": "string"
+                    },
+                    const.SOURCE: {
+                        "type": "string"
+                    },
+                    const.RELOADABLE: {
+                        "type": "boolean"
+                    },
+                    const.AS_CONFIGURED_VALUE: {
+                        "type": ["boolean", "array", "number", "string",
+                                 "null"]
                     }
                 },
                 "required": [
                     const.DESCRIPTION,
                     const.NAME,
                     const.VALUE,
-                    const.VERSION_ADDED
-                ]
+                    const.VERSION_ADDED,
+                    const.SOURCE,
+                    const.RELOADABLE,
+                    const.AS_CONFIGURED_VALUE
+                ],
             }
         },
     },

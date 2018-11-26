@@ -26,6 +26,7 @@ class InviteUnverifiedUserTest(unverified.TestBaseUnverifiedUser):
     def test_invite_unverified_user(self):
 
         user_id = self.create_unverified_user()
+        self.users.append(user_id)
 
         invite_resp = self.user_admin_client.invite_unverified_user(
             user_id=user_id)
@@ -79,11 +80,6 @@ class InviteUnverifiedUserTest(unverified.TestBaseUnverifiedUser):
     @base.base.log_tearDown_error
     def tearDown(self):
         super(InviteUnverifiedUserTest, self).tearDown()
-        for user_id in self.users:
-            resp = self.user_admin_client.delete_user(user_id=user_id)
-            self.assertEqual(
-                resp.status_code, 204,
-                msg='User with ID {0} failed to delete'.format(user_id))
 
     @classmethod
     @unless_coverage

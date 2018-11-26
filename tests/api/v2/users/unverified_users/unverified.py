@@ -33,10 +33,10 @@ class TestBaseUnverifiedUser(base.TestBaseV2):
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})
-        cls.users = []
 
     def setUp(self):
         super(TestBaseUnverifiedUser, self).setUp()
+        self.users = []
 
     def create_unverified_user(self):
         test_email = self.generate_random_string(
@@ -52,14 +52,17 @@ class TestBaseUnverifiedUser(base.TestBaseV2):
         self.assertEqual(
             create_resp.json()[const.USER][const.EMAIL],
             test_email)
-        self.users.append(create_resp.json()[const.USER][const.ID])
 
         return create_resp.json()[const.USER][const.ID]
 
     @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all resources created in the tests
-
+        for user in self.users:
+            resp = self.identity_admin_client.delete_user(user)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete parent'.format(user))
         super(TestBaseUnverifiedUser, self).tearDown()
 
     @classmethod

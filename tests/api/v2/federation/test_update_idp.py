@@ -337,7 +337,12 @@ class TestUpdateIDP(federation.TestBaseFederation):
     @tags('positive', 'p0', 'regression')
     @attr(type='regression')
     def test_update_idp_by_user_clients(self):
-        request_object = factory.get_domain_request_object({})
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
+        domain_req = {
+            'domain_id': domain_id
+        }
+        request_object = factory.get_domain_request_object(domain_req)
         dom_resp = self.identity_admin_client.add_domain(request_object)
         domain_id = dom_resp.json()[const.RAX_AUTH_DOMAIN][const.ID]
 
