@@ -6,8 +6,6 @@ from tests.api.v2 import base
 from tests.api.v2.schema import tokens as tokens_json
 
 from tests.package.johny import constants as const
-from tests.package.johny.v2 import client
-from tests.package.johny.v2.models import requests
 
 
 class TestRackerToken(base.TestBaseV2):
@@ -17,22 +15,17 @@ class TestRackerToken(base.TestBaseV2):
     @unless_coverage
     def setUpClass(cls):
         super(TestRackerToken, cls).setUpClass()
+        domain_id = cls.generate_random_string(pattern=const.DOMAIN_PATTERN)
+        cls.user_admin_client = cls.generate_client(
+            parent_client=cls.identity_admin_client,
+            additional_input_data={'domain_id': domain_id})
 
     @unless_coverage
     def setUp(self):
         super(TestRackerToken, self).setUp()
-        self.racker_client = client.IdentityAPIClient(
-            url=self.url,
-            serialize_format=self.test_config.serialize_format,
-            deserialize_format=self.test_config.deserialize_format)
-
-        # Get Token with Racker user & password
-        request_object = requests.AuthenticateAsRackerWithPassword(
-            racker_name=self.identity_config.racker_username,
-            racker_password=self.identity_config.racker_password)
-
-        self.racker_auth_resp = self.racker_client.get_auth_token(
-            request_object=request_object)
+        self.racker_client = self.generate_racker_client()
+        self.racker_token = self.racker_client.default_headers[
+            const.X_AUTH_TOKEN]
 
     @attr(type='smoke_no_log_alpha')
     @tags('positive', 'p0', 'smoke')
@@ -47,24 +40,76 @@ class TestRackerToken(base.TestBaseV2):
         and we can mask credentials from appearing in the console output.
         """
 
-        self.assertEqual(self.racker_auth_resp.status_code, 200)
-
-        # Validate Racker Token
-        auth_token = self.racker_auth_resp.json()[
-            const.ACCESS][const.TOKEN][const.ID]
-        self.racker_client.default_headers[const.X_AUTH_TOKEN] = auth_token
-
-        resp = self.racker_client.validate_token(token_id=auth_token)
+        resp = self.racker_client.validate_token(token_id=self.racker_token)
         self.assertEqual(resp.status_code, 200)
+
+    @attr(type='smoke_no_log_alpha')
+    @tags('positive', 'p1', 'smoke')
+    def test_revoke_racker_token(self):
+        # validate token using identity admin client, before revoke
+        val_resp = self.identity_admin_client.validate_token(
+            token_id=self.racker_token)
+        self.assertEqual(val_resp.status_code, 200)
+
+        # revoke racker token
+        revoke_resp = self.racker_client.revoke_token()
+        self.assertEqual(revoke_resp.status_code, 204)
+
+        # validate token using identity admin client, after revoke
+        val_resp = self.identity_admin_client.validate_token(
+            token_id=self.racker_token)
+        self.assertEqual(val_resp.status_code, 404)
+
+    @attr(type='smoke_no_log_alpha')
+    @tags('positive', 'p0', 'smoke')
+    def test_revoke_racker_token_by_id(self):
+        # validate token using identity admin client, before revoke
+        val_resp = self.identity_admin_client.validate_token(
+            token_id=self.racker_token)
+        self.assertEqual(val_resp.status_code, 200)
+
+        # revoke token by id
+        revoke_resp = self.racker_client.revoke_token(
+            token_id=self.racker_token)
+        self.assertEqual(revoke_resp.status_code, 204)
+
+        # validate token using identity admin client, after revoke
+        val_resp = self.identity_admin_client.validate_token(
+            token_id=self.racker_token)
+        self.assertEqual(val_resp.status_code, 404)
+
+    @attr(type='regression')
+    @tags('positive', 'p0', 'regression')
+    def test_identity_admin_can_revoke_racker_token(self):
+        # validate token using identity admin client, before revoke
+        val_resp = self.identity_admin_client.validate_token(
+            token_id=self.racker_token)
+        self.assertEqual(val_resp.status_code, 200)
+
+        # revoke token by id
+        revoke_resp = self.identity_admin_client.revoke_token(
+            token_id=self.racker_token)
+        self.assertEqual(revoke_resp.status_code, 204)
+
+        # validate token using identity admin client, after revoke
+        val_resp = self.identity_admin_client.validate_token(
+            token_id=self.racker_token)
+        self.assertEqual(val_resp.status_code, 404)
+
+    @attr(type='regression')
+    @tags('positive', 'p1', 'regression')
+    def test_user_admin_cannot_revoke_racker_token(self):
+        # revoke token by id
+        revoke_resp = self.user_admin_client.revoke_token(
+            token_id=self.racker_token)
+        self.assertEqual(revoke_resp.status_code, 403)
 
     @tags('positive', 'p0', 'regression')
     def test_analyze_racker_token(self):
-        token_id = self.racker_auth_resp.json()[
-            const.ACCESS][const.TOKEN][const.ID]
         # The identity_admin user should have the 'analyze-token' role in order
         # to use the analyze token endpoint, else will result in HTTP 403.
         self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
-            token_id
+            self.racker_token
         analyze_token_resp = self.identity_admin_client.analyze_token()
         self.assertEqual(analyze_token_resp.status_code, 200)
         self.assertSchema(
@@ -78,4 +123,6 @@ class TestRackerToken(base.TestBaseV2):
     @classmethod
     @unless_coverage
     def tearDownClass(cls):
+        cls.delete_client(client=cls.user_admin_client,
+                          parent_client=cls.identity_admin_client)
         super(TestRackerToken, cls).tearDownClass()
