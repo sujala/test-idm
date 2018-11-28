@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
@@ -2493,6 +2494,95 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         response.status == SC_OK
 
         domainEntity.id == domainId
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+    }
+
+    def "User-admin can revoke a federated user's token within own domain"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def userAdmin2 = utils.createCloudAccount()
+        def userAdmin2Token = utils.getToken(userAdmin2.username)
+
+        def domainId = userAdmin.domainId
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = samlAuthResponse.value.token
+        def samlAuthTokenId = samlAuthToken.id
+
+        when: "revoke token - userAdmin not in same domain"
+        def response = cloud20.revokeUserToken(userAdmin2Token, samlAuthTokenId)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "revoke token - userAdmin within same domain"
+        response = cloud20.revokeUserToken(userAdminToken, samlAuthTokenId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+        utils.deleteUser(userAdmin2)
+    }
+
+    def "impersonating a user-admin should allow revoking federated user's token within same domain"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def domainId = userAdmin.domainId
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = samlAuthResponse.value.token
+        def samlAuthTokenId = samlAuthToken.id
+
+        // impersonate a user-admin
+        ImpersonationResponse impersonationResponse = utils.impersonate(utils.getIdentityAdminToken(), userAdmin)
+        def impersonateToken = impersonationResponse.getToken().id
+
+        when: "revoke token"
+        def response = cloud20.revokeUserToken(impersonateToken, samlAuthTokenId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+    }
+
+    def "user-admin shouldn't be able to revoke token obtained by impersonating a fed user"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def domainId = userAdmin.domainId
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def fedUserId = samlAuthResponse.value.user.id
+        def fedUser = utils.getUserById(fedUserId)
+
+        //impersonate federated user
+        ImpersonationResponse impersonationResponse = utils.impersonate(utils.getIdentityAdminToken(), fedUser)
+        def impersonateToken = impersonationResponse.getToken().id
+
+        when: "revoke token"
+        def response = cloud20.revokeUserToken(utils.getToken(userAdmin.username), impersonateToken)
+
+        then:
+        response.status == SC_FORBIDDEN
 
         cleanup:
         utils.deleteUser(userAdmin)

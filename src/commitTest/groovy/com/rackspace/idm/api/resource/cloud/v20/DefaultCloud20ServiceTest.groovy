@@ -6049,7 +6049,47 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
     }
 
+    def "revokeTokenById: allow user-admin to revoke a federated user's token"() {
+        given:
+        def tokenId = "fedTokenId"
+        def caller = entityFactory.createUser()
+        def fedUser = entityFactory.createFederatedUser()
 
+        when:
+        def response = service.revokeToken(headers, authToken, tokenId).build()
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        1 * securityContext.getEffectiveCallerToken() >> new ScopeAccess()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * scopeAccessService.getScopeAccessByAccessToken(tokenId) >> entityFactory.createFederatedToken()
+        1 * identityUserService.getEndUserById(_) >> fedUser
+        1 * authorizationService.verifyDomain(caller, fedUser)
+        1 * scopeAccessService.expireAccessToken(tokenId)
+    }
+
+    def "revokeTokenById: error check"() {
+        given:
+        def tokenId = "fedTokenId"
+        def caller = entityFactory.createUser()
+        def fedUser = entityFactory.createFederatedUser()
+
+        when: "revoke token of fed user not within user-admin's domain"
+        service.revokeToken(headers, authToken, tokenId)
+
+        then:
+        thrown(ForbiddenException)
+
+        1 * securityContext.getEffectiveCallerToken() >> new ScopeAccess()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * scopeAccessService.getScopeAccessByAccessToken(tokenId) >> entityFactory.createFederatedToken()
+        1 * identityUserService.getEndUserById(_) >> fedUser
+        1 * authorizationService.verifyDomain(caller, fedUser) >> {throw new ForbiddenException()}
+        0 * scopeAccessService.expireAccessToken(tokenId)
+    }
 
     def mockServices() {
         mockEndpointConverter(service)

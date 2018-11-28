@@ -5528,11 +5528,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotFoundException("Token not found");
         }
 
+        // Allow a user-admin to revoke tokens for users within own domain. This includes both provisioned and federated
+        // users.
         if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
             if (scopeAccess instanceof RackerScopeAccess) {
                 throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
             }
-            User user = userService.getUserByAuthToken(tokenId);
+            String userId = ((BaseUserToken) scopeAccess).getIssuedToUserId();
+            EndUser user = identityUserService.getEndUserById(userId);
             authorizationService.verifyDomain(caller, user);
         }
 
