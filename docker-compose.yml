@@ -47,6 +47,8 @@ services:
   repose:
     image: docker.artifacts.rackspace.net/repose
     environment:
+      CUSTOMER_IDENTITY_SERVICE_HOST: ${HOSTIP}
+      CUSTOMER_IDENTITY_SERVICE_PORT: 8083
       IDENTITY_HOST: ${HOSTIP}
       IDENTITY_PORT: 8083
     volumes:
