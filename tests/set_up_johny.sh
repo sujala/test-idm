@@ -18,7 +18,8 @@ setup_docker_configs() {
 }
 
 start_docker() {
-    docker-compose -p tests up -d
+    docker-compose -p tests pull
+    docker-compose -p tests up -d --build
     echo "sleep time for repose & idm to spin up!"
     sleep 30
 }
