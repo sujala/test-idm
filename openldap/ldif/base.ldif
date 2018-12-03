@@ -17,54 +17,18 @@ objectClass: top
 ou: Users
 
 dn: cn=test.racker,ou=Users,o=rackspace,dc=rackspace,dc=com
-objectClass: top
+objectClass: user
 objectClass: person
 objectClass: inetOrgPerson
+objectClass: top
 cn: test.racker
 sn: racker
 uid: test.racker
 memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
 userPassword:: cGFzc3dvcmQ=
 
-dn: cn=test.alias,o=rackspace,dc=rackspace,dc=com
-objectClass: person
-objectClass: inetOrgPerson
-objectClass: top
-sn: alias
-cn: test.alias
-uid: test.alias
-memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
-userPassword:: cGFzc3dvcmQ=
-
-dn: o=legacy,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: organization
-o: legacy
-
-dn: cn=test.legacy,o=legacy,o=rackspace,dc=rackspace,dc=com
-objectClass: person
-objectClass: top
-objectClass: inetOrgPerson
-cn: test.legacy
-sn: legacy
-uid: test.legacy
-memberOf: cn=team-cloud-identity,ou=Groups,o=rackspace,dc=rackspace,dc=com
-userPassword:: cGFzc3dvcmQ=
-
-dn: cn=test.alias.legacy,ou=Users,o=rackspace,dc=rackspace,dc=com
-changetype: add
-objectClass: alias
-objectClass: top
-aliasedObjectName: cn=test.legacy,o=rackspace,dc=rackspace,dc=com
-
-dn: cn=test.alias,ou=Users,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: alias
-objectClass: extensibleObject
-cn: test.alias
-aliasedObjectName: cn=test.legacy,o=legacy,o=rackspace,dc=rackspace,dc=com
-
 dn: cn=test.impersonate,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: user
 objectClass: person
 objectClass: inetOrgPerson
 objectClass: top
@@ -75,6 +39,7 @@ memberOf: cn=cloud-identity-impersonate,ou=Groups,o=rackspace,dc=rackspace,dc=co
 userPassword:: cGFzc3dvcmQ=
 
 dn: cn=test.nogroup,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: user
 objectClass: person
 objectClass: inetOrgPerson
 objectClass: top
@@ -84,6 +49,7 @@ uid: test.nogroup
 userPassword:: cGFzc3dvcmQ=
 
 dn: cn=test.ae,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: user
 objectClass: person
 objectClass: inetOrgPerson
 objectClass: top
@@ -95,6 +61,7 @@ memberOf: cn=cloud-identity-ae-tokens,ou=Groups,o=rackspace,dc=rackspace,dc=com
 userPassword:: cGFzc3dvcmQ=
 
 dn: cn=dup.uid.one,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: user
 objectClass: person
 objectClass: inetOrgPerson
 objectClass: top
@@ -104,6 +71,7 @@ uid: dup.uid
 userPassword:: cGFzc3dvcmQ=
 
 dn: cn=dup.uid.two,ou=Users,o=rackspace,dc=rackspace,dc=com
+objectClass: user
 objectClass: person
 objectClass: inetOrgPerson
 objectClass: top

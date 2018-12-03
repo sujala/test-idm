@@ -638,7 +638,7 @@ public class DefaultUserService implements UserService {
     public List<String> getRackerEDirRoles(String rackerId) {
         logger.debug("Getting Roles for Racker: {}", rackerId);
 
-        if (!isTrustedServer()) {
+        if (!isRackerAuthAllowed()) {
             throw new ForbiddenException();
         }
         String rackerIdForSearch = rackerId;
@@ -1801,8 +1801,8 @@ public class DefaultUserService implements UserService {
         return config.getString("cloud.region");
     }
 
-    boolean isTrustedServer() {
-        return config.getBoolean("ldap.server.trusted", false);
+    boolean isRackerAuthAllowed() {
+        return identityConfig.getStaticConfig().isRackerAuthAllowed();
     }
 
     int getLdapPagingOffsetDefault() {
@@ -1827,5 +1827,9 @@ public class DefaultUserService implements UserService {
 
     private boolean getDomainRestrictedToOneUserAdmin() {
         return config.getBoolean("domain.restricted.to.one.user.admin.enabled", false);
+    }
+
+    public void setIdentityConfig(IdentityConfig identityConfig) {
+        this.identityConfig = identityConfig;
     }
 }

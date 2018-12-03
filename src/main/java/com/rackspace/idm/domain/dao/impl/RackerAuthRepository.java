@@ -8,7 +8,6 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
 import com.rackspace.idm.exception.GatewayException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
-import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,7 @@ import java.util.List;
 @Component
 public class RackerAuthRepository implements RackerAuthDao {
 
-    private static final String ATTR_ALIASEDOBJECTNAME = "aliasedobjectname";
+    private static final String ATTR_MEMBERSHIP = "memberOf";
 
     @Autowired
     private LDAPConnectionPool connPool;
@@ -36,38 +35,24 @@ public class RackerAuthRepository implements RackerAuthDao {
 
         String userDn;
 
-        if (identityConfig.getStaticConfig().searchForUserBeforeRackerAuthBind()) {
-            try {
-                SearchResultEntry rackerEntry = getRackerEntry(userName);
-                userDn = rackerEntry.getDN();
-            } catch (NotFoundException e) {
-                audit.fail("User not found in gateway");
-                return false;
-            } catch (GatewayException e) {
-                // A gateway exception means a problem hitting AD
-                audit.fail("Error searching gateway");
-                throw e; // Rethrow the exception
-            }
-        } else {
-            userDn = getBindDn(userName);
+        try {
+            SearchResultEntry rackerEntry = getRackerEntry(userName);
+            userDn = rackerEntry.getDN();
+        } catch (NotFoundException e) {
+            audit.fail("User not found in gateway");
+            return false;
+        } catch (GatewayException e) {
+            // A gateway exception means a problem hitting AD
+            audit.fail("Error searching gateway");
+            throw e; // Rethrow the exception
         }
 
         BindResult result = null;
         try {
             result = connPool.bindAndRevertAuthentication(userDn, password);
         } catch (LDAPException e1) {
-            if (ResultCode.INVALID_CREDENTIALS.equals(e1.getResultCode())) {
-                try {
-                    // Handle aliases
-                    result = bindAlias(userName, password);
-                } catch (LDAPException e) {
-                    logBindException(userName, audit, e);
-                    return false;
-                }
-            } else {
-                logBindException(userName, audit, e1);
-                return false;
-            }
+            logBindException(userName, audit, e1);
+            return false;
         }
 
         if (result == null) {
@@ -101,7 +86,7 @@ public class RackerAuthRepository implements RackerAuthDao {
 
     private List<String> getRackerRoles(SearchResultEntry entry) {
         List<String> roles = new ArrayList<String>();
-        String[] groups = entry.getAttributeValues(getMembershipAttribute());
+        String[] groups = entry.getAttributeValues(ATTR_MEMBERSHIP);
 
         if(groups != null && groups.length > 0) {
             for (String group : groups) {
@@ -116,12 +101,8 @@ public class RackerAuthRepository implements RackerAuthDao {
         SearchResultEntry entry = null;
         try {
             // We expect a single entry to exist in AD with the UID. Could get a size limit exceeded exception if multiple entries with same UID exist.
-            final Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_UID, username).build();
-            entry = getLdapInterface().searchForEntry(getBaseDn(), getSearchScope(), searchFilter, getMembershipAttribute());
-            if (entry == null) {
-                // Handle aliases
-                entry = getAliasEntry(username);
-            }
+            final Filter searchFilter = createRackerSearchFilter(username);
+            entry = getLdapInterface().searchForEntry(getBaseDn(), SearchScope.SUB, searchFilter,ATTR_MEMBERSHIP);
         } catch (LDAPException ldapEx) {
             logger.error(String.format("Encountered exception searching racker repository for user '%s'.", username), ldapEx);
             throw new GatewayException("Encountered error retrieving user.", ErrorCodes.ERROR_CODE_RACKER_PROXY_SEARCH);
@@ -144,56 +125,12 @@ public class RackerAuthRepository implements RackerAuthDao {
         return connPool;
     }
 
-    private String getAliasDN(String username) throws LDAPSearchException {
-        final Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_NAME, username).build();
-        final SearchResultEntry entry = connPool.searchForEntry(getBaseDn(), getSearchScope(), DereferencePolicy.NEVER, 0, false, searchFilter, ATTR_ALIASEDOBJECTNAME);
-        if (entry != null && entry.getAttribute(ATTR_ALIASEDOBJECTNAME) != null) {
-            return entry.getAttribute(ATTR_ALIASEDOBJECTNAME).getValueAsDN().toNormalizedString();
-        } else {
-            return null;
-        }
-    }
+    private Filter createRackerSearchFilter(String username) {
+        LdapSearchBuilder searchBuilder = new LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_UID, username);
 
-    private SearchResultEntry getAliasEntry(String username) throws LDAPException {
-        final String userDn = getAliasDN(username);
-        if (userDn == null) {
-            return null;
-        } else {
-            return getLdapInterface().getEntry(userDn, getMembershipAttribute());
+        if (identityConfig.getReloadableConfig().isFeatureOptimizeRackerSearchEnabled()) {
+            searchBuilder.addEqualAttribute("objectClass", "user");
         }
+        return searchBuilder.build();
     }
-
-    private BindResult bindAlias(String username, String password) throws LDAPException {
-        final String realUserDn = getAliasDN(username);
-        if (realUserDn == null) {
-            throw new LDAPException(ResultCode.INVALID_CREDENTIALS);
-        } else {
-            return connPool.bindAndRevertAuthentication(realUserDn, password);
-        }
-    }
-
-    private String getMembershipAttribute() {
-        if (identityConfig.getStaticConfig().useActiveDirectoryForRackerAuth()) {
-            return "memberOf";
-        } else {
-            return "groupMembership";
-        }
-    }
-
-    private String getBindDn(String userName) {
-        if (identityConfig.getStaticConfig().useActiveDirectoryForRackerAuth()) {
-            return String.format("%s@rackspace.corp", userName);
-        } else {
-            return String.format("cn=%s,", userName) + getBaseDn();
-        }
-    }
-
-    SearchScope getSearchScope() {
-        if (identityConfig.getStaticConfig().useActiveDirectoryForRackerAuth()) {
-            return SearchScope.SUB;
-        } else {
-            return SearchScope.ONE;
-        }
-    }
-
 }

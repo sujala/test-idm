@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.config;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
-import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +26,7 @@ public class RackerAuthRepositoryLdapConfiguration {
 
     @Bean(destroyMethod = "close", name = "connectionToAuth")
     public LDAPConnectionPool connection() {
-        if (!identityConfig.getStaticConfig().getEDirServerTrusted()) {
+        if (!identityConfig.getStaticConfig().isRackerAuthAllowed()) {
             return null;
         }
         

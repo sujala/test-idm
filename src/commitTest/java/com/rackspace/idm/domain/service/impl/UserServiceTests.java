@@ -80,7 +80,6 @@ public class UserServiceTests {
 
 
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
-        appConfig.setProperty("ldap.server.trusted", false);
 
         userService = new DefaultUserService();
         userService.setUserDao(mockUserDao);
@@ -95,8 +94,6 @@ public class UserServiceTests {
         userService.setPropertiesService(propertiesService);
 
         Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
-        
-        appConfig2.setProperty("ldap.server.trusted", true);
 
         trustedUserService =  new DefaultUserService();
 

@@ -28,7 +28,7 @@ class AuthRepositoryLdapConfigurationTest extends Specification {
     def "Racker config returns a null connection pool for non-trusted servers - trusted == #trusted"() {
         given:
         rackerConnectionFactory.createAuthenticatedEncryptedConnection(_, _, _, _, _) >> GroovyMock(LDAPConnection)
-        staticConfig.getEDirServerTrusted() >> trusted
+        staticConfig.isRackerAuthAllowed() >> trusted
         legacyConfig.getBoolean("auth.ldap.useSSL") >> false
         if (trusted) {
             rackerConnectionFactory.createAuthenticatedEncryptedConnection(_, _) >> null
@@ -50,7 +50,7 @@ class AuthRepositoryLdapConfigurationTest extends Specification {
 
     def "Racker config creates authenticated connections"() {
         given:
-        staticConfig.getEDirServerTrusted() >> true
+        staticConfig.isRackerAuthAllowed() >> true
 
         when: "try to create a connection WITH SSL/TLS and WITHOUT authentication"
         legacyConfig.getBoolean("auth.ldap.useSSL") >> true

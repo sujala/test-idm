@@ -624,9 +624,6 @@ public class IdentityConfig {
     public static final String USER_PHONE_PIN_SIZE_PROP = "user.phone.pin.size";
     public static final int USER_PHONE_PIN_SIZE_DEFAULT = 6;
 
-    public static final String EDIR_LDAP_SERVER_TRUSTED_PROP = "ldap.server.trusted";
-    public static final boolean EDIR_LDAP_SERVER_TRUSED_DEFAULT = false;
-
     public static final String INVITES_SUPPORTED_FOR_RCNS_PROP = "invites.supported.for.rcns";
     public static final String INVITES_SUPPORTED_FOR_RCNS_DEFAULT = "";
 
@@ -684,6 +681,9 @@ public class IdentityConfig {
     /* ************************************
        Racker Auth Configuration Properties
      * ************************************ */
+    public static final String RACKER_AUTH_ALLOWED_PROP = "racker.auth.allowed";
+    public static final boolean RACKER_AUTH_ALLOWED_DEFAULT = false;
+
     public static final String RACKER_AUTH_LDAP_SERVER_PROP = "racker.auth.ldap.server";
 
     private static final String RACKER_AUTH_BIND_DN = "racker.auth.bind.dn";
@@ -702,11 +702,8 @@ public class IdentityConfig {
     public static final String RACKER_AUTH_LDAP_BASE_DN_PROP = "racker.auth.ldap.base.dn";
     public static final String RACKER_AUTH_LDAP_BASE_DN_DEFAULT = "ou=users,o=rackspace";
 
-    public static final String RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP = "racker.auth.ldap.use.active.directory";
-    public static final boolean RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_DEFAULT = false;
-
-    public static final String RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP = "racker.auth.ldap.search.for.user.before.bind";
-    public static final boolean RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_DEFAULT = false;
+    public static final String RACKER_AUTH_OPTIMIZE_SEARCH_PROP = "feature.racker.auth.optimize.search";
+    public static final boolean RACKER_AUTH_OPTIMIZE_SEARCH_DEFAULT = false;
 
 
     @Qualifier("staticConfiguration")
@@ -944,7 +941,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT);
         defaults.put(USER_PHONE_PIN_SIZE_PROP, USER_PHONE_PIN_SIZE_DEFAULT);
 
-        defaults.put(EDIR_LDAP_SERVER_TRUSTED_PROP, EDIR_LDAP_SERVER_TRUSED_DEFAULT);
+        defaults.put(RACKER_AUTH_ALLOWED_PROP, RACKER_AUTH_ALLOWED_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_DEFAULT);
         defaults.put(ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_PROP, ROLE_ASSIGNMENTS_MAX_TENANT_ASSIGNMENTS_PER_REQUEST_DEFAULT);
@@ -995,8 +992,7 @@ public class IdentityConfig {
         defaults.put(RACKER_AUTH_LDAP_SERVER_POOL_SIZE_INIT_PROP, RACKER_AUTH_LDAP_SERVER_POOL_SIZE_INIT_DEFAULT);
         defaults.put(RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_PROP, RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_DEFAULT);
         defaults.put(RACKER_AUTH_LDAP_BASE_DN_PROP, RACKER_AUTH_LDAP_BASE_DN_DEFAULT);
-        defaults.put(RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP, RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_DEFAULT);
-        defaults.put(RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP, RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_DEFAULT);
+        defaults.put(RACKER_AUTH_OPTIMIZE_SEARCH_PROP, RACKER_AUTH_OPTIMIZE_SEARCH_DEFAULT);
 
         return defaults;
     }
@@ -1687,9 +1683,9 @@ public class IdentityConfig {
             return getLongSafely(staticConfiguration, LDAP_SERVER_POOL_MIN_DISCONNECT_INTERVAL_TIME_PROP);
         }
 
-        @IdmProp(key = EDIR_LDAP_SERVER_TRUSTED_PROP, versionAdded = "1.0.14.8", description = "Specifies if the edir connection is trusted")
-        public boolean getEDirServerTrusted() {
-            return getBooleanSafely(staticConfiguration, EDIR_LDAP_SERVER_TRUSTED_PROP);
+        @IdmProp(key = RACKER_AUTH_ALLOWED_PROP, versionAdded = "1.0.14.8", description = "Specifies whether racker proxy authentication is supported on this server.")
+        public boolean isRackerAuthAllowed() {
+            return getBooleanSafely(staticConfiguration, RACKER_AUTH_ALLOWED_PROP);
         }
 
         /**
@@ -1804,16 +1800,6 @@ public class IdentityConfig {
         // Intentionally did not include an @IdmProp annotation here. That would cause this property to be exposed in the Identity props API in plain text
         public String getRackerAuthBindPassword() {
             return getStringSafely(staticConfiguration, RACKER_AUTH_BIND_PASSWORD);
-        }
-
-        @IdmProp(key = RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP, versionAdded = "3.28.0", description = "This must be set to 'true' if the property auth.ldap.server points to an ADFS racker server, false if configured for an eDir racker server. Renamed from 'auth.ldap.use.active.directory'")
-        public boolean useActiveDirectoryForRackerAuth() {
-            return getBooleanSafely(staticConfiguration, RACKER_AUTH_LDAP_SERVER_USE_ACTIVE_DIRECTORY_PROP);
-        }
-
-        @IdmProp(key = RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP, versionAdded = "3.28.0", description = "Search for the user with a uid equal to the specified username and use the DN of the resultant user to bind against. Otherwise attempts to dynamically generate the DN based on the username. Renamed from 'auth.ldap.search.for.user.before.bind'")
-        public boolean searchForUserBeforeRackerAuthBind() {
-            return getBooleanSafely(staticConfiguration, RACKER_AUTH_LDAP_SERVER_SEARCH_FOR_USER_BEFORE_BIND_PROP);
         }
 
         @IdmProp(key = DYNAMO_DB_SERVICE_ENDPOINT_PROP, versionAdded = "3.27.0", description = "Specifies the endpoint to use for dynamoDB connections.")
@@ -2706,6 +2692,10 @@ public class IdentityConfig {
             return getIntSafely(reloadableConfiguration, DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_PROP);
         }
 
+        @IdmProp(key = RACKER_AUTH_OPTIMIZE_SEARCH_PROP, versionAdded = "3.28.0", description = "Whether to optimize searching AD for racker by limiting to user object class.")
+        public boolean isFeatureOptimizeRackerSearchEnabled() {
+            return getBooleanSafely(reloadableConfiguration, RACKER_AUTH_OPTIMIZE_SEARCH_PROP);
+        }
     }
 
     public class RepositoryConfig extends ConfigMetaLookup {

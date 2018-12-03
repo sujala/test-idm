@@ -352,16 +352,6 @@ task zipLdap(type: Zip) {
     from "ldap"
 }
 
-task zipEdirLdif(type: Zip) {
-    classifier = 'edir-ldif'
-    from "edir/ldif"
-}
-
-task zipEdirConfig(type: Zip) {
-    classifier = 'edir-config'
-    from "edir/config"
-}
-
 task zipOpenLdapLdif(type: Zip) {
     classifier = 'openldap-ldif'
     from "openldap/ldif"
@@ -429,8 +419,6 @@ gretty {
 artifacts {
     archives zipConfig
     archives zipLdap
-    archives zipEdirLdif
-    archives zipEdirConfig
     archives zipOpenLdapLdif
     archives zipOpenLdapConfig
     archives zipResources
@@ -535,8 +523,6 @@ zipConfig.dependsOn copyBaseConfig
 copyBaseConfig.dependsOn copyGeneratedSrc
 war.dependsOn zipConfig
 war.dependsOn zipLdap
-war.dependsOn zipEdirLdif
-war.dependsOn zipEdirConfig
 war.dependsOn zipOpenLdapLdif
 war.dependsOn zipOpenLdapConfig
 war.dependsOn zipRepose
@@ -708,8 +694,6 @@ publishing {
             artifact zipResources
             artifact zipConfig
             artifact zipLdap
-            artifact zipEdirLdif
-            artifact zipEdirConfig
             artifact zipOpenLdapLdif
             artifact zipOpenLdapConfig
             artifact zipResources

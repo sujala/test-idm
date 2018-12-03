@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.newrelic.api.agent.Trace;
 import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.RackerAuthDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -23,21 +24,15 @@ import javax.validation.groups.Default;
 public class DefaultRackerAuthenticationService implements RackerAuthenticationService {
 
     @Autowired
-    private ApplicationService applicationService;
-    @Autowired
-    private TenantService tenantService;
-    @Autowired
-    private ScopeAccessService scopeAccessService;
-    @Autowired
     private RackerAuthDao authDao;
     @Autowired
     private UserService userService;
     @Autowired
     private InputValidator inputValidator;
     @Autowired
-    private Configuration config;
-    @Autowired
     private RSAClient rsaClient;
+    @Autowired
+    private IdentityConfig identityConfig;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -45,7 +40,7 @@ public class DefaultRackerAuthenticationService implements RackerAuthenticationS
     @Override
     public UserAuthenticationResult authenticateDomainUsernamePassword(String username, String password, Domain domain) {
         // ToDo: Check what Domain to authenticate against, default Rackers
-        if(!isTrustedServer()){
+        if(!isRackerAuthSupported()){
             throw new ForbiddenException();
         }
         return authenticateRacker(username, password, false);
@@ -55,7 +50,7 @@ public class DefaultRackerAuthenticationService implements RackerAuthenticationS
     @Override
     public UserAuthenticationResult authenticateDomainRSA(String username, String tokenkey, Domain domain) {
         // ToDo: Check what Domain to authenticate against, default Rackers
-        if(!isTrustedServer()){
+        if(!isRackerAuthSupported()){
             throw new ForbiddenException();
         }
         return authenticateRacker(username, tokenkey, true);
@@ -64,26 +59,6 @@ public class DefaultRackerAuthenticationService implements RackerAuthenticationS
     @Override
     public void setRackerAuthDao(RackerAuthDao authDao) {
         this.authDao = authDao;
-    }
-
-    @Override
-    public void setTenantService(TenantService tenantService) {
-        this.tenantService = tenantService;
-    }
-
-    @Override
-    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
-        this.scopeAccessService = scopeAccessService;
-    }
-
-    @Override
-    public void setApplicationService(ApplicationService applicationService) {
-        this.applicationService = applicationService;
-    }
-
-    @Override
-    public void setConfig(Configuration appConfig) {
-        this.config = appConfig;
     }
 
     @Override
@@ -99,7 +74,7 @@ public class DefaultRackerAuthenticationService implements RackerAuthenticationS
     UserAuthenticationResult authenticateRacker(String username, String password, boolean usesRSAAuth) {
         logger.debug("Authenticating Racker: {}", username);
 
-        if (!isTrustedServer()) {
+        if (!isRackerAuthSupported()) {
             throw new ForbiddenException();
         }
         boolean authenticated;
@@ -149,7 +124,7 @@ public class DefaultRackerAuthenticationService implements RackerAuthenticationS
         }
     }
 
-    boolean isTrustedServer() {
-        return config.getBoolean("ldap.server.trusted", false);
+    boolean isRackerAuthSupported() {
+        return identityConfig.getStaticConfig().isRackerAuthAllowed();
     }
 }

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.RackerAuthDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
@@ -11,6 +12,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -70,11 +72,23 @@ public class DefaultUserServiceTestOld {
 
     private Validator validator;
 
+    IdentityConfig identityConfig;
+    IdentityConfig.ReloadableConfig reloadableConfig;
+    IdentityConfig.StaticConfig staticConfig;
+
     @Before
     public void setUp() throws Exception {
         validator = new Validator();
         //validator.setLdapPatternRepository(patternDao);
         defaultUserService.setValidator(validator);
+
+        identityConfig = mock(IdentityConfig.class);
+        reloadableConfig = mock(IdentityConfig.ReloadableConfig.class);
+        staticConfig = mock(IdentityConfig.StaticConfig.class);
+        when(identityConfig.getReloadableConfig()).thenReturn(reloadableConfig);
+        when(identityConfig.getStaticConfig()).thenReturn(staticConfig);
+
+        defaultUserService.setIdentityConfig(identityConfig);
     }
 
     @Test
@@ -125,14 +139,14 @@ public class DefaultUserServiceTestOld {
     }
 
     @Test (expected = ForbiddenException.class)
-    public void getRackerRoles_notTrustedServer_throwsForbiddenException() throws Exception {
-        when(config.getBoolean("ldap.server.trusted", false)).thenReturn(false);
+    public void getRackerRoles_notallowed_throwsForbiddenException() throws Exception {
+        when(staticConfig.isRackerAuthAllowed()).thenReturn(false);
         defaultUserService.getRackerEDirRoles("rackerId");
     }
 
     @Test
     public void getRackerRoles_callsAuthDao_getRackerRoles() throws Exception {
-        when(config.getBoolean("ldap.server.trusted", false)).thenReturn(true);
+        when(staticConfig.isRackerAuthAllowed()).thenReturn(true);
         defaultUserService.getRackerEDirRoles("rackerId");
         verify(authDao).getRackerRoles("rackerId");
     }
@@ -141,7 +155,7 @@ public class DefaultUserServiceTestOld {
     public void getRackerRoles_returnRoles() throws Exception {
         List<String> rackeList = new ArrayList<String>();
         rackeList.add("test");
-        when(config.getBoolean("ldap.server.trusted", false)).thenReturn(true);
+        when(staticConfig.isRackerAuthAllowed()).thenReturn(true);
         when(authDao.getRackerRoles("rackerId")).thenReturn(rackeList);
         List<String> roles = defaultUserService.getRackerEDirRoles("rackerId");
         assertThat("roles", roles.get(0), equalTo("test"));

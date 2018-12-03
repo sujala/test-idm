@@ -16,14 +16,6 @@ public interface RackerAuthenticationService {
 
     void setRackerAuthDao(RackerAuthDao authDao);
 
-    void setTenantService(TenantService tenantService);
-
-    void setScopeAccessService(ScopeAccessService scopeAccessService);
-
-    void setApplicationService(ApplicationService applicationService);
-
-    void setConfig(Configuration appConfig);
-
     void setUserService(UserService userService);
 
     void setInputValidator(InputValidator inputValidator);
