@@ -5,7 +5,7 @@
   <repose-cluster id="identity" rewrite-host-header="false">
 
     <nodes>
-        <node id="repose_node1" hostname="localhost" http-port="8080"/>
+        <node id="repose_node1" hostname="127.0.0.1" http-port="8080"/>
     </nodes>
     <filters>
       <!-- Only enable for fed calls via standard fed endpoint. -->

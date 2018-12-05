@@ -4,15 +4,27 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.security.SecurityContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.config.OpenTracingConfiguration;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.TokenScopeEnum;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import com.rackspace.idm.util.HttpHeaderExtractor;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
+import io.opentracing.SpanContext;
+import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -71,6 +83,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     @Autowired
     private RequestContextHolder requestContextHolder;
 
+    @Autowired
+    private OpenTracingConfiguration openTracingConfiguration;
+
     AuthenticationFilter() {
     }
 
@@ -82,6 +97,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     //TODO: Refactor this method. It's way too complex
     @Override
     public ContainerRequest filter(ContainerRequest request) {
+        if (identityConfig.getReloadableConfig().getOpenTracingAuthFilterSpanEnabled()) {
+            startOpenTracingSpan(request);
+        }
         final SecurityContext securityContext = requestContextHolder.getRequestContext().getSecurityContext();
         String path = request.getPath();
         final String method = request.getMethod();
@@ -401,5 +419,45 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         String errMsg = "The scope of this token does not allow access to this resource";
         logger.warn(errMsg);
         throw new ForbiddenException(errMsg);
+    }
+
+    private void startOpenTracingSpan(ContainerRequest containerRequest) {
+        try {
+            SpanContext context = openTracingConfiguration.getGlobalTracer().extract(
+                    Format.Builtin.HTTP_HEADERS, new HttpHeaderExtractor(containerRequest));
+
+            Tracer.SpanBuilder spanBuilder;
+
+            String method = containerRequest.getMethod();
+            String path = containerRequest.getPath(); // does not display query params
+
+            // Path pattern for both v1.1 and v2.0 validate and revoke token
+            Pattern validateRevokeTokenPathPattern = Pattern.compile("^cloud/v[12].[01]/tokens?/[^/]+$");
+
+            // Only show the last 4 characters of a token string in path.
+            if (tokenEndpointPathPattern.matcher(path).matches()) {
+                path = path.replaceFirst("^(cloud/v2.0/tokens)/.*([a-zA-Z0-9-_]{4})/(endpoints)$", "$1/****$2/$3");
+            } else if ((HttpMethod.DELETE.equals(method) || HttpMethod.GET.equals(method))
+                    && validateRevokeTokenPathPattern.matcher(path).matches()) {
+                path = path.replaceFirst("^(cloud/v[12].[01]/tokens?)/.*([a-zA-Z0-9-_]{4})$", "$1/****$2");
+            }
+
+            // Use the method + path as operation name
+            String operationName = String.format("%s %s", containerRequest.getMethod(), path);
+
+            if (context == null)
+                spanBuilder = openTracingConfiguration.getGlobalTracer()
+                        .buildSpan(operationName)
+                        .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
+            else
+                spanBuilder = openTracingConfiguration.getGlobalTracer()
+                        .buildSpan(operationName)
+                        .asChildOf(context)
+                        .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
+
+            spanBuilder.startActive(true);
+        } catch (Exception ex) {
+            logger.debug("An error occurred starting the AuthenticationFilter opentracing span.", ex);
+        }
     }
 }

@@ -356,6 +356,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_OPEN_TRACING_DAO_RESOURCES_PROP = "feature.enable.open.tracing.dao.resources";
     public static final boolean FEATURE_ENABLE_OPEN_TRACING_DAO_RESOURCES_DEFAULT = true;
 
+    public static final String FEATURE_ENABLE_OPEN_TRACING_AUTH_FILTER_SPAN_PROP = "feature.enable.open.tracing.auth.filter.span";
+    public static final boolean FEATURE_ENABLE_OPEN_TRACING_AUTH_FILTER_SPAN_DEFAULT = false;
+
     public static final String FEATURE_OPEN_TRACING_INCLUDE_WEB_RESOURCES_PROP = "open.tracing.include.web.resources";
     public static final List<String> FEATURE_OPEN_TRACING_INCLUDE_WEB_RESOURCES_DEFAULT = Arrays.asList("*");
 
@@ -705,7 +708,6 @@ public class IdentityConfig {
     public static final String RACKER_AUTH_OPTIMIZE_SEARCH_PROP = "feature.racker.auth.optimize.search";
     public static final boolean RACKER_AUTH_OPTIMIZE_SEARCH_DEFAULT = false;
 
-
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -976,6 +978,7 @@ public class IdentityConfig {
         defaults.put(OPENTRACING_LOGGING_ENABLED_PROP, OPENTRACING_LOGGING_ENABLED_DEFAULT);
         defaults.put(OPENTRACING_FLUSH_INTERVAL_MS_PROP, OPENTRACING_MAX_BUFFER_SIZE_DEFAULT);
         defaults.put(OPENTRACING_MAX_BUFFER_SIZE_PROP, OPENTRACING_MAX_BUFFER_SIZE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_OPEN_TRACING_AUTH_FILTER_SPAN_PROP, FEATURE_ENABLE_OPEN_TRACING_AUTH_FILTER_SPAN_DEFAULT);
 
         // Password black list Dynamodb defaults
         defaults.put(FEATURE_ENABLED_PASSWORD_BLACKLIST_PROP, FEATURE_ENABLED_PASSWORD_BLACKLIST_DEFAULT);
@@ -2690,6 +2693,10 @@ public class IdentityConfig {
                 "been publicly compromised, before a user is no longer allowed to use a given password.")
         public int getDynamoDBPasswordBlacklistCountMaxAllowed() {
             return getIntSafely(reloadableConfiguration, DYNAMO_DB_PASSWORD_BLACKLIST_COUNT_MAX_ALLOWED_PROP);
+        }
+        @IdmProp(key = FEATURE_ENABLE_OPEN_TRACING_AUTH_FILTER_SPAN_PROP, versionAdded = "3.27.0", description = "Whether to enable creating span at authentication filter")
+        public Boolean getOpenTracingAuthFilterSpanEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_OPEN_TRACING_AUTH_FILTER_SPAN_PROP);
         }
 
         @IdmProp(key = RACKER_AUTH_OPTIMIZE_SEARCH_PROP, versionAdded = "3.28.0", description = "Whether to optimize searching AD for racker by limiting to user object class.")

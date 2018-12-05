@@ -141,7 +141,7 @@ public class OpenTracingDaoAdvice {
         try {
             return openTracingConfiguration.getGlobalTracer().scopeManager().active();
         } catch (Exception e) {
-            // Eat
+            logger.debug("Unable to get opentracing active scope for dao advice. Returning null.");
         }
         return null;
     }

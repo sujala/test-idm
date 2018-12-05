@@ -57,8 +57,10 @@ public class OpenTracingWebResourceAdvice {
                 identityConfig.getStaticConfig().getOpenTracingEnabledFlag();
 
         Scope activeScope = null;
+        Scope parentScope = null;
         if (tracingIsEnabled) {
             try {
+                parentScope = getActiveScope();
                 activeScope = establishSpanIfNecessary(joinPoint);
             } catch (Exception e) {
                 logger.warn("Attempting to establish tracing, but encountered error. Eating exception.", e);
@@ -69,6 +71,9 @@ public class OpenTracingWebResourceAdvice {
             Object response = joinPoint.proceed();
             if (activeScope != null) {
                 closeScope(activeScope, response);
+            }
+            if (parentScope != null) {
+                closeScope(parentScope, response);
             }
             return response;
         } catch (Throwable ex) {
@@ -107,20 +112,33 @@ public class OpenTracingWebResourceAdvice {
         SpanContext context = openTracingConfiguration.getGlobalTracer().extract(
                 Format.Builtin.HTTP_HEADERS, new HttpHeaderExtractor(apiRequest.getContainerRequest()));
 
+        Scope activeScope = getActiveScope();
+
         Tracer.SpanBuilder spanBuilder;
 
-        if (context == null)
+        if (context != null && activeScope != null)
             spanBuilder = openTracingConfiguration.getGlobalTracer()
                     .buildSpan(resourceName)
+                    .asChildOf(activeScope.span())
+                    .asChildOf(context)
                     .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
-        else
+        else  if (context != null)
             spanBuilder = openTracingConfiguration.getGlobalTracer()
                     .buildSpan(resourceName)
                     .asChildOf(context)
                     .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
+        else if (activeScope != null)
+            spanBuilder = openTracingConfiguration.getGlobalTracer()
+                    .buildSpan(resourceName)
+                    .asChildOf(activeScope.span())
+                    .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
+        else
+            spanBuilder = openTracingConfiguration.getGlobalTracer()
+                    .buildSpan(resourceName)
+                    .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
 
-        Scope activeScope = spanBuilder.startActive(true);
-        return activeScope;
+
+        return spanBuilder.startActive(true);
     }
 
     private void closeScope(Scope activeScope, Object resourceResponse) {
@@ -206,5 +224,14 @@ public class OpenTracingWebResourceAdvice {
             }
         }
         return found;
+    }
+
+    private Scope getActiveScope() {
+        try {
+            return openTracingConfiguration.getGlobalTracer().scopeManager().active();
+        } catch (Exception e) {
+            logger.debug("Unable to get opentracing active scope for web resource advice. Returning null.");
+        }
+        return null;
     }
 }
