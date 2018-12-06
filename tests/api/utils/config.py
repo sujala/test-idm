@@ -145,3 +145,8 @@ class TestConfig(data_interfaces.ConfigSectionInterface):
     def unverified_user_rcn(self):
         """Approved RCN for unverified user functionality"""
         return self.get('unverified_user_rcn')
+
+    @property
+    def nast_tenant_prefix(self):
+        """Tenant prefix for the NAST tenant"""
+        return self.get('nast_tenant_prefix')

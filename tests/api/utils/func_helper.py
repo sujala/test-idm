@@ -3,7 +3,7 @@
 from strgen import StringGenerator
 import urlparse
 
-from tests.api.utils import hotpie
+from tests.api.utils import config, hotpie
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
@@ -63,11 +63,25 @@ def generate_randomized_domain_id(
       until it finds one which is non-existing. If False, it simply generates
       a random string but doesn't check if a domain exists with that ID
     """
-    domain_id = StringGenerator(pattern=pattern).render()
     if non_existing:
         while True:
+            domain_id = StringGenerator(pattern=pattern).render()
             get_domain_resp = client.get_domain(domain_id)
             if get_domain_resp.status_code != 200:
-                break
-            domain_id = StringGenerator(pattern=pattern).render()
+
+                # Check if any possible linked tenants exist that may cause
+                # issue for one-user call. This is needed because
+                # without this check, staging tests seem to fail randomly.
+                # This will reduce the flakiness.
+                get_tenant_resp = client.get_tenant(tenant_id=domain_id)
+                if get_tenant_resp.status_code != 200:
+                    test_config = config.TestConfig()
+                    nast_tenant_id = test_config.nast_tenant_prefix + domain_id
+                    get_tenant_resp = client.get_tenant(
+                        tenant_id=nast_tenant_id)
+                    if get_tenant_resp.status_code != 200:
+                        break
+    else:
+        domain_id = StringGenerator(pattern=pattern).render()
+
     return domain_id
