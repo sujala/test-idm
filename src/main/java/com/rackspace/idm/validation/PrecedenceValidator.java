@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -185,7 +184,7 @@ public class PrecedenceValidator {
         verifyCallerRolePrecedenceForAssignment(user, cRole);
     }
 
-    public void verifyCallerRolePrecedenceForAssignment(User user, ClientRole role) {
+    public void verifyCallerRolePrecedenceForAssignment(EndUser user, ClientRole role) {
         ClientRole callerIdentityRole = applicationService.getUserIdentityRole(user);
         if (callerIdentityRole == null) {
             throw new ForbiddenException(NOT_AUTHORIZED);

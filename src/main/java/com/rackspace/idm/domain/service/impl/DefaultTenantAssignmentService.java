@@ -72,6 +72,8 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
     @Autowired
     private Configuration config;
 
+    //TODO: Replace integer allowRoleAccess variable with IdentityUserTypeEnum for readability
+
     @Override
     public List<TenantRole> replaceTenantAssignmentsOnUser(User user, List<TenantAssignment> tenantAssignments, Integer allowedRoleAccess) {
         Validate.notNull(user);

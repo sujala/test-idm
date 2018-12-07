@@ -729,21 +729,19 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     def "addUserRole verifies user-admin access and role to add"() {
-        given:
-        allowUserAccess()
-
         when:
         service.addUserRole(headers, authToken, userId, roleId)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
+        1 * userService.checkAndGetUserById(userId) >> entityFactory.createUser()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole(null)
     }
 
     def "addUserRole verifies caller precedence over user to modify and role to add"() {
         given:
-        allowUserAccess()
-
         def user = entityFactory.createUser()
         def caller = entityFactory.createUser()
         def roleToAdd = entityFactory.createClientRole(null)
@@ -756,49 +754,53 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addUserRole(headers, authToken, userId, roleId)
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, roleToAdd)
     }
 
     def "addUserRole checks for existing identity:* role"() {
         given:
-        allowUserAccess()
-
         def user = entityFactory.createUser()
         user.id = "somethingdifferentfromcaller"
         def caller = entityFactory.createUser()
         def roleToAdd = entityFactory.createClientRole(null)
 
-        applicationService.getClientRoleById(roleId) >> roleToAdd
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-
         when:
         service.addUserRole(headers, authToken, userId, roleId)
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * tenantService.getGlobalRolesForUser(_)
+        1 * applicationService.getClientRoleById(roleId) >> roleToAdd
 
     }
 
     def "addUserRole verifies user is within caller domain when caller is user-admin"() {
         given:
-        allowUserAccess()
-
         def user = entityFactory.createUser()
-        def caller = Mock(User)
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
         def roleToAdd = entityFactory.createClientRole(null)
-
-        applicationService.getClientRoleById(roleId) >> roleToAdd
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> true
 
         when:
         service.addUserRole(headers, authToken, userId, roleId)
 
         then:
-        1 * caller.getDomainId() >> user.getDomainId()
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
+        1 *applicationService.getClientRoleById(roleId) >> roleToAdd
     }
 
     def "addUserRole adds role"() {
@@ -810,49 +812,53 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def caller = entityFactory.createUser()
         def roleToAdd = entityFactory.createClientRole(null)
 
-        applicationService.getClientRoleById(roleId) >> roleToAdd
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-
         when:
         def response = service.addUserRole(headers, authToken, userId, roleId).build()
 
         then:
-        1 * tenantService.addTenantRoleToUser(user, _)
         response.status == 200
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
+        1 *applicationService.getClientRoleById(roleId) >> roleToAdd
+        1 * tenantService.addTenantRoleToUser(user, _)
     }
 
     def "addUserRole not allowed without scopeAccess"() {
-        given:
-        1 * scopeAccessService.getScopeAccessByAccessToken(_) >> null
-
         when:
         def response = service.addUserRole(headers, authToken, userId, roleId).build()
 
         then:
         response.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
     }
 
     def "addUserRole not allowed without precedence"() {
         given:
-        def mockedScopeAccess = Mock(ScopeAccess)
         def user = entityFactory.createUser()
-        def caller = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
         def roleToAdd = entityFactory.createClientRole(null)
-
-        scopeAccessService.getScopeAccessByAccessToken(_) >> mockedScopeAccess
-
-        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> { throw new ForbiddenException() }
-
-        applicationService.getClientRoleById(roleId) >> roleToAdd
-        userService.checkAndGetUserById(userId) >> user
-        userService.getUserByAuthToken(authToken) >> caller
 
         when:
         def response = service.addUserRole(headers, authToken, userId, roleId).build()
 
         then:
         response.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * applicationService.getClientRoleById(roleId) >> roleToAdd
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> { throw new ForbiddenException() }
     }
 
     def "addUserRole returns not found when user does not exist"() {
@@ -2090,8 +2096,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.addService(headers, uriInfo(), authToken, null).build()
 
         then:
-        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess("token", "1", "clientid", new Date().minus(1))
         result.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN) >> {throw new NotAuthorizedException()}
     }
 
     def "addService checks for null values"() {
@@ -3742,8 +3751,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         applicationService.getClientRoleById(roleId) >> cRole
         userService.checkAndGetUserById(userId) >> user
-        userService.getUserByAuthToken(authToken) >> caller
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         tenantService.getGlobalRolesForUser(_) >> userRoles
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
         authorizationService.hasDefaultUserRole(_) >> true
 
         then:
@@ -3906,8 +3916,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * applicationService.getClientRoleById(_) >> clientRole
         1 * userService.checkAndGetUserById(_) >> user
-        1 * userService.getUserByAuthToken(_) >> caller
-        1 * authorizationService.authorizeCloudUserAdmin(_) >> true
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
         1 * authorizationService.hasDefaultUserRole(_) >> false
         result.build().status == 400
     }
@@ -3919,11 +3929,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.name = "identity:user-manage"
             return it
         }
-        User user = entityFactory.createUser().with {
+        def user = entityFactory.createUser().with {
             it.domainId = "1"
             return it
         }
-        User caller = entityFactory.createUser().with {
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
             it.domainId = "2"
             return it
         }
@@ -3934,7 +3945,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * applicationService.getClientRoleById(_) >> clientRole
         1 * userService.checkAndGetUserById(_) >> user
-        1 * userService.getUserByAuthToken(_) >> caller
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller) >> {throw new ForbiddenException()}
         result.build().status == 403
     }
 
@@ -3945,21 +3958,26 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.name = "identity:user-manage"
             return it
         }
-        User user = entityFactory.createUser()
+        def user = entityFactory.createUser()
         user.id = "something different from caller"
-        User caller = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
         roleService.isIdentityAccessRole(clientRole) >> true
 
         when:
         def result = service.addUserRole(headers, authToken, "abc", "123")
 
         then:
+        result.build().status == 200
+
         1 * applicationService.getClientRoleById(_) >> clientRole
         1 * userService.checkAndGetUserById(_) >> user
-        1 * userService.getUserByAuthToken(_) >> caller
-        1 * authorizationService.authorizeCloudUserAdmin(_) >> true
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(user, caller)
         1 * authorizationService.hasDefaultUserRole(_) >> true
-        result.build().status == 200
     }
 
     def "User with user-manage role can get user by ID" () {
@@ -4922,12 +4940,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.addUserRole(headers, authToken, user.id, roleId).build()
 
         then:
+        response.status == SC_BAD_REQUEST
+
         1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole()
         1 * userService.checkAndGetUserById(user.id) >> user
-        1 * userService.getUserByAuthToken(authToken) >> caller
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * tenantService.getTenantRoleForUserById(user, roleId) >> tenantRole
-
-        response.status == SC_BAD_REQUEST
     }
 
     def "adding role to user on tenant with existing global role throw 400 BadRequest"() {
@@ -4991,7 +5009,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.grantRolesToUser(headers, authToken, userId, roleAssignments).build()
 
         then:
-        1 * requestContext.getEffectiveCaller() >> caller
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * requestContext.getTargetEndUser() >> user
         1 * authorizationService.verifyEffectiveCallerHasManagementAccessToUser(userId)
         1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> IdentityUserTypeEnum.USER_ADMIN
