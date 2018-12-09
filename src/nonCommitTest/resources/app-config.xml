@@ -22,7 +22,8 @@
      -->
     <context:annotation-config/>
 
-    <aop:aspectj-autoproxy />
+    <!-- Setting proxy-target-class to true to also allow @Autowired on classes that implement an interface -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
 
     <bean id="bootstrapOpenSaml" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
         <property name="targetClass"><value>org.opensaml.core.config.InitializationService</value></property>

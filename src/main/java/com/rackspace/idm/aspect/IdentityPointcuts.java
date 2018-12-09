@@ -33,9 +33,9 @@ public class IdentityPointcuts {
     }
 
     /**
-     * Pointcut on all method calls on a Spring bean name ending in "Dao" - the IDM standard for classes that define
+     * Pointcut on all method calls on a Spring bean name ending in "Repository" or "Dao" - the IDM standard for classes that define
      * methods hitting CA.
      */
-    @Pointcut("anyPublicOperation() && (bean(*Dao) || bean(tokenRevocationRecordPersistenceStrategy))")
+    @Pointcut("anyPublicOperation() && (bean(*Repository) || bean(*Dao) || bean(tokenRevocationRecordPersistenceStrategy))")
     public void daoResource() { }
 }
