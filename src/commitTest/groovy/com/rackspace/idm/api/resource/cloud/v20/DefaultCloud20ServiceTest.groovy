@@ -1139,14 +1139,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     def "deleteRole verifies admin level access"() {
-        given:
-        allowUserAccess()
-
         when:
         service.deleteRole(headers, authToken, roleId)
 
         then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
     def "deleteRole verifies callers precedence over role to be deleted"() {
@@ -1180,29 +1180,53 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteRole handles exceptions"() {
         given:
-        def scopeAccessMock = Mock(ScopeAccess)
         def role = entityFactory.createClientRole("identity:role").with {
             it.id = "unique"
             return it
         }
 
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
-        authorizationService.verifyIdentityAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
-
         applicationService.getClientRoleById("unique") >> role
         roleService.isRoleAssigned(role.id) >> true
 
-        when:
+        when: "not authorized"
         def response1 = service.deleteRole(headers, authToken, roleId).build()
-        def response2 = service.deleteRole(headers, authToken, roleId).build()
-        def response3 = service.deleteRole(headers, authToken, null).build()
-        def response4 = service.deleteRole(headers, authToken, "unique").build()
 
         then:
         response1.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
+
+        when: "fobidden"
+        def response2 = service.deleteRole(headers, authToken, roleId).build()
+
+        then:
         response2.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN) >> {throw new ForbiddenException()}
+
+        when: "bad request"
+        def response3 = service.deleteRole(headers, authToken, null).build()
+
+        then:
         response3.status == 400
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+
+        when: "forbidden"
+        def response4 = service.deleteRole(headers, authToken, "unique").build()
+
+        then:
         response4.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * applicationService.getClientRoleById("unique") >> role
+        1 * roleService.isRoleAssigned(role.id) >> true
     }
 
     def "deleteRole handles exceptions when role is assigned to a provisioned/federated user"() {
@@ -5942,7 +5966,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "addEndpointTemplate uses identity admin when feature flag is disabled"() {
         given:
-        allowUserAccess()
         mockEndpointConverter(service)
         def endpointTemplate = v1Factory.createEndpointTemplate().with {
             it.serviceId = "serviceId"
@@ -5957,7 +5980,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         response.status == SC_CREATED
 
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_);
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
     def "addEndpointTemplate uses service-admin or rs-endpoint-admin role when feature flag is enabled"() {
@@ -5982,7 +6007,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteEndpointTemplate uses identity admin when feature flag is disabled"() {
         given:
-        allowUserAccess()
         def endpointTemplate = entityFactory.createCloudBaseUrl().with {
             it.enabled = false
             it
@@ -5997,7 +6021,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         response.status == SC_NO_CONTENT
 
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
     def "deleteEndpointTemplate uses service-admin or rs-endpoint-admin role when feature flag is enabled"() {
@@ -6023,7 +6049,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "updateEndpointTemplate uses service admin when feature flag is disabled"() {
         given:
-        allowUserAccess()
         mockEndpointConverter(service)
         def endpointTemplateId = "100"
         def endpointTemplate = v1Factory.createEndpointTemplate().with {
@@ -6041,7 +6066,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         response.status == SC_OK
 
-        1 * authorizationService.verifyServiceAdminLevelAccess(_);
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
     }
 
     def "updateEndpointTemplate uses service-admin or rs-endpoint-admin role when feature flag is enabled"() {

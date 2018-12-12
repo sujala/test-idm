@@ -428,12 +428,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
         try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
             if (identityConfig.getReloadableConfig().isUseRoleForEndpointManagementEnabled()) {
-                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-                requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
             } else {
-                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
             }
 
             validator20.validateEndpointTemplate(endpoint);
@@ -497,12 +498,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String endpointTemplateId, EndpointTemplate endpoint) {
         try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
             if (identityConfig.getReloadableConfig().isUseRoleForEndpointManagementEnabled()) {
-                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-                requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
             } else {
-                authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
             }
 
             if(endpoint.getId() != null &&  !endpointTemplateId.equals(endpoint.getId().toString())) {
@@ -1823,7 +1825,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateIdentityProviderUsingMetadata(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String identityProviderId, byte[] metadata) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             // Verify user has appropriate role
@@ -2246,7 +2248,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addIdentityProviderCert(HttpHeaders httpHeaders, String authToken, String identityProviderId, PublicCertificate publicCertificate) {
         try {
             //verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
             //verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
@@ -2279,7 +2281,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteIdentityProviderCert(HttpHeaders httpHeaders, String authToken, String identityProviderId, String certificateId) {
         try {
             //verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
             //verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
@@ -2322,7 +2324,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateIdentityProviderPolicy(HttpHeaders httpHeaders, String authToken, String identityProviderId, String policy) {
         try {
             //verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             //verify user has appropriate role
@@ -2428,7 +2430,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, String endpointId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
             CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointId);
             String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
@@ -2444,12 +2450,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
         try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
             if (identityConfig.getReloadableConfig().isUseRoleForEndpointManagementEnabled()) {
-                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-                requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_ENDPOINT_ADMIN.getRoleName());
             } else {
-                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
             }
 
             CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
@@ -2472,7 +2479,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             if (roleId == null) {
                 throw new BadRequestException("roleId cannot be null");
             }
@@ -2541,7 +2552,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) {
         try {
-            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
+
             Application client = applicationService.checkAndGetApplication(serviceId);
             this.applicationService.delete(client.getClientId());
             return Response.noContent();
