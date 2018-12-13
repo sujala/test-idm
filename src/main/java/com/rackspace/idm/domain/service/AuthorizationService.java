@@ -19,7 +19,7 @@ public interface AuthorizationService {
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
 
-    boolean isSelf(User requester, User requestedUser);
+    boolean isSelf(BaseUser requester, User requestedUser);
     boolean isDefaultUser(User user);
 
     boolean hasDefaultUserRole(EndUser user);
@@ -64,7 +64,7 @@ public interface AuthorizationService {
     void verifyUserLevelAccess(ScopeAccess authScopeAccess);
     void verifySelf(User requester, User requestedUser);
     void verifyEffectiveCallerHasTenantAccess(String tenantId);
-    void verifyDomain(BaseUser retrievedUser, BaseUser caller);
+    void verifyDomain(BaseUser caller, BaseUser retrievedUser);
 
     void setConfig(Configuration config);
 

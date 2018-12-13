@@ -799,7 +799,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
         1 *applicationService.getClientRoleById(roleId) >> roleToAdd
     }
 
@@ -823,7 +823,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
         1 *applicationService.getClientRoleById(roleId) >> roleToAdd
         1 * tenantService.addTenantRoleToUser(user, _)
     }
@@ -901,7 +901,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getEffectiveCaller() >> caller
         1 * userService.checkAndGetUserById(_) >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
     }
 
     def "deleteUserRole gets users globalRoles"() {
@@ -1196,7 +1196,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
 
-        when: "fobidden"
+        when: "forbidden"
         def response2 = service.deleteRole(headers, authToken, roleId).build()
 
         then:
@@ -1313,7 +1313,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.checkAndGetTenant("tenantId")
         1 * userService.checkAndGetUserById("id") >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller) >> {throw new ForbiddenException()}
+        1 * authorizationService.verifyDomain(caller, user) >> {throw new ForbiddenException()}
     }
 
     def "addRolesToUserOnTenant verifies role is not a user type role"() {
@@ -1335,7 +1335,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.checkAndGetTenant("tenantId")
         1 * userService.checkAndGetUserById("id") >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
         1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole("identity:user-admin")
     }
 
@@ -1358,7 +1358,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.checkAndGetTenant("tenantId")
         1 * userService.checkAndGetUserById("id") >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
         1 * applicationService.getClientRoleById(_) >> role
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role)
@@ -1386,7 +1386,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.checkAndGetTenant("tenantId") >> entityFactory.createTenant()
         1 * userService.checkAndGetUserById("id") >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
         1 * applicationService.getClientRoleById(_) >> role
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role)
@@ -1472,7 +1472,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.checkAndGetTenant("tenantId")
         1 * userService.checkAndGetUserById("id") >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller) >> {throw new ForbiddenException()}
+        1 * authorizationService.verifyDomain(caller, user) >> {throw new ForbiddenException()}
     }
 
     def "deleteRoleFromUserOnTenant verifies role"() {
@@ -1494,7 +1494,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.checkAndGetTenant("tenantId")
         1 * userService.checkAndGetUserById("id") >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
         1 * applicationService.getClientRoleById("roleId") >> {throw new NotFoundException()}
     }
 
@@ -1515,7 +1515,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.checkAndGetTenant("tenantId")
         1 * userService.checkAndGetUserById("id") >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
         1 * applicationService.getClientRoleById("roleId") >> entityFactory.createClientRole()
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
@@ -1549,7 +1549,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.checkAndGetTenant("tenantId") >> tenant
         1 * userService.checkAndGetUserById("id") >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
         1 * applicationService.getClientRoleById("roleId") >> clientRole
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
@@ -1719,23 +1719,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.getEphemeralRackerTenantRoles(racker.id)
     }
 
-    def "getUserCredential verifies access token"() {
+    def "assert getting user password credentials returns forbidden"() {
         when:
-        service.getUserPasswordCredentials(headers, authToken, "userId")
+        def response = service.getUserPasswordCredentials(headers, authToken, "userId")
 
         then:
-        1 * scopeAccessService.getScopeAccessByAccessToken(_)
-    }
+        response.build().status == SC_FORBIDDEN
 
-    def "getUserCredential verifies user level access"() {
-        given:
-        allowUserAccess()
-
-        when:
-        service.getUserPasswordCredentials(headers, authToken, "userId")
-
-        then:
-        0 * authorizationService.verifyUserLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
     }
 
     def "identity:admin should not get other users password credentials"() {
@@ -2708,19 +2699,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "calling getUsers with email query param returns the user"() {
         given:
-        allowUserAccess()
         ListUsersSearchParams params = new ListUsersSearchParams().with {
             it.email = "test@rackspace.com"
             it.userType = "ALL"
             it
         }
-        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
 
         when:
         def result = service.listUsers(headers, uriInfo(), authToken, params).build()
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         1 * userService.getUsersByEmail('test@rackspace.com', UserType.ALL) >> [entityFactory.createUser()].asList()
 
         then:
@@ -2729,8 +2721,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "userAdmin calling getUsersByEmail filters subUsers by domain"() {
         given:
-        allowUserAccess()
-
         requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
 
         def converter = new UserConverterCloudV20()
@@ -2764,7 +2754,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.listUsers(headers, uriInfo(), authToken, params).build()
 
         then:
-        1 * userService.getUserByScopeAccess(_) >> caller
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1
         1 * userService.getUsersByEmail(_, UserType.ALL) >> [subUser1, subUser2].asList()
         1 * authorizationService.hasSameDomain(caller, subUser1) >> true
         1 * authorizationService.hasSameDomain(caller, subUser2) >> false
@@ -3510,99 +3504,109 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     @Unroll
-    def "delete api key credential"() {
+    def "delete api key credential using admin token - callerType = #callerType"() {
         given:
-        allowUserAccess()
-
         def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
-        def userInDomain = entityFactory.createUser("caller", "userId2", "domainId", "region")
-        userInDomain.apiKey = "key"
-        def userOutOfDomain = entityFactory.createUser("caller", "userId2", "domainId2", "region")
-        userOutOfDomain.apiKey = "key"
+        def userId = "userId2"
+        def user = entityFactory.createUser("caller", userId, "domainId", "region")
+        user.apiKey = "key"
 
         when:
-        def inDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
-        def outDomainResult = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
+        def response = service.deleteUserCredential(headers, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
 
         then:
-        2 * authorizationService.verifyUserLevelAccess(_)
-        2 * userService.checkAndGetUserById(_) >>> [ userInDomain, userOutOfDomain ]
-        2 * userService.getUserByAuthToken(_) >>> [ caller, caller, caller, caller ]
-        4 * authorizationService.hasServiceAdminRole(_) >>> [ callerSA, userSA, callerSA, userSA ]
-        4 * authorizationService.hasIdentityAdminRole(_) >>> [ callerIA, userIA, callerIA, userIA ]
-        4 * authorizationService.hasUserAdminRole(_) >>> [ callerUA, userUA, callerUA, userUA ]
-        4 * authorizationService.hasUserManageRole(_) >>> [ callerUM, userUM, callerUM, userUM ]
-        if (precedenceForbidden) {
-            2 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        response.status == SC_NO_CONTENT
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * userService.checkAndGetUserById(userId) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> callerType
+        1 * authorizationService.isSelf(caller, user) >> false
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        if (callerType.isDomainBasedAccessLevel()) {
+            1 * authorizationService.verifyDomain(caller, user)
+        } else {
+            0 * authorizationService.verifyDomain(caller, user)
+        }
+        1 * userService.updateUser(user) >> { arg ->
+            com.rackspace.idm.domain.entity.User updateUser = arg[0]
+            assert updateUser.apiKey == ""
         }
 
-
-        inDomainResult.status == inDomain
-        outDomainResult.status == outDomain
-
         where:
-        callerSA | callerIA | callerUA | callerUM | userSA | userIA | userUA | userUM | inDomain | outDomain | precedenceForbidden
-        // identity:service-admin calls
-        true     | false    | false    | false    | true   | false  | false  | false  | 403      | 403       | false
-        true     | false    | false    | false    | false  | true   | false  | false  | 204      | 204       | false
-        true     | false    | false    | false    | false  | false  | true   | false  | 204      | 204       | false
-        true     | false    | false    | false    | false  | false  | false  | true   | 204      | 204       | false
-        true     | false    | false    | false    | false  | false  | false  | false  | 204      | 204       | false
-        // identity:admin calls
-        false    | true     | false    | false    | true   | false  | false  | false  | 403      | 403       | true
-        false    | true     | false    | false    | false  | true   | false  | false  | 403      | 403       | false
-        false    | true     | false    | false    | false  | false  | true   | false  | 204      | 204       | false
-        false    | true     | false    | false    | false  | false  | false  | true   | 204      | 204       | false
-        false    | true     | false    | false    | false  | false  | false  | false  | 204      | 204       | false
-        // identity:user-admin calls
-        false    | false    | true     | false    | true   | false  | false  | false  | 403      | 403       | true
-        false    | false    | true     | false    | false  | true   | false  | false  | 403      | 403       | true
-        false    | false    | true     | false    | false  | false  | true   | false  | 403      | 403       | false
-        false    | false    | true     | false    | false  | false  | false  | true   | 204      | 403       | false
-        false    | false    | true     | false    | false  | false  | false  | false  | 204      | 403       | false
-        // identity:user-manage calls
-        false    | false    | false    | true     | true   | false  | false  | false  | 403      | 403       | true
-        false    | false    | false    | true     | false  | true   | false  | false  | 403      | 403       | true
-        false    | false    | false    | true     | false  | false  | true   | false  | 403      | 403       | true
-        false    | false    | false    | true     | false  | false  | false  | true   | 403      | 403       | false
-        false    | false    | false    | true     | false  | false  | false  | false  | 204      | 403       | false
-        // identity:default calls
-        false    | false    | false    | false    | true   | false  | false  | false  | 403      | 403       | true
-        false    | false    | false    | false    | false  | true   | false  | false  | 403      | 403       | true
-        false    | false    | false    | false    | false  | false  | true   | false  | 403      | 403       | true
-        false    | false    | false    | false    | false  | false  | false  | true   | 403      | 403       | true
-        false    | false    | false    | false    | false  | false  | false  | false  | 403      | 403       | false
+        callerType << [IdentityUserTypeEnum.SERVICE_ADMIN, IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
     }
 
     @Unroll
-    def "self delete api key credentials"() {
+    def "self delete api key credentials - callerType = #callerType"() {
         given:
-        allowUserAccess()
-
-        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def caller = entityFactory.createUser("caller", userId, "domainId", "region")
         caller.apiKey = "key"
 
         when:
-        def result = service.deleteUserCredential(headers, authToken, "1", JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
+        def result = service.deleteUserCredential(headers, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
 
         then:
-        1 * userService.checkAndGetUserById(_) >> caller
-        1 * userService.getUserByAuthToken(_) >> caller
-        2 * authorizationService.hasServiceAdminRole(_) >> callerSA
-        2 * authorizationService.hasIdentityAdminRole(_) >> callerIA
-        2 * authorizationService.hasUserAdminRole(_) >> callerUA
-        2 * authorizationService.hasUserManageRole(_) >>> callerUM
+        if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
+            result.status == SC_FORBIDDEN
+        } else {
+            result.status == SC_NO_CONTENT
+        }
 
-        result.status == expectedResult
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * userService.checkAndGetUserById(userId) >> caller
+        1 * requestContext.getEffectiveCallersUserType() >> callerType
+        1 * authorizationService.isSelf(caller, caller) >> true
+        0 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
+        0 * authorizationService.verifyDomain(_, _)
+        userService.updateUser(caller) >> { arg ->
+            com.rackspace.idm.domain.entity.User updateUser = arg[0]
+            assert updateUser.apiKey == ""
+        }
 
         where:
-        where:
-        callerSA | callerIA | callerUA | callerUM | expectedResult
-        true     | false    | false    | false    | 204
-        false    | true     | false    | false    | 204
-        false    | false    | true     | false    | 403
-        false    | false    | false    | true     | 204
-        false    | false    | false    | false    | 204
+        callerType << IdentityUserTypeEnum.values()
+    }
+
+    def "error check: delete api key credential"() {
+        given:
+        def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
+        def userId = "userId2"
+        def user = entityFactory.createUser("caller", userId, "domainId", "region")
+        user.apiKey = "key"
+
+        when: "caller does not have precedence over user"
+        def response = service.deleteUserCredential(headers, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * userService.checkAndGetUserById(userId) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        1 * authorizationService.isSelf(caller, user) >> false
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> {throw new ForbiddenException()}
+
+        when: "caller and user do not belong to the same domain"
+        response = service.deleteUserCredential(headers, authToken, userId, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS).build()
+
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * userService.checkAndGetUserById(userId) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.isSelf(caller, user) >> false
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * authorizationService.verifyDomain(caller, user) >> {throw new ForbiddenException()}
     }
 
     def "Add Group to user"() {
@@ -3971,7 +3975,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkAndGetUserById(_) >> user
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller) >> {throw new ForbiddenException()}
+        1 * authorizationService.verifyDomain(caller, user) >> {throw new ForbiddenException()}
         result.build().status == 403
     }
 
@@ -4000,7 +4004,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkAndGetUserById(_) >> user
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(user, caller)
+        1 * authorizationService.verifyDomain(caller, user)
         1 * authorizationService.hasDefaultUserRole(_) >> true
     }
 
@@ -4066,7 +4070,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "User with user-manage role can get user by email" () {
         given:
-        allowUserAccess()
         User user = entityFactory.createUser()
         def users = [user].asList()
         User caller = entityFactory.createUser()
@@ -4081,10 +4084,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.listUsers(headers, uriInfo(), authToken, params)
 
         then:
-        1 * userService.getUsersByEmail(_, UserType.ALL) >> users
-        1 * userService.getUserByScopeAccess(_) >> caller
-        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
         result.build().status == 200
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userService.getUsersByEmail(_, UserType.ALL) >> users
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
     }
 
     def "User with user-manage can get user's api-key" () {
@@ -5858,8 +5865,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteTenant uses identity admin when feature flag is disabled"() {
         given:
-        allowUserAccess()
-
         when:
         reloadableConfig.isUseRoleForTenantManagementEnabled() >> false
         def response = service.deleteTenant(headers, authToken, "tenantId").build()
@@ -5867,7 +5872,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         response.status == SC_NO_CONTENT
 
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
     def "deleteTenant uses service-admin or rs-tenant-admin role when feature flag is enabled"() {

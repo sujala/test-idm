@@ -253,7 +253,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean isSelf(User requester, User requestedUser) {
+    public boolean isSelf(BaseUser requester, User requestedUser) {
         if(requester.getUsername() != null && requester.getUsername().equals(requestedUser.getUsername())){
             return true;
         }

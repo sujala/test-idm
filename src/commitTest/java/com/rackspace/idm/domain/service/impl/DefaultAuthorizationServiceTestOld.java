@@ -1,24 +1,25 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.RoleService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
-import org.joda.time.DateTime;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 
 import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -124,7 +125,7 @@ public class DefaultAuthorizationServiceTestOld {
             User retrievedUser = new User();
             retrievedUser.setId("2");
             retrievedUser.setDomainId("domainId");
-            defaultAuthorizationService.verifyDomain(retrievedUser, caller);
+            defaultAuthorizationService.verifyDomain(caller, retrievedUser);
             assertTrue("should throw exception", false);
         } catch (ForbiddenException ex){
             assertThat("exception message", ex.getMessage(),equalTo("Not Authorized"));
@@ -138,7 +139,7 @@ public class DefaultAuthorizationServiceTestOld {
             User retrievedUser = new User();
             caller.setId("1");
             retrievedUser.setId("2");
-            defaultAuthorizationService.verifyDomain(retrievedUser, caller);
+            defaultAuthorizationService.verifyDomain(caller, retrievedUser);
             assertTrue("should throw exception", false);
         } catch (ForbiddenException ex){
             assertThat("exception message", ex.getMessage(),equalTo("Not Authorized"));
@@ -152,7 +153,7 @@ public class DefaultAuthorizationServiceTestOld {
             User retrievedUser = new User();
             caller.setId("1");
             retrievedUser.setId("1");
-            defaultAuthorizationService.verifyDomain(retrievedUser, caller);
+            defaultAuthorizationService.verifyDomain(caller, retrievedUser);
         } catch (ForbiddenException ex){
             assertTrue("should not throw exception", false);
         }
@@ -167,7 +168,7 @@ public class DefaultAuthorizationServiceTestOld {
             retrievedUser.setDomainId("domainId");
             caller.setId("1");
             retrievedUser.setId("2");
-            defaultAuthorizationService.verifyDomain(retrievedUser, caller);
+            defaultAuthorizationService.verifyDomain(caller, retrievedUser);
             assertTrue("should throw exception",false);
         }catch (ForbiddenException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
