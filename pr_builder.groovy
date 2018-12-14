@@ -56,7 +56,7 @@ return [
 
     chart: [
             name: 'customer-identity',
-            version: '0.1.2',
+            version: '0.1.3',
             values: { branch, name ->
                 def deployConfig = [
                         trigger_tag: branch,
