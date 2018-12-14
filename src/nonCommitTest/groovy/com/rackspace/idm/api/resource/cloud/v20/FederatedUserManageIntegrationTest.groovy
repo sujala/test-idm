@@ -1,12 +1,16 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
+import com.rackspace.idm.domain.dao.TenantRoleDao
+import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.modules.usergroups.dao.UserGroupDao
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
@@ -37,17 +41,46 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
     @Shared
     def tenant
 
+    @Autowired
+    TenantRoleDao tenantRoleDao
+
+    @Autowired
+    UserGroupDao userGroupDao
+
+    @Autowired
+    ApplicationRoleDao roleDao
+
     def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
         sharedServiceAdminToken = cloud20.authenticateForToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
         domainId = utils.createDomain()
         (user, users) = utils.createUserAdmin(domainId)
         sharedUserGroup = utils.createUserGroup(domainId)
-        utils.grantRoleAssignmentsOnUserGroup(sharedUserGroup, v2Factory.createSingleRoleAssignment(Constants.USER_MANAGE_ROLE_ID, ['*']))
+
+        //TODO: Update once user-manage is allowed to be set on a user-group
+        //utils.grantRoleAssignmentsOnUserGroup(sharedUserGroup, v2Factory.createSingleRoleAssignment(Constants.USER_MANAGE_ROLE_ID, ['*']))
+        grantRoleAssignmentsOnUserGroup(sharedUserGroup)
+
         tenant = utils.createTenant()
 
         AuthenticateResponse fedAuthResponse = utils.authenticateFederatedUser(domainId, [sharedUserGroup.name] as Set)
         token = fedAuthResponse.token.id
+    }
+
+    private void grantRoleAssignmentsOnUserGroup(UserGroup sharedUserGroup) {
+        def userGroup = userGroupDao.getGroupById(sharedUserGroup.id)
+        def role = roleDao.getRoleByName(Constants.USER_MANAGE_ROLE_NAME)
+        RoleAssignments tenantAssignments = v2Factory.createSingleRoleAssignment(Constants.USER_MANAGE_ROLE_ID, ['*'])
+        def tenantAssignment = tenantAssignments.tenantAssignments.tenantAssignment.get(0)
+
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setRoleRsId(tenantAssignment.getOnRole());
+        tenantRole.setClientId(role.getClientId());
+        tenantRole.setName(role.getName());
+        tenantRole.setDescription(role.getDescription());
+        tenantRole.setRoleType(role.getRoleType());
+
+        tenantRoleDao.addRoleAssignmentOnGroup(userGroup, tenantRole);
     }
 
     def cleanup() {
@@ -67,7 +100,7 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         response = cloud20.getRole(token, Constants.DEFAULT_USER_ROLE_ID)
 
         then:
-        response.status == SC_FORBIDDEN
+        response.status == SC_OK
     }
 
     def "federated user with user-manage domain" () {
@@ -117,7 +150,7 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         response.status == SC_OK
 
         when: "grant role to user-group"
-        response = cloud20.grantRoleAssignmentsOnUserGroup(token, userGroup, v2Factory.createSingleRoleAssignment(Constants.USER_MANAGE_ROLE_ID, ['*']))
+        response = cloud20.grantRoleAssignmentsOnUserGroup(token, userGroup, v2Factory.createSingleRoleAssignment(Constants.ADMIN_ROLE_ID, ['*']))
 
         then:
         response.status == SC_OK
@@ -129,25 +162,25 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         response.status == SC_OK
 
         when: "get roles on user-group"
-        cloud20.getRoleAssignmentOnUserGroup(token, userGroup, Constants.USER_MANAGE_ROLE_ID)
+        cloud20.getRoleAssignmentOnUserGroup(token, userGroup, Constants.ADMIN_ROLE_ID)
 
         then:
         response.status == SC_OK
 
         when: "revoke roles on user-group"
-        cloud20.revokeRoleAssignmentFromUserGroup(token, userGroup, Constants.USER_MANAGE_ROLE_ID)
+        cloud20.revokeRoleAssignmentFromUserGroup(token, userGroup, Constants.ADMIN_ROLE_ID)
 
         then:
         response.status == SC_OK
 
         when: "grant role on tenant to user-group"
-        response = cloud20.grantRoleOnTenantToGroup(token, userGroup, Constants.USER_MANAGE_ROLE_ID, tenant.id)
+        response = cloud20.grantRoleOnTenantToGroup(token, userGroup, Constants.ADMIN_ROLE_ID, tenant.id)
 
         then:
         response.status == SC_NO_CONTENT
 
         when: "revoke role on tenant from user-group"
-        response = cloud20.revokeRoleOnTenantToGroup(token, userGroup, Constants.USER_MANAGE_ROLE_ID, tenant.id)
+        response = cloud20.revokeRoleOnTenantToGroup(token, userGroup, Constants.ADMIN_ROLE_ID, tenant.id)
 
         then:
         response.status == SC_NO_CONTENT
