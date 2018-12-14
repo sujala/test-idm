@@ -299,15 +299,17 @@ task copyConfig(type: Copy) {
     into 'build/config'
 }
 
-task copyBuildInfo << {
-    ['src/commitTest/resources', 'src/nonCommitTest/resources', 'src/test/resources', 'src/main/resources'].each { dest ->
-        copy {
-            from 'src/main/config/build_info.properties'
-            into dest
-            ant.property(name: 'version', value: featureVersion)
-            ant.property(name: 'buildVersion', value: buildVersion)
-            ant.property(name: 'gitRevision', value: gitRevision)
-            filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
+task copyBuildInfo {
+    doLast {
+        ['src/commitTest/resources', 'src/nonCommitTest/resources', 'src/test/resources', 'src/main/resources'].each { dest ->
+            copy {
+                from 'src/main/config/build_info.properties'
+                into dest
+                ant.property(name: 'version', value: featureVersion)
+                ant.property(name: 'buildVersion', value: buildVersion)
+                ant.property(name: 'gitRevision', value: gitRevision)
+                filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
+            }
         }
     }
 }
@@ -319,11 +321,13 @@ task deleteBuildInfo(type: Delete) {
     delete 'src/nonCommitTest/resources/build_info.properties'
 }
 
-task copyBaseConfig << {
-    resourceDirs.each { destDir ->
-        copy {
-            from ('src/main/config/log4j.xml')
-            into "build/config/$destDir"
+task copyBaseConfig {
+    doLast {
+        resourceDirs.each { destDir ->
+            copy {
+                from ('src/main/config/log4j.xml')
+                into "build/config/$destDir"
+            }
         }
     }
 }
@@ -462,17 +466,21 @@ def getWarArtifacts(){
     return result
 }
 
-task appRevision() << {
-    File location = getWarArtifacts().get(0)
-    println(location.name.replace("idm-","").replace(".war",""))
+task appRevision() {
+    doLast {
+        File location = getWarArtifacts().get(0)
+        println(location.name.replace("idm-","").replace(".war",""))
+    }
 }
 
-task wadl << {
-    ant.taskdef(name: 'wadl', classname: 'com.sun.jersey.api.wadl.WadlGeneratorTask', classpath: configurations.wadl.asPath )
-    ant.wadl(destFile: sourceSets.main.output.classesDir.toString()+'/application.wadl',
-        classpath: sourceSets.main.output.classesDir,
-        baseUri: "http://localhost:$port"
-    )
+task wadl {
+    doLast {
+        ant.taskdef(name: 'wadl', classname: 'com.sun.jersey.api.wadl.WadlGeneratorTask', classpath: configurations.wadl.asPath )
+        ant.wadl(destFile: sourceSets.main.output.classesDir.toString()+'/application.wadl',
+            classpath: sourceSets.main.output.classesDir,
+            baseUri: "http://localhost:$port"
+        )
+    }
 }
 
 nexus {
@@ -559,10 +567,12 @@ war {
     }
 }
 
-task echo << {
-    println "source main sets=$sourceSets.main.java.srcDirs"
-    println "source test sets=$sourceSets.test.java.srcDirs"
-    println "source test sets=$sourceSets.test.groovy.srcDirs"
+task echo {
+    doLast {
+        println "source main sets=$sourceSets.main.java.srcDirs"
+        println "source test sets=$sourceSets.test.java.srcDirs"
+        println "source test sets=$sourceSets.test.groovy.srcDirs"
+    }
 }
 
 jacocoTestReport {
@@ -581,12 +591,14 @@ sourceSets {
     }
 }
 
-task('dependenciesList') <<  {
-    println "Compile dependencies"
-    def selectedDeps = project.configurations.compile.incoming.resolutionResult.allDependencies.collect { dep ->
-        "${dep.selected}"
+task('dependenciesList') {
+    doLast {
+        println "Compile dependencies"
+        def selectedDeps = project.configurations.compile.incoming.resolutionResult.allDependencies.collect { dep ->
+            "${dep.selected}"
+        }
+        selectedDeps.unique().sort().each { println it}
     }
-    selectedDeps.unique().sort().each { println it}
 }
 
 // Write test reports in distinct locations
@@ -617,7 +629,7 @@ tasks.withType(Test) {
     jacoco {
         append = false
         destinationFile = file("$buildDir/jacoco/${name}/jacocoTest.exec")
-        classDumpFile = file("$buildDir/jacoco/${name}/classpathdumps")
+        classDumpDir = file("$buildDir/jacoco/${name}/classpathdumps")
     }
 
     testLogging {
@@ -674,17 +686,19 @@ nonCommitCodeCoverage.dependsOn nonCommitTest
 codeCoverage.dependsOn commitCodeCoverage
 codeCoverage.dependsOn nonCommitCodeCoverage
 
-task debugme << {
-    sourceSets.each {
-        println "********************* sourceSet.name = "+it.name+"*********************"
-        println "####output.classesDir#### = "+it.output.classesDir
-        println ""
-        println "####output.resourcesDir#### = "+it.output.resourcesDir
-        println ""
-        println "####compileClasspath#### = "+it.compileClasspath.asPath
-        println ""
-        println "####runtimeClasspath#### = "+it.runtimeClasspath.asPath
-        println "***********************************************************************"
+task debugme {
+    doLast {
+        sourceSets.each {
+            println "********************* sourceSet.name = "+it.name+"*********************"
+            println "####output.classesDir#### = "+it.output.classesDir
+            println ""
+            println "####output.resourcesDir#### = "+it.output.resourcesDir
+            println ""
+            println "####compileClasspath#### = "+it.compileClasspath.asPath
+            println ""
+            println "####runtimeClasspath#### = "+it.runtimeClasspath.asPath
+            println "***********************************************************************"
+        }
     }
 }
 
