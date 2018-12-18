@@ -27,6 +27,7 @@ import com.rackspace.idm.validation.Cloud20CreateUserValidator
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.DN
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.dozer.DozerBeanMapper
 import org.joda.time.DateTime
@@ -3312,8 +3313,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Unroll("service admin deleting product roles on #userRole returns #expectedResult")
     def "service admin CAN delete a users product roles"() {
         given:
-        allowUserAccess()
-
         def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
         def user = entityFactory.createUser("user", "userId2", "domainId", "region")
 
@@ -3321,11 +3320,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * userService.checkAndGetUserById(_) >> user
 
         if (precedenceThrowsForbidden) {
             precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        } else {
+            1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.SERVICE_ADMIN
+            1 * tenantService.deleteRbacRolesForUser(user)
         }
 
         deleteRolesResult.status == expectedResult
@@ -3342,8 +3346,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Unroll("identity admin deleting product roles on #userRole returns #expectedResult")
     def "identity admin CAN delete a users product roles"() {
         given:
-        allowUserAccess()
-
         def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
         def user = entityFactory.createUser("user", "userId2", "domainId", "region")
 
@@ -3351,11 +3353,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * userService.checkAndGetUserById(_) >> user
 
         if (precedenceThrowsForbidden) {
             precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        } else {
+            1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+            1 * tenantService.deleteRbacRolesForUser(user)
         }
 
         deleteRolesResult.status == expectedResult
@@ -3381,15 +3388,18 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * userService.checkAndGetUserById(_) >> user
 
         if (precedenceThrowsForbidden) {
             precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        } else {
+            1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+            1 * authorizationService.verifyDomain(caller, user)
+            1 * tenantService.deleteRbacRolesForUser(user)
         }
-
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        authorizationService.authorizeUserManageRole(_) >> false
 
         deleteRolesResult.status == expectedResult
 
@@ -3404,8 +3414,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "user admin CANNOT delete a different domain users product roles"() {
         given:
-        allowUserAccess()
-
         def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
         def user = entityFactory.createUser("user", "userId2", "domainId2", "region")
 
@@ -3413,19 +3421,18 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        authorizationService.authorizeUserManageRole(_) >> false
-
         deleteRolesResult.status == SC_FORBIDDEN
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * authorizationService.verifyDomain(caller, user) >> {throw new ForbiddenException()}
     }
 
     @Unroll("user manage deleting product roles on #userRole returns #expectedResult")
     def "user manage CAN delete a users product roles"() {
         given:
-        allowUserAccess()
-
         def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
         def user = entityFactory.createUser("user", "userId2", "domainId", "region")
 
@@ -3433,15 +3440,18 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
+        1 * userService.checkAndGetUserById(_) >> user
 
         if (precedenceThrowsForbidden) {
             precedenceValidator.verifyCallerPrecedenceOverUser(_,_) >> {throw new ForbiddenException()}
+        } else {
+            1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+            1 * authorizationService.verifyDomain(caller, user)
+            1 * tenantService.deleteRbacRolesForUser(user)
         }
-
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-        authorizationService.authorizeUserManageRole(_) >> true
 
         deleteRolesResult.status == expectedResult
 
@@ -3456,8 +3466,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "user manage CANNOT delete a different domain users product roles"() {
         given:
-        allowUserAccess()
-
         def caller = entityFactory.createUser("caller", "userId", "domainId", "region")
         def user = entityFactory.createUser("user", "userId2", "domainId2", "region")
 
@@ -3465,12 +3473,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def deleteRolesResult = service.deleteUserRoles(headers, authToken, "1", "rbac").build()
 
         then:
-        userService.checkAndGetUserById(_) >> user
-        userService.getUserByAuthToken(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-        authorizationService.authorizeUserManageRole(_) >> true
-
         deleteRolesResult.status == SC_FORBIDDEN
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * userService.checkAndGetUserById(_) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 * authorizationService.verifyDomain(caller, user) >> {throw new ForbiddenException()}
     }
 
     @Unroll("default user deleting product roles on #userRole returns #expectedResult")
@@ -6143,6 +6152,155 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         0 * scopeAccessService.expireAccessToken(tokenId)
     }
 
+    @Unroll
+    def "listEndpointTemplates - calls correct services: serviceId = #serviceId"() {
+        given:
+        def application = entityFactory.createApplication().with {
+            it.openStackType = "type"
+            it.clientId = serviceId
+            it
+        }
+        def cloudBaseUrl = entityFactory.createCloudBaseUrl()
+
+        when:
+        def response = service.listEndpointTemplates(headers, authToken, serviceId)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        if (StringUtils.isBlank(serviceId)) {
+            1 * endpointService.getBaseUrls() >> [cloudBaseUrl]
+        } else {
+            1 * applicationService.checkAndGetApplication(serviceId) >> application
+            1 * endpointService.getBaseUrlsByServiceType(application.getOpenStackType()) >> [cloudBaseUrl]
+        }
+
+        where:
+        serviceId << [null, "", "id"]
+    }
+
+    def "listRolesForTenant - calls correct services"(){
+        given:
+        def tenantId = "tenantId"
+        def tenant = entityFactory.createTenant().with {
+            it.tenantId = tenantId
+            it
+        }
+
+        when:
+        def response = service.listRolesForTenant(headers, authToken, tenantId, null, null)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * tenantService.checkAndGetTenant(tenantId) >> tenant
+        1 * tenantService.getTenantRolesForTenant(tenant.getTenantId()) >> []
+    }
+
+    @Unroll
+    def "listRolesForUserOnTenant - calls correct services: applyRcnRoles = #applyRcnRoles"(){
+        given:
+        def tenantId = "tenantId"
+        def tenant = entityFactory.createTenant().with {
+            it.tenantId = tenantId
+            it
+        }
+        def caller = entityFactory.createUser()
+        def userId = "userId"
+        def user = entityFactory.createUser().with {
+            it.id = userId
+            it
+        }
+
+        when:
+        def response = service.listRolesForUserOnTenant(headers, authToken, tenantId, userId, applyRcnRoles)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * tenantService.checkAndGetTenant(tenantId) >> tenant
+        1 * userService.checkAndGetUserById(userId) >> user
+        1 * authorizationService.isSelf(caller, user) >> false
+        if (applyRcnRoles) {
+            1 * tenantService.getEffectiveTenantRolesForUserOnTenantApplyRcnRoles(user, tenant) >> []
+        } else {
+            1 * tenantService.getEffectiveTenantRolesForUserOnTenant(user, tenant) >> []
+        }
+
+        where:
+        applyRcnRoles << [true, false]
+    }
+
+    @Unroll
+    def "listServices - calls correct services: serviceName = #serviceName"(){
+        given:
+        def paginatorContext = Mock(PaginatorContext)
+        def application = entityFactory.createApplication()
+
+        when:
+        def response = service.listServices(headers, uriInfo(), authToken, serviceName, offset, limit)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        if (StringUtils.isBlank(serviceName)) {
+            1 * applicationService.getOpenStackServices(offset, limit) >> paginatorContext
+            1 * applicationPaginator.createLinkHeader(_, paginatorContext)
+            1 * paginatorContext.getValueList() >> [application]
+        } else {
+            1 * applicationService.getByName(serviceName) >> application
+        }
+
+        where:
+        serviceName << [null, "", "serviceName"]
+    }
+
+    def "listGroups - calls correct services"() {
+        given:
+        def group = entityFactory.createGroup("id", "name", "desc")
+
+        when:
+        def response = service.listGroups(headers, authToken, null, offset, limit)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * groupService.getGroups(offset, limit) >> [group]
+        1 * cloudKsGroupBuilder.build(group) >> v2Factory.createGroup(group.name)
+    }
+
+    def "getGroup - calls correct services"() {
+        given:
+        def group = entityFactory.createGroup("id", "name", "desc")
+
+        when:
+        def response = service.getGroup(headers, authToken, group.name)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * groupService.getGroupByName(group.name) >> group
+        1 * cloudKsGroupBuilder.build(group) >> v2Factory.createGroup(group.name)
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockRackerAuthenticationService(service)
@@ -6183,11 +6341,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockValidator20(service)
         mockPrecedenceValidator(service)
         mockUserPaginator(service)
+        mockApplicationPaginator(service)
         mockEndUserPaginator(service)
         mockAuthWithToken(service)
         mockAuthWithApiKeyCredentials(service)
         mockAuthWithPasswordCredentials(service)
         mockUserConverter(service)
+        mockServiceConverter(service)
         mockSamlUnmarshaller(service)
         mockIdmPathUtils(service)
         mockEmailClient(service)

@@ -1201,6 +1201,7 @@ public class Cloud20VersionResource {
             @PathParam("tenantId") String tenantId,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
+        // NOTE: marker and limit are ignored when listing roles for tenant
         return cloud20Service.listRolesForTenant(httpHeaders, authToken, tenantId, validateMarker(marker), validateLimit(limit)).build();
     }
 
@@ -1548,6 +1549,7 @@ public class Cloud20VersionResource {
         if(groupName != null){
             return cloud20Service.getGroup(httpHeaders, authToken, groupName).build();
         }
+        // NOTE: QueryParam groupName is never used when listing groups
         return cloud20Service.listGroups(httpHeaders, authToken, groupName, validateMarker(marker), validateLimit(limit)).build();
     }
 

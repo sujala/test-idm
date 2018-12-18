@@ -201,6 +201,7 @@ class RootServiceTest extends Specification {
     @Shared Paginator applicationRolePaginator
     @Shared Paginator tenantRolePaginator
     @Shared Paginator clientPaginator
+    @Shared Paginator applicationPaginator
     @Shared AuthWithToken authWithToken
     @Shared AuthWithPasswordCredentials authWithPasswordCredentials
     @Shared AuthWithApiKeyCredentials authWithApiKeyCredentials
@@ -876,6 +877,11 @@ class RootServiceTest extends Specification {
     def mockClientPaginator(service) {
         clientPaginator = Mock()
         service.clientPaginator = clientPaginator
+    }
+
+    def mockApplicationPaginator(service) {
+        applicationPaginator = Mock()
+        service.applicationPaginator = applicationPaginator
     }
 
     /*

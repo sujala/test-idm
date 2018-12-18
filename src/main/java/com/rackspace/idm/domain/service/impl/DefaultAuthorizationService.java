@@ -254,15 +254,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean isSelf(BaseUser requester, User requestedUser) {
-        if(requester.getUsername() != null && requester.getUsername().equals(requestedUser.getUsername())){
-            return true;
-        }
-
-        if(requester.getUniqueId() != null && requester.getUniqueId().equals(requestedUser.getUniqueId())){
-            return true;
-        }
-
-        return false;
+        return requester.getUniqueId() != null && requester.getUniqueId().equals(requestedUser.getUniqueId());
     }
 
     private ImmutableClientRole getServiceAdminRole() {

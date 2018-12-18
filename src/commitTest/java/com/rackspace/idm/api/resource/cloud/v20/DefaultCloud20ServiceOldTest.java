@@ -3,12 +3,21 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.api.converter.cloudv20.*;
+import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
+import com.rackspace.idm.api.security.RequestContext;
+import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.api.security.SecurityContext;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
@@ -32,7 +41,11 @@ import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.Token;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
@@ -47,7 +60,13 @@ import java.util.HashMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by IntelliJ IDEA.
@@ -116,6 +135,9 @@ public class DefaultCloud20ServiceOldTest {
     private Domain domain;
     private DefaultPaginator<User> userPaginator;
     private DefaultPaginator<ClientRole> clientRolePaginator;
+    private RequestContextHolder requestContextHolder;
+    private RequestContext requestContext;
+    private SecurityContext securityContext;
 
     @Before
     public void setUp() throws Exception {
@@ -154,6 +176,9 @@ public class DefaultCloud20ServiceOldTest {
         userPaginator = mock(DefaultPaginator.class);
         clientRolePaginator = mock(DefaultPaginator.class);
         uriInfo = mock(UriInfo.class);
+        requestContextHolder = mock(RequestContextHolder.class);
+        requestContext = mock(RequestContext.class);
+        securityContext = mock(SecurityContext.class);
 
         //setting mocks
         defaultCloud20Service.setUserService(userService);
@@ -184,6 +209,7 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.setApplicationRolePaginator(clientRolePaginator);
         defaultCloud20Service.setUserPaginator(userPaginator);
         defaultCloud20Service.setQuestionService(questionService);
+        defaultCloud20Service.setRequestContextHolder(requestContextHolder);
 
         //fields
         user = new User();
@@ -266,6 +292,8 @@ public class DefaultCloud20ServiceOldTest {
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
         when(groupService.checkAndGetGroupById(anyString())).thenReturn(group);
         when(uriInfo.getAbsolutePath()).thenReturn(new URI("http://absolute.path/to/resource"));
+        when(requestContextHolder.getRequestContext()).thenReturn(requestContext);
+        when(requestContext.getSecurityContext()).thenReturn(securityContext);
     }
 
     @Test(expected = BadRequestException.class)
