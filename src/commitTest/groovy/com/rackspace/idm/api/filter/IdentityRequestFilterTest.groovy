@@ -122,4 +122,28 @@ class IdentityRequestFilterTest extends RootServiceTest {
         }
         noExceptionThrown()
     }
+
+
+    def "filter: MDC is cleared on every request"() {
+        given:
+        MDC.put(Audit.REMOTE_IP, "something")
+        MDC.put(Audit.HOST_IP, "something")
+        MDC.put(Audit.PATH, "something")
+        MDC.put(Audit.GUUID, "something")
+        MDC.put(Audit.X_FORWARDED_FOR, "something")
+        MDC.put(Audit.WHO, "something")
+
+        when:
+        // Null out req in filter so values don't get set from request. Just want to verify they get unset to start out
+        filter.req = null
+        filter.filter(request)
+
+        then:
+        MDC.get(Audit.REMOTE_IP) == null
+        MDC.get(Audit.HOST_IP) == null
+        MDC.get(Audit.PATH) == null
+        MDC.get(Audit.GUUID) == null
+        MDC.get(Audit.X_FORWARDED_FOR) == null
+        MDC.get(Audit.WHO) == null
+    }
  }

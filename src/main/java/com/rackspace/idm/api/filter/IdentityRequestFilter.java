@@ -49,6 +49,9 @@ public class IdentityRequestFilter implements ContainerRequestFilter {
     }
 
     private void populateMappedDiagnosticContext(ContainerRequest request) {
+        // Always clear the context for every request
+        MDC.clear();
+
         String path = request.getPath();
 
         //TODO: Transition this to use the provided ContainerRequest rather than raw HttpServletRequest
@@ -64,6 +67,7 @@ public class IdentityRequestFilter implements ContainerRequestFilter {
                 MDC.put(Audit.X_FORWARDED_FOR, req.getRemoteAddr());
             }
         }
+
     }
 
     private String calculateAuditGuuid(ContainerRequest request) {
