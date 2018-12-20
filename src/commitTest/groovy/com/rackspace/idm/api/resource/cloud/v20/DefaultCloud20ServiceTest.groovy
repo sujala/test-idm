@@ -626,10 +626,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response4.status == 400
     }
 
-    def "listUsersWithRole verifies admin level access"() {
+    def "listUsersWithRole verifies user admin level access"() {
         given:
         mockUserConverter(service)
-        allowUserAccess()
 
         def contextMock = Mock(PaginatorContext)
         contextMock.getValueList() >> [].asList()
@@ -641,19 +640,21 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit)
 
         then:
-        1 * authorizationService.verifyUserAdminLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
     }
 
     def "listUsersWithRole (user admin caller) filters by domain and gets users"() {
         given:
         mockUserConverter(service)
         mockUserPaginator(service)
-        allowUserAccess()
         def domain = "callerDomain"
 
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, domain, "region")
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >>  entityFactory.createUser("caller", null, domain, "region")
         userPaginator.createLinkHeader(_, _) >> "link header"
 
         def contextMock = Mock(PaginatorContext)
@@ -706,27 +707,49 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserConverter(service)
         mockUserPaginator(service)
 
-        def scopeAccessMock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, scopeAccessMock ] >> Mock(ScopeAccess)
-        authorizationService.verifyUserAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
-
-        applicationService.getClientRoleById(_) >>> [ null ] >> entityFactory.createClientRole()
-
-        authorizationService.authorizeCloudUserAdmin(_) >>> [ true ] >> false
-
-        userService.getUserByScopeAccess(_) >> entityFactory.createUser("caller", null, null, "region")
+        def caller =  entityFactory.createUser("caller", null, null, "region")
 
         when:
         def response1 = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
-        def response2 = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
-        def response3 = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
-        def response4 = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
 
         then:
         response1.status == 401
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> {throw new NotAuthorizedException()}
+
+        when:
+        def response2 = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
+
+        then:
         response2.status == 403
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN) >> {throw new ForbiddenException()}
+
+        when:
+        def response3 = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
+
+        then:
         response3.status == 404
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN)
+        1 * applicationService.getClientRoleById(roleId) >>  null
+
+        when:
+        caller.domainId = null
+        def response4 = service.listUsersWithRole(headers, uriInfo(), authToken, roleId, offset, limit).build()
+
+        then:
         response4.status == 400
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * applicationService.getClientRoleById(roleId) >> entityFactory.createClientRole()
     }
 
     def "addUserRole verifies user-admin access and role to add"() {
@@ -1860,7 +1883,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "getEndpointsByDomainId verifies admin access"() {
         given:
-        allowUserAccess()
         mockEndpointConverter(service)
 
         domainService.checkAndGetDomain(_) >> entityFactory.createDomain()
@@ -1869,7 +1891,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.getEndpointsByDomainId(authToken, "domainId")
 
         then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
     def "getEndpointsByDomainId verifies domain"() {
@@ -1903,14 +1927,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     def "removeTenantFromDomain verifies access level"() {
-        given:
-        allowUserAccess()
-
         when:
         service.removeTenantFromDomain(authToken, "domainId", "tenantId")
 
         then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
     def "removeTenantFromDomain removes tenant from domain"() {
@@ -1928,7 +1951,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "method getAccessibleDomainsEndpointsForUser gets endpoints by user"() {
         given:
-        allowUserAccess()
         def userId = "userId"
         def domainId = "domainId"
         def user = entityFactory.createUser()
@@ -1941,14 +1963,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.getAccessibleDomainsEndpointsForUser(authToken, userId, domainId)
 
         then:
-        authorizationService.authorizeCloudUser(_) >> true
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> user
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getEffectiveCallersUserType() >>  IdentityUserTypeEnum.DEFAULT_USER
+        1 * authorizationService.isSelf(user, user) >> true
         1 * userService.checkAndGetUserById(_) >> user
         1 * domainService.checkAndGetDomain(_) >> domain
-        0 * scopeAccessService.getScopeAccessForUser(_)
         1 * scopeAccessService.getOpenstackEndpointsForUser(_) >> endpoints
         1 * tenantService.getTenantsByDomainId(_) >> tenants
-        1 * userService.getUserByScopeAccess(_) >> user
-        1 * tenantService.getTenantRolesForUser(_) >> tenantRoles
         response.build().status == 200
     }
 
@@ -5073,7 +5096,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Unroll
     def "addUserToDomain: calls correct service methods - userType = #userType"() {
         given:
-        allowUserAccess()
         def domain = entityFactory.createDomain("someDomainId")
         def user = entityFactory.createUser()
         def role = entityFactory.createTenantRole()
@@ -5082,6 +5104,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.addUserToDomain(authToken, domain.domainId, user.id).build()
 
         then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain
         1 * userService.checkAndGetUserById(user.id) >> user
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
@@ -5090,15 +5115,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(user)
 
         if (IdentityUserTypeEnum.SERVICE_ADMIN == userType || IdentityUserTypeEnum.IDENTITY_ADMIN == userType) {
-            1 * authorizationService.verifyServiceAdminLevelAccess(_)
+            1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
             0 * domainService.getDomainAdmins(_)
             0 * domainService.updateDomainUserAdminDN(_)
         }  else if (IdentityUserTypeEnum.USER_ADMIN == userType) {
-            0 * authorizationService.verifyServiceAdminLevelAccess(_)
+            0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
             1 * domainService.getDomainAdmins(domain.domainId) >> []
             1 * domainService.updateDomainUserAdminDN(user)
         } else if (IdentityUserTypeEnum.USER_MANAGER == userType || IdentityUserTypeEnum.DEFAULT_USER == userType) {
-            0 * authorizationService.verifyServiceAdminLevelAccess(_)
+            0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
             0 * domainService.getDomainAdmins(_)
             0 * domainService.updateDomainUserAdminDN(_)
         }
@@ -5934,7 +5959,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteDomain uses identity admin when feature flag is disabled"() {
         given:
-        allowUserAccess()
         def domainId = "domainId"
         def domain = entityFactory.createDomain(domainId).with {
             it.enabled = false
@@ -5952,7 +5976,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         response.status == SC_NO_CONTENT
 
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
     def "deleteDomain uses service-admin or rs-domain-admin role when feature flag is enabled"() {
@@ -6297,6 +6323,189 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
         1 * groupService.getGroupByName(group.name) >> group
         1 * cloudKsGroupBuilder.build(group) >> v2Factory.createGroup(group.name)
+    }
+
+    def "deleteDomainPasswordPolicy - calls correct services"() {
+        given:
+        def domainId = "domainId"
+        def domain = entityFactory.createDomain(domainId)
+        def caller = entityFactory.createUser().with {
+            it.domainId = domainId
+            it
+        }
+
+        when:
+        def response = service.deleteDomainPasswordPolicy(headers, authToken, domainId)
+
+        then:
+        response.build().status == SC_NO_CONTENT
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN)
+        1 * domainService.getDomain(domainId) >> domain
+        1 * requestContextHolder.getRequestContext().getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * requestContextHolder.getRequestContext().getEffectiveCaller() >> caller
+        1 * domainService.deleteDomainPasswordPolicy(domainId)
+    }
+
+    @Unroll
+    def "getAccessibleDomains - calls correct services: rcn = #rcn"() {
+        given:
+        mockDomainPaginator(service)
+        mockDomainConverter(service)
+
+        def caller = entityFactory.createUser()
+        def paginatorContext = Mock(PaginatorContext)
+
+        when:
+        def response = service.getAccessibleDomains(uriInfo(), authToken, offset, limit, rcn)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        if (StringUtils.isNotBlank(rcn)) {
+            1 * domainService.getDomainsByRCN(rcn, offset, limit) >> paginatorContext
+        } else {
+            1 * domainService.getDomains(offset, limit) >> paginatorContext
+        }
+        1 * domainPaginator.createLinkHeader(_, paginatorContext)
+        1 * paginatorContext.getValueList() >> [entityFactory.createDomain()]
+
+        where:
+        rcn << [null, "" , "rcn"]
+    }
+
+    @Unroll
+    def "getAccessibleDomains - domain base access level - calls correct services: rcn = #rcn"() {
+        given:
+        mockDomainPaginator(service)
+        mockDomainConverter(service)
+
+        def caller = entityFactory.createUser()
+        def domain = entityFactory.createDomain()
+        def otherDomain = entityFactory.createDomain().with {
+            it.domainId = "otherDomainId"
+            it.rackspaceCustomerNumber = "rcn"
+            it
+        }
+        def tenants = [entityFactory.createTenant()]
+
+        when:
+        def response = service.getAccessibleDomains(uriInfo(), authToken, offset, limit, rcn)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * domainService.getDomain(caller.getDomainId()) >> domain
+        1 * tenantService.getTenantsForUserByTenantRoles(caller) >> tenants
+        1 * domainService.getDomainsForTenants(tenants) >> [otherDomain]
+
+        and: "verify domains returned"
+        domainConverter.toDomains(_) >> { arg ->
+            Domains domains = arg[0]
+            if (StringUtils.isNotBlank(rcn))
+                assert domains.domain.size() == 1
+            else
+                assert domains.domain.size() == 2
+            return new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains()
+        }
+
+        where:
+        rcn << [null, "" , "rcn"]
+    }
+
+    @Unroll
+    def "getAccessibleDomainsForUser - calls correct services"() {
+        given:
+        mockDomainPaginator(service)
+        mockDomainConverter(service)
+
+        def caller = entityFactory.createUser()
+        def user = entityFactory.createUser()
+        def domain = entityFactory.createDomain()
+        def otherDomain = entityFactory.createDomain().with {
+            it.domainId = "otherDomainId"
+            it.rackspaceCustomerNumber = "rcn"
+            it
+        }
+        def tenants = [entityFactory.createTenant()]
+
+        when:
+        def response = service.getAccessibleDomainsForUser(authToken, userId)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * userService.checkAndGetUserById(userId) >> user
+        1 * authorizationService.isSelf(caller, user) >> false
+        1 * requestContext.getEffectiveCallersUserType() >> callerType
+        1 * domainService.getDomain(user.getDomainId()) >> domain
+        1 * tenantService.getTenantsForUserByTenantRoles(user) >> tenants
+        1 * domainService.getDomainsForTenants(tenants) >> [otherDomain]
+
+        and: "verify services called based on caller"
+        if (callerType.isDomainBasedAccessLevel()) {
+            1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+            1 * authorizationService.verifyDomain(caller, user)
+        } else {
+            0 * precedenceValidator.verifyCallerPrecedenceOverUser(_, _)
+            0 * authorizationService.verifyDomain(_, _)
+        }
+
+        and: "verify domains returned"
+        domainConverter.toDomains(_) >> { arg ->
+            Domains domains = arg[0]
+            assert domains.domain.size() == 2
+            return new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains()
+        }
+
+        where:
+        callerType << [IdentityUserTypeEnum.SERVICE_ADMIN, IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
+    }
+
+    def "addRegion - calls correct services"() {
+        mockRegionConverter(service)
+
+        def region = v1Factory.createRegion()
+
+        when:
+        def response = service.addRegion(uriInfo(), authToken, region)
+
+        then:
+        response.build().status == SC_CREATED
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * cloudRegionService.addRegion(_)
+    }
+
+    def "getRegion - calls correct services"() {
+        mockRegionConverter(service)
+
+        def region = "ORD"
+
+        when:
+        def response = service.getRegion(authToken, region)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * cloudRegionService.checkAndGetRegion(region) >> entityFactory.createRegion()
     }
 
     def mockServices() {

@@ -4031,7 +4031,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
 
             // Verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
@@ -4154,12 +4154,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteDomain(String authToken, String domainId) {
         try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
             if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()) {
-                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-                requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
             } else {
-                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
             }
 
             String defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
@@ -4248,8 +4249,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) throws IOException, JAXBException {
-        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-        authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
         Domain domain = domainService.checkAndGetDomain(domainId);
         if (!domain.getEnabled()) {
             throw new ForbiddenException("Cannot add users to a disabled domain.");
@@ -4260,7 +4264,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         //service admins can only update other service admins and identity admins
         if(IdentityUserTypeEnum.SERVICE_ADMIN == userType || IdentityUserTypeEnum.IDENTITY_ADMIN == userType) {
-            authorizationService.verifyServiceAdminLevelAccess(scopeAccess);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
         }
 
         // Verify status of domain before adding new user-admin.
@@ -4298,7 +4302,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getEndpointsByDomainId(String authToken, String domainId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
         Domain domain = domainService.checkAndGetDomain(domainId);
         List<Tenant> tenantList = tenantService.getTenantsFromNameList(tenantService.getTenantIdsForDomain(domain));
         List<OpenstackEndpoint> endpoints = endpointService.getEndpointsFromTenantList(tenantList);
@@ -4347,7 +4355,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
         if (StringUtils.isNotBlank(tenantId)) {
 
             Iterable<TenantRole> daRoles = delegationService.getTenantRolesForDelegationAgreementsForTenant(tenantId);
@@ -4373,32 +4385,31 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit, String rcn) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            if (this.authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken) ||
-                    this.authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-                PaginatorContext<Domain> domainContext;
-                if (StringUtils.isNotBlank(rcn)) {
-                    domainContext = this.domainService.getDomainsByRCN(rcn, marker, limit);
-                } else {
-                    domainContext = this.domainService.getDomains(marker, limit);
-                }
-                String linkHeader = this.domainPaginator.createLinkHeader(uriInfo, domainContext);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-                Domains domains = new Domains();
-                domains.getDomain().addAll(domainContext.getValueList());
-                com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainConverterCloudV20.toDomains(domains);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
 
-                return Response.status(200).header("Link", linkHeader).entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
-
-            } else {
-                User user = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
-                if (StringUtils.isNotBlank(rcn)) {
-                    return getAccessibleDomainsForUserInRCN(authToken, user.getId(), rcn);
-                } else {
-                    return getAccessibleDomainsForUser(authToken, user.getId());
-                }
+            // NOTE: marker and limit are ignored for domain based access users
+            if (callerType.isDomainBasedAccessLevel()) {
+                return getAccessibleDomainsForUserInRCN((EndUser) caller, rcn);
             }
+
+            PaginatorContext<Domain> domainContext;
+            if (StringUtils.isNotBlank(rcn)) {
+                domainContext = this.domainService.getDomainsByRCN(rcn, marker, limit);
+            } else {
+                domainContext = this.domainService.getDomains(marker, limit);
+            }
+            String linkHeader = this.domainPaginator.createLinkHeader(uriInfo, domainContext);
+
+            Domains domains = new Domains();
+            domains.getDomain().addAll(domainContext.getValueList());
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainConverterCloudV20.toDomains(domains);
+
+            return Response.status(200).header("Link", linkHeader).entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -4406,62 +4417,110 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId) {
-        return getAccessibleDomainsForUserInRCN(authToken, userId, null);
-    }
-
-    public ResponseBuilder getAccessibleDomainsForUserInRCN(String authToken, String userId, String rcn) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             User user = userService.checkAndGetUserById(userId);
-            Domains domains = cloudUserAccessibility.getAccessibleDomainsByUser(user);
 
-            domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
-            domains = cloudUserAccessibility.removeDuplicateDomains(domains);
+            // NOTE: This logic will change to contract to allow user-manager to list a defaults user's accessible domain
+            // within their own domain.
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            if (!authorizationService.isSelf(caller, user)) {
+                if (!callerType.hasAtLeastIdentityAdminAccessLevel()) {
+                    precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+                    authorizationService.verifyDomain(caller, user);
+                }
+            }
+
+            return getAccessibleDomainsForUserInRCN(user, null);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private ResponseBuilder getAccessibleDomainsForUserInRCN(EndUser user, String rcn) {
+        try {
+            Domains domains = new Domains();
+            // Add user's domain
+            Domain userDomain = domainService.getDomain(user.getDomainId());
+            if (userDomain != null) domains.getDomain().add(userDomain);
+
+            // Add domains associated with tenant role
+            List<Tenant> tenants = tenantService.getTenantsForUserByTenantRoles(user);
+            if (tenants != null && tenants.size() > 0) {
+                for (Domain domain : domainService.getDomainsForTenants(tenants)) {
+                    domains.getDomain().add(domain);
+                }
+            }
+
+            domains = removeDuplicateDomains(domains);
 
             if (StringUtils.isNotBlank(rcn)) {
-                domains = cloudUserAccessibility.removeNonRcnDomains(domains, rcn);
+                domains = removeNonRcnDomains(domains, rcn);
             }
 
             com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainConverterCloudV20.toDomains(domains);
-
             return Response.ok().entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
     }
 
-    public CloudUserAccessibility getUserAccessibility(ScopeAccess scopeAccess) {
-        if (this.authorizationService.authorizeCloudUser(scopeAccess)) {
-            return new CloudDefaultUserAccessibility(tenantService, domainService,
-                    authorizationService, userService, config, jaxbObjectFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+    private Domains removeNonRcnDomains(Domains domains, String rcn) {
+        if (domains == null) {
+            return new Domains();
         }
-        if (this.authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
-            return new CloudUserAdminAccessibility(tenantService, domainService,
-                    authorizationService, userService, config, jaxbObjectFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+
+        List<Domain> list = new ArrayList<>();
+
+        for (Domain domain : domains.getDomain()) {
+            if (rcn.equalsIgnoreCase(domain.getRackspaceCustomerNumber())) {
+                list.add(domain);
+            }
         }
-        if (this.authorizationService.authorizeCloudIdentityAdmin(scopeAccess)) {
-            return new CloudIdentityAdminAccessibility(tenantService, domainService,
-                    authorizationService, userService, config, jaxbObjectFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+        Domains result = new Domains();
+        result.getDomain().addAll(list);
+        return result;
+    }
+
+    private Domains removeDuplicateDomains(Domains domains) {
+        if(domains == null){
+            return new Domains();
         }
-        if (this.authorizationService.authorizeCloudServiceAdmin(scopeAccess)) {
-            return new CloudServiceAdminAccessibility(tenantService, domainService,
-                    authorizationService, userService, config, jaxbObjectFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+
+        HashMap<String, Domain> map = new HashMap<String, Domain>();
+        for (Domain domain : domains.getDomain()) {
+            if (!map.containsKey(domain.getDomainId())) {
+                map.put(domain.getDomainId(), domain);
+            }
         }
-        return new CloudUserAccessibility(tenantService, domainService,
-                authorizationService, userService, config, jaxbObjectFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+        Domains result = new Domains();
+        result.getDomain().addAll(map.values());
+        return result;
     }
 
     @Override
     public ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId) {
         try {
-            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
 
             User user = userService.checkAndGetUserById(userId);
+
+            if (!authorizationService.isSelf(caller, user)) {
+                if (!callerType.hasAtLeastIdentityAdminAccessLevel()) {
+                    precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+                    authorizationService.verifyDomain(caller, user);
+                }
+            }
+
             domainService.checkAndGetDomain(domainId);
 
             List<OpenstackEndpoint> endpoints;
@@ -4473,9 +4532,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
 
-            List<OpenstackEndpoint> domainEndpoints = cloudUserAccessibility.getAccessibleDomainEndpoints(endpoints, tenants, user);
+            List<OpenstackEndpoint> domainEndpoints = getAccessibleDomainEndpoints(endpoints, tenants, user);
 
-            EndpointList list = cloudUserAccessibility.convertPopulateEndpointList(domainEndpoints);
+            EndpointList list = convertPopulateEndpointList(callerType, domainEndpoints);
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
         } catch (Exception ex) {
@@ -4483,22 +4542,76 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    private List<OpenstackEndpoint> getAccessibleDomainEndpoints(List<OpenstackEndpoint> endpoints, List<Tenant> tenants, User user) {
+        List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
+        if (endpoints.isEmpty() || tenants.isEmpty()) {
+            return openstackEndpoints;
+        }
+        for (OpenstackEndpoint openstackEndpoint : endpoints) {
+            String tenantId = openstackEndpoint.getTenantId();
+            for (Tenant tenant : tenants) {
+                if (tenantId.equals(tenant.getTenantId())) {
+                    openstackEndpoints.add(openstackEndpoint);
+                }
+            }
+
+        }
+        return openstackEndpoints;
+    }
+
+    private EndpointList convertPopulateEndpointList(IdentityUserTypeEnum callerType, List<OpenstackEndpoint> endpoints) {
+        EndpointList list = jaxbObjectFactories.getOpenStackIdentityV2Factory().createEndpointList();
+
+        if (endpoints == null || endpoints.size() == 0) {
+            return list;
+        }
+
+        for (OpenstackEndpoint point : endpoints) {
+            for (CloudBaseUrl baseUrl : point.getBaseUrls()) {
+                VersionForService version = new VersionForService();
+                version.setId(baseUrl.getVersionId());
+                version.setInfo(baseUrl.getVersionInfo());
+                version.setList(baseUrl.getVersionList());
+
+                Endpoint endpoint = jaxbObjectFactories.getOpenStackIdentityV2Factory().createEndpoint();
+                if (callerType.hasAtLeastIdentityAdminAccessLevel()) {
+                    endpoint.setAdminURL(baseUrl.getAdminUrl());
+                }
+                if (baseUrl.getBaseUrlId() != null) {
+                    endpoint.setId(Integer.parseInt(baseUrl.getBaseUrlId()));
+                }
+                endpoint.setInternalURL(baseUrl.getInternalUrl());
+                endpoint.setName(baseUrl.getServiceName());
+                endpoint.setPublicURL(baseUrl.getPublicUrl());
+                endpoint.setRegion(baseUrl.getRegion());
+                endpoint.setType(baseUrl.getOpenstackType());
+                endpoint.setTenantId(point.getTenantId());
+                if (!StringUtils.isBlank(version.getId())) {
+                    endpoint.setVersion(version);
+                }
+                list.getEndpoint().add(endpoint);
+            }
+        }
+        return list;
+    }
+
     public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, Integer marker, Integer limit) {
         try {
-            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
+
             ClientRole role = this.applicationService.getClientRoleById(roleId);
 
             if (role == null) {
                 throw new NotFoundException(String.format(ROLE_ID_NOT_FOUND_ERROR_MESSAGE, roleId));
             }
 
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
-
             PaginatorContext<User> userContext;
 
-            if (callerIsUserAdmin) {
-                User caller = (User) this.userService.getUserByScopeAccess(scopeAccess);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
                 if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
                     throw new BadRequestException("User-admin has no domain");
                 }
@@ -4508,7 +4621,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
-
             return Response.status(200).header("Link", linkHeader).entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
                     .createUsers(this.userConverterCloudV20.toUserList(userContext.getValueList())).getValue());
         } catch (Exception ex) {
@@ -4519,7 +4631,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // NOTE: We should probably not allow identity:admin's to add regions
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
             cloudRegionService.addRegion(regionConverterCloudV20.fromRegion(region));
             String regionName = region.getName();
@@ -4536,7 +4652,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getRegion(String authToken, String name) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             com.rackspace.idm.domain.entity.Region region = this.cloudRegionService.checkAndGetRegion(name);
             return Response.ok().entity(regionConverterCloudV20.toRegion(region).getValue());
         } catch (Exception ex) {
