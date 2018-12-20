@@ -28,7 +28,7 @@ pip install tox
 cafe-config init || true
 cafe-config plugins install http
 ls -latr
-TEST_ENDPOINT=http://${REPOSE_PORT_8080_TCP_ADDR}:${REPOSE_PORT_8080_TCP_PORT}
+TEST_ENDPOINT=https://customer-identity-pr-${ghprbPullId}-identity-test.devapps.rsi.rackspace.net
 check_status $TEST_ENDPOINT/idm/cloud
 TOKEN=`curl -s -X POST "${TEST_ENDPOINT}/idm/cloud/v2.0/tokens" -H 'content-type: application/json' -d "{ \"auth\": { \"passwordCredentials\":{ \"username\":\"AuthQE\", \"password\": \"Auth1234\" }}}" | python  -c 'import sys, json; print json.load(sys.stdin)["access"]["token"]["id"]'`
 cp etc/api.conf $TEST_CONFIG_DIR/api.conf

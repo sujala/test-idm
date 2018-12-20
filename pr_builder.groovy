@@ -55,58 +55,27 @@ return [
     },
 
     chart: [
-            name: 'customer-identity',
-            version: '0.1.3',
+            name: 'customer-identity-pr',
+            version: '0.1.0',
             values: { branch, name ->
-                def custIdentityConfig = [
+                def deployConfig = [
                         trigger_tag: branch,
-                        name: "customer-identity-$name",
                         env: [
                                 values: [
                                         [ name: 'http_proxy' ],
                                         [ name: 'HTTP_PROXY' ],
-                                        [ name: 'TOMCAT_HTTP_PORT', value: 8083]
-                                ]
-                        ]
-                ]
-                def reposeConfig = [
-                        trigger_tag: branch,
-                        name: "repose-$name",
-                        env: [
-                                values: [
-                                        [ name: 'http_proxy' ],
-                                        [ name: 'HTTP_PROXY' ]
-                                ]
-                        ]
-                ]
-                def activeDirectoryConfig = [
-                        trigger_tag: branch,
-                        name: "active-directory-$name",
-                        env: [
-                                values: [
-                                        [ name: 'http_proxy' ],
-                                        [ name: 'HTTP_PROXY' ],
-                                        [ name: 'LDAPS_PORT', value: 636]
-                                ]
-                        ]
-                ]
-                def caDirectoryConfig = [
-                        trigger_tag: branch,
-                        name: "ca-directory-$name",
-                        env: [
-                                values: [
-                                        [ name: 'http_proxy' ],
-                                        [ name: 'HTTP_PROXY' ],
-                                        [ name: 'LDAPS_PORT', value: 636]
+                                        [ name: 'TOMCAT_HTTP_PORT', value: 8280]
                                 ]
                         ]
                 ]
 
                 return [
-                        'customer-identity-deploy': custIdentityConfig,
-                        'repose-deploy': reposeConfig,
-                        'active-directory-deploy': activeDirectoryConfig,
-                        'ca-directory-deploy': caDirectoryConfig
+                    'name': "customer-identity-pr-$name"
+                    'repose': deployConfig,
+                    'customer-identity': deployConfig,
+                    'active-directory': deployConfig,
+                    'ca-directory': deployConfig,
+                    'dynamodb': deployConfig
                 ]
             }
     ],
