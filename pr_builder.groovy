@@ -60,7 +60,7 @@ return [
             values: { branch, name ->
                 def custIdentityConfig = [
                         trigger_tag: branch,
-                        name: "customer-identity-$name"
+                        name: "customer-identity-$name",
                         env: [
                                 values: [
                                         [ name: 'http_proxy' ],
@@ -71,7 +71,7 @@ return [
                 ]
                 def reposeConfig = [
                         trigger_tag: branch,
-                        name: "repose-$name"
+                        name: "repose-$name",
                         env: [
                                 values: [
                                         [ name: 'http_proxy' ],
@@ -81,7 +81,7 @@ return [
                 ]
                 def activeDirectoryConfig = [
                         trigger_tag: branch,
-                        name: "active-directory-$name"
+                        name: "active-directory-$name",
                         env: [
                                 values: [
                                         [ name: 'http_proxy' ],
@@ -92,7 +92,7 @@ return [
                 ]
                 def caDirectoryConfig = [
                         trigger_tag: branch,
-                        name: "ca-directory-$name"
+                        name: "ca-directory-$name",
                         env: [
                                 values: [
                                         [ name: 'http_proxy' ],
