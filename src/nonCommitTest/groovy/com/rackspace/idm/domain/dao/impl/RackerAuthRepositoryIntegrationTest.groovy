@@ -11,9 +11,6 @@ class RackerAuthRepositoryIntegrationTest extends RootIntegrationTest {
     @Autowired
     private RackerAuthRepository repo
 
-    @Autowired
-    private LDAPConnectionPool connPool
-
     @Unroll
     def "Can auth with correct password. Optimized search: #optimizeSearch"() {
         reloadableConfiguration.setProperty(IdentityConfig.RACKER_AUTH_OPTIMIZE_SEARCH_PROP, optimizeSearch)

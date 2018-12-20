@@ -1350,8 +1350,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             PasswordCredentialsBase creds = (PasswordCredentialsBase) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
             validator20.validatePasswordCredentials(creds);
-            Domain domainDO = domainConverterCloudV20.fromDomain(domain);
-            UserAuthenticationResult result = rackerAuthenticationService.authenticateDomainUsernamePassword(creds.getUsername(), creds.getPassword(), domainDO);
+            UserAuthenticationResult result = rackerAuthenticationService.authenticateRackerUsernamePassword(creds.getUsername(), creds.getPassword());
             racker = (Racker) result.getUser();
             authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
         } else if (authenticationRequest.getCredential().getValue() instanceof RsaCredentials) {
@@ -1359,8 +1358,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             RsaCredentials creds = (RsaCredentials) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
             validator20.validateUsername(creds.getUsername());
-            Domain domainDO = domainConverterCloudV20.fromDomain(domain);
-            UserAuthenticationResult result = rackerAuthenticationService.authenticateDomainRSA(creds.getUsername(), creds.getTokenKey(), domainDO);
+            UserAuthenticationResult result = rackerAuthenticationService.authenticateRackerRSA(creds.getUsername(), creds.getTokenKey());
             racker = (Racker) result.getUser();
             authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_RSAKEY);
         }

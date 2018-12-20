@@ -10,13 +10,11 @@ public interface RackerAuthenticationService {
     
 	String AUTH_TOKEN_HEADER = "X-Auth-Token";
 	
-    UserAuthenticationResult authenticateDomainUsernamePassword(String username, String password, Domain domain);
+    UserAuthenticationResult authenticateRackerUsernamePassword(String username, String password);
 
-    UserAuthenticationResult authenticateDomainRSA(String username, String tokenkey, Domain domain);
+    UserAuthenticationResult authenticateRackerRSA(String username, String tokenkey);
 
     void setRackerAuthDao(RackerAuthDao authDao);
 
     void setUserService(UserService userService);
-
-    void setInputValidator(InputValidator inputValidator);
 }

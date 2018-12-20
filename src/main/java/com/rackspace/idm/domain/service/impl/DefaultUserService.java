@@ -80,7 +80,7 @@ public class DefaultUserService implements UserService {
     private ScopeAccessService scopeAccessService;
 
     @Autowired
-    private RackerAuthDao authDao;
+    private RackerAuthDao rackerAuthDao;
 
     @Autowired
     private ApplicationService applicationService;
@@ -650,7 +650,12 @@ public class DefaultUserService implements UserService {
             rackerIdForSearch = Racker.getUsernameFromFederatedId(rackerId);
         }
 
-        List<String> roles = authDao.getRackerRoles(rackerIdForSearch);
+        List<String> roles;
+        if (identityConfig.getReloadableConfig().cacheRackerGroups()) {
+            roles = rackerAuthDao.getRackerRolesWithCache(rackerIdForSearch);
+        } else {
+            roles = rackerAuthDao.getRackerRoles(rackerIdForSearch);
+        }
         logger.debug("Got Roles for Racker: {}", rackerId);
         return roles;
     }
@@ -817,8 +822,8 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void setAuthDao(RackerAuthDao authDao) {
-        this.authDao = authDao;
+    public void setRackerAuthDao(RackerAuthDao rackerAuthDao) {
+        this.rackerAuthDao = rackerAuthDao;
     }
 
     @Override

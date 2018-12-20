@@ -118,7 +118,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def setup() {
         mockScopeAccessService(service)
-        mockAuthDao(service)
+        mockRackerAuthDao(service)
         mockApplicationService(service)
         mockConfiguration(service)
         mockUserDao(service)

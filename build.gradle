@@ -24,7 +24,7 @@ buildscript {
     dependencies {
         classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.3'
         classpath 'org.akhikhl.gretty:gretty:1.4.2'
-        classpath 'org.unbroken-dome.gradle-plugins:gradle-testsets-plugin:1.4.2'
+        classpath 'org.unbroken-dome.gradle-plugins:gradle-testsets-plugin:1.5.2'
         classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4+"
     }
 }
@@ -290,8 +290,8 @@ dependencies {
 
     // Add all source for common to commit/nonCommitTest path to allow to share common utils and allow Intellij to
     // actually find usages across commonTest/commit/nonCommit code
-    commitTestCompile sourceSets.commonTest.output
-    nonCommitTestCompile sourceSets.commonTest.output
+    commitTestImplementation sourceSets.commonTest.output
+    nonCommitTestImplementation sourceSets.commonTest.output
 }
 
 task copyConfig(type: Copy) {

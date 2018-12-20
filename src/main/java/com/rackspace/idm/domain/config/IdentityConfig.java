@@ -708,6 +708,24 @@ public class IdentityConfig {
     public static final String RACKER_AUTH_OPTIMIZE_SEARCH_PROP = "feature.racker.auth.optimize.search";
     public static final boolean RACKER_AUTH_OPTIMIZE_SEARCH_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_RACKER_AUTH_RESULT_CACHE_PROP = "feature.enable.racker.auth.result.cache";
+    public static final boolean FEATURE_ENABLE_RACKER_AUTH_RESULT_CACHE_DEFAULT = false;
+
+    public static final String CACHE_RACKER_AUTH_RESULT_TTL_PROP = "cache.racker.auth.result.ttl";
+    public static final Duration CACHE_RACKER_AUTH_RESULT_TTL_DEFAULT = Duration.parse("PT5M");
+
+    public static final String CACHE_RACKER_AUTH_RESULT_SIZE_PROP = "cache.racker.auth.result.size";
+    public static final int CACHE_RACKER_AUTH_RESULT_SIZE_DEFAULT = 300;
+
+    public static final String FEATURE_ENABLE_RACKER_GROUPS_CACHE_PROP = "feature.enable.racker.groups.cache";
+    public static final boolean FEATURE_ENABLE_RACKER_GROUPS_CACHE_DEFAULT = false;
+
+    public static final String CACHE_RACKER_GROUPS_TTL_PROP = "cache.racker.groups.ttl";
+    public static final Duration CACHE_RACKER_GROUPS_TTL_DEFAULT = Duration.parse("PT5M");
+
+    public static final String CACHE_RACKER_GROUPS_SIZE_PROP = "cache.racker.groups.size";
+    public static final int CACHE_RACKER_GROUPS_SIZE_DEFAULT = 300;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -996,6 +1014,12 @@ public class IdentityConfig {
         defaults.put(RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_PROP, RACKER_AUTH_LDAP_SERVER_POOL_SIZE_MAX_DEFAULT);
         defaults.put(RACKER_AUTH_LDAP_BASE_DN_PROP, RACKER_AUTH_LDAP_BASE_DN_DEFAULT);
         defaults.put(RACKER_AUTH_OPTIMIZE_SEARCH_PROP, RACKER_AUTH_OPTIMIZE_SEARCH_DEFAULT);
+        defaults.put(FEATURE_ENABLE_RACKER_AUTH_RESULT_CACHE_PROP, FEATURE_ENABLE_RACKER_AUTH_RESULT_CACHE_DEFAULT);
+        defaults.put(CACHE_RACKER_AUTH_RESULT_TTL_PROP, CACHE_RACKER_AUTH_RESULT_TTL_DEFAULT);
+        defaults.put(CACHE_RACKER_AUTH_RESULT_SIZE_PROP, CACHE_RACKER_AUTH_RESULT_SIZE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_RACKER_GROUPS_CACHE_PROP, FEATURE_ENABLE_RACKER_GROUPS_CACHE_DEFAULT);
+        defaults.put(CACHE_RACKER_GROUPS_TTL_PROP, CACHE_RACKER_GROUPS_TTL_DEFAULT);
+        defaults.put(CACHE_RACKER_GROUPS_SIZE_PROP, CACHE_RACKER_GROUPS_SIZE_DEFAULT);
 
         return defaults;
     }
@@ -1803,6 +1827,26 @@ public class IdentityConfig {
         // Intentionally did not include an @IdmProp annotation here. That would cause this property to be exposed in the Identity props API in plain text
         public String getRackerAuthBindPassword() {
             return getStringSafely(staticConfiguration, RACKER_AUTH_BIND_PASSWORD);
+        }
+
+        @IdmProp(key = CACHE_RACKER_AUTH_RESULT_TTL_PROP, versionAdded = "3.28.0" , description = "The ttl of entries in the racker auth result cache. A ttl of 0 means no cache.")
+        public Duration getRackerAuthResultCacheTtl() {
+            return getDurationSafely(staticConfiguration, CACHE_RACKER_AUTH_RESULT_TTL_PROP);
+        }
+
+        @IdmProp(key = CACHE_RACKER_AUTH_RESULT_SIZE_PROP, versionAdded = "3.28.0" , description = "The max size of the racker auth result cache.")
+        public int getRackerAuthResultCacheSize() {
+            return getIntSafely(staticConfiguration, CACHE_RACKER_AUTH_RESULT_SIZE_PROP);
+        }
+
+        @IdmProp(key = CACHE_RACKER_GROUPS_TTL_PROP, versionAdded = "3.28.0" , description = "The ttl of entries in the racker groups cache. A ttl of 0 means no cache.")
+        public Duration getRackerGroupsCacheTtl() {
+            return getDurationSafely(staticConfiguration, CACHE_RACKER_GROUPS_TTL_PROP);
+        }
+
+        @IdmProp(key = CACHE_RACKER_GROUPS_SIZE_PROP, versionAdded = "3.28.0" , description = "The max size of the racker groups cache.")
+        public int getRackerGroupsCacheSize() {
+            return getIntSafely(staticConfiguration, CACHE_RACKER_GROUPS_SIZE_PROP);
         }
 
         @IdmProp(key = DYNAMO_DB_SERVICE_ENDPOINT_PROP, versionAdded = "3.27.0", description = "Specifies the endpoint to use for dynamoDB connections.")
@@ -2702,6 +2746,16 @@ public class IdentityConfig {
         @IdmProp(key = RACKER_AUTH_OPTIMIZE_SEARCH_PROP, versionAdded = "3.28.0", description = "Whether to optimize searching AD for racker by limiting to user object class.")
         public boolean isFeatureOptimizeRackerSearchEnabled() {
             return getBooleanSafely(reloadableConfiguration, RACKER_AUTH_OPTIMIZE_SEARCH_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_RACKER_AUTH_RESULT_CACHE_PROP, versionAdded = "3.28.0", description = "Whether or not to cache racker authentication results.")
+        public boolean cacheRackerAuthResult() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_RACKER_AUTH_RESULT_CACHE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_RACKER_GROUPS_CACHE_PROP, versionAdded = "3.28.0", description = "Whether or not to cache racker groups.")
+        public boolean cacheRackerGroups() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_RACKER_GROUPS_CACHE_PROP);
         }
     }
 

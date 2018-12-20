@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.config
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import org.springframework.cache.CacheManager
 import org.springframework.cache.caffeine.CaffeineCache
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -23,6 +24,21 @@ class CacheConfigurationTest extends Specification {
 
         cacheConfiguration = new CacheConfiguration()
         cacheConfiguration.identityConfig = identityConfig
+    }
+
+    def "Cache manager creates appropriate caches"() {
+        CacheManager cacheManager = cacheConfiguration.cacheManager()
+
+        // This is auto called by Spring when loading app context, but since this test doesn't use spring need to manually trigger
+        cacheManager.initializeCaches()
+
+        expect:
+        cacheManager.cacheNames.contains(CacheConfiguration.CLIENT_ROLE_CACHE_BY_ID)
+        cacheManager.cacheNames.contains(CacheConfiguration.CLIENT_ROLE_CACHE_BY_NAME)
+        cacheManager.cacheNames.contains(CacheConfiguration.RACKER_AUTH_RESULT_CACHE)
+        cacheManager.cacheNames.contains(CacheConfiguration.RACKER_GROUPS_CACHE)
+        cacheManager.cacheNames.contains(CacheConfiguration.REPOSITORY_PROPERTY_CACHE_BY_NAME)
+        cacheManager.cacheNames.contains(CacheConfiguration.USER_LOCKOUT_CACHE_BY_NAME)
     }
 
     @Unroll
@@ -161,4 +177,45 @@ class CacheConfigurationTest extends Specification {
         null | null
     }
 
+    @Unroll
+    def "Racker auth cache configured via properties. test size: #size; test ttl: #ttl"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.CACHE_RACKER_AUTH_RESULT_SIZE_PROP, size)
+        staticIdmConfiguration.setProperty(IdentityConfig.CACHE_RACKER_AUTH_RESULT_TTL_PROP, ttl)
+
+        when:
+        Caffeine builder = cacheConfiguration.createRackerAuthCache()
+
+        then:
+        builder.maximumSize == size
+        builder.expireAfterWriteNanos == Duration.parse(ttl).toNanos()
+
+        where:
+        size | ttl
+        10 | "PT5M"
+        30 | "P1DT1H"
+        5 | "PT1H5.5S"
+        500 | "PT0S"
+    }
+
+    @Unroll
+    def "Racker groups cache configured via properties. test size: #size; test ttl: #ttl"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.CACHE_RACKER_GROUPS_SIZE_PROP, size)
+        staticIdmConfiguration.setProperty(IdentityConfig.CACHE_RACKER_GROUPS_TTL_PROP, ttl)
+
+        when:
+        Caffeine builder = cacheConfiguration.createRackerGroupsCache()
+
+        then:
+        builder.maximumSize == size
+        builder.expireAfterWriteNanos == Duration.parse(ttl).toNanos()
+
+        where:
+        size | ttl
+        10 | "PT5M"
+        30 | "P1DT1H"
+        5 | "PT1H5.5S"
+        500 | "PT0S"
+    }
 }

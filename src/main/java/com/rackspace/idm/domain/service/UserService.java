@@ -123,7 +123,7 @@ public interface UserService {
 
     void setUserDao(UserDao userDao);
 
-    void setAuthDao(RackerAuthDao rackerDao);
+    void setRackerAuthDao(RackerAuthDao rackerDao);
 
     void setApplicationService(ApplicationService clientService);
 

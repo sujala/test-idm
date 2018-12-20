@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config;
 
+import com.rackspace.idm.domain.dao.impl.RackerConnectionPoolDelegate;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
@@ -24,8 +25,8 @@ public class RackerAuthRepositoryLdapConfiguration {
 
     private final Logger logger = LoggerFactory.getLogger(RackerAuthRepositoryLdapConfiguration.class);
 
-    @Bean(destroyMethod = "close", name = "connectionToAuth")
-    public LDAPConnectionPool connection() {
+    @Bean(destroyMethod = "close")
+    public RackerConnectionPoolDelegate connection() {
         if (!identityConfig.getStaticConfig().isRackerAuthAllowed()) {
             return null;
         }
@@ -58,6 +59,6 @@ public class RackerAuthRepositoryLdapConfiguration {
         }
 
         logger.debug("LDAPConnectionPool:[{}]", connPool);
-        return connPool;
+        return new RackerConnectionPoolDelegate(connPool);
     }
 }

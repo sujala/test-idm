@@ -21,6 +21,8 @@ public class CacheConfiguration {
     public final static String CLIENT_ROLE_CACHE_BY_NAME = "clientRoleCacheByName";
     public final static String USER_LOCKOUT_CACHE_BY_NAME = "userLockout";
     public final static String REPOSITORY_PROPERTY_CACHE_BY_NAME = "repositoryPropertyCache";
+    public final static String RACKER_AUTH_RESULT_CACHE = "rackerAuthCache";
+    public final static String RACKER_GROUPS_CACHE = "rackerGroupsCache";
 
     @Autowired
     IdentityConfig identityConfig;
@@ -31,7 +33,10 @@ public class CacheConfiguration {
         cacheManager.setCaches(Arrays.asList(getClientRoleCache(CLIENT_ROLE_CACHE_BY_ID)
                 , getClientRoleCache(CLIENT_ROLE_CACHE_BY_NAME)
                 , new CaffeineCache(USER_LOCKOUT_CACHE_BY_NAME, createUserLockOutCacheBuilder().build())
-                , new CaffeineCache(REPOSITORY_PROPERTY_CACHE_BY_NAME, createRepositoryPropertyCacheBuilder().build()))
+                , new CaffeineCache(REPOSITORY_PROPERTY_CACHE_BY_NAME, createRepositoryPropertyCacheBuilder().build())
+                , new CaffeineCache(RACKER_AUTH_RESULT_CACHE, createRackerAuthCache().build())
+                , new CaffeineCache(RACKER_GROUPS_CACHE, createRackerGroupsCache().build())
+                )
         );
         return cacheManager;
     }
@@ -67,6 +72,24 @@ public class CacheConfiguration {
     private Caffeine createRepositoryPropertyCacheBuilder() {
         Duration ttl = identityConfig.getStaticConfig().getRepositoryPropertyCacheTtl();
         int size = identityConfig.getStaticConfig().getRepositoryPropertyCacheSize();
+
+        return Caffeine.newBuilder()
+                .maximumSize(size)
+                .expireAfterWrite(ttl.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private Caffeine createRackerAuthCache() {
+        Duration ttl = identityConfig.getStaticConfig().getRackerAuthResultCacheTtl();
+        int size = identityConfig.getStaticConfig().getRackerAuthResultCacheSize();
+
+        return Caffeine.newBuilder()
+                .maximumSize(size)
+                .expireAfterWrite(ttl.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private Caffeine createRackerGroupsCache() {
+        Duration ttl = identityConfig.getStaticConfig().getRackerGroupsCacheTtl();
+        int size = identityConfig.getStaticConfig().getRackerGroupsCacheSize();
 
         return Caffeine.newBuilder()
                 .maximumSize(size)

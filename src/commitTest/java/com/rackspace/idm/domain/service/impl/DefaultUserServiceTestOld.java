@@ -12,7 +12,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,7 +41,7 @@ public class DefaultUserServiceTestOld {
     @Mock
     private UserDao userDao;
     @Mock
-    private RackerAuthDao authDao;
+    private RackerAuthDao rackerAuthDao;
     @Mock
     private ApplicationService applicationService;
     @Mock
@@ -148,7 +147,7 @@ public class DefaultUserServiceTestOld {
     public void getRackerRoles_callsAuthDao_getRackerRoles() throws Exception {
         when(staticConfig.isRackerAuthAllowed()).thenReturn(true);
         defaultUserService.getRackerEDirRoles("rackerId");
-        verify(authDao).getRackerRoles("rackerId");
+        verify(rackerAuthDao).getRackerRoles("rackerId");
     }
 
     @Test
@@ -156,7 +155,7 @@ public class DefaultUserServiceTestOld {
         List<String> rackeList = new ArrayList<String>();
         rackeList.add("test");
         when(staticConfig.isRackerAuthAllowed()).thenReturn(true);
-        when(authDao.getRackerRoles("rackerId")).thenReturn(rackeList);
+        when(rackerAuthDao.getRackerRoles("rackerId")).thenReturn(rackeList);
         List<String> roles = defaultUserService.getRackerEDirRoles("rackerId");
         assertThat("roles", roles.get(0), equalTo("test"));
     }
