@@ -16,13 +16,13 @@ execution_id=$(curl $PERF_URL/executions \
 while true; do
   status=$(curl $PERF_URL/executions/$execution_id | python -c 'import sys, json; print json.load(sys.stdin)["status"]')
   echo "Weekly Test Status for $execution_id: $status"
-  if [ "$status" == \"Completed\" ] || [ "$status" == \"Errored\" ]; then break; fi
+  if [ "$status" == "Completed" ] || [ "$status" == "Errored" ]; then break; fi
   sleep 60  
 done
 
 echo "Test Finished for $execution_id: $status"
 
-if [ "$status" == \"Completed\" ]
+if [ "$status" == "Completed" ]
 then
    exit 0
 else
