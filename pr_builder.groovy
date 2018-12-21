@@ -71,7 +71,7 @@ return [
                 ]
 
                 return [
-                    'name': "customer-identity-pr-$name"
+                    'name': "customer-identity-pr-$name",
                     'repose': deployConfig,
                     'customer-identity': deployConfig,
                     'active-directory': deployConfig,
