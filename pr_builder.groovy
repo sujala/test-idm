@@ -64,7 +64,8 @@ return [
                                 values: [
                                         [ name: 'http_proxy' ],
                                         [ name: 'HTTP_PROXY' ],
-                                        [ name: 'TOMCAT_HTTP_PORT', value: 8280]
+                                        [ name: 'TOMCAT_HTTP_PORT', value: 8280],
+                                        [ name: 'DYNAMODB_SERVICE_HOST', value: 'localhost:8000']
                                 ]
                         ]
                 ]
