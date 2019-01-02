@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
@@ -9,11 +10,20 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
+import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
+import testHelpers.saml.SamlFactory
 
 import static org.apache.http.HttpStatus.*
 
@@ -52,6 +62,9 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
 
     def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, true)
+
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
         sharedServiceAdminToken = cloud20.authenticateForToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
         domainId = utils.createDomain()
         (user, users) = utils.createUserAdmin(domainId)
@@ -89,7 +102,7 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         utils.deleteTestDomainQuietly(domainId)
     }
 
-    def "federated user with user-manage role" () {
+    def "federated user with user-manage - role" () {
         when: "lists roles"
         def response = cloud20.listRoles(token)
 
@@ -103,7 +116,7 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         response.status == SC_OK
     }
 
-    def "federated user with user-manage domain" () {
+    def "federated user with user-manage - domain" () {
         when: "get domain by id"
         def response = cloud20.getDomain(token, domainId)
         def domainEntity = response.getEntity(Domain)
@@ -119,10 +132,7 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         response.status == SC_OK
     }
 
-    def "federated user with user-manage user-group" () {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
-
+    def "federated user with user-manage - user-group" () {
         when: "create user group"
         def response = cloud20.createUserGroup(token, v2Factory.createUserGroup(domainId))
         def userGroup = response.getEntity(UserGroup)
@@ -210,4 +220,90 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         response.status == SC_NO_CONTENT
     }
 
+    def "federated user with user-manage - multi-factor" () {
+        when: "update multi-factor settings"
+        MultiFactorDomain settings = v2Factory.createMultiFactorDomainSettings()
+        settings.domainMultiFactorEnforcementLevel = DomainMultiFactorEnforcementLevelEnum.REQUIRED
+        def response = cloud20.updateMultiFactorDomainSettings(token, domainId, settings)
+
+        then:
+        response.status == SC_NO_CONTENT
+    }
+
+    def "federated user with user-manage - identity-provider" () {
+        given:
+        def identityProvider = utils.createIdentityProvider(sharedServiceAdminToken, IdentityProviderFederationTypeEnum.DOMAIN, domainId)
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(testUtils.getRandomUUID("http://example.com/"), RandomStringUtils.randomAlphabetic(8))
+
+        when: "create identity-provider"
+        def identityProviderToCreate = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, [domainId] as List)
+        def response = cloud20.createIdentityProvider(token, identityProviderToCreate)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "create identity-provider with metadata"
+        response = cloud20.createIdentityProviderWithMetadata(token, metadata)
+        def idp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "delete identity-provider created from metadata"
+        response = cloud20.deleteIdentityProvider(token, idp.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "list identity-providers"
+        response = cloud20.listIdentityProviders(token)
+
+        then:
+        response.status == SC_OK
+
+        when: "get identity-provider"
+        response = cloud20.getIdentityProvider(token, identityProvider.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "update identity-provider"
+        identityProvider.description = "updated"
+        response = cloud20.updateIdentityProvider(token, identityProvider.id, identityProvider)
+
+        then:
+        response.status == SC_OK
+
+        when: "get identity-provider policy"
+        response = cloud20.getIdentityProviderPolicy(token, identityProvider.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "update identity-provider policy"
+        def policy = '{"policy": "updated"}'
+        response = cloud20.updateIdentityProviderPolicy(token, identityProvider.id, policy)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "update identity-provider metadata"
+        metadata = new SamlFactory().generateMetadataXMLForIDP(identityProvider.issuer, RandomStringUtils.randomAlphabetic(8))
+        response = cloud20.updateIdentityProviderUsingMetadata(token, identityProvider.id, metadata)
+
+        then:
+        response.status == SC_OK
+
+        when: "get identity-provider metadata"
+        response = cloud20.getIdentityProviderMetadata(token, identityProvider.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "delete identity-provider"
+        response = cloud20.deleteIdentityProvider(token, identityProvider.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+    }
 }

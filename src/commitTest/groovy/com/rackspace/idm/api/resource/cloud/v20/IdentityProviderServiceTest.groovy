@@ -67,7 +67,7 @@ class IdentityProviderServiceTest extends RootServiceTest {
         1 * reloadableConfig.getEnableExternalUserIdpManagement() >> false
         1 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName())
         1 * federatedIdentityService.checkAndGetIdentityProviderWithMetadataById("id") >> entityFactory.createIdentityProviderWithoutCertificate()
-        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        1 * requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         1 * federatedIdentityService.updateIdentityProvider(_)
         1 * atomHopperClient.asyncPostIdpEvent(_, EventType.UPDATE);
         1 * identityProviderConverterCloudV20.toIdentityProvider(_) >> identityProvider

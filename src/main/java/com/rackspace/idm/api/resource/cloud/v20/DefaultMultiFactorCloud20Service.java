@@ -585,9 +585,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
              */
             final BaseUser requester = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            User caller;
-            if (requester instanceof User) {
-                caller = (User) requester;
+            EndUser caller;
+            if (requester instanceof User || requester instanceof FederatedUser) {
+                caller = (EndUser) requester;
             } else {
                 throw new ForbiddenException(NOT_AUTHORIZED_ERROR_MSG);
             }
@@ -601,13 +601,16 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 throw new ForbiddenException(NOT_AUTHORIZED_ERROR_MSG);
             }
 
-            /*
-            For a user-admin/user-manager to change the state of MFA on a domain, the caller must have MFA enabled or have his/her user enforcement set to OPTIONAL. This guarantees
-            that at least one user-admin/manager in the domain can continue to log-in after enabling domain level enforcement. Requiring it to disable
-            domain level enforcement is for consistency and to allow a user who may have mistakenly disable it on the domain to immediately re-enable it.
-             */
-            if (requesterIdentityRole.isDomainBasedAccessLevel() && !caller.isMultiFactorEnabled() && !GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equals(caller.getUserMultiFactorEnforcementLevel())) {
-                throw new ForbiddenException(FORBIDDEN_MSG_MULTIFACTOR_DISABLED);
+            if (requester instanceof User) {
+                User user = (User) requester;
+                /*
+                For a user-admin/user-manager to change the state of MFA on a domain, the caller must have MFA enabled or have his/her user enforcement set to OPTIONAL. This guarantees
+                that at least one user-admin/manager in the domain can continue to log-in after enabling domain level enforcement. Requiring it to disable
+                domain level enforcement is for consistency and to allow a user who may have mistakenly disable it on the domain to immediately re-enable it.
+                 */
+                if (requesterIdentityRole.isDomainBasedAccessLevel() && !user.isMultiFactorEnabled() && !GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equals(user.getUserMultiFactorEnforcementLevel())) {
+                    throw new ForbiddenException(FORBIDDEN_MSG_MULTIFACTOR_DISABLED);
+                }
             }
 
             //counting on this method to throw NotFoundException if domainId does not exist
