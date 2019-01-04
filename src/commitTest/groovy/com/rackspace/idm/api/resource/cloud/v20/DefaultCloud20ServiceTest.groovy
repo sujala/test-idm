@@ -3721,21 +3721,23 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "Delete Group from user with subUsers removes from each"(){
         given:
         User user = entityFactory.createRandomUser()
-        allowUserAccess()
-        groupService.checkAndGetGroupById(_) >> entityFactory.createGroup("1", "nameone", "desc")
-        identityUserService.checkAndGetUserById(_) >> user
-        authorizationService.hasDefaultUserRole(_) >> false
-        authorizationService.hasUserAdminRole(_) >> true
-        identityUserService.getEndUsersByDomainId(_, UserType.ALL) >> [user, entityFactory.createRandomUser()].asList()
-        userService.isUserInGroup(_, _) >> true
 
         when:
         Response.ResponseBuilder response = service.removeUserFromGroup(headers, authToken, "1", user.id)
 
         then:
+        response.build().status == 204
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * groupService.checkAndGetGroupById(_) >> entityFactory.createGroup("1", "nameone", "desc")
+        1 * identityUserService.checkAndGetUserById(_) >> user
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * identityUserService.getEndUsersByDomainId(_, UserType.ALL) >> [user, entityFactory.createRandomUser()].asList()
+        1 *userService.isUserInGroup(_, _) >> true
         2 * atomHopperClient.asyncPost(_, _)
         2 * identityUserService.removeGroupFromEndUser(_, _)
-        response.build().status == 204
     }
 
     def "Remove v1Default if it exists" () {
@@ -6475,6 +6477,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     def "addRegion - calls correct services"() {
+        given:
         mockRegionConverter(service)
 
         def region = v1Factory.createRegion()
@@ -6492,6 +6495,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     }
 
     def "getRegion - calls correct services"() {
+        given:
         mockRegionConverter(service)
 
         def region = "ORD"
@@ -6506,6 +6510,262 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
         1 * cloudRegionService.checkAndGetRegion(region) >> entityFactory.createRegion()
+    }
+
+    def "getRegions - calls correct services"() {
+        given:
+        mockRegionConverter(service)
+
+        when:
+        def response = service.getRegions(authToken)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * cloudRegionService.getRegions(_) >> [entityFactory.createRegion()]
+    }
+
+    def "updateRegion - calls correct services"() {
+        given:
+        mockRegionConverter(service)
+        def region = v1Factory.createRegion()
+
+        when:
+        def response = service.updateRegion(authToken, region.name, region)
+
+        then:
+        response.build().status == SC_NO_CONTENT
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * cloudRegionService.checkAndGetRegion(region.name)
+        1 * cloudRegionService.updateRegion(region.name, _)
+    }
+
+    def "deleteRegion - calls correct services"() {
+        given:
+        mockRegionConverter(service)
+        def region = "ORD"
+
+        when:
+        def response = service.deleteRegion(authToken, region)
+
+        then:
+        response.build().status == SC_NO_CONTENT
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * cloudRegionService.checkAndGetRegion(region)
+        1 * cloudRegionService.deleteRegion(region)
+    }
+
+    def "getGroupById - calls correct services"() {
+        given:
+        def group = entityFactory.createGroup("id", "group", "desc")
+
+        when:
+        def response = service.getGroupById(headers, authToken, group.groupId)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * groupService.checkAndGetGroupById(group.groupId) >> group
+    }
+
+    def "addGroup - calls correct services"() {
+        given:
+        def groupForCreate = v1Factory.createGroup("group", "id", "desc")
+        def group = entityFactory.createGroup("id", "group", "desc")
+
+        when:
+        def response = service.addGroup(headers, uriInfo(), authToken, groupForCreate)
+
+        then:
+        response.build().status == SC_CREATED
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * cloudGroupBuilder.build(groupForCreate) >> group
+        1 * groupService.addGroup(_)
+        1 * cloudKsGroupBuilder.build(_) >> groupForCreate
+    }
+
+    def "updateGroup - calls correct services"() {
+        given:
+        def groupForUpdate = v1Factory.createGroup("group", "id", "desc")
+        def group = entityFactory.createGroup("id", "group", "desc")
+
+        when:
+        def response = service.updateGroup(headers, authToken, groupForUpdate.id, groupForUpdate)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * cloudGroupBuilder.build(groupForUpdate) >> group
+        1 * groupService.updateGroup(_)
+        1 * cloudKsGroupBuilder.build(_) >> groupForUpdate
+    }
+
+    def "deleteGroup - calls correct services"() {
+        given:
+        def groupId = "groupId"
+
+        when:
+        def response = service.deleteGroup(headers, authToken, groupId)
+
+        then:
+        response.build().status == SC_NO_CONTENT
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * groupService.deleteGroup(groupId)
+    }
+
+    def "addUserToGroup - calls correct services"() {
+        given:
+        def group = entityFactory.createGroup("groupId", "name", "desc")
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
+
+        when:
+        def response = service.addUserToGroup(headers, authToken, group.groupId, user.id)
+
+        then:
+        response.build().status == SC_NO_CONTENT
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * groupService.checkAndGetGroupById(group.groupId) >> group
+        1 * identityUserService.checkAndGetUserById(user.id) >> user
+        1 * authorizationService.hasDefaultUserRole(user) >> false
+        1 * userService.isUserInGroup(user.id, group.groupId) >> false
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * authorizationService.hasUserAdminRole(user) >> false
+        1 * identityUserService.addGroupToEndUser(group.groupId, user.id)
+        1 * atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP)
+    }
+
+    def "removeUserFromGroup - calls correct services"() {
+        given:
+        def group = entityFactory.createGroup("groupId", "name", "desc")
+        def user = entityFactory.createUser()
+
+        when:
+        def response = service.removeUserFromGroup(headers, authToken, group.groupId, user.id)
+
+        then:
+        response.build().status == SC_NO_CONTENT
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * groupService.checkAndGetGroupById(group.groupId) >> group
+        1 * identityUserService.checkAndGetUserById(user.id) >> user
+        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.USER_ADMIN
+        1 * userService.isUserInGroup(user.id, group.groupId) >> true
+        1 * identityUserService.getEndUsersByDomainId(user.domainId, UserType.ALL) >> []
+        1 * identityUserService.removeGroupFromEndUser(group.groupId, user.id)
+        1 * atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP)
+    }
+
+    def "getUsersForGroup - calls correct services"() {
+        given:
+        def group = entityFactory.createGroup("id", "name", "desc")
+
+        when:
+        def response = service.getUsersForGroup(headers, authToken, group.groupId, offset, limit)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * groupService.checkAndGetGroupById(group.groupId)
+        1 * userService.getEnabledUsersByGroupId(group.groupId, offset, limit) >> Mock(PaginatorContext)
+    }
+
+    def "setUserEnabled - calls correct services"() {
+        given:
+        def userForUpdate = v2Factory.createUser()
+        def user = entityFactory.createUser()
+
+        when:
+        def response = service.setUserEnabled(headers, authToken, userForUpdate.id, userForUpdate)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * userService.checkAndGetUserById(userForUpdate.id) >> user
+        1 * userService.updateUser(_)
+    }
+
+    def "updateUserApiKeyCredentials - calls correct services"() {
+        given:
+        def user = entityFactory.createUser()
+        def apiKeyCred = v2Factory.createApiKeyCredentials("username", "key")
+
+        when:
+        def response = service.updateUserApiKeyCredentials(headers, authToken, user.id, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS, apiKeyCred)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * validator20.validateUsername(apiKeyCred.username)
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * userService.updateUser(user)
+    }
+
+    @Unroll
+    def "resetUserApiKeyCredentials - calls correct services - callerType = #callerType"() {
+        given:
+        def user = entityFactory.createUser()
+        def caller = entityFactory.createUser()
+
+        when:
+        def response = service.resetUserApiKeyCredentials(headers, authToken, user.id, JSONConstants.RAX_KSKEY_API_KEY_CREDENTIALS)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * requestContext.getEffectiveCallersUserType() >> callerType
+        if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
+            1 * authorizationService.verifyDomain(caller, user)
+        }
+        if (callerType == IdentityUserTypeEnum.IDENTITY_ADMIN) {
+            1 * authorizationService.hasServiceAdminRole(user)
+        }
+        1 * userService.updateUser(user)
+
+        where:
+        callerType << IdentityUserTypeEnum.values()
     }
 
     def mockServices() {

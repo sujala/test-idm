@@ -98,7 +98,7 @@ public class SecurityContext {
     }
 
     /**
-     * This is meant to be analogous (and a direct replacement) for {@link com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service#getScopeAccessForValidToken(String)}
+     * This is meant to be analogous (and a direct replacement) for {com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service#getScopeAccessForValidToken(String)}
      * for the use case of retrieving the effective token and verifying that it's still valid, etc. This meant to provide
      * a baby step toward migrating to the use of the securityContext. Eventually, this method should be removed as well once
      * the authenticationFilter performs this validation itself.

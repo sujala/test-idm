@@ -4666,7 +4666,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getRegions(String authToken) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
         Iterable<com.rackspace.idm.domain.entity.Region> regions = this.cloudRegionService.getRegions(config.getString("cloud.region"));
         return Response.ok().entity(regionConverterCloudV20.toRegions(regions).getValue());
     }
@@ -4674,7 +4678,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateRegion(String authToken, String name, Region region) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
             cloudRegionService.checkAndGetRegion(name);
             com.rackspace.idm.domain.entity.Region updateRegion = regionConverterCloudV20.fromRegion(region);
@@ -4688,7 +4695,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRegion(String authToken, String name) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             cloudRegionService.checkAndGetRegion(name);
             cloudRegionService.deleteRegion(name);
             return Response.noContent();
@@ -4874,7 +4885,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addTenantType(UriInfo uriInfo, String authToken, TenantType tenantType) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
             tenantTypeService.createTenantType(tenantTypeConverter.fromTenantType(tenantType));
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
@@ -4888,7 +4899,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getTenantType(UriInfo uriInfo, String authToken, String tenantTypeName) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
             TenantType tenantType = tenantTypeConverter.toTenantType(tenantTypeService.checkAndGetTenantType(tenantTypeName));
             return Response.ok().entity(tenantType);
@@ -4900,7 +4911,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listTenantTypes(UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
             PaginatorContext<com.rackspace.idm.domain.entity.TenantType> tenantTypeContext = tenantTypeService.listTenantTypes(marker, limit);
             TenantTypes tenantTypes = tenantTypeConverter.toTenantType(tenantTypeContext.getValueList());
@@ -4915,7 +4926,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteTenantType(String authToken, String tenantTypeId) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
             com.rackspace.idm.domain.entity.TenantType tenantType = tenantTypeService.checkAndGetTenantType(tenantTypeId);
             tenantTypeService.deleteTenantType(tenantType);
@@ -5000,7 +5011,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             Group group = groupService.checkAndGetGroupById(groupId);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
             return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup).getValue());
@@ -5013,7 +5028,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
                                     com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             validator20.validateKsGroup(group);
             Group groupDO = cloudGroupBuilder.build(group);
             groupService.addGroup(groupDO);
@@ -5033,7 +5052,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId,
                                        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             validator20.validateKsGroup(group);
 
             if(group.getId() != null && !groupId.equals(group.getId())){
@@ -5056,7 +5079,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             groupService.deleteGroup(groupId);
             return Response.noContent();
         } catch (Exception e) {
@@ -5067,10 +5094,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Group group = groupService.checkAndGetGroupById(groupId);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            User caller = userService.getUserByAuthToken(authToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
+            Group group = groupService.checkAndGetGroupById(groupId);
             EndUser user = identityUserService.checkAndGetUserById(userId);
 
             if (authorizationService.hasDefaultUserRole(user)) {
@@ -5109,8 +5138,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) {
         try {
-            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             Group group = groupService.checkAndGetGroupById(groupId);
 
             if (userId == null || userId.trim().isEmpty()) {
@@ -5118,10 +5150,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             EndUser user = identityUserService.checkAndGetUserById(userId);
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(user);
-            boolean isUserAdmin = authorizationService.hasUserAdminRole(user);
+            IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(user);
 
-            if (isDefaultUser) {
+            if (userType == IdentityUserTypeEnum.DEFAULT_USER) {
                 throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
             }
 
@@ -5129,7 +5160,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException("Group '" + group.getName() + "' is not assigned to user.");
             }
 
-            if (isUserAdmin) {
+            if (userType == IdentityUserTypeEnum.USER_ADMIN) {
                 Iterable<EndUser> subUsers = identityUserService.getEndUsersByDomainId(user.getDomainId(), UserType.ALL);
                 for (EndUser subUser : subUsers) {
                     if (!user.getId().equalsIgnoreCase(subUser.getId())) {
@@ -5156,7 +5187,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, Integer marker, Integer limit)  {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             groupService.checkAndGetGroupById(groupId);
             PaginatorContext<User> users = userService.getEnabledUsersByGroupId(groupId, marker, limit);
 
@@ -5302,9 +5337,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId,
                                           org.openstack.docs.identity.api.v2.User user) {
-
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
             User userDO = userService.checkAndGetUserById(userId);
 
@@ -5381,7 +5418,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
                                         org.openstack.docs.identity.api.v2.Tenant tenant) {
-
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
@@ -5418,9 +5454,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId,
                                                        String credentialType, ApiKeyCredentials creds) {
-
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
             if (StringUtils.isBlank(creds.getApiKey())) {
                 String errMsg = "Expecting apiKey";
@@ -5429,15 +5467,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             validator20.validateUsername(creds.getUsername());
-            User credUser = this.userService.getUser(creds.getUsername());
-
-            if (credUser == null) {
-                String errMsg = String.format("User: '%s' not found.", creds.getUsername());
-                logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
-            }
-
-
             User user = userService.checkAndGetUserById(userId);
             Validator20.validateItsNotUnverifiedUser(user);
 
@@ -5459,28 +5488,26 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder resetUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) {
-
         try {
-            ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(authScopeAccess);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
             if (identityConfig.getReloadableConfig().preventRackerImpersonationApiKeyAccess() &&
                     requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
                 throw new ForbiddenException("Impersonation tokens cannot be used to reset user API key credentials");
             }
 
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(authScopeAccess);
-            boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(authScopeAccess);
-
-            User caller = userService.getUserByAuthToken(authToken);
             User credUser = this.userService.checkAndGetUserById(userId);
             Validator20.validateItsNotUnverifiedUser(credUser);
 
-            if (callerIsDefaultUser && !caller.getId().equals(userId)) {
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            if (callerType == IdentityUserTypeEnum.DEFAULT_USER && !caller.getId().equals(userId)) {
                 throw new ForbiddenException("This user can only reset their own apiKey");
-            } else if (callerIsUserAdmin) {
+            } else if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
                 authorizationService.verifyDomain(caller, credUser);
-            } else if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
+            } else if (callerType == IdentityUserTypeEnum.IDENTITY_ADMIN) {
                 if (authorizationService.hasServiceAdminRole(credUser)) {
                     throw new ForbiddenException("This user cannot set or reset Service Admin apiKey.");
                 }
@@ -5504,9 +5531,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId,
                                                          String credentialType, PasswordCredentialsBase creds) {
-
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
             validator.isUsernameValid(creds.getUsername());
             validator.validatePasswordForCreateOrUpdate(creds.getPassword());
 
@@ -5524,7 +5554,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.updateUser(user);
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createCredential(creds).getValue());
-
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -5960,18 +5989,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
         }
-    }
-
-    public ScopeAccess getScopeAccessForValidToken(String authToken) {
-        String errMsg = "No valid token provided. Please use the 'X-Auth-Token' header with a valid token.";
-        if (StringUtils.isBlank(authToken)) {
-            throw new NotAuthorizedException(errMsg);
-        }
-        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (authScopeAccess == null || (authScopeAccess.isAccessTokenExpired(new DateTime()))) {
-            throw new NotAuthorizedException(errMsg);
-        }
-        return authScopeAccess;
     }
 
     JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {
