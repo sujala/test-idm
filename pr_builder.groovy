@@ -35,7 +35,7 @@ return [
         node('master') {
             openshift.withCluster {
                 branches = [:]
-                ['ca-directory', 'customer-identity', 'repose', 'active-directory'].each {
+                ['ca-directory', 'customer-identity', 'repose', 'active-directory', 'dynamodb'].each {
                     def name = it
                     branches[name] = {
                         def build = openshift.selector('bc', name).startBuild(
@@ -55,28 +55,82 @@ return [
     },
 
     chart: [
-            name: 'customer-identity-pr',
-            version: '0.1.0',
+            name: 'customer-identity',
+            version: '0.1.4',
             values: { branch, name ->
-                def deployConfig = [
+                def dynamoDBConfig = [
                         trigger_tag: branch,
+                        name: "dynamodb-$name",
+                        imageName: "dynamodb",
                         env: [
                                 values: [
                                         [ name: 'http_proxy' ],
                                         [ name: 'HTTP_PROXY' ],
-                                        [ name: 'TOMCAT_HTTP_PORT', value: 8280],
-                                        [ name: 'DYNAMODB_SERVICE_HOST', value: 'localhost:8000']
+                                        [ name: 'TOMCAT_HTTP_PORT', value: 8083]
+                                ]
+                        ]
+                ]
+                def custIdentityConfig = [
+                        trigger_tag: branch,
+                        name: "customer-identity-$name",
+                        imageName: "customer-identity",
+                        env: [
+                                values: [
+                                        [ name: 'http_proxy' ],
+                                        [ name: 'HTTP_PROXY' ],
+                                        [ name: 'TOMCAT_HTTP_PORT', value: 8083],
+                                        [ name: 'CA_DIRECTORY_SERVICE_HOST', value: "\$(CA_DIRECTORY_${name.toUpperCase().replaceAll('-','_')}_SERVICE_HOST)"],
+                                        [ name: 'CA_DIRECTORY_SERVICE_PORT', value: "\$(CA_DIRECTORY_${name.toUpperCase().replaceAll('-','_')}_SERVICE_PORT)"],
+                                        [ name: 'ACTIVE_DIRECTORY_SERVICE_HOST', value: "\$(ACTIVE_DIRECTORY_${name.toUpperCase().replaceAll('-','_')}_SERVICE_HOST)"],
+                                        [ name: 'ACTIVE_DIRECTORY_SERVICE_PORT', value: "\$(ACTIVE_DIRECTORY_${name.toUpperCase().replaceAll('-','_')}_SERVICE_PORT)"],
+                                        [ name: 'DYNAMODB_SERVICE_HOST', value: "\$(DYNAMODB_${name.toUpperCase().replaceAll('-','_')}_SERVICE_HOST):\$(DYNAMODB_${name.toUpperCase().replaceAll('-','_')}_SERVICE_PORT)"]
+                                ]
+                        ]
+                ]
+                def reposeConfig = [
+                        trigger_tag: branch,
+                        name: "repose-$name",
+                        imageName: "repose",
+                        env: [
+                                values: [
+                                        [ name: 'http_proxy' ],
+                                        [ name: 'HTTP_PROXY' ],
+                                        [ name: 'CUSTOMER_IDENTITY_SERVICE_HOST', value: "\$(CUSTOMER_IDENTITY_${name.toUpperCase().replaceAll('-','_')}_SERVICE_HOST)"],
+                                        [ name: 'CUSTOMER_IDENTITY_SERVICE_PORT', value: "\$(CUSTOMER_IDENTITY_${name.toUpperCase().replaceAll('-','_')}_SERVICE_PORT)"]
+                                ]
+                        ]
+                ]
+                def activeDirectoryConfig = [
+                        trigger_tag: branch,
+                        name: "active-directory-$name",
+                        imageName: "active-directory",
+                        env: [
+                                values: [
+                                        [ name: 'http_proxy' ],
+                                        [ name: 'HTTP_PROXY' ],
+                                        [ name: 'LDAPS_PORT', value: 636]
+                                ]
+                        ]
+                ]
+                def caDirectoryConfig = [
+                        trigger_tag: branch,
+                        name: "ca-directory-$name",
+                        imageName: "ca-directory",
+                        env: [
+                                values: [
+                                        [ name: 'http_proxy' ],
+                                        [ name: 'HTTP_PROXY' ],
+                                        [ name: 'LDAPS_PORT', value: 636]
                                 ]
                         ]
                 ]
 
                 return [
-                    'name': "customer-identity-$name",
-                    'repose': deployConfig,
-                    'customer-identity': deployConfig,
-                    'active-directory': deployConfig,
-                    'ca-directory': deployConfig,
-                    'dynamodb': deployConfig
+                        'customer-identity-deploy': custIdentityConfig,
+                        'repose-deploy': reposeConfig,
+                        'active-directory-deploy': activeDirectoryConfig,
+                        'ca-directory-deploy': caDirectoryConfig,
+                        'dynamodb-deploy': dynamoDBConfig
                 ]
             }
     ],
