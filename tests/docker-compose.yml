@@ -65,7 +65,6 @@ services:
     network_mode: "service:network"
 
   testenv:
-    image: testenv
     build:
       context: .
       dockerfile: Dockerfile
