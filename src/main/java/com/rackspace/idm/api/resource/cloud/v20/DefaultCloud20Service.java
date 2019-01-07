@@ -592,7 +592,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
             EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
@@ -603,7 +603,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+
             // Checking for domain base level here since default user don't have access to this resource.
             if (callerType.isDomainBasedAccessLevel()) {
                 authorizationService.verifyDomain(caller, user);
@@ -623,8 +624,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(ERROR_CANNOT_ADD_ROLE_TO_USER_ON_TENANT_ERROR_MESSAGE);
             }
 
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role);
+            precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
+            precedenceValidator.verifyCallerRolePrecedenceForAssignment(callerType, role);
 
             TenantRole tenantRole = new TenantRole();
             tenantRole.setName(role.getName());
@@ -763,7 +764,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
 
-            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             //ignore the mfa attributes
             usr.setMultiFactorEnabled(null);
@@ -1262,7 +1263,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = (User) requestContextHolder.getRequestContext().getTargetEndUser();
             // Get caller type to validate role access
-            IdentityUserTypeEnum callerUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+            IdentityUserTypeEnum callerUserType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
 
             userService.replaceRoleAssignmentsOnUser(user, roleAssignments, callerUserType.getLevelAsInt());
 
@@ -1292,8 +1293,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, cRole);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+
+            precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
+            precedenceValidator.verifyCallerRolePrecedenceForAssignment(callerType, cRole);
 
             if (user.getId().equals(caller.getId())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
@@ -1306,7 +1309,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             checkForMultipleIdentityAccessRoles(user, cRole);
 
-            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
             if (callerType.isDomainBasedAccessLevel()) {
                 authorizationService.verifyDomain(caller, user);
             }
@@ -2512,9 +2514,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
-            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
             authorizationService.verifyEffectiveCallerHasTenantAccess(tenantId);
@@ -2523,7 +2525,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
             // Checking for domain base level here since default user don't have access to this resource.
             if (callerType.isDomainBasedAccessLevel()) {
                 authorizationService.verifyDomain(caller, user);
@@ -2531,8 +2533,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
 
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, role);
+            precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
+            precedenceValidator.verifyCallerRolePrecedenceForAssignment(callerType, role);
 
             TenantRole tenantRole = tenantService.checkAndGetTenantRoleForUserById(user, roleId);
 
@@ -2693,14 +2695,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
 
-            User caller = (User) requestContextHolder.getRequestContext().getEffectiveCaller();
+            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getEffectiveCaller();
             User user = userService.checkAndGetUserById(userId);
 
             if (user.getId().equals(caller.getId())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
-            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
             if (callerType.isDomainBasedAccessLevel()) {
                 authorizationService.verifyDomain(caller, user);
             }
@@ -2719,8 +2721,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
 
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-            precedenceValidator.verifyCallerRolePrecedence(caller, role);
+            precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
+            precedenceValidator.verifyCallerRolePrecedence(callerType, role);
 
             //the only user-type role you can delete on a user is the "identity:user-manage" role
             IdentityUserTypeEnum userTypeEnum = IdentityUserTypeEnum.fromRoleName(role.getName());
@@ -3681,9 +3683,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
 
-            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
 
             if (callerType.isDomainBasedAccessLevel()) {
                 authorizationService.verifyDomain(caller, user);
@@ -4510,13 +4512,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
 
             User user = userService.checkAndGetUserById(userId);
 
             if (!authorizationService.isSelf(caller, user)) {
                 if (!callerType.hasAtLeastIdentityAdminAccessLevel()) {
-                    precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+                    precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
                     authorizationService.verifyDomain(caller, user);
                 }
             }

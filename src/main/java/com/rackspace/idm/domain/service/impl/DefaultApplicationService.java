@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.api.security.ImmutableTenantRole;
+import com.rackspace.idm.api.security.RequestContext;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.CacheConfiguration;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
@@ -41,6 +43,8 @@ public class DefaultApplicationService implements ApplicationService {
     private Configuration config;
     @Autowired
     private RoleService roleService;
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -326,6 +330,10 @@ public class DefaultApplicationService implements ApplicationService {
         logger.debug("getting identity:* role for user: {}", user);
 
         List<ClientRole> clientRoles = roleService.getIdentityAccessRoles();
+        List<String> clientRoleIds = new ArrayList<>();
+        for (ClientRole clientRole : clientRoles) {
+            clientRoleIds.add(clientRole.getId());
+        }
 
         Set<String> tenantRoleIds = new HashSet<String>();
 
