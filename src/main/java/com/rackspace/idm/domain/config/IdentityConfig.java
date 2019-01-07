@@ -711,19 +711,19 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_RACKER_AUTH_RESULT_CACHE_PROP = "feature.enable.racker.auth.result.cache";
     public static final boolean FEATURE_ENABLE_RACKER_AUTH_RESULT_CACHE_DEFAULT = false;
 
-    public static final String CACHE_RACKER_AUTH_RESULT_TTL_PROP = "cache.racker.auth.result.ttl";
+    public static final String CACHE_RACKER_AUTH_RESULT_TTL_PROP = "racker.auth.result.cache.ttl";
     public static final Duration CACHE_RACKER_AUTH_RESULT_TTL_DEFAULT = Duration.parse("PT5M");
 
-    public static final String CACHE_RACKER_AUTH_RESULT_SIZE_PROP = "cache.racker.auth.result.size";
+    public static final String CACHE_RACKER_AUTH_RESULT_SIZE_PROP = "racker.auth.result.cache.size";
     public static final int CACHE_RACKER_AUTH_RESULT_SIZE_DEFAULT = 300;
 
     public static final String FEATURE_ENABLE_RACKER_GROUPS_CACHE_PROP = "feature.enable.racker.groups.cache";
     public static final boolean FEATURE_ENABLE_RACKER_GROUPS_CACHE_DEFAULT = false;
 
-    public static final String CACHE_RACKER_GROUPS_TTL_PROP = "cache.racker.groups.ttl";
+    public static final String CACHE_RACKER_GROUPS_TTL_PROP = "racker.groups.cache.ttl";
     public static final Duration CACHE_RACKER_GROUPS_TTL_DEFAULT = Duration.parse("PT5M");
 
-    public static final String CACHE_RACKER_GROUPS_SIZE_PROP = "cache.racker.groups.size";
+    public static final String CACHE_RACKER_GROUPS_SIZE_PROP = "racker.groups.cache.size";
     public static final int CACHE_RACKER_GROUPS_SIZE_DEFAULT = 300;
 
     @Qualifier("staticConfiguration")

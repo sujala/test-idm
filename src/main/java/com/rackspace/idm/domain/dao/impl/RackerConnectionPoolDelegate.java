@@ -12,7 +12,7 @@ import com.unboundid.ldap.sdk.*;
  * in the first place.
  *
  * Note - can't use Lombok's @Delegate experimental annotation due to issues generating methods that contain varargs.
- * We only use a couple of th methods anyway so easy enough to explicitly define them.
+ * We only use a couple of the methods anyway so easy enough to explicitly define them.
  */
 public class RackerConnectionPoolDelegate {
     private LDAPConnectionPool rackerConnectionPool;
