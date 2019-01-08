@@ -489,9 +489,8 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         then:
         1 * identityConfig.staticConfig.getIdentityUserManagerRoleName() >> IdentityUserTypeEnum.USER_MANAGER.roleName
         1 * userService.checkAndGetUserById(userId) >> user
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         (1.._) * requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
-        1 * requestContext.getEffectiveCallersUserType() >>  IdentityUserTypeEnum.USER_MANAGER
     }
 
     def "isCallerAuthorizedToManageDelegationAgreement: verify authorization for DA's effective principal"() {
