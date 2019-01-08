@@ -712,11 +712,11 @@ public class DefaultAuthorizationService implements AuthorizationService {
         User user = userService.checkAndGetUserById(userId);
         requestContextHolder.getRequestContext().setTargetEndUser(user);
 
-        // Verify the caller has precedence over the user being modified
-        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-
         // If domain based identity role, must verify user has access to domain
-        IdentityUserTypeEnum callersUserType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+        IdentityUserTypeEnum callersUserType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+
+        // Verify the caller has precedence over the user being modified
+        precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
 
         if (callersUserType == null) {
             // If we don't know the type of user, we can't authorize the user for anything

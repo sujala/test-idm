@@ -217,4 +217,16 @@ public class RequestContext {
         }
     }
 
+    /**
+     * Helper method to verify the effective caller is not a federated user or racker
+     *
+     * @return
+     */
+    public void verifyEffectiveCallerIsNotARacker() {
+        BaseUser caller = getEffectiveCaller();
+        if (caller != null && caller instanceof Racker) {
+            throw new ForbiddenException("Not Authorized");
+        }
+    }
+
 }

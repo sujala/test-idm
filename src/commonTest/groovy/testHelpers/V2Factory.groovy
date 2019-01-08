@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import org.apache.commons.lang.BooleanUtils
+import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -461,6 +462,14 @@ class V2Factory {
 
     def createUser() {
         return createUser(ID, USERNAME)
+    }
+
+    def createUnverifiedUser(domainId) {
+        new User().with {
+            it.domainId = domainId
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            return it
+        }
     }
 
     def createUser(String id, String username) {

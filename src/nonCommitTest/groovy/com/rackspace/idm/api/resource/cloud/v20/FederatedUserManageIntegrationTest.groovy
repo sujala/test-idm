@@ -3,6 +3,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -19,6 +21,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -51,6 +54,9 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
     @Shared
     def tenant
 
+    @Shared
+    def role
+
     @Autowired
     TenantRoleDao tenantRoleDao
 
@@ -63,6 +69,7 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
     def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, false)
 
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
         sharedServiceAdminToken = cloud20.authenticateForToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
@@ -75,6 +82,8 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         grantRoleAssignmentsOnUserGroup(sharedUserGroup)
 
         tenant = utils.createTenant()
+        utils.addTenantToDomain(domainId, tenant.id)
+        role = utils.createRole()
 
         AuthenticateResponse fedAuthResponse = utils.authenticateFederatedUser(domainId, [sharedUserGroup.name] as Set)
         token = fedAuthResponse.token.id
@@ -306,4 +315,96 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_NO_CONTENT
     }
+
+    def "federated user with user-manage - user crud" () {
+        given:
+        utils.domainRcnSwitch(domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        when: "add user invite"
+        def response = cloud20.createUnverifiedUser(token, v2Factory.createUnverifiedUser(domainId))
+        def unverifiedUser = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "send unverified user invite"
+        response = cloud20.sendUnverifiedUserInvite(token, unverifiedUser.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "create user"
+        def userToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("user"), "display", "email@email.com", true, null, null, "Password1")
+        response = cloud20.createUser(token, userToCreate)
+        def user = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "add role to user on tenant"
+        response = cloud20.addRoleToUserOnTenant(token, tenant.id, user.id, role.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "delete role from user on tenant"
+        response = cloud20.deleteRoleFromUserOnTenant(token, tenant.id, user.id, role.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "get accesible domains endpoints for user"
+        response = cloud20.getAccessibleDomainEndpointsForUser(token, user.id, domainId)
+
+        then:
+        response.status == SC_OK
+
+        when: "grant roles to user"
+        RoleAssignments assignments = new RoleAssignments().with {
+            TenantAssignments ta = new TenantAssignments()
+            ta.tenantAssignment.add(createTenantAssignment(Constants.ROLE_RBAC1_ID, [tenant.id]))
+            it.tenantAssignments = ta
+            it
+        }
+
+        response = cloud20.grantRoleAssignmentsOnUser(token, user, assignments)
+
+        then:
+        response.status == SC_OK
+
+        when: "delete user product roles"
+        response = cloud20.deleteUserProductRoles(token, user.id, 'rbac')
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "add user to role"
+        response = cloud20.addApplicationRoleToUser(token, role.id, user.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "remove user from role"
+        response = cloud20.deleteApplicationRoleOnUser(token, role.id, user.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "delete user"
+        response = cloud20.deleteUser(token, user.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+    }
+
+    TenantAssignment createTenantAssignment(String roleId, List<String> tenants) {
+        def assignment = new TenantAssignment().with {
+            ta ->
+                ta.onRole = roleId
+                ta.forTenants.addAll(tenants)
+                ta
+        }
+        return assignment
+    }
+
 }

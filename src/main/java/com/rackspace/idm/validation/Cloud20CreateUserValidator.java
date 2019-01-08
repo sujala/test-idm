@@ -3,6 +3,8 @@ package com.rackspace.idm.validation;
 import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.CreateUserUtil;
@@ -41,7 +43,7 @@ public class Cloud20CreateUserValidator {
     @Autowired
     private Validator20 validator20;
 
-    public User validateCreateUserAndGetUserForDefaults(org.openstack.docs.identity.api.v2.User user, User caller) {
+    public User validateCreateUserAndGetUserForDefaults(org.openstack.docs.identity.api.v2.User user, EndUser caller) {
 
         if (StringUtils.isNotBlank(user.getContactId())) {
             validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
@@ -108,28 +110,40 @@ public class Cloud20CreateUserValidator {
         return userForDefaults;
     }
 
-    private User getUserForDefaults(org.openstack.docs.identity.api.v2.User usr, User caller) {
+    private User getUserForDefaults(org.openstack.docs.identity.api.v2.User usr, EndUser caller) {
+        User userForDefaults = null;
+        if (caller instanceof FederatedUser) {
+            // if caller is a federated user,
+            // this means that the user for the defaults should be the enabled user-admin of the domain
+            userForDefaults = getDomainUserAdmin(caller.getDomainId());
+        } else {
+            userForDefaults = (User)caller;
 
-        // if this is a one-user call and we are creating a sub-user,
-        // this means that the user for defaults should be the enabled user-admin of the domain
-        User userForDefaults = caller;
-        if(CreateUserUtil.isCreateUserOneCall(usr) && usr.getRoles() != null && CollectionUtils.isNotEmpty(usr.getRoles().getRole())) {
-            Collection<IdentityUserTypeEnum> userTypeBeingCreated = CollectionUtils.collect(usr.getRoles().getRole(), new Transformer<Role, IdentityUserTypeEnum>() {
-                @Override
-                public IdentityUserTypeEnum transform(Role role) {
-                    return role == null || StringUtils.isBlank(role.getName()) ? null : IdentityUserTypeEnum.fromRoleName(role.getName());
+            // if this is a one-user call and we are creating a sub-user,
+            // this means that the user for defaults should be the enabled user-admin of the domain
+            if(CreateUserUtil.isCreateUserOneCall(usr) && usr.getRoles() != null && CollectionUtils.isNotEmpty(usr.getRoles().getRole())) {
+                Collection<IdentityUserTypeEnum> userTypeBeingCreated = CollectionUtils.collect(usr.getRoles().getRole(), new Transformer<Role, IdentityUserTypeEnum>() {
+                    @Override
+                    public IdentityUserTypeEnum transform(Role role) {
+                        return role == null || StringUtils.isBlank(role.getName()) ? null : IdentityUserTypeEnum.fromRoleName(role.getName());
+                    }
+                });
+                if (userTypeBeingCreated.contains(IdentityUserTypeEnum.DEFAULT_USER) || userTypeBeingCreated.contains(IdentityUserTypeEnum.USER_MANAGER)) {
+                    userForDefaults = getDomainUserAdmin(usr.getDomainId());
                 }
-            });
-            if (userTypeBeingCreated.contains(IdentityUserTypeEnum.DEFAULT_USER) || userTypeBeingCreated.contains(IdentityUserTypeEnum.USER_MANAGER)) {
-                List<User> userAdmins = domainService.getEnabledDomainAdmins(usr.getDomainId());
-                //the user-admins for the domain have already been validate but checking again just to be safe and not return a 500
-                if(CollectionUtils.isEmpty(userAdmins)) {
-                    throw new BadRequestException(DefaultCloud20Service.INVALID_DOMAIN_ERROR);
-                }
-                userForDefaults = userAdmins.get(0);
             }
         }
 
+        return userForDefaults;
+    }
+
+    private User getDomainUserAdmin(String domainId) {
+        User userForDefaults;List<User> userAdmins = domainService.getEnabledDomainAdmins(domainId);
+        //the user-admins for the domain have already been validate but checking again just to be safe and not return a 500
+        if(CollectionUtils.isEmpty(userAdmins)) {
+            throw new BadRequestException(DefaultCloud20Service.INVALID_DOMAIN_ERROR);
+        }
+        userForDefaults = userAdmins.get(0);
         return userForDefaults;
     }
 

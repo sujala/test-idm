@@ -1,6 +1,7 @@
 package com.rackspace.idm.validation;
 
 import com.rackspace.idm.api.security.IdentityRole;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -39,6 +40,9 @@ public class PrecedenceValidator {
     @Autowired
     AuthorizationService authorizationService;
 
+    @Autowired
+    private RequestContextHolder requestContextHolder;
+
     private static final String NOT_AUTHORIZED = "Not Authorized";
 
     public void verifyCallerRolePrecedence(User user, ClientRole role) {
@@ -49,13 +53,18 @@ public class PrecedenceValidator {
         compareWeights(userIdentityRole.getRsWeight(), role.getRsWeight());
     }
 
-    public void verifyCallerRolePrecedence(User user, TenantRole role) {
+    public void verifyCallerRolePrecedence(EndUser user, TenantRole role) {
         ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);
         ClientRole clientRole = applicationService.getClientRoleById(role.getRoleRsId());
         if (userIdentityRole == null) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
         compareWeights(userIdentityRole.getRsWeight(), clientRole.getRsWeight());
+    }
+
+    public void verifyCallerRolePrecedence(IdentityUserTypeEnum callerType, TenantRole role) {
+        ClientRole clientRole = applicationService.getClientRoleById(role.getRoleRsId());
+        compareWeights(callerType.getLevelAsInt(), clientRole.getRsWeight());
     }
 
     public void verifyCallerPrecedenceOverUser(BaseUser caller, BaseUser user) {
@@ -70,6 +79,22 @@ public class PrecedenceValidator {
             }
         } else {
             throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+    }
+
+    public void verifyEffectiveCallerPrecedenceOverUser(BaseUser user) {
+        EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+        if (!(caller instanceof EndUser || caller instanceof FederatedUser)) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+
+        if (!(user instanceof EndUser)) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+        IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+        ClientRole userIdentityRole = applicationService.getUserIdentityRole((EndUser) user);
+        if (userIdentityRole != null) {
+            compareWeights(callerType.getLevelAsInt(), userIdentityRole.getRsWeight());
         }
     }
 
@@ -179,7 +204,7 @@ public class PrecedenceValidator {
         return callerWeight == targetWeight || callerHasLowerWeight(callerWeight, targetWeight);
     }
 
-    public void verifyCallerRolePrecedenceForAssignment(User user, TenantRole role) {
+    public void verifyCallerRolePrecedenceForAssignment(EndUser user, TenantRole role) {
         ClientRole cRole = applicationService.getClientRoleById(role.getRoleRsId());
         verifyCallerRolePrecedenceForAssignment(user, cRole);
     }
@@ -193,7 +218,11 @@ public class PrecedenceValidator {
         compareWeights(callerWeight, role.getRsWeight());
     }
 
-    public void verifyCallerRolePrecedenceForAssignment(User user, Collection<String> roleNames) {
+    public void verifyCallerRolePrecedenceForAssignment(IdentityUserTypeEnum callerType, ClientRole role) {
+        compareWeights(callerType.getLevelAsInt(), role.getRsWeight());
+    }
+
+    public void verifyCallerRolePrecedenceForAssignment(EndUser user, Collection<String> roleNames) {
         ClientRole callerIdentityRole = applicationService.getUserIdentityRole(user);
         if (callerIdentityRole == null) {
             throw new ForbiddenException(NOT_AUTHORIZED);
