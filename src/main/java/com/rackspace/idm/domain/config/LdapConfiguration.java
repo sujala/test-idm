@@ -83,13 +83,13 @@ public class LdapConfiguration {
             SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
             LDAPConnectionOptions ldapConnectionOptions = new LDAPConnectionOptions();
             ldapConnectionOptions.setAllowConcurrentSocketFactoryUse(identityConfig.getStaticConfig().getLDAPServerPoolAllowConcurrentSocketFactoryUse());
+            BindRequest bind = new SimpleBindRequest(bindDn, password);
             ServerSet serverSet;
             if(isSSL) {
-				serverSet = new RoundRobinServerSet(hosts, ports, sslUtil.createSSLSocketFactory(), ldapConnectionOptions);
+                serverSet = new RoundRobinServerSet(hosts, ports, sslUtil.createSSLSocketFactory(), ldapConnectionOptions, bind, null);
             } else {
-            	serverSet = new RoundRobinServerSet(hosts, ports, ldapConnectionOptions);
+                serverSet = new RoundRobinServerSet(hosts, ports, null, ldapConnectionOptions, bind, null);
             }
-            BindRequest bind = new SimpleBindRequest(bindDn, password);
             connPool = new LDAPConnectionPool(serverSet, bind, initPoolSize, maxPoolSize);
             connPool.setRetryFailedOperationsDueToInvalidConnections(true);
             connPool.setHealthCheck(ldapConnectionPoolHealthCheck);
