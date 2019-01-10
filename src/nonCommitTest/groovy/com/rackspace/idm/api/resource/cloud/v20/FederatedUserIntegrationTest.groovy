@@ -47,6 +47,7 @@ import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
+import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -61,6 +62,8 @@ import testHelpers.saml.SamlProducer
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.Constants.ROLE_RBAC1_ID
+import static com.rackspace.idm.Constants.ROLE_RBAC1_ID
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
@@ -2586,6 +2589,48 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUser(userAdmin)
+    }
+
+    def "Fed user can be assigned the user-manager role"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def email = "fedIntTest@invalid.rackspace.com"
+        AuthenticateResponse authResponse = null
+
+        //specify assertion with user-manager role
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, [Constants.USER_MANAGE_ROLE_NAME], email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        when: "auth"
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        authResponse = samlResponse.getEntity(AuthenticateResponse).value
+
+        then: "verify fed user has the user-manager role"
+        samlResponse.status == HttpServletResponse.SC_OK
+
+        verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
+        def roles = authResponse.user.roles.role
+
+        roles.find {it.id == Constants.DEFAULT_USER_ROLE_ID} != null
+        roles.find {it.id == Constants.USER_MANAGE_ROLE_ID} != null
+
+        when: "getting role accessible to user-manager"
+        def fedUserToken = authResponse.token.id
+        def response = cloud20.getRole(fedUserToken, ROLE_RBAC1_ID)
+        def role = response.getEntity(Role).value
+
+        then: "assert correct role is returned"
+        response.status == SC_OK
+
+        role.id == ROLE_RBAC1_ID
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsersQuietly(users)
     }
 
     def getFederatedUser(String domainId, mediaType) {

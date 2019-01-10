@@ -360,7 +360,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
 
         where:
         roleName | errorScenario
-        IdentityUserTypeEnum.USER_MANAGER.roleName | "Non RBAC type role"
+        IdentityUserTypeEnum.USER_ADMIN.roleName | "Non RBAC type role"
         UUID.randomUUID().toString() | "Non-existent role"
     }
 

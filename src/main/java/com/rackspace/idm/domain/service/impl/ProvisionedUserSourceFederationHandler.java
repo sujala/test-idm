@@ -298,7 +298,9 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
                 //TODO: Candidate for caching...
                 ClientRole role = roleService.getRoleByName(roleName);
-                if (role == null || role.getRsWeight() != PrecedenceValidator.RBAC_ROLES_WEIGHT) {
+                if (role == null
+                        || (role.getRsWeight() != PrecedenceValidator.RBAC_ROLES_WEIGHT
+                        && !IdentityUserTypeEnum.USER_MANAGER.getRoleName().equalsIgnoreCase(role.getName()))) {
                     throw new BadRequestException("Invalid role '" + roleName + "'");
                 }
 
