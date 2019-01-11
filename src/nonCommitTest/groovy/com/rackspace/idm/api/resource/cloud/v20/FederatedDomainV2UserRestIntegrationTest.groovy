@@ -33,6 +33,7 @@ import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
+import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenants
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -48,6 +49,7 @@ import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_NAME
 import static org.apache.http.HttpStatus.SC_CREATED
 import static org.apache.http.HttpStatus.SC_OK
 
@@ -490,6 +492,35 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
                 testUtils.createFedUserFeedsRequest(fedUser, EventType.UPDATE.name()),
                 VerificationTimes.exactly(1)
         )
+    }
+
+    def "Allow granting the user-manager role to federated user"() {
+        given:
+        def fedRequest = createFedRequest().with {
+            it.roleNames = [USER_MANAGE_ROLE_NAME] as Set
+            it
+        }
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        AuthenticateResponse entity = null
+
+        when: "authenticating federated user"
+        def authClientResponse = cloud20.authenticateV2FederatedUser(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+        entity = authClientResponse.getEntity(AuthenticateResponse).value
+
+        then: "verify user-manager role is assigned to user"
+        authClientResponse.status == SC_OK
+
+        entity.user.roles.role.find {it.name == USER_MANAGE_ROLE_NAME} != null
+
+        when: "getting role accessible to user-manager"
+        def fedUserToken = entity.token.id
+        def response = cloud20.getRole(fedUserToken, ROLE_RBAC1_ID)
+        def role = response.getEntity(Role).value
+
+        then: "assert correct role is returned"
+        response.status == SC_OK
+
+        role.id == ROLE_RBAC1_ID
     }
 
 

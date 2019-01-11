@@ -434,13 +434,6 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         then:
         samlResponse.status == 400
 
-        when: "user manage role"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, ["identity:user-manage"].asList());
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
-
-        then:
-        samlResponse.status == 400
-
         when: "default user role"
         samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, ["identity:default"].asList());
         samlResponse = cloud20.samlAuthenticate(samlAssertion)

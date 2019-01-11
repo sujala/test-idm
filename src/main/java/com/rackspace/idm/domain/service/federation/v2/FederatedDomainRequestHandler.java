@@ -208,7 +208,9 @@ public class FederatedDomainRequestHandler {
                 //TODO: Candidate for caching...
                 ClientRole role = roleService.getRoleByName(roleName);
                 // Verify role is non-null and assignable by user
-                if (role == null || role.getRsWeight() != PrecedenceValidator.RBAC_ROLES_WEIGHT) {
+                if (role == null ||
+                        (role.getRsWeight() != PrecedenceValidator.RBAC_ROLES_WEIGHT &&
+                         !IdentityUserTypeEnum.USER_MANAGER.getRoleName().equalsIgnoreCase(role.getName()))) {
                     throw new BadRequestException(String.format("Role '%s' is either invalid or unknown.", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
                 }
 
