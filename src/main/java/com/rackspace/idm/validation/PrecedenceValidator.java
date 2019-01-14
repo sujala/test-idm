@@ -83,7 +83,7 @@ public class PrecedenceValidator {
     }
 
     public void verifyEffectiveCallerPrecedenceOverUser(BaseUser user) {
-        EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+        BaseUser caller = (BaseUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
         if (!(caller instanceof EndUser || caller instanceof FederatedUser)) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }

@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.idm.api.security.AuthorizationContext
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.api.security.SecurityContext
@@ -39,8 +40,9 @@ class DefaultMultifactorCloud20Test extends Specification {
     def authorizationService
     def exceptionHandler
     def requestContextHolder
-    def requestContext
+    RequestContext requestContext
     SecurityContext securityContext
+    AuthorizationContext authorizationContext
 
     @Shared def v2Factory = new V2Factory()
 
@@ -76,6 +78,8 @@ class DefaultMultifactorCloud20Test extends Specification {
         requestContextHolder.getRequestContext() >> requestContext
         securityContext = Mock(SecurityContext)
         requestContext.getSecurityContext() >> securityContext
+        authorizationContext = Mock(AuthorizationContext)
+        requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
     }
 
     def "updateMultifactor unlock - allow unlocking another account"() {
@@ -103,8 +107,8 @@ class DefaultMultifactorCloud20Test extends Specification {
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> token
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * requestContextHolder.checkAndGetTargetUser(_) >> targetUser
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_)
-        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(_)
+        1 * authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_MANAGER
         2 * requestContext.getEffectiveCaller() >> caller
         1 * authorizationService.verifyDomain(_,_)
         1 * multiFactorService.updateMultiFactorSettings(_,_)

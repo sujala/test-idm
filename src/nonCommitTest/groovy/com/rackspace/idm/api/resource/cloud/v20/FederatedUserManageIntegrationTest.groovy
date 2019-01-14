@@ -2,10 +2,13 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
@@ -19,7 +22,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.util.OTPHelper
+import com.unboundid.util.Base32
 import org.apache.commons.lang.RandomStringUtils
+import org.apache.http.client.utils.URLEncodedUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -65,6 +71,9 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     ApplicationRoleDao roleDao
+
+    @Autowired
+    OTPHelper otpHelper
 
     def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
@@ -386,6 +395,125 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
 
         when: "remove user from role"
         response = cloud20.deleteApplicationRoleOnUser(token, role.id, user.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "delete user"
+        response = cloud20.deleteUser(token, user.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+    }
+
+
+    def "federated user with user-manage - multifactor" () {
+        when: "create user"
+        def userToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("user"), "display", "email@email.com", true, null, null, "Password1")
+        def response = cloud20.createUser(token, userToCreate)
+        def user = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+
+        when: "add otp device to user"
+        def otpDeviceToCreate = new OTPDevice().with {
+            it.name = "myOtp"
+            it
+        }
+        response = cloud20.addOTPDeviceToUser(token, user.id, otpDeviceToCreate)
+        def otpDevice = response.getEntity(OTPDevice)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "add otp device to user for delete"
+        def otpDeviceToCreate2 = new OTPDevice().with {
+            it.name = "myOtp2"
+            it
+        }
+        response = cloud20.addOTPDeviceToUser(token, user.id, otpDeviceToCreate2)
+        def otpDevice2 = response.getEntity(OTPDevice)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "delete otp device from user"
+        response = cloud20.deleteOTPDeviceFromUser(token, user.id, otpDevice2.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "list otp devices for user"
+        response = cloud20.getOTPDevicesFromUser(token, user.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "get otp device for user by id"
+        response = cloud20.getOTPDeviceFromUser(token, user.id, otpDevice.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "verify otp device"
+        def code = new VerificationCode()
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(otpDevice.getKeyUri()), "UTF-8").find { it.name == 'secret' }.value)
+        code.setCode(otpHelper.TOTP(secret))
+        response = cloud20.verifyOTPDevice(token, user.id, otpDevice.id, code)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "update multifactor settings"
+        def multiFactorSettings = v2Factory.createMultiFactorSettings(true)
+        response = cloud20.updateMultiFactorSettings(token, user.id, multiFactorSettings)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "get multifactor devices from user"
+        response = cloud20.getMultiFactorDevicesFromUser(token, user.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "add mobile phone to user"
+        def requestMobilePhone = v2Factory.createMobilePhone();
+        response = cloud20.addPhoneToUser(token, user.id, requestMobilePhone)
+        def mobilePhone = response.getEntity(MobilePhone)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "send verification code"
+        response = cloud20.sendVerificationCode(token, user.id, mobilePhone.id)
+
+        then:
+        response.status == SC_ACCEPTED
+
+        when: "verify verification code"
+        def constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN)
+        response = cloud20.verifyVerificationCode(token, user.id, mobilePhone.id, constantVerificationCode)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "get phone from user"
+        response = cloud20.getPhoneFromUser(token, user.id, mobilePhone.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "delete phone from user"
+        response = cloud20.deletePhoneFromUser(token, user.id, mobilePhone.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "delete multifactor"
+        response = cloud20.deleteMultiFactor(token, user.id)
 
         then:
         response.status == SC_NO_CONTENT

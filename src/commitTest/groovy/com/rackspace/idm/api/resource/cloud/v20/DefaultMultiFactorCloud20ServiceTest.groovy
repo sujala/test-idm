@@ -401,7 +401,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkUserDisabled(caller) //validates caller user state
         2 * requestContext.getEffectiveCaller() >> caller
         1 * requestContextHolder.checkAndGetTargetUser(targetUser.id) >> targetUser
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, targetUser)
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(targetUser)
     }
 
     def "listOTPDevices: verify authorization logic called appropriately for non-self calls for user admin"() {
@@ -418,8 +418,8 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkUserDisabled(caller) //validates caller user state
         2 * requestContext.getEffectiveCaller() >> caller
         1 * requestContextHolder.checkAndGetTargetUser(targetUser.id) >> targetUser
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, targetUser)
-        1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(targetUser)
+        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
         1 * authorizationService.verifyDomain(caller, targetUser)
     }
 
@@ -473,10 +473,10 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(caller.id) >> caller
         requestContextHolder.checkAndGetTargetUser(user.id) >> user
-        requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
+        requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerUserIdentityRoleType
 
         if (!allowed) {
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> {throw new ForbiddenException()}
+            precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user) >> {throw new ForbiddenException()}
         }
 
         def capturedException
@@ -560,12 +560,12 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         requestContext.getEffectiveCaller() >> caller
         requestContextHolder.checkAndGetTargetUser(caller.id) >> caller
         requestContextHolder.checkAndGetTargetUser(user.id) >> user
-        requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
+        requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerUserIdentityRoleType
 
         multiFactorService.addOTPDeviceToUser(user.id, device.getName()) >> entity
 
         if (!allowed) {
-            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> {throw new ForbiddenException()}
+            precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user) >> {throw new ForbiddenException()}
         }
 
         def capturedException
@@ -685,14 +685,14 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
         requestContext.getEffectiveCaller() >> caller
         requestContextHolder.getAndCheckTargetEndUser(user.id) >> user
-        requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
+        requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerUserIdentityRoleType
 
         when:
         service.deletePhoneFromUser(uriInfo, callerToken.accessTokenString, user.id, "blah")
 
         then: "verify calls appropriate external services to validate"
         1 * userService.validateUserIsEnabled(caller)
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
 
         interaction {
             def domainVerifyCount = callerUserIdentityRoleType.isDomainBasedAccessLevel() && callerUserIdentityRoleType != IdentityUserTypeEnum.DEFAULT_USER ? 1 : 0
@@ -765,14 +765,14 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_) >> callerToken
         requestContext.getEffectiveCaller() >> caller
         requestContextHolder.getAndCheckTargetEndUser(user.id) >> user
-        requestContext.getEffectiveCallersUserType() >> callerUserIdentityRoleType
+        requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerUserIdentityRoleType
 
         when:
         service.getPhoneFromUser(uriInfo, callerToken.accessTokenString, user.id, "blah")
 
         then: "verify calls appropriate external services to validate"
         1 * userService.validateUserIsEnabled(caller)
-        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
 
         interaction {
             def domainVerifyCount = callerUserIdentityRoleType.isDomainBasedAccessLevel() && callerUserIdentityRoleType != IdentityUserTypeEnum.DEFAULT_USER ? 1 : 0

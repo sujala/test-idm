@@ -147,8 +147,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     private void verifyEffectiveCallerAccessToTargetUser(BaseUser user) {
         BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
         if (!isSelfCall(requester, user)) {
-            precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
-            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
             if (callerType == IdentityUserTypeEnum.USER_ADMIN || callerType == IdentityUserTypeEnum.USER_MANAGER) {
                 authorizationService.verifyDomain(requester, user);
             }
