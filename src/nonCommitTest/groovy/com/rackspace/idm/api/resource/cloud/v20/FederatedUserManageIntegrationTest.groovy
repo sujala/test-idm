@@ -86,9 +86,7 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         (user, users) = utils.createUserAdmin(domainId)
         sharedUserGroup = utils.createUserGroup(domainId)
 
-        //TODO: Update once user-manage is allowed to be set on a user-group
-        //utils.grantRoleAssignmentsOnUserGroup(sharedUserGroup, v2Factory.createSingleRoleAssignment(Constants.USER_MANAGE_ROLE_ID, ['*']))
-        grantRoleAssignmentsOnUserGroup(sharedUserGroup)
+        utils.grantRoleAssignmentsOnUserGroup(sharedUserGroup, v2Factory.createSingleRoleAssignment(Constants.USER_MANAGE_ROLE_ID, ['*']))
 
         tenant = utils.createTenant()
         utils.addTenantToDomain(domainId, tenant.id)

@@ -736,8 +736,16 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * applicationService.getClientRoleById(roleId) >> null
         thrown(NotFoundException)
 
-        when: "role administrator is not a user-manager"
-        clientRole.rsWeight = RoleLevelEnum.LEVEL_900.levelAsInt
+        when: "role administrator is not a user-manager/user-admin"
+        clientRole.rsWeight = RoleLevelEnum.LEVEL_750.levelAsInt
+        service.addRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        thrown(ForbiddenException)
+
+        when: "role administrator is not a user-manager/user-admin"
+        clientRole.rsWeight = RoleLevelEnum.LEVEL_500.levelAsInt
         service.addRoleAssignmentOnGroup(group, roleId, tenantId)
 
         then:
@@ -891,8 +899,16 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * applicationService.getClientRoleById(roleId) >> null
         thrown(NotFoundException)
 
-        when: "role administrator is not a user-manager"
-        clientRole.rsWeight = RoleLevelEnum.LEVEL_900.levelAsInt
+        when: "role administrator is not a user-manager/user-admin"
+        clientRole.rsWeight = RoleLevelEnum.LEVEL_750.levelAsInt
+        service.revokeRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        thrown(ForbiddenException)
+
+        when: "role administrator is not a user-manager/user-admin"
+        clientRole.rsWeight = RoleLevelEnum.LEVEL_500.levelAsInt
         service.revokeRoleAssignmentOnGroup(group, roleId, tenantId)
 
         then:

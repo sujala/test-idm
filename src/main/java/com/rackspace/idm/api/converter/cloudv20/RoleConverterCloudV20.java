@@ -146,27 +146,7 @@ public class RoleConverterCloudV20 {
         roleEntity.setPropagate(role.getPropagate());
         roleEntity.setServiceId(role.getClientId());
 
-        RoleLevelEnum roleLevelEnum = RoleLevelEnum.fromInt(role.getRsWeight());
-
-        IdentityUserTypeEnum administratorRole = null;
-        if (roleLevelEnum == RoleLevelEnum.LEVEL_50) {
-            administratorRole = IdentityUserTypeEnum.SERVICE_ADMIN;
-        } else if (roleLevelEnum == RoleLevelEnum.LEVEL_500) {
-            administratorRole = IdentityUserTypeEnum.IDENTITY_ADMIN;
-        } else if (roleLevelEnum == RoleLevelEnum.LEVEL_1000) {
-            administratorRole = IdentityUserTypeEnum.USER_MANAGER;
-        } else if (roleLevelEnum == IdentityUserTypeEnum.IDENTITY_ADMIN.getLevel()) {
-            administratorRole = IdentityUserTypeEnum.SERVICE_ADMIN;
-        } else if (roleLevelEnum == IdentityUserTypeEnum.USER_ADMIN.getLevel()) {
-            administratorRole = IdentityUserTypeEnum.IDENTITY_ADMIN;
-        } else if (roleLevelEnum == IdentityUserTypeEnum.USER_MANAGER.getLevel()) {
-            administratorRole = IdentityUserTypeEnum.USER_ADMIN;
-        } else if (roleLevelEnum == IdentityUserTypeEnum.DEFAULT_USER.getLevel()) {
-            administratorRole = IdentityUserTypeEnum.USER_MANAGER;
-        } else {
-            logger.error(String.format("Client role with id '%s' has an invalid weight of %d", role.getId(), role.getRsWeight()));
-            administratorRole = null;
-        }
+        IdentityUserTypeEnum administratorRole = role.getAdministratorRole();
 
         if (administratorRole != null) {
             roleEntity.setAdministratorRole(administratorRole.getRoleName());

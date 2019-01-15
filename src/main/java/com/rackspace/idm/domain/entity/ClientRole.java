@@ -4,10 +4,14 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+import com.rackspace.idm.domain.service.RoleLevelEnum;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.dozer.Mapping;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.HashSet;
@@ -16,6 +20,7 @@ import java.util.Set;
 @Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, postEncodeMethod="doPostEncode", auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
 public class ClientRole implements Auditable, UniqueId, Metadata {
+    private static final Logger log = LoggerFactory.getLogger(ClientRole.class);
 
 	public static final String SUPER_ADMIN_ROLE = "3";
 	public static final String RACKER = "RackerVirtualRole";
@@ -58,6 +63,31 @@ public class ClientRole implements Auditable, UniqueId, Metadata {
             metadata = new HashSet<String>();
         }
         return metadata;
+    }
+
+    public IdentityUserTypeEnum getAdministratorRole() {
+        RoleLevelEnum roleLevelEnum = RoleLevelEnum.fromInt(rsWeight);
+
+        IdentityUserTypeEnum administratorRole = null;
+        if (roleLevelEnum == RoleLevelEnum.LEVEL_50) {
+            administratorRole = IdentityUserTypeEnum.SERVICE_ADMIN;
+        } else if (roleLevelEnum == RoleLevelEnum.LEVEL_500) {
+            administratorRole = IdentityUserTypeEnum.IDENTITY_ADMIN;
+        } else if (roleLevelEnum == RoleLevelEnum.LEVEL_1000) {
+            administratorRole = IdentityUserTypeEnum.USER_MANAGER;
+        } else if (roleLevelEnum == IdentityUserTypeEnum.IDENTITY_ADMIN.getLevel()) {
+            administratorRole = IdentityUserTypeEnum.SERVICE_ADMIN;
+        } else if (roleLevelEnum == IdentityUserTypeEnum.USER_ADMIN.getLevel()) {
+            administratorRole = IdentityUserTypeEnum.IDENTITY_ADMIN;
+        } else if (roleLevelEnum == IdentityUserTypeEnum.USER_MANAGER.getLevel()) {
+            administratorRole = IdentityUserTypeEnum.USER_ADMIN;
+        } else if (roleLevelEnum == IdentityUserTypeEnum.DEFAULT_USER.getLevel()) {
+            administratorRole = IdentityUserTypeEnum.USER_MANAGER;
+        } else {
+            log.error(String.format("Client role with id '%s' has an invalid weight of %d", id,  rsWeight));
+            administratorRole = null;
+        }
+        return administratorRole;
     }
 
     public RoleTypeEnum getRoleType() {

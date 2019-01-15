@@ -12,12 +12,7 @@ import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.DelegationService;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.RoleLevelEnum;
-import com.rackspace.idm.domain.service.TenantAssignmentService;
-import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -279,8 +274,8 @@ public class DefaultUserGroupService implements UserGroupService {
             throw new NotFoundException(errMsg);
         }
 
-        // Verify the role's administrator is user-manager
-        if (clientRole.getRsWeight() != RoleLevelEnum.LEVEL_1000.getLevelAsInt()) {
+        // Verify the role's administrator is appropriate for user group
+        if (!IdentityUserTypeEnum.USER_ADMIN.hasLevelAccessOf(clientRole.getAdministratorRole())) {
             throw new ForbiddenException("Not authorized to create role assignment.");
         }
 
@@ -327,8 +322,8 @@ public class DefaultUserGroupService implements UserGroupService {
             throw new NotFoundException(errMsg);
         }
 
-        // Verify the role's administrator is user-manager
-        if (clientRole.getRsWeight() != RoleLevelEnum.LEVEL_1000.getLevelAsInt()) {
+        // Verify the role's administrator is appropriate for user group
+        if (!IdentityUserTypeEnum.USER_ADMIN.hasLevelAccessOf(clientRole.getAdministratorRole())) {
             throw new ForbiddenException("Not authorized to create role assignment.");
         }
 

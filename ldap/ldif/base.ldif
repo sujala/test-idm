@@ -1327,6 +1327,7 @@ objectClass: clientRole
 rsId: 7
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: identity:user-manage
+rsAssignment: GLOBAL
 description: User manage role
 rsWeight: 900
 

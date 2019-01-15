@@ -1,6 +1,8 @@
 package com.rackspace.idm.modules.usergroups.api.resource
 
 import com.rackspace.docs.core.event.EventType
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
@@ -8,7 +10,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.RoleAssignmentType
 import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.service.RoleLevelEnum
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
@@ -23,6 +28,9 @@ import testHelpers.RootIntegrationTest
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.Constants.CLIENT_ID
+import static com.rackspace.idm.Constants.USER_ADMIN_ROLE_ID
+import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 
 class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
 
@@ -273,8 +281,12 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         maxTa << [0, 1]
     }
 
+    /**
+     * Verify the user-manage role can be granted/revoked on user groups.  Other tests verify response and such
+     * so this test only needs to verify the operation is allowed (status codes)
+     */
     @Unroll
-    def "Error: Not allowed to grant user-manage role to user group; mediaType = #mediaType"() {
+    def "Allowed to grant and delete user-manage role to user group at domain level; mediaType = #mediaType"() {
         UserGroup group = new UserGroup().with {
             it.domainId = sharedUserAdmin.domainId
             it.name = "addRoleTest_" + RandomStringUtils.randomAlphanumeric(10)
@@ -299,10 +311,137 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         when:
         def response = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments, mediaType)
 
+        then: "allowed"
+        response.status == HttpStatus.SC_OK
+
+        when:
+        response = cloud20.revokeRoleAssignmentFromUserGroup(sharedIdentityAdminToken, createdGroup, USER_MANAGE_ROLE_ID, mediaType)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Error: Not allowed to grant user-manage role to user group at tenant level; mediaType = #mediaType"() {
+        UserGroup group = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.name = "addRoleTest_" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def createdGroup = cloud20.createUserGroup(sharedIdentityAdminToken, group, mediaType).getEntity(UserGroup)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = USER_MANAGE_ROLE_ID
+                            ta.forTenants.add(group.domainId)
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments, mediaType)
+
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN
                 , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_USER_GROUPS_INVALID_ATTRIBUTE
-                , String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, USER_MANAGE_ROLE_ID));
+                , String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_GLOBAL_ROLE_ASSIGNMENT_ONLY_MSG_PATTERN, USER_MANAGE_ROLE_ID));
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Allowed to grant 900 weight role that can be assigned on tenants to user group at tenant level; mediaType = #mediaType"() {
+        // Add a new role
+        ClientRole role = new ClientRole().with {
+            it.rsWeight = RoleLevelEnum.LEVEL_900.levelAsInt
+            it.name = RandomStringUtils.randomAlphabetic(10)
+            it.assignmentType = RoleAssignmentEnum.TENANT.value()
+            it.clientId = IDENTITY_CLIENT_ID
+            it
+        }
+
+        applicationService.addClientRole(role)
+
+        UserGroup group = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.name = "addRoleTest_" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def createdGroup = cloud20.createUserGroup(sharedIdentityAdminToken, group, mediaType).getEntity(UserGroup)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = role.id
+                            ta.forTenants.add(group.domainId)
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments, mediaType)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        when:
+        response = cloud20.revokeRoleAssignmentFromUserGroup(sharedIdentityAdminToken, createdGroup, role.id, mediaType)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        cleanup:
+        applicationService.deleteClientRole(role)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Error: Not allowed to grant user-admin role to user group; mediaType = #mediaType"() {
+        UserGroup group = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.name = "addRoleTest_" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def createdGroup = cloud20.createUserGroup(sharedIdentityAdminToken, group, mediaType).getEntity(UserGroup)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = USER_ADMIN_ROLE_ID
+                            ta.forTenants.add("*")
+                            ta
+                    })
+                    tas
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN
+                , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_USER_GROUPS_INVALID_ATTRIBUTE
+                , String.format(ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, USER_ADMIN_ROLE_ID));
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]

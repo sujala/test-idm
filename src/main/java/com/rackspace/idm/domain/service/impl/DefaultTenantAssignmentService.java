@@ -321,7 +321,7 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
 
             // Validate role being added to userGroup
             String roleId = tenantAssignment.getOnRole();
-            if (cache.roleCache.get(roleId).getRsWeight() != Constants.USER_GROUP_ALLOWED_ROLE_WEIGHT) {
+            if (!IdentityUserTypeEnum.USER_ADMIN.hasLevelAccessOf(cache.roleCache.get(roleId).getAdministratorRole())) {
                 throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId), ERROR_CODE_INVALID_ATTRIBUTE);
             }
         }

@@ -94,6 +94,7 @@ class Constants {
     static String RACKER_DUP_UID = "dup.uid"
     static String RACKER_DUP_UID_PASSWORD = "password"
 
+    static def IDENTITY_CLIENT_ID = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
     static def CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221"
     static def CLIENT_SECRET = "Password1"
 
