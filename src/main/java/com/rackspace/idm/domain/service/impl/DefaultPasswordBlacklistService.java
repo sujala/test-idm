@@ -5,6 +5,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
+import com.newrelic.api.agent.Trace;
 import com.rackspace.idm.domain.config.DynamoDBClientConfiguration;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.service.PasswordBlacklistService;
@@ -28,6 +29,7 @@ public class DefaultPasswordBlacklistService implements PasswordBlacklistService
     @Autowired
     IdentityConfig identityConfig;
 
+    @Trace
     @Override
     public boolean isPasswordInBlacklist(String password) {
         try {
