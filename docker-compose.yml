@@ -6,6 +6,7 @@ services:
     ports:
       - 127.0.0.1:20389:1389
       - 127.0.0.1:20636:1636
+      - 127.0.0.1:8000:8000
       - 127.0.0.1:8080:8080
       - 127.0.0.1:8180:8180
       - 127.0.0.1:10636:10636
@@ -56,14 +57,15 @@ services:
       - ./repose/config:/etc/repose-build/config
     network_mode: "service:network"
 
-# Will uncomment once Jenkins pipeline would have dynamoDB docker image
-#  dynamodb:
-#    image: docker.artifacts.rackspace.net/dynamodb
-#    volumes:
-#      - ./dynamodb/config:/config
-#      - ./dynamodb/data:/data
-#    network_mode: "service:network"
-#
+  dynamodb:
+    image: docker.artifacts.rackspace.net/dynamodb
+    environment:
+      DYNAMODB_PORT: 8000
+    volumes:
+      - ./dynamodb/config:/config
+      - ./dynamodb/data:/data
+    network_mode: "service:network"
+
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
