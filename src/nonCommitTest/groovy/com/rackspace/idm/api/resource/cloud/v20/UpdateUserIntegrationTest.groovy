@@ -773,7 +773,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userManagerSameDomain.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.NOT_AUTHORIZED)
+        assertUsernameUpdated(response, userUpdates, userAllowedToUpdateUsername)
 
         when: "update w/ user manager token from different domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)

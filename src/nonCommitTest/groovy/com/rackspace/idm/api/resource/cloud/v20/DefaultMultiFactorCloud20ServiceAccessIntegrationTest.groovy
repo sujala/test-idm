@@ -214,7 +214,7 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
         serviceAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         identityAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         userAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
-        userManageResponse.getStatus() == HttpStatus.SC_FORBIDDEN
+        userManageResponse.getStatus() == HttpStatus.SC_NO_CONTENT
         defaultUserResponse.getStatus() == HttpStatus.SC_NO_CONTENT
         userManageResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
         defaultUserResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
@@ -309,7 +309,7 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
         serviceAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         identityAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         userAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
-        userManageResponse.getStatus() == HttpStatus.SC_FORBIDDEN
+        userManageResponse.getStatus() == HttpStatus.SC_NO_CONTENT
         defaultUserResponse.getStatus() == HttpStatus.SC_NO_CONTENT
         userManageResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
         defaultUserResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
@@ -403,7 +403,7 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
         serviceAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         identityAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         userAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
-        userManageResponse.getStatus() == HttpStatus.SC_FORBIDDEN
+        userManageResponse.getStatus() == HttpStatus.SC_OK
         defaultUserResponse.getStatus() == HttpStatus.SC_OK
         userManageResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
         defaultUserResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
@@ -507,7 +507,7 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
         serviceAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         identityAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         userAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
-        userManageResponse.getStatus() == HttpStatus.SC_FORBIDDEN
+        userManageResponse.getStatus() == HttpStatus.SC_NO_CONTENT
         defaultUserResponse.getStatus() == HttpStatus.SC_NO_CONTENT
         userManageResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
         defaultUserResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
@@ -613,7 +613,7 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
         serviceAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         identityAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         userAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
-        userManageResponse.getStatus() == HttpStatus.SC_FORBIDDEN
+        userManageResponse.getStatus() == HttpStatus.SC_ACCEPTED
         defaultUserResponse.getStatus() == HttpStatus.SC_ACCEPTED
         userManageResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
         defaultUserResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
@@ -716,7 +716,7 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
         serviceAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         identityAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         userAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
-        userManageResponse.getStatus() == HttpStatus.SC_FORBIDDEN
+        userManageResponse.getStatus() == HttpStatus.SC_CREATED
         defaultUserResponse.getStatus() == HttpStatus.SC_CREATED
         userManageResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
         defaultUserResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
@@ -826,7 +826,7 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
         serviceAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         identityAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
         userAdminResponse.getStatus() == HttpStatus.SC_FORBIDDEN
-        userManageResponse.getStatus() == HttpStatus.SC_FORBIDDEN
+        userManageResponse.getStatus() == HttpStatus.SC_OK
         defaultUserResponse.getStatus() == HttpStatus.SC_OK
         userManageResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN
         defaultUserResponseOtherDomain.getStatus() == HttpStatus.SC_FORBIDDEN

@@ -590,10 +590,10 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         when: "User-manager"
         returnedUsers = utils.listUsers(utils.getToken(userManage.username))
 
-        then: "new behavior filters user-admins and user-managers"
+        then: "new behavior filters user-admins"
         returnedUsers.find {it.id == userAdmin.id} == null
         returnedUsers.find {it.id == userManage.id} != null
-        returnedUsers.find {it.id == userManage2.id} == null
+        returnedUsers.find {it.id == userManage2.id} != null
         returnedUsers.find {it.id == defaultUser.id} != null
 
         when: "default user w/ flag enabled"
@@ -637,10 +637,10 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         when: "User-manager"
         returnedUsers = utils.getUsersByEmail(commonEmail, utils.getToken(userManage.username))
 
-        then: "new behavior filters out user-admins and other user-managers"
+        then: "new behavior filters out user-admins"
         returnedUsers.find {it.id == userAdmin.id} == null
         returnedUsers.find {it.id == userManage.id} != null
-        returnedUsers.find {it.id == userManage2.id} == null
+        returnedUsers.find {it.id == userManage2.id} != null
         returnedUsers.find {it.id == defaultUser.id} != null
 
         when: "default user"
@@ -719,10 +719,10 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         userManage2Response = cloud20.getUserByName(token, userManage2.username)
         defaultUserResponse = cloud20.getUserByName(token, defaultUser.username)
 
-        then: "new behavior only allows self and default users"
+        then: "new behavior only allows self, default users and user-manage"
         userAdminResponse.status == SC_FORBIDDEN
         userManageResponse.status == SC_OK
-        userManage2Response.status == SC_FORBIDDEN
+        userManage2Response.status == SC_OK
         defaultUserResponse.status == SC_OK
 
         when: "default user"

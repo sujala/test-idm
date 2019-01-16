@@ -82,19 +82,29 @@ public class PrecedenceValidator {
         }
     }
 
+    /**
+     * Verifies that effective caller has precedence over user by only checking the identity roles. User-manager will be
+     * allow to have precedence over other user-manage.
+     *
+     * @throws ForbiddenException
+     * @param user
+     */
     public void verifyEffectiveCallerPrecedenceOverUser(BaseUser user) {
-        BaseUser caller = (BaseUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
-        if (!(caller instanceof EndUser || caller instanceof FederatedUser)) {
+        BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+        if (!(caller instanceof EndUser)) {
             throw new ForbiddenException(NOT_AUTHORIZED);
         }
 
-        if (!(user instanceof EndUser)) {
-            throw new ForbiddenException(NOT_AUTHORIZED);
-        }
         IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
         ClientRole userIdentityRole = applicationService.getUserIdentityRole((EndUser) user);
         if (userIdentityRole != null) {
-            compareWeights(callerType.getLevelAsInt(), userIdentityRole.getRsWeight());
+            if(!(IdentityUserTypeEnum.USER_MANAGER == callerType && callerType.getRoleName().equalsIgnoreCase(userIdentityRole.getName()))) {
+                compareWeights(callerType.getLevelAsInt(), userIdentityRole.getRsWeight());
+            }
+        }
+
+        if (callerType.isDomainBasedAccessLevel()) {
+            authorizationService.verifyDomain(caller, user);
         }
     }
 

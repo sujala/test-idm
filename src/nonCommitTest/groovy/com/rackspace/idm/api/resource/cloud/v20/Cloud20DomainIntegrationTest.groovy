@@ -270,7 +270,11 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def domain = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domain)
-        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        def userManage2 = utils.createUser(utils.getToken(userAdmin.username), testUtils.getRandomUUID(), domain, userAdmin.defaultRegion)
+        utils.addRoleToUser(userManage2, USER_MANAGE_ROLE_ID)
+
+        def users = [defaultUser, userManage, userManage2, userAdmin, identityAdmin]
 
         // Create tenant
         def tenantDomain = utils.createDomainEntity()
@@ -336,6 +340,16 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domains.domain.find {it.id == userAdmin.domainId} != null
         domains.domain.find {it.id == tenantDomain.id} != null
 
+         when: "caller: user manage, target user: user-manager"
+        response = cloud20.getAccessibleDomainsForUser(utils.getToken(userManage.username), userManage2.id)
+
+        then:
+        response.status == SC_OK
+
+        domains.domain.size() == 2
+        domains.domain.find {it.id == userAdmin.domainId} != null
+        domains.domain.find {it.id == tenantDomain.id} != null
+
         when: "caller: user manage, target user: default user"
         response = cloud20.getAccessibleDomainsForUser(utils.getToken(userManage.username), defaultUser.id)
 
@@ -382,12 +396,6 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         when: "caller: user admin, target: user admin - different domain"
         response = cloud20.getAccessibleDomainsForUser(userAdminToken, userAdmin2.id)
-
-        then:
-        response.status == SC_FORBIDDEN
-
-        when: "caller: user manage, target: user manage - same domain"
-        response = cloud20.getAccessibleDomainsForUser(utils.getToken(userManage.username), secondUserManage.id)
 
         then:
         response.status == SC_FORBIDDEN

@@ -95,10 +95,13 @@ class TestListUsersByUserManager(base.TestBaseV2):
 
         self.assertIn(self.user_manager_name,
                       str(resp.json()[const.USERS]))
-        # exclude other user managers
+
+        # include user-manage from same domain
+        self.assertIn(self.user_manager_name2,
+                      str(resp.json()[const.USERS]))
+
+        # exclude user-manage from different domain
         self.assertNotIn(self.user_manager_name3,
-                         str(resp.json()[const.USERS]))
-        self.assertNotIn(self.user_manager_name2,
                          str(resp.json()[const.USERS]))
 
     @tags('positive', 'p0', 'smoke')
@@ -108,18 +111,18 @@ class TestListUsersByUserManager(base.TestBaseV2):
         resp = self.user_manager_client.list_users(
             option={'name': self.user_manager_name})
         self.assertEqual(resp.status_code, 200)
-
-        # list other user manager name return 403
-        resp2 = self.user_manager_client.list_users(
-            option={'name': self.user_manager_name2})
-
-        resp3 = self.user_manager_client.list_users(
-            option={'name': self.user_manager_name3})
-
         self.assertEqual(resp.json()[const.USER][const.USERNAME],
                          self.user_manager_name)
+
+        resp2 = self.user_manager_client.list_users(
+            option={'name': self.user_manager_name2})
+        self.assertEqual(resp2.status_code, 200)
+        self.assertEqual(resp2.json()[const.USER][const.USERNAME],
+                         self.user_manager_name2)
+
         # list other user manager name return 403
-        self.assertEqual(resp2.status_code, 403)
+        resp3 = self.user_manager_client.list_users(
+            option={'name': self.user_manager_name3})
         self.assertEqual(resp3.status_code, 403)
 
     @tags('positive', 'p1', 'regression')
@@ -167,9 +170,9 @@ class TestListUsersByUserManager(base.TestBaseV2):
         # list with same email
         self.assertIn(self.user_manager_name,
                       str(resp3.json()[const.USERS]))
+        self.assertIn(self.user_manager_name2,
+                      str(resp3.json()[const.USERS]))
         # exclude other user managers
-        self.assertNotIn(self.user_manager_name2,
-                         str(resp3.json()[const.USERS]))
         self.assertNotIn(self.user_manager_name3,
                          str(resp3.json()[const.USERS]))
 

@@ -113,7 +113,7 @@ class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationT
         deleteUserQuietly(userAdmin)
     }
 
-    def "user manage role CANNOT update another user manage role"() {
+    def "user manage role update another user manage role"() {
         setup:
         User userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
@@ -133,7 +133,7 @@ class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationT
         def updateResult = cloud20.updateUser(defaultUserToken, defaultUser2.getId(), defaultUser2)
 
         then:
-        updateResult.status == HttpStatus.FORBIDDEN.value()
+        updateResult.status == HttpStatus.OK.value()
 
         cleanup:
         deleteUserQuietly(defaultUser)
