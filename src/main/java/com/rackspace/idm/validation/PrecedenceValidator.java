@@ -86,6 +86,9 @@ public class PrecedenceValidator {
      * Verifies that effective caller has precedence over user by only checking the identity roles. User-manager will be
      * allow to have precedence over other user-manage.
      *
+     * If the caller is a domain based caller (user-admin/user-manager/default) this method will verify the caller and
+     * user have the same domain.
+     *
      * @throws ForbiddenException
      * @param user
      */
@@ -96,6 +99,10 @@ public class PrecedenceValidator {
         }
 
         IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+        if (callerType == null) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+
         ClientRole userIdentityRole = applicationService.getUserIdentityRole((EndUser) user);
         if (userIdentityRole != null) {
             if(!(IdentityUserTypeEnum.USER_MANAGER == callerType && callerType.getRoleName().equalsIgnoreCase(userIdentityRole.getName()))) {

@@ -4472,7 +4472,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
 
             if (!authorizationService.isSelf(caller, user)) {
-                precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
+                IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+                if (!callerType.hasAtLeastIdentityAdminAccessLevel()) {
+                    precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
+                }
             }
 
             domainService.checkAndGetDomain(domainId);
