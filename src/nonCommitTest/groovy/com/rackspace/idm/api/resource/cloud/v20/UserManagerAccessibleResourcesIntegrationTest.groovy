@@ -83,6 +83,29 @@ class UserManagerAccessibleResourcesIntegrationTest extends RootIntegrationTest 
         deleteResponse.status == SC_NO_CONTENT
     }
 
+    def "error check: user-manage CANNOT add/delete role to another user-manage in different domain"() {
+        given:
+        def domainIdOther = utils.createDomain()
+        def identityAdminOther, userAdminOther, userManageOther, defaultUserOther
+        (identityAdminOther, userAdminOther, userManageOther, defaultUserOther) = utils.createUsers(domainIdOther)
+        def users = [defaultUserOther, userManageOther, userAdminOther, identityAdminOther]
+
+        when: "add role"
+        def addResponse = cloud20.addUserRole(userManageToken, userManageOther.id, ROLE_RBAC1_ID)
+
+        then:
+        addResponse.status == SC_FORBIDDEN
+
+        when: "delete role"
+        def deleteResponse = cloud20.deleteApplicationRoleFromUser(userManageToken, ROLE_RBAC1_ID, userManageOther.id)
+
+        then:
+        deleteResponse.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+    }
+
     def "user-manage can add/delete role on tenant to another user-manage in the same domain"() {
         when: "add role to user on tenant"
         def response = cloud20.addRoleToUserOnTenant(userManageToken, tenant.id, userManage2.id, ROLE_RBAC1_ID)
@@ -95,6 +118,29 @@ class UserManagerAccessibleResourcesIntegrationTest extends RootIntegrationTest 
 
         then:
         deleteResponse.status == SC_NO_CONTENT
+    }
+
+    def "error check: user-manage CANNOT add/delete role on tenant to another user-manage in the different domain"() {
+        given:
+        def domainIdOther = utils.createDomain()
+        def identityAdminOther, userAdminOther, userManageOther, defaultUserOther
+        (identityAdminOther, userAdminOther, userManageOther, defaultUserOther) = utils.createUsers(domainIdOther)
+        def users = [defaultUserOther, userManageOther, userAdminOther, identityAdminOther]
+
+        when: "add role to user on tenant"
+        def response = cloud20.addRoleToUserOnTenant(userManageToken, tenant.id, userManageOther.id, ROLE_RBAC1_ID)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "delete role from user on tenant"
+        def deleteResponse = cloud20.deleteRoleFromUserOnTenant(userManageToken, tenant.id, userManageOther.id, ROLE_RBAC1_ID)
+
+        then:
+        deleteResponse.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
     }
 
     def "user-manage can update another user-manage in the same domain"() {
@@ -111,7 +157,27 @@ class UserManagerAccessibleResourcesIntegrationTest extends RootIntegrationTest 
         entity.email == email
     }
 
-    def "user-manage can get/delete/reset another user-manage API key credentials"() {
+    def "error check: user-manage CANNOT update another user-manage in the different domain"() {
+        given:
+        def domainIdOther = utils.createDomain()
+        def identityAdminOther, userAdminOther, userManageOther, defaultUserOther
+        (identityAdminOther, userAdminOther, userManageOther, defaultUserOther) = utils.createUsers(domainIdOther)
+        def users = [defaultUserOther, userManageOther, userAdminOther, identityAdminOther]
+
+        def email = "anotherEmail@test.com"
+        def userToUpdate = v2Factory.createUserForUpdate(null, null, null, email, true, null, null)
+
+        when: "update user's email"
+        def response = cloud20.updateUser(userManageToken, userManageOther.id, userToUpdate)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+    }
+
+    def "user-manage can get/delete/reset another user-manage API key credentials in the same domain"() {
         given:
         utils.addApiKeyToUser(userManage2)
 
@@ -123,13 +189,42 @@ class UserManagerAccessibleResourcesIntegrationTest extends RootIntegrationTest 
         response.status == SC_NO_CONTENT
         getApiKeyResponse.status == SC_NOT_FOUND
 
-        then: "reset and get API key"
+        when: "reset and get API key"
         def resetResponse = cloud20.resetUserApiKey(userManageToken, userManage2.id)
         ApiKeyCredentials resetCred = utils.getUserApiKey(userManage2)
 
         then:
         resetResponse.status == SC_OK
         assert StringUtils.isNoneBlank(resetCred.apiKey)
+    }
+
+    def "error check: user-manage CANNOT get/delete/reset another user-manage API key credentials in a different domain"() {
+        def domainIdOther = utils.createDomain()
+        def identityAdminOther, userAdminOther, userManageOther, defaultUserOther
+        (identityAdminOther, userAdminOther, userManageOther, defaultUserOther) = utils.createUsers(domainIdOther)
+        def users = [defaultUserOther, userManageOther, userAdminOther, identityAdminOther]
+        utils.addApiKeyToUser(userManage2)
+
+        when: "get API key"
+        def getApiKeyResponse = cloud20.getUserApiKey(userManageToken, userManageOther.id)
+
+        then:
+        getApiKeyResponse.status == SC_FORBIDDEN
+
+        when: "delete API key"
+        def response = cloud20.deleteUserApiKey(userManageToken, userManageOther.id)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "reset API key"
+        def resetResponse = cloud20.resetUserApiKey(userManageToken, userManageOther.id)
+
+        then:
+        resetResponse.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
     }
 
 }

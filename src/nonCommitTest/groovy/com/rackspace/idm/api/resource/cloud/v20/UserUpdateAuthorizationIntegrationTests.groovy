@@ -113,7 +113,7 @@ class UserUpdateAuthorizationIntegrationTests extends RootConcurrentIntegrationT
         deleteUserQuietly(userAdmin)
     }
 
-    def "user manage role update another user manage role"() {
+    def "user manage role can update another user manage role"() {
         setup:
         User userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
