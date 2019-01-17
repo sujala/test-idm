@@ -67,11 +67,10 @@ class TenantServiceTests extends RootServiceTest {
         1 * domainService.getDomain(domainId) >> domain
         1 * applicationService.getCachedClientRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
+        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.DEFAULT_USER
         if (excludeTenantType) {
-            1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
             0 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
         } else {
-            0 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
             1 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
         }
 
@@ -132,7 +131,6 @@ class TenantServiceTests extends RootServiceTest {
         1 * domainService.getDomain(domainId) >> domain
         1 * applicationService.getCachedClientRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
-        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
 
         and: "the user did not get the tenant-access role and the role was not loaded to populate the role details"
         0 * applicationService.getCachedClientRoleById(tenantAccessRole.id) >> tenantAccessRole
@@ -182,7 +180,7 @@ class TenantServiceTests extends RootServiceTest {
         1 * domainService.getDomain(domainId) >> domain
         1 * applicationService.getCachedClientRoleByName(Constants.IDENTITY_TENANT_ACCESS_ROLE_NAME) >> tenantAccessRole
         1 * identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom() >> excludedTenantTypes
-        1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> userType
+        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> userType
 
         and: "the auto-assign role is only loaded by id to populate the role details for users that actually get the role"
         if (IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType) {

@@ -34,6 +34,8 @@ import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
 
+import javax.xml.datatype.DatatypeFactory
+
 import static org.apache.http.HttpStatus.*
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
@@ -47,6 +49,9 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
 
     @Shared
     def domainId
+
+    @Shared
+    def otherDomainId
 
     @Shared
     def sharedUserGroup
@@ -85,6 +90,8 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         domainId = utils.createDomain()
         (user, users) = utils.createUserAdmin(domainId)
         sharedUserGroup = utils.createUserGroup(domainId)
+        otherDomainId = utils.createDomain()
+        utils.createDomain(v2Factory.createDomain(otherDomainId, otherDomainId))
 
         utils.grantRoleAssignmentsOnUserGroup(sharedUserGroup, v2Factory.createSingleRoleAssignment(Constants.USER_MANAGE_ROLE_ID, ['*']))
 
@@ -141,11 +148,23 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         response.status == SC_OK
 
         when: "update domain"
+        def newDuration = DatatypeFactory.newInstance().newDuration(300 * 1000)
         domainEntity.description = "updated"
-        cloud20.updateDomain(token, domainId, domainEntity)
+        domainEntity.sessionInactivityTimeout = newDuration
+        response = cloud20.updateDomain(token, domainId, domainEntity)
+        def updatedDomainEntity = response.getEntity(Domain)
 
         then:
         response.status == SC_OK
+        updatedDomainEntity.sessionInactivityTimeout == newDuration
+
+        when: "update domain user does not belong access"
+        def otherDomainEntity = utils.getDomain(otherDomainId)
+        otherDomainEntity.description = "can not updated"
+        response = cloud20.updateDomain(token, otherDomainId, otherDomainEntity)
+
+        then:
+        response.status == SC_FORBIDDEN
     }
 
     def "federated user with user-manage - user-group" () {
@@ -333,6 +352,12 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_CREATED
+
+        when: "add user invite"
+        response = cloud20.createUnverifiedUser(token, v2Factory.createUnverifiedUser(otherDomainId))
+
+        then:
+        response.status == SC_FORBIDDEN
 
         when: "send unverified user invite"
         response = cloud20.sendUnverifiedUserInvite(token, unverifiedUser.id)

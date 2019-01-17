@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
@@ -321,13 +322,7 @@ public class DefaultTenantService implements TenantService {
             List<TenantRole> rolesToMerge = new ArrayList<>();
 
             // Get the list of tenant roles explicitly assigned to the user
-            Iterable<TenantRole> itTenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
-
-            // Create the identity:tenant-access role if required
-            TenantRole implicitRole = createTenantRoleForAutoAssignment(user);
-            if (implicitRole != null) {
-                rolesToMerge.add(implicitRole);
-            }
+            List<TenantRole> tenantRoles = Lists.newArrayList(this.tenantRoleDao.getTenantRolesForUser(user));
 
             /*
              If the user has user groups associated with it, only include group membership roles if user groups are enabled
@@ -354,7 +349,20 @@ public class DefaultTenantService implements TenantService {
                     rolesToMerge.addAll(groupRoles);
                 }
             }
-            userTenantRoles.addAll(roleUtil.mergeTenantRoleSets(itTenantRoles, rolesToMerge));
+
+            List<TenantRole> tempTenantRoles = new ArrayList<>();
+            tempTenantRoles.addAll(tenantRoles);
+            tempTenantRoles.addAll(rolesToMerge);
+            IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(tempTenantRoles);
+
+            // Create the identity:tenant-access role if required
+            TenantRole implicitRole = createTenantRoleForAutoAssignment(user, userType);
+            if (implicitRole != null) {
+                rolesToMerge.add(implicitRole);
+            }
+
+            userTenantRoles.addAll(roleUtil.mergeTenantRoleSets(tenantRoles, rolesToMerge));
+
         }
         return userTenantRoles;
     }
@@ -488,7 +496,7 @@ public class DefaultTenantService implements TenantService {
      * @param user
      * @return
      */
-    private TenantRole createTenantRoleForAutoAssignment(BaseUser user) {
+    private TenantRole createTenantRoleForAutoAssignment(BaseUser user, IdentityUserTypeEnum userType) {
         TenantRole implicitRole = null;
 
         // If enabled, auto-assign access role to all tenants within user's domain
@@ -512,19 +520,12 @@ public class DefaultTenantService implements TenantService {
 
                     List<String> excludeTenantPrefixes = identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom();
                     if (CollectionUtils.isNotEmpty(excludeTenantPrefixes)) {
-                        IdentityUserTypeEnum userType = null;
                         for (String tenantId : tenantIds) {
                             String tenantPrefix = parseTenantPrefixFromTenantId(tenantId);
                             if (StringUtils.isNotBlank(tenantPrefix) && excludeTenantPrefixes.contains(tenantPrefix)) {
-                                if (userType == null) {
-                                    // Note - if user doesn't have a identity type role then this would be called once per excluded tenant
-                                    // However, since that shouldn't happen, not worried about that inefficiency
-                                    userType = authorizationService.getIdentityTypeRoleAsEnum(user);
-                                }
                                 if (!(IdentityUserTypeEnum.USER_ADMIN == userType) && !(IdentityUserTypeEnum.USER_MANAGER == userType)) {
                                     tenantIdsToGetAutoAssignRole.remove(tenantId);
                                 }
-
                             }
                         }
                     }
@@ -1804,7 +1805,7 @@ public class DefaultTenantService implements TenantService {
                 Map<String, List<TenantRole>> systemRoleMap = new HashMap<>();
 
                 // Assign the identity:tenant-access role if required
-                TenantRole systemAssignedRole = createTenantRoleForAutoAssignment(user);
+                TenantRole systemAssignedRole = createTenantRoleForAutoAssignment(user, authorizationService.getIdentityTypeRoleAsEnum(user));
                 if (systemAssignedRole != null) {
                     systemRoleMap.put(SYSTEM_SOURCE_IDENTITY, Arrays.asList(systemAssignedRole));
                 }
@@ -1922,7 +1923,7 @@ public class DefaultTenantService implements TenantService {
                 Map<String, List<TenantRole>> systemRoleMap = new HashMap<>();
 
                 // Assign the identity:tenant-access role if required
-                TenantRole systemAssignedRole = createTenantRoleForAutoAssignment(provisionedUserDelegate);
+                TenantRole systemAssignedRole = createTenantRoleForAutoAssignment(provisionedUserDelegate, authorizationService.getIdentityTypeRoleAsEnum(provisionedUserDelegate));
                 if (systemAssignedRole != null) {
                     systemRoleMap.put(SYSTEM_SOURCE_IDENTITY, Arrays.asList(systemAssignedRole));
                 }
