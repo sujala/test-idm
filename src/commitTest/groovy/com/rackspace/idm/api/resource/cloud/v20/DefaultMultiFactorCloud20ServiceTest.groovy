@@ -419,8 +419,6 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         2 * requestContext.getEffectiveCaller() >> caller
         1 * requestContextHolder.checkAndGetTargetUser(targetUser.id) >> targetUser
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(targetUser)
-        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * authorizationService.verifyDomain(caller, targetUser)
     }
 
     def "listOTPDevices: verify authorization logic called appropriately for self calls"() {
@@ -694,11 +692,6 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         1 * userService.validateUserIsEnabled(caller)
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
 
-        interaction {
-            def domainVerifyCount = callerUserIdentityRoleType.isDomainBasedAccessLevel() && callerUserIdentityRoleType != IdentityUserTypeEnum.DEFAULT_USER ? 1 : 0
-            domainVerifyCount * authorizationService.verifyDomain(caller, user)
-        }
-
         where:
         callerUserIdentityRoleType              | _
         IdentityUserTypeEnum.SERVICE_ADMIN      | _
@@ -773,11 +766,6 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         then: "verify calls appropriate external services to validate"
         1 * userService.validateUserIsEnabled(caller)
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
-
-        interaction {
-            def domainVerifyCount = callerUserIdentityRoleType.isDomainBasedAccessLevel() && callerUserIdentityRoleType != IdentityUserTypeEnum.DEFAULT_USER ? 1 : 0
-            domainVerifyCount * authorizationService.verifyDomain(caller, user)
-        }
 
         where:
         callerUserIdentityRoleType              | _

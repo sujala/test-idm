@@ -108,9 +108,7 @@ class DefaultMultifactorCloud20Test extends Specification {
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * requestContextHolder.checkAndGetTargetUser(_) >> targetUser
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(_)
-        1 * authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.USER_MANAGER
         2 * requestContext.getEffectiveCaller() >> caller
-        1 * authorizationService.verifyDomain(_,_)
         1 * multiFactorService.updateMultiFactorSettings(_,_)
         response.status == HttpStatus.SC_NO_CONTENT
     }

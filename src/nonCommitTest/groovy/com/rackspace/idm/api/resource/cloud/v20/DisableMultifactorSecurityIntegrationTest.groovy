@@ -145,7 +145,7 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
         TokenType.SERVICE_ADMIN  | 403                   | 204                   | 204                        | 204                         | 204                          | 204                           | 204                          | 204                           | 204
         TokenType.IDENTITY_ADMIN | 403                   | 403                   | 204                        | 204                         | 204                          | 204                           | 204                          | 204                           | 204
         TokenType.USER_ADMIN     | 403                   | 403                   | 403                        | 403                         | 403                          | 204                           | 403                          | 204                           | 204
-        TokenType.USER_MANAGE    | 403                   | 403                   | 403                        | 403                         | 403                          | 403                           | 403                          | 204                           | 204
+        TokenType.USER_MANAGE    | 403                   | 403                   | 403                        | 403                         | 403                          | 204                           | 403                          | 204                           | 204
         TokenType.DEFAULT_USER   | 403                   | 403                   | 403                        | 403                         | 403                          | 403                           | 403                          | 403                           | 204
     }
 
@@ -240,7 +240,7 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
         TokenType.SERVICE_ADMIN  | 403                   | 204                   | 204                        | 204                         | 204                          | 204                           | 204                          | 204                           | 204
         TokenType.IDENTITY_ADMIN | 403                   | 403                   | 204                        | 204                         | 204                          | 204                           | 204                          | 204                           | 204
         TokenType.USER_ADMIN     | 403                   | 403                   | 403                        | 403                         | 403                          | 204                           | 403                          | 204                           | 204
-        TokenType.USER_MANAGE    | 403                   | 403                   | 403                        | 403                         | 403                          | 403                           | 403                          | 204                           | 204
+        TokenType.USER_MANAGE    | 403                   | 403                   | 403                        | 403                         | 403                          | 204                           | 403                          | 204                           | 204
         TokenType.DEFAULT_USER   | 403                   | 403                   | 403                        | 403                         | 403                          | 403                           | 403                          | 403                           | 204
     }
 

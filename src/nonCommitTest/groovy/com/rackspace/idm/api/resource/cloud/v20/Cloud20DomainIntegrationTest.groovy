@@ -270,7 +270,11 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def domain = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domain)
-        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        def userManage2 = utils.createUser(utils.getToken(userAdmin.username), testUtils.getRandomUUID(), domain, userAdmin.defaultRegion)
+        utils.addRoleToUser(userManage2, USER_MANAGE_ROLE_ID)
+
+        def users = [defaultUser, userManage, userManage2, userAdmin, identityAdmin]
 
         // Create tenant
         def tenantDomain = utils.createDomainEntity()
@@ -336,6 +340,16 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domains.domain.find {it.id == userAdmin.domainId} != null
         domains.domain.find {it.id == tenantDomain.id} != null
 
+         when: "caller: user manage, target user: user-manager"
+        response = cloud20.getAccessibleDomainsForUser(utils.getToken(userManage.username), userManage2.id)
+
+        then:
+        response.status == SC_OK
+
+        domains.domain.size() == 2
+        domains.domain.find {it.id == userAdmin.domainId} != null
+        domains.domain.find {it.id == tenantDomain.id} != null
+
         when: "caller: user manage, target user: default user"
         response = cloud20.getAccessibleDomainsForUser(utils.getToken(userManage.username), defaultUser.id)
 
@@ -386,12 +400,6 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_FORBIDDEN
 
-        when: "caller: user manage, target: user manage - same domain"
-        response = cloud20.getAccessibleDomainsForUser(utils.getToken(userManage.username), secondUserManage.id)
-
-        then:
-        response.status == SC_FORBIDDEN
-
         when: "caller: user manager, target: default user - different domain"
         response = cloud20.getAccessibleDomainsForUser(utils.getToken(userManage.username), defaultUser2.id)
 
@@ -407,6 +415,74 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsersQuietly(users)
         utils.deleteUsersQuietly(users2)
+    }
+
+    def "list accessible domain endpoints for user"() {
+        given:
+        def domain = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domain)
+
+        def userManage2 = utils.createUser(utils.getToken(userAdmin.username), testUtils.getRandomUUID(), domain, userAdmin.defaultRegion)
+        utils.addRoleToUser(userManage2, USER_MANAGE_ROLE_ID)
+
+        def users = [defaultUser, userManage, userManage2, userAdmin, identityAdmin]
+
+        // Create tenant
+        def tenantName = testUtils.getRandomUUID("tenant")
+        def tenant = utils.createTenant(tenantName, true, tenantName, domain)
+
+        // Create propagating role
+        def role = utils.createPropagatingRole()
+
+        // Add tenantRole to user
+        utils.addRoleToUserOnTenant(userAdmin, tenant, role.id)
+
+        when: "self caller"
+        def response = cloud20.getAccessibleDomainEndpointsForUser(utils.getToken(userAdmin.username), userAdmin.id, domain)
+
+        then:
+        response.status == SC_OK
+
+        when: "caller: identity admin, target: service admin"
+        // NOTE: identity admins are allowed to retrieve the accessible domain endpoints of a service admin
+        response = cloud20.getAccessibleDomainEndpointsForUser(utils.identityAdminToken, Constants.SERVICE_ADMIN_ID, domain)
+
+        then:
+        response.status == SC_OK
+
+        when: "caller: service admin, target user: user admin"
+        response = cloud20.getAccessibleDomainEndpointsForUser(utils.serviceAdminToken, userAdmin.id, domain)
+
+        then:
+        response.status == SC_OK
+
+        when: "caller: identity admin, target user: user admin"
+        response = cloud20.getAccessibleDomainEndpointsForUser(utils.identityAdminToken, userAdmin.id, domain)
+
+        then:
+        response.status == SC_OK
+
+        when: "caller: user admin, target user: user manage"
+        response = cloud20.getAccessibleDomainEndpointsForUser(utils.getToken(userAdmin.username), userManage.id, domain)
+
+        then:
+        response.status == SC_OK
+
+         when: "caller: user manage, target user: user-manager"
+        response = cloud20.getAccessibleDomainEndpointsForUser(utils.getToken(userManage.username), userManage2.id, domain)
+
+        then:
+        response.status == SC_OK
+
+        when: "caller: user manage, target user: default user"
+        response = cloud20.getAccessibleDomainEndpointsForUser(utils.getToken(userManage.username), defaultUser.id, domain)
+
+        then:
+        response.status == SC_OK
+
+        cleanup:
+        utils.deleteUsers(users)
     }
 
     def "Test if 'cloud20Service.addTenant(...)' adds default 'domainId' to the tenant and updates domain to point to tenant"() {

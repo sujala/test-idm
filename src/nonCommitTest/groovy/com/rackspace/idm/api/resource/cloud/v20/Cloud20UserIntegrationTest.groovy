@@ -184,7 +184,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId2)
     }
 
-    def "User manage within the same domain should not be allowed to retrieve other user manage's apiKey" () {
+    def "User manage within the same domain should be allowed to retrieve other user manage's apiKey" () {
         given:
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
@@ -194,18 +194,26 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         def userAdminTwoToken = utils.getToken(userManageTwo.username)
         def userManageThree =  utils.createUser(userAdminTwoToken, testUtils.getRandomUUID("userManage"), domainId2)
 
-        when:
         utils.addRoleToUser(userManageTwo, Constants.USER_MANAGE_ROLE_ID)
         utils.addRoleToUser(userManageThree, Constants.USER_MANAGE_ROLE_ID)
+
         String userManageThreeToken = utils.getToken(userManageThree.username)
         String token = utils.getToken(userManage.username)
+
         def credentials = utils.addApiKeyToUser(userManageTwo)
+
+        when: "same domain"
         def userManageThreeResponse = cloud20.getUserApiKey(userManageThreeToken, userManageTwo.id)
+
+        then:
+        userManageThreeResponse.status == HttpStatus.SC_OK
+
+        credentials.username == userManageTwo.username
+
+        when: "different domain"
         def response = cloud20.getUserApiKey(token, userManageTwo.id)
 
         then:
-        credentials.username == userManageTwo.username
-        userManageThreeResponse.status == 403
         response.status == 403
 
         cleanup:
