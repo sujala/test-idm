@@ -84,6 +84,11 @@ GET_USERS_FOR_ROLE_URL = '/OS-KSADM/roles/{role_id}/RAX-AUTH/users'
 GET_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL = (
     DELETE_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL)
 GROUPS_URL = '/RAX-GRPADM/groups'
+GET_GROUP_URL = '/RAX-GRPADM/groups/{group_id}'
+UPDATE_GROUP_URL = '/RAX-GRPADM/groups/{group_id}'
+ADD_USER_TO_GROUP_URL = '/RAX-GRPADM/groups/{group_id}/users/{user_id}'
+GET_USERS_IN_GROUP_URL = '/RAX-GRPADM/groups/{group_id}/users'
+REMOVE_USER_FROM_GROUP_URL = '/RAX-GRPADM/groups/{group_id}/users/{user_id}'
 IDM_URL = '/idm'
 IDP_URL = '/RAX-AUTH/federation/identity-providers'
 IDP_RUD_URL = (IDP_URL + "/{idp_id}")

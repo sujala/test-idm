@@ -177,12 +177,62 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
 
+    def get_group(self, group_id):
+        """Return response object from the get group api call
+
+        GET /groups/{group_id}
+        """
+        url = self.url + const.GET_GROUP_URL.format(group_id=group_id)
+        resp = self.request('GET', url)
+        return resp
+
+    def update_group(self, group_id,
+                     request_object, requestslib_kwargs=None):
+        """Return response object from the update group api call
+
+        POST /groups/{group_id}
+        """
+        url = self.url + const.UPDATE_GROUP_URL.format(group_id=group_id)
+        resp = self.request('PUT', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def delete_group(self, group_id, requestslib_kwargs=None):
         """
         Delete Group
         """
         url = self.url + const.GROUPS_URL + "/" + group_id
         return self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def add_user_to_group(
+            self, group_id, user_id, requestslib_kwargs=None):
+        """
+        PUT /v2.0/RAX-GRPADM/groups/{groupId}/users/{userId}
+        """
+        url = self.url + const.ADD_USER_TO_GROUP_URL.format(
+            group_id=group_id, user_id=user_id)
+        return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)
+
+    def get_users_in_group(self, group_id):
+        """Return response object from the get users in group api call
+
+        GET /v2.0/RAX-GRPADM/groups/{groupId}/users
+        """
+        url = self.url + const.GET_USERS_IN_GROUP_URL.format(
+            group_id=group_id)
+        resp = self.request('GET', url)
+        return resp
+
+    def remove_user_from_group(self, group_id, user_id,
+                               requestslib_kwargs=None):
+        """remove user from group api call
+
+        DELETE v2.0/RAX-GRPADM/groups/{groupId}/users/{userId}
+        """
+        url = self.url + const.REMOVE_USER_FROM_GROUP_URL.format(
+                                    group_id=group_id, user_id=user_id)
+        return self.request('DELETE', url,
                             requestslib_kwargs=requestslib_kwargs)
 
     def get_api_key(self, user_id):
