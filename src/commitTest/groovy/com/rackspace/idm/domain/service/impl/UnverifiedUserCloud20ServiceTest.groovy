@@ -115,7 +115,7 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * authorizationService.getIdentityTypeRoleAsEnum(caller) >> userType
+        1 * requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType() >> userType
         if (sameDomain || (IdentityUserTypeEnum.SERVICE_ADMIN == userType || IdentityUserTypeEnum.IDENTITY_ADMIN == userType)) {
             0 * exceptionHandler.exceptionResponse(_)
             1 * userService.addUnverifiedUser(_)

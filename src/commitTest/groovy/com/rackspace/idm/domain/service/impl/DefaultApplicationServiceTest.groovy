@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.SourcedRoleAssignments
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.exception.DuplicateException
@@ -147,7 +148,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         service.getUserIdentityRole(user)
 
         then:
-        1 * tenantService.getTenantRolesForUserById(_, _) >> [tenantRole]
+        1 * tenantService.getTenantRolesForUserPerformant(_) >> [tenantRole]
     }
 
     def "getUserIdentityRole returns null if user has no identityRole"() {
@@ -156,7 +157,7 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         def clientRole = entityFactory.createClientRole()
 
         roleService.getIdentityAccessRoles() >> [ clientRole ].asList()
-        tenantService.getTenantRolesForUserById(_, _) >> [].asList()
+        tenantService.getTenantRolesForUserPerformant(_) >> [].asList()
 
         when:
         def result = service.getUserIdentityRole(user)

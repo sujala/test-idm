@@ -814,7 +814,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
             BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
-            IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
 
             if (!identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled()) {
                 throw new ForbiddenException(ERROR_CREATION_OF_INVITE_USERS_DISABLED, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
@@ -3879,7 +3879,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
 
-            IdentityUserTypeEnum callersUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+            IdentityUserTypeEnum callersUserType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
             if (IdentityUserTypeEnum.IDENTITY_ADMIN == callersUserType) {
                 List<User> superAdmins = domainService.getDomainSuperAdmins(domainId);
                 if (containsServiceAdmin(superAdmins)) {

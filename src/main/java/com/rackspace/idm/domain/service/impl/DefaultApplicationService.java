@@ -17,9 +17,11 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.HashHelper;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.persistence.jpa.jpql.utility.iterable.ArrayIterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -349,8 +351,10 @@ public class DefaultApplicationService implements ApplicationService {
                     tenantRoleIds.add(tenantRole.getRoleRsId());
                 }
             } else {
-                for (TenantRole tenantRole : tenantService.getTenantRolesForUserById(user, clientRoles)) {
-                    tenantRoleIds.add(tenantRole.getRoleRsId());
+                for (TenantRole tenantRole : tenantService.getTenantRolesForUserPerformant(user)) {
+                    if (clientRoleIds.contains(tenantRole.getRoleRsId())) {
+                        tenantRoleIds.add(tenantRole.getRoleRsId());
+                    }
                 }
             }
         }
