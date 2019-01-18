@@ -1036,7 +1036,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
             BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
@@ -3167,9 +3167,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
-            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
@@ -3248,9 +3248,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, Integer marker, Integer limit) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
-            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 

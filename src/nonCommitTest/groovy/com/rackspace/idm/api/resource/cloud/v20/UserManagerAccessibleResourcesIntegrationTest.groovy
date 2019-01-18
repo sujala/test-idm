@@ -227,6 +227,14 @@ class UserManagerAccessibleResourcesIntegrationTest extends RootIntegrationTest 
         then:
         response.status == SC_OK
         entity.email == email
+
+        when: "update user's email - federated user caller"
+        response = cloud20.updateUser(fedUserToken, userManage2.id, userToUpdate)
+        entity = response.getEntity(User).value
+
+        then:
+        response.status == SC_OK
+        entity.email == email
     }
 
     def "error check: user-manage CANNOT update another user-manage in the different domain"() {
@@ -275,11 +283,13 @@ class UserManagerAccessibleResourcesIntegrationTest extends RootIntegrationTest 
         resetResponse.status == SC_OK
         assert StringUtils.isNotBlank(resetCred.apiKey)
 
-        when: "delete API key - federated user caller"
+        when: "delete and get API key - federated user caller"
         response = cloud20.deleteUserApiKey(fedUserToken, userManage2.id)
+        getApiKeyResponse = cloud20.getUserApiKey(fedUserToken, userManage2.id)
 
         then:
         response.status == SC_NO_CONTENT
+        getApiKeyResponse.status == SC_NOT_FOUND
 
         when: "reset and get API key - federated user caller"
         resetResponse = cloud20.resetUserApiKey(fedUserToken, userManage2.id)
