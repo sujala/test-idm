@@ -2429,30 +2429,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
     }
 
-    def "get user by name using a federated user's token return 403"() {
-        given:
-        def userAdmin = utils.createCloudAccount()
-        def domainId = userAdmin.domainId
-        def username = testUtils.getRandomUUID("samlUser")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
-
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
-        def samlAuthToken = samlAuthResponse.value.token
-        def samlAuthTokenId = samlAuthToken.id
-        def userId = samlAuthResponse.value.user.id
-
-        when: "get user by name"
-        def response = cloud20.getUserByName(samlAuthTokenId, userId)
-
-        then:
-        response.status == SC_FORBIDDEN
-
-        cleanup:
-        utils.deleteUsers(userAdmin)
-    }
-
     def "federated user can revoke own token"() {
         given:
         def userAdmin = utils.createCloudAccount()

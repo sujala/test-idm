@@ -3029,12 +3029,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
-            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
+            // NOTE: This service does not allow retrieving federated user by name
             User user = userService.getUser(name);
 
             if (user == null) {

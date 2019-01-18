@@ -4048,7 +4048,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 200
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.verifyEffectiveCallerIsNotARacker()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * userService.getUser(_) >> user
         1 * authorizationService.hasSameDomain(caller, user) >> true

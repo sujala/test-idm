@@ -1,7 +1,9 @@
 package com.rackspace.idm.validation
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
@@ -29,6 +31,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
         mockAuthorizationService(service)
         mockConfiguration(service)
         mockRoleService(service)
+        mockRequestContextHolder(service)
     }
 
     def "compareWeights throws forbidden exception if caller weight is greater than role weight"() {
@@ -440,6 +443,103 @@ class PrecedenceValidatorTest extends RootServiceTest {
         IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_ADMIN     | true       | false
         IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_MANAGER   | true       | false
         IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.DEFAULT_USER   | true       | false
+    }
+
+    @Unroll
+    def "verifyEffectiveCallerPrecedenceOverUser: calls correct services - userType = #userType"() {
+        given:
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
+        def user = entityFactory.createUser()
+        ClientRole defaultUserRole = entityFactory.createClientRole(IdentityUserTypeEnum.DEFAULT_USER.roleName, IdentityUserTypeEnum.DEFAULT_USER.levelAsInt)
+
+        when: "provisioned user caller"
+        service.verifyEffectiveCallerPrecedenceOverUser(user)
+
+        then:
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * securityContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerUserType
+        1 * applicationService.getUserIdentityRole((EndUser) user) >> defaultUserRole
+
+        if (((IdentityUserTypeEnum)callerUserType).isDomainBasedAccessLevel()) {
+            1 * authorizationService.verifyDomain(caller, user)
+        }
+
+        where:
+        callerUserType << [IdentityUserTypeEnum.SERVICE_ADMIN, IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
+    }
+
+    def "verifyEffectiveCallerPrecedenceOverUser: user-manage has precedence over another user-manage in same domain - userType = #userType"() {
+        given:
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
+        def user = entityFactory.createUser()
+        ClientRole userManageRole = entityFactory.createClientRole(IdentityUserTypeEnum.USER_MANAGER.roleName, IdentityUserTypeEnum.USER_MANAGER.levelAsInt)
+
+        when: "provisioned user caller"
+        service.verifyEffectiveCallerPrecedenceOverUser(user)
+
+        then:
+        noExceptionThrown()
+
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * securityContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 * applicationService.getUserIdentityRole((EndUser) user) >> userManageRole
+        1 * authorizationService.verifyDomain(caller, user)
+    }
+
+    def "verifyEffectiveCallerPrecedenceOverUser: error check - userType = #userType"() {
+        given:
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
+        def user = entityFactory.createUser()
+
+        ClientRole defaultUserRole = entityFactory.createClientRole(IdentityUserTypeEnum.DEFAULT_USER.roleName, IdentityUserTypeEnum.DEFAULT_USER.levelAsInt)
+        ClientRole userAdminRole = entityFactory.createClientRole(IdentityUserTypeEnum.USER_ADMIN.roleName, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+
+        when: "caller is an racker"
+        service.verifyEffectiveCallerPrecedenceOverUser(user)
+
+        then:
+        thrown(ForbiddenException)
+
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createRacker()
+
+        when: "caller type is null"
+        service.verifyEffectiveCallerPrecedenceOverUser(user)
+
+        then:
+        thrown(ForbiddenException)
+
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * securityContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> null
+
+        when: "caller does not have precedence over user"
+        service.verifyEffectiveCallerPrecedenceOverUser(user)
+
+        then:
+        thrown(ForbiddenException)
+
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * securityContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 * applicationService.getUserIdentityRole((EndUser) user) >> userAdminRole
+
+        when: "caller and target user have different domains"
+        service.verifyEffectiveCallerPrecedenceOverUser(user)
+
+        then:
+        thrown(ForbiddenException)
+
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * securityContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 * applicationService.getUserIdentityRole((EndUser) user) >> defaultUserRole
+        1 * authorizationService.verifyDomain(caller, user) >> {throw new ForbiddenException()}
     }
 
     def mockRoleService(service) {
