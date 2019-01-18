@@ -452,6 +452,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
             it.id = "callerId"
             it
         }
+        def fedCaller = entityFactory.createFederatedUser()
         def user = entityFactory.createUser()
         ClientRole defaultUserRole = entityFactory.createClientRole(IdentityUserTypeEnum.DEFAULT_USER.roleName, IdentityUserTypeEnum.DEFAULT_USER.levelAsInt)
 
@@ -465,13 +466,29 @@ class PrecedenceValidatorTest extends RootServiceTest {
 
         if (((IdentityUserTypeEnum)callerUserType).isDomainBasedAccessLevel()) {
             1 * authorizationService.verifyDomain(caller, user)
+        } else {
+            0 * authorizationService.verifyDomain(caller, user)
+        }
+
+        when: "federated user caller"
+        service.verifyEffectiveCallerPrecedenceOverUser(user)
+
+        then:
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> fedCaller
+        1 * securityContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerUserType
+        1 * applicationService.getUserIdentityRole((EndUser) user) >> defaultUserRole
+
+        if (((IdentityUserTypeEnum)callerUserType).isDomainBasedAccessLevel()) {
+            1 * authorizationService.verifyDomain(fedCaller, user)
+        } else {
+            0 * authorizationService.verifyDomain(fedCaller, user)
         }
 
         where:
         callerUserType << [IdentityUserTypeEnum.SERVICE_ADMIN, IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
     }
 
-    def "verifyEffectiveCallerPrecedenceOverUser: user-manage has precedence over another user-manage in same domain - userType = #userType"() {
+    def "verifyEffectiveCallerPrecedenceOverUser: user-manage has precedence over another user-manage in same domain"() {
         given:
         def caller = entityFactory.createUser().with {
             it.id = "callerId"
@@ -492,7 +509,7 @@ class PrecedenceValidatorTest extends RootServiceTest {
         1 * authorizationService.verifyDomain(caller, user)
     }
 
-    def "verifyEffectiveCallerPrecedenceOverUser: error check - userType = #userType"() {
+    def "verifyEffectiveCallerPrecedenceOverUser: error check"() {
         given:
         def caller = entityFactory.createUser().with {
             it.id = "callerId"

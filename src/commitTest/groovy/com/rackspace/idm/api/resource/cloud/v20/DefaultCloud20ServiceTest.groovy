@@ -3819,15 +3819,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         def user = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
 
         when:
         service.deleteUser(headers, authToken, "userId")
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * identityUserService.checkAndGetUserById(_) >> user
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.USER_ADMIN
         1 * domainService.removeDomainUserAdminDN(user)
@@ -3838,38 +3843,48 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         def user = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
 
         when:
         service.deleteUser(headers, authToken, "userId")
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * identityUserService.checkAndGetUserById(_) >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
-        1 * authorizationService.verifyDomain(_, _)
         1 * identityUserService.deleteUser(_)
     }
 
-    def "User with user-manage role cannot delete user with user-manage role" () {
+    def "User with user-manage role can delete user with user-manage role" () {
         given:
         allowUserAccess()
         def user = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
 
         when:
         def result = service.deleteUser(headers, authToken, "userId")
 
         then:
-        result.build().status == 401
+        result.build().status == SC_NO_CONTENT
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * identityUserService.checkAndGetUserById(_) >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 *  precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.USER_MANAGER
+        1 * identityUserService.deleteUser(_)
     }
 
     @Unroll

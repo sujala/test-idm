@@ -21,6 +21,7 @@ import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
@@ -29,6 +30,7 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.util.SamlUnmarshaller
 import com.rackspace.idm.validation.Validator20
+import com.sun.mail.imap.protocol.Item
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.codec.binary.StringUtils
 import org.apache.commons.lang.BooleanUtils
@@ -1719,14 +1721,15 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "getting user api key credentials using a federated user's token returns 403: #mediaType"() {
+    def "getting user's api key credentials using a federated user's token: #mediaType"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, [IdentityUserTypeEnum.USER_MANAGER.roleName]);
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
 
         def samlResponse = cloud20.samlAuthenticate(samlAssertion, mediaType)
         def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
@@ -1734,11 +1737,17 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def samlAuthTokenId = samlAuthToken.id
         def userId = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user.id : samlAuthResponse.user.id
 
-        when: "get api key for user"
+        when: "get api key for federated user"
         def response = cloud20.getUserApiKey(samlAuthTokenId, userId)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Not Authorized")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, SC_NOT_FOUND, String.format("User %s not found", userId))
+
+        when: "get api key for provisioned user"
+        response = cloud20.getUserApiKey(samlAuthTokenId, userManage.id)
+
+        then:
+        response.status == SC_OK
 
         cleanup:
         utils.deleteUsers(users)

@@ -461,4 +461,28 @@ class UserManagerAccessibleResourcesIntegrationTest extends RootIntegrationTest 
         cleanup:
         utils.deleteUsersQuietly(users)
     }
+
+    def "user-manager CANNOT self delete"() {
+        when:
+        def response = cloud20.deleteUser(userManageToken, userManage.id)
+
+        then:
+        response.status == SC_FORBIDDEN
+    }
+
+    def "user-manager can delete another user-manager in the same domain"() {
+        when:
+        def response = cloud20.deleteUser(userManageToken, userManage2.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+    }
+
+    def "federated user-manager can delete another user-manager in the same domain"() {
+        when:
+        def response = cloud20.deleteUser(fedUserToken, userManage2.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+    }
 }
