@@ -654,6 +654,64 @@ class ManageUserRolesRestIntegrationTest extends RootIntegrationTest {
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
+    def "grantRolesToUser: user-managers can assign/remove the user-manage role from users"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+        def role = utils.createRole()
+
+        def tenant = utils.createTenant()
+        utils.addTenantToDomain(domainId, tenant.id)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(USER_MANAGE_ROLE_ID, ['*']))
+                    tas
+            }
+            it
+        }
+
+        def token = utils.getToken(userManage.username)
+
+        when: "grant domain role to user"
+        def response = cloud20.addUserRole(token, defaultUser.id, USER_MANAGE_ROLE_ID)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        when: "revoke domain role from user"
+        response = cloud20.deleteApplicationRoleOnUser(token, USER_MANAGE_ROLE_ID, defaultUser.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "grant role on tenant to user"
+        response = cloud20.addRoleToUserOnTenant(token, tenant.id, defaultUser.id, role.id)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        when: "revoke role on tenant from user"
+        response = cloud20.deleteRoleFromUserOnTenant(token, tenant.id, defaultUser.id, role.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "grant role to user"
+        response = cloud20.grantRoleAssignmentsOnUser(token, defaultUser, assignments)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteTestDomainQuietly(domainId)
+        utils.deleteRoleQuietly(role)
+    }
+
     void verifyContainsAssignment(RoleAssignments roleAssignments, String roleId, List<String> tenantIds) {
         ImmutableClientRole imr = applicationService.getCachedClientRoleById(roleId)
 

@@ -37,6 +37,7 @@ import testHelpers.saml.SamlFactory
 import javax.xml.datatype.DatatypeFactory
 
 import static org.apache.http.HttpStatus.*
+import static com.rackspace.idm.Constants.*
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class FederatedUserManageIntegrationTest extends RootIntegrationTest {
@@ -101,22 +102,6 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
 
         AuthenticateResponse fedAuthResponse = utils.authenticateFederatedUser(domainId, [sharedUserGroup.name] as Set)
         token = fedAuthResponse.token.id
-    }
-
-    private void grantRoleAssignmentsOnUserGroup(UserGroup sharedUserGroup) {
-        def userGroup = userGroupDao.getGroupById(sharedUserGroup.id)
-        def role = roleDao.getRoleByName(Constants.USER_MANAGE_ROLE_NAME)
-        RoleAssignments tenantAssignments = v2Factory.createSingleRoleAssignment(Constants.USER_MANAGE_ROLE_ID, ['*'])
-        def tenantAssignment = tenantAssignments.tenantAssignments.tenantAssignment.get(0)
-
-        TenantRole tenantRole = new TenantRole();
-        tenantRole.setRoleRsId(tenantAssignment.getOnRole());
-        tenantRole.setClientId(role.getClientId());
-        tenantRole.setName(role.getName());
-        tenantRole.setDescription(role.getDescription());
-        tenantRole.setRoleType(role.getRoleType());
-
-        tenantRoleDao.addRoleAssignmentOnGroup(userGroup, tenantRole);
     }
 
     def cleanup() {
@@ -547,6 +532,63 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_NO_CONTENT
     }
+
+    def "grantRolesToUser: federated user-managers can assign/remove the user-manage role from users"() {
+        given:
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(USER_MANAGE_ROLE_ID, ['*']))
+                    tas
+            }
+            it
+        }
+
+        when: "create user"
+        def userToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("user"), "display", "email@email.com", true, null, null, "Password1")
+        def response = cloud20.createUser(token, userToCreate)
+        def defaultUser = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "grant domain role to user"
+        response = cloud20.addUserRole(token, defaultUser.id, USER_MANAGE_ROLE_ID)
+
+        then:
+        response.status == SC_OK
+
+        when: "revoke domain role from user"
+        response = cloud20.deleteApplicationRoleOnUser(token, USER_MANAGE_ROLE_ID, defaultUser.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "grant role on tenant to user"
+        response = cloud20.addRoleToUserOnTenant(token, tenant.id, defaultUser.id, role.id)
+
+        then:
+        response.status == SC_OK
+
+        when: "revoke role on tenant from user"
+        response = cloud20.deleteRoleFromUserOnTenant(token, tenant.id, defaultUser.id, role.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "grant role to user"
+        response = cloud20.grantRoleAssignmentsOnUser(token, defaultUser, assignments)
+
+        then:
+        response.status == SC_OK
+
+        when: "delete user"
+        response = cloud20.deleteUser(utils.getServiceAdminToken(), defaultUser.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+    }
+
 
     TenantAssignment createTenantAssignment(String roleId, List<String> tenants) {
         def assignment = new TenantAssignment().with {

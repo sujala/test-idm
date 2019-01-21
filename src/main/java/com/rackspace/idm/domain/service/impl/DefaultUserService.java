@@ -1146,11 +1146,11 @@ public class DefaultUserService implements UserService {
 
 
     @Override
-    public List<TenantRole> replaceRoleAssignmentsOnUser(User user, RoleAssignments roleAssignments, Integer allowedRoleAccess) {
+    public List<TenantRole> replaceRoleAssignmentsOnUser(User user, RoleAssignments roleAssignments, IdentityUserTypeEnum callerUserType) {
         Validate.notNull(user);
         Validate.notNull(user.getUniqueId());
         Validate.notNull(roleAssignments);
-        Validate.notNull(allowedRoleAccess);
+        Validate.notNull(callerUserType);
 
         if (roleAssignments.getTenantAssignments() == null || CollectionUtils.isEmpty(roleAssignments.getTenantAssignments().getTenantAssignment())) {
             return Collections.emptyList();
@@ -1159,7 +1159,7 @@ public class DefaultUserService implements UserService {
         List<TenantRole> tenantRoles = tenantAssignmentService.replaceTenantAssignmentsOnUser(
                 user,
                 roleAssignments.getTenantAssignments().getTenantAssignment(),
-                allowedRoleAccess);
+                callerUserType);
 
         // Send an UPDATE user event when roles change on user.
         atomHopperClient.asyncPost(user, AtomHopperConstants.UPDATE);

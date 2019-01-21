@@ -1307,26 +1307,26 @@ class DefaultUserServiceTest extends RootServiceTest {
             it
         }
 
-        def allowedRoleAccess = IdentityUserTypeEnum.USER_ADMIN.levelAsInt
+        def callerType = IdentityUserTypeEnum.USER_ADMIN
 
         when:
-        service.replaceRoleAssignmentsOnUser(user, assignments, allowedRoleAccess)
+        service.replaceRoleAssignmentsOnUser(user, assignments, callerType)
 
         then:
-        1 * tenantAssignmentService.replaceTenantAssignmentsOnUser(user, assignments.tenantAssignments.tenantAssignment, allowedRoleAccess)
+        1 * tenantAssignmentService.replaceTenantAssignmentsOnUser(user, assignments.tenantAssignments.tenantAssignment, callerType)
     }
 
     def "replaceRoleAssignmentsOnUser: Throws IllegalArgumentException if supplied user is invalid"() {
         def roleAssignments = new RoleAssignments()
 
         when: "user arg is null"
-        service.replaceRoleAssignmentsOnUser(null, roleAssignments, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceRoleAssignmentsOnUser(null, roleAssignments, IdentityUserTypeEnum.USER_ADMIN)
 
         then:
         thrown(IllegalArgumentException)
 
         when: "user arg has no unique id"
-        service.replaceRoleAssignmentsOnUser(new User(), roleAssignments, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceRoleAssignmentsOnUser(new User(), roleAssignments, IdentityUserTypeEnum.USER_ADMIN)
 
         then:
         thrown(IllegalArgumentException)
@@ -1334,7 +1334,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "replaceRoleAssignmentsOnUser: Throws IllegalArgumentException if roleAssignments arg is null"() {
         when:
-        service.replaceRoleAssignmentsOnUser(new User().with {it.uniqueId = "uniqueId";it}, null, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceRoleAssignmentsOnUser(new User().with {it.uniqueId = "uniqueId";it}, null, IdentityUserTypeEnum.USER_ADMIN)
 
         then:
         thrown(IllegalArgumentException)

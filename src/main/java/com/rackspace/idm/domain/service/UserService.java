@@ -288,7 +288,7 @@ public interface UserService {
      * persisting the assignments post-validation
      * @return the tenant roles saved
      */
-    List<TenantRole> replaceRoleAssignmentsOnUser(User user, RoleAssignments roleAssignments, Integer allowedRoleAccess);
+    List<TenantRole> replaceRoleAssignmentsOnUser(User user, RoleAssignments roleAssignments, IdentityUserTypeEnum callerUserType);
 
     /**
      * Retrieve the set of roles assignments on the user.

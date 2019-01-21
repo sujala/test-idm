@@ -20,7 +20,7 @@ public interface TenantAssignmentService {
      *
      * @param user
      * @param tenantAssignments
-     * @param allowedRoleAccess
+     * @param callerUserType
      *
      * @throws IllegalArgumentException if user, user.getUniqueId(), tenantAssignments, or allowedRoleAccess is null
      * @throws com.rackspace.idm.exception.BadRequestException If same role is repeated multiple times or assignment contains
@@ -32,7 +32,7 @@ public interface TenantAssignmentService {
      * persisting the assignments post-validation
      * @return the tenant roles saved
      */
-    List<TenantRole> replaceTenantAssignmentsOnUser(User user, List<TenantAssignment> tenantAssignments, Integer allowedRoleAccess);
+    List<TenantRole> replaceTenantAssignmentsOnUser(User user, List<TenantAssignment> tenantAssignments, IdentityUserTypeEnum callerUserType);
 
     /**
      * Assign the specified roles to the userGroup.
