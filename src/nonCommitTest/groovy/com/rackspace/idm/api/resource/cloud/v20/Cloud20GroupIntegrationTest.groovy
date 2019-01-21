@@ -2,9 +2,12 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 class Cloud20GroupIntegrationTest extends RootIntegrationTest {
@@ -141,6 +144,33 @@ class Cloud20GroupIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         utils.deleteGroup(groupEntity)
+    }
+
+    def "do not allow removing legacy group from sub users"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        // Add group to userAdmin
+        def group = utils.createGroup()
+        utils.addUserToGroup(group, userAdmin)
+
+        when: "delete group from default user"
+        def response = cloud20.removeUserFromGroup(utils.identityAdminToken, group.id, defaultUser.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Cannot remove Sub-Users directly from a Group, must remove their Parent User.")
+
+        when: "delete group from user manage"
+        response = cloud20.removeUserFromGroup(utils.identityAdminToken, group.id, userManage.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Cannot remove Sub-Users directly from a Group, must remove their Parent User.")
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
     }
 
 }

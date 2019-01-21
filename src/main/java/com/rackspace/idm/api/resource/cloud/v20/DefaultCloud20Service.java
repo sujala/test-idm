@@ -5113,7 +5113,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             EndUser user = identityUserService.checkAndGetUserById(userId);
             IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(user);
 
-            if (userType == IdentityUserTypeEnum.DEFAULT_USER) {
+            if (userType == IdentityUserTypeEnum.DEFAULT_USER || userType == IdentityUserTypeEnum.USER_MANAGER) {
                 throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
             }
 
