@@ -985,7 +985,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(_)
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
-        1 * precedenceValidator.verifyCallerRolePrecedence(_, _)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(_, _)
+
     }
 
     def "deleteUserRole deletes role"() {
@@ -1012,7 +1013,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         1 * tenantService.getGlobalRolesForUser(_) >> [ tenantRole ].asList()
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(_)
-        1 * precedenceValidator.verifyCallerRolePrecedence(_, _)
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(_, _)
         1 * tenantService.deleteTenantRoleForUser(_, _)
     }
 
@@ -5040,7 +5041,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getTargetEndUser() >> user
         1 * authorizationService.verifyEffectiveCallerHasManagementAccessToUser(userId)
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 * userService.replaceRoleAssignmentsOnUser(user, roleAssignments, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        1 * userService.replaceRoleAssignmentsOnUser(user, roleAssignments, IdentityUserTypeEnum.USER_ADMIN)
         1 * userService.getRoleAssignmentsOnUser(user, _) >> new PaginatorContext<>()
         1 * roleAssignmentConverter.toRoleAssignmentsWeb(_)
 

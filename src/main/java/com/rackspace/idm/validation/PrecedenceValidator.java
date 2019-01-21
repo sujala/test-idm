@@ -236,7 +236,11 @@ public class PrecedenceValidator {
     }
 
     public void verifyCallerRolePrecedenceForAssignment(IdentityUserTypeEnum callerType, ClientRole role) {
-        compareWeights(callerType.getLevelAsInt(), role.getRsWeight());
+        if (!(callerType.equals(IdentityUserTypeEnum.USER_MANAGER) && IdentityUserTypeEnum.fromRoleName(role.getName()) == IdentityUserTypeEnum.USER_MANAGER)) {
+            if (!callerType.hasLevelAccessOf(role.getAdministratorRole())) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+        }
     }
 
     public void verifyCallerRolePrecedenceForAssignment(EndUser user, Collection<String> roleNames) {

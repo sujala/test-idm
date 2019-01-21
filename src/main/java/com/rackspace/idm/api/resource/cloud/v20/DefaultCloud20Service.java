@@ -1255,7 +1255,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Get caller type to validate role access
             IdentityUserTypeEnum callerUserType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
 
-            userService.replaceRoleAssignmentsOnUser(user, roleAssignments, callerUserType.getLevelAsInt());
+            userService.replaceRoleAssignmentsOnUser(user, roleAssignments, callerUserType);
 
             // Retrieve the first 1000 assigned roles on the user
             PaginatorContext<TenantRole> tenantRolePage = userService.getRoleAssignmentsOnUser(user, new PaginationParams(0, 1000));
@@ -2696,7 +2696,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
-            precedenceValidator.verifyCallerRolePrecedence(callerType, role);
+            ClientRole clientRole = applicationService.getClientRoleById(role.getRoleRsId());
+            precedenceValidator.verifyCallerRolePrecedenceForAssignment(callerType, clientRole);
 
             //the only user-type role you can delete on a user is the "identity:user-manage" role
             IdentityUserTypeEnum userTypeEnum = IdentityUserTypeEnum.fromRoleName(role.getName());

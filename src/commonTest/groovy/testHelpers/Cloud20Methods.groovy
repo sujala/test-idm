@@ -838,6 +838,7 @@ class Cloud20Methods {
     }
 
     def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE, requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#addRolesToUserOnTenant()} */
         initOnUse()
         resource.path(path20).path(TENANTS).path(tenantId).path(USERS).path(userId) .path(ROLES).path(OS_KSADM).path(roleId) .header(X_AUTH_TOKEN, token).accept(acceptMediaType).type(requestContentMediaType).put(ClientResponse)
     }
@@ -961,6 +962,7 @@ class Cloud20Methods {
     }
 
     def addUserRole(String token, String userId, String roleId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#addUserRole()} */
         initOnUse()
         resource.path(path20).path(USERS).path(userId)
                 .path(ROLES).path(OS_KSADM).path(roleId)
@@ -968,6 +970,7 @@ class Cloud20Methods {
     }
 
     def deleteRoleFromUserOnTenant(String token, String tenantId, String userId, String roleId) {
+        /** {@link Cloud20VersionResource#deleteRoleFromUserOnTenant()} */
         initOnUse()
         resource.path(path20).path(TENANTS).path(tenantId).path(USERS).path(userId)
                 .path(ROLES).path(OS_KSADM).path(roleId)
@@ -991,6 +994,7 @@ class Cloud20Methods {
     }
 
     def deleteApplicationRoleOnUser(String token, String roleId, String userId) {
+        /** {@link Cloud20VersionResource#deleteUserRole()} */
         initOnUse()
         resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
@@ -1465,6 +1469,7 @@ class Cloud20Methods {
     }
 
     def grantRoleAssignmentsOnUser(String token, User user, RoleAssignments roleAssignments, MediaType media=MediaType.APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#grantRolesToUser()} */
         initOnUse()
         resource.path(path20).path(USERS).path(user.id).path(RAX_AUTH).path(SERVICE_PATH_ROLES).type(media).accept(media).header(X_AUTH_TOKEN, token).entity(roleAssignments).put(ClientResponse)
     }

@@ -292,7 +292,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         deleteRoleQuietly(role)
     }
 
-    def "User manager cannot assign user-manager role to default user within domain"() {
+    def "User manager can assign user-manager role to default user within domain"() {
         def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
 
@@ -310,8 +310,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         def forbiddenStatus = addRoleToUser(userManagerToken, defaultUser, userManageRole)
 
         then:
-        assert forbiddenStatus == HttpStatus.SC_FORBIDDEN
-        assertUserDoesNotHaveRole(defaultUser, userManageRole)
+        assert forbiddenStatus == HttpStatus.SC_OK
+        assertUserHasRole(defaultUser, userManageRole)
 
         cleanup:
         deleteUserQuietly(userManager)

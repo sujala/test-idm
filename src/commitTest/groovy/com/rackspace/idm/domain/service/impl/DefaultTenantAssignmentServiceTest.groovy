@@ -38,6 +38,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         mockIdentityConfig(service)
         mockDelegationService(service)
         mockConfiguration(service)
+        mockPrecedenceValidator(service)
 
         reloadableConfig.getRoleAssignmentsMaxTenantAssignmentsPerRequest() >> 10
     }
@@ -80,7 +81,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         RoleAssignments roleAssignments = genRoleAssignments(taNoTenants, taAllandExplicitTenants, taMissingRole, taWrongDomainTenant, taInvalidRoleWeight, taNoTenants)
 
         when: "Duplicate role exist along with other validation errors"
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws 400 due to dup roles"
         Exception ex = thrown()
@@ -90,7 +91,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
 
         when: "Submit request that includes missing forTenants and invalid for tenants along with invalid backend role errors"
         roleAssignments = genRoleAssignments(taMissingRole, taWrongDomainTenant, taInvalidRoleWeight, taNoTenants, taAllandExplicitTenants, taNonExistantTenant)
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws 400 on first static tenant error encountered"
         Exception ex2 = thrown()
@@ -100,7 +101,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
 
         when: "Submit request that includes missing forTenants and invalid forTenants definition along with invalid backend role errors"
         roleAssignments = genRoleAssignments(taMissingRole, taWrongDomainTenant, taInvalidRoleWeight, taAllandExplicitTenants, taNoTenants)
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws 400 on first tenant error encountered"
         Exception ex3 = thrown()
@@ -110,7 +111,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
 
         when: "Submit request that includes empty string forTenants"
         roleAssignments = genRoleAssignments(taEmptyStringTenants)
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws 400"
         Exception ex4 = thrown()
@@ -137,16 +138,17 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         tenantAssignmentsTenantRole.add(taTenantRole)
 
         when: "grant role to user"
-        service.verifyTenantAssignmentsWithCacheForUser(user, tenantAssignmentsGlobalRole, IdentityUserTypeEnum.IDENTITY_ADMIN.levelAsInt)
+        service.verifyTenantAssignmentsWithCacheForUser(user, tenantAssignmentsGlobalRole, IdentityUserTypeEnum.IDENTITY_ADMIN)
 
         then:
         notThrown(Exception)
 
         1 * applicationService.getClientRoleById(clientRole.id) >> clientRole
         1 * authorizationService.hasDefaultUserRole(user) >> true
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(_, _)
 
         when: "authorized user adds role to user without the 'identity:default' role"
-        service.verifyTenantAssignmentsWithCacheForUser(user, tenantAssignmentsGlobalRole, IdentityUserTypeEnum.IDENTITY_ADMIN.levelAsInt)
+        service.verifyTenantAssignmentsWithCacheForUser(user, tenantAssignmentsGlobalRole, IdentityUserTypeEnum.IDENTITY_ADMIN)
 
         then:
         Exception ex = thrown()
@@ -156,7 +158,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         1 * authorizationService.hasDefaultUserRole(user) >> false
 
         when: "add non-global role to default user"
-        service.verifyTenantAssignmentsWithCacheForUser(user, tenantAssignmentsTenantRole, IdentityUserTypeEnum.IDENTITY_ADMIN.levelAsInt)
+        service.verifyTenantAssignmentsWithCacheForUser(user, tenantAssignmentsTenantRole, IdentityUserTypeEnum.IDENTITY_ADMIN)
 
         then:
         ex = thrown()
@@ -312,7 +314,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
 
         when: "Submit request that includes missing missing roles, invalid role, and invalid tenant (backend state)"
         RoleAssignments roleAssignments = genRoleAssignments(taMissingRole, taNonExistentTenant, taWrongDomainTenant, taInvalidRoleWeight)
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws exception on first backend failure (NotFoundException)"
         Exception ex4 = thrown()
@@ -320,15 +322,16 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
 
         when: "Submit request that includes missing missing roles, invalid role, and invalid tenant (backend state)"
         roleAssignments = genRoleAssignments(taInvalidRoleWeight, taNonExistentTenant, taWrongDomainTenant, taMissingRole)
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws exception on first backend failure (ForbiddenException)"
         Exception ex5 = thrown()
         IdmExceptionAssert.assertException(ex5, ForbiddenException, "GEN-005", String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, taInvalidRoleWeight.onRole))
+        1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(_, _) >> { throw new ForbiddenException() }
 
         when: "Submit request that includes missing tenant in different domain"
         roleAssignments = genRoleAssignments(taNonExistentTenant, taInvalidRoleWeight, taWrongDomainTenant, taMissingRole)
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws exception on first backend failure (NotFoundException)"
         Exception ex6 = thrown()
@@ -336,7 +339,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
 
         when: "Submit request that includes missing tenant in different domain"
         roleAssignments = genRoleAssignments(taWrongDomainTenant, taNonExistentTenant, taInvalidRoleWeight, taMissingRole, taInvalidRoleAssignmentGlobal, taInvalidRoleAssignmentTenant)
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws exception on first backend failure (ForbiddenException)"
         Exception ex7 = thrown()
@@ -344,7 +347,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
 
         when: "Submit request that includes missing tenant in different domain"
         roleAssignments = genRoleAssignments(taInvalidRoleAssignmentGlobal, taWrongDomainTenant, taNonExistentTenant, taInvalidRoleWeight, taMissingRole, taInvalidRoleAssignmentTenant)
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws exception on first backend failure (ForbiddenException)"
         Exception ex8 = thrown()
@@ -352,7 +355,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
 
         when: "Submit request that includes missing tenant in different domain"
         roleAssignments = genRoleAssignments(taInvalidRoleAssignmentTenant, taInvalidRoleAssignmentGlobal, taWrongDomainTenant, taNonExistentTenant, taInvalidRoleWeight, taMissingRole)
-        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then: "Throws exception on first backend failure (ForbiddenException)"
         Exception ex9 = thrown()
@@ -538,7 +541,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         }
 
         when:
-        List<TenantRole> result = service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        List<TenantRole> result = service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then:
         // Verify roles are retrieved for verification
@@ -702,7 +705,7 @@ class DefaultTenantAssignmentServiceTest extends RootServiceTest{
         }
 
         when:
-        List<TenantRole> result = service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN.levelAsInt)
+        List<TenantRole> result = service.replaceTenantAssignmentsOnUser(user, roleAssignments.tenantAssignments.tenantAssignment, IdentityUserTypeEnum.USER_ADMIN)
 
         then:
         // Verify roles are retrieved for verification

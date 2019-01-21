@@ -16,9 +16,9 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
+import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.configuration.Configuration;
@@ -72,19 +72,20 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
     @Autowired
     private Configuration config;
 
-    //TODO: Replace integer allowRoleAccess variable with IdentityUserTypeEnum for readability
+    @Autowired
+    private PrecedenceValidator precedenceValidator;
 
     @Override
-    public List<TenantRole> replaceTenantAssignmentsOnUser(User user, List<TenantAssignment> tenantAssignments, Integer allowedRoleAccess) {
+    public List<TenantRole> replaceTenantAssignmentsOnUser(User user, List<TenantAssignment> tenantAssignments, IdentityUserTypeEnum callerUserType) {
         Validate.notNull(user);
         Validate.notNull(user.getUniqueId());
         Validate.notNull(tenantAssignments);
-        Validate.notNull(allowedRoleAccess);
+        Validate.notNull(callerUserType);
 
         verifyTenantAssignments(tenantAssignments);
 
         // Iterate over all the roles to verify they're all valid before assigning any
-        AssignmentCache assignmentCache = verifyTenantAssignmentsWithCacheForUser(user, tenantAssignments, allowedRoleAccess);
+        AssignmentCache assignmentCache = verifyTenantAssignmentsWithCacheForUser(user, tenantAssignments, callerUserType);
 
         // Iterate over the assignments and create/modify the tenant role
         List<TenantRole> tenantRoles = new ArrayList<>(assignmentCache.roleCache.size());
@@ -267,10 +268,10 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
      *
      * @param user
      * @param tenantAssignments
-     * @param allowedRoleAccess
+     * @param callerType
      * @return
      */
-    private AssignmentCache verifyTenantAssignmentsWithCacheForUser(User user, List<TenantAssignment> tenantAssignments, Integer allowedRoleAccess) {
+    private AssignmentCache verifyTenantAssignmentsWithCacheForUser(User user, List<TenantAssignment> tenantAssignments, IdentityUserTypeEnum callerType) {
         AssignmentCache cache = new AssignmentCache();
 
         // Perform in-depth analysis to verify requested backend data exists appropriately
@@ -281,7 +282,10 @@ public class DefaultTenantAssignmentService implements TenantAssignmentService {
             String roleId = tenantAssignment.getOnRole();
             ClientRole role = cache.roleCache.get(roleId);
 
-            if (role.getRsWeight() < allowedRoleAccess) {
+            try {
+                precedenceValidator.verifyCallerRolePrecedenceForAssignment(callerType, role);
+            }
+            catch (ForbiddenException e) {
                 throw new ForbiddenException(String.format(ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN, roleId), ERROR_CODE_INVALID_ATTRIBUTE);
             }
 
