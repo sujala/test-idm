@@ -47,7 +47,7 @@ return [
                         openshift.tag("${name}@${digest}", "${name}:${env.ghprbSourceBranch}")
                     }
                 }
-                timeout(15) {
+                timeout(20) {
                     parallel branches
                 }
             }
