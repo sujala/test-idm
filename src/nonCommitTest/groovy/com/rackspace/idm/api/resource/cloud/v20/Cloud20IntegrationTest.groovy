@@ -910,7 +910,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         deleteResponses.status == 204
     }
 
-    def "user-manage cannot update/delete another user with user-manage"() {
+    def "user-manage can update/delete another user with user-manage"() {
         when:
         //Create user
         cloud20.addApplicationRoleToUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
@@ -926,18 +926,12 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         //Delete user
         def deleteResponses = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
-        //Hard delete user
-        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, userEntity.getId())
-        def actualDelete = cloud20.deleteUser(defaultUserManageRoleToken, userEntity.getId())
-
-        cloud20.deleteApplicationRoleFromUser(serviceAdminToken, USER_MANAGE_ROLE_ID, defaultUserWithManageRole.getId())
 
         then:
         response.status == 201
         response.location != null
         getUserResponse.status == 200
-        deleteResponses.status == 401
-        actualDelete.status == 204
+        deleteResponses.status == 204
     }
 
     def "user-manage cannot be added to user admin"() {
@@ -4234,6 +4228,131 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createdUser.id)
         cloud20.deleteRole(serviceAdminToken, createdRole.id)
+    }
+
+    def "self delete provisioned users"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when: "default user"
+        def response = cloud20.deleteUser(utils.getToken(defaultUser.username), defaultUser.id)
+        // Use admin to delete default user
+        utils.deleteUser(defaultUser)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "user manage"
+        response = cloud20.deleteUser(utils.getToken(userManage.username), userManage.id)
+        // Use admin to delete user manage user
+        utils.deleteUser(userManage)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "user admin"
+        response = cloud20.deleteUser(utils.getToken(userAdmin.username), userAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "identity admin"
+        response = cloud20.deleteUser(utils.getToken(identityAdmin.username), identityAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+    }
+
+    def "delete user - check caller precedence over user"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when: "caller: userManage, target: defaultUser"
+        def response = cloud20.deleteUser(utils.getToken(userManage.username), defaultUser.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "caller: userAdmin, target: userManage"
+        response = cloud20.deleteUser(utils.getToken(userAdmin.username), userManage.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "caller: identityAdmin, target: userAdmin"
+        response = cloud20.deleteUser(utils.getToken(identityAdmin.username), userAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "caller: serviceAdmin, target: identityAdmin"
+        response = cloud20.deleteUser(utils.serviceAdminToken, identityAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+    }
+
+    def "delete user - error check"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        def domainId2 = utils.createDomain()
+        def identityAdmin2, userAdmin2, userManage2, defaultUser2
+        (identityAdmin2, userAdmin2, userManage2, defaultUser2) = utils.createUsers(domainId2)
+        def users2 = [defaultUser2, userManage2, userAdmin2, identityAdmin2]
+
+        when: "caller: userManage, target: userAdmin"
+        def response = cloud20.deleteUser(utils.getToken(userManage.username), userAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "caller: userManage, target: identityAdmin"
+        response = cloud20.deleteUser(utils.getToken(userManage.username), identityAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "caller: userAdmin, target: identityAdmin"
+        response = cloud20.deleteUser(utils.getToken(userAdmin.username), identityAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "caller: identityAdmin, target: serviceAdmin"
+        response = cloud20.deleteUser(utils.getToken(userAdmin.username), identityAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "caller: userManage, target: userManage - different domain"
+        response = cloud20.deleteUser(utils.getToken(userManage.username), userManage2.id)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "caller: userAdmin, target: userAdmin - different domain"
+        response = cloud20.deleteUser(utils.getToken(userAdmin.username), userAdmin2.id)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "caller: identityAdmin, target: identityAdmin - different domain"
+        response = cloud20.deleteUser(utils.getToken(userAdmin.username), userAdmin2.id)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteUsersQuietly(users2)
     }
 
     def getEntity(response, type) {

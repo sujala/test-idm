@@ -1758,7 +1758,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker()
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
     }
 
@@ -1814,7 +1814,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker()
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.isSelf(caller, user) >> false
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
@@ -1983,7 +1983,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 401
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.verifyEffectiveCallerIsNotARacker()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER) >> { throw new NotAuthorizedException() }
     }
@@ -1994,7 +1994,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.verifyEffectiveCallerIsNotARacker()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser()
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * userService.checkAndGetUserById("userId")
@@ -2016,7 +2016,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == SC_OK
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.verifyEffectiveCallerIsNotARacker()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * userService.checkAndGetUserById("userId") >> user
         1 * authorizationService.isSelf(caller, user) >> false
@@ -2041,7 +2041,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == SC_OK
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.verifyEffectiveCallerIsNotARacker()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * userService.checkAndGetUserById("id") >> user
@@ -2067,7 +2067,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == SC_OK
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.verifyEffectiveCallerIsNotARacker()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * userService.checkAndGetUserById("userId") >> user
@@ -2087,7 +2087,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == SC_OK
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.verifyEffectiveCallerIsNotARacker()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         1 * userService.checkAndGetUserById("userId") >> user
@@ -2583,7 +2583,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker()
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.isSelf(caller, user) >> false
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
@@ -3819,15 +3819,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         def user = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
 
         when:
         service.deleteUser(headers, authToken, "userId")
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * identityUserService.checkAndGetUserById(_) >> user
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.USER_ADMIN
         1 * domainService.removeDomainUserAdminDN(user)
@@ -3838,38 +3843,48 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         def user = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
 
         when:
         service.deleteUser(headers, authToken, "userId")
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * identityUserService.checkAndGetUserById(_) >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.DEFAULT_USER
-        1 * authorizationService.verifyDomain(_, _)
         1 * identityUserService.deleteUser(_)
     }
 
-    def "User with user-manage role cannot delete user with user-manage role" () {
+    def "User with user-manage role can delete user with user-manage role" () {
         given:
         allowUserAccess()
         def user = entityFactory.createUser()
+        def caller = entityFactory.createUser().with {
+            it.id = "callerId"
+            it
+        }
 
         when:
         def result = service.deleteUser(headers, authToken, "userId")
 
         then:
-        result.build().status == 401
+        result.build().status == SC_NO_CONTENT
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * identityUserService.checkAndGetUserById(_) >> user
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_MANAGER
+        1 *  precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         1 * authorizationService.getIdentityTypeRoleAsEnum(user) >> IdentityUserTypeEnum.USER_MANAGER
+        1 * identityUserService.deleteUser(_)
     }
 
     @Unroll
@@ -4048,7 +4063,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 200
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContext.verifyEffectiveCallerIsNotARacker()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * userService.getUser(_) >> user
         1 * authorizationService.hasSameDomain(caller, user) >> true
@@ -4097,7 +4112,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker()
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.isSelf(caller, user) >> false
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
@@ -4107,7 +4122,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         User user = entityFactory.createUser()
         user.apiKey = "apikeyyay"
-        User caller = entityFactory.createUser()
 
         when:
         def result = service.getUserApiKeyCredentials(headers, authToken, "abc123")
@@ -4116,7 +4130,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 403
 
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker() >> { throw new ForbiddenException() }
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker() >> { throw new ForbiddenException() }
         0 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
         0 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled()
     }
@@ -4136,7 +4150,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER)
-        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker()
+        1 * requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker()
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.isSelf(caller, user) >> false
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user) >> { throw  new ForbiddenException() }

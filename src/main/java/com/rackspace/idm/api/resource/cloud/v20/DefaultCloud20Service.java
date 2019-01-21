@@ -1036,7 +1036,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
             BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
@@ -2581,20 +2581,21 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
 
-            //is same domain?
             IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
-            if (callerType.isDomainBasedAccessLevel()) {
-                authorizationService.verifyDomain(caller, user);
+
+            // NOTE: This logic will allow service admins, identity-admins, and user-admins to self delete.
+            if (!caller.getId().equals(user.getId())) {
+                precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
+            } else if (callerType == IdentityUserTypeEnum.USER_MANAGER){
+                // Do not allow user-manager to self delete.
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
-            // NOTE: This logic will allow user-admins to self delete, but not user-managers.
             IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(user);
             if (userType == IdentityUserTypeEnum.USER_ADMIN && userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
             }
-            if(callerType == IdentityUserTypeEnum.USER_MANAGER && userType == IdentityUserTypeEnum.USER_MANAGER) {
-                throw new NotAuthorizedException("Cannot delete user with same access level");
-            }
+
             identityUserService.deleteUser(user);
 
             if (user instanceof User && userType == IdentityUserTypeEnum.USER_ADMIN) {
@@ -3029,12 +3030,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
-            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
+            // NOTE: This service does not allow retrieving federated user by name
             User user = userService.getUser(name);
 
             if (user == null) {
@@ -3166,9 +3168,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
-            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
@@ -3247,9 +3249,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, Integer marker, Integer limit) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotAFederatedUserOrRacker();
+            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
 
-            User caller = (User) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
