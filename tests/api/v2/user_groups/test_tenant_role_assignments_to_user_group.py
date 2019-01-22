@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+import ddt
 from nose.plugins.attrib import attr
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -9,6 +10,7 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
+@ddt.ddt
 class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
     """
     Tests for crud tenant-role assignments for user group for a domain service
@@ -37,11 +39,18 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
 
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
-    def test_crud_tenant_role_assignments_to_user_group(self):
+    @ddt.data(True, False)
+    def test_crud_tenant_role_assignments_to_user_group(
+            self, assign_user_manager_role):
         group = self.setup_user_group()
-        # create roles
+        # create role/s
         role_1 = self.create_role()
-        role_2 = self.create_role()
+        if assign_user_manager_role:
+            role_2_resp = self.user_admin_client.get_role(
+                role_id=const.USER_MANAGER_ROLE_ID)
+            role_2 = usergroups.responses.Role(role_2_resp.json())
+        else:
+            role_2 = self.create_role()
         # create tenant
         tenant_1 = self.create_tenant()
 
