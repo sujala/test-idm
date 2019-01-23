@@ -957,7 +957,7 @@ public class Cloud20VersionResource {
         return cloud20Service.sendUnverifiedUserInvite(httpHeaders, uriInfo, authToken, userId).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Send unverified user invite")
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Accept unverified user invite")
     @PUT
     @Path("RAX-AUTH/invite/user/{userId}/accept")
     public Response acceptUnverifiedUserInvite(@Context UriInfo uriInfo,
