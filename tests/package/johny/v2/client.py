@@ -924,14 +924,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         In case of XML response, add a json() method to the response object
         that will create a JSON equivalent of the XML response
         """
-
         if not new_url:
             url = self.url + const.LEGACY_FED_AUTH_URL
         else:
             url = self.url + const.NEW_FED_AUTH_URL
+
         headers = {
             'Accept': 'application/{0}'.format(accept_type)
         }
+
         if base64_url_encode:
             headers['Content-Type'] = 'application/{0}'.format(
                 content_type or 'x-www-form-urlencoded'

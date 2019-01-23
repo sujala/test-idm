@@ -1,0 +1,34 @@
+{
+    "new_fed_auth_identity_admin": {
+        "fed_input": {
+            "new_url": true,
+            "content_type": "x-www-form-urlencoded",
+            "fed_api": "v2",
+            "user_type": "identity_admin"
+        }
+    },
+    "new_fed_auth_user_admin": {
+        "fed_input": {
+            "new_url": true,
+            "content_type": "x-www-form-urlencoded",
+            "fed_api": "v2",
+            "user_type": "user_admin"
+        }
+    },
+    "legacy_fed_auth_identity_admin": {
+        "fed_input": {
+            "new_url": false,
+            "content_type": "xml",
+            "fed_api": "v1",
+            "user_type": "identity_admin"
+        }
+    },
+    "legacy_fed_auth_user_admin": {
+        "fed_input": {
+            "new_url": false,
+            "content_type": "xml",
+            "fed_api": "v1",
+            "user_type": "user_admin"
+        }
+    }
+}

@@ -1,3 +1,4 @@
+import ddt
 from nose.plugins.attrib import attr
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -8,8 +9,11 @@ from tests.api.v2 import base
 from tests.api.v2.federation import federation
 
 from tests.package.johny import constants as const
+import os
+import re
 
 
+@ddt.ddt
 class TestFedUserGlobalRoles(federation.TestBaseFederation):
 
     """Tests for Fed User's global roles."""
@@ -34,6 +38,10 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         cls.domain_ids = []
 
         cls.domain_ids.append(cls.domain_id)
+        cls.clients = {
+            'identity_admin': cls.identity_admin_client,
+            'user_admin': cls.user_admin_client
+        }
 
     @unless_coverage
     def setUp(self):
@@ -60,8 +68,8 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         cert = saml_helper.create_saml_assertion_v2(
             domain=self.domain_id, username=subject, issuer=self.issuer,
             email=self.test_email, private_key_path=key_path,
-            public_key_path=cert_path, response_flavor='v2DomainOrigin',
-            output_format='formEncode')
+            public_key_path=cert_path, response_flavor=const.V2_DOMAIN_ORIGIN,
+            output_format=const.FORM_ENCODE)
 
         auth = self.identity_admin_client.auth_with_saml(
             saml=cert, content_type=const.X_WWW_FORM_URLENCODED,
@@ -86,6 +94,74 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         role_ids = [role[const.ID] for role in list_resp.json()[const.ROLES]]
         self.assertIn(const.USER_DEFAULT_ROLE_ID, role_ids)
 
+    @unless_coverage
+    @attr(type='regression')
+    @ddt.file_data('data_saml_fed_auth.json')
+    def test_fed_auth_with_v1_and_v2_saml(self, test_data):
+
+        issuer = 'http://test.rackspace.com'
+        subject = self.generate_random_string(
+            pattern='fed[\-]user[\-][\d\w]{12}')
+        fed_input_data = test_data['fed_input']
+        new_url = fed_input_data['new_url']
+        content_type = fed_input_data['content_type']
+        user_type = fed_input_data['user_type']
+
+        cur_path = os.path.abspath('.')
+        tests_path = re.search('(.*)tests', cur_path)
+        if not tests_path:
+            src_path = cur_path
+        else:
+            src_path = tests_path.group(1)
+
+        key_path = os.path.join(src_path, 'src',
+                                'commonTest', 'resources')
+        public_key_path = os.path.join(
+            key_path, 'saml.crt')
+        private_key_path = os.path.join(
+            key_path, 'saml.pkcs8')
+
+        if fed_input_data['fed_api'] == 'v2':
+            cert = saml_helper.create_saml_assertion_v2(
+                domain=self.domain_id, username=subject,
+                roles=[const.USER_MANAGE_ROLE_NAME],
+                issuer=issuer,
+                email=self.test_email, private_key_path=private_key_path,
+                public_key_path=public_key_path,
+                response_flavor=const.V2_DOMAIN_ORIGIN,
+                output_format=const.FORM_ENCODE)
+        else:
+            cert = saml_helper.create_saml_assertion(
+                    domain=self.domain_id, subject=subject,
+                    roles=[const.USER_MANAGE_ROLE_NAME],
+                    issuer=issuer, private_key_path=private_key_path,
+                    public_key_path=public_key_path,
+                    email=self.test_email, base64_url_encode=False,
+                    seconds_to_expiration=300)
+
+        # Get fed auth token
+        auth = self.clients[user_type].auth_with_saml(
+            saml=cert, content_type=content_type,
+            base64_url_encode=False, new_url=new_url)
+        fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
+        self.users.append(fed_user_id)
+        role_names = [role[const.NAME] for role in auth.json()[const.ACCESS]
+                          [const.USER][const.ROLES]]
+        role_ids = [role[const.ID] for role in auth.json()[const.ACCESS]
+                        [const.USER][const.ROLES]]
+
+        # verify user-manager role is assigned to user
+        self.assertIn(const.USER_MANAGE_ROLE_NAME, role_names)
+        self.assertIn(const.USER_MANAGER_ROLE_ID, role_ids)
+
+        fed_user_client = self.generate_client(
+            token=auth.json()[const.ACCESS][const.TOKEN][const.ID])
+
+        # getting role accessible to user-manager
+        resp = fed_user_client.get_role_by_name(const.ROLE_RBAC1_NAME)
+        self.assertEqual(resp.json()[const.ROLES][0][const.NAME],
+                         const.ROLE_RBAC1_NAME)
+
     @base.base.log_tearDown_error
     @unless_coverage
     def tearDown(self):
@@ -94,10 +170,10 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
             self.assertEqual(
                 resp.status_code, 204,
                 msg='User with ID {0} failed to delete'.format(user_id))
-        self.delete_client(self.user_admin_client)
         super(TestFedUserGlobalRoles, self).tearDown()
 
     @classmethod
     @unless_coverage
     def tearDownClass(cls):
+        cls.delete_client(cls.user_admin_client)
         super(TestFedUserGlobalRoles, cls).tearDownClass()
