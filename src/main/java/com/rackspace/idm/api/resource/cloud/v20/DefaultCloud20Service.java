@@ -765,6 +765,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             usr.setUserMultiFactorEnforcementLevel(null);
             usr.setFactorType(null);
 
+            //ignore the userId
+            usr.setId(null);
+
             //ignore the core contact id for users that are not service or identity admins
             if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
                 usr.setContactId(null);

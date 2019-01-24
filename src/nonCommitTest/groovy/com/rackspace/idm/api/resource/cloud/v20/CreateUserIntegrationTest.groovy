@@ -32,6 +32,7 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
+import static org.apache.http.HttpStatus.*
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 
 class CreateUserIntegrationTest extends RootIntegrationTest {
@@ -1909,5 +1910,27 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUser(createdUser)
+    }
+
+    def "User creators should not be able to specify the userId of the created user"() {
+        when: "create user"
+        def domainId = utils.createDomain()
+        def userId = testUtils.getRandomUUID()
+        def userToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("user"), "displayName", "email@email.com", null, "ORD", domainId, "Password1").with {
+            it.id = userId
+            it
+        }
+        def response = cloud20.createUser(identityAdminToken, userToCreate)
+        def user = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+        user.id != userId
+
+        when: "delete user"
+        response = cloud20.deleteUser(identityAdminToken, user.id)
+
+        then:
+        response.status == SC_NO_CONTENT
     }
 }

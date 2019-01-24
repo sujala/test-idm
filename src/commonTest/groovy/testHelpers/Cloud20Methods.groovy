@@ -171,6 +171,7 @@ class Cloud20Methods {
     }
 
     def createUser(String token, user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#addUser()} */
         initOnUse()
         resource.path(path20).path(USERS).accept(accept).type(request).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
