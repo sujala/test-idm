@@ -41,7 +41,9 @@ return [
                         def build = openshift.selector('bc', name).startBuild(
                                 "--commit=master", "--env=identity_version=${env.IDM_VERSION}", "--env=artifactory_host=https://artifacts.rackspace.net")
                         waitUntil {
-                            return build.object().status.phase == 'Complete'
+                            def status = build.object().status.phase
+                            println "build config ${name} is in status ${status}."
+                            return status == 'Complete'
                         }
                         def digest = build.object().status.output.to.imageDigest
                         openshift.tag("${name}@${digest}", "${name}:${env.ghprbSourceBranch}")
