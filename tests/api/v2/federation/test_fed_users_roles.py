@@ -7,7 +7,7 @@ from tests.api.utils import func_helper
 from tests.api.utils import saml_helper
 from tests.api.v2 import base
 from tests.api.v2.federation import federation
-
+from tests.package.johny.v2.models import requests
 from tests.package.johny import constants as const
 import os
 import re
@@ -139,6 +139,11 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
                     email=self.test_email, base64_url_encode=False,
                     seconds_to_expiration=300)
 
+        provider_id = self.add_idp_with_metadata_return_id(
+            cert_path=public_key_path, api_client=self.user_admin_client)
+        self.update_mapping_policy(idp_id=provider_id,
+                                   client=self.user_admin_client)
+
         # Get fed auth token
         auth = self.clients[user_type].auth_with_saml(
             saml=cert, content_type=content_type,
@@ -161,6 +166,32 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         resp = fed_user_client.get_role_by_name(const.ROLE_RBAC1_NAME)
         self.assertEqual(resp.json()[const.ROLES][0][const.NAME],
                          const.ROLE_RBAC1_NAME)
+
+        # check if fed user can now get own idp...with having user-manager role
+        get_idp_resp = fed_user_client.get_idp(idp_id=provider_id)
+        self.assertEqual(get_idp_resp.status_code, 200)
+
+        list_idp_resp = fed_user_client.list_idp()
+        # check if fed user can now get own idp...with having user-manager role
+        self.assertEqual(list_idp_resp.status_code, 200)
+
+        # Check if list effective roles for user is successful
+        fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
+        eff_roles_resp = fed_user_client.list_effective_roles_for_user(
+            user_id=fed_user_id)
+        self.assertEqual(eff_roles_resp.status_code, 200)
+
+        # list global roles for a user
+        list_role_for_user_resp = fed_user_client.list_roles_for_user(
+             user_id=fed_user_id)
+        self.assertEqual(list_role_for_user_resp.status_code, 200)
+
+        # Keeping update idp at last as it revokes fed user manager's token
+        # as we are calling 'disable' idp
+        update_idp_req = requests.IDP(idp_id=provider_id, enabled=False)
+        update_resp = fed_user_client.update_idp(
+            idp_id=provider_id, request_object=update_idp_req)
+        self.assertEqual(update_resp.status_code, 200)
 
     @base.base.log_tearDown_error
     @unless_coverage
