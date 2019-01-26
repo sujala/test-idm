@@ -684,7 +684,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.id = roleId
             return it
         }
-        authorizationService.authorizeCloudUserAdmin(_) >> false
         userPaginator.createLinkHeader(_, _) >> "link header"
 
         def contextMock = Mock(PaginatorContext)
@@ -1665,7 +1664,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * securityContext.getEffectiveCallerToken() >> callerToken
-        1 * authorizationService.verifyCallerCanImpersonate(_, _)
+        1 * authorizationService.verifyEffectiveCallerCanImpersonate()
         1 * scopeAccessService.processImpersonatedScopeAccessRequest(_, _, _, _, _) >> impersonatedToken
     }
 
@@ -1787,7 +1786,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
 
         authorizationService.authorizeCloudServiceAdmin(_) >> false
-        authorizationService.authorizeCloudUserAdmin(_) >> false
 
         when:
         def result = service.getUserApiKeyCredentials(headers, authToken, "userId")
@@ -2797,7 +2795,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "Update token format as a identity admin when ae tokens enabled doesn't reset the data"() {
         given:
         allowUserAccess()
-        authorizationService.authorizeCloudIdentityAdmin(_) >> true
 
         UserForCreate userInput = Mock(UserForCreate)
         userInput.getId() >> "2"
@@ -2816,7 +2813,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         0 * userInput.setTokenFormat(_)
-        staticConfig.getFeatureAETokensDecrypt() >> true
     }
 
     def "Update token format as a service admin doesn't reset the data"() {
@@ -2841,13 +2837,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         0 * userInput.setTokenFormat(_)
-        staticConfig.getFeatureAETokensDecrypt() >> true
     }
 
     def "Update token format as a non service/identity admin reset the data"() {
         given:
         allowUserAccess()
-        authorizationService.authorizeCloudIdentityAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> false
 
         UserForCreate userInput = Mock(UserForCreate)
@@ -3202,7 +3196,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def caller = entityFactory.createUser()
         caller.id = userId
         requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
-        authorizationService.authorizeCloudUser(_) >> true
         authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.DEFAULT_USER
         precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(_) >> {
             throw new ForbiddenException()

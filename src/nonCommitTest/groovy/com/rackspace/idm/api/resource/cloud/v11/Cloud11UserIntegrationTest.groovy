@@ -16,6 +16,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
     def "Valid GET operations - username with special characters" () {
         given:
         User user = utils11.createUser(testUtils.getRandomUUID('test@test'))
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
 
         when:
         utils11.authenticateWithKey(user.id, user.key)
@@ -40,7 +41,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         true
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
         utils.deleteDomain(String.valueOf(user.mossoId))
@@ -68,7 +69,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         utils.authenticateApiKey(user20, cred.apiKey)
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
         utils.deleteDomain(String.valueOf(user.mossoId))
@@ -77,6 +78,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
     def "Add/Update user's secretQA - validate encryption" () {
         given:
         User user = utils11.createUser(testUtils.getRandomUUID('testSecretQA'))
+
         String key = "key"
 
         when:
@@ -94,7 +96,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         updatedSecretQA.answer == Constants.DEFAULT_RAX_KSQA_SECRET_ANWSER
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
         utils.deleteDomain(String.valueOf(user.mossoId))
@@ -104,14 +106,14 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         when:
         User user = utils11.createUser(testUtils.getRandomUUID('testV1Default'))
         User getUser = utils11.getUserByName(user.id)
-
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
 
         then:
         utils11.validateV1Default(user.baseURLRefs.baseURLRef)
         utils11.validateV1Default(getUser.baseURLRefs.baseURLRef)
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
         utils.deleteDomain(String.valueOf(user.mossoId))
@@ -120,6 +122,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
     def "Replacing v1Default on existing service on user" () {
         given:
         User user = utils11.createUser(testUtils.getRandomUUID('testNewV1Default'))
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
 
         when:
         def addBaseUrlResponse = utils11.addBaseUrl(testUtils.getRandomInteger(), "cloudFiles")
@@ -142,7 +145,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         }
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
         utils.deleteDomain(String.valueOf(user.mossoId))
@@ -158,6 +161,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         when:
         def user = utils11.createUser(username, key, mossoId, nastId, enabled)
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
 
         then:
         user.nastId != nastId
@@ -166,7 +170,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         user.key == key
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUserQuietly(user20)
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
         utils.deleteDomain(String.valueOf(user.mossoId))
@@ -182,6 +186,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         when:
         def user = utils11.createUser(username, key, mossoId, nastId, enabled)
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
         def response = cloud11.getGroups(username, MediaType.APPLICATION_JSON)
 
         then:
@@ -191,7 +196,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         slurper.getAt("valuess") == null
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
     }
 
     @Unroll
@@ -199,6 +204,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
         def user = utils11.createUser()
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
 
         when:
         def response = cloud11.getUserFromNastId(user.nastId)
@@ -207,7 +213,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         response.status == HttpStatus.SC_MOVED_PERMANENTLY
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         reloadableConfiguration.reset()
 
         where:
@@ -219,6 +225,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, featureEnabled)
         def user = utils11.createUser()
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
 
         when:
         def response = cloud11.getUserFromMossoId(String.valueOf(user.mossoId))
@@ -227,7 +234,7 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         response.status == HttpStatus.SC_MOVED_PERMANENTLY
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         reloadableConfiguration.reset()
 
         where:

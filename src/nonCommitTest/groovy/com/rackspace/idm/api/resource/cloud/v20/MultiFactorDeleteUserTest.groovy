@@ -80,7 +80,7 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
         def userEntity = userService.getUserById(user.id)
 
         when:
-        def response = cloud11.deleteUser(user.username)
+        def response = cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
 
         then:
         response.status == 204
@@ -88,17 +88,6 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
 
         cleanup:
         mockMobilePhoneVerification.reset()
-    }
-
-    def "delete non-MFA user does not return an error through v1.1 delete user call"() {
-        given:
-        def user = createUserAdmin()
-
-        when:
-        def response = cloud11.deleteUser(user.username)
-
-        then:
-        response.status == 204
     }
 
     def addPhone(token, user, verify=true) {

@@ -162,52 +162,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getIdentityAdminRole().asClientRole()));
-    }
-
-    @Override
-    public boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        if (!authorizeUserAccess(user)) {
-            return false;
-        }
-        Domain domain = domainService.getDomain(user.getDomainId());
-        if (!authorizeDomainAccess(domain)) {
-            return false;
-        }
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getUserAdminRole().asClientRole()));
-    }
-
-    @Override
-    public boolean authorizeUserManageRole(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        if (!authorizeUserAccess(user)) {
-            return false;
-        }
-        Domain domain = domainService.getDomain(user.getDomainId());
-        if (!authorizeDomainAccess(domain)) {
-            return false;
-        }
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getUserManageRole().asClientRole()));
-    }
-
-    @Override
-    public boolean authorizeCloudUser(ScopeAccess scopeAccess) {
-        BaseUser userByScopeAccess = userService.getUserByScopeAccess(scopeAccess);
-        BaseUser user = userByScopeAccess;
-        if (!authorizeUserAccess(user)) {
-            return false;
-        }
-        Domain domain = domainService.getDomain(user.getDomainId());
-        if (!authorizeDomainAccess(domain)) {
-            return false;
-        }
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getDefaultUserRole().asClientRole()));
-    }
-
-    @Override
     public boolean hasDefaultUserRole(EndUser user) {
         if (user == null) {
             return false;
@@ -285,7 +239,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyCallerCanImpersonate(BaseUser caller, ScopeAccess callerToken) {
+    public void verifyEffectiveCallerCanImpersonate() {
+        BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+
         if (caller instanceof Racker) {
             //rackers must have impersonate group in edir
             Racker racker = (Racker) caller;
@@ -294,68 +250,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
                 throw new ForbiddenException("Missing RackImpersonation role needed for this operation.");
             }
         } else {
-            verifyIdentityAdminLevelAccess(caller, callerToken);
+            verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
         }
-    }
-
-    @Override
-    public void verifyIdentityAdminLevelAccess(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        verifyIdentityAdminLevelAccess(user, scopeAccess);
-    }
-
-    private void verifyIdentityAdminLevelAccess(BaseUser user, ScopeAccess scopeAccess) {
-        verifyUserAccess(user);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole()));
-    }
-
-    @Override
-    public void verifyUserAdminLevelAccess(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        verifyUserAccess(user);
-        Domain domain = domainService.getDomain(user.getDomainId());
-        verifyDomainAccess(domain);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole(), getUserAdminRole().asClientRole()));
-    }
-
-    @Override
-    public void verifyUserManagedLevelAccess(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        verifyUserAccess(user);
-        Domain domain = domainService.getDomain(user.getDomainId());
-        verifyDomainAccess(domain);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole(), getUserAdminRole().asClientRole(), getUserManageRole().asClientRole()));
-    }
-
-    @Override
-    public void verifyUserManagedLevelAccess(EndUser user) {
-        ClientRole requesterIdentityClientRole = applicationService.getUserIdentityRole(user);
-        IdentityUserTypeEnum userIdentityRole = getIdentityTypeRoleAsEnum(requesterIdentityClientRole);
-        verifyUserManagedLevelAccess(userIdentityRole);
-    }
-
-    @Override
-    public void verifyUserManagedLevelAccess(IdentityUserTypeEnum userType) {
-        if (userType == null || !userType.hasAtLeastUserManagedAccessLevel()) {
-            throw new ForbiddenException(NOT_AUTHORIZED_MSG);
-        }
-    }
-
-    @Override
-    public void verifyUserLevelAccess(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        verifyUserAccess(user);
-        Domain domain = domainService.getDomain(user.getDomainId());
-        verifyDomainAccess(domain);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole(), getIdentityAdminRole().asClientRole(), getUserAdminRole().asClientRole(), getDefaultUserRole().asClientRole()));
-    }
-
-    @Override
-    public boolean isDefaultUser(User user) {
-        // This method returns whether or not a user is a default user
-        // A default user is defined as one that has the identity:default role
-        // this includes a user that also has the identity:user-manage role
-        return containsRole(user, Arrays.asList(getDefaultUserRole().asClientRole()));
     }
 
     @Override

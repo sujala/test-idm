@@ -79,11 +79,6 @@ class Cloud11Methods {
         resource.path(path11).path(USERS).path(username).header("Authorization", getBasicAuth()).accept(acceptMediaType).type(requestMediaType).entity(user).put(ClientResponse)
     }
 
-    def deleteUser(String username) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).delete(ClientResponse)
-    }
-
     def setUserEnabled(String username, user) {
         initOnUse()
         resource.path(path11).path(USERS).path(username).path(ENABLED).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)

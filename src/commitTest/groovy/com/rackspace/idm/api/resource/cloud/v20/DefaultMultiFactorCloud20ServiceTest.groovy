@@ -434,7 +434,6 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkUserDisabled(caller) //validates caller user state
         2 * requestContext.getEffectiveCaller() >> caller
         0 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, _)
-        0 * authorizationService.authorizeCloudUserAdmin(callerToken)
         0 * authorizationService.verifyDomain(caller, _)
     }
 

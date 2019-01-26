@@ -192,17 +192,6 @@ public class Cloud11VersionResource {
         return cloud11Service.getUser(request, userId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Delete user")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserByUsernameAbsolutePathPatternRegex)
-    @DELETE
-    @Path("users/{userId}")
-    public Response deleteUser(@Context HttpServletRequest request,
-                               @PathParam("userId") String userId,
-                               @Context HttpHeaders httpHeaders
-    ) throws IOException, JAXBException {
-        return cloud11Service.deleteUser(request, userId, httpHeaders).build();
-    }
-
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user")
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserByUsernameAbsolutePathPatternRegex)
     @PUT

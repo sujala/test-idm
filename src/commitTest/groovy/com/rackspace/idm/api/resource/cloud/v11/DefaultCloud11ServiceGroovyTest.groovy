@@ -9,6 +9,7 @@ import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.providers.cloudv11.Core11XMLWriter
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.validation.Validator
 import com.rackspacecloud.docs.auth.api.v1.User
@@ -536,21 +537,6 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         1 * scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
     }
 
-    def "deleteUser - Delete userAdminDN on domain when deleting user-admin" () {
-        given:
-        allowAccess()
-        mockDomainService(service)
-        def user = entityFactory.createUser()
-
-        when:
-        service.deleteUser(request, user.username, headers)
-
-        then:
-        1 * userService.deleteUser(user)
-        1 * userService.getUser(user.username) >> user
-        1 * domainService.removeDomainUserAdminDN(user)
-    }
-
     def createCore11XMLWriter() {
         Core11XMLWriter core11XMLWriter = new Core11XMLWriter()
 
@@ -594,7 +580,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
 
         authHeaderHelper.parseBasicParams(_) >> new HashMap<String, String>()
         scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(_,_,_) >> new UserScopeAccess()
-        authorizationService.authorizeCloudIdentityAdmin(_) >> true
+        authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN) >> true
         authorizationService.authorizeCloudServiceAdmin(_) >> true
     }
 

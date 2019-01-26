@@ -504,42 +504,6 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
-
-        try {
-            authenticateAndAuthorizeCloudAdminUser(request);
-
-            User retrievedUser = userService.getUser(userId);
-
-            if (retrievedUser == null) {
-                String errMsg = String.format(USER_S_NOT_FOUND, userId);
-                throw new NotFoundException(errMsg);
-            }
-
-            boolean isDefaultUser = authorizationService.isDefaultUser(retrievedUser);
-            if (isDefaultUser) {
-                throw new BadRequestException("Cannot delete Sub-Users via Auth v1.1. Please use v2.0");
-            }
-            if (userService.hasSubUsers(retrievedUser.getId())) {
-                throw new BadRequestException("Cannot delete a User-Admin with Sub-Users. Please use v2.0 contract to remove Sub-Users then try again");
-            }
-
-            this.userService.deleteUser(retrievedUser);
-
-            // This operation is conditional based on whether the supplied user is actually registered on the Domain
-            // entry as the user-admin.
-            domainService.removeDomainUserAdminDN(retrievedUser);
-
-            //AtomHopper
-            atomHopperClient.asyncPost(retrievedUser, AtomHopperConstants.DELETED);
-
-            return Response.noContent();
-        } catch (Exception ex) {
-            return cloudExceptionResponse.exceptionResponse(ex);
-        }
-    }
-
-    @Override
     public Response.ResponseBuilder getBaseURLRef(HttpServletRequest request,
                                                   String userId, String baseURLId, HttpHeaders httpHeaders)
             throws IOException {
@@ -1340,29 +1304,25 @@ public class DefaultCloud11Service implements Cloud11Service {
         UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(adminUsername, adminPassword, getCloudAuthClientId());
 
         boolean authorized;
-        if (identityConfig.getReloadableConfig().migrateV11ServicesToRequestContext()) {
-            // Populate the request/security contexts
-            RequestContext requestContext = requestContextHolder.getRequestContext();
-            requestContext.getSecurityContext().setCallerTokens(usa, usa);
+        // Populate the request/security contexts
+        RequestContext requestContext = requestContextHolder.getRequestContext();
+        requestContext.getSecurityContext().setCallerTokens(usa, usa);
 
-            IdentityApi identityApi = requestContext.getIdentityApi();
-            Cloud11AuthorizationLevel authorizationLevel = Cloud11AuthorizationLevel.LEGACY;
-            if (identityApi != null) {
-                authorizationLevel = identityConfig.getRepositoryConfig().getAuthorizationLevelForService(identityApi.name());
-            }
-            if (authorizationLevel == Cloud11AuthorizationLevel.LEGACY) {
-                authorized = authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
-            } else if (authorizationLevel == Cloud11AuthorizationLevel.ROLE) {
-                logger.debug("Authorizing via dynamic roles");
-                String authorizedRoleName = calculateAuthorizationRoleNameForService(identityApi);
-                authorized = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(authorizedRoleName);
-            } else {
-                BaseUser caller = requestContext.getEffectiveCaller();
-                logger.warn(String.format("User '%s' attempted to call '%s'. Access to this service has been forbidden for all users", caller == null ? "<UNKNOWN>" : caller.getUsername(), identityApi.name()));
-                authorized = false;
-            }
+        IdentityApi identityApi = requestContext.getIdentityApi();
+        Cloud11AuthorizationLevel authorizationLevel = Cloud11AuthorizationLevel.LEGACY;
+        if (identityApi != null) {
+            authorizationLevel = identityConfig.getRepositoryConfig().getAuthorizationLevelForService(identityApi.name());
+        }
+        if (authorizationLevel == Cloud11AuthorizationLevel.LEGACY) {
+            authorized = authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+        } else if (authorizationLevel == Cloud11AuthorizationLevel.ROLE) {
+            logger.debug("Authorizing via dynamic roles");
+            String authorizedRoleName = calculateAuthorizationRoleNameForService(identityApi);
+            authorized = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(authorizedRoleName);
         } else {
-            authorized = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
+            BaseUser caller = requestContext.getEffectiveCaller();
+            logger.warn(String.format("User '%s' attempted to call '%s'. Access to this service has been forbidden for all users", caller == null ? "<UNKNOWN>" : caller.getUsername(), identityApi.name()));
+            authorized = false;
         }
 
         if (!authorized) {

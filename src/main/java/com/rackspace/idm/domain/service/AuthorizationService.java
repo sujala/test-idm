@@ -12,15 +12,10 @@ public interface AuthorizationService {
 
     boolean authorizeRacker(ScopeAccess scopeAccess);
     boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess);
-    boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess);
-    boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
-    boolean authorizeUserManageRole(ScopeAccess scopeAccess);
-    boolean authorizeCloudUser(ScopeAccess scopeAccess);
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
 
     boolean isSelf(BaseUser requester, User requestedUser);
-    boolean isDefaultUser(User user);
 
     boolean hasDefaultUserRole(EndUser user);
     boolean hasUserAdminRole(EndUser user);
@@ -31,37 +26,14 @@ public interface AuthorizationService {
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
 
     /**
-     * Verifies a user can impersonate another user.
-     *
-     * @param caller
-     * @param callerToken
+     * Verifies the effective caller can impersonate some other user. It does not determine whether the caller can impersonate the
+     * particular user the caller is asking to impersonate.
      *
      * @throws com.rackspace.idm.exception.NotFoundException if the specified caller does not exist (e.g. Racker doesn't exist in eDir)
      * @throws ForbiddenException If the user does not have the appropriate role to impersonate another user.
      */
-    void verifyCallerCanImpersonate(BaseUser caller, ScopeAccess callerToken);
+    void verifyEffectiveCallerCanImpersonate();
 
-    void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
-    void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess);
-    void verifyUserManagedLevelAccess(ScopeAccess authScopeAccess);
-
-    /**
-     * Determines whether the specified user has AT LEAST user-manager level access
-     * @param user
-     *
-     * @throws com.rackspace.idm.exception.NotAuthorizedException if the user does not have the specified access
-     */
-    void verifyUserManagedLevelAccess(EndUser user);
-
-    /**
-     * Determines whether the specified userType has AT LEAST user-manager level access
-     * @param userType
-     *
-     * @throws com.rackspace.idm.exception.NotAuthorizedException if the userType does not have the specified access
-     */
-    void verifyUserManagedLevelAccess(IdentityUserTypeEnum userType);
-
-    void verifyUserLevelAccess(ScopeAccess authScopeAccess);
     void verifySelf(User requester, User requestedUser);
     void verifyEffectiveCallerHasTenantAccess(String tenantId);
     void verifyDomain(BaseUser caller, BaseUser retrievedUser);

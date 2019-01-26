@@ -60,7 +60,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
     }
 
     def cleanupSpec() {
-        cloud11.deleteUser(identityAdmin.username)
+        cloud20.deleteUser(serviceAdminToken, identityAdmin.id)
     }
 
     def "Admin authenticate with password credentials returns 200"() {
@@ -81,7 +81,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         authResponse.status == 200
 
         cleanup:
-        cloud11.deleteUser(username)
+        cloud20.deleteUser(utils.getServiceAdminToken(), userEntity.id)
     }
 
     def "user authenticate success"() {
@@ -102,7 +102,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         authData.token != null
 
         cleanup:
-        cloud11.deleteUser(username)
+        cloud20.deleteUser(utils.getServiceAdminToken(), userId)
     }
 
     def "CRUD user v1.1"() {
@@ -143,7 +143,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         updateUser.updated != null
 
         cleanup:
-        cloud11.deleteUser(username)
+        cloud20.deleteUser(utils.getServiceAdminToken(), userEntity.id)
         cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
     }
 
@@ -171,7 +171,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         userCreateNewNameResponse.status == 400
 
         cleanup:
-        cloud11.deleteUser(username)
+        cloud20.deleteUser(utils.getServiceAdminToken(), userEntity.id)
         cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
     }
 
@@ -686,7 +686,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         failedValidateResponse.status == 404
 
         cleanup:
-        cloud11.deleteUser(username)
+        cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
     }
 
     def "Create user with blank nastIds" () {
@@ -761,24 +761,6 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUserQuietly(userAdmin)
-        utils.deleteTenantQuietly(domainId)
-        utils.deleteTenantQuietly(userAdmin.nastId)
-        utils.deleteTestDomainQuietly(domainId)
-    }
-
-    def "deleteUser: removes domain's userAdminDN"() {
-        given:
-        def userAdmin = utils11.createUser()
-        def domainId = Integer.toString(userAdmin.mossoId)
-
-        when:
-        utils11.deleteUser(userAdmin)
-        def domainEntity = domainDao.getDomain(domainId)
-
-        then:
-        domainEntity.userAdminDN == null
-
-        cleanup:
         utils.deleteTenantQuietly(domainId)
         utils.deleteTenantQuietly(userAdmin.nastId)
         utils.deleteTestDomainQuietly(domainId)

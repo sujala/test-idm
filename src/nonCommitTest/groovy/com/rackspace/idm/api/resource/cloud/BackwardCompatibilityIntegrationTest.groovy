@@ -7,7 +7,6 @@ class BackwardCompatibilityIntegrationTest extends RootIntegrationTest {
 
     @Shared def userAdmin, users
 
-
     def "Verify that the 'create one user' call is backwards compatible with v11 for user-admins" () {
         given:
         def domainId = utils.createDomain()
@@ -59,6 +58,7 @@ class BackwardCompatibilityIntegrationTest extends RootIntegrationTest {
     def "Verify that create user v1.1 sets correctly the v1Default for v1.0 authentication" () {
         when:
         def user = utils11.createUser()
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
         def headers = utils10.authenticate(user.id, user.key)
 
         def v1DefaultEndpoints = user.baseURLRefs.baseURLRef.findAll{it.v1Default == true}
@@ -81,10 +81,9 @@ class BackwardCompatibilityIntegrationTest extends RootIntegrationTest {
         servers.publicURL ==  utils10.removeTenantFromEndpoint(headers["X-Server-Management-Url"][0])
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
         utils.deleteDomain(String.valueOf(user.mossoId))
-
     }
 }

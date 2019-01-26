@@ -9,7 +9,9 @@ import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials
 import com.rackspace.idm.api.security.AuthenticationContext
-import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.api.security.RequestContext
+import com.rackspace.idm.api.security.RequestContextHolder
+import com.rackspace.idm.api.security.SecurityContext;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
@@ -167,6 +169,9 @@ public class DefaultCloud11ServiceTestOld extends Specification {
         defaultCloud11Service.setIdentityConfig(identityConfig);
         defaultCloud11Service.requestContextHolder = Mock(RequestContextHolder)
         defaultCloud11Service.requestContextHolder.getAuthenticationContext() >> Mock(AuthenticationContext)
+        defaultCloud11Service.requestContextHolder.getRequestContext() >> Mock(RequestContext)
+        defaultCloud11Service.requestContextHolder.getRequestContext().getSecurityContext() >> Mock(SecurityContext)
+
     }
 
     def authenticateResponse_withNastCredential_redirects() {
@@ -436,43 +441,18 @@ public class DefaultCloud11ServiceTestOld extends Specification {
 
     def authenticateCloudAdminUserForGetRequests_withServiceAndServiceAdmin_withoutExceptions() {
         when:
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)).thenReturn(true)
 
         then:
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
-    }
-
-    def authenticateCloudAdminUserForGetRequests_withService() {
-        given:
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-
-        when:
-        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
-
-        then:
-        assertTrue("no Exception thrown", true);
-    }
-
-    def NauthenticateCloudAdminUserForGetRequests_withServiceAdmin() {
-        given:
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-
-        when:
-        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
-
-        then:
-        assertTrue("no Exception thrown", true);
     }
 
     def extensions_returns200() {
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.extensions(httpHeaders);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.extensions(httpHeaders)
 
         then:
-        assertThat("response code", responseBuilder.build().getStatus(), org.hamcrest.Matchers.equalTo(200));
+        assertThat("response code", responseBuilder.build().getStatus(), org.hamcrest.Matchers.equalTo(200))
     }
 
     def extensions_withNonNullExtension_returns200() {
@@ -483,7 +463,7 @@ public class DefaultCloud11ServiceTestOld extends Specification {
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.extensions(httpHeaders);
 
         then:
-        assertThat("response code", responseBuilder.build().getStatus(), org.hamcrest.Matchers.equalTo(200));
+        assertThat("response code", responseBuilder.build().getStatus(), org.hamcrest.Matchers.equalTo(200))
     }
 
     def getExtension_blankExtensionAlias_throwsBadRequestException() {
@@ -491,7 +471,7 @@ public class DefaultCloud11ServiceTestOld extends Specification {
         when(validator.isBlank(anyString())).thenReturn(true);
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "")
 
         then:
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
@@ -502,7 +482,7 @@ public class DefaultCloud11ServiceTestOld extends Specification {
         defaultCloud11Service.extensions(httpHeaders);
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123")
 
         then:
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
@@ -511,10 +491,10 @@ public class DefaultCloud11ServiceTestOld extends Specification {
 
     def getExtension_withExtensionMap_throwsNotFoundException() {
         given:
-        defaultCloud11Service.getExtension(httpHeaders, "123");
+        defaultCloud11Service.getExtension(httpHeaders, "123")
 
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123")
 
         then:
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
@@ -522,15 +502,15 @@ public class DefaultCloud11ServiceTestOld extends Specification {
 
     def getExtension_invalidExtension_throwsNotFoundException() {
         when:
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "INVALID");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "INVALID")
 
         then:
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404))
     }
 
     def authenticateCloudAdminUser_withInvalidAuthHeaders() {
         given:
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"));
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"))
 
         when:
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
@@ -550,19 +530,9 @@ public class DefaultCloud11ServiceTestOld extends Specification {
         thrown CloudAdminAuthorizationException
     }
 
-    def authenticateCloudAdminUser_withServiceAndServiceAdmin_withoutExceptions() {
-        when:
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-
-        then:
-        defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request) == null
-    }
-
     def authenticateCloudAdminUser_withServiceAndServiceAdminFalse() {
         given:
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)).thenReturn(false)
 
         when:
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
@@ -571,22 +541,9 @@ public class DefaultCloud11ServiceTestOld extends Specification {
         thrown CloudAdminAuthorizationException
     }
 
-    def authenticateCloudAdminUser_withService() {
-        given:
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-
-        when:
-        defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
-
-        then:
-        assertTrue("no Exception thrown", true);
-    }
-
     def authenticateCloudAdminUser_withServiceAdmin() {
         given:
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)).thenReturn(true)
 
         when:
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
