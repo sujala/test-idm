@@ -45,6 +45,8 @@ class TestFedUserManagerViaUserGroups(federation.TestBaseFederation):
         self.tenant_access_role_id = get_role_resp.json()[const.ROLES][0][
             const.ID]
         self.group_ids = []
+        self.tenant_ids = []
+        self.role_ids = []
 
     def create_role(self):
 
@@ -57,6 +59,23 @@ class TestFedUserManagerViaUserGroups(federation.TestBaseFederation):
         self.role_ids.append(role.id)
         return role
 
+    def create_tenant(self, domain=None, name=None, tenant_types=None):
+
+        if not domain:
+            domain = self.domain_id
+        if name:
+            tenant_req = factory.get_add_tenant_object(
+                domain_id=domain, tenant_name=name, tenant_types=tenant_types)
+        else:
+            tenant_req = factory.get_add_tenant_object(
+                domain_id=domain, tenant_types=tenant_types)
+        add_tenant_resp = self.identity_admin_client.add_tenant(
+            tenant=tenant_req)
+        self.assertEqual(add_tenant_resp.status_code, 201)
+        tenant = responses.Tenant(add_tenant_resp.json())
+        self.tenant_ids.append(tenant.id)
+        return tenant
+
     def generate_tenants_assignment_dict(self, on_role, *for_tenants):
 
         tenant_assignment_request = {
@@ -64,6 +83,14 @@ class TestFedUserManagerViaUserGroups(federation.TestBaseFederation):
             const.FOR_TENANTS: list(for_tenants)
         }
         return tenant_assignment_request
+
+    def create_default_user(self):
+        # create sub user to test
+        sub_username = "sub_" + self.generate_random_string()
+        request_object = requests.UserAdd(sub_username)
+        resp = self.user_admin_client.add_user(request_object=request_object)
+        sub_user_id = resp.json()[const.USER][const.ID]
+        return sub_user_id
 
     @tags('positive', 'p0', 'regression')
     @attr(type='regression')
@@ -156,6 +183,41 @@ class TestFedUserManagerViaUserGroups(federation.TestBaseFederation):
             user_id=fed_user_id)
         self.assertEqual(list_role_for_user_resp.status_code, 200)
 
+        # create default user
+        user_id = self.create_default_user()
+
+        # grant User Manager role to user at domain-level
+        resp = fed_user_client.add_role_to_user(
+            role_id=user_manager_role.id, user_id=user_id)
+        self.assertEqual(resp.status_code, 200)
+
+        # revoke User Manager role from user at domain-level
+        resp = fed_user_client.delete_role_from_user(
+            role_id=user_manager_role.id, user_id=user_id)
+        self.assertEqual(resp.status_code, 204)
+
+        tenant = self.create_tenant(domain=self.domain_id)
+
+        role = self.create_role()
+
+        # grant other role that a user-admin can assign, on tenant to user
+        resp = fed_user_client.add_role_to_user_for_tenant(
+                    tenant_id=tenant.id, role_id=role.id,
+                    user_id=user_id)
+        self.assertEqual(resp.status_code, 200)
+
+        # revoke other role that a user-admin can assign, on tenant to user
+        resp = fed_user_client.delete_role_from_user_for_tenant(
+                    tenant_id=tenant.id, role_id=role.id,
+                    user_id=user_id)
+        self.assertEqual(resp.status_code, 204)
+
+        # grant roles to user
+        resp = fed_user_client.add_role_assignments_to_user(
+                user_id=user_id,
+                request_object=tenants_role_assignment_req_1)
+        self.assertEqual(resp.status_code, 200)
+
         # Keeping update idp at last as it revokes fed user manager's token
         # as we are calling 'disable' idp
         update_idp_req = requests.IDP(idp_id=provider_id, enabled=False)
@@ -188,6 +250,20 @@ class TestFedUserManagerViaUserGroups(federation.TestBaseFederation):
                 msg='User group with ID {0} failed to delete'.format(
                     group_id))
         self.delete_client(self.user_admin_client)
+
+        for id_ in self.role_ids:
+            resp = self.identity_admin_client.delete_role(role_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Role with ID {0} failed to delete'.format(id_))
+        # For some cases, tenant is getting deleted by delete_client()
+        # call, prior. Hence checking for either 204 or 404.
+        for id_ in self.tenant_ids:
+            self.identity_admin_client.delete_tenant(tenant_id=id_)
+            self.assertIn(
+                resp.status_code, [204, 404],
+                msg='Tenant with ID {0} failed to delete'.format(id_))
+
         super(TestFedUserManagerViaUserGroups, self).tearDown()
 
     @classmethod
