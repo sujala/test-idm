@@ -178,14 +178,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean hasUserManageRole(EndUser user) {
-        if (user == null || user instanceof FederatedUser) {
-            return false;
-        }
-        return containsRole(user, Arrays.asList(getUserManageRole().asClientRole()));
-    }
-
-    @Override
     public boolean hasIdentityAdminRole(EndUser user) {
         if (user == null || user instanceof FederatedUser) {
             return false;

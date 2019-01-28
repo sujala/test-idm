@@ -208,17 +208,6 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         1 * tenantService.doesUserContainTenantRole(_, _) >> true
     }
 
-    def "hasUserManageRole call tenantService to verify role exists" () {
-        given:
-        def user = entityFactory.createUser()
-
-        when:
-        def result = service.hasUserManageRole(user)
-
-        then:
-        1 * tenantService.doesUserContainTenantRole(_, _)
-    }
-
     def "hasIdentityAdminRole calls tenantService to user is not null" () {
         given:
         def user = null
