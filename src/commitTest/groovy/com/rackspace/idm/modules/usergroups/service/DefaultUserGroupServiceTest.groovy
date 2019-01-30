@@ -3,7 +3,7 @@ package com.rackspace.idm.modules.usergroups.service
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.EndUser
@@ -666,7 +666,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
         1 * tenantRoleDao.updateRoleAssignmentOnGroup(group, tenantRole)
         1 * identityUserService.getEndUsersInUserGroup(group) >> [user]
-        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
 
         when: "Adding new role assignment"
         tenantRole.tenantIds.clear()
@@ -679,7 +679,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  null
         1 * tenantRoleDao.addRoleAssignmentOnGroup(group, tenantRole)
         1 * identityUserService.getEndUsersInUserGroup(group) >> [user]
-        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
     }
 
     def "addRoleAssignmentOnGroup: error check"() {
@@ -823,7 +823,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
         1 * tenantRoleDao.deleteOrUpdateRoleAssignmentOnGroup(group, tenantRole)
         1 * identityUserService.getEndUsersInUserGroup(group) >> [user]
-        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
         tenantRole.tenantIds.size() == 1
         tenantRole.tenantIds.contains(tenantId)
 
@@ -839,7 +839,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
         1 * tenantRoleDao.deleteOrUpdateRoleAssignmentOnGroup(group, tenantRole)
         1 * identityUserService.getEndUsersInUserGroup(group) >> [user]
-        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
         tenantRole.tenantIds.size() == 1
         tenantRole.tenantIds.contains(tenantId)
     }
@@ -977,7 +977,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         then:
         1 * tenantAssignmentService.replaceTenantAssignmentsOnUserGroup(group, assignments.tenantAssignments.tenantAssignment)
         1 * identityUserService.getEndUsersInUserGroup(group) >> [user]
-        1 * atomHopperClient.asyncPost(user, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
     }
 
     def "replaceRoleAssignmentsOnGroup: error check and invalid cases"() {

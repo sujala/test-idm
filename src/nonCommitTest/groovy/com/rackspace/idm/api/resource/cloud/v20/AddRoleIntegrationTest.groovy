@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.Constants
@@ -16,6 +17,7 @@ import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
@@ -569,9 +571,16 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         testUtils.assertStringPattern("[a-zA-Z0-9]{32}", roleEntity.id)
 
         when: "Add role to user and validate token"
+        cloudFeedsMock.reset()
         utils.addRoleToUser(userAdmin, roleEntity.id)
         def tokenId = utils.getToken(userAdmin.username)
         def validateResponse = utils.validateToken(tokenId)
+
+        and: "verify that event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE.value()),
+                VerificationTimes.exactly(1)
+        )
 
         then: "Assert role correctly added to user"
         validateResponse.user.roles.role.find {it.id == roleEntity.id} != null

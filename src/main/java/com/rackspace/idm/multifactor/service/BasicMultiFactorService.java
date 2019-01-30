@@ -12,7 +12,7 @@ import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.BypassDeviceDao;
@@ -546,7 +546,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         removeMultifactorFromUserWithoutNotifications(user);
 
         if (enabled) {
-            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.MULTI_FACTOR);
             emailClient.asyncSendMultiFactorDisabledMessage(user);
         }
     }
@@ -1040,7 +1040,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             revokeAllMFAProtectedTokensForUser(user);
         }
         if (sendNotifications) {
-            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.MULTI_FACTOR);
             emailClient.asyncSendMultiFactorEnabledMessage(user);
         }
     }
@@ -1100,7 +1100,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         userService.updateUserForMultiFactor(user);
 
         if (enabled){
-            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.MULTI_FACTOR);
             emailClient.asyncSendMultiFactorDisabledMessage(user);
         }
 

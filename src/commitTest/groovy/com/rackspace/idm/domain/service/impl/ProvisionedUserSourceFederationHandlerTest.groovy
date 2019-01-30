@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -610,7 +610,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         noExceptionThrown()
 
         and: "created user feed event is sent"
-        1 * mockAtomHopperClient.asyncPost(_, AtomHopperConstants.CREATE)
+        1 * mockAtomHopperClient.asyncPost(_, FeedsUserStatusEnum.CREATE)
     }
 
     def "validate saml response when role does not exist" (){

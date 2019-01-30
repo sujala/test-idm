@@ -6,7 +6,7 @@ import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.v20.*;
 import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.api.security.RequestContextHolder;
@@ -801,9 +801,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser);
             if (gaUser.isDisabled() && !isDisabled) {
-                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
+                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.DISABLED);
             } else if (!gaUser.isDisabled() && isDisabled) {
-                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.ENABLED);
+                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.ENABLED);
             }
 
             return Response.ok(getJAXBElementUserEnabledWithEndpoints(gaUser).getValue());
@@ -888,12 +888,12 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (gaUser.isDisabled() && !isDisabled ) {
-                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.DISABLED);
+                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.DISABLED);
             } else if (!gaUser.isDisabled() && isDisabled) {
-                atomHopperClient.asyncPost(gaUser, AtomHopperConstants.ENABLED);
+                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.ENABLED);
             }
 
-            atomHopperClient.asyncPost(gaUser, AtomHopperConstants.UPDATE);
+            atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.UPDATE);
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
 

@@ -250,9 +250,6 @@ public class IdentityConfig {
     public static final String PURGE_TRRS_OBSOLETE_AFTER_PROP = "purge.trrs.after.lifetime.hours";
     public static final int PURGE_TRRS_OBSOLETE_AFTER_DEFAULT = 25;
 
-    public static final String ATOM_HOPPER_URL_PROP = "atom.hopper.url";
-    public static final String ATOM_HOPPER_DATA_CENTER_PROP = "atom.hopper.dataCenter";
-    public static final String ATOM_HOPPER_REGION_PROP = "atom.hopper.region";
 
     public static final String FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP = "feature.return.json.specific.cloud.version";
     public static final boolean FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT = true;
@@ -466,6 +463,17 @@ public class IdentityConfig {
 
     public static final String NAST_TENANT_PREFIX_PROP = "nast.tenant.prefix";
     public static final String NAST_TENANT_PREFIX_DEFAULT = "MossoCloudFS_";
+
+    /*
+     * Feeds settings
+     */
+    public static final String ATOM_HOPPER_URL_PROP = "atom.hopper.url";
+    public static final String ATOM_HOPPER_DATA_CENTER_PROP = "atom.hopper.dataCenter";
+    public static final String ATOM_HOPPER_REGION_PROP = "atom.hopper.region";
+
+    public static final String FEEDS_USER_PRODUCT_SCHEMA_VERSION_PROP = "feeds.user.product.schema.version";
+    public static final int FEEDS_USER_PRODUCT_SCHEMA_VERSION_DEFAULT = 1;
+
 
     /* ************************
     FEEDS Connection Props. Feed calls are asynchronous so a larger default timeout is acceptable
@@ -1015,6 +1023,11 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_RACKER_GROUPS_CACHE_PROP, FEATURE_ENABLE_RACKER_GROUPS_CACHE_DEFAULT);
         defaults.put(CACHE_RACKER_GROUPS_TTL_PROP, CACHE_RACKER_GROUPS_TTL_DEFAULT);
         defaults.put(CACHE_RACKER_GROUPS_SIZE_PROP, CACHE_RACKER_GROUPS_SIZE_DEFAULT);
+
+        /*
+         * Feeds default configurations
+         */
+        defaults.put(FEEDS_USER_PRODUCT_SCHEMA_VERSION_PROP, FEEDS_USER_PRODUCT_SCHEMA_VERSION_DEFAULT);
 
         return defaults;
     }
@@ -2746,6 +2759,18 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_RACKER_GROUPS_CACHE_PROP, versionAdded = "3.28.0", description = "Whether or not to cache racker groups.")
         public boolean cacheRackerGroups() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_RACKER_GROUPS_CACHE_PROP);
+        }
+
+        @IdmProp(key = FEEDS_USER_PRODUCT_SCHEMA_VERSION_PROP, versionAdded = "3.29.0", description = "The user product schema version to use on user event feeds.")
+        public int getFeedsUserProductSchemaVersion() {
+            Integer version = getIntSafely(reloadableConfiguration, FEEDS_USER_PRODUCT_SCHEMA_VERSION_PROP);
+
+            // Use version 1 (default) if version loaded does not match an allowed version (1 and 3).
+            if (version != FEEDS_USER_PRODUCT_SCHEMA_VERSION_DEFAULT && version != 3) {
+                version = FEEDS_USER_PRODUCT_SCHEMA_VERSION_DEFAULT;
+            }
+
+            return  version;
         }
     }
 

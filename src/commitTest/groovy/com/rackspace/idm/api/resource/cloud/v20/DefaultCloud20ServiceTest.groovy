@@ -12,6 +12,7 @@ import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.*
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
@@ -849,8 +850,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.checkAndGetUserById(_) >> user
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER)
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
-        1 *applicationService.getClientRoleById(roleId) >> roleToAdd
+        1 * applicationService.getClientRoleById(roleId) >> roleToAdd
         1 * tenantService.addTenantRoleToUser(user, _)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
     }
 
     def "addUserRole not allowed without scopeAccess"() {
@@ -1014,6 +1016,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(_)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(_, _)
         1 * tenantService.deleteTenantRoleForUser(_, _)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
     }
 
     def "deleteUserRole handles exceptions"() {
@@ -1398,6 +1401,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(IdentityUserTypeEnum.USER_ADMIN, role)
         1 * tenantService.addTenantRoleToUser(user, _)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
     }
 
     def "deleteRoleFromUserOnTenant verifies user manage level access"() {
@@ -1558,6 +1562,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(IdentityUserTypeEnum.USER_ADMIN, _)
         1 * tenantService.checkAndGetTenantRoleForUserById(user, "roleId") >>  tenantRole
         1 * tenantService.deleteTenantOnRoleForUser(user, _, _)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
     }
 
     def "getSecretQA - return valid response"() {
@@ -2787,8 +2792,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.updateUser(headers, authToken, "2", user)
 
         then:
-        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.DISABLED)
-        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.DISABLED)
+        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.UPDATE)
     }
 
     def "Update token format as a identity admin when ae tokens enabled doesn't reset the data"() {
@@ -3038,8 +3043,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.updateUser(headers, authToken, "2", user)
 
         then:
-        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.ENABLED)
-        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.ENABLED)
+        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.UPDATE)
     }
 
     def "Disabling a enabled user does send an atom feed"(){
@@ -3070,7 +3075,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.updateUser(headers, authToken, "2", user)
 
         then:
-        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.UPDATE)
     }
 
     def "updateUser does not allow a user to enable their own account"() {
@@ -6614,7 +6619,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
         1 * authorizationService.hasUserAdminRole(user) >> false
         1 * identityUserService.addGroupToEndUser(group.groupId, user.id)
-        1 * atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP)
+        1 * atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP)
     }
 
     def "removeUserFromGroup - calls correct services"() {
@@ -6637,7 +6642,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.isUserInGroup(user.id, group.groupId) >> true
         1 * identityUserService.getEndUsersByDomainId(user.domainId, UserType.ALL) >> []
         1 * identityUserService.removeGroupFromEndUser(group.groupId, user.id)
-        1 * atomHopperClient.asyncPost((User)user, AtomHopperConstants.GROUP)
+        1 * atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP)
     }
 
     def "getUsersForGroup - calls correct services"() {

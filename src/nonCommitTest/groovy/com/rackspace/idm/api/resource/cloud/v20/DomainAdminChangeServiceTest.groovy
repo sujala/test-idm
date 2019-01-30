@@ -6,7 +6,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.RequestContextHolder
@@ -620,8 +620,8 @@ class DomainAdminChangeServiceTest extends Specification {
         response.status == HttpStatus.SC_NO_CONTENT
 
         and: "atom hopper client called to send feed events"
-        1 * atomHopperClient.asyncPost(promoteUser, AtomHopperConstants.ROLE)
-        1 * atomHopperClient.asyncPost(demoteUser, AtomHopperConstants.ROLE)
+        1 * atomHopperClient.asyncPost(promoteUser, FeedsUserStatusEnum.ROLE)
+        1 * atomHopperClient.asyncPost(demoteUser, FeedsUserStatusEnum.ROLE)
 
         and: "verify if cached role name is retrieved from applicationService"
         1 * applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)

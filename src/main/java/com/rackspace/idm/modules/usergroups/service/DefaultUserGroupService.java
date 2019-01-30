@@ -3,7 +3,7 @@ package com.rackspace.idm.modules.usergroups.service;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.BaseUser;
@@ -303,9 +303,9 @@ public class DefaultUserGroupService implements UserGroupService {
             tenantRoleDao.addRoleAssignmentOnGroup(userGroup, tenantRole);
         }
 
-        // Send an UPDATE user event for all members of the user group.
-        for(BaseUser baseUser : getUsersInGroup(userGroup)) {
-            atomHopperClient.asyncPost((EndUser) baseUser, AtomHopperConstants.UPDATE);
+        // Send a user event for all members of the user group.
+        for(EndUser endUser : getUsersInGroup(userGroup)) {
+            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE);
         }
     }
 
@@ -345,9 +345,9 @@ public class DefaultUserGroupService implements UserGroupService {
         tenantRole.getTenantIds().add(tenantId);
         tenantRoleDao.deleteOrUpdateRoleAssignmentOnGroup(userGroup, tenantRole);
 
-        // Send an UPDATE user event for all members of the user group.
-        for(BaseUser baseUser : getUsersInGroup(userGroup)) {
-            atomHopperClient.asyncPost((EndUser) baseUser, AtomHopperConstants.UPDATE);
+        // Send a user event for all members of the user group.
+        for(EndUser endUser : getUsersInGroup(userGroup)) {
+            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE);
         }
     }
 
@@ -421,11 +421,11 @@ public class DefaultUserGroupService implements UserGroupService {
         }
 
         List<TenantRole> tenantRoles = tenantAssignmentService.replaceTenantAssignmentsOnUserGroup(
-                userGroup, roleAssignments.getTenantAssignments().getTenantAssignment() );
+                userGroup, roleAssignments.getTenantAssignments().getTenantAssignment());
 
-        // Send an UPDATE user event for all members of the user group.
-        for (BaseUser baseUser : getUsersInGroup(userGroup)) {
-            atomHopperClient.asyncPost((EndUser) baseUser, AtomHopperConstants.UPDATE);
+        // Send a user event for all members of the user group.
+        for (EndUser endUser : getUsersInGroup(userGroup)) {
+            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE);
         }
 
         return tenantRoles;
@@ -446,8 +446,8 @@ public class DefaultUserGroupService implements UserGroupService {
         tenantRoleDao.deleteTenantRole(assignedRole);
 
         // Send an UPDATE user event for all members of the user group.
-        for (BaseUser baseUser : getUsersInGroup(userGroup)) {
-            atomHopperClient.asyncPost((EndUser) baseUser, AtomHopperConstants.UPDATE);
+        for (EndUser endUser : getUsersInGroup(userGroup)) {
+            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE);
         }
     }
 

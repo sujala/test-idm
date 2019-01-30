@@ -6,7 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.AuthenticationContext;
@@ -179,7 +179,7 @@ public class DefaultUserService implements UserService {
 
         userDao.addUser(user);
 
-        atomHopperClient.asyncPost(user, AtomHopperConstants.CREATE);
+        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE);
 
         assignUserRoles(user, false);
 
@@ -257,7 +257,7 @@ public class DefaultUserService implements UserService {
         }
         userDao.addUser(user);
 
-        atomHopperClient.asyncPost(user, AtomHopperConstants.CREATE);
+        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE);
 
         assignUserRoles(user, isCreateUserInOneCall);
 
@@ -1221,7 +1221,7 @@ public class DefaultUserService implements UserService {
                 callerUserType);
 
         // Send an UPDATE user event when roles change on user.
-        atomHopperClient.asyncPost(user, AtomHopperConstants.UPDATE);
+        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.UPDATE);
 
         return tenantRoles;
     }
@@ -1801,22 +1801,31 @@ public class DefaultUserService implements UserService {
     }
 
     private void assignUserRoles(User user, boolean isCreateUserInOneCall) {
-        for (TenantRole role : user.getRoles()) {
-            ClientRole roleObj = roleService.getRoleByName(role.getName());
+        boolean sendFeedEvent = false;
+        try {
+            for (TenantRole role : user.getRoles()) {
+                ClientRole roleObj = roleService.getRoleByName(role.getName());
 
-            TenantRole tenantRole = new TenantRole();
-            tenantRole.setRoleRsId(roleObj.getId());
-            tenantRole.setClientId(roleObj.getClientId());
-            tenantRole.setName(roleObj.getName());
-            tenantRole.setUserId(user.getId());
-            tenantRole.getTenantIds().addAll(role.getTenantIds());
+                TenantRole tenantRole = new TenantRole();
+                tenantRole.setRoleRsId(roleObj.getId());
+                tenantRole.setClientId(roleObj.getClientId());
+                tenantRole.setName(roleObj.getName());
+                tenantRole.setUserId(user.getId());
+                tenantRole.getTenantIds().addAll(role.getTenantIds());
 
-            try {
-                tenantService.addTenantRoleToUser(user, tenantRole);
-            } catch (ClientConflictException e) {
-                if (!isCreateUserInOneCall){
-                    throw e;
+                try {
+                    tenantService.addTenantRoleToUser(user, tenantRole);
+                    sendFeedEvent = true;
+                } catch (ClientConflictException e) {
+                    if (!isCreateUserInOneCall) {
+                        throw e;
+                    }
                 }
+            }
+        } finally {
+            // Send user feed event if at least one tenantRole was added to the user.
+            if (sendFeedEvent) {
+                atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE);
             }
         }
     }

@@ -5,8 +5,8 @@ import com.rackspace.docs.core.event.EventType;
 import com.rackspace.docs.core.event.Region;
 import com.rackspace.docs.core.event.V1Element;
 import com.rackspace.docs.event.identity.trr.user.ValuesEnum;
-import com.rackspace.docs.event.identity.user.CloudIdentityType;
-import com.rackspace.docs.event.identity.user.ResourceTypes;
+import com.rackspace.docs.event.identity.user.*;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
@@ -37,10 +37,12 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.w3._2005.atom.Title;
+import org.w3._2005.atom.UsageCategory;
 import org.w3._2005.atom.UsageContent;
 import org.w3._2005.atom.UsageEntry;
 
@@ -89,7 +91,8 @@ public class AtomHopperClient {
 
     private static final Class[] JAXB_CONTEXT_FEED_ENTRY_CONTEXT_PATH = new Class[] {
             UsageEntry.class,
-            CloudIdentityType.class,
+            CloudIdentity1Type.class,
+            CloudIdentity3Type.class,
             com.rackspace.docs.event.identity.token.CloudIdentityType.class,
             com.rackspace.docs.event.identity.trr.user.CloudIdentityType.class,
             com.rackspace.docs.event.identity.idp.CloudIdentityType.class,
@@ -227,7 +230,7 @@ public class AtomHopperClient {
     }
 
     @Async
-    public void asyncPost(EndUser user, String userStatus) {
+    public void asyncPost(EndUser user, FeedsUserStatusEnum userStatus) {
         try {
             postUser(user, userStatus);
         } catch (Exception e) {
@@ -291,28 +294,22 @@ public class AtomHopperClient {
         }
     }
 
-    private void postUser(EndUser user, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+    private void postUser(EndUser user, FeedsUserStatusEnum userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         HttpResponse response = null;
         try {
             UsageEntry entry = null;
-            if (userStatus.equals(AtomHopperConstants.DELETED)) {
-                entry = createEntryForUser(user, EventType.DELETE, false);
-            } else if (userStatus.equals(AtomHopperConstants.DISABLED)) {
-                entry = createEntryForUser(user, EventType.SUSPEND, false);
-            } else if (userStatus.equals(AtomHopperConstants.MIGRATED)) {
-                entry = createEntryForUser(user, EventType.CREATE, true);
-            } else if (userStatus.equals(AtomHopperConstants.GROUP)) {
-                entry = createEntryForUser(user, EventType.UPDATE, false);
-            } else if (userStatus.equals(AtomHopperConstants.ROLE)) {
-                entry = createEntryForUser(user, EventType.UPDATE, false);
-            } else if (userStatus.equals(AtomHopperConstants.ENABLED)) {
-                entry = createEntryForUser(user, EventType.UNSUSPEND, false);
-            } else if (userStatus.equals(AtomHopperConstants.MULTI_FACTOR)) {
-                entry = createEntryForUser(user, EventType.UPDATE, false);
-            } else if (userStatus.equals(AtomHopperConstants.UPDATE)) {
-                entry = createEntryForUser(user, EventType.UPDATE, false);
-            } else if (userStatus.equals(AtomHopperConstants.CREATE)) {
-                entry = createEntryForUser(user, EventType.CREATE, false);
+            if (userStatus.equals(FeedsUserStatusEnum.DELETED)) {
+                entry = createEntryForUser(user, EventType.DELETE, false, userStatus);
+            } else if (userStatus.equals(FeedsUserStatusEnum.DISABLED)) {
+                entry = createEntryForUser(user, EventType.SUSPEND, false, userStatus);
+            } else if (userStatus.equals(FeedsUserStatusEnum.ENABLED)) {
+                entry = createEntryForUser(user, EventType.UNSUSPEND, false, userStatus);
+            } else if (userStatus.equals(FeedsUserStatusEnum.CREATE)) {
+                entry = createEntryForUser(user, EventType.CREATE, false, userStatus);
+            } else if (userStatus.equals(FeedsUserStatusEnum.MIGRATED)) {
+                entry = createEntryForUser(user, EventType.CREATE, true, userStatus);
+            } else if (userStatus.isUpdateEvent()) {
+                entry = createEntryForUser(user, EventType.UPDATE, false, userStatus);
             }
 
             if (entry != null) {
@@ -452,47 +449,147 @@ public class AtomHopperClient {
         return new InputStreamEntity(new ByteArrayInputStream(s.getBytes("UTF-8")), -1);
     }
 
-    private UsageEntry createEntryForUser(EndUser user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
+    private UsageEntry createEntryForUser(EndUser user, EventType eventType, Boolean migrated, FeedsUserStatusEnum userStatus) throws DatatypeConfigurationException {
         logger.debug("Creating user entry ...");
 
-        final CloudIdentityType cloudIdentityType = new CloudIdentityType();
+        // Get the user's information
+        final List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUserPerformant(user);
+        final Iterable<Group> groups = identityUserService.getGroupsForEndUser(user.getId());
 
-        cloudIdentityType.setResourceType(ResourceTypes.USER);
+        String displayName = user.getUsername();
+        if (user instanceof FederatedUser) {
+            FederatedUser fedUser = (FederatedUser) user;
+            displayName = String.format("%s@%s", fedUser.getUsername(), fedUser.getFederatedIdpUri());
+        }
 
-        String username = user.getUsername();
+        // Get requestId
+        String requestId = MDC.get(Audit.GUUID);
+
+        int feedsUserProductSchemaVersion = identityConfig.getReloadableConfig().getFeedsUserProductSchemaVersion();
+
+        final Object cloudIdentityType;
+        if (feedsUserProductSchemaVersion == AtomHopperConstants.V1_USER_PRODUCT_SCHEMA_VERSION) {
+            cloudIdentityType = createCloudIdentity1Type(user, displayName, groups, tenantRoles, migrated);
+        } else {
+            cloudIdentityType = createCloudIdentity3Type(user, displayName, groups, tenantRoles, migrated, requestId, userStatus);
+        }
+
+        final String id = UUID.randomUUID().toString();
+        final String tenantId = defaultTenantService.getMossoIdFromTenantRoles(tenantRoles);
+        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), displayName, AtomHopperConstants.IDENTITY_EVENT, tenantId);
+
+        // Set additional search category
+        UsageCategory requestIdUsageCategory = new UsageCategory();
+        requestIdUsageCategory.setTerm(String.format("requestId:%s", requestId));
+        usageEntry.getCategory().add(requestIdUsageCategory);
+
+        logger.debug("Created Identity user entry with id: " + id);
+        return usageEntry;
+    }
+
+    /**
+     * Creates a version 1 product in user events for feed entry.
+     *
+     * @param user
+     * @param displayName
+     * @param groups
+     * @param tenantRoles
+     * @param migrated
+     * @return
+     */
+    private CloudIdentity1Type createCloudIdentity1Type(EndUser user, String displayName, Iterable<Group> groups,
+                                                        List<TenantRole> tenantRoles, Boolean migrated) {
+
+        CloudIdentity1Type cloudIdentityType = new CloudIdentity1Type();
+        cloudIdentityType.setResourceType(ResourceTypes1.USER);
+
+
+        cloudIdentityType.setDisplayName(displayName);
+
         if (user instanceof User) {
-            //only applicable for provisioned users
+            // Only applicable for provisioned users
             cloudIdentityType.setMultiFactorEnabled(((User)user).isMultiFactorEnabled());
         }
-        else if (user instanceof FederatedUser) {
-            FederatedUser fedUser = (FederatedUser) user;
-            username = String.format("%s@%s", fedUser.getUsername(), fedUser.getFederatedIdpUri());
-        }
-        cloudIdentityType.setDisplayName(username);
 
-        for (Group group : identityUserService.getGroupsForEndUser(user.getId())) {
-            cloudIdentityType.getGroups().add(group.getGroupId());
-        }
+        // Add user's rate limiting groups
+        groups.forEach(group -> cloudIdentityType.getGroups().add(group.getGroupId()));
 
-        final List<TenantRole> tenantRoles = defaultTenantService.getTenantRolesForUser(user);
-        if (tenantRoles != null) {
-            for (TenantRole tenantRole : tenantRoles) {
-                cloudIdentityType.getRoles().add(tenantRole.getName());
-            }
-        }
+        // Add user's tenant roles
+        tenantRoles.forEach(tenantRole -> cloudIdentityType.getRoles().add(tenantRole.getName()));
 
-        final String tenantId = defaultTenantService.getMossoIdFromTenantRoles(tenantRoles);
-
-        cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
-        cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
         if (migrated) {
             cloudIdentityType.setMigrated(migrated);
         }
 
-        final String id = UUID.randomUUID().toString();
-        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), username, AtomHopperConstants.IDENTITY_EVENT, tenantId);
-        logger.debug("Created Identity user entry with id: " + id);
-        return usageEntry;
+        cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
+        cloudIdentityType.setVersion(String.valueOf(AtomHopperConstants.V1_USER_PRODUCT_SCHEMA_VERSION));
+
+        return cloudIdentityType;
+    }
+
+    /**
+     * Creates a version 3   product in user events for feed entry.
+     *
+     * @param user
+     * @param displayName
+     * @param groups
+     * @param tenantRoles
+     * @param migrated
+     * @param requestId
+     * @param userStatus
+     * @return
+     */
+    private CloudIdentity3Type createCloudIdentity3Type(EndUser user, String displayName,
+                                                        Iterable<Group> groups, List<TenantRole> tenantRoles,
+                                                        Boolean migrated, String requestId,
+                                                        FeedsUserStatusEnum userStatus) {
+
+        CloudIdentity3Type cloudIdentityType = new CloudIdentity3Type();
+        cloudIdentityType.setResourceType(ResourceTypes3.USER);
+
+        // Required attributes
+        cloudIdentityType.setDisplayName(displayName);
+        cloudIdentityType.setDomainId(user.getDomainId());
+        // This will be populated by identity if not set on the request header.
+        cloudIdentityType.setRequestId(requestId);
+
+        if (user instanceof User) {
+            // Only applicable for provisioned users
+            cloudIdentityType.setMultiFactorEnabled(((User)user).isMultiFactorEnabled());
+        }
+
+        // Optional attributes
+        if (user.getContactId() != null) {
+            cloudIdentityType.setContactId(user.getContactId());
+        }
+
+        // Add user's rate limiting groups
+        groups.forEach(group -> cloudIdentityType.getGroups().add(group.getGroupId()));
+
+        // Add user's tenant roles
+        tenantRoles.forEach(tenantRole -> cloudIdentityType.getRoles().add(tenantRole.getName()));
+
+        if (migrated) {
+            cloudIdentityType.setMigrated(migrated);
+        }
+
+        if (userStatus.isUpdateEvent()) {
+            if (FeedsUserStatusEnum.USER_GROUP == userStatus) {
+                cloudIdentityType.getUpdatedAttributes().add(UpdatedAttributes3Enum.USER_GROUP);
+            }
+            if (FeedsUserStatusEnum.ROLE == userStatus || FeedsUserStatusEnum.USER_GROUP == userStatus) {
+                cloudIdentityType.getUpdatedAttributes().add(UpdatedAttributes3Enum.ROLES);
+            }
+
+            if (cloudIdentityType.getUpdatedAttributes().isEmpty()) {
+                cloudIdentityType.getUpdatedAttributes().add(UpdatedAttributes3Enum.USER);
+            }
+        }
+
+        cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
+        cloudIdentityType.setVersion(String.valueOf(AtomHopperConstants.V3_USER_PRODUCT_SCHEMA_VERSION));
+
+        return cloudIdentityType;
     }
 
     private UsageEntry createEntryForRevokeToken(EndUser user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {

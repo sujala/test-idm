@@ -4,7 +4,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.v20.ListUsersSearchParams;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -347,7 +347,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
         userService.addUserGroupToUser(group, baseUser);
 
         // Send an UPDATE user event for user being added to user group.
-        atomHopperClient.asyncPost(baseUser, AtomHopperConstants.UPDATE);
+        atomHopperClient.asyncPost(baseUser, FeedsUserStatusEnum.USER_GROUP);
     }
 
     @Override
@@ -355,7 +355,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
         userService.removeUserGroupFromUser(group, baseUser);
 
         // Send an UPDATE user event for user being removed from a user group.
-        atomHopperClient.asyncPost(baseUser, AtomHopperConstants.UPDATE);
+        atomHopperClient.asyncPost(baseUser, FeedsUserStatusEnum.USER_GROUP);
     }
 
     @Override

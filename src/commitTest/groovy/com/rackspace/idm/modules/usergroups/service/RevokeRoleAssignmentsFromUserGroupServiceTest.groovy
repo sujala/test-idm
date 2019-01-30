@@ -1,6 +1,6 @@
 package com.rackspace.idm.modules.usergroups.service
 
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.NotFoundException
@@ -107,6 +107,6 @@ class RevokeRoleAssignmentsFromUserGroupServiceTest extends RootServiceTest{
         1 * tenantRoleDao.deleteTenantRole(tenantRoleAssignment)
 
         1 * identityUserService.getEndUsersInUserGroup(group) >> [user]
-        1 * atomHopperClient.asyncPost((EndUser) user, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost((EndUser) user, FeedsUserStatusEnum.ROLE)
     }
 }

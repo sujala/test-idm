@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
@@ -350,7 +350,7 @@ public class DefaultDelegationService implements DelegationService {
         for (BaseUser user : users) {
             // Only post events for provisioned users.
             if (!(user instanceof FederatedUser)) {
-                atomHopperClient.asyncPost((EndUser) user, AtomHopperConstants.UPDATE);
+                atomHopperClient.asyncPost((EndUser) user, FeedsUserStatusEnum.UPDATE);
             }
         }
     }

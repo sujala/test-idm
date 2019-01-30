@@ -3,7 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.RequestContextHolder
@@ -124,8 +124,8 @@ class DomainRcnSwitchCommitTests extends Specification {
 
         and: "delete the role from that user if they have any RCN roles"
         1 * tenantService.deleteTenantRole(rcnTenantRole)
-        1 * atomHopperClient.asyncPost(user1, AtomHopperConstants.ROLE)
-        0 * atomHopperClient.asyncPost(user2, AtomHopperConstants.ROLE)
+        1 * atomHopperClient.asyncPost(user1, FeedsUserStatusEnum.ROLE)
+        0 * atomHopperClient.asyncPost(user2, FeedsUserStatusEnum.ROLE)
 
         and: "update the RCN on the domain to the new RCN"
         1 * domainService.updateDomain(*_) >> { arguments ->

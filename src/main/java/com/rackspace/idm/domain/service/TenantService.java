@@ -87,15 +87,6 @@ public interface TenantService {
     void addTenantRolesToUser(BaseUser user, List<TenantRole> tenantRoles);
 
     /**
-     * Assigns the target user all the propagating roles the "caller" user is "effectively" assigned. The calling users
-     * roles are determined by applying group membership and implicit identity:tenant-access logic, but not RCN logic.
-     *
-     * @param caller
-     * @param user
-     */
-    void addCallerTenantRolesToUser(User caller, User user);
-
-    /**
      * Delete the role explicitly assigned to the specified user (Federated or Provisioned).
      *
      * If the user is not explicitly assigned the role, no role is removed (and no exception is thrown)

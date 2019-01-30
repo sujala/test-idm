@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.idm.SAMLConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -162,7 +162,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         identityUserService.deleteUser(user);
 
         //send atom hopper feed showing deletion of this user
-        atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);
+        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.DELETED);
     }
 
     /**
@@ -390,16 +390,25 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         Collection<String> add = ListUtils.removeAll(desiredRbacRoleMap.keySet(), existingRbacRoleMap.keySet());
         Collection<String> remove = ListUtils.removeAll(existingRbacRoleMap.keySet(), desiredRbacRoleMap.keySet());
 
-        //remove roles that user should no longer have
-        for (String roleToRemove : remove) {
-            tenantService.deleteGlobalRole(existingRbacRoleMap.get(roleToRemove));
-        }
+        boolean sendFeedEvent = false;
+        try {
+            //remove roles that user should no longer have
+            for (String roleToRemove : remove) {
+                tenantService.deleteGlobalRole(existingRbacRoleMap.get(roleToRemove));
+                sendFeedEvent = true;
+            }
 
-        //add roles that user should have
-        for (String roleToAdd : add) {
-            tenantService.addTenantRoleToUser(existingFederatedUser, desiredRbacRoleMap.get(roleToAdd));
+            //add roles that user should have
+            for (String roleToAdd : add) {
+                tenantService.addTenantRoleToUser(existingFederatedUser, desiredRbacRoleMap.get(roleToAdd));
+                sendFeedEvent = true;
+            }
+        } finally {
+            // Send user feed event if any roles were modified on the user.
+            if (sendFeedEvent) {
+                atomHopperClient.asyncPost(existingFederatedUser, FeedsUserStatusEnum.ROLE);
+            }
         }
-
         existingFederatedUser.setRoles(desiredRbacRolesOnUser);
     }
 
@@ -445,7 +454,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
         federatedUserDao.addUser(request.getIdentityProvider(), userToCreate);
 
-        atomHopperClient.asyncPost(userToCreate, AtomHopperConstants.CREATE);
+        atomHopperClient.asyncPost(userToCreate, FeedsUserStatusEnum.CREATE);
 
         tenantService.addTenantRolesToUser(userToCreate, tenantRoles);
 
