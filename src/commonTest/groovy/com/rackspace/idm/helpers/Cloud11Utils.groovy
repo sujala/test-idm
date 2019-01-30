@@ -32,11 +32,6 @@ class Cloud11Utils {
         response.getEntity(User)
     }
 
-    def deleteUser(User user) {
-        def response = methods.deleteUser(user.id)
-        assert (response.status == SC_NO_CONTENT)
-    }
-
     def getUserByName(String username) {
         def response = methods.getUserByName(username)
         assert (response.status == SC_OK)

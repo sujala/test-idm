@@ -44,7 +44,7 @@ class Cloud11ValidateTokenIntegrationTest extends RootIntegrationTest {
         response.status == SC_NOT_FOUND
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         utils.deleteTenantById(String.valueOf(user.mossoId))
         utils.deleteTenantById(user.nastId)
         utils.deleteDomain(domainId)

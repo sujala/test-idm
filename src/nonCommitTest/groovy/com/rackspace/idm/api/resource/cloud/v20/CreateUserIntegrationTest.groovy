@@ -316,7 +316,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         !tenants.tenant.isEmpty()
 
         cleanup:
-        cloud11.deleteUser(username)
+        cloud20.deleteUser(utils.getServiceAdminToken(), userEntity.id)
     }
 
     def "Do not allow more than one userAdmin per domain" () {

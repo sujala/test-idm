@@ -3732,7 +3732,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ScopeAccess callerScopeAccess = requestContextHolder.getRequestContext().getSecurityContext().getEffectiveCallerToken();
 
-            authorizationService.verifyCallerCanImpersonate(impersonator, callerScopeAccess);
+            authorizationService.verifyEffectiveCallerCanImpersonate();
 
             ImpersonatorType impersonatorType = null;
             if (callerScopeAccess instanceof RackerScopeAccess) {

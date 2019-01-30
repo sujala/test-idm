@@ -23,6 +23,7 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
     def "Authenticate user within a disable domain should return 403" () {
         given:
         def user = utils11.createUser()
+        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
         def domainId = String.valueOf(user.mossoId)
         def domain = v1Factory.createDomain().with {
             it.id = domainId
@@ -50,7 +51,7 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
         nastResponse.status ==  SC_FORBIDDEN
 
         cleanup:
-        utils11.deleteUser(user)
+        utils.deleteUser(user20)
         utils.deleteTenantById(String.valueOf(user.mossoId))
         utils.deleteTenantById(user.nastId)
         utils.deleteDomain(domainId)
@@ -284,5 +285,4 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
             assert parsedAuthResponse.auth.token.expires != null
         }
     }
-
 }
