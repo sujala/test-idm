@@ -37,7 +37,7 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.assertEqual(create_group_resp.status_code, 201)
         return responses.UserGroup(create_group_resp.json())
 
-    @tags('positive', 'p0', 'smoke')
+    @unless_coverage
     @attr(type='smoke_alpha')
     @ddt.data(True, False)
     def test_crud_tenant_role_assignments_to_user_group(

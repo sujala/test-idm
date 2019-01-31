@@ -2,7 +2,7 @@
 from nose.plugins.attrib import attr
 import ddt
 import time
-from qe_coverage.opencafe_decorators import unless_coverage
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import data_file_iterator
 from tests.api.utils import saml_helper
@@ -644,6 +644,7 @@ class TestAdminsOfUser(base.TestBaseV2):
             token_id=fed_user_auth_token)
         self.assertEqual(validate_resp.status_code, 404)
 
+    @tags('negative', 'p1', 'regression')
     def test_racker_saml_logout(self):
         #  Logging out federated rackers is not supported
         logout_v2_saml = saml_helper.create_saml_logout_v2(
