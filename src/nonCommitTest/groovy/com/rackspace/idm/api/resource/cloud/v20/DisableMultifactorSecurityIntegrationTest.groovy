@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UserDao
@@ -13,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-
-import static com.rackspace.idm.Constants.*
 
 class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
 
@@ -295,12 +292,12 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
             it.clientId = Constants.IDENTITY_SERVICE_ID
             it
         }
-        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole)
+        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole, false)
 
         tenantRole.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.DEFAULT_USER_ROLE_ID, userAdmin2.id)
         tenantRole.roleRsId = Constants.DEFAULT_USER_ROLE_ID
         tenantRole.name = Constants.DEFAULT_USER_ROLE_NAME
-        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole)
+        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole, false)
 
         def userAdmin2Token = utils.getToken(userAdmin2.username, Constants.DEFAULT_PASSWORD)
 

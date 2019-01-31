@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
@@ -260,7 +259,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         ClientRole cloudIdentityAdminRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.IDENTITY_ADMIN.roleName).asClientRole()
 
         def identityAdminEntity = userService.getUserById(identityAdmin.id)
-        tenantService.deleteTenantRoleForUser(identityAdminEntity, tenantService.getTenantRoleForUserById(identityAdminEntity, Constants.IDENTITY_ADMIN_ROLE_ID))
+        tenantService.deleteTenantRoleForUser(identityAdminEntity, tenantService.getTenantRoleForUserById(identityAdminEntity, Constants.IDENTITY_ADMIN_ROLE_ID), false)
         assertUserDoesNotHaveRole(identityAdmin, cloudIdentityAdminRole)
 
         when: "Add role to user without any identity role"

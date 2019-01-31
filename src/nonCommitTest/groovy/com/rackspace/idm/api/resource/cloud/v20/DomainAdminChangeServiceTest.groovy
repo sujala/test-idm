@@ -545,7 +545,7 @@ class DomainAdminChangeServiceTest extends Specification {
         def response = defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest).build()
 
         then: "Promote users roles are properly modified"
-        1 * tenantService.addTenantRoleToUser(promoteUser, {it.name == USER_ADMIN.roleName})
+        1 * tenantService.addTenantRoleToUser(promoteUser, {it.name == USER_ADMIN.roleName}, true)
         1 * tenantService.deleteTenantRole({it.name == DEFAULT_USER.roleName})
 
         and: "Domain's userAdminDN is properly updated"
@@ -556,7 +556,7 @@ class DomainAdminChangeServiceTest extends Specification {
         }
 
         and: "Demote users roles are properly modified"
-        1 * tenantService.addTenantRoleToUser(demoteUser, {it.name == DEFAULT_USER.roleName})
+        1 * tenantService.addTenantRoleToUser(demoteUser, {it.name == DEFAULT_USER.roleName}, true)
         1 * tenantService.deleteTenantRole({it.name == USER_ADMIN.roleName})
 
         response.status == HttpStatus.SC_NO_CONTENT
@@ -597,7 +597,7 @@ class DomainAdminChangeServiceTest extends Specification {
         def response = defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest).build()
 
         then: "Promote users roles are properly modified"
-        1 * tenantService.addTenantRoleToUser(promoteUser, {it.name == USER_ADMIN.roleName})
+        1 * tenantService.addTenantRoleToUser(promoteUser, {it.name == USER_ADMIN.roleName}, true)
         1 * tenantService.deleteTenantRole({it.name == "promoteRBAC"})
         1 * tenantService.deleteTenantRole({it.name == DEFAULT_USER.roleName})
         1 * tenantService.deleteTenantRole({it.name == USER_MANAGER.roleName})
@@ -611,17 +611,13 @@ class DomainAdminChangeServiceTest extends Specification {
         }
 
         and: "Demote users roles are properly modified"
-        1 * tenantService.addTenantRoleToUser(demoteUser, {it.name == DEFAULT_USER.roleName})
+        1 * tenantService.addTenantRoleToUser(demoteUser, {it.name == DEFAULT_USER.roleName}, true)
         1 * tenantService.deleteTenantRole({it.name == "demoteRBAC"})
         1 * tenantService.deleteTenantRole({it.name == USER_ADMIN.roleName})
         0 * tenantService.deleteTenantRole({it.name == "demote"})
 
         and:
         response.status == HttpStatus.SC_NO_CONTENT
-
-        and: "atom hopper client called to send feed events"
-        1 * atomHopperClient.asyncPost(promoteUser, FeedsUserStatusEnum.ROLE)
-        1 * atomHopperClient.asyncPost(demoteUser, FeedsUserStatusEnum.ROLE)
 
         and: "verify if cached role name is retrieved from applicationService"
         1 * applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)

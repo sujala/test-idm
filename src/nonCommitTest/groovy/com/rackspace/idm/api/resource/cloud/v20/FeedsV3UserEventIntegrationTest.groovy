@@ -26,9 +26,12 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
     def setupSpec() {
         // User version 3 user product schema
         reloadableConfiguration.setProperty(IdentityConfig.FEEDS_USER_PRODUCT_SCHEMA_VERSION_PROP, 3)
+
+        resetCloudFeedsMock()
     }
 
     def cleanupSpec() {
+        resetCloudFeedsMock()
         reloadableConfiguration.reset()
     }
 

@@ -124,8 +124,8 @@ class DomainRcnSwitchCommitTests extends Specification {
 
         and: "delete the role from that user if they have any RCN roles"
         1 * tenantService.deleteTenantRole(rcnTenantRole)
-        1 * atomHopperClient.asyncPost(user1, FeedsUserStatusEnum.ROLE)
-        0 * atomHopperClient.asyncPost(user2, FeedsUserStatusEnum.ROLE)
+        1 * atomHopperClient.asyncPost(user1, FeedsUserStatusEnum.ROLE, _)
+        0 * atomHopperClient.asyncPost(user2, FeedsUserStatusEnum.ROLE, _)
 
         and: "update the RCN on the domain to the new RCN"
         1 * domainService.updateDomain(*_) >> { arguments ->

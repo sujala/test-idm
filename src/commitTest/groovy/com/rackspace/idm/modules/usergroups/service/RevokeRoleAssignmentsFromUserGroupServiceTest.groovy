@@ -107,6 +107,6 @@ class RevokeRoleAssignmentsFromUserGroupServiceTest extends RootServiceTest{
         1 * tenantRoleDao.deleteTenantRole(tenantRoleAssignment)
 
         1 * identityUserService.getEndUsersInUserGroup(group) >> [user]
-        1 * atomHopperClient.asyncPost((EndUser) user, FeedsUserStatusEnum.ROLE)
+        1 * atomHopperClient.asyncPost((EndUser) user, FeedsUserStatusEnum.ROLE, _)
     }
 }

@@ -384,12 +384,12 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
             it.clientId = Constants.IDENTITY_SERVICE_ID
             it
         }
-        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole)
+        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole, false)
         // Delete default user role
         tenantRole.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.DEFAULT_USER_ROLE_ID, userAdmin2.id)
         tenantRole.roleRsId = Constants.DEFAULT_USER_ROLE_ID
         tenantRole.name = Constants.DEFAULT_USER_ROLE_NAME
-        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole)
+        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole, false)
 
         when:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", true)

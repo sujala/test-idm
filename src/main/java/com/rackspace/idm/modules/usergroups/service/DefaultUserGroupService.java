@@ -4,9 +4,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
-import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
@@ -32,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -305,7 +306,7 @@ public class DefaultUserGroupService implements UserGroupService {
 
         // Send a user event for all members of the user group.
         for(EndUser endUser : getUsersInGroup(userGroup)) {
-            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE);
+            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
         }
     }
 
@@ -347,7 +348,7 @@ public class DefaultUserGroupService implements UserGroupService {
 
         // Send a user event for all members of the user group.
         for(EndUser endUser : getUsersInGroup(userGroup)) {
-            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE);
+            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
         }
     }
 
@@ -425,7 +426,7 @@ public class DefaultUserGroupService implements UserGroupService {
 
         // Send a user event for all members of the user group.
         for (EndUser endUser : getUsersInGroup(userGroup)) {
-            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE);
+            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
         }
 
         return tenantRoles;
@@ -447,7 +448,7 @@ public class DefaultUserGroupService implements UserGroupService {
 
         // Send an UPDATE user event for all members of the user group.
         for (EndUser endUser : getUsersInGroup(userGroup)) {
-            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE);
+            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
         }
     }
 

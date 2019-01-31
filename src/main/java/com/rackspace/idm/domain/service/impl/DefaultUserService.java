@@ -179,7 +179,7 @@ public class DefaultUserService implements UserService {
 
         userDao.addUser(user);
 
-        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE);
+        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, MDC.get(Audit.GUUID));
 
         assignUserRoles(user, false);
 
@@ -257,7 +257,7 @@ public class DefaultUserService implements UserService {
         }
         userDao.addUser(user);
 
-        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE);
+        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, MDC.get(Audit.GUUID));
 
         assignUserRoles(user, isCreateUserInOneCall);
 
@@ -1221,7 +1221,7 @@ public class DefaultUserService implements UserService {
                 callerUserType);
 
         // Send an UPDATE user event when roles change on user.
-        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.UPDATE);
+        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.UPDATE, MDC.get(Audit.GUUID));
 
         return tenantRoles;
     }
@@ -1814,7 +1814,7 @@ public class DefaultUserService implements UserService {
                 tenantRole.getTenantIds().addAll(role.getTenantIds());
 
                 try {
-                    tenantService.addTenantRoleToUser(user, tenantRole);
+                    tenantService.addTenantRoleToUser(user, tenantRole, false);
                     sendFeedEvent = true;
                 } catch (ClientConflictException e) {
                     if (!isCreateUserInOneCall) {
@@ -1825,7 +1825,7 @@ public class DefaultUserService implements UserService {
         } finally {
             // Send user feed event if at least one tenantRole was added to the user.
             if (sendFeedEvent) {
-                atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE);
+                atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
             }
         }
     }

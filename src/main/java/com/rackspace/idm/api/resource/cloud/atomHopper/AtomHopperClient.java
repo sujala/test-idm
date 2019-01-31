@@ -6,7 +6,6 @@ import com.rackspace.docs.core.event.Region;
 import com.rackspace.docs.core.event.V1Element;
 import com.rackspace.docs.event.identity.trr.user.ValuesEnum;
 import com.rackspace.docs.event.identity.user.*;
-import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
@@ -37,7 +36,6 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -230,9 +228,9 @@ public class AtomHopperClient {
     }
 
     @Async
-    public void asyncPost(EndUser user, FeedsUserStatusEnum userStatus) {
+    public void asyncPost(EndUser user, FeedsUserStatusEnum userStatus, String requestId) {
         try {
-            postUser(user, userStatus);
+            postUser(user, userStatus, requestId);
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception posting user change: ", e);
         }
@@ -294,22 +292,22 @@ public class AtomHopperClient {
         }
     }
 
-    private void postUser(EndUser user, FeedsUserStatusEnum userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+    private void postUser(EndUser user, FeedsUserStatusEnum userStatus, String requestId) throws JAXBException, IOException, HttpException, URISyntaxException {
         HttpResponse response = null;
         try {
             UsageEntry entry = null;
             if (userStatus.equals(FeedsUserStatusEnum.DELETED)) {
-                entry = createEntryForUser(user, EventType.DELETE, false, userStatus);
+                entry = createEntryForUser(user, EventType.DELETE, false, userStatus, requestId);
             } else if (userStatus.equals(FeedsUserStatusEnum.DISABLED)) {
-                entry = createEntryForUser(user, EventType.SUSPEND, false, userStatus);
+                entry = createEntryForUser(user, EventType.SUSPEND, false, userStatus, requestId);
             } else if (userStatus.equals(FeedsUserStatusEnum.ENABLED)) {
-                entry = createEntryForUser(user, EventType.UNSUSPEND, false, userStatus);
+                entry = createEntryForUser(user, EventType.UNSUSPEND, false, userStatus, requestId);
             } else if (userStatus.equals(FeedsUserStatusEnum.CREATE)) {
-                entry = createEntryForUser(user, EventType.CREATE, false, userStatus);
+                entry = createEntryForUser(user, EventType.CREATE, false, userStatus, requestId);
             } else if (userStatus.equals(FeedsUserStatusEnum.MIGRATED)) {
-                entry = createEntryForUser(user, EventType.CREATE, true, userStatus);
+                entry = createEntryForUser(user, EventType.CREATE, true, userStatus, requestId);
             } else if (userStatus.isUpdateEvent()) {
-                entry = createEntryForUser(user, EventType.UPDATE, false, userStatus);
+                entry = createEntryForUser(user, EventType.UPDATE, false, userStatus, requestId);
             }
 
             if (entry != null) {
@@ -422,7 +420,7 @@ public class AtomHopperClient {
                 .setConnectionRequestTimeout(identityConfig.getReloadableConfig().getFeedsConnectionRequestTimeout())
                 .build();
 
-        final HttpPost httpPost = new HttpPost(identityConfig.getReloadableConfig().getAtomHopperUrl());
+        final HttpPost httpPost = new HttpPost(identityConfig.getReloadableConfig().getFeedsUrl());
         httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML);
         httpPost.setHeader("X-Auth-Token", authToken);
         httpPost.setEntity(createRequestEntity(writer.toString()));
@@ -449,7 +447,7 @@ public class AtomHopperClient {
         return new InputStreamEntity(new ByteArrayInputStream(s.getBytes("UTF-8")), -1);
     }
 
-    private UsageEntry createEntryForUser(EndUser user, EventType eventType, Boolean migrated, FeedsUserStatusEnum userStatus) throws DatatypeConfigurationException {
+    private UsageEntry createEntryForUser(EndUser user, EventType eventType, Boolean migrated, FeedsUserStatusEnum userStatus, String requestId) throws DatatypeConfigurationException {
         logger.debug("Creating user entry ...");
 
         // Get the user's information
@@ -462,20 +460,18 @@ public class AtomHopperClient {
             displayName = String.format("%s@%s", fedUser.getUsername(), fedUser.getFederatedIdpUri());
         }
 
-        // Get requestId
-        String requestId = MDC.get(Audit.GUUID);
-
         int feedsUserProductSchemaVersion = identityConfig.getReloadableConfig().getFeedsUserProductSchemaVersion();
 
+        String tenantId = null;
         final Object cloudIdentityType;
         if (feedsUserProductSchemaVersion == AtomHopperConstants.V1_USER_PRODUCT_SCHEMA_VERSION) {
             cloudIdentityType = createCloudIdentity1Type(user, displayName, groups, tenantRoles, migrated);
+            tenantId = defaultTenantService.getMossoIdFromTenantRoles(tenantRoles);
         } else {
             cloudIdentityType = createCloudIdentity3Type(user, displayName, groups, tenantRoles, migrated, requestId, userStatus);
         }
 
         final String id = UUID.randomUUID().toString();
-        final String tenantId = defaultTenantService.getMossoIdFromTenantRoles(tenantRoles);
         final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), displayName, AtomHopperConstants.IDENTITY_EVENT, tenantId);
 
         // Set additional search category
@@ -502,7 +498,6 @@ public class AtomHopperClient {
 
         CloudIdentity1Type cloudIdentityType = new CloudIdentity1Type();
         cloudIdentityType.setResourceType(ResourceTypes1.USER);
-
 
         cloudIdentityType.setDisplayName(displayName);
 
@@ -711,9 +706,11 @@ public class AtomHopperClient {
         v1Element.setType(eventType);
         v1Element.setResourceId(resourceId);
         v1Element.setResourceName(resourceName);
-        v1Element.setTenantId(tenantId);
-        v1Element.setRegion(Region.fromValue(identityConfig.getReloadableConfig().getAtomHopperRegion()));
-        v1Element.setDataCenter(DC.fromValue(identityConfig.getReloadableConfig().getAtomHopperDataCenter()));
+        if (tenantId != null) {
+            v1Element.setTenantId(tenantId);
+        }
+        v1Element.setRegion(Region.fromValue(identityConfig.getReloadableConfig().getFeedsRegion()));
+        v1Element.setDataCenter(DC.fromValue(identityConfig.getReloadableConfig().getFeedsDataCenter()));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);
 

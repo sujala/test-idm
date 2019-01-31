@@ -467,9 +467,9 @@ public class IdentityConfig {
     /*
      * Feeds settings
      */
-    public static final String ATOM_HOPPER_URL_PROP = "atom.hopper.url";
-    public static final String ATOM_HOPPER_DATA_CENTER_PROP = "atom.hopper.dataCenter";
-    public static final String ATOM_HOPPER_REGION_PROP = "atom.hopper.region";
+    public static final String FEEDS_URL_PROP = "feeds.url";
+    public static final String FEEDS_DATA_CENTER_PROP = "feeds.dataCenter";
+    public static final String FEEDS_REGION_PROP = "feeds.region";
 
     public static final String FEEDS_USER_PRODUCT_SCHEMA_VERSION_PROP = "feeds.user.product.schema.version";
     public static final int FEEDS_USER_PRODUCT_SCHEMA_VERSION_DEFAULT = 1;
@@ -2312,19 +2312,19 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP);
         }
 
-        @IdmProp(key = ATOM_HOPPER_URL_PROP, versionAdded = "3.5.0", description = "The URL to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.")
-        public String getAtomHopperUrl() {
-            return reloadableConfiguration.getString(ATOM_HOPPER_URL_PROP);
+        @IdmProp(key = FEEDS_URL_PROP, versionAdded = "3.5.0", description = "The URL to use when posting events to feeds. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.")
+        public String getFeedsUrl() {
+            return reloadableConfiguration.getString(FEEDS_URL_PROP);
         }
 
-        @IdmProp(key = ATOM_HOPPER_DATA_CENTER_PROP, versionAdded = "3.5.0", description = "The data center to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.")
-        public String getAtomHopperDataCenter() {
-            return reloadableConfiguration.getString(ATOM_HOPPER_DATA_CENTER_PROP);
+        @IdmProp(key = FEEDS_DATA_CENTER_PROP, versionAdded = "3.5.0", description = "The data center to use when posting events to feeds. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.")
+        public String getFeedsDataCenter() {
+            return reloadableConfiguration.getString(FEEDS_DATA_CENTER_PROP);
         }
 
-        @IdmProp(key = ATOM_HOPPER_REGION_PROP, versionAdded = "3.5.0", description = "The region to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.")
-        public String getAtomHopperRegion() {
-            return reloadableConfiguration.getString(ATOM_HOPPER_REGION_PROP);
+        @IdmProp(key = FEEDS_REGION_PROP, versionAdded = "3.5.0", description = "The region to use when posting events to feeds. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.")
+        public String getFeedsRegion() {
+            return reloadableConfiguration.getString(FEEDS_REGION_PROP);
         }
 
         @IdmProp(key = FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, versionAdded = "3.3.2", description = "Whether or not to return the custom versions.json when GET /cloud is called and json is requested or translate the versions.xml to json")

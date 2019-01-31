@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v11
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple
 import com.rackspace.idm.api.security.AuthenticationContext
@@ -271,8 +270,8 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         service.updateUser(request, "jmunoz", null, user)
 
         then:
-        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.DISABLED)
-        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.UPDATE)
+        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.DISABLED, _)
+        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.UPDATE, _)
 
     }
 
@@ -298,7 +297,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         service.updateUser(request, "jmunoz", null, user)
 
         then:
-        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.UPDATE)
+        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.UPDATE, _)
 
     }
 
@@ -320,7 +319,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         service.setUserEnabled(request, "jmunoz",  user, null)
 
         then:
-        1 * atomHopperClient.asyncPost(_,_)
+        1 * atomHopperClient.asyncPost(_, _, _)
 
     }
 
@@ -342,7 +341,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         service.setUserEnabled(request, "jmunoz",  user, null)
 
         then:
-        0 * atomHopperClient.asyncPost(_,_)
+        0 * atomHopperClient.asyncPost(_, _, _)
     }
 
     def "Do not add v1Default if set to false and tenant contains v1Defaults" ()  {

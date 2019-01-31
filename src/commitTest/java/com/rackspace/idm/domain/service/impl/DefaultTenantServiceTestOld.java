@@ -8,28 +8,20 @@ import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.DN;
-import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldap.sdk.RDN;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -86,7 +78,7 @@ public class DefaultTenantServiceTestOld {
 
     @Test (expected = IllegalArgumentException.class)
     public void deleteTenantRole_nullRole_throwsIllegalArgumentException() throws Exception {
-        defaultTenantService.deleteTenantRoleForUser(getUser(), null);
+        defaultTenantService.deleteTenantRoleForUser(getUser(), null, false);
     }
 
     @Test
@@ -97,32 +89,32 @@ public class DefaultTenantServiceTestOld {
 
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToUser_userIsNullAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
-        defaultTenantService.addTenantRoleToUser(null,null);
+        defaultTenantService.addTenantRoleToUser(null,null, false);
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToUser_userIsNullAndRoleExists_throwsIllegalArgumentException() throws Exception {
         TenantRole role = new TenantRole();
-        defaultTenantService.addTenantRoleToUser(null,role);
+        defaultTenantService.addTenantRoleToUser(null,role, false);
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToUser_userIdIsBlankAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
         User user = new User();
-        defaultTenantService.addTenantRoleToUser(user,null);
+        defaultTenantService.addTenantRoleToUser(user,null, false);
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToUser_userIdIsBlankAndRoleExists_throwsIllegalArgumentException() throws Exception {
         User user = new User();
         TenantRole tenantRole = new TenantRole();
-        defaultTenantService.addTenantRoleToUser(user,tenantRole);
+        defaultTenantService.addTenantRoleToUser(user,tenantRole, false);
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToUser_nullRole_throwsIllegalArgumentException() throws Exception {
         User user = new User();
-        defaultTenantService.addTenantRoleToUser(user,null);
+        defaultTenantService.addTenantRoleToUser(user,null, false);
     }
 
     @Test

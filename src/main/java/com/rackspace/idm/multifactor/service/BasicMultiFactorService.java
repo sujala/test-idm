@@ -1,7 +1,6 @@
 package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Trace;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.identity.multifactor.domain.*;
@@ -14,6 +13,7 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.BypassDeviceDao;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
@@ -38,6 +38,7 @@ import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -546,7 +547,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         removeMultifactorFromUserWithoutNotifications(user);
 
         if (enabled) {
-            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.MULTI_FACTOR);
+            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.MULTI_FACTOR, MDC.get(Audit.GUUID));
             emailClient.asyncSendMultiFactorDisabledMessage(user);
         }
     }
@@ -1040,7 +1041,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             revokeAllMFAProtectedTokensForUser(user);
         }
         if (sendNotifications) {
-            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.MULTI_FACTOR);
+            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.MULTI_FACTOR, MDC.get(Audit.GUUID));
             emailClient.asyncSendMultiFactorEnabledMessage(user);
         }
     }
@@ -1100,7 +1101,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         userService.updateUserForMultiFactor(user);
 
         if (enabled){
-            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.MULTI_FACTOR);
+            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.MULTI_FACTOR, MDC.get(Audit.GUUID));
             emailClient.asyncSendMultiFactorDisabledMessage(user);
         }
 

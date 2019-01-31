@@ -3,10 +3,7 @@ package com.rackspace.idm.api.resource.cloud.atomHopper
 import com.rackspace.idm.domain.config.IdentityConfig
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.Configurable
-import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.DefaultHttpClient
-import org.apache.http.impl.client.InternalHttpClient
-import org.apache.http.impl.conn.PoolingClientConnectionManager
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import spock.lang.Shared
 import spock.lang.Specification
@@ -37,9 +34,9 @@ class HttpClientSettingsTest extends Specification {
         identityConfig.getReloadableConfig() >> reloadableConfig
         client.identityConfig = identityConfig
 
-        reloadableConfig.getAtomHopperDataCenter() >> "GLOBAL"
-        reloadableConfig.getAtomHopperUrl() >> "http://localhost:8888/namespace/feed"
-        reloadableConfig.getAtomHopperRegion() >> "GLOBAL"
+        reloadableConfig.getFeedsDataCenter() >> "GLOBAL"
+        reloadableConfig.getFeedsUrl() >> "http://localhost:8888/namespace/feed"
+        reloadableConfig.getFeedsRegion() >> "GLOBAL"
     }
 
     def cleanup() {

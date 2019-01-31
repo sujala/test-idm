@@ -148,7 +148,7 @@ class RackerSourceFederationHandlerTest extends Specification {
         1 * tenantService.getEphemeralRackerTenantRoles(newRackerUsername) >> Collections.EMPTY_LIST
         0 * federatedRackerDao.getUserById(_)
         0 * federatedRackerDao.addUser(_, _)
-        0 * tenantService.addTenantRoleToUser(_, _)
+        0 * tenantService.addTenantRoleToUser(_, _, _)
         0 * scopeAccessService.deleteExpiredTokensQuietly(_)
         newRackerResponse.user != null
         newRackerResponse.token != null

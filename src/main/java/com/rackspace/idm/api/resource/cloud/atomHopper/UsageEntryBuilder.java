@@ -84,8 +84,8 @@ public class UsageEntryBuilder {
         v1Element.setResourceId(resourceId);
         v1Element.setResourceName(resourceName);
         v1Element.setTenantId(tenantId);
-        v1Element.setRegion(Region.fromValue(identityConfig.getReloadableConfig().getAtomHopperRegion()));
-        v1Element.setDataCenter(DC.fromValue(identityConfig.getReloadableConfig().getAtomHopperDataCenter()));
+        v1Element.setRegion(Region.fromValue(identityConfig.getReloadableConfig().getFeedsRegion()));
+        v1Element.setDataCenter(DC.fromValue(identityConfig.getReloadableConfig().getFeedsDataCenter()));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(eventData);
 

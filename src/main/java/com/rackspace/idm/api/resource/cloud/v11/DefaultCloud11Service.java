@@ -11,6 +11,7 @@ import com.rackspace.idm.api.resource.cloud.v20.*;
 import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.Cloud11AuthorizationLevel;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -37,6 +38,7 @@ import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -801,9 +803,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser);
             if (gaUser.isDisabled() && !isDisabled) {
-                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.DISABLED);
+                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.DISABLED, MDC.get(Audit.GUUID));
             } else if (!gaUser.isDisabled() && isDisabled) {
-                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.ENABLED);
+                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.ENABLED, MDC.get(Audit.GUUID));
             }
 
             return Response.ok(getJAXBElementUserEnabledWithEndpoints(gaUser).getValue());
@@ -888,12 +890,12 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (gaUser.isDisabled() && !isDisabled ) {
-                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.DISABLED);
+                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.DISABLED, MDC.get(Audit.GUUID));
             } else if (!gaUser.isDisabled() && isDisabled) {
-                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.ENABLED);
+                atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.ENABLED, MDC.get(Audit.GUUID));
             }
 
-            atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.UPDATE);
+            atomHopperClient.asyncPost(gaUser, FeedsUserStatusEnum.UPDATE, MDC.get(Audit.GUUID));
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
 

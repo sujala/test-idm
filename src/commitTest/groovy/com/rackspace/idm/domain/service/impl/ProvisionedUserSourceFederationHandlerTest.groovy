@@ -610,7 +610,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         noExceptionThrown()
 
         and: "created user feed event is sent"
-        1 * mockAtomHopperClient.asyncPost(_, FeedsUserStatusEnum.CREATE)
+        1 * mockAtomHopperClient.asyncPost(_, FeedsUserStatusEnum.CREATE, _)
     }
 
     def "validate saml response when role does not exist" (){

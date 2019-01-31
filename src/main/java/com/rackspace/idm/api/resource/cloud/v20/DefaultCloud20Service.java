@@ -85,6 +85,7 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -628,9 +629,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantRole.setUserId(user.getId());
             tenantRole.getTenantIds().add(tenant.getTenantId());
 
-            tenantService.addTenantRoleToUser(user, tenantRole);
-
-            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE);
+            tenantService.addTenantRoleToUser(user, tenantRole, true);
 
             // NOTE: At this point we can't do a contract change, but this should've been a HTTP 204 No Content.
             return Response.ok();
@@ -1006,7 +1005,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             userService.updateUser(retrievedUnverifiedUser);
 
-            atomHopperClient.asyncPost(retrievedUnverifiedUser, FeedsUserStatusEnum.CREATE);
+            atomHopperClient.asyncPost(retrievedUnverifiedUser, FeedsUserStatusEnum.CREATE, MDC.get(Audit.GUUID));
 
             User userEntity = identityUserService.getProvisionedUserById(retrievedUnverifiedUser.getId());
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userEntity)).getValue());
@@ -1145,9 +1144,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                     userDO.setEnabled(((User) retrievedUser).getEnabled());
                 }
                 if (userDO.isDisabled() && !isDisabled) {
-                    atomHopperClient.asyncPost((User) retrievedUser, FeedsUserStatusEnum.DISABLED);
+                    atomHopperClient.asyncPost((User) retrievedUser, FeedsUserStatusEnum.DISABLED, MDC.get(Audit.GUUID));
                 } else if (!userDO.isDisabled() && isDisabled) {
-                    atomHopperClient.asyncPost((User) retrievedUser, FeedsUserStatusEnum.ENABLED);
+                    atomHopperClient.asyncPost((User) retrievedUser, FeedsUserStatusEnum.ENABLED, MDC.get(Audit.GUUID));
                 }
 
                 Boolean updateRegion = true;
@@ -1170,7 +1169,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             EndUser endUser = identityUserService.getEndUserById(userId);
 
             if (sendUserEvent) {
-                atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.UPDATE);
+                atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.UPDATE, MDC.get(Audit.GUUID));
             }
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(endUser)).getValue());
@@ -1326,9 +1325,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             role.setClientId(clientRole.getClientId());
             role.setName(clientRole.getName());
             role.setRoleRsId(clientRole.getId());
-            this.tenantService.addTenantRoleToUser(user, role);
-
-            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE);
+            this.tenantService.addTenantRoleToUser(user, role, true);
         }
     }
 
@@ -2535,8 +2532,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             this.tenantService.deleteTenantOnRoleForUser(user, tenantRole, tenant);
 
-            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE);
-
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -2618,7 +2613,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 domainService.removeDomainUserAdminDN((User) user);
             }
 
-            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.DELETED);
+            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.DELETED, MDC.get(Audit.GUUID));
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -2719,9 +2714,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException(ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE);
             }
 
-            this.tenantService.deleteTenantRoleForUser(user, role);
-
-            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE);
+            this.tenantService.deleteTenantRoleForUser(user, role, true);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -5095,7 +5088,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                             identityUserService.addGroupToEndUser(groupId, subUser.getId());
                             if (user instanceof User) {
                                 //we don't send fed user create events, so won't send update events
-                                atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP);
+                                atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP, MDC.get(Audit.GUUID));
                             }
                         }
                     }
@@ -5104,7 +5097,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 identityUserService.addGroupToEndUser(groupId, user.getId());
                 if (user instanceof User) {
                     //we don't send fed user create events, so won't send update events
-                    atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP);
+                    atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP, MDC.get(Audit.GUUID));
                 }
             }
             return Response.noContent();
@@ -5145,7 +5138,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                         identityUserService.removeGroupFromEndUser(groupId, subUser.getId());
                         if (user instanceof User) {
                             //we don't send fed user create events, so won't send update events
-                            atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP);
+                            atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP, MDC.get(Audit.GUUID));
                         }
                     }
                 }
@@ -5154,7 +5147,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             identityUserService.removeGroupFromEndUser(groupId, user.getId());
             if (user instanceof User) {
                 //we don't send fed user create events, so won't send update events
-                atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP);
+                atomHopperClient.asyncPost((User)user, FeedsUserStatusEnum.GROUP, MDC.get(Audit.GUUID));
             }
             return Response.noContent();
         } catch (Exception e) {
@@ -5327,9 +5320,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             userDO.setEnabled(user.isEnabled());
 
             if (userDO.isDisabled() && !isDisabled) {
-                atomHopperClient.asyncPost(userDO, FeedsUserStatusEnum.DISABLED);
+                atomHopperClient.asyncPost(userDO, FeedsUserStatusEnum.DISABLED, MDC.get(Audit.GUUID));
             } else if (!userDO.isDisabled() && isDisabled) {
-                atomHopperClient.asyncPost(userDO, FeedsUserStatusEnum.ENABLED);
+                atomHopperClient.asyncPost(userDO, FeedsUserStatusEnum.ENABLED, MDC.get(Audit.GUUID));
             }
 
             this.userService.updateUser(userDO);
@@ -5882,7 +5875,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                         tenantService.deleteTenantRole(rcnTenantRole);
                     }
 
-                    atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE);
+                    atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
                 }
 
             }

@@ -6,6 +6,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest;
 import com.rackspace.idm.api.security.AuthenticationContext;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.dao.DomainDao;
@@ -32,6 +33,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -162,7 +164,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         identityUserService.deleteUser(user);
 
         //send atom hopper feed showing deletion of this user
-        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.DELETED);
+        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.DELETED, MDC.get(Audit.GUUID));
     }
 
     /**
@@ -400,13 +402,13 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
             //add roles that user should have
             for (String roleToAdd : add) {
-                tenantService.addTenantRoleToUser(existingFederatedUser, desiredRbacRoleMap.get(roleToAdd));
+                tenantService.addTenantRoleToUser(existingFederatedUser, desiredRbacRoleMap.get(roleToAdd), false);
                 sendFeedEvent = true;
             }
         } finally {
             // Send user feed event if any roles were modified on the user.
             if (sendFeedEvent) {
-                atomHopperClient.asyncPost(existingFederatedUser, FeedsUserStatusEnum.ROLE);
+                atomHopperClient.asyncPost(existingFederatedUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
             }
         }
         existingFederatedUser.setRoles(desiredRbacRolesOnUser);
@@ -454,7 +456,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
         federatedUserDao.addUser(request.getIdentityProvider(), userToCreate);
 
-        atomHopperClient.asyncPost(userToCreate, FeedsUserStatusEnum.CREATE);
+        atomHopperClient.asyncPost(userToCreate, FeedsUserStatusEnum.CREATE, MDC.get(Audit.GUUID));
 
         tenantService.addTenantRolesToUser(userToCreate, tenantRoles);
 

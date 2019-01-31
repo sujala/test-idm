@@ -60,7 +60,7 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false, FeedsUserStatusEnum.DELETED)
+        UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false, FeedsUserStatusEnum.DELETED, "requestId")
 
         then:
         entry.title.value.equals("Identity Event")
@@ -85,7 +85,7 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false, FeedsUserStatusEnum.GROUP)
+        UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false, FeedsUserStatusEnum.GROUP, "requestId")
 
         def cloudIdentityType = (CloudIdentity1Type) entry.content.event.any.get(0)
         def groupInfo = cloudIdentityType.getGroups().get(0)
@@ -108,7 +108,7 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        client.postUser(user, FeedsUserStatusEnum.DELETED)
+        client.postUser(user, FeedsUserStatusEnum.DELETED, "requestId")
 
         then:
         1 * httpClient.execute(_)
@@ -128,7 +128,7 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        client.postUser(user, FeedsUserStatusEnum.DISABLED)
+        client.postUser(user, FeedsUserStatusEnum.DISABLED, "requestId")
 
         then:
         1 * httpClient.execute(_)
@@ -148,7 +148,7 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        client.postUser(user, FeedsUserStatusEnum.MIGRATED)
+        client.postUser(user, FeedsUserStatusEnum.MIGRATED, "requestId")
 
         then:
         1 * httpClient.execute(_)
@@ -197,7 +197,7 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        client.postUser(user, FeedsUserStatusEnum.DISABLED)
+        client.postUser(user, FeedsUserStatusEnum.DISABLED, "requestId")
 
         then:
         1 * httpClient.execute(_) >> response
@@ -526,7 +526,7 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         def group = entityFactory.createGroup("groupId", "groupName", "description")
 
         when:
-        UsageEntry usageEntry = client.createEntryForUser(user, EventType.UPDATE, false, FeedsUserStatusEnum.UPDATE)
+        UsageEntry usageEntry = client.createEntryForUser(user, EventType.UPDATE, false, FeedsUserStatusEnum.UPDATE, "requestId")
 
         then:
         usageEntry != null
@@ -567,9 +567,9 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         atomHopperHelper = Mock()
         client.atomHopperHelper = atomHopperHelper
 
-        reloadableConfig.getAtomHopperDataCenter() >> "GLOBAL"
-        reloadableConfig.getAtomHopperUrl() >> "http://localhost:8888/namespace/feed"
-        reloadableConfig.getAtomHopperRegion() >> "GLOBAL"
+        reloadableConfig.getFeedsDataCenter() >> "GLOBAL"
+        reloadableConfig.getFeedsUrl() >> "http://localhost:8888/namespace/feed"
+        reloadableConfig.getFeedsRegion() >> "GLOBAL"
 
         config.getString("atom.hopper.crypto.password") >> "password"
         config.getString("atom.hopper.crypto.salt") >> "c8 99"

@@ -257,8 +257,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * domainService.addTenantToDomain(domainId,domainId)
         1 * domainService.addTenantToDomain(expectedNastTenantId, domainId)
         1 * userDao.addUser(user)
-        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE);
-        1 * tenantService.addTenantRoleToUser(user, _);
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, _);
+        1 * tenantService.addTenantRoleToUser(user, _, false);
         1 * domainService.updateDomainUserAdminDN(user)
         endpointService.doesBaseUrlBelongToCloudRegion(_) >> true
 
@@ -298,7 +298,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * mockValidator.validateUser(user)
         1 * domainService.createNewDomain(domainId)
         1 * userDao.addUser(user)
-        1 * tenantService.addTenantRoleToUser(user, _);
+        1 * tenantService.addTenantRoleToUser(user, _, false);
         1 * domainService.updateDomainUserAdminDN(user)
 
         user.password != null
@@ -334,7 +334,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * domainService.getDomainAdmins(domain.domainId) >> []
         1 * userDao.getUsersByDomain(domain.domainId) >> []
         1 * userDao.addUser(user)
-        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE);
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, _);
         1 * domainService.updateDomainUserAdminDN(user)
         if (isCreateUserOneCall) {
             2 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
@@ -1374,7 +1374,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * mockValidator.validateUser(user)
         1 * domainService.createNewDomain(domainId)
         1 * userDao.addUser(user)
-        1 * tenantService.addTenantRoleToUser(user, _);
+        1 * tenantService.addTenantRoleToUser(user, _, false);
 
         user.password != null
         user.userPassword != null
@@ -1595,8 +1595,8 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         1 * mockRoleService.getRoleByName(tenantRole.name) >> clientRole
         1 * mockRoleService.getRoleByName(tenantRole2.name) >> clientRole
-        2 * tenantService.addTenantRoleToUser(user, _) >>> [null, {throw new Exception()}]
-        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE)
+        2 * tenantService.addTenantRoleToUser(user, _, false) >>> [null, {throw new Exception()}]
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE, _)
     }
 
     def createStringPaginatorContext() {

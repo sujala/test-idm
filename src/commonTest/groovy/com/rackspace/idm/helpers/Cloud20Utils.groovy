@@ -48,7 +48,6 @@ import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
-import java.security.Identity
 
 import static com.rackspace.idm.Constants.*
 import static com.rackspace.idm.SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
@@ -489,7 +488,7 @@ class Cloud20Utils {
         role.setClientId(serviceAdminClientRole.getClientId())
         role.setName(serviceAdminClientRole.getName())
         role.setRoleRsId(serviceAdminClientRole.getId())
-        tenantService.addTenantRoleToUser(serviceAdminEntity, role)
+        tenantService.addTenantRoleToUser(serviceAdminEntity, role, false)
         return serviceAdmin
     }
 

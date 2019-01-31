@@ -1007,7 +1007,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
             it.roleRsId = updateUsernameRole.id
             it
         }
-        tenantService.addTenantRoleToUser(user, role)
+        tenantService.addTenantRoleToUser(user, role, false)
     }
 
 }
