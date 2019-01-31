@@ -2955,31 +2955,6 @@ public class IdentityConfig {
     }
 
     @Deprecated
-    public String getIdentityUserAdminRoleName() {
-        return getStaticConfig().getIdentityUserAdminRoleName();
-    }
-
-    @Deprecated
-    public String getIdentityIdentityAdminRoleName() {
-        return getStaticConfig().getIdentityIdentityAdminRoleName();
-    }
-
-    @Deprecated
-    public String getIdentityServiceAdminRoleName() {
-        return getStaticConfig().getIdentityServiceAdminRoleName();
-    }
-
-    @Deprecated
-    public String getIdentityDefaultUserRoleName() {
-        return getStaticConfig().getIdentityDefaultUserRoleName();
-    }
-
-    @Deprecated
-    public String getIdentityUserManagerRoleName() {
-        return getStaticConfig().getIdentityUserManagerRoleName();
-    }
-
-    @Deprecated
     public String getKeyCzarDN() {
         return getStaticConfig().getKeyCzarDN();
     }
@@ -3091,6 +3066,5 @@ public class IdentityConfig {
         boolean reloadable;
         String id;
         IdmPropertyType idmPropertyType;
-
     }
 }

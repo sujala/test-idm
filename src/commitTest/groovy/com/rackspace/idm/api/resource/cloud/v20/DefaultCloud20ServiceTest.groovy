@@ -1772,7 +1772,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         userService.getUserById(_) >> user
         userService.getUser(_) >> caller
-        authorizationService.verifyServiceAdminLevelAccess(_) >> {throw new ForbiddenException()}
 
         when:
         def result = service.getUserPasswordCredentials(headers, authToken, "userId")

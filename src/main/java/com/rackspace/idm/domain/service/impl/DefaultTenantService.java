@@ -544,51 +544,12 @@ public class DefaultTenantService implements TenantService {
         return implicitRole;
     }
 
-    private TenantRole createTenantRoleForAutoAssignment(EndUser user, IdentityUserTypeEnum identityUserTypeEnum, Domain domain) {
-        TenantRole implicitRole = null;
-
-        // If enabled, auto-assign access role to all tenants within user's domain
-        if (domain != null
-                && !domain.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
-            String[] tenantIds = getTenantIdsForDomain(domain);
-            if (ArrayUtils.isNotEmpty(tenantIds)) {
-                // Load the auto-assigned role from cache
-                ImmutableClientRole autoAssignedRole = getAutoAssignedRole();
-                List<String> tenantIdsToGetAutoAssignRole = new ArrayList<>(Arrays.asList(tenantIds));
-
-                List<String> excludeTenantPrefixes = identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom();
-                if (CollectionUtils.isNotEmpty(excludeTenantPrefixes)) {
-                    IdentityUserTypeEnum userType = null;
-                    for (String tenantId : tenantIds) {
-                        String tenantPrefix = parseTenantPrefixFromTenantId(tenantId);
-                        if (StringUtils.isNotBlank(tenantPrefix) && excludeTenantPrefixes.contains(tenantPrefix)) {
-                            if (!(IdentityUserTypeEnum.USER_ADMIN == userType) && !(IdentityUserTypeEnum.USER_MANAGER == userType)) {
-                                tenantIdsToGetAutoAssignRole.remove(tenantId);
-                            }
-
-                        }
-                    }
-                }
-
-                if (autoAssignedRole != null && CollectionUtils.isNotEmpty(tenantIdsToGetAutoAssignRole)) {
-                    // Add the auto-assigned role for all tenants in domain.
-                    implicitRole = new TenantRole();
-                    implicitRole.setClientId(autoAssignedRole.getClientId());
-                    implicitRole.setRoleRsId(autoAssignedRole.getId());
-                    implicitRole.setUserId(user.getId());
-                    implicitRole.getTenantIds().addAll(tenantIdsToGetAutoAssignRole);
-                }
-            }
-        }
-        return implicitRole;
-    }
-
-        /**
-         * Retrieve the auto-assigned 'identity:tenant-access' role based on configuration. The role name is configurable,
-         * but is set to 'identity:tenant-access' in dev, staging, and production.
-         **
-         * @return
-         */
+    /**
+     * Retrieve the auto-assigned 'identity:tenant-access' role based on configuration. The role name is configurable,
+     * but is set to 'identity:tenant-access' in dev, staging, and production.
+     **
+     * @return
+     */
     private ImmutableClientRole getAutoAssignedRole() {
         ImmutableClientRole autoAssignedRole = this.applicationService.getCachedClientRoleByName(IdentityRole.IDENTITY_TENANT_ACCESS.getRoleName());
 

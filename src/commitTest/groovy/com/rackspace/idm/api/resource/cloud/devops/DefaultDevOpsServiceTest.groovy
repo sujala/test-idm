@@ -27,7 +27,9 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
         service.encryptUsers("token")
 
         then:
-        1 * authorizationService.verifyServiceAdminLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
         1 * userService.reEncryptUsers()
     }
 
@@ -40,7 +42,9 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
         service.resetKeyMetadata("token")
 
         then:
-        1 * authorizationService.verifyServiceAdminLevelAccess(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
         1 * keyCzarCrypterLocator.resetCache()
     }
 
@@ -61,7 +65,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
         then:
         1 * authorizationService.verifyEffectiveCallerHasRoleByName(_)
-        1 * securityContext.getAndVerifyEffectiveCallerToken(_)
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(_)
         1 * aeTokenService.unmarshallToken(_)
     }
 

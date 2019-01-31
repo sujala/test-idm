@@ -28,7 +28,6 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
     def setup() {
         service = new DefaultAuthorizationService()
-        mockConfiguration(service)
         mockScopeAccessService(service)
         mockTenantService(service)
         mockApplicationService(service)
@@ -42,62 +41,6 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         applicationService.getCachedClientRoleByName(_) >> new ImmutableClientRole(new ClientRole())
 
         retrieveIdentityRoles()
-    }
-
-    def "authorizeRacker verifies the scopeAccess"() {
-        when:
-        def result = service.authorizeRacker(scopeAccess)
-
-        then:
-        result == expectedResult
-        scopeAccessService.isScopeAccessExpired(scopeAccess) >> expired
-        userService.getUserByScopeAccess(scopeAccess) >> entityFactory.createUser()
-        tenantService.doesUserContainTenantRole(_, _) >> hasTenantRole
-
-        where:
-        expectedResult  | expired   | hasTenantRole | scopeAccess
-        false           | true      | false         | null
-        false           | true      | false         | createRackerScopeAcccss()
-        false           | false     | false         | createRackerScopeAcccss()
-        true            | false     | true          | createRackerScopeAcccss()
-    }
-
-    def "authorizeRacker verifies the scopeAccess is not expired"() {
-        given:
-        def expiredScopeAccess = expireScopeAccess(createRackerScopeAcccss())
-
-        when:
-        def result = service.authorizeRacker(expiredScopeAccess)
-
-        then:
-        1 * scopeAccessService.isScopeAccessExpired(_) >> true
-        result == false
-    }
-
-    def "authorizeRacker verifies scopeAccess belongs to a racker"() {
-        given:
-        def userScopeAccess = createUserScopeAccess()
-
-        when:
-        def result = service.authorizeRacker(userScopeAccess)
-
-        then:
-        result == false
-    }
-
-    def "authorizeRacker allows access with valid role and non expired token"() {
-        given:
-        def scopeAccess = createRackerScopeAcccss()
-        def user = entityFactory.createUser()
-
-        when:
-        def result = service.authorizeRacker(scopeAccess)
-
-        then:
-        result == true
-        1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
-        1 * userService.getUserByScopeAccess(scopeAccess) >> user
-        1 * tenantService.doesUserContainTenantRole(user, _) >> true
     }
 
     def "authorizeCloudServiceAdmin verifies the scopeAccess is not expired"() {
@@ -135,7 +78,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         result == true
         1 * scopeAccessService.isScopeAccessExpired(scopeAccess) >> false
         1 * userService.getUserByScopeAccess(scopeAccess) >> user
-        1 * tenantService.doesUserContainTenantRole(user, _) >> true
+        1 * applicationService.getUserIdentityRole(user) >> entityFactory.createClientRole(IdentityUserTypeEnum.SERVICE_ADMIN.roleName)
     }
 
     def "hasDefaultUserRole calls tenantService to user is not null" () {

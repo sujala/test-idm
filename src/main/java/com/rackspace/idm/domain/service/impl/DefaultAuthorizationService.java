@@ -1,42 +1,17 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.DelegationAgreement;
-import com.rackspace.idm.domain.entity.DelegationPrincipal;
-import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.DelegationService;
-import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
-import com.rackspace.idm.domain.service.RoleService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.ServiceCatalogInfo;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
@@ -46,15 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class DefaultAuthorizationService implements AuthorizationService {
@@ -64,8 +31,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Autowired
     private ApplicationService applicationService;
 
-    @Autowired
-    private Configuration config;
     @Autowired
     private IdentityConfig identityConfig;
     @Autowired
@@ -79,12 +44,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Autowired
     private RoleService roleService;
-
-    @Autowired
-    private DelegationService delegationService;
-
-    @Autowired
-    private UserGroupService userGroupService;
 
     @Autowired
     private RequestContextHolder requestContextHolder;
@@ -145,20 +104,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess) {
-
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        return authorizeRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole()));
-    }
-
-    public boolean authorizeRacker(ScopeAccess scopeAccess){
-        logger.debug("Authorizing {} as a Racker", scopeAccess);
-        if (!(scopeAccess instanceof RackerScopeAccess)){
+        if (scopeAccessService.isScopeAccessExpired(scopeAccess)) {
             return false;
         }
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        boolean authorized = authorize(user, scopeAccess, Arrays.asList(applicationService.getCachedClientRoleByName(GlobalConstants.ROLE_NAME_RACKER).asClientRole()));
-        logger.debug("Authorized {} as Racker - {}", scopeAccess, authorized);
-        return authorized;
+        IdentityUserTypeEnum userType = getIdentityTypeRoleAsEnum(user);
+        return userType != null && userType.hasLevelAccessOf(IdentityUserTypeEnum.SERVICE_ADMIN);
     }
 
     @Override
@@ -224,13 +175,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyServiceAdminLevelAccess(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        verifyUserAccess(user);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(getServiceAdminRole().asClientRole()));
-    }
-
-    @Override
     public void verifyEffectiveCallerCanImpersonate() {
         BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
@@ -243,15 +187,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
             }
         } else {
             verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
-        }
-    }
-
-    @Override
-    public void verifySelf(User requester, User requestedUser) {
-        if (!(requester.getUsername().equals(requestedUser.getUsername()) && (requester.getUniqueId().equals(requestedUser.getUniqueId())))) {
-            String errMsg = NOT_AUTHORIZED_MSG;
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
         }
     }
 
@@ -292,16 +227,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void checkAuthAndHandleFailure(boolean authorized, ScopeAccess scopeAccess) {
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                    scopeAccess.getAccessTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-    }
-
-    @Override
     public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(ClientRole identityTypeRole) {
         Validate.notNull(identityTypeRole);
 
@@ -316,13 +241,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         Validate.notNull(identityTypeRole);
 
         String userRoleName = identityTypeRole.getName();
-        if (identityConfig.getIdentityServiceAdminRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.SERVICE_ADMIN;}
-        if (identityConfig.getIdentityIdentityAdminRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.IDENTITY_ADMIN;}
-        if (identityConfig.getIdentityUserAdminRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.USER_ADMIN;}
-        if (identityConfig.getIdentityUserManagerRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.USER_MANAGER;}
-        if (identityConfig.getIdentityDefaultUserRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.DEFAULT_USER;}
-
-        return null;
+        return IdentityUserTypeEnum.fromRoleName(userRoleName);
     }
 
     public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(BaseUser baseUser) {
@@ -367,15 +286,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return userLowestWeightIdentityRoleType;
     }
 
-
-    private boolean authorize(BaseUser user, ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
-        if (scopeAccessService.isScopeAccessExpired(scopeAccess)) {
-            return false;
-        }
-
-        return containsRole(user, clientRoles);
-    }
-
     /**
      * Whether the user has at least one of the specified roles
      * @param user
@@ -397,47 +307,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return false;
     }
 
-    private void verifyRoleAccess(BaseUser user, ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
-        if (!authorizeRoleAccess(user, scopeAccess, clientRoles)) {
-            String errMsg = NOT_AUTHORIZED_MSG;
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-    }
-
-    private boolean authorizeRoleAccess(BaseUser user, ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
-        String rolesString = getRoleString(clientRoles);
-
-        logger.debug("Authorizing {} as {}", scopeAccess, rolesString);
-        boolean authorized = authorize(user, scopeAccess, clientRoles);
-        logger.debug(String.format("Authorized %s as %s - %s", scopeAccess, rolesString, authorized));
-        return authorized;
-    }
-
-    private void verifyDomainAccess(Domain domain) {
-        if(domain != null && !domain.getEnabled()) {
-            String errMsg = NOT_AUTHORIZED_MSG;
-            logger.warn(errMsg);
-            throw new NotAuthorizedException(errMsg);
-        }
-    }
-
-    private boolean authorizeDomainAccess(Domain domain) {
-        return domain == null || domain.getEnabled();
-
-    }
-
     private void verifyUserAccess(BaseUser user) {
         if( user != null && user.isDisabled() ) {
             String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
             throw new NotAuthorizedException(errMsg);
         }
-    }
-
-    private boolean authorizeUserAccess(BaseUser user) {
-        return user == null || !user.isDisabled();
-
     }
 
     @Override
@@ -648,60 +523,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return isAuthorized;
     }
 
-    private String getRoleString(List<ClientRole> clientRoles) {
-        List<String> roles = new ArrayList<String>();
-        for (ClientRole clientRole : clientRoles) {
-            roles.add(clientRole.getName());
-        }
-        return StringUtils.join(roles, " ");
-    }
-
-    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
-        this.scopeAccessService = scopeAccessService;
-    }
-
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
-    }
-
-    String getIdmClientId() {
-        return config.getString("idm.clientId");
-    }
-
-    String getRackspaceCustomerId() {
-        return config.getString("rackspace.customerId");
-    }
-
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
-    }
-
-    private String getIdmSuperAdminRoleName() {
-        return config.getString("idm.superAdminRole");
-    }
-
-    private String getCloudAuthServiceAdminRole() {
-        return config.getString("cloudAuth.serviceAdminRole");
-    }
-
-    private String getCloudAuthIdentityAdminRole() {
-        return config.getString("cloudAuth.adminRole");
-    }
-
-    private String getCloudAuthUserAdminRole() {
-        return config.getString("cloudAuth.userAdminRole");
-    }
-
-    private String getCloudAuthUserRole() {
-        return config.getString("cloudAuth.userRole");
-    }
-
-    private String getCloudAuthUserManagedRole() {
-        return config.getString("cloudAuth.userManagedRole");
-    }
-
-    public void setConfig(Configuration config) {
-        this.config = config;
     }
 
     public void setApplicationService(ApplicationService applicationService) {

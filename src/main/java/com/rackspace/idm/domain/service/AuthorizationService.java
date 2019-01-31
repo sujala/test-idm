@@ -10,19 +10,16 @@ import java.util.List;
 
 public interface AuthorizationService {
 
-    boolean authorizeRacker(ScopeAccess scopeAccess);
     boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess);
-
-    void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
 
     boolean isSelf(BaseUser requester, User requestedUser);
 
     boolean hasDefaultUserRole(EndUser user);
     boolean hasUserAdminRole(EndUser user);
     boolean hasServiceAdminRole(EndUser user);
-    boolean hasSameDomain(EndUser caller, EndUser retrievedUser);
+    boolean hasIdentityAdminRole(EndUser user);
 
-    void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
+    boolean hasSameDomain(EndUser caller, EndUser retrievedUser);
 
     /**
      * Verifies the effective caller can impersonate some other user. It does not determine whether the caller can impersonate the
@@ -33,13 +30,9 @@ public interface AuthorizationService {
      */
     void verifyEffectiveCallerCanImpersonate();
 
-    void verifySelf(User requester, User requestedUser);
     void verifyEffectiveCallerHasTenantAccess(String tenantId);
     void verifyDomain(BaseUser caller, BaseUser retrievedUser);
 
-    void setConfig(Configuration config);
-
-    boolean hasIdentityAdminRole(EndUser user);
 
     /**
      * Convert an identity 'classification' role to a static enum that can be subsequently used for comparison/identification purposes
@@ -217,7 +210,6 @@ public interface AuthorizationService {
      */
     boolean restrictEndpointsForTerminator(ServiceCatalogInfo serviceCatalogInfo);
 
-
     /**
      * Verifies the caller has at least the user-manage role and has access to modify user.
      *
@@ -233,5 +225,4 @@ public interface AuthorizationService {
      * @throws IllegalArgumentException if the delegationAgreement, or delegationAgreement's principal is null.
      */
     boolean isCallerAuthorizedToManageDelegationAgreement(DelegationAgreement delegationAgreement);
-
 }

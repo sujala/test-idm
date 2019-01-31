@@ -41,9 +41,7 @@ public class DefaultAuthorizationServiceTestOld {
     @Before
     public void setUp() throws Exception {
         defaultAuthorizationService = new DefaultAuthorizationService();
-        defaultAuthorizationService.setConfig(config);
         defaultAuthorizationService.setTenantService(tenantSerivce);
-        defaultAuthorizationService.setScopeAccessService(scopeAccessService);
         defaultAuthorizationService.setApplicationService(applicationService);
         defaultAuthorizationService.setUserService(userService);
         defaultAuthorizationService.setRoleService(roleService);
@@ -51,70 +49,6 @@ public class DefaultAuthorizationServiceTestOld {
         when(roleService.getAllIdentityRoles()).thenReturn(Collections.EMPTY_LIST);
         when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(new ClientRole());
         defaultAuthorizationService.retrieveAccessControlRoles();
-    }
-
-    @Test
-    public void verifySelf_sameUsernameAndUniqueId_succeeds() throws Exception {
-            User user1 = new User();
-            user1.setUniqueId("foo");
-            user1.setId("foo");
-            user1.setUsername("foo");
-            User user2 = new User();
-            user2.setUniqueId("foo");
-            user2.setId("foo");
-            user2.setUsername("foo");
-            defaultAuthorizationService.verifySelf(user1, user2);
-    }
-
-    @Test
-    public void verifySelf_differentUsername_throwsForbiddenException() throws Exception {
-       try{
-           User user1 = new User();
-           user1.setId("foo");
-           user1.setUsername("foo");
-           User user2 = new User();
-           user2.setId("foo");
-           user2.setUsername("!foo");
-           defaultAuthorizationService.verifySelf(user1, user2);
-           assertTrue("should throw exception", false);
-       }catch (ForbiddenException ex){
-           assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
-       }
-    }
-
-    @Test
-    public void verifySelf_differentUniqueId_throwsForbiddenException() throws Exception {
-        try{
-            User user1 = new User();
-            user1.setUniqueId("foo1");
-            user1.setId("foo");
-            user1.setUsername("foo");
-            User user2 = new User();
-            user1.setUniqueId("foo2");
-            user2.setId("foo");
-            user2.setUsername("foo");
-            defaultAuthorizationService.verifySelf(user1, user2);
-            assertTrue("should throw exception", false);
-        }catch (ForbiddenException ex){
-            assertThat("exception message", ex.getMessage(),equalTo("Not Authorized"));
-        }
-
-    }
-
-    @Test
-    public void verifySelf_differentUsernameAndDifferentUniqueId_throwsForbiddenException() throws Exception {
-        try{
-            User user1 = new User();
-            user1.setId("foo");
-            user1.setUsername("foo");
-            User user2 = new User();
-            user2.setId("foo");
-            user2.setUsername("!foo");
-            defaultAuthorizationService.verifySelf(user1, user2);
-            assertTrue("should throw exception", false);
-        }catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
-        }
     }
 
     @Test
@@ -173,10 +107,5 @@ public class DefaultAuthorizationServiceTestOld {
         }catch (ForbiddenException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
         }
-    }
-
-    @Test
-    public void checkAuthAndHandleFailure_isAuthorized_doesNothing() throws Exception {
-        defaultAuthorizationService.checkAuthAndHandleFailure(true,null);
     }
 }

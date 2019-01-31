@@ -126,13 +126,18 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     @Async
     public void encryptUsers(String authToken) {
-        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
+
         userService.reEncryptUsers();
     }
 
     @Override
     public Response.ResponseBuilder getLdapLog(UriInfo uriInfo, String authToken, String logName) {
-        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
 
         if (!isLdapLoggingAllowed()) {
             throw new WebApplicationException(404);
@@ -154,7 +159,10 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Override
     public Response.ResponseBuilder getKeyMetadata(String authToken) {
-        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
+
         if (!(keyCzarCrypterLocator instanceof CacheableKeyCzarCrypterLocator)) {
             return Response.noContent();
         } else {
@@ -165,7 +173,10 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Override
     public Response.ResponseBuilder resetKeyMetadata(String authToken) {
-        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
+
         if (!(keyCzarCrypterLocator instanceof CacheableKeyCzarCrypterLocator)) {
             return Response.noContent();
         } else {
@@ -183,8 +194,10 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Override
     public Response.ResponseBuilder getIdmPropsByQuery(String authToken, final List<String> versions, final String name) {
-        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_QUERY_PROPS.getRoleName(), IdentityRole.IDENTITY_PROPERTY_ADMIN.getRoleName());
+
         return filterAsUsedIdmProps(versions, name);
     }
 
@@ -244,7 +257,8 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Override
     public Response.ResponseBuilder purgeObsoleteTrrs(String authToken, TokenRevocationRecordDeletionRequest request) {
-        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
         authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PURGE_TOKEN_REVOCATION_RECORDS.getRoleName());
 
         //if not provided use default delay.
@@ -268,7 +282,8 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     public Response.ResponseBuilder createIdmProperty(String authToken, IdentityProperty identityProperty) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROPERTY_ADMIN.getRoleName());
 
             identityPropertyValidator.validateIdentityPropertyForCreate(identityProperty);
@@ -297,7 +312,8 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     public Response.ResponseBuilder updateIdmProperty(String authToken, String idmPropertyId, IdentityProperty identityProperty) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROPERTY_ADMIN.getRoleName());
 
             com.rackspace.idm.domain.entity.IdentityProperty propEntity = identityPropertyService.getIdentityPropertyById(idmPropertyId);
@@ -346,7 +362,8 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     public Response.ResponseBuilder deleteIdmProperty(String authToken, String idmPropertyId) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROPERTY_ADMIN.getRoleName());
 
             if (StringUtils.isEmpty(idmPropertyId)) {
@@ -371,7 +388,8 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     public Response.ResponseBuilder analyzeToken(String authToken, String subjectToken) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_ANALYZE_TOKEN.getRoleName());
 
             if (StringUtils.isEmpty(subjectToken)) {
@@ -430,7 +448,8 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     public Response.ResponseBuilder migrateDomainAdmin(String authToken, String domainId) {
         try {
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_MIGRATE_DOMAIN_ADMIN.getRoleName());
 
             Domain domain = domainService.checkAndGetDomain(domainId);
