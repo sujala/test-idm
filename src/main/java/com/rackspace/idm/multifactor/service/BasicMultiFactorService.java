@@ -1107,6 +1107,43 @@ public class BasicMultiFactorService implements MultiFactorService {
         deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
     }
 
+    @Override
+    public boolean removeExternalProfileForUser(String userId) {
+        // Pull a fresh user since this code will update the user
+        final User user = userService.checkAndGetUserById(userId);
+        String providerUserId = user.getExternalMultiFactorUserId();
+
+        boolean removed = false;
+        if (org.apache.commons.lang.StringUtils.isNotBlank(providerUserId)) {
+            // First delete the link to the external profile from the Identity user
+            user.setExternalMultiFactorUserId(null);
+            userService.updateUserForMultiFactor(user);
+
+            // Now delete the external profile
+            deleteExternalUser(user.getId(), user.getUsername(), providerUserId);
+            removed = true;
+        }
+
+        return removed;
+    }
+
+    @Override
+    public boolean addExternalProfileForUser(String userId) {
+        // Pull a fresh user since this code will update the user
+        final User user = userService.checkAndGetUserById(userId);
+
+        /*
+        If user has SMS MFA enabled, must configure Duo profiles (User and Phone) and add links to local entries.
+        OTP doesn't require anything else to be done
+         */
+        boolean added = false;
+        if (user.isMultiFactorEnabled() && isMultiFactorTypePhone(user)) {
+            setupDuoSmsProfilesOnUser(user);
+            userService.updateUserForMultiFactor(user);
+        }
+        return added;
+    }
+
     private void deleteExternalUser(String userId, String username, String externalProviderUserId) {
         //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
         //the info in ldap has been removed.

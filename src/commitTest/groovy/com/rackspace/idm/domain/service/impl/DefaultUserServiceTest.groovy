@@ -136,6 +136,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockIdentityConfig(service)
         mockTenantAssignmentService(service)
         mockAtomHopperClient(service)
+        mockTokenRevocationService(service)
         service.authenticationContext = Mock(AuthenticationContext)
     }
 
@@ -662,7 +663,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.updateUser(user)
 
         then:
-        1 * scopeAccessService.expireAllTokensForUser(_)
+        1 * tokenRevocationService.revokeAllTokensForEndUser(currentUser)
         userDao.getUserById(_) >> currentUser
         scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
     }
@@ -811,7 +812,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         userDao.getUsersByDomain(_) >> users
         authorizationService.hasUserAdminRole(_) >> true
-        1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+        1 * tokenRevocationService.revokeAllTokensForEndUser(subUser)
     }
 
     def "updateUser disables sub users that are enabled when user is disabled"() {
@@ -841,8 +842,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * userDao.updateUser(subUser) >> { User subUser1 ->
             assert (subUser1.enabled == false)
         }
-        1 * scopeAccessService.expireAllTokensForUser(user.getUsername());
-        1 * scopeAccessService.expireAllTokensForUser(subUser.getUsername());
+        1 * tokenRevocationService.revokeAllTokensForEndUser(currentUser)
+        1 * tokenRevocationService.revokeAllTokensForEndUser(subUser)
     }
 
     def "uses DAO to get users in domain with domainId"() {

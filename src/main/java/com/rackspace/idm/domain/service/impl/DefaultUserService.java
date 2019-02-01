@@ -2,10 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.collect.Iterables;
 import com.rackspace.docs.event.identity.user.credential.CredentialTypeEnum;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
@@ -19,6 +16,9 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.DelegationAgreement;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Region;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.modules.usergroups.Constants;
@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBException;
@@ -150,6 +151,10 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private AtomHopperClient atomHopperClient;
+
+    @Autowired
+    @Qualifier("tokenRevocationService")
+    private TokenRevocationService tokenRevocationService;
 
     @Override
     public void addUserv11(User user) {
@@ -979,7 +984,8 @@ public class DefaultUserService implements UserService {
             //load user without password history
             currentUser = userDao.getUserById(user.getId());
         }
-        boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
+        boolean userIsBeingDisabled = checkIfUserIsBeingDisabled(currentUser, user);
+        boolean userIsBeingEnabled = checkIfUserIsBeingEnabled(currentUser, user);
 
         /*
          some mfa properties on user should never be set via updateUser call (which is used by various front end services
@@ -1023,17 +1029,70 @@ public class DefaultUserService implements UserService {
             }
         }
 
+
         if (userIsBeingDisabled) {
-            scopeAccessService.expireAllTokensForUser(user.getUsername());
-            disableUserAdminSubUsers(currentUser);
-            if(currentUser.isMultiFactorEnabled()) {
-                MultiFactor mfa = new MultiFactor();
-                mfa.setEnabled(false);
-                multiFactorService.updateMultiFactorSettings(user.getId(), mfa);
-            }
+            processDisabledUser(user.getId());
+        } else if (userIsBeingEnabled) {
+            processEnabledUser(user.getId());
         }
 
         logger.info("Updated User: {}", user);
+    }
+
+    /**
+     * This is run on disabled users _after_ they are disabled within Identity. It orchestrates any post processes that
+     * need to occur.
+     *
+     * @param userId
+     */
+    private void processDisabledUser(String userId) throws IOException, JAXBException {
+        /*
+         Pull fresh user from backend to retrieve final state of the updated user. This is a little inefficient since
+         the removeExternalProfile call will also retrieve a fresh user, but need the independence between the services.
+        */
+        User user = userDao.getUserById(userId);
+
+        // Revoke all outstanding tokens for the user
+        tokenRevocationService.revokeAllTokensForEndUser(user);
+
+        /*
+         Remove external profile (if SMS), when disabled user has MFA enabled. This breaks encapsulation of the
+         mfa service a little by acknowledging the relationship between SMS and external profiles in this part
+         of code, but efficiency of not reloading users unecessarily wins out.
+        */
+        if(user.isMultiFactorEnabled() && user.getMultiFactorTypeAsEnum() == FactorTypeEnum.SMS) {
+            multiFactorService.removeExternalProfileForUser(user.getId());
+        }
+
+        // If the user is a user-admin, must disable all sub-users
+        disableUserAdminSubUsers(user);
+    }
+
+    /**
+     * This is run on enabled users _after_ they are enabled within Identity. It orchestrates any post processes that
+     * need to occur.
+     *
+     * @param userId
+     */
+    private void processEnabledUser(String userId) {
+        /*
+         Pull fresh user from backend to retrieve final state of the updated user
+        */
+        User user = userDao.getUserById(userId);
+
+        /*
+         Add Duo profile if the user has SMS MFA enabled. This breaks encapsulation of the
+         mfa service a little by acknowledging the relationship between SMS and external profiles, but efficiency of not
+         reloading users unecessarily wins out.
+         */
+        if(user.isMultiFactorEnabled() && user.getMultiFactorTypeAsEnum() == FactorTypeEnum.SMS) {
+            /*
+             Note - there is an edge case here where if for some reason the enable process fails to add the profile
+             to the user, the user will be in a invalid state (SMS MFA enabled, but without a profile). This is a
+             possibility even when
+              */
+            multiFactorService.addExternalProfileForUser(user.getId());
+        }
     }
 
     /**
@@ -1227,22 +1286,45 @@ public class DefaultUserService implements UserService {
                     if (provisionedUser.getEnabled()) {
                         provisionedUser.setEnabled(false);
                         userDao.updateUser(provisionedUser);
-                        scopeAccessService.expireAllTokensForUser(provisionedUser.getUsername());
+                        tokenRevocationService.revokeAllTokensForEndUser(provisionedUser);
                     }
                 } else if(subUser instanceof FederatedUser) {
-                    scopeAccessService.expireAllTokensForUserById(subUser.getId());
+                    tokenRevocationService.revokeAllTokensForEndUser(subUser);
                 }
             }
-
         }
     }
 
+    /**
+     * Checks whether the user is being updated from an enabled state to a disabled state.
+     *
+     * @param currentUser
+     * @param user
+     * @return
+     */
     private boolean checkIfUserIsBeingDisabled(User currentUser, User user) {
         if (currentUser != null && user != null && user.getEnabled() != null) {
             boolean currentUserEnabled = currentUser.getEnabled();
             boolean userEnabled = user.getEnabled();
 
             return !userEnabled && userEnabled != currentUserEnabled;
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether the user is being updated from a disabled state to an enabled state.
+     *
+     * @param currentUser
+     * @param user
+     * @return
+     */
+    private boolean checkIfUserIsBeingEnabled(User currentUser, User user) {
+        if (currentUser != null && user != null && user.getEnabled() != null) {
+            boolean currentUserEnabled = currentUser.getEnabled();
+            boolean userEnabled = user.getEnabled();
+
+            return userEnabled && userEnabled != currentUserEnabled;
         }
         return false;
     }

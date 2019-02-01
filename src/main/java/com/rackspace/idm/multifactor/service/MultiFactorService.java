@@ -119,6 +119,26 @@ public interface MultiFactorService {
     void removeMultiFactorForUser(String userId);
 
     /**
+     * If the user is linked to an external profile, this deletes the external profile *without* disabling MFA for the user.
+     * If the user has MFA enabled, the user *will not be in a valid state* if the type of MFA depends on an external
+     * profile (e.g. SMS).
+     *
+     * @param userId
+     * @return True if an external profile was deleted, false otherwise
+     */
+    boolean removeExternalProfileForUser(String userId);
+
+    /**
+     * The counterpoint to {@link #removeExternalProfileForUser(String)}. Will re-add the profile, if necessary, for the user.
+     * Does *not* enable MFA, or make any other changes to the user other than setting the profile.
+     *
+     * @param userId
+     * @return True if an external profile was added, false otherwise
+     */
+    boolean addExternalProfileForUser(String userId);
+
+
+    /**
      * Sends an SMS passcode to the specified user.
      *
      * @param userId
