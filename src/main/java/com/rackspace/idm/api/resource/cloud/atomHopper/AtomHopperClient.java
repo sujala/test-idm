@@ -462,16 +462,15 @@ public class AtomHopperClient {
 
         int feedsUserProductSchemaVersion = identityConfig.getReloadableConfig().getFeedsUserProductSchemaVersion();
 
-        String tenantId = null;
         final Object cloudIdentityType;
         if (feedsUserProductSchemaVersion == AtomHopperConstants.V1_USER_PRODUCT_SCHEMA_VERSION) {
             cloudIdentityType = createCloudIdentity1Type(user, displayName, groups, tenantRoles, migrated);
-            tenantId = defaultTenantService.getMossoIdFromTenantRoles(tenantRoles);
         } else {
             cloudIdentityType = createCloudIdentity3Type(user, displayName, groups, tenantRoles, migrated, requestId, userStatus);
         }
 
         final String id = UUID.randomUUID().toString();
+        String tenantId = defaultTenantService.getMossoIdFromTenantRoles(tenantRoles);
         final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), displayName, AtomHopperConstants.IDENTITY_EVENT, tenantId);
 
         // Set additional search category

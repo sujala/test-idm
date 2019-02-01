@@ -347,7 +347,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def user = utils.getUserById(userAdmin.id)
         assert user.contactId == null
 
-        // Rest cloudFeedsMock to ensure only events from update are posted
+        // Reset cloudFeedsMock to ensure only events from update are posted
         cloudFeedsMock.reset()
 
         when: "update user using service admin"

@@ -329,7 +329,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         when:
         try {
-            service.addTenantRoleToUser(user, role, false)
+            service.addTenantRoleToUser(user, role, true)
         } catch (ClientConflictException ex) {
             //we forced this exception
         }
@@ -381,7 +381,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         sendEventForTargetUser << [true, false]
     }
 
-    def "deleteTenantRole does not send atom feed if user already has role"() {
+    def "deleteTenantRole does not send atom feed if user does not have role"() {
         def user = entityFactory.createUser()
         def role = entityFactory.createTenantRole()
         def cRole = entityFactory.createClientRole().with {
@@ -397,7 +397,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         when:
         try {
-            service.deleteTenantRoleForUser(user, role, false)
+            service.deleteTenantRoleForUser(user, role, true)
         } catch (NotFoundException ex) {
             //we forced this exception
         }
