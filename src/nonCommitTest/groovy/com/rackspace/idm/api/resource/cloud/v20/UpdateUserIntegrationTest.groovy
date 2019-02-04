@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
@@ -20,6 +21,7 @@ import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.IdentityFault
@@ -345,6 +347,9 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def user = utils.getUserById(userAdmin.id)
         assert user.contactId == null
 
+        // Reset cloudFeedsMock to ensure only events from update are posted
+        cloudFeedsMock.reset()
+
         when: "update user using service admin"
         def contactId = testUtils.getRandomUUID("contactId")
         UserForCreate userForCreate = new UserForCreate().with {
@@ -362,6 +367,12 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
         and: "user groups remain"
         utils.listUserGroupsForDomain(userAdmin.getDomainId(), new UserGroupSearchParams(null, userAdmin.id)).userGroup.size() == 1
+
+        and: "verify that event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE.value()),
+                VerificationTimes.exactly(1)
+        )
     }
 
     @Unroll
@@ -996,7 +1007,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
             it.roleRsId = updateUsernameRole.id
             it
         }
-        tenantService.addTenantRoleToUser(user, role)
+        tenantService.addTenantRoleToUser(user, role, false)
     }
 
 }

@@ -16,7 +16,6 @@ import com.rackspacecloud.docs.auth.api.v1.ForbiddenFault
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.EndpointList
-import org.openstack.docs.identity.api.v2.Tenant
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -510,7 +509,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         tenantRole.setUserId(user.id)
         tenantRole.getTenantIds().add(tenant.id);
 
-        tenantService.addTenantRoleToUser(user, tenantRole);
+        tenantService.addTenantRoleToUser(user, tenantRole, false);
     }
 
     def deleteRoleOnServiceAdmin(roleId, serviceAdminUsername) {

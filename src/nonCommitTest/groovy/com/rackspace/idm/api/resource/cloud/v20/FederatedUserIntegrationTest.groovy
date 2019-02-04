@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
@@ -10,7 +11,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.domain.config.IdentityConfig
 
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -533,6 +534,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
     def "initial user populated appropriately from saml with 1 role provided"() {
         given:
+        cloudFeedsMock.reset()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -560,6 +562,16 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         fedUser.domainId == domainId
         fedUser.email == email
         fedUser.region == userAdminEntity.region
+
+        and: "verify that events were posted"
+        cloudFeedsMock.verify(
+                testUtils.createFedUserFeedsRequest(fedUser, EventType.CREATE.value()),
+                VerificationTimes.exactly(1)
+        )
+        cloudFeedsMock.verify(
+                testUtils.createFedUserFeedsRequest(fedUser, EventType.UPDATE.value()),
+                VerificationTimes.exactly(1)
+        )
 
         cleanup:
         deleteFederatedUserQuietly(username)
@@ -2411,9 +2423,9 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         then: "assert 200"
         samlResponse.status == SC_OK
 
-        and: "verify that user CREATE event is not posted"
+        and: "verify that the user CREATE event is not posted"
         cloudFeedsMock.verify(
-                testUtils.createFedUserFeedsRequest(federatedUser, AtomHopperConstants.CREATE),
+                testUtils.createFedUserFeedsRequest(federatedUser, FeedsUserStatusEnum.CREATE.value()),
                 VerificationTimes.exactly(0)
         )
 
@@ -2426,11 +2438,26 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         samlResponse.status == SC_OK
         federatedUser.email == "test@mail.com"
 
-        and: "verify that user CREATE event is not posted"
+        and: "verify that the user CREATE event is not posted"
         cloudFeedsMock.verify(
-                testUtils.createFedUserFeedsRequest(federatedUser, AtomHopperConstants.CREATE),
+                testUtils.createFedUserFeedsRequest(federatedUser, FeedsUserStatusEnum.CREATE.value()),
                 VerificationTimes.exactly(0)
         )
+
+        when: "add role to existing federated user"
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, [Constants.ROLE_RBAC1_NAME], "test@mail.com");
+        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        federatedUser = utils.getUserById(samlAuthResponse.value.user.id)
+
+        then:
+        samlResponse.status == SC_OK
+
+        and: "verify that the user UPDATE event is posted"
+        cloudFeedsMock.verify(
+                testUtils.createFedUserFeedsRequest(federatedUser, FeedsUserStatusEnum.UPDATE.value()),
+                VerificationTimes.exactly(1)
+        )
+
 
         cleanup:
         utils.logoutFederatedUser(federatedUser.username)

@@ -7,11 +7,12 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.api.security.ImmutableTenantRole;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.TenantDao;
@@ -39,6 +40,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -643,12 +645,23 @@ public class DefaultTenantService implements TenantService {
         logger.info("Deleting Product Roles for {}", user);
         Iterable<TenantRole> tenantRoles = tenantRoleDao.getTenantRolesForUser(user);
 
-        for (TenantRole role : tenantRoles) {
-            if (role != null) {
-                ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
-                if (cRole != null && cRole.getRsWeight() == RoleLevelEnum.LEVEL_1000.getLevelAsInt()) {
-                    deleteTenantRoleForUser(user, role);
+        boolean sendFeedEvent = false;
+        try {
+            for (TenantRole role : tenantRoles) {
+                if (role != null) {
+                    // TODO: The client role is retrieved in method deleteTenantRoleForUser. This causes extract calls
+                    // to ldap to retrieve the same client role and should be fixed.
+                    ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
+                    if (cRole != null && cRole.getRsWeight() == RoleLevelEnum.LEVEL_1000.getLevelAsInt()) {
+                        deleteTenantRoleForUser(user, role, false);
+                        sendFeedEvent = true;
+                    }
                 }
+            }
+        } finally {
+            // Send user feed event if at least one tenant role was deleted from the user.
+            if (sendFeedEvent) {
+                atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
             }
         }
 
@@ -656,7 +669,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void addTenantRoleToUser(BaseUser user, TenantRole role) {
+    public void addTenantRoleToUser(BaseUser user, TenantRole role, boolean sendEventFeedForTargetUser) {
         if (user == null || StringUtils.isBlank(user.getUniqueId()) || role == null) {
             throw new IllegalArgumentException(
                     "User cannot be null and must have uniqueID; role cannot be null");
@@ -667,16 +680,22 @@ public class DefaultTenantService implements TenantService {
 
         tenantRoleDao.addTenantRoleToUser(user, role);
 
+        if (sendEventFeedForTargetUser && user instanceof EndUser) {
+            atomHopperClient.asyncPost((EndUser) user, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
+        }
+
         if(user instanceof User){
+            // TODO: Method validateTenantRole already retrieves the client role. This causes a duplicate request
+            // to retrieve the same role and should be fixed.
             ClientRole cRole = this.applicationService.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
-            atomHopperClient.asyncPost((User) user, AtomHopperConstants.ROLE);
+
             if (isUserAdmin((User) user) && cRole.getPropagate()) {
                 //add the role to all sub-users
                 for (User subUser : userService.getSubUsers((User) user)) {
                     try {
                         role.setUniqueId(null);
                         tenantRoleDao.addTenantRoleToUser(subUser, role);
-                        atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
+                        atomHopperClient.asyncPost(subUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
                     } catch (ClientConflictException ex) {
                         String msg = String.format("User %s already has tenantRole %s", subUser.getId(), role.getName());
                         logger.warn(msg);
@@ -688,6 +707,7 @@ public class DefaultTenantService implements TenantService {
                     try {
                         role.setUniqueId(null);
                         tenantRoleDao.addTenantRoleToUser(subUser, role);
+                        atomHopperClient.asyncPost(subUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
                     } catch (ClientConflictException ex) {
                         String msg = String.format("Federated user %s already has tenantRole %s", subUser.getId(), role.getName());
                         logger.warn(msg);
@@ -722,39 +742,25 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void addCallerTenantRolesToUser(User caller, User user) {
-        List<TenantRole> tenantRoles = this.getTenantRolesForUser(caller);
-        for (TenantRole tenantRole : tenantRoles) {
-            if (!tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.adminRole"))
-                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
-                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))
-                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userRole"))
-                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userManagedRole"))
-                    && tenantRole.getPropagate()
-                    ) {
-                TenantRole role = new TenantRole();
-                role.setClientId(tenantRole.getClientId());
-                role.setDescription(tenantRole.getDescription());
-                role.setName(tenantRole.getName());
-                role.setRoleRsId(tenantRole.getRoleRsId());
-                role.setTenantIds(tenantRole.getTenantIds());
-                role.setUserId(user.getId());
-                this.addTenantRoleToUser(user, role);
-            }
-        }
-    }
-
-    @Override
     public void addTenantRolesToUser(BaseUser user, List<TenantRole> tenantRoles) {
-        for (TenantRole tenantRole : tenantRoles) {
-            addTenantRoleToUser(user, tenantRole);
+        boolean sendFeedEvent = false;
+        try {
+            for (TenantRole tenantRole : tenantRoles) {
+                addTenantRoleToUser(user, tenantRole, false);
+                sendFeedEvent = true;
+            }
+        } finally {
+            // Send user feed event if at least one tenant role was added to the user.
+            if (user instanceof EndUser && sendFeedEvent) {
+                atomHopperClient.asyncPost((EndUser) user, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
+            }
         }
 
         logger.info("Added tenantRoles {} to user {}", tenantRoles, user);
     }
 
     @Override
-    public void deleteTenantRoleForUser(EndUser endUser, TenantRole role) {
+    public void deleteTenantRoleForUser(EndUser endUser, TenantRole role, boolean sendEventFeedForTargetUser) {
         if (endUser == null || role == null) {
             throw new IllegalArgumentException();
         }
@@ -768,10 +774,13 @@ public class DefaultTenantService implements TenantService {
 
         tenantRoleDao.deleteTenantRoleForUser(endUser, role);
 
+        if (sendEventFeedForTargetUser) {
+            atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
+        }
+
         if (endUser instanceof User) {
             //this only applies for users, not federatedusers for now...
             User user = (User) endUser;
-            atomHopperClient.asyncPost((User) user, AtomHopperConstants.ROLE);
 
             if (isUserAdmin(user) && cRole.getPropagate()) {
                 //remove propagating roles from sub-users
@@ -779,7 +788,7 @@ public class DefaultTenantService implements TenantService {
                     try {
                         role.setUniqueId(null);
                         tenantRoleDao.deleteTenantRoleForUser(subUser, role);
-                        atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
+                        atomHopperClient.asyncPost(subUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
                     } catch (NotFoundException ex) {
                         String msg = String.format("User %s does not have tenantRole %s", subUser.getId(), role.getName());
                         logger.warn(msg);
@@ -791,15 +800,14 @@ public class DefaultTenantService implements TenantService {
                     try {
                         role.setUniqueId(null);
                         tenantRoleDao.deleteTenantRoleForUser(subUser, role);
+                        atomHopperClient.asyncPost(subUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
                     } catch (NotFoundException ex) {
                         String msg = String.format("Federated user %s does not have tenantRole %s", user.getId(), role.getName());
                         logger.warn(msg);
                     }
                 }
-
             }
         }
-
     }
 
     @Override
@@ -820,7 +828,8 @@ public class DefaultTenantService implements TenantService {
         if (endUser instanceof User) {
             //this only applies for users, not federatedusers for now...
             User user = (User) endUser;
-            atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
+
+            atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
 
             if (isUserAdmin(user) && cRole.getPropagate()) {
                 //remove propagating roles from sub-users
@@ -829,7 +838,7 @@ public class DefaultTenantService implements TenantService {
                         TenantRole subUserTenantRole = tenantRoleDao.getTenantRoleForUser(subUser, role.getRoleRsId());
                         if (subUserTenantRole != null) {
                             deleteTenantFromTenantRole(subUserTenantRole, tenant.getTenantId());
-                            atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
+                            atomHopperClient.asyncPost(subUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
                         }
                     } catch (NotFoundException ex) {
                         String msg = String.format("User %s does not have tenantRole %s", subUser.getId(), role.getName());
@@ -842,15 +851,14 @@ public class DefaultTenantService implements TenantService {
                     try {
                         TenantRole subUserTenantRole = tenantRoleDao.getTenantRoleForUser(subUser, role.getRoleRsId());
                         deleteTenantFromTenantRole(subUserTenantRole, tenant.getTenantId());
+                        atomHopperClient.asyncPost(subUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
                     } catch (NotFoundException ex) {
                         String msg = String.format("Federated user %s does not have tenantRole %s", user.getId(), role.getName());
                         logger.warn(msg);
                     }
                 }
-
             }
         }
-
     }
 
     @Override

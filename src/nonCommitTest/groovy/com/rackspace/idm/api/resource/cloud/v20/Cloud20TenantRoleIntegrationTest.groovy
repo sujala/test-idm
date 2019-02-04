@@ -1,10 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.http.HttpStatus
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.*
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -386,11 +388,19 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, DefaultCloud20Service.ERROR_CANNOT_ADD_ROLE_TO_USER_ON_TENANT_ERROR_MESSAGE)
 
         when: "delete global role and add tenant role"
+        cloudFeedsMock.reset()
         utils.deleteRoleOnUser(userAdmin, role.id)
         response = cloud20.addRoleToUserOnTenant(utils.getIdentityAdminToken(), tenant.id, userAdmin.id, role.id, mediaType, mediaType)
 
         then:
         response.getStatus() == HttpStatus.SC_OK
+
+        and: "verify that the events were posted"
+        // Two event are expected: 1. deleteRole 2. addRole
+        cloudFeedsMock.verify(
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE.value()),
+                VerificationTimes.exactly(2)
+        )
 
         cleanup:
         utils.deleteUsersQuietly(users)

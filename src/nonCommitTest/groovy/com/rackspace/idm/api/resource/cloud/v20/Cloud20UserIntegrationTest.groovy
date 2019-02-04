@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.UserDao
 import org.apache.http.HttpStatus
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.Tenant
@@ -734,6 +736,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
     def "Verify values on create one user call with additional tenant created" () {
         given:
+        cloudFeedsMock.reset()
         def domainId = utils.createDomain()
         def tenantId = testUtils.getRandomUUID("AddTenant")
         def newRole = utils.createRole()
@@ -762,6 +765,18 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         userAdmin.roles.role[newRoleIndex].tenantId == tenantId
 
         retreivedTenant.id == tenantId
+
+        and: "verify that events were posted"
+        // Event post when user is created
+        cloudFeedsMock.verify(
+                testUtils.createUserFeedsRequest(userAdmin, EventType.CREATE.value()),
+                VerificationTimes.exactly(1)
+        )
+        // Event post when user roles are added.
+        cloudFeedsMock.verify(
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE.value()),
+                VerificationTimes.exactly(1)
+        )
 
         cleanup:
         utils.deleteUsers(users)

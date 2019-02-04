@@ -56,7 +56,7 @@ public interface TenantService {
      * If the service does not throw an exception, regardless of whether or not the backend tenant role is actually
      * modified, the following additional logic is performed:
      * <ol>
-     *     <li>A Feed event is posted for the user indicating an update of roles</li>
+     *     <li>If 'sendEventFeedForTargetUser' is set to true, a feed event is posted for the user indicating an update of roles</li>
      *     <li>If the user is a user-admin and the role is a propagating role, perform the same assignment on all
      *     subusers (both Federated and Provisioned). Any ClientConflictException resulting from this assignment are
      *     logged, but ignored. Any updates to a provisioned user also results in the posting of a User Update Feed event</li>
@@ -64,13 +64,14 @@ public interface TenantService {
      *
      * @param user
      * @param role
+     * @param sendEventFeedForTargetUser
      * @throws NotFoundException - if an application with the role's clientId does not exist or a role with the given role name is not found
      * @throws ClientConflictException - If the requested role assignment on a particular tenant already exists.
      */
-    void addTenantRoleToUser(BaseUser user, TenantRole role);
+    void addTenantRoleToUser(BaseUser user, TenantRole role, boolean sendEventFeedForTargetUser);
 
     /**
-     * Iterates over the specified tenant roles (assignments) and calls {@link #addTenantRoleToUser(BaseUser, TenantRole)}
+     * Iterates over the specified tenant roles (assignments) and calls {@link #addTenantRoleToUser(BaseUser, TenantRole, boolean)}
      *
      * Does not perform any rollback logic or continuation logic if an exception is encountered.
      *
@@ -85,15 +86,6 @@ public interface TenantService {
      * @param tenantRoles
      */
     void addTenantRolesToUser(BaseUser user, List<TenantRole> tenantRoles);
-
-    /**
-     * Assigns the target user all the propagating roles the "caller" user is "effectively" assigned. The calling users
-     * roles are determined by applying group membership and implicit identity:tenant-access logic, but not RCN logic.
-     *
-     * @param caller
-     * @param user
-     */
-    void addCallerTenantRolesToUser(User caller, User user);
 
     /**
      * Delete the role explicitly assigned to the specified user (Federated or Provisioned).
@@ -131,14 +123,15 @@ public interface TenantService {
      *
      * @param user
      * @param role
+     * @param sendEventFeedForTargetUser
      * @throws NotFoundException - if an application with the role's clientId does not exist
      */
-    void deleteTenantRoleForUser(EndUser user, TenantRole role);
+    void deleteTenantRoleForUser(EndUser user, TenantRole role, boolean sendEventFeedForTargetUser);
 
     /**
-     * See {@link #deleteTenantRoleForUser(EndUser, TenantRole)} as this appears to perform the exact same logic
+     * See {@link #deleteTenantRoleForUser(EndUser, TenantRole, boolean)} as this appears to perform the exact same logic
      *
-     * TODO: Simplify this service to simply call {@link #deleteTenantRoleForUser(EndUser, TenantRole)}
+     * TODO: Simplify this service to simply call {@link #deleteTenantRoleForUser(EndUser, TenantRole, boolean)}
      *
      * @param user
      * @param role

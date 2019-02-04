@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.SAMLConstants
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.IdentityConfigHolder
@@ -203,7 +203,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         }
 
         and: "Feed event is not sent when only change is a group modification"
-        0 * atomHopperClient.asyncPost(_, _)
+        0 * atomHopperClient.asyncPost(_, _, _)
     }
 
     def "If existing fed user email is changed, feed event is sent"() {
@@ -246,7 +246,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         service.processAuthRequestForProvider(authRequest, idp, false)
 
         then: "Update feed event will be sent"
-        1 * atomHopperClient.asyncPost(existingUser, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost(existingUser, FeedsUserStatusEnum.UPDATE, _)
     }
 
     def "When existing fed user roles are changed, feed event is sent"() {
@@ -292,8 +292,8 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         service.processAuthRequestForProvider(authRequest, idp, false)
 
         then: "Update feed event will be sent"
-        1 * tenantService.addTenantRoleToUser(existingUser, _) // Adding a new role
-        1 * atomHopperClient.asyncPost(existingUser, AtomHopperConstants.UPDATE) // Reporting on it
+        1 * tenantService.addTenantRoleToUser(existingUser, _, false) // Adding a new role
+        1 * atomHopperClient.asyncPost(existingUser, FeedsUserStatusEnum.ROLE, _) // Reporting on it
     }
 
     def "When updated existing fed user email and roles, only one feed event is sent"() {
@@ -339,8 +339,8 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         service.processAuthRequestForProvider(authRequest, idp, false)
 
         then: "Update feed event will be sent"
-        1 * tenantService.addTenantRoleToUser(existingUser, _) // Adding a new role
-        1 * atomHopperClient.asyncPost(existingUser, AtomHopperConstants.UPDATE) // Reporting on it
+        1 * tenantService.addTenantRoleToUser(existingUser, _, false) // Adding a new role
+        1 * atomHopperClient.asyncPost(existingUser, FeedsUserStatusEnum.UPDATE, _) // Reporting on it
     }
 
     def "processAuthRequestForProvider - assert create user event is sent"() {
@@ -397,7 +397,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         then:
         1 * userGroupService.getGroupByNameForDomain(groupName, domainId) >> userGroup
         1 * federatedUserDao.addUser(_, _);
-        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.CREATE)
+        1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.CREATE, _)
     }
 
     def createValidDomainAuthGenerationRequest(username = UUID.randomUUID()) {

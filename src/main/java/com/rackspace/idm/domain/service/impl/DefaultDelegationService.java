@@ -4,10 +4,11 @@ import com.google.common.collect.Lists;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams;
 import com.rackspace.idm.api.resource.cloud.v20.FindDelegationAgreementParams;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.DelegationAgreementDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -34,6 +35,7 @@ import org.apache.commons.lang.Validate;
 import org.eclipse.persistence.jpa.jpql.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -350,7 +352,7 @@ public class DefaultDelegationService implements DelegationService {
         for (BaseUser user : users) {
             // Only post events for provisioned users.
             if (!(user instanceof FederatedUser)) {
-                atomHopperClient.asyncPost((EndUser) user, AtomHopperConstants.UPDATE);
+                atomHopperClient.asyncPost((EndUser) user, FeedsUserStatusEnum.UPDATE, MDC.get(Audit.GUUID));
             }
         }
     }

@@ -406,12 +406,12 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             it.clientId = Constants.IDENTITY_SERVICE_ID
             it
         }
-        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole)
+        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole, false)
 
         tenantRole.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.DEFAULT_USER_ROLE_ID, userAdmin2.id)
         tenantRole.roleRsId = Constants.DEFAULT_USER_ROLE_ID
         tenantRole.name = Constants.DEFAULT_USER_ROLE_NAME
-        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole)
+        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole, false)
         def userAdmin2Token = utils.getToken(userAdmin2.username)
 
         when: "create a default user from user admin 2"
@@ -721,12 +721,12 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             it.clientId = Constants.IDENTITY_SERVICE_ID
             it
         }
-        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole)
+        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole, false)
 
         tenantRole.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.DEFAULT_USER_ROLE_ID, userAdmin2.id)
         tenantRole.roleRsId = Constants.DEFAULT_USER_ROLE_ID
         tenantRole.name = Constants.DEFAULT_USER_ROLE_NAME
-        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole)
+        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole, false)
 
         users1 = users1.reverse()
         def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())

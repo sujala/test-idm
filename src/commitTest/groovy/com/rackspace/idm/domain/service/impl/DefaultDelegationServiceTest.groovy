@@ -4,7 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.ErrorCodes
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.resource.cloud.v20.DelegationAgreementRoleSearchParams
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.entity.*
@@ -58,7 +58,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         then:
         1 * tenantAssignmentService.replaceTenantAssignmentsOnDelegationAgreement(da, assignments.tenantAssignments.tenantAssignment)
         1 * delegationAgreementDao.getDelegationAgreementDelegates(da) >> [user]
-        1 * atomHopperClient.asyncPost((EndUser) user, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost((EndUser) user, FeedsUserStatusEnum.UPDATE, _)
     }
 
     def "replaceRoleAssignmentsOnDelegationAgreement: error check and invalid cases"() {
@@ -149,7 +149,7 @@ class DefaultDelegationServiceTest extends RootServiceTest {
         1 * tenantRoleDao.getRoleAssignmentOnDelegationAgreement(da, tenantRole.roleRsId) >> tenantRole
         1 * tenantRoleDao.deleteTenantRole(tenantRole)
         1 * delegationAgreementDao.getDelegationAgreementDelegates(da) >> [user]
-        1 * atomHopperClient.asyncPost((EndUser) user, AtomHopperConstants.UPDATE)
+        1 * atomHopperClient.asyncPost((EndUser) user, FeedsUserStatusEnum.UPDATE, _)
     }
 
     def "revokeRoleAssignmentOnDelegationAgreement: error check"() {

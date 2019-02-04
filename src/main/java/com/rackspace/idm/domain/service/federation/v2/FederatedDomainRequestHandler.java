@@ -4,9 +4,10 @@ import com.google.common.collect.Sets;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.api.security.ImmutableClientRole;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
@@ -30,6 +31,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -348,6 +350,11 @@ public class FederatedDomainRequestHandler {
             sendFeedEventForUserUpdate = true;
         }
 
+        // Send update event if necessary.
+        if (sendFeedEventForUserUpdate) {
+            atomHopperClient.asyncPost(existingUser, FeedsUserStatusEnum.UPDATE, MDC.get(Audit.GUUID));
+        }
+
         // Update user expiration if necessary
         if (existingUser.getExpiredTimestamp() == null ||
                 new DateTime(existingUser.getExpiredTimestamp()).isBefore(authRequest.getRequestedTokenExpiration())) {
@@ -374,12 +381,9 @@ public class FederatedDomainRequestHandler {
         // Update roles as necessary
         boolean userRolesChanged = reconcileRequestedRbacRolesFromRequest(existingUser, requestedRoles);
 
-        /*
-            Currently both user and role changes will be translated to same event by atomhopperclient so only send a
-            single event rather than ultimately sending the same event twice.
-         */
-        if (sendFeedEventForUserUpdate || userRolesChanged) {
-            atomHopperClient.asyncPost(existingUser, AtomHopperConstants.UPDATE);
+        // Send user feed event if roles changed.
+        if (userRolesChanged) {
+            atomHopperClient.asyncPost(existingUser, FeedsUserStatusEnum.ROLE, MDC.get(Audit.GUUID));
         }
 
         return existingUser;
@@ -466,7 +470,7 @@ public class FederatedDomainRequestHandler {
         } else if (existingAssignment == null) {
             // Adding new role
             newAssignment.setUserId(user.getId());
-            tenantService.addTenantRoleToUser(user, newAssignment);
+            tenantService.addTenantRoleToUser(user, newAssignment, false);
         } else if (newAssignment == null) {
             /*
              Removing role. Doesn't matter if user is assigned this role as a tenant role or globally.
@@ -534,11 +538,11 @@ public class FederatedDomainRequestHandler {
 
         federatedUserDao.addUser(originIdp, federatedUser);
 
-        atomHopperClient.asyncPost(federatedUser, AtomHopperConstants.CREATE);
+        atomHopperClient.asyncPost(federatedUser, FeedsUserStatusEnum.CREATE, MDC.get(Audit.GUUID));
 
         tenantService.addTenantRolesToUser(federatedUser, userRoles);
-
         federatedUser.setRoles(userRoles);
+
         return federatedUser;
     }
 

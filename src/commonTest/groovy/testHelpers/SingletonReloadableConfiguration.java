@@ -38,7 +38,7 @@ public final class SingletonReloadableConfiguration implements Configuration {
     public synchronized void reset() {
         idmPropertiesConfig = pfConfig.getReloadableConfig(pfConfig.getConfig());
 
-        idmPropertiesConfig.setProperty(IdentityConfig.ATOM_HOPPER_URL_PROP, Constants.TEST_MOCK_FEEDS_URL);
+        idmPropertiesConfig.setProperty(IdentityConfig.FEEDS_URL_PROP, Constants.TEST_MOCK_FEEDS_URL);
     }
 
 }

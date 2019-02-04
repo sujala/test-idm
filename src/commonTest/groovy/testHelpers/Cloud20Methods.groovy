@@ -170,10 +170,16 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).queryParam("name", name).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def createUser(String token, user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
+    def createUser(String token, user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE, String requestId = null) {
         /** {@link Cloud20VersionResource#addUser()} */
         initOnUse()
-        resource.path(path20).path(USERS).accept(accept).type(request).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+        def builder = resource.path(path20).path(USERS).accept(accept).type(request).header(X_AUTH_TOKEN, token).entity(user)
+
+        if (requestId) {
+            builder.header(GlobalConstants.X_REQUEST_ID, requestId)
+        }
+
+        return builder.post(ClientResponse)
     }
 
     def createUnverifiedUser(String token, user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
@@ -568,9 +574,13 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).queryParams(queryParams).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
-    def samlAuthenticate(request, accept = APPLICATION_XML, contentType = APPLICATION_XML) {
+    def samlAuthenticate(request, accept = APPLICATION_XML, contentType = APPLICATION_XML, String requestId = null) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(accept).type(contentType).entity(request).post(ClientResponse)
+        def builder = resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(accept).type(contentType).entity(request)
+        if (requestId) {
+            builder.header(GlobalConstants.X_REQUEST_ID, requestId)
+        }
+        return builder.post(ClientResponse)
     }
 
     def federatedAuthenticate(request, applyRcnRoles = false, String version = null, accept = APPLICATION_XML) {

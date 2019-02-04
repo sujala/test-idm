@@ -3,57 +3,35 @@ package com.rackspace.idm.api.resource.cloud.atomHopper
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.event.identity.trr.user.CloudIdentityType
 import com.rackspace.docs.event.identity.trr.user.ValuesEnum
-import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.docs.event.identity.user.CloudIdentity1Type
+import com.rackspace.docs.event.identity.user.CloudIdentity3Type
+import com.rackspace.docs.event.identity.user.ResourceTypes1
+import com.rackspace.docs.event.identity.user.ResourceTypes3
+import com.rackspace.docs.event.identity.user.UpdatedAttributes3Enum
 import com.rackspace.idm.domain.dao.impl.MemoryTokenRevocationRecordPersistenceStrategy
-import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
-import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
-import com.rackspace.idm.domain.entity.Group
-import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.entity.TokenRevocationRecord
-import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.TokenRevocationService
-import com.rackspace.idm.domain.service.impl.DefaultIdentityUserService
-import com.rackspace.idm.domain.service.impl.DefaultTenantService
-import com.rackspace.idm.util.CryptHelper
 import org.apache.commons.collections4.CollectionUtils
-import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.StatusLine
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.conn.HttpClientConnectionManager
-import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy
 import org.apache.http.protocol.HttpContext
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
-import spock.lang.Specification
 import spock.lang.Unroll
+import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.MediaType
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 12/20/12
- * Time: 9:52 AM
- * To change this template use File | Settings | File Templates.
- */
-class AtomHopperClientGroovyTest extends Specification {
+class AtomHopperClientGroovyTest extends RootServiceTest {
     @Shared AtomHopperClient client
-    @Shared DefaultIdentityUserService identityUserService
-
-    @Shared DefaultTenantService defaultTenantService
-    @Shared Configuration config
-    @Shared IdentityConfig identityConfig
     @Shared AtomHopperLogger httpClient
     @Shared org.openstack.docs.identity.api.v2.ObjectFactory objectFactory;
-    @Shared CryptHelper cryptHelper
     @Shared AtomHopperHelper atomHopperHelper
-
-    @Shared IdentityConfig.StaticConfig staticConfig
-    @Shared IdentityConfig.ReloadableConfig reloadableConfig
 
     def setupSpec(){
         client = new AtomHopperClient();
@@ -76,12 +54,13 @@ class AtomHopperClientGroovyTest extends Specification {
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        defaultTenantService.getTenantRolesForUserPerformant(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
+        reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false)
+        UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false, FeedsUserStatusEnum.DELETED, "requestId")
 
         then:
         entry.title.value.equals("Identity Event")
@@ -90,7 +69,7 @@ class AtomHopperClientGroovyTest extends Specification {
         entry.content.event.tenantId.equals("tenantId")
     }
 
-    def "atom entry posts Groud Id not Group Name " () {
+    def "atom entry posts GroupId not Group Name " () {
         given:
         User user = new User()
         user.username = "testUser"
@@ -100,14 +79,15 @@ class AtomHopperClientGroovyTest extends Specification {
         def groupName = "MyGroup"
         def groupId = 1
         identityUserService.getGroupsForEndUser(_) >> [createGroup(groupName, groupId,"desc")].asList()
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        defaultTenantService.getTenantRolesForUserPerformant(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
+        reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false)
+        UsageEntry entry = client.createEntryForUser(user, EventType.DELETE, false, FeedsUserStatusEnum.GROUP, "requestId")
 
-        def cloudIdentityType = (com.rackspace.docs.event.identity.user.CloudIdentityType) entry.content.event.any.get(0)
+        def cloudIdentityType = (CloudIdentity1Type) entry.content.event.any.get(0)
         def groupInfo = cloudIdentityType.getGroups().get(0)
         then:
         !groupInfo.equals(groupName)
@@ -123,11 +103,12 @@ class AtomHopperClientGroovyTest extends Specification {
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
         config.getString(_) >> "DFW" >> "DFW1" >> "http://10.4.39.67:8888/namespace/feed"
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        defaultTenantService.getTenantRolesForUserPerformant(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
+        reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        client.postUser(user, AtomHopperConstants.DELETED)
+        client.postUser(user, FeedsUserStatusEnum.DELETED, "requestId")
 
         then:
         1 * httpClient.execute(_)
@@ -141,12 +122,13 @@ class AtomHopperClientGroovyTest extends Specification {
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        defaultTenantService.getTenantRolesForUserPerformant(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
+        reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        client.postUser(user, AtomHopperConstants.DISABLED)
+        client.postUser(user, FeedsUserStatusEnum.DISABLED, "requestId")
 
         then:
         1 * httpClient.execute(_)
@@ -160,12 +142,13 @@ class AtomHopperClientGroovyTest extends Specification {
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        defaultTenantService.getTenantRolesForUserPerformant(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
+        reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        client.postUser(user, AtomHopperConstants.MIGRATED)
+        client.postUser(user, FeedsUserStatusEnum.MIGRATED, "requestId")
 
         then:
         1 * httpClient.execute(_)
@@ -201,23 +184,24 @@ class AtomHopperClientGroovyTest extends Specification {
         StatusLine sl = Mock()
         response.statusLine >> sl
         sl.statusCode >> 201
-        HttpEntity enty = Mock()
+        HttpEntity entity = Mock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
         user.region = "DFW"
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        defaultTenantService.getTenantRolesForUserPerformant(_) >> [createTenantRole("someRole", "1", "desc")].asList()
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
+        reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
 
         when:
-        client.postUser(user, AtomHopperConstants.DISABLED)
+        client.postUser(user, FeedsUserStatusEnum.DISABLED, "requestId")
 
         then:
         1 * httpClient.execute(_) >> response
-        1 * response.entity >> enty
+        1 * response.entity >> entity
         1 * atomHopperHelper.entityConsume(_)
     }
 
@@ -227,7 +211,7 @@ class AtomHopperClientGroovyTest extends Specification {
         StatusLine sl = Mock()
         response.statusLine >> sl
         sl.statusCode >> 201
-        HttpEntity enty = Mock()
+        HttpEntity entity = Mock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
@@ -242,7 +226,7 @@ class AtomHopperClientGroovyTest extends Specification {
 
         then:
         1 * httpClient.execute(_) >> response
-        1 * response.entity >> enty
+        1 * response.entity >> entity
         1 * atomHopperHelper.entityConsume(_)
     }
 
@@ -254,7 +238,7 @@ class AtomHopperClientGroovyTest extends Specification {
         StatusLine sl = Mock()
         response.statusLine >> sl
         sl.statusCode >> 201
-        HttpEntity enty = Mock()
+        HttpEntity entity = Mock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
@@ -270,7 +254,7 @@ class AtomHopperClientGroovyTest extends Specification {
 
         then:
         1 * httpClient.execute(_) >> response
-        1 * response.entity >> enty
+        1 * response.entity >> entity
         1 * atomHopperHelper.entityConsume(_)
 
         where:
@@ -407,8 +391,6 @@ class AtomHopperClientGroovyTest extends Specification {
 
     def "keep-alive stategy uses duration config value when no default duration is specified and keepAlive is enabled"() {
         given:
-        identityConfig = Mock()
-        staticConfig = Mock()
         identityConfig.getReloadableConfig() >> reloadableConfig
         reloadableConfig.getFeedsAllowConnectionKeepAlive() >> true
         reloadableConfig.getFeedsConnectionKeepAliveDuration() >> 1000
@@ -430,8 +412,6 @@ class AtomHopperClientGroovyTest extends Specification {
     @Unroll
     def "keep-alive strategy uses default duration when specified with keepAlive value: #keepAlive"() {
         given:
-        identityConfig = Mock()
-        staticConfig = Mock()
         identityConfig.getReloadableConfig() >> reloadableConfig
         reloadableConfig.getFeedsAllowConnectionKeepAlive() >> keepAlive
         reloadableConfig.getFeedsConnectionKeepAliveDuration() >> 1000
@@ -455,6 +435,108 @@ class AtomHopperClientGroovyTest extends Specification {
         false     | _
     }
 
+    @Unroll
+    def "createCloudIdentity1Type: builds correct v1 cloud identity type - FeedUserStatus = #feedUserStatus"() {
+        given:
+        def user = entityFactory.createUser().with {
+            it.contactId = "contactId"
+            it
+        }
+        def group = entityFactory.createGroup("id", "groupName", "description")
+        def groupList = [group]
+        def tenantRole = entityFactory.createTenantRole()
+        def tenantRoles = [entityFactory.createTenantRole()]
+
+        when:
+        CloudIdentity1Type cloudIdentity1Type = client.createCloudIdentity1Type(user, user.username, groupList, tenantRoles, false)
+
+        then:
+        cloudIdentity1Type != null
+        cloudIdentity1Type.getServiceCode() == AtomHopperConstants.CLOUD_IDENTITY
+        cloudIdentity1Type.getVersion() == String.valueOf(AtomHopperConstants.V1_USER_PRODUCT_SCHEMA_VERSION)
+        cloudIdentity1Type.getResourceType() == ResourceTypes1.USER
+        cloudIdentity1Type.getDisplayName() == user.username
+        !cloudIdentity1Type.isMultiFactorEnabled()
+        cloudIdentity1Type.getGroups().size() == 1
+        cloudIdentity1Type.getGroups().get(0) == group.groupId
+        cloudIdentity1Type.getRoles().size() == 1
+        cloudIdentity1Type.getRoles().get(0) == tenantRole.name
+        !cloudIdentity1Type.isMigrated()
+
+        where:
+        feedUserStatus << FeedsUserStatusEnum.values()
+    }
+
+    @Unroll
+    def "createCloudIdentity3Type: builds correct v3 cloud identity type - FeedUserStatus = #feedUserStatus"() {
+        given:
+        def user = entityFactory.createUser().with {
+            it.contactId = "contactId"
+            it
+        }
+        def group = entityFactory.createGroup("id", "groupName", "description")
+        def groupList = [group]
+        def tenantRole = entityFactory.createTenantRole()
+        def tenantRoles = [entityFactory.createTenantRole()]
+        def requestId = "requestId"
+
+        when:
+        CloudIdentity3Type cloudIdentity3Type = client.createCloudIdentity3Type(user, user.username, groupList, tenantRoles, false, requestId, feedUserStatus as FeedsUserStatusEnum)
+
+        then:
+        cloudIdentity3Type != null
+        cloudIdentity3Type.getServiceCode() == AtomHopperConstants.CLOUD_IDENTITY
+        cloudIdentity3Type.getVersion() == String.valueOf(AtomHopperConstants.V3_USER_PRODUCT_SCHEMA_VERSION)
+        cloudIdentity3Type.getResourceType() == ResourceTypes3.USER
+        cloudIdentity3Type.getDisplayName() == user.username
+        cloudIdentity3Type.getRequestId() == requestId
+        !cloudIdentity3Type.isMultiFactorEnabled()
+        cloudIdentity3Type.getContactId() == user.contactId
+        cloudIdentity3Type.getGroups().size() == 1
+        cloudIdentity3Type.getGroups().get(0) == group.groupId
+        cloudIdentity3Type.getRoles().size() == 1
+        cloudIdentity3Type.getRoles().get(0) == tenantRole.name
+        !cloudIdentity3Type.isMigrated()
+
+        if (((FeedsUserStatusEnum) feedUserStatus).isUpdateEvent()) {
+            assert cloudIdentity3Type.getUpdatedAttributes() != null
+            if (feedUserStatus == FeedsUserStatusEnum.USER_GROUP) {
+                assert cloudIdentity3Type.getUpdatedAttributes().find {it == UpdatedAttributes3Enum.ROLES}
+            }
+            if (feedUserStatus == FeedsUserStatusEnum.ROLE) {
+                assert cloudIdentity3Type.getUpdatedAttributes().find {it == UpdatedAttributes3Enum.ROLES}
+            }
+
+            if (cloudIdentity3Type.getUpdatedAttributes().isEmpty()) {
+                assert cloudIdentity3Type.getUpdatedAttributes().find {it == UpdatedAttributes3Enum.USER}
+            }
+        } else {
+            assert cloudIdentity3Type.getUpdatedAttributes().isEmpty()
+        }
+
+        where:
+        feedUserStatus << FeedsUserStatusEnum.values()
+    }
+
+    def "createEntryForUser: calls correct services"(){
+        given:
+        def user = entityFactory.createUser()
+        def tenantRole = entityFactory.createTenantRole()
+        def tenantRoles = [tenantRole]
+        def group = entityFactory.createGroup("groupId", "groupName", "description")
+
+        when:
+        UsageEntry usageEntry = client.createEntryForUser(user, EventType.UPDATE, false, FeedsUserStatusEnum.UPDATE, "requestId")
+
+        then:
+        usageEntry != null
+
+        1 * reloadableConfig.getFeedsUserProductSchemaVersion() >> 1
+        1 * defaultTenantService.getTenantRolesForUserPerformant(user) >> tenantRoles
+        1 * identityUserService.getGroupsForEndUser(user.id) >> [group]
+        1 * defaultTenantService.getMossoIdFromTenantRoles(tenantRoles) >> "mossoId"
+    }
+
     def createTenantRole(String name, String roleRsId, String description) {
         new TenantRole().with {
             it.name = name
@@ -474,17 +556,9 @@ class AtomHopperClientGroovyTest extends Specification {
     }
 
     def setupMock(client) {
-        identityUserService = Mock()
-        client.identityUserService = identityUserService
-        defaultTenantService = Mock()
-        client.defaultTenantService = defaultTenantService
-
-        identityConfig = Mock()
-        staticConfig = Mock()
-        reloadableConfig = Mock()
-        identityConfig.getStaticConfig() >> staticConfig
-        identityConfig.getReloadableConfig() >> reloadableConfig
-        client.identityConfig = identityConfig
+        mockIdentityUserService(client)
+        mockDefaultTenantService(client)
+        mockIdentityConfig(client)
 
         reloadableConfig.reuseJaxbContext() >> false
 
@@ -493,11 +567,10 @@ class AtomHopperClientGroovyTest extends Specification {
         atomHopperHelper = Mock()
         client.atomHopperHelper = atomHopperHelper
 
-        reloadableConfig.getAtomHopperDataCenter() >> "GLOBAL"
-        reloadableConfig.getAtomHopperUrl() >> "http://localhost:8888/namespace/feed"
-        reloadableConfig.getAtomHopperRegion() >> "GLOBAL"
+        reloadableConfig.getFeedsDataCenter() >> "GLOBAL"
+        reloadableConfig.getFeedsUrl() >> "http://localhost:8888/namespace/feed"
+        reloadableConfig.getFeedsRegion() >> "GLOBAL"
 
-        config = Mock()
         config.getString("atom.hopper.crypto.password") >> "password"
         config.getString("atom.hopper.crypto.salt") >> "c8 99"
     }

@@ -34,7 +34,7 @@ public class idmPropertiesTest {
         for (String fileName : propertyHashMap.keySet()) {
             ArrayList<String> propertyNameErrorList = propertyHashMap.get(fileName);
             propertyNameErrorList.remove("virtualPath");
-            propertyNameErrorList.remove("atom.hopper.dataCenter");
+            propertyNameErrorList.remove("feeds.dataCenter");
             propertyNameErrorList.remove("cloudAuthUK11url");
             propertyNameErrorList.remove("cloudAuthUK20url");
             propertyNameErrorList.remove("auth.ldap.useSSL");

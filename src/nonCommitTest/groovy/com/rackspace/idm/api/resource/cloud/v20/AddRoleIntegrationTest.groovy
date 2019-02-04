@@ -1,10 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
@@ -16,6 +16,7 @@ import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
@@ -258,7 +259,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         ClientRole cloudIdentityAdminRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.IDENTITY_ADMIN.roleName).asClientRole()
 
         def identityAdminEntity = userService.getUserById(identityAdmin.id)
-        tenantService.deleteTenantRoleForUser(identityAdminEntity, tenantService.getTenantRoleForUserById(identityAdminEntity, Constants.IDENTITY_ADMIN_ROLE_ID))
+        tenantService.deleteTenantRoleForUser(identityAdminEntity, tenantService.getTenantRoleForUserById(identityAdminEntity, Constants.IDENTITY_ADMIN_ROLE_ID), false)
         assertUserDoesNotHaveRole(identityAdmin, cloudIdentityAdminRole)
 
         when: "Add role to user without any identity role"
@@ -569,9 +570,16 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         testUtils.assertStringPattern("[a-zA-Z0-9]{32}", roleEntity.id)
 
         when: "Add role to user and validate token"
+        cloudFeedsMock.reset()
         utils.addRoleToUser(userAdmin, roleEntity.id)
         def tokenId = utils.getToken(userAdmin.username)
         def validateResponse = utils.validateToken(tokenId)
+
+        and: "verify that event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createUserFeedsRequest(userAdmin, EventType.UPDATE.value()),
+                VerificationTimes.exactly(1)
+        )
 
         then: "Assert role correctly added to user"
         validateResponse.user.roles.role.find {it.id == roleEntity.id} != null

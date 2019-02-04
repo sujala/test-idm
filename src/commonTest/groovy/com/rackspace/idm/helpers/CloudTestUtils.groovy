@@ -2,9 +2,12 @@ package com.rackspace.idm.helpers
 
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.resource.cloud.email.EmailTemplateConstants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
+import com.rackspace.idm.domain.entity.EndUser
+import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
@@ -109,6 +112,45 @@ class CloudTestUtils {
         return "//event[@id and @resourceName='${username}' and @type='$eventType']/product[@displayName='${username}' and @resourceType='USER' and @serviceCode='CloudIdentity']"
     }
 
+    String getFeedsXPathForUserV3(EndUser user, EventType eventType, FeedsUserStatusEnum userStatusEnum, String requestId) {
+        // Determine username
+        def username
+        if (user instanceof FederatedUser) {
+            username = String.format("%s@%s", user.username, user.federatedIdpUri)
+        } else {
+            username = user.username
+        }
+
+        // Build xpath
+        String xpath = "//event[@id and @resourceName='${username}' and @type='$eventType']/product[@displayName='${username}'" +
+                "and @resourceType='USER' and @serviceCode='CloudIdentity' and @version='3' " +
+                "and @domainId='${user.domainId}'"
+
+        if (eventType == EventType.UPDATE) {
+            if (FeedsUserStatusEnum.ROLE == userStatusEnum) {
+                xpath = xpath.concat(" and @updatedAttributes='ROLES'")
+            } else if (FeedsUserStatusEnum.USER_GROUP == userStatusEnum) {
+                xpath = xpath.concat(" and @updatedAttributes='USER_GROUP ROLES'")
+            } else {
+                xpath = xpath.concat(" and @updatedAttributes='USER'")
+            }
+        }
+
+        if (requestId != null) {
+            xpath = xpath.concat(" and @requestId='${requestId}'")
+        } else {
+            xpath = xpath.concat(" and @requestId")
+        }
+
+        if (user.contactId != null) {
+            xpath = xpath.concat(" and @contactId='${user.contactId}'")
+        }
+
+        xpath = xpath.concat("]")
+
+        return xpath
+    }
+
     String getFeedsXPathForFedUser(user, eventType) {
         def federatedIdp = user instanceof User ? user.federatedIdp : user?.federatedIdpUri
         return "//event[@id and @resourceName='${user?.username}@${federatedIdp}' and @type='$eventType']/product[@displayName='${user?.username}@${federatedIdp}' and @resourceType='USER' and @serviceCode='CloudIdentity']"
@@ -160,6 +202,10 @@ class CloudTestUtils {
 
     HttpRequest createUserFeedsRequest(user, eventType) {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUser(user, eventType)))
+    }
+
+    HttpRequest createV3UserFeedsRequest(EndUser user, EventType eventType, FeedsUserStatusEnum userStatusEnum, String requestId = null) {
+        return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUserV3(user, eventType, userStatusEnum, requestId)))
     }
 
     HttpRequest createFedUserFeedsRequest(user, eventType) {
