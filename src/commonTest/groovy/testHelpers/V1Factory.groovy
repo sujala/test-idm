@@ -369,11 +369,12 @@ class V1Factory {
         return createRegion(name, true, false)
     }
 
-    def createRegion(String name, Boolean enabled, Boolean isDefault){
+    def createRegion(String name, Boolean enabled, Boolean isDefault, String cloud="US"){
         return new Region().with {
             it.name = name
             it.enabled = enabled
             it.isDefault = isDefault
+            it.cloud = cloud
             return it
         }
     }

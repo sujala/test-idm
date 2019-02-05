@@ -6444,7 +6444,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
         1 * cloudRegionService.addRegion(_)
     }
 
@@ -6462,7 +6462,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
         1 * cloudRegionService.checkAndGetRegion(region) >> entityFactory.createRegion()
     }
 
@@ -6478,7 +6478,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
         1 * cloudRegionService.getRegions(_) >> [entityFactory.createRegion()]
     }
 
@@ -6495,7 +6495,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
         1 * cloudRegionService.checkAndGetRegion(region.name)
         1 * cloudRegionService.updateRegion(region.name, _)
     }
@@ -6513,7 +6513,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN)
         1 * cloudRegionService.checkAndGetRegion(region)
         1 * cloudRegionService.deleteRegion(region)
     }

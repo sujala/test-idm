@@ -16,9 +16,6 @@ public class RegionConverterCloudV20 {
     private Mapper mapper;
 
     @Autowired
-    private Configuration config;
-
-    @Autowired
     private JAXBObjectFactories objFactories;
 
     public JAXBElement<com.rackspace.docs.identity.api.ext.rax_auth.v1.Region> toRegion(Region region) {
@@ -33,7 +30,7 @@ public class RegionConverterCloudV20 {
         Region region = mapper.map(regionEntity, Region.class);
         region.setIsDefault(regionEntity.isIsDefault());
         region.setIsEnabled(regionEntity.isEnabled());
-        region.setCloud(config.getString("cloud.region"));
+        region.setCloud(regionEntity.getCloud());
         return region;
     }
 

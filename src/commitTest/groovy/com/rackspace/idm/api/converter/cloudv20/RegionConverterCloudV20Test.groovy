@@ -33,15 +33,10 @@ class RegionConverterCloudV20Test extends Specification {
         region.name == regionEntity.name
         region.isEnabled == regionEntity.enabled
         region.isDefault == regionEntity.isDefault
-
+        region.cloud == regionEntity.cloud
     }
 
     def "convert region from jersey object to ldap object"() {
-        given:
-        Configuration config = Mock()
-        converterCloudV20.config = config
-        config.getString("cloud.region") >> US_CLOUD
-
         when:
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Region regionEntity = regionEntity()
         Region region = converterCloudV20.fromRegion(regionEntity)
@@ -66,20 +61,7 @@ class RegionConverterCloudV20Test extends Specification {
         regionEntity.name == region.name
         regionEntity.enabled == region.isEnabled
         regionEntity.isDefault == region.isDefault
-    }
-
-    def "cloud gets assigned from config file"() {
-        given:
-        Configuration config = Mock()
-        converterCloudV20.config = config
-        config.getString("cloud.region") >> US_CLOUD
-
-        when:
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.Region regionEntity = regionEntity()
-        Region region = converterCloudV20.fromRegion(regionEntity)
-
-        then:
-        region.cloud == US_CLOUD
+        regionEntity.cloud == region.cloud
     }
 
     def region(String name, String cloud, isEnabled, Boolean isDefault) {
@@ -96,16 +78,17 @@ class RegionConverterCloudV20Test extends Specification {
         return region("name", "cloud", false, true)
     }
 
-    def regionEntity(String name, Boolean isEnabled, Boolean isDefault) {
+    def regionEntity(String name, Boolean isEnabled, Boolean isDefault, String cloud) {
         new com.rackspace.docs.identity.api.ext.rax_auth.v1.Region().with {
             it.name = name
             it.enabled = isEnabled
             it.isDefault = isDefault
+            it.cloud = cloud
             return it
         }
     }
 
     def regionEntity() {
-        return regionEntity("name", true, false)
+        return regionEntity("name", true, false, US_CLOUD)
     }
 }

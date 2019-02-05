@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.RegionDao
 import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService
@@ -8,6 +10,10 @@ import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
+
+import javax.ws.rs.core.MediaType
+
+import static org.apache.http.HttpStatus.*
 
 
 class Cloud20RegionIntegrationTest extends RootIntegrationTest {
@@ -102,4 +108,158 @@ class Cloud20RegionIntegrationTest extends RootIntegrationTest {
         response.status == 204
     }
 
+    def "Create region accepts cloud region in the request"() {
+        when: "create region"
+        def cloud = "US"
+        def regionToCreate = v1Factory.createRegion(testUtils.getRandomUUID("region"), false, false, cloud)
+        def response = cloud20.createRegion(utils.getServiceAdminToken(), regionToCreate, contentType)
+
+        then: "created"
+        response.status == SC_CREATED
+
+        when: "get region"
+        response = cloud20.getRegion(utils.getServiceAdminToken(), regionToCreate.name, contentType)
+
+        then: "cloud is returned"
+        response.status == SC_OK
+        def region = response.getEntity(Region)
+        region.cloud == cloud
+
+        when: "list region"
+        response = cloud20.getRegions(utils.getServiceAdminToken(), contentType)
+
+        then: "cloud is returned"
+        response.status == SC_OK
+        def regions = response.getEntity(Regions)
+        regions.region.find {it.name == regionToCreate.name}.cloud == cloud
+
+        when: "update region"
+        region.cloud = "UK"
+        response = cloud20.updateRegion(utils.getServiceAdminToken(), region.name, region, contentType)
+
+        then:
+        response.status == SC_BAD_REQUEST
+
+        when: "delete region"
+        response = cloud20.deleteRegion(utils.getServiceAdminToken(), region.name, contentType)
+
+        then: "success"
+        response.status == SC_NO_CONTENT
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def "Cloud region can be set to US and UK only"() {
+        when: "create region"
+        def cloud = "US"
+        def regionToCreate = v1Factory.createRegion(testUtils.getRandomUUID("region"), false, false, cloud)
+        def response = cloud20.createRegion(utils.getServiceAdminToken(), regionToCreate)
+
+        then: "created"
+        response.status == SC_CREATED
+
+        when: "get region"
+        response = cloud20.getRegion(utils.getServiceAdminToken(), regionToCreate.name)
+
+        then: "cloud is returned"
+        response.status == SC_OK
+        def region = response.getEntity(Region)
+        region.cloud == cloud
+
+        when: "delete region"
+        response = cloud20.deleteRegion(utils.getServiceAdminToken(), region.name)
+
+        then: "success"
+        response.status == SC_NO_CONTENT
+
+        when: "create region"
+        cloud = "UK"
+        regionToCreate = v1Factory.createRegion(testUtils.getRandomUUID("region"), false, false, cloud)
+        response = cloud20.createRegion(utils.getServiceAdminToken(), regionToCreate)
+
+        then: "created"
+        response.status == SC_CREATED
+
+        when: "get region"
+        response = cloud20.getRegion(utils.getServiceAdminToken(), regionToCreate.name)
+        region = response.getEntity(Region)
+
+        then: "cloud is returned"
+        response.status == SC_OK
+        region.cloud == cloud
+
+        when: "delete region"
+        response = cloud20.deleteRegion(utils.getServiceAdminToken(), region.name)
+
+        then: "success"
+        response.status == SC_NO_CONTENT
+
+        when: "create region"
+        cloud = "USSR"
+        regionToCreate = v1Factory.createRegion(testUtils.getRandomUUID("region"), false, false, cloud)
+        response = cloud20.createRegion(utils.getServiceAdminToken(), regionToCreate)
+
+        then: "returns bad request"
+        response.status == SC_BAD_REQUEST
+
+    }
+
+    def "Region services are only accesible to service-admins"() {
+        when: "create region"
+        def cloud = "US"
+        def regionToCreate = v1Factory.createRegion(testUtils.getRandomUUID("region"), false, false, cloud)
+        def response = cloud20.createRegion(utils.getIdentityAdminToken(), regionToCreate, contentType)
+
+        then: "forbidden"
+        response.status == SC_FORBIDDEN
+
+        when: "create region"
+        cloud = "US"
+        regionToCreate = v1Factory.createRegion(testUtils.getRandomUUID("region"), false, false, cloud)
+        response = cloud20.createRegion(utils.getServiceAdminToken(), regionToCreate, contentType)
+
+        then: "created"
+        response.status == SC_CREATED
+
+        when: "get region"
+        response = cloud20.getRegion(utils.getIdentityAdminToken(), regionToCreate.name, contentType)
+
+        then: "forbidden"
+        response.status == SC_FORBIDDEN
+
+        when: "list region"
+        response = cloud20.getRegions(utils.getIdentityAdminToken(), contentType)
+
+        then: "forbidden"
+        response.status == SC_FORBIDDEN
+
+        when: "update region"
+        response = cloud20.getRegion(utils.getServiceAdminToken(), regionToCreate.name, contentType)
+        def region = response.getEntity(Region)
+        region.enabled = false
+        response = cloud20.updateRegion(utils.getIdentityAdminToken(), region.name, region, contentType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "delete region"
+        response = cloud20.deleteRegion(utils.getIdentityAdminToken(), region.name, contentType)
+
+        then: "forbidden"
+        response.status == SC_FORBIDDEN
+
+        when: "delete region"
+        response = cloud20.deleteRegion(utils.getServiceAdminToken(), region.name, contentType)
+
+        then: "success"
+        response.status == SC_NO_CONTENT
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
 }

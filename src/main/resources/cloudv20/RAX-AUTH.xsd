@@ -506,6 +506,15 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="cloud" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A string indicating the cloud region.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
     <complexType name="Regions">

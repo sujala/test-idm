@@ -719,29 +719,34 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(CERTIFICATES).path(certificateId).header(X_AUTH_TOKEN, token).type(requestContentMediaType.toString()).delete(ClientResponse)
     }
 
-    def createRegion(String token, region) {
+    def createRegion(String token, region, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#createRegion()} */
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(REGIONS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(REGIONS).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).entity(region).post(ClientResponse)
     }
 
-    def getRegion(String token, String regionId) {
+    def getRegion(String token, String regionId, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#getRegion()} */
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).get(ClientResponse)
     }
 
-    def getRegions(String token) {
+    def getRegions(String token, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#getRegions()} */
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(REGIONS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(REGIONS).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).get(ClientResponse)
     }
 
-    def updateRegion(String token, String regionId, region) {
+    def updateRegion(String token, String regionId, region, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#updateRegion()} */
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionId).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).type(mediaType.toString()).entity(region).put(ClientResponse)
     }
 
-    def deleteRegion(String token, String regionName) {
+    def deleteRegion(String token, String regionName, MediaType mediaType = MediaType.APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#deleteRegion()} */
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionName).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionName).header(X_AUTH_TOKEN, token).accept(mediaType.toString()).delete(ClientResponse)
     }
 
     def listUsersWithRole(String token, String roleId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {

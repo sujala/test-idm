@@ -79,7 +79,9 @@ class DefaultCloudRegionServiceTest extends Specification {
         setupMocks()
 
         when:
-        cloudRegionService.updateRegion("missing", region())
+        def region = region()
+        region.cloud = null
+        cloudRegionService.updateRegion("missing", region)
 
         then:
         thrown(NotFoundException)
@@ -153,6 +155,7 @@ class DefaultCloudRegionServiceTest extends Specification {
         regionDao.getDefaultRegion(_) >> region1
 
         when:
+        region2.cloud = null
         cloudRegionService.updateRegion("IAD", region2)
 
         then:

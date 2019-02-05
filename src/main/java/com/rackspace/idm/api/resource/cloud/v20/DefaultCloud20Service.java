@@ -4606,7 +4606,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
             // NOTE: We should probably not allow identity:admin's to add regions
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
 
             cloudRegionService.addRegion(regionConverterCloudV20.fromRegion(region));
             String regionName = region.getName();
@@ -4626,7 +4626,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
 
             com.rackspace.idm.domain.entity.Region region = this.cloudRegionService.checkAndGetRegion(name);
             return Response.ok().entity(regionConverterCloudV20.toRegion(region).getValue());
@@ -4640,7 +4640,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
         requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
 
         Iterable<com.rackspace.idm.domain.entity.Region> regions = this.cloudRegionService.getRegions(config.getString("cloud.region"));
         return Response.ok().entity(regionConverterCloudV20.toRegions(regions).getValue());
@@ -4652,7 +4652,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
 
             cloudRegionService.checkAndGetRegion(name);
             com.rackspace.idm.domain.entity.Region updateRegion = regionConverterCloudV20.fromRegion(region);
@@ -4669,7 +4669,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
 
             cloudRegionService.checkAndGetRegion(name);
             cloudRegionService.deleteRegion(name);

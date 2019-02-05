@@ -1320,6 +1320,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def getRegionResponse = cloud20.getRegion(serviceAdminToken, regionName)
         Region createdRegion = getRegionResponse.getEntity(Region)
 
+        region2.cloud = null
         def updateRegionResponse = cloud20.updateRegion(serviceAdminToken, regionName, region2)
         def getUpdatedRegionResponse = cloud20.getRegion(serviceAdminToken, regionName)
         Region updatedRegion = getUpdatedRegionResponse.getEntity(Region)
