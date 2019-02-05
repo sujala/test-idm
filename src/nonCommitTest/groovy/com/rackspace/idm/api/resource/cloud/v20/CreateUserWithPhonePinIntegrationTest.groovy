@@ -3,12 +3,10 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
-@Ignore
 class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
     @Shared
@@ -23,7 +21,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     def "Create identityAdmin, userAdmin, userManage, defaultUser with phone PIN - featureEnabled == #featureEnabled" () {
         given:
         def domainId = utils.createDomain()
-        def pinLength = 4
+        def pinLength = 6
 
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, featureEnabled)
         reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)

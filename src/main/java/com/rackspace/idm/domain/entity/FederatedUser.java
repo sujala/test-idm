@@ -86,21 +86,21 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
     )
     private Set<String> rsGroupId;
 
-//    @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN,
-//            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
-//            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private byte[] encryptedPhonePin;
     private String phonePin;
 
-//    @LDAPField(attribute=LdapRepository.ATTR_ENCRYPTION_VERSION_ID,
-//            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
-//            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED,
-//            defaultDecodeValue = "0")
+    @LDAPField(attribute=LdapRepository.ATTR_ENCRYPTION_VERSION_ID,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED,
+            defaultDecodeValue = "0")
     private String encryptionVersion;
 
-//    @LDAPField(attribute=LdapRepository.ATTR_ENCRYPTION_SALT,
-//            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
-//            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    @LDAPField(attribute=LdapRepository.ATTR_ENCRYPTION_SALT,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String salt;
 
     /**
