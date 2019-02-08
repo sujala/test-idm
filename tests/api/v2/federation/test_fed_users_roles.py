@@ -38,10 +38,6 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         cls.domain_ids = []
 
         cls.domain_ids.append(cls.domain_id)
-        cls.clients = {
-            'identity_admin': cls.identity_admin_client,
-            'user_admin': cls.user_admin_client
-        }
 
     @unless_coverage
     def setUp(self):
@@ -94,18 +90,12 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         role_ids = [role[const.ID] for role in list_resp.json()[const.ROLES]]
         self.assertIn(const.USER_DEFAULT_ROLE_ID, role_ids)
 
-    @unless_coverage
-    @attr(type='regression')
-    @ddt.file_data('data_saml_fed_auth.json')
-    def test_fed_auth_with_v1_and_v2_saml(self, test_data):
+    @tags('positive', 'p0', 'regression')
+    def test_fed_auth_with_v1_saml(self):
 
         issuer = 'http://test.rackspace.com'
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
-        fed_input_data = test_data['fed_input']
-        new_url = fed_input_data['new_url']
-        content_type = fed_input_data['content_type']
-        user_type = fed_input_data['user_type']
 
         cur_path = os.path.abspath('.')
         tests_path = re.search('(.*)tests', cur_path)
@@ -121,17 +111,7 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         private_key_path = os.path.join(
             key_path, 'saml.pkcs8')
 
-        if fed_input_data['fed_api'] == 'v2':
-            cert = saml_helper.create_saml_assertion_v2(
-                domain=self.domain_id, username=subject,
-                roles=[const.USER_MANAGE_ROLE_NAME],
-                issuer=issuer,
-                email=self.test_email, private_key_path=private_key_path,
-                public_key_path=public_key_path,
-                response_flavor=const.V2_DOMAIN_ORIGIN,
-                output_format=const.FORM_ENCODE)
-        else:
-            cert = saml_helper.create_saml_assertion(
+        cert = saml_helper.create_saml_assertion(
                     domain=self.domain_id, subject=subject,
                     roles=[const.USER_MANAGE_ROLE_NAME],
                     issuer=issuer, private_key_path=private_key_path,
@@ -145,9 +125,80 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
                                    client=self.user_admin_client)
 
         # Get fed auth token
-        auth = self.clients[user_type].auth_with_saml(
-            saml=cert, content_type=content_type,
-            base64_url_encode=False, new_url=new_url)
+        auth = self.identity_admin_client.auth_with_saml(
+            saml=cert, content_type='xml',
+            base64_url_encode=False, new_url=False)
+        fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
+        self.users.append(fed_user_id)
+        role_names = [role[const.NAME] for role in auth.json()[const.ACCESS]
+                          [const.USER][const.ROLES]]
+        role_ids = [role[const.ID] for role in auth.json()[const.ACCESS]
+                        [const.USER][const.ROLES]]
+
+        # verify user-manager role is assigned to user
+        self.assertIn(const.USER_MANAGE_ROLE_NAME, role_names)
+        self.assertIn(const.USER_MANAGER_ROLE_ID, role_ids)
+
+        fed_user_client = self.generate_client(
+            token=auth.json()[const.ACCESS][const.TOKEN][const.ID])
+
+        # getting role accessible to user-manager
+        resp = fed_user_client.get_role_by_name(const.ROLE_RBAC1_NAME)
+        self.assertEqual(resp.json()[const.ROLES][0][const.NAME],
+                         const.ROLE_RBAC1_NAME)
+
+        # check if fed user can now get own idp...with having user-manager role
+        get_idp_resp = fed_user_client.get_idp(idp_id=provider_id)
+        self.assertEqual(get_idp_resp.status_code, 200)
+
+        list_idp_resp = fed_user_client.list_idp()
+        # check if fed user can now get own idp...with having user-manager role
+        self.assertEqual(list_idp_resp.status_code, 200)
+
+        # Check if list effective roles for user is successful
+        fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
+        eff_roles_resp = fed_user_client.list_effective_roles_for_user(
+            user_id=fed_user_id)
+        self.assertEqual(eff_roles_resp.status_code, 200)
+
+        # list global roles for a user
+        list_role_for_user_resp = fed_user_client.list_roles_for_user(
+             user_id=fed_user_id)
+        self.assertEqual(list_role_for_user_resp.status_code, 200)
+
+        # Keeping update idp at last as it revokes fed user manager's token
+        # as we are calling 'disable' idp
+        update_idp_req = requests.IDP(idp_id=provider_id, enabled=False)
+        update_resp = fed_user_client.update_idp(
+            idp_id=provider_id, request_object=update_idp_req)
+        self.assertEqual(update_resp.status_code, 200)
+
+    @tags('positive', 'p0', 'regression')
+    @attr(type='regression')
+    def test_fed_auth_with_v2_saml(self):
+
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        provider_id = self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.user_admin_client)
+        self.update_mapping_policy(idp_id=provider_id,
+                                   client=self.user_admin_client)
+
+        subject = self.generate_random_string(
+            pattern='fed[\-]user[\-][\d\w]{12}')
+
+        cert = saml_helper.create_saml_assertion_v2(
+            domain=self.domain_id, username=subject, issuer=self.issuer,
+            roles=[const.USER_MANAGE_ROLE_NAME],
+            email=self.test_email, private_key_path=key_path,
+            public_key_path=cert_path, response_flavor=const.V2_DOMAIN_ORIGIN,
+            output_format=const.FORM_ENCODE)
+
+        # Get fed auth token
+        auth = self.identity_admin_client.auth_with_saml(
+            saml=cert, content_type=const.X_WWW_FORM_URLENCODED,
+            base64_url_encode=True, new_url=True)
         fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
         self.users.append(fed_user_id)
         role_names = [role[const.NAME] for role in auth.json()[const.ACCESS]
