@@ -9,6 +9,7 @@ from tests.api.v2 import base
 from tests.api.v2.federation import federation
 from tests.package.johny.v2.models import requests
 from tests.package.johny import constants as const
+from tests.api.v2.models import factory, responses
 import os
 import re
 
@@ -43,6 +44,18 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
     def setUp(self):
         super(TestFedUserGlobalRoles, self).setUp()
         self.users = []
+        self.role_ids = []
+
+    def create_role(self):
+
+        role_req = factory.get_add_role_request_object(
+            administrator_role=const.USER_MANAGE_ROLE_NAME)
+        add_role_resp = self.identity_admin_client.add_role(
+            request_object=role_req)
+        self.assertEqual(add_role_resp.status_code, 201)
+        role = responses.Role(add_role_resp.json())
+        self.role_ids.append(role.id)
+        return role
 
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
@@ -142,10 +155,12 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         fed_user_client = self.generate_client(
             token=auth.json()[const.ACCESS][const.TOKEN][const.ID])
 
+        role = self.create_role()
+
         # getting role accessible to user-manager
-        resp = fed_user_client.get_role_by_name(const.ROLE_RBAC1_NAME)
+        resp = fed_user_client.get_role_by_name(role.name)
         self.assertEqual(resp.json()[const.ROLES][0][const.NAME],
-                         const.ROLE_RBAC1_NAME)
+                         role.name)
 
         # check if fed user can now get own idp...with having user-manager role
         get_idp_resp = fed_user_client.get_idp(idp_id=provider_id)
@@ -213,10 +228,12 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         fed_user_client = self.generate_client(
             token=auth.json()[const.ACCESS][const.TOKEN][const.ID])
 
+        role = self.create_role()
+
         # getting role accessible to user-manager
-        resp = fed_user_client.get_role_by_name(const.ROLE_RBAC1_NAME)
+        resp = fed_user_client.get_role_by_name(role.name)
         self.assertEqual(resp.json()[const.ROLES][0][const.NAME],
-                         const.ROLE_RBAC1_NAME)
+                         role.name)
 
         # check if fed user can now get own idp...with having user-manager role
         get_idp_resp = fed_user_client.get_idp(idp_id=provider_id)
@@ -252,6 +269,11 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
             self.assertEqual(
                 resp.status_code, 204,
                 msg='User with ID {0} failed to delete'.format(user_id))
+        for id_ in self.role_ids:
+            resp = self.identity_admin_client.delete_role(role_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Role with ID {0} failed to delete'.format(id_))
         super(TestFedUserGlobalRoles, self).tearDown()
 
     @classmethod
