@@ -66,6 +66,11 @@ public class Domain implements Auditable, UniqueId, Metadata {
     )
     private Set<String> metadata;
 
+    @LDAPField(attribute = LdapRepository.ATTR_TYPE,
+            objectClass = LdapRepository.OBJECTCLASS_DOMAIN,
+            filterUsage = FilterUsage.ALWAYS_ALLOWED)
+    private String type;
+
     public Set<String> getMedatadata() {
         if (metadata == null) {
             metadata = new HashSet<String>();

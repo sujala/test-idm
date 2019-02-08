@@ -284,6 +284,9 @@ public class IdentityConfig {
     public static final String DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP = "domain.default.session.inactivity.timeout";
     public static final Duration DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT = Duration.parse("PT15M");
 
+    public static final String DOMAIN_TYPES_PROP = "domain.types";
+    public static final List<String> DOMAIN_TYPES_DEFAULT = Arrays.asList();
+
     public static final String SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP = "session.inactivity.timeout.max.duration";
     public static final Duration SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT = Duration.parse("PT24H");
 
@@ -879,6 +882,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT);
 
         defaults.put(DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT);
+        defaults.put(DOMAIN_TYPES_PROP, DOMAIN_TYPES_DEFAULT);
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT);
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_DEFAULT);
 
@@ -2771,6 +2775,11 @@ public class IdentityConfig {
             }
 
             return  version;
+        }
+
+        @IdmProp(key = DOMAIN_TYPES_PROP, versionAdded = "3.29.0", description = "List of acceptable domain type.")
+        public Set<String> getDomainTypes() {
+            return getSetSafely(reloadableConfiguration, DOMAIN_TYPES_PROP);
         }
     }
 

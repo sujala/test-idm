@@ -17,6 +17,7 @@ import com.rackspace.idm.validation.Validator20
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
@@ -672,5 +673,28 @@ class Validator20Test extends RootServiceTest {
 
         where:
         passwordFeatureFlag << [true, false]
+    }
+
+    def "validateDomainType - validate correct domain type"() {
+        given:
+        def domain = v1Factory.createDomain().with {
+            it.type = "CLOUD_US"
+            it
+        }
+        identityConfig.reloadableConfig.getDomainTypes() >> ["CLOUD_US"]
+
+        when: "valid domain type"
+        service.validateDomainType(domain)
+
+        then:
+        notThrown()
+
+        when: "invalid domain type"
+        domain.type = "BAD"
+        service.validateDomainType(domain)
+
+        then:
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, BadRequestException, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [CLOUD_US]")
     }
 }

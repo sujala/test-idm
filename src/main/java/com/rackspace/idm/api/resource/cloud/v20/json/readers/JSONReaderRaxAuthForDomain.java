@@ -66,6 +66,7 @@ public class JSONReaderRaxAuthForDomain implements MessageBodyReader<Domain> {
             Object name = jsonDomain.get(JSONConstants.NAME);
             Object sessionInactivityTimeout = jsonDomain.get(JSONConstants.SESSION_INACTIVITY_TIMEOUT);
             Object rackspaceCustomerNumber = jsonDomain.get(JSONConstants.RACKSPACE_CUSTOMER_NUMBER);
+            Object domainType = jsonDomain.get(JSONConstants.TYPE);
 
             if (id != null) {
                 domain.setId(id.toString());
@@ -90,6 +91,9 @@ public class JSONReaderRaxAuthForDomain implements MessageBodyReader<Domain> {
             }
             if (rackspaceCustomerNumber != null) {
                 domain.setRackspaceCustomerNumber(rackspaceCustomerNumber.toString());
+            }
+            if (domainType != null) {
+                domain.setType(domainType.toString());
             }
         } catch (Exception e) {
             throw new BadRequestException(INVALID_JSON_ERROR_MESSAGE, e);

@@ -1829,6 +1829,38 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
+    @Unroll
+    def "addDomain - verify domain type can be assigned for authorized user: hasRole = #hasRole"() {
+        given:
+        mockDomainConverter(service)
+
+        def domain = v1Factory.createDomain().with {
+            it.type = "CLOUD_US"
+            it
+        }
+
+        when:
+        service.addDomain(authToken, uriInfo(), domain)
+
+        then:
+        1 * requestContext.getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled() >> false
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> hasRole
+        1 * validator20.validateDomainForCreation(domain) >> { arg ->
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain d = arg[0]
+            if (hasRole) {
+                assert d.type == domain.type
+            } else {
+                assert d.type == null
+            }
+        }
+
+        where:
+        hasRole << [true, false]
+    }
+
 
     def "addDomain adds domain with duplicate exception and success"() {
         given:
