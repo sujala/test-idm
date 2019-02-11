@@ -220,9 +220,9 @@ public class DefaultUserService implements UserService {
 
         if (isCreateUserInOneCall) {
             verifyUserRolesExist(user);
-            if(userContainsRole(user, identityConfig.getStaticConfig().getIdentityUserAdminRoleName())) {
+            if(userContainsRole(user, IdentityUserTypeEnum.USER_ADMIN.getRoleName())) {
                 verifyUserTenantsInCreateOneCall(user);
-            } else if(userContainsRole(user, identityConfig.getStaticConfig().getIdentityDefaultUserRoleName())) {
+            } else if(userContainsRole(user, IdentityUserTypeEnum.DEFAULT_USER.getRoleName())) {
                 verifyUserTenantsExist(user);
             } else {
                 //if we get here, then the user being created is a service or identity admin

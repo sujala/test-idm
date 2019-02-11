@@ -339,7 +339,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         if (isCreateUserOneCall) {
             2 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
             2 * domainService.getDomain(domain.domainId) >> domain
-            1 * staticConfig.getIdentityUserAdminRoleName() >> Constants.IDENTITY_USER_ADMIN_ROLE
         } else {
             1 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
             1 * domainService.getDomain(domain.domainId) >> domain

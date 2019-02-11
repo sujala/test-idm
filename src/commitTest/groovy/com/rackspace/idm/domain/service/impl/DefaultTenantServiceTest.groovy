@@ -8,6 +8,7 @@ import com.rackspace.idm.api.security.ImmutableTenantRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.DomainSubUserDefaults
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.domain.service.rolecalculator.UserRoleLookupService
 import com.rackspace.idm.exception.ClientConflictException
@@ -144,34 +145,42 @@ class DefaultTenantServiceTest extends RootServiceTest {
         1 * tenantRoleDao.getAllTenantRolesForClientRole(role)
     }
 
-    def "deleteTenantRoleForUser deletes tenantRole from subUsers if user is user-admin"() {
+    def "deleteTenantRoleForUser deletes propagating tenantRole from subUsers if user is user-admin"() {
         given:
-        def roleName = "identity"
-        def identityRole = entityFactory.createTenantRole(roleName)
-        def role = entityFactory.createTenantRole()
-        def cRole = entityFactory.createClientRole().with {
-            it.name = roleName
+        def userAdminRole = entityFactory.createClientRole().with {
+            it.id = "useradmin"
+            it.name = IdentityUserTypeEnum.USER_ADMIN.getRoleName()
+            it.roleType = RoleTypeEnum.STANDARD
+            return it
+        }
+
+        def role = entityFactory.createClientRole().with {
+            it.id = "propRole"
+            it.name = "aRole"
             it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
+        def tenantRole = entityFactory.createTenantRole(role.name).with {it.roleRsId = role.id; it}
+        def identityRole = entityFactory.createTenantRole(userAdminRole.name).with {it.roleRsId = userAdminRole.id; it}
+
         def user = entityFactory.createUser()
         def subUser = entityFactory.createUser("subUser", "subUserId", "domainId", "REGION")
 
         tenantRoleDao.getTenantRolesForUser(user) >> [ identityRole ].asList()
-        applicationService.getClientRoleById(_) >> cRole
-        config.getString(_) >> roleName
+        applicationService.getClientRoleById(userAdminRole.id) >> userAdminRole
+        applicationService.getClientRoleById(role.id) >> role
         mockFederatedUserDao.getUsersByDomainId(_) >> [].asList()
 
         when:
-        service.deleteTenantRoleForUser(user, role, false)
+        service.deleteTenantRoleForUser(user, tenantRole, false)
 
         then:
-        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> cRole
+        applicationService.getClientRoleByClientIdAndRoleName(_, role.name) >> role
         then:
-        1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
+        1 * tenantRoleDao.deleteTenantRoleForUser(user, tenantRole)
         then:
         1 * userService.getSubUsers(user) >> [ subUser ].asList()
-        1 * tenantRoleDao.deleteTenantRoleForUser(subUser, role)
+        1 * tenantRoleDao.deleteTenantRoleForUser(subUser, tenantRole)
     }
 
     def "deleteTenantRole uses DAO to delete role"() {
@@ -343,9 +352,8 @@ class DefaultTenantServiceTest extends RootServiceTest {
     }
 
     def force_user_admin(ClientRole role) {
-        tenantRoleDao.getTenantRolesForUser(_) >> [ entityFactory.createTenantRole("admin_role") ].asList()
-        config.getString("cloudAuth.userAdminRole") >> "admin_role"
-        role.name = "admin_role"
+        tenantRoleDao.getTenantRolesForUser(_) >> [ entityFactory.createTenantRole(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) ].asList()
+        role.name = IdentityUserTypeEnum.USER_ADMIN.getRoleName()
         applicationService.getClientRoleById(_) >> role
     }
 
@@ -411,41 +419,52 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def tRole = entityFactory.createTenantRole()
         def cRole1 = entityFactory.createClientRole("roleOne")
-        def cRole2 = entityFactory.createClientRole("roleTwo")
+        def cRole2;
+        if (addUserAdmin) {
+            cRole2 = entityFactory.createClientRole(IdentityUserTypeEnum.USER_ADMIN.getRoleName())
+        } else {
+            cRole2 = entityFactory.createClientRole("roleTwo")
+        }
         tenantRoleDao.getTenantRolesForUser(_) >> [ tRole, tRole ].asList()
-        config.getString("cloudAuth.userAdminRole") >> userAdminRoleName
         applicationService.getClientRoleById(_) >>> [ cRole1, cRole2 ]
 
         def result = service.isUserAdmin(user)
 
         then:
-        result == isUserAdmin
+        result == addUserAdmin
 
         where:
-        isUserAdmin | userAdminRoleName
-        false       | "roleThree"
-        true        | "roleOne"
+        addUserAdmin << [true, false]
     }
 
     def "addTenantRole adds role to subusers if user is user-admin"() {
         given:
-        def roleName = "thisRole"
+        def userAdminRole = entityFactory.createClientRole().with {
+            it.id = "useradmin"
+            it.name = IdentityUserTypeEnum.USER_ADMIN.getRoleName()
+            it.roleType = RoleTypeEnum.STANDARD
+            return it
+        }
+
         def role = entityFactory.createClientRole().with {
-            it.name = roleName
+            it.id = "propRole"
+            it.name = "aRole"
             it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
-        def tenantRole = entityFactory.createTenantRole()
-        def identityRole = entityFactory.createTenantRole(roleName)
+        def tenantRole = entityFactory.createTenantRole(role.name).with {it.roleRsId = role.id; it}
+        def identityRole = entityFactory.createTenantRole(userAdminRole.name).with {it.roleRsId = userAdminRole.id; it}
         def user = entityFactory.createUser("user", "userId", "domainId", "region")
         def subUser = entityFactory.createUser()
 
         applicationService.getById(_) >> entityFactory.createApplication()
-        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> role
-        applicationService.getClientRoleById(_) >> role
+        applicationService.getClientRoleByClientIdAndRoleName(_, userAdminRole.name) >> userAdminRole
+        applicationService.getClientRoleByClientIdAndRoleName(_, role.name) >> role
+        applicationService.getClientRoleById(userAdminRole.id) >> userAdminRole
+        applicationService.getClientRoleById(role.id) >> role
         tenantRoleDao.getTenantRolesForUser(user) >> [ identityRole ].asList()
         userService.getSubUsers(user) >> [ subUser ].asList()
-        config.getString("cloudAuth.userAdminRole") >> roleName
+
         mockFederatedUserDao.getUsersByDomainId(_) >> [].asList()
 
         when:
@@ -1247,7 +1266,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         1 * tenantRoleDao.addTenantRoleToUser(user, tenantRole)
         2 * applicationService.getClientRoleByClientIdAndRoleName(tenantRole.getClientId(), tenantRole.getName()) >> clientRole
         1 * applicationService.getById(tenantRole.getClientId()) >> entityFactory.createApplication()
-        1 * config.getString("cloudAuth.userAdminRole") >> false
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
         1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE, _)
     }
@@ -1281,7 +1299,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         2 * applicationService.getClientRoleByClientIdAndRoleName(tenantRole.getClientId(), tenantRole.getName()) >> clientRole
         1 * applicationService.getClientRoleByClientIdAndRoleName(tenantRole2.getClientId(), tenantRole2.getName()) >> clientRole
         2 * applicationService.getById(tenantRole.getClientId()) >> entityFactory.createApplication()
-        1 * config.getString("cloudAuth.userAdminRole") >> false
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
         1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE, _)
     }
@@ -1317,7 +1334,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         4 * applicationService.getClientRoleById(_) >> clientRole
         1 * tenantRoleDao.deleteTenantRoleForUser(user, tenantRole)
         1 * tenantRoleDao.deleteTenantRoleForUser(user, tenantRole2) >> {throw new Exception()}
-        1 * config.getString("cloudAuth.userAdminRole") >> false
         1 * tenantRoleDao.getTenantRolesForUser(user) >> []
         1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE, _)
     }

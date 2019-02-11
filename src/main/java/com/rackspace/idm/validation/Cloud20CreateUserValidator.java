@@ -62,7 +62,7 @@ public class Cloud20CreateUserValidator {
                         throw new BadRequestException("Role name cannot be blank");
                     }
 
-                    if (roleService.isIdentityAccessRole(role.getName())) {
+                    if (roleService.isIdentityUserTypeRole(role.getName())) {
                         //identity admins can create sub-users and the user defaults are set based on the user admin for the domain
                         if(IdentityUserTypeEnum.DEFAULT_USER.getRoleName().equals(role.getName()) ||
                                 IdentityUserTypeEnum.USER_MANAGER.getRoleName().equals(role.getName())) {

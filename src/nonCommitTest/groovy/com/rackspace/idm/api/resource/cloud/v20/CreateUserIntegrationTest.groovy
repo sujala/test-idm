@@ -572,7 +572,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         users = users.reverse()
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())].asList())
 
         when:
         def userForCreate = v2Factory.createUserForCreate(username1, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
@@ -635,7 +635,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("defaultUser")
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())].asList())
         def userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.roles = defaultUserRoles
             it
@@ -655,7 +655,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         users = users.reverse()
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())].asList())
         def userForCreate = v2Factory.createUserForCreate(username1, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.roles = defaultUserRoles
             it
@@ -679,7 +679,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         users = users.reverse()
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())].asList())
         def userForCreate = v2Factory.createUserForCreate(username1, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.roles = defaultUserRoles
             it
@@ -729,7 +729,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole, false)
 
         users1 = users1.reverse()
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())].asList())
         def userForCreate = v2Factory.createUserForCreate(username1, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.roles = defaultUserRoles
             it
@@ -861,8 +861,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def userManagerUsername = testUtils.getRandomUUID("userManager")
         def propRole = utils.createPropagatingRole()
         def nonPropRole = utils.createRole();
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP)), nonPropRole].asList())
-        def userManageUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP)), v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_MANAGE_ROLE_NAME_PROP)), nonPropRole].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()), nonPropRole].asList())
+        def userManageUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()), v2Factory.createRole(IdentityUserTypeEnum.USER_MANAGER.getRoleName()), nonPropRole].asList())
         def userAdminForCreate = v2Factory.createUserForCreate(userAdminUsername, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.secretQA = v1Factory.createRaxKsQaSecretQA()
             it.roles = v2Factory.createRoleList([].asList() << propRole)
@@ -893,7 +893,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             userAdmin = new JsonSlurper().parseText(userAdminResponse.getEntity(String)).user
             assert userAdmin['RAX-AUTH:domainId'] == domainId
             assert userAdmin.roles.name.contains(propRole.name)
-            assert userAdmin.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_ADMIN_ROLE_NAME_PROP))
+            assert userAdmin.roles.name.contains(IdentityUserTypeEnum.USER_ADMIN.getRoleName())
         }
 
         when: "create the default user"
@@ -906,14 +906,14 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             subUser = subUserResponse.getEntity(User).value
             assert subUser.roles.role.name.contains(propRole.name)
             assert subUser.roles.role.name.contains(nonPropRole.name)
-            assert subUser.roles.role.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))
+            assert subUser.roles.role.name.contains(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())
             assert subUser.domainId == domainId
         } else {
             subUser = new JsonSlurper().parseText(subUserResponse.getEntity(String)).user
             assert subUser['RAX-AUTH:domainId'] == domainId
             assert subUser.roles.name.contains(propRole.name)
             assert subUser.roles.name.contains(nonPropRole.name)
-            assert subUser.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))
+            assert subUser.roles.name.contains(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())
         }
 
         when: "create the user manager"
@@ -926,15 +926,15 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             userManager = userManagerResponse.getEntity(User).value
             assert userManager.roles.role.name.contains(propRole.name)
             assert userManager.roles.role.name.contains(nonPropRole.name)
-            assert userManager.roles.role.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))
-            assert userManager.roles.role.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_MANAGE_ROLE_NAME_PROP))
+            assert userManager.roles.role.name.contains(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())
+            assert userManager.roles.role.name.contains(IdentityUserTypeEnum.USER_MANAGER.getRoleName())
             assert userManager.domainId == domainId
         } else {
             userManager = new JsonSlurper().parseText(userManagerResponse.getEntity(String)).user
             assert userManager.roles.name.contains(propRole.name)
             assert userManager.roles.name.contains(nonPropRole.name)
-            assert userManager.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))
-            assert userManager.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_MANAGE_ROLE_NAME_PROP))
+            assert userManager.roles.name.contains(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())
+            assert userManager.roles.name.contains(IdentityUserTypeEnum.USER_MANAGER.getRoleName())
             assert userManager['RAX-AUTH:domainId'] == domainId
         }
 
@@ -957,7 +957,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def group = utils.createGroup()
         def userAdminUsername = testUtils.getRandomUUID("userAdmin")
         def defaultUserUsername = testUtils.getRandomUUID("defaultUser")
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())].asList())
         def userAdminForCreate = v2Factory.createUserForCreate(userAdminUsername, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.secretQA = v1Factory.createRaxKsQaSecretQA()
             it.groups = new Groups().with {
@@ -986,12 +986,12 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             userAdmin = userAdminResponse.getEntity(User).value
             assert userAdmin.domainId == domainId
             assert userAdmin.groups.group.name.contains(group.name)
-            assert userAdmin.roles.role.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_ADMIN_ROLE_NAME_PROP))
+            assert userAdmin.roles.role.name.contains(IdentityUserTypeEnum.USER_ADMIN.getRoleName())
         } else {
             userAdmin = new JsonSlurper().parseText(userAdminResponse.getEntity(String)).user
             assert userAdmin['RAX-AUTH:domainId'] == domainId
             assert userAdmin[JSONConstants.RAX_KSGRP_GROUPS].name.contains(group.name)
-            assert userAdmin.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_ADMIN_ROLE_NAME_PROP))
+            assert userAdmin.roles.name.contains(IdentityUserTypeEnum.USER_ADMIN.getRoleName())
         }
 
         when: "create the default user"
@@ -1019,7 +1019,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def tenantId = testUtils.getRandomUUID("tenantIdForSubUser")
         def role = utils.createRole();
         def defaultUserUsername = testUtils.getRandomUUID("defaultUser")
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())].asList())
         defaultUserRoles.role << v2Factory.createRole(role.name).with {
             it.tenantId = tenantId
             it
@@ -1695,7 +1695,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             it.tenantId = tenantName
             it
         }
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP)), tenantRole].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()), tenantRole].asList())
         def defaultUserToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("user"), "display", "email@example.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.roles = defaultUserRoles
             it
@@ -1784,7 +1784,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             it.tenantId = tenantName
             it
         }
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP)), tenantRole].asList())
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()), tenantRole].asList())
         def defaultUserToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("user"), "display", "email@example.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.roles = defaultUserRoles
             it

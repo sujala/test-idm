@@ -65,12 +65,6 @@ public class IdentityConfig {
     private static final List<String> FORGOT_PWD_VALID_PORTALS_DEFAULT = Collections.EMPTY_LIST;
 
     private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
-    public static final String IDENTITY_ACCESS_ROLE_NAMES_PROP = "cloudAuth.accessRoleNames";
-    public static final String IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP = "cloudAuth.adminRole";
-    public static final String IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP = "cloudAuth.serviceAdminRole";
-    public static final String IDENTITY_USER_ADMIN_ROLE_NAME_PROP = "cloudAuth.userAdminRole";
-    public static final String IDENTITY_USER_MANAGE_ROLE_NAME_PROP = "cloudAuth.userManagedRole";
-    public static final String IDENTITY_DEFAULT_USER_ROLE_NAME_PROP = "cloudAuth.userRole";
     public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
     public static final String GROUP_DOMAINID_DEFAULT = "group.domainId.default";
     public static final String TENANT_DOMAINID_DEFAULT = "tenant.domainId.default";
@@ -1063,13 +1057,6 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(SETUP_MFA_SCOPED_TOKEN_EXPIRATION_SECONDS, REQUIRED);
         verifyAndLogStaticProperty(CLOUD_AUTH_CLIENT_ID, REQUIRED);
 
-        verifyAndLogStaticProperty(IDENTITY_ACCESS_ROLE_NAMES_PROP, REQUIRED);
-        verifyAndLogStaticProperty(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP, REQUIRED);
-        verifyAndLogStaticProperty(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP, REQUIRED);
-        verifyAndLogStaticProperty(IDENTITY_USER_ADMIN_ROLE_NAME_PROP, REQUIRED);
-        verifyAndLogStaticProperty(IDENTITY_USER_MANAGE_ROLE_NAME_PROP, REQUIRED);
-        verifyAndLogStaticProperty(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP, REQUIRED);
-
         verifyAndLogStaticProperty(ROLE_ID_RACKER_PROP, REQUIRED);
         verifyAndLogStaticProperty(CLIENT_ID_FOUNDATION_PROP, REQUIRED);
 
@@ -1447,35 +1434,6 @@ public class IdentityConfig {
         @IdmProp(key = CLOUD_AUTH_CLIENT_ID, description = "Cloud Identity Application ID.", versionAdded = "1.0.14.8")
         public String getCloudAuthClientId() {
             return getStringSafely(staticConfiguration, CLOUD_AUTH_CLIENT_ID);
-        }
-
-        @IdmProp(key = IDENTITY_USER_ADMIN_ROLE_NAME_PROP, description = "User admin role name.", versionAdded = "1.0.14.8")
-        public String getIdentityUserAdminRoleName() {
-            return getStringSafely(staticConfiguration, IDENTITY_USER_ADMIN_ROLE_NAME_PROP);
-        }
-
-        public String[] getIdentityAccessRoleNames() {
-            return staticConfiguration.getStringArray(IDENTITY_ACCESS_ROLE_NAMES_PROP);
-        }
-
-        @IdmProp(key = IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP, description = "Identity admin role name.", versionAdded = "1.0.14.8")
-        public String getIdentityIdentityAdminRoleName() {
-            return getStringSafely(staticConfiguration, IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP);
-        }
-
-        @IdmProp(key = IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP, description = "Service admin role name (super user).", versionAdded = "1.0.14.8")
-        public String getIdentityServiceAdminRoleName() {
-            return getStringSafely(staticConfiguration, IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP);
-        }
-
-        @IdmProp(key = IDENTITY_DEFAULT_USER_ROLE_NAME_PROP, description = "Default user role name.", versionAdded = "1.0.14.8")
-        public String getIdentityDefaultUserRoleName() {
-            return getStringSafely(staticConfiguration, IDENTITY_DEFAULT_USER_ROLE_NAME_PROP);
-        }
-
-        @IdmProp(key = IDENTITY_USER_MANAGE_ROLE_NAME_PROP, description = "User manager role name.", versionAdded = "1.0.14.8")
-        public String getIdentityUserManagerRoleName() {
-            return getStringSafely(staticConfiguration, IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
         }
 
         @IdmProp(key = LDAP_PAGING_LIMIT_DEFAULT_PROP)

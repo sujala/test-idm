@@ -283,7 +283,6 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         service.verifyEffectiveCallerHasManagementAccessToUser(userId)
 
         then:
-        1 * identityConfig.staticConfig.getIdentityUserManagerRoleName() >> IdentityUserTypeEnum.USER_MANAGER.roleName
         1 * userService.checkAndGetUserById(userId) >> user
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         (1.._) * requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext

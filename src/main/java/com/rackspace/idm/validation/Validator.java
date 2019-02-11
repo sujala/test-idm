@@ -7,10 +7,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.PatternDao;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.GroupService;
-import com.rackspace.idm.domain.service.PasswordBlacklistService;
-import com.rackspace.idm.domain.service.RoleService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
@@ -137,7 +134,7 @@ public class Validator {
     }
 
     private boolean isUserASubUser(com.rackspace.idm.domain.entity.User user) {
-        String subUserRoleName = config.getString("cloudAuth.userRole");
+        String subUserRoleName = IdentityUserTypeEnum.DEFAULT_USER.getRoleName();
         List<TenantRole> userRoles = user.getRoles();
         for (TenantRole userRole : userRoles) {
             if (subUserRoleName != null && subUserRoleName.equals(userRole.getName())) {

@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -46,72 +47,56 @@ class DefaultRoleServiceTest extends RootServiceTest {
         given:
         def roleName = "roleName"
 
-        mockApplicationRoleDao.getRoleByName(roleName) >> mockClientRole
-
         when:
         def result = service.getRoleByName(roleName)
 
         then:
+        1 * mockApplicationRoleDao.getRoleByName(roleName) >> mockClientRole
         result == mockClientRole
     }
 
     def "Get super user admin role" () {
-        given:
-        staticConfig.getIdentityServiceAdminRoleName() >> "identity:service-admin"
-        mockApplicationRoleDao.getRoleByName("identity:service-admin") >> mockClientRole
-
         when:
         def result = service.getSuperUserAdminRole()
 
         then:
+        1 * mockApplicationRoleDao.getRoleByName(IdentityUserTypeEnum.SERVICE_ADMIN.roleName) >> mockClientRole
         result == mockClientRole
     }
 
     def "Get identity admin role" () {
-        given:
-        staticConfig.getIdentityIdentityAdminRoleName() >> "identity:admin"
-        mockApplicationRoleDao.getRoleByName("identity:admin") >> mockClientRole
-
         when:
         def result = service.getIdentityAdminRole()
 
         then:
+        1 * mockApplicationRoleDao.getRoleByName(IdentityUserTypeEnum.IDENTITY_ADMIN.roleName) >> mockClientRole
         result == mockClientRole
     }
 
     def "Get user admin role" () {
-        given:
-        staticConfig.getIdentityUserAdminRoleName() >> "identity:user-admin"
-        mockApplicationRoleDao.getRoleByName("identity:user-admin") >> mockClientRole
-
         when:
         def result = service.getUserAdminRole()
 
         then:
+        1 * mockApplicationRoleDao.getRoleByName(IdentityUserTypeEnum.USER_ADMIN.roleName) >> mockClientRole
         result == mockClientRole
     }
 
     def "Get user manage role" () {
-        given:
-        staticConfig.getIdentityUserManagerRoleName() >> "identity:user-manage"
-        mockApplicationRoleDao.getRoleByName("identity:user-manage") >> mockClientRole
-
         when:
         def result = service.getUserManageRole()
 
         then:
+        1 * mockApplicationRoleDao.getRoleByName(IdentityUserTypeEnum.USER_MANAGER.roleName) >> mockClientRole
         result == mockClientRole
     }
 
     def "Get default role" () {
-        given:
-        staticConfig.getIdentityDefaultUserRoleName() >> "identity:default"
-        mockApplicationRoleDao.getRoleByName("identity:default") >> mockClientRole
-
         when:
         def result = service.getDefaultRole()
 
         then:
+        1 * mockApplicationRoleDao.getRoleByName(IdentityUserTypeEnum.DEFAULT_USER.roleName) >> mockClientRole
         result == mockClientRole
     }
 

@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.util.JSONReaderForRoles
 import org.apache.commons.configuration.Configuration
@@ -107,7 +108,6 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         given:
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        String adminRole = config.getString('cloudAuth.adminRole')
 
         when:
         def userManageToken = utils.getToken(userManage.username, DEFAULT_PASSWORD)
@@ -115,7 +115,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
 
         then:
         roles != null
-        !roles.role.name.contains(adminRole)
+        !roles.role.name.contains(IdentityUserTypeEnum.IDENTITY_ADMIN.getRoleName())
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)

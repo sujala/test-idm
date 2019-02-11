@@ -14,8 +14,8 @@ public interface RoleService {
     ClientRole getDefaultRole();
     ClientRole getComputeDefaultRole();
     ClientRole getObjectStoreDefaultRole();
-    boolean isIdentityAccessRole(ClientRole role);
-    boolean isIdentityAccessRole(String rolename);
+    boolean isIdentityUserTypeRole(ClientRole role);
+    boolean isIdentityUserTypeRole(String rolename);
     List<ClientRole> getIdentityAccessRoles();
 
     /**
