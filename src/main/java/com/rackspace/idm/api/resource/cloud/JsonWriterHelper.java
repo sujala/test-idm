@@ -308,6 +308,10 @@ public final class JsonWriterHelper {
             userInner.put(JSONConstants.RAX_AUTH_DOMAIN_ID, user.getDomainId().toString());
         }
 
+        if (user.getPhonePin() != null) {
+            userInner.put(JSONConstants.RAX_AUTH_PHONE_PIN, user.getPhonePin());
+        }
+
         return userInner;
     }
 

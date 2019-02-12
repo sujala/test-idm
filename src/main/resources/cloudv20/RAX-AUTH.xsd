@@ -47,6 +47,7 @@
     <attribute name="principalDomain" type="xsd:string"/>
     <attribute name="unverified" type="xsd:boolean"/>
     <attribute name="registrationCode" type="xsd:string"/>
+    <attribute name="phonePin" type="xsd:string"/>
 
     <attribute name="sessionInactivityTimeout" type="xsd:duration">
         <annotation>

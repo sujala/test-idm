@@ -276,6 +276,8 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         BaseUser impersonator = userService.getUserByScopeAccess(isa);
         UserScopeAccess usaImpersonatedToken = (UserScopeAccess) impersonatedToken;
         EndUser user = identityUserService.getEndUserById(usaImpersonatedToken.getUserRsId());
+        //Phone PIN must not be returned where token being validated is an impersonation token
+        user.setPhonePin(null);
 
         if (applyRcnRoles) {
             SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);

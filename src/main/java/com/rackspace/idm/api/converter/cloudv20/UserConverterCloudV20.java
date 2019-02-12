@@ -85,6 +85,7 @@ public class UserConverterCloudV20 {
         jaxbUser.setName(user.getUsername());
         jaxbUser.setDomainId(user.getDomainId());
         jaxbUser.setContactId(user.getContactId());
+        jaxbUser.setPhonePin(user.getPhonePin());
 
         String region = user.getRegion();
         if(org.apache.commons.lang.StringUtils.isBlank(region)) {

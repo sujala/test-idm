@@ -1141,6 +1141,7 @@ class Cloud20Methods {
     }
 
     def validateToken(String token, String validateToken, accept = APPLICATION_XML_TYPE){
+        /** {@link Cloud20VersionResource#validateToken()} */
         initOnUse()
         resource.path(path20).path(TOKENS).path(validateToken).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }

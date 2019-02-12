@@ -43,6 +43,7 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                     Object contactId = userJson.get(JSONConstants.RAX_AUTH_CONTACT_ID);
                     Object sessionInactivityTimeout = userJson.get(JSONConstants.RAX_AUTH_SESSION_INACTIVITY_TIMEOUT);
                     Object delegationAgreementId = userJson.get(JSONConstants.RAX_AUTH_DELEGATION_AGREEMENT_ID);
+                    Object phonePin = userJson.get(JSONConstants.RAX_AUTH_PHONE_PIN);
 
                     JSONArray userRolesArray = (JSONArray) userJson.get(JSONConstants.ROLES);
 
@@ -68,6 +69,10 @@ public class JSONReaderForCloudAuthenticationResponseUser {
 
                     if (contactId != null) {
                         user.setContactId(contactId.toString());
+                    }
+
+                    if (phonePin != null) {
+                        user.setPhonePin(phonePin.toString());
                     }
 
                     if (sessionInactivityTimeout != null && StringUtils.isNotBlank(sessionInactivityTimeout.toString())) {

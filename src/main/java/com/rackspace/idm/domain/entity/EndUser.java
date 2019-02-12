@@ -14,6 +14,8 @@ public interface EndUser extends BaseUser {
     String getEmail();
     String getUsername();
     String getDomainId();
+    String getPhonePin();
+    void setPhonePin(String pin);
     List<TenantRole> getRoles();
     Set<String> getRsGroupId();
 
