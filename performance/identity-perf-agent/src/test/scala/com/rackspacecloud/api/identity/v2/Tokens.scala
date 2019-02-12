@@ -428,7 +428,7 @@ def v20_create_user: ChainBuilder = {
     * This flow will test the cloud feed events
     * It will:
     *
-    * * Create a user with default password as Password1 (issue event)
+    * * Create a user with default password (issue event)
     * * Retrieve user's token (issue event)
     * * Explicitly revoke user's token (issue event)
     * * Update user's password (issue a slew of events)

@@ -13,6 +13,8 @@ cd data_generation
 cp ../../../tests/resources/saml-generator-* ../lib/.
 mkdir -p sample_keys
 jar xf ../lib/saml-generator-* sample_keys/fed-origin.crt
+echo "update password in json file"
+./add_password_to_request.py
 echo "create users against $IDM_ENDPOINT"
 ./create_users.sh $IDM_ENDPOINT 1 10 5 1
 echo "create admins"
