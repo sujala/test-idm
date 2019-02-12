@@ -82,6 +82,10 @@ public class DefaultDomainService implements DomainService {
         if (domain.getEnabled() == null) {
            domain.setEnabled(true);
         }
+        // Ensure domain's type is always save in upper case
+        if (domain.getType() != null) {
+            domain.setType(domain.getType().toUpperCase());
+        }
         verifyDomain(domain);
         logger.info("Adding Domain: {}", domain);
         domainDao.addDomain(domain);

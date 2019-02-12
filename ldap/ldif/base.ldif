@@ -5993,6 +5993,17 @@ rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE
 
+dn: rsId=164e253e778e4e30abbaab2295f53d2c,ou=properties,ou=cloud,o=configura
+ tion,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: domain.types
+description: A comma delimited list of valid domain types
+rsIdmVersion: 3.29.0
+rsPropertyValue: PUBLIC_CLOUD_US,PUBLIC_CLOUD_UK,DEDICATED,RACKSPACE,UNKNOWN
+rsPropertyValueType: String
+rsReloadable: TRUE
+rsSearchable: TRUE
+
 dn: rsId=b59a7a0ac6e2433ca45c3af059c75325,ou=users,o=rackspace,dc=rackspace,dc=com
 rsId: b59a7a0ac6e2433ca45c3af059c75325
 objectClass: rsPerson

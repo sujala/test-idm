@@ -681,7 +681,7 @@ class Validator20Test extends RootServiceTest {
             it.type = "CLOUD_US"
             it
         }
-        identityConfig.reloadableConfig.getDomainTypes() >> ["CLOUD_US"]
+        identityConfig.repositoryConfig.getDomainTypes() >> ["CLOUD_US"]
 
         when: "valid domain type"
         service.validateDomainType(domain)

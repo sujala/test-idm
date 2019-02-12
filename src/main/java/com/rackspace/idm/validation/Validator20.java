@@ -45,6 +45,8 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.NOT_AUTHORIZED;
 
@@ -814,9 +816,10 @@ public class Validator20 {
 
     private void validateDomainType(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         if (domain.getType() != null) {
-            Set<String> domainTypes = identityConfig.getReloadableConfig().getDomainTypes();
-            if (!domainTypes.contains(domain.getType())) {
-                String errMsg = String.format("Invalid value for domain type. Acceptable values are: %s", domainTypes);
+            List<String> domainTypes = identityConfig.getRepositoryConfig().getDomainTypes();
+            if (domainTypes.stream().noneMatch(domain.getType()::equalsIgnoreCase)) {
+                String errMsg = String.format("Invalid value for domain type. Acceptable values are: %s",
+                        domainTypes.stream().map(String::toUpperCase).collect(Collectors.toList()));
                 throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
         }

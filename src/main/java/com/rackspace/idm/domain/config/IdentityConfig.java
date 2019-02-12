@@ -2777,10 +2777,6 @@ public class IdentityConfig {
             return  version;
         }
 
-        @IdmProp(key = DOMAIN_TYPES_PROP, versionAdded = "3.29.0", description = "List of acceptable domain type.")
-        public Set<String> getDomainTypes() {
-            return getSetSafely(reloadableConfiguration, DOMAIN_TYPES_PROP);
-        }
     }
 
     public class RepositoryConfig extends ConfigMetaLookup {
@@ -2946,6 +2942,28 @@ public class IdentityConfig {
         @IdmProp(key = INVITES_SUPPORTED_FOR_RCNS_PROP)
         public List<String> getInvitesSupportedForRCNs() {
             String rawValue = getRepositoryStringSafely(INVITES_SUPPORTED_FOR_RCNS_PROP);
+            return splitStringPropIntoList(rawValue);
+        }
+
+        /**
+         * This property represents a list of valid domain type. The value for the prop in the backend is comma
+         * delimited list of types. This method will trim all whitespace from all individual values in the list. Empty
+         * values are ignored. As an example:
+         *
+         * <ul>
+         *     <li>"a,b" = ["a","b"]</li>
+         *     <li>"  a  ,  b " = ["a","b"]</li>
+         *     <li>"a,,b" = ["a","b"]</li>
+         *     <li>",b" = ["b"]</li>
+         *     <li>"," = []</li>
+         * </ul>
+         *
+         * @return
+         */
+
+        @IdmProp(key = DOMAIN_TYPES_PROP, versionAdded = "3.29.0", description = "List of acceptable domain type.")
+        public List<String> getDomainTypes() {
+            String rawValue = getRepositoryStringSafely(DOMAIN_TYPES_PROP);
             return splitStringPropIntoList(rawValue);
         }
     }

@@ -3954,7 +3954,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     String errMsg = String.format("Domain '%s' already has type '%s' and cannot be updated.", domainId, domainDO.getType());
                     throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
                 }
-                domainDO.setType(domain.getType());
+                domainDO.setType(domain.getType().toUpperCase());
             }
 
             this.domainService.updateDomain(domainDO);
