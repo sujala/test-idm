@@ -818,8 +818,7 @@ public class Validator20 {
         if (domain.getType() != null) {
             List<String> domainTypes = identityConfig.getRepositoryConfig().getDomainTypes();
             if (domainTypes.stream().noneMatch(domain.getType()::equalsIgnoreCase)) {
-                String errMsg = String.format("Invalid value for domain type. Acceptable values are: %s",
-                        domainTypes.stream().map(String::toUpperCase).collect(Collectors.toList()));
+                String errMsg = String.format("Invalid value for domain type. Acceptable values are: %s", domainTypes);
                 throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
         }

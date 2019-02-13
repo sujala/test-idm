@@ -2919,7 +2919,7 @@ public class IdentityConfig {
         @IdmProp(key = ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP)
         public List<String> getRCNsExplicitlyEnabledForDelegationAgreements() {
             String rawValue = getRepositoryStringSafely(ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP);
-            return splitStringPropIntoList(rawValue);
+            return splitStringPropIntoList(rawValue, false);
         }
 
         /**
@@ -2942,7 +2942,7 @@ public class IdentityConfig {
         @IdmProp(key = INVITES_SUPPORTED_FOR_RCNS_PROP)
         public List<String> getInvitesSupportedForRCNs() {
             String rawValue = getRepositoryStringSafely(INVITES_SUPPORTED_FOR_RCNS_PROP);
-            return splitStringPropIntoList(rawValue);
+            return splitStringPropIntoList(rawValue, false);
         }
 
         /**
@@ -2964,7 +2964,7 @@ public class IdentityConfig {
         @IdmProp(key = DOMAIN_TYPES_PROP, versionAdded = "3.29.0", description = "List of acceptable domain type.")
         public List<String> getDomainTypes() {
             String rawValue = getRepositoryStringSafely(DOMAIN_TYPES_PROP);
-            return splitStringPropIntoList(rawValue);
+            return splitStringPropIntoList(rawValue, true);
         }
     }
 
@@ -2981,11 +2981,16 @@ public class IdentityConfig {
      * </ul>
      *
      * @param rawValue
+     * @param toUpperCase if true, all values are upper cased, else all values are lower cased.
      * @return
      */
-    private List<String> splitStringPropIntoList(String rawValue) {
+    private List<String> splitStringPropIntoList(String rawValue, boolean toUpperCase) {
         if (StringUtils.isNotBlank(rawValue)) {
-            rawValue = rawValue.toLowerCase();
+            if (toUpperCase) {
+                rawValue = rawValue.toUpperCase();
+            } else {
+                rawValue = rawValue.toLowerCase();
+            }
         }
 
         List<String> values = Collections.emptyList();

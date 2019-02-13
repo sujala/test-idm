@@ -2612,7 +2612,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         then:
         assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
 
-        when: "create domain - invalid type - staring with validType"
+        when: "create domain - invalid type - starting with valid type"
         domainEntity.type = "PUBLIC_CLOUD_US_BAD"
         response = cloud20.addDomain(identityAdminToken, domainEntity)
 
@@ -2702,7 +2702,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         then:
         assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
 
-        when: "update domain - invalid type - staring with validType"
+        when: "update domain - invalid type - starting with valid type"
         domainEntity.type = "PUBLIC_CLOUD_US_BAD"
         response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
 
