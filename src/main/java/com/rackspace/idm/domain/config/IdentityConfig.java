@@ -278,6 +278,9 @@ public class IdentityConfig {
     public static final String DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP = "domain.default.session.inactivity.timeout";
     public static final Duration DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT = Duration.parse("PT15M");
 
+    public static final String DOMAIN_TYPES_PROP = "domain.types";
+    public static final List<String> DOMAIN_TYPES_DEFAULT = Arrays.asList();
+
     public static final String SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP = "session.inactivity.timeout.max.duration";
     public static final Duration SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT = Duration.parse("PT24H");
 
@@ -873,6 +876,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT);
 
         defaults.put(DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT);
+        defaults.put(DOMAIN_TYPES_PROP, DOMAIN_TYPES_DEFAULT);
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT);
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_DEFAULT);
 
@@ -2730,6 +2734,7 @@ public class IdentityConfig {
 
             return  version;
         }
+
     }
 
     public class RepositoryConfig extends ConfigMetaLookup {
@@ -2872,7 +2877,7 @@ public class IdentityConfig {
         @IdmProp(key = ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP)
         public List<String> getRCNsExplicitlyEnabledForDelegationAgreements() {
             String rawValue = getRepositoryStringSafely(ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP);
-            return splitStringPropIntoList(rawValue);
+            return splitStringPropIntoList(rawValue, false);
         }
 
         /**
@@ -2895,7 +2900,29 @@ public class IdentityConfig {
         @IdmProp(key = INVITES_SUPPORTED_FOR_RCNS_PROP)
         public List<String> getInvitesSupportedForRCNs() {
             String rawValue = getRepositoryStringSafely(INVITES_SUPPORTED_FOR_RCNS_PROP);
-            return splitStringPropIntoList(rawValue);
+            return splitStringPropIntoList(rawValue, false);
+        }
+
+        /**
+         * This property represents a list of valid domain type. The value for the prop in the backend is comma
+         * delimited list of types. This method will trim all whitespace from all individual values in the list. Empty
+         * values are ignored. As an example:
+         *
+         * <ul>
+         *     <li>"a,b" = ["a","b"]</li>
+         *     <li>"  a  ,  b " = ["a","b"]</li>
+         *     <li>"a,,b" = ["a","b"]</li>
+         *     <li>",b" = ["b"]</li>
+         *     <li>"," = []</li>
+         * </ul>
+         *
+         * @return
+         */
+
+        @IdmProp(key = DOMAIN_TYPES_PROP, versionAdded = "3.29.0", description = "List of acceptable domain type.")
+        public List<String> getDomainTypes() {
+            String rawValue = getRepositoryStringSafely(DOMAIN_TYPES_PROP);
+            return splitStringPropIntoList(rawValue, true);
         }
     }
 
@@ -2912,11 +2939,16 @@ public class IdentityConfig {
      * </ul>
      *
      * @param rawValue
+     * @param toUpperCase if true, all values are upper cased, else all values are lower cased.
      * @return
      */
-    private List<String> splitStringPropIntoList(String rawValue) {
+    private List<String> splitStringPropIntoList(String rawValue, boolean toUpperCase) {
         if (StringUtils.isNotBlank(rawValue)) {
-            rawValue = rawValue.toLowerCase();
+            if (toUpperCase) {
+                rawValue = rawValue.toUpperCase();
+            } else {
+                rawValue = rawValue.toLowerCase();
+            }
         }
 
         List<String> values = Collections.emptyList();

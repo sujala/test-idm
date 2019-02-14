@@ -45,6 +45,8 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.NOT_AUTHORIZED;
 
@@ -807,14 +809,26 @@ public class Validator20 {
         if (StringUtils.isBlank(domain.getName())) {
             throwBadRequestForMissingAttr("name");
         }
+        validateDomainType(domain);
         validateDomainSessionInactivityTimeout(domain);
         validateStringMaxLength("rackspaceCustomerNumber", domain.getRackspaceCustomerNumber(), MAX_LENGTH_32);
+    }
+
+    private void validateDomainType(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
+        if (domain.getType() != null) {
+            List<String> domainTypes = identityConfig.getRepositoryConfig().getDomainTypes();
+            if (domainTypes.stream().noneMatch(domain.getType()::equalsIgnoreCase)) {
+                String errMsg = String.format("Invalid value for domain type. Acceptable values are: %s", domainTypes);
+                throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            }
+        }
     }
 
     public void validateDomainForUpdate(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {
         if (StringUtils.isNotBlank(domain.getId()) && !domainId.equalsIgnoreCase(domain.getId())) {
             throw new BadRequestException("Domain Id does not match.");
         }
+        validateDomainType(domain);
         validateDomainSessionInactivityTimeout(domain);
         validateDomainRcn(domain.getRackspaceCustomerNumber());
     }

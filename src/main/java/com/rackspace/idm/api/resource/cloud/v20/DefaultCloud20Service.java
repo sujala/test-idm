@@ -3841,6 +3841,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
             }
 
+            // Ignore domain type if caller does not have the "identity:rs-domain-admin" role.
+            if (domain.getType() != null && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
+                domain.setType(null);
+            }
+
             validator20.validateDomainForCreation(domain);
             Domain savedDomain = this.domainConverterCloudV20.fromDomain(domain);
             this.domainService.addDomain(savedDomain);
@@ -3905,12 +3910,20 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (!caller.getDomainId().equals(domainId)) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
-                // If user-admin or user-manage level access, only allow to update the sessionInactivityTimeout and ignore others attributes.
+                // If user-admin or user-manage level access, only allow to updating the sessionInactivityTimeout and type.
                 com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain updateDomain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
                 if (domain.getSessionInactivityTimeout() != null) {
                     updateDomain.setSessionInactivityTimeout(domain.getSessionInactivityTimeout());
                 }
+                if (StringUtils.isNotBlank(domain.getType())) {
+                    updateDomain.setType(domain.getType());
+                }
                 domain = updateDomain;
+            }
+
+            // Ignore domain type if caller does not have the "identity:rs-domain-admin" role.
+            if (domain.getType() != null && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
+                domain.setType(null);
             }
 
             Domain domainDO = domainService.checkAndGetDomain(domainId);
@@ -3934,6 +3947,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (domain.isEnabled() != null) {
                 shouldExpireAllTokens = domainDO.getEnabled() && !domain.isEnabled();
                 domainDO.setEnabled(domain.isEnabled());
+            }
+
+            if(StringUtils.isNotBlank(domain.getType())) {
+                if (domainDO.getType() != null && !domainDO.getType().equals(domain.getType())) {
+                    String errMsg = String.format("Domain '%s' already has type '%s' and cannot be updated.", domainId, domainDO.getType());
+                    throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+                }
+                domainDO.setType(domain.getType().toUpperCase());
             }
 
             this.domainService.updateDomain(domainDO);

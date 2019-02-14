@@ -457,6 +457,15 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="type" type="xsd:string">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The type of the domain.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
     <complexType name="Domains">
