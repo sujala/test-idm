@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.security.AuthenticationContext
@@ -137,6 +138,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockTenantAssignmentService(service)
         mockAtomHopperClient(service)
         mockTokenRevocationService(service)
+        mockPhonePinService(service)
         service.authenticationContext = Mock(AuthenticationContext)
     }
 
@@ -1358,11 +1360,11 @@ class DefaultUserServiceTest extends RootServiceTest {
         def salt = "a1 b2"
 
         reloadableConfig.getEnablePhonePinOnUserFlag() >> true
-        reloadableConfig.getUserPhonePinSize() >> 4
 
         propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
         userDao.getUsersByDomain(domainId) >> [].asList()
         userDao.nextUserId >> "nextId"
+        phonePinService.generatePhonePin() >> "246971"
         mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
         cryptHelper.generateSalt() >> salt
 
@@ -1373,7 +1375,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * mockValidator.validateUser(user)
         1 * domainService.createNewDomain(domainId)
         1 * userDao.addUser(user)
-        1 * tenantService.addTenantRoleToUser(user, _, false);
+        1 * tenantService.addTenantRoleToUser(user, _, false)
 
         user.password != null
         user.userPassword != null
@@ -1385,7 +1387,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         user.phonePin != null
         user.phonePin.isNumber()
-        user.phonePin.size() == 4
+        user.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
 
         when: "create another user with the same PIN length"
 
@@ -1399,7 +1401,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         user1.phonePin != null
         user1.phonePin.isNumber()
-        user1.phonePin.size() == 4
+        user1.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
     }
 
     def "Add UserV20 with phone PIN feature turned OFF"() {

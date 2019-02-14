@@ -33,8 +33,8 @@ public class DefaultPhonePinService implements PhonePinService {
 
     @Override
     public PhonePin resetPhonePin(PhonePinProtectedUser user) {
-        user.setPhonePin(RandomGeneratorUtil.generateSecureRandomNumber
-                (identityConfig.getReloadableConfig().getUserPhonePinSize()));
+        user.setPhonePin(generatePhonePin());
+
         identityUserDao.updateIdentityUser((BaseUser) user);
 
         return checkAndGetPhonePin(user);
@@ -59,4 +59,36 @@ public class DefaultPhonePinService implements PhonePinService {
         phonePin.setPin(user.getPhonePin());
         return phonePin;
     }
+
+    /**
+     * This method generates will generate and return 6 digit pin with all unique digits which are
+     * non sequential and non repetitive.
+     * @return String - 6 digit phone pin
+     */
+    @Override
+    public String generatePhonePin() {
+
+        StringBuilder phonePin = new StringBuilder(RandomGeneratorUtil.generateSecureRandomNumber(1));
+
+        String digit;
+        for (int i = 0; i < 5; i++) {
+            digit = RandomGeneratorUtil.generateSecureRandomNumber(1);
+
+            // get a new number if it is sequential or repetitive
+            while (isRepetitive(phonePin, digit) > -1 && isSequential(phonePin, digit, i)) {
+                digit = RandomGeneratorUtil.generateSecureRandomNumber(1);
+            }
+            phonePin.append(digit);
+        }
+        return phonePin.toString();
+    }
+
+    private int isRepetitive(StringBuilder phonePin, String singleDigit) {
+        return phonePin.indexOf(singleDigit);
+    }
+
+    private boolean isSequential(StringBuilder phonePin, String singleDigit, int i) {
+        return Integer.parseInt(phonePin.charAt(i)+"") - Integer.parseInt(singleDigit) != 1;
+    }
+
 }

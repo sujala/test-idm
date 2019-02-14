@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -82,9 +83,7 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "SAML assertion 2.0 - Create a federated user with phone PIN - featureEnabled == #featureEnabled"() {
         given:
-        def pinLength = 4
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, featureEnabled)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
 
         def fedRequest = createFedRequest()
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
@@ -108,7 +107,7 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
             assert fedUser.phonePin != null
             assert fedUser.encryptedPhonePin != null
             assert fedUser.salt != null
-            assert fedUser.phonePin.size() == pinLength
+            assert fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
             assert fedUser.phonePin.isNumber()
         } else {
             assert fedUser.phonePin == null
@@ -123,63 +122,12 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
         where:
         featureEnabled << [true, false]
-    }
-
-    @Unroll
-    def "SAML assertion 2.0 - Create a federated user with phone PIN - pinLength == #pinLength" () {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
-
-        def fedRequest = createFedRequest()
-        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
-
-        when:
-        def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
-
-        then:
-        assert authClientResponse.status == HttpServletResponse.SC_OK
-
-        when:
-        AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
-        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
-
-        then:
-        assert fedUser.id == authResponse.user.id
-        assert fedUser.username == fedRequest.username
-        assert fedUser.domainId == fedRequest.domainId
-
-        if (pinLength > 0) {
-            assert fedUser.phonePin != null
-            assert fedUser.encryptedPhonePin != null
-            assert fedUser.salt != null
-            assert fedUser.phonePin.size() == pinLength
-            assert fedUser.phonePin.isNumber()
-        }  else if (pinLength == 0) {
-            assert fedUser.phonePin != null
-            assert fedUser.encryptedPhonePin != null
-            assert fedUser.salt != null
-            assert fedUser.phonePin.size() == pinLength
-            assert fedUser.phonePin.isEmpty()
-        }
-
-        cleanup:
-        try {
-            deleteFederatedUserQuietly(fedRequest.username)
-        } catch (Exception ex) {
-            // Eat
-        }
-
-        where:
-        pinLength << [0,4,10]
     }
 
     @Unroll
     def "SAML assertion 1.0 - Create a federated user with phone PIN - featureEnabled == #featureEnabled"() {
         given:
-        def pinLength = 4
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, featureEnabled)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
 
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -203,7 +151,7 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
             assert fedUser.phonePin != null
             assert fedUser.encryptedPhonePin != null
             assert fedUser.salt != null
-            assert fedUser.phonePin.size() == pinLength
+            assert fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
             assert fedUser.phonePin.isNumber()
         } else {
             assert fedUser.phonePin == null
@@ -220,54 +168,6 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         featureEnabled << [true, false]
     }
 
-    @Unroll
-    def "SAML assertion 1.0 - Create a federated user with phone PIN - pinLength == #pinLength" () {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-        reloadableConfiguration.setProperty(IdentityConfig.USER_PHONE_PIN_SIZE_PROP, pinLength)
-
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "test@rackspace.com"
-
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, sharedUserAdmin.domainId, null, email)
-
-        when:
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-
-        then:
-        samlResponse.status == HttpServletResponse.SC_OK
-
-        when:
-        def authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def fedUser = federatedUserRepository.getUserById(authResponse.user.id)
-
-        then:
-
-        if (pinLength > 0) {
-            assert fedUser.phonePin != null
-            assert fedUser.encryptedPhonePin != null
-            assert fedUser.salt != null
-            assert fedUser.phonePin.size() == pinLength
-            assert fedUser.phonePin.isNumber()
-        }  else if (pinLength == 0) {
-            assert fedUser.phonePin != null
-            assert fedUser.encryptedPhonePin != null
-            assert fedUser.salt != null
-            assert fedUser.phonePin.size() == pinLength
-            assert fedUser.phonePin.isEmpty()
-        }
-
-        cleanup:
-        try {
-            deleteFederatedUserQuietly(username)
-        } catch (Exception ex) {
-            // Eat
-        }
-
-        where:
-        pinLength << [0,4,10]
-    }
 
     def deleteFederatedUserQuietly(username) {
         try {

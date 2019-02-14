@@ -1,6 +1,8 @@
 package testHelpers
 
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.IdmException
 import com.sun.jersey.api.client.ClientResponse
 import org.apache.commons.lang.StringUtils
@@ -139,4 +141,56 @@ class IdmAssert {
     static Pattern generateErrorCodePattern(String errorCode, String errorMessagePattern) {
         Pattern.compile(String.format("^Error code: '%s'; %s\$", errorCode, errorMessagePattern))
     }
+
+    /**
+     * Reusable Assert method for Phone pin
+     * @param user
+     * @param pinLength
+     */
+    static def assertPhonePin(User user) {
+        assert user.phonePin != null
+        assert user.encryptedPhonePin != null
+        assert user.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
+        assert user.phonePin.isNumber()
+        assert isPhonePinNonRepeating(user.phonePin)
+        assert isPhonePinNonSequential(user.phonePin)
+
+    }
+
+    /**
+     * Ensure that phone pin is Limited to 3 repeating numbers max.
+     * e.g. 111 and 121212 is okay, 1111 is not okay.
+     * @param phonePin
+     * @return Boolean
+     */
+    static isPhonePinNonRepeating(String phonePin) {
+        Pattern pattern = Pattern.compile("([0-9])\\1{2}")
+        Matcher matcher = pattern.matcher(phonePin)
+        return !matcher.find()
+    }
+
+    /**
+     * Ensure that phone pin is Limit to 3 sequential numbers max
+     * e.g. 345 is okay, 3456 is not okay.
+     * @param phonePin
+     * @return Boolean
+     */
+    static isPhonePinNonSequential(String phonePin) {
+        char[] lst = phonePin.toCharArray()
+        int sequenceCount = 0
+
+        for (int i = 0; i < phonePin.length()-1; i++) {
+            int difference = Integer.parseInt(lst[i + 1].toString()) - Integer.parseInt(lst[i].toString());
+            if (difference == 1) {
+                sequenceCount++
+                if (sequenceCount >= 3){
+                    return false
+                }
+            } else {
+                sequenceCount = 0
+            }
+        }
+        return true
+    }
+
 }

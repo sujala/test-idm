@@ -129,5 +129,6 @@ public final class GlobalConstants {
     public static final String V2_LIST_USER_LEGACY_GROUPS = "v2.0 List user legacy groups";
 
     public static final String ALL_RCNS_WILDCARD = "*";
+    public static final Integer PHONE_PIN_SIZE = 6;
 
 }

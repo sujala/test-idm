@@ -153,6 +153,9 @@ public class DefaultUserService implements UserService {
     private AtomHopperClient atomHopperClient;
 
     @Autowired
+    private PhonePinService phonePinService;
+
+    @Autowired
     @Qualifier("tokenRevocationService")
     private TokenRevocationService tokenRevocationService;
 
@@ -253,7 +256,7 @@ public class DefaultUserService implements UserService {
         user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
 
         if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
-            user.setPhonePin(RandomGeneratorUtil.generateSecureRandomNumber(identityConfig.getReloadableConfig().getUserPhonePinSize()));
+            user.setPhonePin(phonePinService.generatePhonePin());
         }
         userDao.addUser(user);
 

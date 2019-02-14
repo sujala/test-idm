@@ -12,4 +12,5 @@ public interface PhonePinService {
     PhonePin resetPhonePin(PhonePinProtectedUser user);
     void verifyPhonePin(PhonePinProtectedUser user, String pin);
     PhonePin checkAndGetPhonePin(PhonePinProtectedUser userId);
+    String generatePhonePin();
 }

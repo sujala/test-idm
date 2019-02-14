@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.SAMLConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
@@ -108,6 +109,9 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
     @Autowired
     private AuthenticationContext authenticationContext;
+
+    @Autowired
+    private PhonePinService phonePinService;
 
     @Override
     public SamlAuthResponse processRequestForProvider(SamlResponseDecorator samlResponseDecorator, IdentityProvider provider) {
@@ -451,7 +455,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         }
 
         if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
-            userToCreate.setPhonePin(RandomGeneratorUtil.generateSecureRandomNumber(identityConfig.getReloadableConfig().getUserPhonePinSize()));
+            userToCreate.setPhonePin(phonePinService.generatePhonePin());
         }
 
         federatedUserDao.addUser(request.getIdentityProvider(), userToCreate);

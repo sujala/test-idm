@@ -69,6 +69,7 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         mockUserGroupService(service)
         mockAtomHopperClient(service)
         mockRoleService(service)
+        mockPhonePinService(service)
     }
 
     void cleanupSpec() {

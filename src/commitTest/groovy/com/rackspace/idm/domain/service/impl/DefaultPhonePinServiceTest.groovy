@@ -1,11 +1,14 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotFoundException
 import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
+import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootServiceTest
 
 class DefaultPhonePinServiceTest extends RootServiceTest {
@@ -90,8 +93,6 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
 
     def "Reset phone pin for provisioned user" () {
         given:
-        identityConfig.getReloadableConfig().getUserPhonePinSize() >> 6
-
         User user = new User()
         user.id = "userId"
         user.phonePin = pin
@@ -103,14 +104,12 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         1 * identityUserDao.updateIdentityUser(_)
 
         pp.getPin() != pin
-        pp.getPin().size() == 6
+        pp.getPin().size() == GlobalConstants.PHONE_PIN_SIZE
         pp.getPin().isNumber()
     }
 
     def "Reset phone pin for federated user" () {
         given:
-        identityConfig.getReloadableConfig().getUserPhonePinSize() >> 6
-
         FederatedUser user = new FederatedUser()
         user.id = "userId"
         user.phonePin = pin
@@ -122,8 +121,23 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         1 * identityUserDao.updateIdentityUser(_)
 
         pp.getPin() != pin
-        pp.getPin().size() == 6
+        pp.getPin().size() == GlobalConstants.PHONE_PIN_SIZE
         pp.getPin().isNumber()
+    }
+
+    @Unroll("pin generation test repeated #i time")
+    def "test that generated phone pin is 6 digit, non sequential and non repeating numbers"(){
+        when:
+        def pp = service.generatePhonePin()
+
+        then:
+        pp.size() == GlobalConstants.PHONE_PIN_SIZE
+        pp.isNumber()
+        IdmAssert.isPhonePinNonRepeating(pp)
+        IdmAssert.isPhonePinNonSequential(pp)
+
+        where:
+        i << (1..100)
     }
 
     def mockServices() {

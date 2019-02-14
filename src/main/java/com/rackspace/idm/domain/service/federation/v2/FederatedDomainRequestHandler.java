@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.federation.v2;
 import com.google.common.collect.Sets;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.security.AuthenticationContext;
@@ -86,6 +87,9 @@ public class FederatedDomainRequestHandler {
 
     @Autowired
     private UserGroupService userGroupService;
+
+    @Autowired
+    private PhonePinService phonePinService;
 
     @Autowired
     private AtomHopperClient atomHopperClient;
@@ -533,7 +537,7 @@ public class FederatedDomainRequestHandler {
             federatedUser.getUserGroupDNs().add(userGroup.getGroupDn());
         }
         if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
-            federatedUser.setPhonePin(RandomGeneratorUtil.generateSecureRandomNumber(identityConfig.getReloadableConfig().getUserPhonePinSize()));
+            federatedUser.setPhonePin(phonePinService.generatePhonePin());
         }
 
         federatedUserDao.addUser(originIdp, federatedUser);
