@@ -10,6 +10,7 @@ import sys
 import traceback
 from functools import partial
 import time
+import perf_constants as const
 
 
 @contextmanager
@@ -35,7 +36,7 @@ def name_generator(size=18, start_char=string.ascii_lowercase,
     return start + end
 
 
-def get_token(user_name, password="Password1", alt_url=None):
+def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     if alt_url:
         baseurl = alt_url
     # auth to check
@@ -80,7 +81,7 @@ def add_default_user(username, password):
         create_user_data = {"user": {
                             "enabled": True,
                             "username": user_name,
-                            "OS-KSADM:password": "Password1"}}
+                            "OS-KSADM:password": const.TEST_PASSWORD}}
         u_url = "{0}/v2.0/users".format(baseurl)
         user_admin_token = get_token(
             user_name=username, password=password, alt_url=baseurl)
@@ -94,7 +95,7 @@ def add_default_user(username, password):
         user_data = dict()
         user_data["username"] = result_data["user"]["username"]
         user_data["userid"] = result_data["user"]["id"]
-        user_data["password"] = "Password1"
+        user_data["password"] = const.TEST_PASSWORD
         apikey = get_api_key(baseurl, headers, user_data["userid"])
         user_data["apikey"] = apikey
         time.sleep(0.1)
@@ -133,7 +134,7 @@ def add_user(number):
                                 "question": "What is the meaning of it all"},
                             "RAX-AUTH:domainId": domain_id,
                             "username": user_name,
-                            "OS-KSADM:password": "Password1",
+                            "OS-KSADM:password": const.TEST_PASSWORD,
                             "email": "identity_perf_test_{0}@rackspace.com"
                             "".format(domain_id)}}
         u_url = "{0}/v2.0/users".format(baseurl)
@@ -150,7 +151,7 @@ def add_user(number):
         user_data["userid"] = result_data["user"]["id"]
         user_data["domainid"] = domain_id
         user_data["groupid"] = result_data["user"]["RAX-KSGRP:groups"][0]["id"]
-        user_data["password"] = "Password1"
+        user_data["password"] = const.TEST_PASSWORD
         user_data["nastid"] = [role["tenantId"] for
                                role in result_data["user"]["roles"] if
                                role["name"] == "object-store:default"][0]
@@ -182,7 +183,7 @@ def add_admin_user(number, alt_url=None):
         create_user_data = {"user": {
                             "enabled": True,
                             "username": user_name,
-                            "OS-KSADM:password": "Password1",
+                            "OS-KSADM:password": const.TEST_PASSWORD,
                             "email": "identity_perf_test_{0}@rackspace.com"
                             "".format(user_name)}}
         admin_token = get_token(user_name="keystone_service_admin",
@@ -199,7 +200,7 @@ def add_admin_user(number, alt_url=None):
         user_data = dict()
         user_data["username"] = result_data["user"]["username"]
         user_data["userid"] = result_data["user"]["id"]
-        user_data["password"] = "Password1"
+        user_data["password"] = const.TEST_PASSWORD
         apikey = get_api_key(baseurl, sa_headers, user_data["userid"])
         user_data["apikey"] = apikey
         time.sleep(0.1)
@@ -251,7 +252,7 @@ if __name__ == '__main__':
     # authdata = {"auth":
     #             {"passwordCredentials":
     #              {"username": "IAperf11",
-    #               "password": "Password1"}
+    #               "password": const.TEST_PASSWORD}
     #              }
     #             }
 

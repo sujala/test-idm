@@ -720,8 +720,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     private boolean isUserAdmin(User user) {
-        String roleName = config.getString("cloudAuth.userAdminRole");
-        return hasRole(user, roleName);
+        return hasRole(user, IdentityUserTypeEnum.USER_ADMIN.getRoleName());
     }
 
     /**

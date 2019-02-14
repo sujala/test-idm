@@ -348,29 +348,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
      * @return
      */
     private Set<String> getIdentityRolesForLevel(IdentityUserTypeEnum identityType) {
-        Set<String> rolesAtOrHigherThanLevel = new HashSet<String>();
-
-        if (IdentityUserTypeEnum.SERVICE_ADMIN.hasLevelAccessOf(identityType)) {
-            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityServiceAdminRoleName());
-        }
-
-        if (IdentityUserTypeEnum.IDENTITY_ADMIN.hasLevelAccessOf(identityType)) {
-            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName());
-        }
-
-        if (IdentityUserTypeEnum.USER_ADMIN.hasLevelAccessOf(identityType)) {
-            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityUserAdminRoleName());
-        }
-
-        if (IdentityUserTypeEnum.USER_MANAGER.hasLevelAccessOf(identityType)) {
-            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityUserManagerRoleName());
-        }
-
-        if (IdentityUserTypeEnum.DEFAULT_USER.hasLevelAccessOf(identityType)) {
-            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityDefaultUserRoleName());
-        }
-
-        return rolesAtOrHigherThanLevel;
+        return identityType.getTypesEqualOrHigherThanMeAsRoleNames();
     }
 
     @Override

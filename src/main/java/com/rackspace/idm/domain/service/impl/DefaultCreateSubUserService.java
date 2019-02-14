@@ -82,7 +82,7 @@ public class DefaultCreateSubUserService implements CreateSubUserService {
         Domain domain = domainService.getDomain(domainId);
         List<TenantRole> subUserRoles = getAssignableCallerRoles(userAdmin);
 
-        ImmutableClientRole icr = applicationService.getCachedClientRoleByName(identityConfig.getStaticConfig().getIdentityDefaultUserRoleName());
+        ImmutableClientRole icr = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName());
         TenantRole tr = RoleUtil.newTenantRoleFromClientRole(icr);
         subUserRoles.add(tr);
 

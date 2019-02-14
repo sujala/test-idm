@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import argparse
 import csv
+import perf_constants as const
 import requests
 
 
-def get_token(user_name, password="Password1", alt_url=None):
+def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     if alt_url:
         baseurl = alt_url
     # auth to check

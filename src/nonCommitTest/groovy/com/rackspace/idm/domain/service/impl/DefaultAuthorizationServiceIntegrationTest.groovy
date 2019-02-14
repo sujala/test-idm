@@ -27,9 +27,9 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
 
     @Shared def entityFactory = new EntityFactory()
 
-    def "Getting identity user type only recognizes user type roles"() {
-        ImmutableClientRole uaRole = applicationService.getCachedClientRoleByName(identityConfig.getStaticConfig().getIdentityUserAdminRoleName())
-        ImmutableClientRole umRole = applicationService.getCachedClientRoleByName(identityConfig.getStaticConfig().getIdentityUserManagerRoleName())
+    def "Getting identity user type returns highest level role"() {
+        ImmutableClientRole uaRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_ADMIN.roleName)
+        ImmutableClientRole umRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_MANAGER.roleName)
 
         List<TenantRole> tenantRoles = [createTenantRoleForClientRole(umRole), createTenantRoleForClientRole(uaRole)]
 
@@ -46,16 +46,7 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
         service.getIdentityTypeRoleAsEnum(tenantRoles) == null
     }
 
-    def List<String> getExpectedRoles() {
-        return Arrays.asList(identityConfig.getStaticConfig().getIdentityServiceAdminRoleName()
-                , identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()
-                , identityConfig.getStaticConfig().getIdentityUserAdminRoleName()
-                , identityConfig.getStaticConfig().getIdentityUserManagerRoleName()
-                , identityConfig.getStaticConfig().getIdentityDefaultUserRoleName()
-                , GlobalConstants.ROLE_NAME_RACKER);
-    }
-
-    def TenantRole createTenantRoleForClientRole(ImmutableClientRole cr) {
+    TenantRole createTenantRoleForClientRole(ImmutableClientRole cr) {
         entityFactory.createTenantRole(cr.name, cr.roleType).with {
             it.clientId = cr.clientId
             it.roleRsId = cr.id

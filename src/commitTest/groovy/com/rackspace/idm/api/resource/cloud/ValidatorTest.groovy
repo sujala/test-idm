@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.Pattern
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.GroupService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.PasswordBlacklistService
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.UserService
@@ -443,9 +444,8 @@ class ValidatorTest extends Specification {
 
     def "Validate user does not validate region for subuser when flag disabled"(){
         given:
-        def subUserRoleName = "identity:default"
+        def subUserRoleName = IdentityUserTypeEnum.DEFAULT_USER.getRoleName()
         config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> false
-        config.getString("cloudAuth.userRole") >> subUserRoleName
 
         def userEntity = createUser()
         TenantRole subUserRole = new TenantRole().with {
@@ -468,9 +468,8 @@ class ValidatorTest extends Specification {
 
     def "Validate user does validate region for subuser when flag enabled"(){
         given:
-        def subUserRoleName = "identity:default"
+        def subUserRoleName = IdentityUserTypeEnum.DEFAULT_USER.getRoleName()
         config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> true
-        config.getString("cloudAuth.userRole") >> subUserRoleName
 
         def userEntity = createUser()
         TenantRole subUserRole = new TenantRole().with {

@@ -5,6 +5,7 @@ import copy
 from multiprocessing import Pool
 from contextlib import contextmanager
 import argparse
+import perf_constants as const
 import os
 
 
@@ -20,7 +21,7 @@ user_by_id = dict()
 headers = None
 
 # Authenticate User Admin
-def get_token(user_name, password="Password1", alt_url=None):
+def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     if alt_url:
         baseurl = alt_url
     # auth to check

@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ClientSecret
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.apache.commons.collections4.IteratorUtils
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
@@ -189,13 +190,7 @@ class ApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
     def "can retrieve all identity roles"() {
         given:
-        List<String> minRoleNamesExpected = Arrays.asList(identityConfig.getStaticConfig().getIdentityServiceAdminRoleName()
-                , identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()
-                , identityConfig.getStaticConfig().getIdentityUserAdminRoleName()
-                , identityConfig.getStaticConfig().getIdentityUserManagerRoleName()
-                , identityConfig.getStaticConfig().getIdentityDefaultUserRoleName()
-                , identityConfig.getStaticConfig().getIdentityDefaultUserRoleName()
-        )
+        List<String> minRoleNamesExpected = IdentityUserTypeEnum.getUserTypeRoleNames()
 
         when:
         List<ClientRole> identityRoles = IteratorUtils.toList(applicationRoleDao.getAllIdentityRoles().iterator())

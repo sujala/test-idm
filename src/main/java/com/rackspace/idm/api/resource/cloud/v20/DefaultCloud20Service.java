@@ -5965,7 +5965,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         user.setRoles(tenantService.getGlobalRolesForUser(user));
         if (user.getRoles() == null ||
             roleToAdd == null ||
-            !roleService.isIdentityAccessRole(roleToAdd) ||
+            !roleService.isIdentityUserTypeRole(roleToAdd) ||
             roleToAdd.getName().equalsIgnoreCase(IdentityUserTypeEnum.USER_MANAGER.getRoleName())
         ) {
             return;
@@ -5973,7 +5973,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         for (TenantRole userRole : user.getRoles()) {
             ClientRole clientRole = applicationService.getClientRoleById(userRole.getRoleRsId());
-            if(roleService.isIdentityAccessRole(clientRole)) {
+            if(roleService.isIdentityUserTypeRole(clientRole)) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
         }

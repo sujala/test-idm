@@ -3962,7 +3962,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         User user = entityFactory.createUser()
         user.id = "somthingdifferentfromcaller"
         User caller = entityFactory.createUser()
-        roleService.isIdentityAccessRole(clientRole) >> true
+        roleService.isIdentityUserTypeRole(clientRole) >> true
 
         when:
         def result = service.addUserRole(headers, authToken, "abc", "123")
@@ -4018,7 +4018,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.id = "callerId"
             it
         }
-        roleService.isIdentityAccessRole(clientRole) >> true
+        roleService.isIdentityUserTypeRole(clientRole) >> true
 
         when:
         def result = service.addUserRole(headers, authToken, "abc", "123")

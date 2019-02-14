@@ -36,6 +36,16 @@ public class ProvisionedUserDelegate implements EndUserDelegate {
     }
 
     @Override
+    public String getPhonePin() {
+        return originalEndUser.getPhonePin();
+    }
+
+    @Override
+    public void setPhonePin(String pin) {
+        originalEndUser.setPhonePin(pin);
+    }
+
+    @Override
     public Set<String> getRsGroupId() {
         return subUserDefaults.getRateLimitingGroupIds();
     }

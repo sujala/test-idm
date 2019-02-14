@@ -7,6 +7,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -550,15 +551,15 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
     }
 
     def String getCloudAuthIdentityAdminRole() {
-        return config.getString("cloudAuth.adminRole");
+        return IdentityUserTypeEnum.IDENTITY_ADMIN.getRoleName()
     }
 
     def String getCloudAuthIdentityUserManageRole() {
-        return config.getString("cloudAuth.userManagedRole");
+        return IdentityUserTypeEnum.USER_MANAGER.getRoleName()
     }
 
     def String getCloudAuthDefaultUserRole() {
-        return config.getString("cloudAuth.userRole");
+        return IdentityUserTypeEnum.DEFAULT_USER.getRoleName()
     }
 
     private String getCloudAuthClientId() {

@@ -446,15 +446,15 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def String getCloudAuthUserManageRole() {
-        return config.getString("cloudAuth.userManagedRole");
+        return IdentityUserTypeEnum.USER_MANAGER.getRoleName()
     }
 
     def String getCloudAuthDefaultUserRole() {
-        return config.getString("cloudAuth.userRole");
+        return IdentityUserTypeEnum.DEFAULT_USER.getRoleName()
     }
 
     private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
+        return config.getString("cloudAuth.clientId")
     }
 
     private def listRolesForUserOnTenant(String token, String tenantId, String userId) {

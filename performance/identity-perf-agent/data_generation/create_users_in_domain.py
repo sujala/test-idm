@@ -11,6 +11,7 @@ import string
 import sys
 import traceback
 import time
+import perf_constants as const
 
 
 @contextmanager
@@ -35,7 +36,7 @@ def name_generator(size=18, start_char=string.ascii_lowercase,
     return start + end
 
 
-def get_token(user_name, password="Password1", alt_url=None):
+def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     if alt_url:
         baseurl = alt_url
     # auth to check
@@ -62,7 +63,7 @@ def add_default_user(number):
         create_user_data = {"user": {
                             "enabled": True,
                             "username": user_name,
-                            "OS-KSADM:password": "Password1"}}
+                            "OS-KSADM:password": const.TEST_PASSWORD}}
         u_url = "{0}/v2.0/users".format(baseurl)
         r = requests.post(url=u_url,
                           json=create_user_data, headers=ua_headers, verify=False)
@@ -72,7 +73,7 @@ def add_default_user(number):
         user_data = dict()
         user_data["username"] = result_data["user"]["username"]
         user_data["userid"] = result_data["user"]["id"]
-        user_data["password"] = "Password1"
+        user_data["password"] = const.TEST_PASSWORD
         user_data["domainId"] = domain_id
         time.sleep(0.1)
         return user_data

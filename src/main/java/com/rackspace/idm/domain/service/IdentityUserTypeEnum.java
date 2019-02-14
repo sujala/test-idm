@@ -2,8 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * The defined 'user types' within identity. Every end user within identity is classified as one of these user types.
@@ -93,4 +92,39 @@ public enum IdentityUserTypeEnum {
         }
         return roleNames;
     }
+
+
+    /**
+     * Returns all the user types greater than (e.g higher privileged) or equal to the current level
+     *
+     * @param java.util.Set<IdentityUserTypeEnum>
+     * @return
+     */
+    public Set<IdentityUserTypeEnum> getTypesEqualOrHigherThanMe() {
+        Set<IdentityUserTypeEnum> rolesAtOrHigherThanLevel = new HashSet<IdentityUserTypeEnum>();
+
+        for (IdentityUserTypeEnum that : IdentityUserTypeEnum.values()) {
+            if (that.hasLevelAccessOf(this)) {
+                rolesAtOrHigherThanLevel.add(that);
+            }
+        }
+
+        return rolesAtOrHigherThanLevel;
+    }
+
+    /**
+     * Returns all the user types greater than (e.g higher privileged) or equal to the current level
+     *
+     * @param java.util.Set<String>
+     * @return
+     */
+    public Set<String> getTypesEqualOrHigherThanMeAsRoleNames() {
+        Set<String> rolesAtOrHigherThanLevel = new HashSet<>();
+        for (IdentityUserTypeEnum identityUserTypeEnum : getTypesEqualOrHigherThanMe()) {
+            rolesAtOrHigherThanLevel.add(identityUserTypeEnum.roleName);
+        }
+
+        return rolesAtOrHigherThanLevel;
+    }
+
 }

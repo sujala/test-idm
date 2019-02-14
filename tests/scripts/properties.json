@@ -336,14 +336,6 @@
             "versionAdded": ""
         },
         {
-            "name": "cloudAuth.adminRole",
-            "reloadable": false,
-            "description": "Identity admin role name.",
-            "source": "idm.properties",
-            "value": "identity:admin",
-            "versionAdded": "1.0.14.8"
-        },
-        {
             "name": "cloudAuth.clientId",
             "reloadable": false,
             "description": "Cloud Identity Application ID.",
@@ -357,38 +349,6 @@
             "description": "The rsid id of the racker role",
             "source": "idm.properties",
             "value": "9",
-            "versionAdded": "1.0.14.8"
-        },
-        {
-            "name": "cloudAuth.serviceAdminRole",
-            "reloadable": false,
-            "description": "Service admin role name (super user).",
-            "source": "idm.properties",
-            "value": "identity:service-admin",
-            "versionAdded": "1.0.14.8"
-        },
-        {
-            "name": "cloudAuth.userAdminRole",
-            "reloadable": false,
-            "description": "User admin role name.",
-            "source": "idm.properties",
-            "value": "identity:user-admin",
-            "versionAdded": "1.0.14.8"
-        },
-        {
-            "name": "cloudAuth.userManagedRole",
-            "reloadable": false,
-            "description": "User manager role name.",
-            "source": "idm.properties",
-            "value": "identity:user-manage",
-            "versionAdded": "1.0.14.8"
-        },
-        {
-            "name": "cloudAuth.userRole",
-            "reloadable": false,
-            "description": "Default user role name.",
-            "source": "idm.properties",
-            "value": "identity:default",
             "versionAdded": "1.0.14.8"
         },
         {
@@ -597,15 +557,6 @@
             "source": "idm.properties",
             "value": 86400,
             "versionAdded": "2.9.0"
-        },
-        {
-            "defaultValue": "UUID",
-            "name": "feature.provisioned.defaultTokenFormat",
-            "reloadable": false,
-            "description": "Defines the default token format for provisioned users tokens.",
-            "source": "idm.properties",
-            "value": "AE",
-            "versionAdded": "2.12.0"
         },
         {
             "defaultValue": "FILE",
