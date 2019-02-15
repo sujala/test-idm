@@ -422,6 +422,7 @@ class Cloud20Methods {
     }
 
     def getUserById(String token, String userId, MediaType mediaType = APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#getUserById()} */
         initOnUse()
         resource.path(path20).path(USERS).path(userId).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
@@ -1123,11 +1124,6 @@ class Cloud20Methods {
     def getRole(String token, String roleId) {
         initOnUse()
         resource.path(path20).path(OS_KSADM).path(ROLES).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def getPhonePin(String token, String userId, MediaType accept = MediaType.APPLICATION_XML_TYPE) {
-        initOnUse()
-        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
     def verifyPhonePin(String token, String userId, phonePin, MediaType requestType = MediaType.APPLICATION_XML_TYPE) {

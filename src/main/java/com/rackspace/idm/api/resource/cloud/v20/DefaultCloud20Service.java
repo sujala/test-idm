@@ -2986,8 +2986,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                2. Service admin and identity admin can retrieve any user
                3. Domains are verified for user-admin and user-manage callers
              */
+            boolean isSelf = caller.getId().equals(userId);
+            boolean isImpersonated = requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest();
             EndUser user = null;
-            if (caller.getId().equals(userId)) {
+            if (isSelf) {
                 user = (EndUser) caller;
             } else if (callerType.hasAtLeastUserManagedAccessLevel()) {
                 user = identityUserService.getEndUserById(userId);
@@ -3006,6 +3008,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             setEmptyUserValues(user);
 
             org.openstack.docs.identity.api.v2.User userResponse = this.userConverterCloudV20.toUser(user);
+            if (isSelf && !isImpersonated) {
+                userResponse.setPhonePin(user.getPhonePin());
+            }
             if (user instanceof User && identityConfig.getReloadableConfig().isIncludePasswordExpirationDateForGetUserResponsesEnabled()) {
                 DateTime pwdExpiration = userService.getPasswordExpiration((User) user);
                 if (pwdExpiration != null) {

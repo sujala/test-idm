@@ -1484,18 +1484,6 @@ public class Cloud20VersionResource {
         return cloud20Service.createSecretQA(authToken, userId, secretQA).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Get user phone pin")
-    @GET
-    @Path("users/{userId}/RAX-AUTH/phone-pin")
-    public Response getPhonePin(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId){
-        if(!identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
-        return cloud20Service.getPhonePin(authToken, userId).build();
-    }
-
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Verify user phone pin")
     @POST
     @Path("users/{userId}/RAX-AUTH/phone-pin/verify")

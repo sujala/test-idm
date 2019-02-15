@@ -12,6 +12,7 @@ import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
 import com.rackspace.idm.domain.dao.TenantRoleDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.domain.entity.TenantRole
@@ -81,6 +82,9 @@ class Cloud20Utils {
 
     @Autowired
     UserService userService
+
+    @Autowired
+    UserDao userDao
 
     @Autowired
     TenantService tenantService
@@ -1708,8 +1712,7 @@ class Cloud20Utils {
     }
 
     def getPhonePin(String userId, String userToken) {
-        def response = methods.getPhonePin(userToken, userId)
-        assert (response.status == SC_OK)
-        response.getEntity(PhonePin)
+        def user = userDao.getUserById(userId)
+        return user.phonePin
     }
 }

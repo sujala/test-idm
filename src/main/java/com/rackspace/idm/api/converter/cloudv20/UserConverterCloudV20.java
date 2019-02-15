@@ -208,6 +208,7 @@ public class UserConverterCloudV20 {
 
     public User toUser(com.rackspace.idm.domain.entity.User user, boolean includeOtherAttributes) {
         User jaxbUser = mapper.map(user, User.class);
+        jaxbUser.setPhonePin(null);
 
         try {
             if (user.getCreated() != null) {
