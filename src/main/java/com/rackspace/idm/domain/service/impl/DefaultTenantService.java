@@ -1215,6 +1215,10 @@ public class DefaultTenantService implements TenantService {
             if (role != null
                     && (role.getTenantIds() == null || role.getTenantIds().size() == 0)) {
                 ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
+                if (cRole == null) {
+                    logger.error(String.format("Entity w/ id '%s' is assigned a tenant role that is associated with the non-existent client role '%s'. Skipping assignment.", role.getIdOfEntityAssignedRole(), role.getRoleRsId()));
+                    continue;
+                }
                 if (cRole.getRoleType() == RoleTypeEnum.RCN) {
                     // If 'apply_rcn_roles=true', RCN roles assigned to the user are NOT returned.
                     if (applyRcnRoles) {
