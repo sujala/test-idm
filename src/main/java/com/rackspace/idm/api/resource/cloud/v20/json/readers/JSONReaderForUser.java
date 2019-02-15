@@ -40,6 +40,7 @@ public class JSONReaderForUser extends JSONReaderForEntity<User> {
         prefixValues.put(USER_RAX_AUTH_PASSWORD_EXPIRATION_PATH, PASSWORD_EXPIRATION);
         prefixValues.put(USER_RAX_AUTH_DELEGATION_AGREEMENT_ID_PATH, DELEGATION_AGREEMENT_ID);
         prefixValues.put(USER_RAX_AUTH_UNVERIFIED_PATH, UNVERIFIED);
+        prefixValues.put(USER_RAX_AUTH_PHONE_PIN_PATH, PHONE_PIN);
 
         return read(inputStream, USER, prefixValues);
     }
