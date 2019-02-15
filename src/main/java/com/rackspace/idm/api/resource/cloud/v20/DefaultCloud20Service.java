@@ -3841,6 +3841,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
             }
 
+            // Attribute domainMultiFactorEnforcementLevel cannot be set on domain creation
+            domain.setDomainMultiFactorEnforcementLevel(null);
+
             // Ignore domain type if caller does not have the "identity:rs-domain-admin" role.
             if (domain.getType() != null && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
                 domain.setType(null);
