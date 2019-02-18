@@ -40,6 +40,7 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
         mockExceptionHandler(service)
         mockValidator(service)
         mockIdmPathUtils(service)
+        mockPhonePinService(service)
     }
 
     @Unroll
@@ -400,6 +401,36 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
         1 * exceptionHandler.exceptionResponse(_) >> { args ->
             def exception = args[0]
             IdmExceptionAssert.assertException(exception, ForbiddenException, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN, ErrorCodes.ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN_MESSAGE)
+        }
+    }
+
+    def "generate a phone pin on unverified user creation"() {
+        given:
+        allowUserAccess()
+        def user = new User().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(8)
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it
+        }
+
+
+        when:
+        service.addInviteUser(headers, uriInfo(), authToken, user)
+
+        then:
+        1 * identityConfig.getReloadableConfig().isCreationOfInviteUsersEnabled() >> true
+        1 * domainService.getDomain(user.domainId) >> new Domain().with {
+            it.enabled = true
+            it.userAdminDN = new DN("rsId=id")
+            it
+        }
+        1 * validator.isEmailValid(_) >> true
+        1 * identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs() >> ['*']
+        1 * userConverter.toUser(_, _) >> user
+        1 * phonePinService.generatePhonePin() >> "12345"
+        1 * userService.addUnverifiedUser(_) >> { args ->
+            com.rackspace.idm.domain.entity.User unverifiedUser = args[0]
+            assert unverifiedUser.phonePin != null
         }
     }
 
