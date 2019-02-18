@@ -4,6 +4,7 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PhonePin;
 import com.rackspace.idm.domain.entity.PhonePinProtectedUser;
 import com.rackspace.idm.domain.service.IdentityUserService;
@@ -41,11 +42,14 @@ public class DefaultPhonePinService implements PhonePinService {
     }
 
     @Override
-    public void verifyPhonePin(PhonePinProtectedUser user, String pin) {
-        if (!StringUtils.equals(pin, checkAndGetPhonePin(user).getPin())) {
-            throw new BadRequestException(String.format("Incorrect phone pin for the user."),
-                    ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+    public boolean verifyPhonePinOnUser(String userId, String pin) {
+        EndUser user = identityUserService.checkAndGetEndUserById(userId);
+
+        // A blank pin must never match a pin on a user
+        if (StringUtils.isNotBlank(pin) && StringUtils.equals(pin, user.getPhonePin())) {
+            return true;
         }
+        return false;
     }
 
     @Override

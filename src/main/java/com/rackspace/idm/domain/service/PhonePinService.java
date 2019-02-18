@@ -10,7 +10,16 @@ import java.io.IOException;
 public interface PhonePinService {
 
     PhonePin resetPhonePin(PhonePinProtectedUser user);
-    void verifyPhonePin(PhonePinProtectedUser user, String pin);
+
+    /**
+     * Returns whether or not the specified pin is correct for the specified user.
+     * @param userId
+     * @param pin
+     * @return true if the pin matches the user
+     *
+     * @throws com.rackspace.idm.exception.NotFoundException if the specified user does not exist
+     */
+    boolean verifyPhonePinOnUser(String userId, String pin);
     PhonePin checkAndGetPhonePin(PhonePinProtectedUser userId);
     String generatePhonePin();
 }
