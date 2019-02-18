@@ -146,9 +146,7 @@ public class RequestContext {
      * @return
      */
     public IdentityUserTypeEnum getEffectiveCallersUserType() {
-        BaseUser effectiveCaller = getEffectiveCaller();
-
-        return effectiveCaller == null ? null : authorizationService.getIdentityTypeRoleAsEnum(effectiveCaller);
+        return getEffectiveCallerAuthorizationContext().getIdentityUserType();
     }
 
     /**
