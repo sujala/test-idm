@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
@@ -1827,6 +1828,27 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+    }
+
+    def "domainMultiFactorEnforcementLevel can not be set on domain creation"() {
+        given:
+        mockDomainConverter(service)
+        def domain = v1Factory.createDomain().with {
+            it.domainMultiFactorEnforcementLevel = DomainMultiFactorEnforcementLevelEnum.REQUIRED
+            it
+        }
+        when:
+        service.addDomain(authToken, uriInfo(), domain)
+
+        then:
+        1 * requestContext.getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled() >> false
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * validator20.validateDomainForCreation(domain) >> { arg ->
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain d = arg[0]
+            assert d.domainMultiFactorEnforcementLevel == null
+        }
     }
 
     @Unroll

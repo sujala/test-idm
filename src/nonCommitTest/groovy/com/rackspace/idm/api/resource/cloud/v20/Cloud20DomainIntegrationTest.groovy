@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroups
 import com.rackspace.idm.Constants
@@ -2739,6 +2740,39 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteUserQuietly(userAdmin)
         utils.deleteUserQuietly(identityAdmin)
         utils.deleteDomain(createdDomain.id)
+    }
+
+    @Unroll
+    def "verify domainMultiFactorEnforcementLevel can not be set on domain creation - mediaType = #mediaType"() {
+        given:
+        def identityAdmin = utils.createIdentityAdmin()
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+
+        // Build domain entity
+        def domainId = testUtils.getRandomUUID("domainId")
+        def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
+            it.domainMultiFactorEnforcementLevel = DomainMultiFactorEnforcementLevelEnum.REQUIRED
+            it
+        }
+
+        when: "create domain"
+        def response = cloud20.addDomain(identityAdminToken, domainEntity, mediaType, mediaType)
+        def domain = response.getEntity(Domain)
+
+        then:
+        response.status == SC_CREATED
+
+        domain.name == domainEntity.name
+        domain.id == domainEntity.id
+        domain.enabled
+        domain.domainMultiFactorEnforcementLevel == null
+
+        cleanup:
+        utils.deleteUserQuietly(identityAdmin)
+        utils.deleteTestDomainQuietly(domainId)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
     def removeDomainFromUser(username) {
