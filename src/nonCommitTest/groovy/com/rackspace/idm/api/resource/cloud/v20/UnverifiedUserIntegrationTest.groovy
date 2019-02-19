@@ -1628,7 +1628,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         then: "assert unverified user was created"
         response.status == 201
 
-        // assert phone pin is not exposed
+        and: "phone pin is not exposed"
         unverifiedUser.phonePin == null
 
         when: "retrieving unverified user"
@@ -1636,7 +1636,6 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         then:
         unverifiedUserEntity.id == unverifiedUser.id
-        unverifiedUserEntity.phonePin != null
         IdmAssert.assertPhonePin(unverifiedUserEntity)
 
         cleanup:
@@ -1665,7 +1664,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         then: "assert unverified user was created"
         response.status == 201
 
-        // assert phone pin is not exposed
+        and: "phone pin is not exposed"
         unverifiedUser.phonePin == null
 
         when: "retrieving unverified user"
@@ -1673,9 +1672,8 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         then:
         unverifiedUserEntity.id == unverifiedUser.id
-        unverifiedUserEntity.phonePin != null
-        unverifiedUserEntity.phonePin != "123456"
         IdmAssert.assertPhonePin(unverifiedUserEntity)
+        unverifiedUserEntity.phonePin != "123456"
 
         when: "update unverified user"
         response = cloud20.updateUser(utils.getServiceAdminToken(), unverifiedUser.id, userReq)
@@ -1684,7 +1682,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_OK
 
-        // assert phone pin is not exposed
+        and: "phone pin is not exposed"
         unverifiedUser.phonePin == null
 
         when: "retrieving unverified user"
@@ -1692,9 +1690,8 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         then:
         unverifiedUserEntity.id == unverifiedUser.id
-        unverifiedUserEntity.phonePin != null
-        unverifiedUserEntity.phonePin != "123456"
         IdmAssert.assertPhonePin(unverifiedUserEntity)
+        unverifiedUserEntity.phonePin != "123456"
 
         cleanup:
         utils.deleteUserQuietly(unverifiedUser)
