@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.google.common.collect.ImmutableSet;
 import com.unboundid.ldap.sdk.DN;
 
 import java.util.List;
@@ -9,13 +8,11 @@ import java.util.Set;
 /**
  * Represents a non-racker end user
  */
-public interface EndUser extends BaseUser {
+public interface EndUser extends BaseUser, PhonePinProtectedUser {
     String getRegion();
     String getEmail();
     String getUsername();
     String getDomainId();
-    String getPhonePin();
-    void setPhonePin(String pin);
     List<TenantRole> getRoles();
     Set<String> getRsGroupId();
 

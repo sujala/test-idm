@@ -4,6 +4,7 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PhonePin;
 import com.rackspace.idm.domain.entity.PhonePinProtectedUser;
 import com.rackspace.idm.domain.service.IdentityUserService;
@@ -16,6 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class DefaultPhonePinService implements PhonePinService {
@@ -41,11 +45,14 @@ public class DefaultPhonePinService implements PhonePinService {
     }
 
     @Override
-    public void verifyPhonePin(PhonePinProtectedUser user, String pin) {
-        if (!StringUtils.equals(pin, checkAndGetPhonePin(user).getPin())) {
-            throw new BadRequestException(String.format("Incorrect phone pin for the user."),
-                    ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+    public boolean verifyPhonePinOnUser(String userId, String pin) {
+        EndUser user = identityUserService.checkAndGetEndUserById(userId);
+
+        // A blank pin must never match a pin on a user
+        if (StringUtils.isNotBlank(pin) && StringUtils.equals(pin, user.getPhonePin())) {
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -61,34 +68,24 @@ public class DefaultPhonePinService implements PhonePinService {
     }
 
     /**
-     * This method generates will generate and return 6 digit pin with all unique digits which are
-     * non sequential and non repetitive.
+     * This method generates and returns 6 digit pin.
+     *
      * @return String - 6 digit phone pin
      */
     @Override
     public String generatePhonePin() {
+        StringBuilder phonePin = new StringBuilder();
 
-        StringBuilder phonePin = new StringBuilder(RandomGeneratorUtil.generateSecureRandomNumber(1));
+        // getting first 2 digits of phone pins
+        String firstPart = RandomGeneratorUtil.generateSecureRandomNumber(2);
+        phonePin.append(firstPart);
 
-        String digit;
-        for (int i = 0; i < 5; i++) {
-            digit = RandomGeneratorUtil.generateSecureRandomNumber(1);
-
-            // get a new number if it is sequential or repetitive
-            while (isRepetitive(phonePin, digit) > -1 && isSequential(phonePin, digit, i)) {
-                digit = RandomGeneratorUtil.generateSecureRandomNumber(1);
-            }
-            phonePin.append(digit);
+        for (int i = 2; i < 6; i++) {
+            String digit3 = RandomGeneratorUtil.getNextPhonePinDigit(phonePin.charAt(i - 2), phonePin.charAt(i - 1));
+            phonePin.append(digit3);
         }
+
         return phonePin.toString();
-    }
-
-    private int isRepetitive(StringBuilder phonePin, String singleDigit) {
-        return phonePin.indexOf(singleDigit);
-    }
-
-    private boolean isSequential(StringBuilder phonePin, String singleDigit, int i) {
-        return Integer.parseInt(phonePin.charAt(i)+"") - Integer.parseInt(singleDigit) != 1;
     }
 
 }

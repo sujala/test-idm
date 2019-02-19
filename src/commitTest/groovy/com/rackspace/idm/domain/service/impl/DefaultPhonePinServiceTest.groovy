@@ -67,28 +67,56 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         thrown(NotFoundException)
     }
 
-    def "Verify phone pin from provisioned user"() {
+    def "verifyPhonePinOnUser: Verify correct phone pin return true"() {
         given:
-        User user = new User()
-        user.phonePin = pin
+        User user = new User().with {
+            it.id = "id"
+            it.phonePin = "123231"
+            it
+        }
 
         when:
-        service.verifyPhonePin(user, "123231")
+        boolean result = service.verifyPhonePinOnUser(user.id, "123231")
 
         then:
-        thrown(BadRequestException)
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        result
     }
 
-    def "Verify phone pin from federated user"() {
+    def "verifyPhonePinOnUser: Verify incorrect phone pin return false"() {
         given:
-        FederatedUser user = new FederatedUser()
-        user.phonePin = pin
+        User user = new User().with {
+            it.id = "id"
+            it.phonePin = "1232456"
+            it
+        }
 
         when:
-        service.verifyPhonePin(user, "123231")
+        boolean result = service.verifyPhonePinOnUser(user.id, "123231")
 
         then:
-        thrown(BadRequestException)
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        !result
+    }
+
+    @Unroll
+    def "verifyPhonePinOnUser: Verify blank phone pin results in no match: pin: #pin"() {
+        given:
+        User user = new User().with {
+            it.id = "id"
+            it.phonePin = pin
+            it
+        }
+
+        when:
+        boolean result = service.verifyPhonePinOnUser(user.id, pin)
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        !result
+
+        where:
+        pin << ["", null, "  "]
     }
 
     def "Reset phone pin for provisioned user" () {
@@ -137,7 +165,7 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         IdmAssert.isPhonePinNonSequential(pp)
 
         where:
-        i << (1..100)
+        i << (1..10000)
     }
 
     def mockServices() {

@@ -2441,7 +2441,19 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         assert result.status == 403
     }
 
-    def "Successfully verified the phone pin"() {
+    def "Verify phone pin appropriately validates the caller before the PIN"() {
+        when:
+        def result = service.verifyPhonePin(authToken, "userId", null).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName())
+
+        assert result.status == 400
+    }
+
+    def "Correct phone pin results in 204"() {
         given:
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
             it.pin = "2342"
@@ -2453,37 +2465,33 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.verifyPhonePin(authToken, "userId", phonePin).build()
 
         then:
-        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * authorizationService.verifyEffectiveCallerHasRoleByName(_)
-        1 * identityUserService.checkAndGetEndUserById(_) >> user
-        1 * phonePinService.verifyPhonePin(user, phonePin.getPin())
+        1 * phonePinService.verifyPhonePinOnUser(user.id, phonePin.getPin()) >> true
 
         assert result.status == 204
     }
 
-
-    def "Input phone pin empty for verify phone pin call"() {
+    def "Incorrect phone pin results in 400"() {
         given:
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = ""
+            it.pin = "2342"
             it
         }
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
 
         when:
         def result = service.verifyPhonePin(authToken, "userId", phonePin).build()
 
         then:
-        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * authorizationService.verifyEffectiveCallerHasRoleByName(_)
+        1 * phonePinService.verifyPhonePinOnUser(user.id, phonePin.getPin()) >> false
 
         assert result.status == 400
     }
 
-
-    def "Verify phone pin validates the token"() {
+    @Unroll
+    def "Blank phone pin '#pin' for verify phone pin call results in 400"() {
         given:
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = "2323"
+            it.pin = pin
             it
         }
 
@@ -2491,11 +2499,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.verifyPhonePin(authToken, "userId", phonePin).build()
 
         then:
-        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> { throw new NotAuthorizedException() }
+        0 * identityUserService.checkAndGetEndUserById(_)
+        result.status == 400
 
-        assert result.status == 401
+        where:
+        pin << ["", " ", null]
     }
-
 
     def "Reset phone pin verifies user level access throws NotAuthorizedException"() {
         when:

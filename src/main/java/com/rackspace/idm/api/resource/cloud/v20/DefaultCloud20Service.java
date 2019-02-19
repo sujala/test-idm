@@ -2876,13 +2876,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder verifyPhonePin(String authToken, String userId, PhonePin phonePin) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName());
 
-            if (phonePin != null && StringUtils.isBlank(phonePin.getPin())) {
+            if (phonePin == null || StringUtils.isBlank(phonePin.getPin())) {
                 throw new BadRequestException("Invalid phone pin.", ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
             }
-            PhonePinProtectedUser phonePinProtectedUser = getPhonePinProtectedUser(userId);
-            phonePinService.verifyPhonePin(phonePinProtectedUser, phonePin.getPin());
+
+            boolean matches = phonePinService.verifyPhonePinOnUser(userId, phonePin.getPin());
+            if (!matches) {
+                throw new BadRequestException(String.format("Incorrect phone pin for the user."),
+                        ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+            }
 
             return Response.noContent();
         } catch (Exception ex) {
