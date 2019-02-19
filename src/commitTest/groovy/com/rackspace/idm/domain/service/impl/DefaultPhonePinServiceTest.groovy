@@ -165,7 +165,7 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         IdmAssert.isPhonePinNonSequential(pp)
 
         where:
-        i << (1..100)
+        i << (1..10000)
     }
 
     def mockServices() {
