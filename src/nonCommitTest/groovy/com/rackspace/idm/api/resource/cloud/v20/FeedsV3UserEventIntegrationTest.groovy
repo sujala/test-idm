@@ -172,7 +172,6 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
 
         then:
         samlResponse.status == SC_OK
-        DefaultPhonePinService.java
         and: "verify that the user UPDATE event is posted"
         cloudFeedsMock.verify(
                 testUtils.createV3UserFeedsRequest(endUser, EventType.UPDATE, FeedsUserStatusEnum.ROLE, requestId),
