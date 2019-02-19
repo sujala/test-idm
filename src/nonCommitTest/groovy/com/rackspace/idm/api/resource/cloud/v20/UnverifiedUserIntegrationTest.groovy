@@ -1637,6 +1637,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         then:
         unverifiedUserEntity.id == unverifiedUser.id
         unverifiedUserEntity.phonePin != null
+        IdmAssert.assertPhonePin(unverifiedUserEntity)
 
         cleanup:
         utils.deleteUserQuietly(unverifiedUser)
@@ -1674,6 +1675,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         unverifiedUserEntity.id == unverifiedUser.id
         unverifiedUserEntity.phonePin != null
         unverifiedUserEntity.phonePin != "123456"
+        IdmAssert.assertPhonePin(unverifiedUserEntity)
 
         when: "update unverified user"
         response = cloud20.updateUser(utils.getServiceAdminToken(), unverifiedUser.id, userReq)
@@ -1692,6 +1694,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         unverifiedUserEntity.id == unverifiedUser.id
         unverifiedUserEntity.phonePin != null
         unverifiedUserEntity.phonePin != "123456"
+        IdmAssert.assertPhonePin(unverifiedUserEntity)
 
         cleanup:
         utils.deleteUserQuietly(unverifiedUser)
