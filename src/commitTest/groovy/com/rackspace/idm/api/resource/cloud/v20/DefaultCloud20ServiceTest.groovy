@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.api.idm.v1.IdmFault
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
@@ -2485,6 +2486,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * phonePinService.verifyPhonePinOnUser(user.id, phonePin.getPin()) >> false
 
         assert result.status == 400
+        BadRequestFault fault = result.getEntity()
+        fault.message == "Error code: 'PP-001'; Incorrect Phone PIN."
     }
 
     @Unroll
@@ -2504,6 +2507,25 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         where:
         pin << ["", " ", null]
+    }
+
+    def "verifyPhonePin: If user doesn't have a phone pin, returns 400"() {
+        given:
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
+            it.pin = "2342"
+            it
+        }
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+
+        when:
+        def result = service.verifyPhonePin(authToken, "userId", phonePin).build()
+
+        then:
+        1 * phonePinService.verifyPhonePinOnUser(user.id, phonePin.getPin()) >> {throw new NoPinSetException()}
+
+        assert result.status == 400
+        BadRequestFault fault = result.getEntity()
+        fault.message == new NoPinSetException().getMessage()
     }
 
     def "Reset phone pin verifies user level access throws NotAuthorizedException"() {

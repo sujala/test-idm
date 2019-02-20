@@ -18,6 +18,7 @@ public interface PhonePinService {
      * @return true if the pin matches the user
      *
      * @throws com.rackspace.idm.exception.NotFoundException if the specified user does not exist
+     * @throws com.rackspace.idm.exception.NoPinSetException If the specified user does not have a pin set
      */
     boolean verifyPhonePinOnUser(String userId, String pin);
     PhonePin checkAndGetPhonePin(PhonePinProtectedUser userId);
