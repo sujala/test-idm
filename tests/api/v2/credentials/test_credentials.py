@@ -26,7 +26,7 @@ class TestCredentials(base.TestBaseV2):
         super(TestCredentials, self).setUp()
         self.user_ids = []
         self.domain_ids = []
-        self.user_id, self.testusername = self.create_user()
+        self.user_id, self.testusername, self.pwd = self.create_user()
 
     def create_user(self):
         domain_id = func_helper.generate_randomized_domain_id(
@@ -43,7 +43,8 @@ class TestCredentials(base.TestBaseV2):
         self.domain_ids.append(resp.json()[const.USER][
                                    const.RAX_AUTH_DOMAIN_ID])
         username = resp.json()[const.USER][const.USERNAME]
-        return user_id, username
+        password = resp.json()[const.USER][const.OS_KSADM_PASSWORD]
+        return user_id, username, password
 
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
@@ -98,12 +99,34 @@ class TestCredentials(base.TestBaseV2):
 
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
-    def test_reset_apikey(self):
+    def test_reset_apikey_by_identity_admin(self):
         resp = self.identity_admin_client.get_api_key(self.user_id)
         self.assertEqual(resp.status_code, 200)
         previous_apikey = (resp.json()[const.NS_API_KEY_CREDENTIALS]
                                       [const.API_KEY])
         resp = self.identity_admin_client.reset_api_key(self.user_id)
+        self.assertEqual(resp.status_code, 200)
+        new_apikey = (resp.json()[const.NS_API_KEY_CREDENTIALS]
+                                 [const.API_KEY])
+        self.assertIsNotNone(new_apikey)
+        self.assertFalse(previous_apikey == new_apikey,
+                         msg="The API key should be different after reset!")
+
+    @tags('positive', 'p0', 'smoke')
+    @attr(type='smoke_alpha')
+    def test_reset_own_apikey_by_user_admin(self):
+        resp = self.identity_admin_client.get_api_key(self.user_id)
+        self.assertEqual(resp.status_code, 200)
+        previous_apikey = (resp.json()[const.NS_API_KEY_CREDENTIALS]
+                                      [const.API_KEY])
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=self.testusername, password=self.pwd)
+        resp = self.identity_admin_client.get_auth_token(
+            request_object=req_obj)
+        user_admin_client = self.generate_client(
+            token=resp.json()[const.ACCESS][const.TOKEN][const.ID])
+
+        resp = user_admin_client.reset_api_key(self.user_id)
         self.assertEqual(resp.status_code, 200)
         new_apikey = (resp.json()[const.NS_API_KEY_CREDENTIALS]
                                  [const.API_KEY])

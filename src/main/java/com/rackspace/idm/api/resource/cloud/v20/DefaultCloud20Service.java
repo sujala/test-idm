@@ -5514,14 +5514,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             User credUser = this.userService.checkAndGetUserById(userId);
             Validator20.validateItsNotUnverifiedUser(credUser);
 
+            //TODO: Refactor this logic. Likely able to just call `precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(credUser);`
             IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
-            if (callerType == IdentityUserTypeEnum.DEFAULT_USER && !caller.getId().equals(userId)) {
-                throw new ForbiddenException("This user can only reset their own apiKey");
-            } else if (callerType == IdentityUserTypeEnum.USER_ADMIN || callerType == IdentityUserTypeEnum.USER_MANAGER) {
-                precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(credUser);
-            } else if (callerType == IdentityUserTypeEnum.IDENTITY_ADMIN) {
-                if (authorizationService.hasServiceAdminRole(credUser)) {
-                    throw new ForbiddenException("This user cannot set or reset Service Admin apiKey.");
+            if (!authorizationService.isSelf(caller, credUser)) {
+                if (callerType == IdentityUserTypeEnum.DEFAULT_USER && !caller.getId().equals(userId)) {
+                    throw new ForbiddenException("This user can only reset their own apiKey");
+                } else if (callerType == IdentityUserTypeEnum.USER_ADMIN || callerType == IdentityUserTypeEnum.USER_MANAGER) {
+                    precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(credUser);
+                } else if (callerType == IdentityUserTypeEnum.IDENTITY_ADMIN) {
+                    if (authorizationService.hasServiceAdminRole(credUser)) {
+                        throw new ForbiddenException("This user cannot set or reset Service Admin apiKey.");
+                    }
                 }
             }
 
