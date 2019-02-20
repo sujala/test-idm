@@ -882,6 +882,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User unverifiedUser = this.userConverterCloudV20.fromUser(user);
 
+            // Generate a phone pin for unverified user
+            unverifiedUser.setPhonePin(phonePinService.generatePhonePin());
+
             userService.addUnverifiedUser(unverifiedUser);
 
             org.openstack.docs.identity.api.v2.User responseUser = this.userConverterCloudV20.toUser(unverifiedUser, false);

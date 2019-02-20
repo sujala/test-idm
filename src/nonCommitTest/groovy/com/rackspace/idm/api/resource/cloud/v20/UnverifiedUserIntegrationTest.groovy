@@ -1625,6 +1625,94 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
+    @Unroll
+    def "generate a phone pin for unverified users on creation: contentType = #contentType"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+        def userReq = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = userAdmin.domainId
+            it
+        }
+
+        when: "create unverified user"
+        def response = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), userReq, contentType, contentType)
+        User unverifiedUser = testUtils.getEntity(response, User)
+
+        then: "assert unverified user was created"
+        response.status == 201
+
+        and: "phone pin is not exposed"
+        unverifiedUser.phonePin == null
+
+        when: "retrieving unverified user"
+        com.rackspace.idm.domain.entity.User unverifiedUserEntity = userDao.getUserById(unverifiedUser.id)
+
+        then:
+        unverifiedUserEntity.id == unverifiedUser.id
+        IdmAssert.assertPhonePin(unverifiedUserEntity)
+
+        cleanup:
+        utils.deleteUserQuietly(unverifiedUser)
+        utils.deleteUserQuietly(userAdmin)
+
+        where:
+        contentType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "assert phone pin cannot be set on unverified user creation or update"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+        def userReq = new User().with {
+            it.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
+            it.domainId = userAdmin.domainId
+            it.phonePin = "123456"
+            it
+        }
+
+        when: "create unverified user"
+        def response = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), userReq)
+        User unverifiedUser = testUtils.getEntity(response, User)
+
+        then: "assert unverified user was created"
+        response.status == 201
+
+        and: "phone pin is not exposed"
+        unverifiedUser.phonePin == null
+
+        when: "retrieving unverified user"
+        com.rackspace.idm.domain.entity.User unverifiedUserEntity = userDao.getUserById(unverifiedUser.id)
+
+        then:
+        unverifiedUserEntity.id == unverifiedUser.id
+        IdmAssert.assertPhonePin(unverifiedUserEntity)
+        unverifiedUserEntity.phonePin != "123456"
+
+        when: "update unverified user"
+        response = cloud20.updateUser(utils.getServiceAdminToken(), unverifiedUser.id, userReq)
+        unverifiedUser = testUtils.getEntity(response, User)
+
+        then:
+        response.status == SC_OK
+
+        and: "phone pin is not exposed"
+        unverifiedUser.phonePin == null
+
+        when: "retrieving unverified user"
+        unverifiedUserEntity = userDao.getUserById(unverifiedUser.id)
+
+        then:
+        unverifiedUserEntity.id == unverifiedUser.id
+        IdmAssert.assertPhonePin(unverifiedUserEntity)
+        unverifiedUserEntity.phonePin != "123456"
+
+        cleanup:
+        utils.deleteUserQuietly(unverifiedUser)
+        utils.deleteUserQuietly(userAdmin)
+    }
+
     def getInviteEntity(ClientResponse response) {
         if (response.getType() == MediaType.APPLICATION_XML_TYPE) {
             return response.getEntity(Invite)

@@ -147,14 +147,13 @@ class IdmAssert {
      * @param user
      * @param pinLength
      */
-    static def assertPhonePin(User user) {
+    static void assertPhonePin(User user) {
         assert user.phonePin != null
         assert user.encryptedPhonePin != null
         assert user.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
         assert user.phonePin.isNumber()
         assert isPhonePinNonRepeating(user.phonePin)
         assert isPhonePinNonSequential(user.phonePin)
-
     }
 
     /**
