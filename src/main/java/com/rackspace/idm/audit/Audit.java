@@ -36,6 +36,7 @@ public class Audit {
 		FORGOTPWDAUTH,
 		PASSWORD_RESET,
 		DELEGATEAUTH,
+		PHONEPIN_VERIFY,
 	}
 
 	private enum RESULT {
@@ -98,6 +99,11 @@ public class Audit {
     public static Audit authRacker(Auditable o) {
         return new Audit(o.getAuditContext()).addEvent(ACTION.RACKERAUTH);
     }
+
+	public static Audit verifyPhonePin(EndUser o) {
+		return new Audit(o.getAuditContext()).addEvent(ACTION.PHONEPIN_VERIFY);
+	}
+
 
 	public static Audit authFederated(FederatedBaseUser o) {
 		return new Audit(o.getAuditContext()).addEvent(ACTION.FEDERATEDAUTH);
