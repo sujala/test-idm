@@ -211,7 +211,7 @@ class Cloud20Utils {
         return entity
     }
 
-    User createUnverifiedUser(String domainId, String email = "${RandomStringUtils.randomAlphabetic(8)}@example.com", String token = getServiceAdminToken()) {
+    User createUnverifiedUser(String domainId, String email = "${RandomStringUtils.randomAlphabetic(8)}@rackspace.com", String token = getServiceAdminToken()) {
         def user = new User().with {
             it.domainId = domainId
             it.email = email
@@ -220,6 +220,32 @@ class Cloud20Utils {
         def response = methods.createUnverifiedUser(token, user)
 
         assert (response.status == SC_CREATED)
+
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
+    }
+
+    Invite sendUnverifiedUserInvite(String unverifiedUserId, String token = getServiceAdminToken()) {
+        def response = methods.sendUnverifiedUserInvite(token, unverifiedUserId)
+        assert response.status == SC_OK
+
+        def inviteEntity = response.getEntity(Invite)
+
+        assert inviteEntity != null
+        return inviteEntity
+    }
+
+    User acceptUnverifiedUserInvite(String userId, String email, String registrationCode, String username = RandomStringUtils.randomAlphabetic(10)) {
+        def user = factory.userForCreate(username, "display", email, null, null, null, DEFAULT_PASSWORD).with {
+            it.registrationCode = registrationCode
+            it.id = userId
+            it
+        }
+        user.secretQA = v1Factory.createRaxKsQaSecretQA()
+
+        def response = methods.acceptUnverifiedUserInvite(user)
+        assert (response.status == SC_OK)
 
         def entity = response.getEntity(User).value
         assert (entity != null)
