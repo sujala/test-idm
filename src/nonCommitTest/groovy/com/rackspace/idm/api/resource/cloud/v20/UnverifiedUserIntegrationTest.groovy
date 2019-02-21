@@ -283,48 +283,63 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, DefaultCloud20Service.ERROR_DOMAIN_MUST_BE_ENABLED_FOR_UNVERIFIED_USERS)
     }
 
-    def "unverified users must have a unique email address within their domain"() {
+    def "unverified users can duplicate email address of a verified user"() {
         given :
-        def userAdmin = utils.createCloudAccount()
-        def email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
-        def user = new User().with {
-            it.email = email
-            it.domainId = userAdmin.domainId
-            it
-        }
+        def userAdmin = utils.createGenericUserAdmin()
         utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
 
         when: "try to create the user w/ a provisioned user in the same domain with the same email address"
-        def otherUser = utils.createUser(utils.getToken(userAdmin.username))
-        otherUser.email = email
-        utils.updateUser(otherUser)
+        def user = new User().with {
+            it.email = userAdmin.email
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def response = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), user)
+
+        then:
+        response.status == SC_CREATED
+    }
+
+    def "unverified users can not duplicate email address of another unverified user within the same domain"() {
+        given :
+        def userAdmin = utils.createGenericUserAdmin()
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        // Create initial unverified user
+        User unverifiedUser = utils.createUnverifiedUser(userAdmin.domainId)
+
+        when: "Create a user with the same email address as another unverified user in same domain"
+        def user = new User().with {
+            it.email = unverifiedUser.email
+            it.domainId = userAdmin.domainId
+            it
+        }
         def response = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), user)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_CONFLICT, ErrorCodes.ERROR_CODE_INVALID_VALUE, DefaultCloud20Service.ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN)
+    }
 
-        when: "delete the provisioned user and try again"
-        utils.deleteUser(otherUser)
-        response = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), user)
+    def "When unverified user is accepted, can reuse email address"() {
+        given :
+        def userAdmin = utils.createGenericUserAdmin()
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        // Create initial unverified user and accept it
+        User unverifiedUser = utils.createUnverifiedUser(userAdmin.domainId)
+        Invite invite = utils.sendUnverifiedUserInvite(unverifiedUser.id)
+        utils.acceptUnverifiedUserInvite(unverifiedUser.id, unverifiedUser.email, invite.registrationCode)
+
+        when: "Create a user with the same email address an accepted unverified user in same domain"
+        def user = new User().with {
+            it.email = unverifiedUser.email
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def response = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), user)
 
         then:
-        response.status == 201
-
-        when: "create an unverified user with the same email address as another unverified user"
-        email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
-        user.email = email
-        def unverifiedUser = utils.createUnverifiedUser(userAdmin.domainId, email)
-        response = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), user)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_CONFLICT, ErrorCodes.ERROR_CODE_INVALID_VALUE, DefaultCloud20Service.ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN)
-
-        when: "delete the unverified user and try again"
-        utils.deleteUser(unverifiedUser)
-        response = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), user)
-
-        then:
-        response.status == 201
+        response.status == SC_CREATED
     }
 
     def "the creation of unverified users cannot exceed the max number of users in a domain"() {

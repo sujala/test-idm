@@ -1,8 +1,13 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.google.common.collect.Lists
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
+import com.rackspace.idm.api.resource.cloud.v20.ListUsersSearchParams
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.EndUser
+import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
@@ -363,11 +368,31 @@ class UnverifiedUserCloud20ServiceTest extends RootServiceTest {
         1 * identityConfig.getRepositoryConfig().getInvitesSupportedForRCNs() >> ['*']
         1 * validator.isEmailValid(_) >> true
         if (emailUnique) {
-            1 * identityUserService.getProvisionedUsersByDomainIdAndEmail(user.domainId, user.email) >> []
+            1 * identityUserService.getEndUsersPaged(_) >> { args ->
+                ListUsersSearchParams params = args[0]
+                assert params.email == user.email
+                assert params.domainId == user.domainId
+                assert params.paginationRequest.marker == 0
+                assert params.paginationRequest.limit == 1
+
+                def fake = new PaginatorContext<EndUser>()
+                fake.update(Lists.newArrayList(), 0, 1)
+                return fake
+            }
             0 * exceptionHandler.exceptionResponse(_)
             1 * userService.addUnverifiedUser(_)
         } else {
-            1 * identityUserService.getProvisionedUsersByDomainIdAndEmail(user.domainId, user.email) >> [new com.rackspace.idm.domain.entity.User()]
+            1 * identityUserService.getEndUsersPaged(_) >> { args ->
+                ListUsersSearchParams params = args[0]
+                assert params.email == user.email
+                assert params.domainId == user.domainId
+                assert params.paginationRequest.marker == 0
+                assert params.paginationRequest.limit == 1
+
+                def fake = new PaginatorContext<EndUser>()
+                fake.update(Lists.newArrayList(new User()), 0, 1)
+                return fake
+            }
             0 * userService.addUnverifiedUser(user)
             1 * exceptionHandler.exceptionResponse(_) >> { args ->
                 def exception = args[0]
