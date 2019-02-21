@@ -127,7 +127,7 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), userAdmin.id, phonePin, requestType)
 
         then: "get back error"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect phone pin for the user.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect Phone PIN.")
 
         cleanup:
         utils.deleteUserQuietly(userAdmin)
@@ -169,7 +169,7 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
      * @return
      */
     @Unroll
-    def "Verify user without a set phone pin always returns as unmatched: specifiedPhonePin: #pin; requestType: #requestType" () {
+    def "Verify must supply a phone pin to verify against: specifiedPhonePin: #pin; requestType: #requestType" () {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
 
         User user = userService.checkAndGetUserByName("uaGlobalRolesUser") // pre-existing user
@@ -180,10 +180,10 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
             it.pin = pin
             it
         }
-        def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), user.id, phonePin, MediaType.APPLICATION_JSON_TYPE)
+        def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), user.id, phonePin, requestType)
 
         then: "Returns as invalid"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Invalid phone pin.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Must supply a Phone PIN.")
 
         where:
         pin | requestType
@@ -192,6 +192,23 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         null  | MediaType.APPLICATION_XML_TYPE
         null  | MediaType.APPLICATION_JSON_TYPE
         " "  | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def "Verify verifying pin of user without one returns correct error" () {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+
+        User user = userService.checkAndGetUserByName("uaGlobalRolesUser") // pre-existing user
+        assert user.phonePin == null
+
+        when: "Verify with authorized user"
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
+            it.pin = "12324"
+            it
+        }
+        def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), user.id, phonePin)
+
+        then: "Returns as invalid"
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-000'; The user has not set a Phone PIN.")
     }
 
     /**

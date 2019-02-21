@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.PhonePinProtectedUser;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.PhonePinService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NoPinSetException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.RandomGeneratorUtil;
 import org.apache.commons.lang.StringUtils;
@@ -47,6 +48,10 @@ public class DefaultPhonePinService implements PhonePinService {
     @Override
     public boolean verifyPhonePinOnUser(String userId, String pin) {
         EndUser user = identityUserService.checkAndGetEndUserById(userId);
+
+        if (user.getPhonePin() == null) {
+            throw new NoPinSetException();
+        }
 
         // A blank pin must never match a pin on a user
         if (StringUtils.isNotBlank(pin) && StringUtils.equals(pin, user.getPhonePin())) {

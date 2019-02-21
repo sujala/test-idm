@@ -1,14 +1,17 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.NoPinSetException
 import com.rackspace.idm.exception.NotFoundException
 import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
+import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
 class DefaultPhonePinServiceTest extends RootServiceTest {
@@ -81,6 +84,23 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         then:
         1 * identityUserService.checkAndGetEndUserById(user.id) >> user
         result
+    }
+
+    def "verifyPhonePinOnUser: Throws com.rackspace.idm.exception.NoPinSetException when user does not have a pin"() {
+        given:
+        User user = new User().with {
+            it.id = "id"
+            it.phonePin = null
+            it
+        }
+
+        when:
+        service.verifyPhonePinOnUser(user.id, "123231")
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, NoPinSetException, ErrorCodes.ERROR_CODE_PHONE_PIN_NOT_FOUND, "The user has not set a Phone PIN.")
     }
 
     def "verifyPhonePinOnUser: Verify incorrect phone pin return false"() {

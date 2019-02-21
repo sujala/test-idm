@@ -137,7 +137,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, emptyPhonePin)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Invalid phone pin.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Must supply a Phone PIN.")
 
         when: "verify phone pin with incorrect phone pin"
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin incorrectPhonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
@@ -147,7 +147,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, incorrectPhonePin)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect phone pin for the user.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect Phone PIN.")
 
         cleanup:
         try {
@@ -202,7 +202,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, incorrectPhonePin)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect phone pin for the user.")
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect Phone PIN.")
 
         cleanup:
         try {

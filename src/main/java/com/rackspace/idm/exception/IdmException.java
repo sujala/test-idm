@@ -39,4 +39,8 @@ public class IdmException extends RuntimeException {
         return ErrorCodes.generateErrorCodeFormattedMessage(errorCode, super.getMessage());
     }
 
+    public String getRawMessage()  {
+        return super.getMessage();
+    }
+
 }
