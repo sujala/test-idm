@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+import copy
+
 from nose.plugins.attrib import attr
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -56,15 +58,23 @@ class TestImpersonateUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
 
         token_id = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+
+        modified_schema = copy.deepcopy(tokens_json.impersonation_item)
+        modified_schema['properties'][const.ACCESS]['properties'][const.USER][
+            'required'].remove(const.RAX_AUTH_PHONE_PIN)
         self.assertSchema(response=resp,
-                          json_schema=tokens_json.impersonation_item)
+                          json_schema=modified_schema)
 
         # Validate impersonation token
         resp = self.identity_admin_client.validate_token(
             token_id=token_id)
         self.assertEqual(resp.status_code, 200)
+        modified_validate_schema = copy.deepcopy(
+            tokens_json.impersonation_item)
+        modified_validate_schema['properties'][const.ACCESS]['properties'][
+            const.USER]['required'].remove(const.RAX_AUTH_PHONE_PIN)
         self.assertSchema(response=resp,
-                          json_schema=tokens_json.validate_token)
+                          json_schema=modified_validate_schema)
 
     @tags('positive', 'p1', 'regression')
     def test_analyze_impersonation_token(self):
