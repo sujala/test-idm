@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.BaseUser;
@@ -49,14 +50,19 @@ public class DefaultPhonePinService implements PhonePinService {
     public boolean verifyPhonePinOnUser(String userId, String pin) {
         EndUser user = identityUserService.checkAndGetEndUserById(userId);
 
+        Audit audit = Audit.verifyPhonePin(user);
         if (user.getPhonePin() == null) {
+            audit.fail("User has not set a Phone PIN.");
             throw new NoPinSetException();
         }
 
         // A blank pin must never match a pin on a user
         if (StringUtils.isNotBlank(pin) && StringUtils.equals(pin, user.getPhonePin())) {
+            audit.succeed();
             return true;
         }
+
+        audit.fail("Incorrect Phone PIN provided.");
         return false;
     }
 
