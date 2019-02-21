@@ -37,9 +37,10 @@ user_item = {
         const.RAX_AUTH_DEFAULT_REGION: {'type': 'string',
                                         'enum': const.DC_LIST},
         const.ROLES: {'type': 'array'},
-        const.RAX_AUTH_SESSION_TIMEOUT: {'type': 'string'}},
+        const.RAX_AUTH_SESSION_TIMEOUT: {'type': 'string'},
+        const.RAX_AUTH_PHONE_PIN: {'type': 'string'}},
     'required': [const.RAX_AUTH_DEFAULT_REGION, const.ROLES, const.ID,
-                 const.NAME]
+                 const.NAME, const.RAX_AUTH_PHONE_PIN]
 }
 
 validate_token = {
@@ -173,4 +174,3 @@ analyze_token_revoked[
 
 impersonation_item = copy.deepcopy(validate_token)
 impersonation_item['properties'][const.ACCESS]['required'].remove('user')
-del impersonation_item['properties'][const.ACCESS]['properties']['user']
