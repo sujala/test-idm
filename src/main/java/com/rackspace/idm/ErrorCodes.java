@@ -167,7 +167,7 @@ public final class ErrorCodes {
 
     //Password Blacklist
     public static final String ERROR_CODE_BLACKLISTED_PASSWORD = "PB-000";
-    public static final String ERROR_CODE_BLACKLISTED_PASSWORD_MSG = "Password provided is blacklisted and had been publicly compromised before. Please try a different password.";
+    public static final String ERROR_CODE_BLACKLISTED_PASSWORD_MSG = "The password you submitted resembles one or more found in compromised data sets on the Internet, so we did not save it. Instead, use a new unique, strong password.";
 
     /**
      * PLEASE ADD REUSABLE ERROR MESSAGES HERE.
