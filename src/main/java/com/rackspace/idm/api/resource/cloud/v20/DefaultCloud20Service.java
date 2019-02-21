@@ -871,8 +871,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(ERROR_UNVERIFIED_USERS_REQUIRED_VALID_EMAIL_ADDRESS, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
 
-            Iterable<User> usersWithEmailAddressInDomain = identityUserService.getProvisionedUsersByDomainIdAndEmail(domain.getDomainId(), user.getEmail());
-            if (usersWithEmailAddressInDomain != null && usersWithEmailAddressInDomain.iterator().hasNext()) {
+            /*
+            An unverified user can only use an email address that is *not* already in use by another unverified user within the domain
+             */
+            ListUsersSearchParams unverifiedUserSearchParams = new ListUsersSearchParams(null, user.getEmail(), null, user.getDomainId(), null, UserType.UNVERIFIED.name(), new PaginationParams(0, 1));
+            PaginatorContext<EndUser> paginatorContext = this.identityUserService.getEndUsersPaged(unverifiedUserSearchParams);
+            if (paginatorContext != null && paginatorContext.getTotalRecords() > 0) {
                 throw new DuplicateException(ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN, ErrorCodes.ERROR_CODE_INVALID_VALUE);
             }
 
