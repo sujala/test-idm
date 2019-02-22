@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
+import static com.rackspace.idm.GlobalConstants.ERROR_MSG_USER_S_NOT_FOUND;
 import static com.rackspace.idm.GlobalConstants.MOSSO;
 import static com.rackspace.idm.GlobalConstants.NAST;
 
@@ -1352,7 +1353,7 @@ public class DefaultUserService implements UserService {
         User user = getUserById(id);
 
         if (user == null) {
-            String errMsg = String.format("User %s not found", id);
+            String errMsg = String.format(ERROR_MSG_USER_S_NOT_FOUND, id);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }

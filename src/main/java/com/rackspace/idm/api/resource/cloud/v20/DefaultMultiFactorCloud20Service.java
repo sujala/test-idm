@@ -57,6 +57,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.rackspace.idm.GlobalConstants.NOT_AUTHORIZED_MSG;
+
 @Component
 public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Service {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMultiFactorCloud20Service.class);
@@ -843,11 +845,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 //breaks from standard as user-managers can change setting on user-admin
                 if (!precedenceValidator.hasGreaterOrEqualAccess(requesterIdentityClientRole, targetIdentityClientRole)
                         && targetIdentityRole != IdentityUserTypeEnum.USER_ADMIN) {
-                    throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
+                    throw new ForbiddenException(NOT_AUTHORIZED_MSG);
                 }
                 authorizationService.verifyDomain(caller, targetUser);
             } else {
-                throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
+                throw new ForbiddenException(NOT_AUTHORIZED_MSG);
             }
         }
     }

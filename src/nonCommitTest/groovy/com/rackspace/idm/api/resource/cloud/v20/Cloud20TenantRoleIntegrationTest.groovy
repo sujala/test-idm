@@ -4,6 +4,7 @@ import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.http.HttpStatus
 import org.mockserver.verify.VerificationTimes
@@ -265,7 +266,7 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == 403
-        response.getEntity(IdentityFault).value.message == DefaultAuthorizationService.NOT_AUTHORIZED_MSG
+        response.getEntity(IdentityFault).value.message == GlobalConstants.NOT_AUTHORIZED_MSG
     }
 
     def "Allow deleting RCN roles on user"() {

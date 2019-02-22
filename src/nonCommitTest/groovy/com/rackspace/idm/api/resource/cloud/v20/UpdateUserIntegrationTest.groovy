@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.PatternErrorMessages
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
@@ -15,7 +16,6 @@ import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
@@ -511,21 +511,21 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userAdmin.username), serviceAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ user manager token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(userManager.username), serviceAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ default user token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(defaultUser.username), serviceAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -587,21 +587,21 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userAdmin.username), identityAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ user manager token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(userManager.username), identityAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ default user token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(defaultUser.username), identityAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -669,7 +669,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userAdmin2.username), userAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ user manager token from same domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -683,21 +683,21 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userManagerDifferentDomain.username), userAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ default user token from same domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(defaultUserSameDomain.username), userAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ default user token from different domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(defaultUserDifferentDomain.username), userAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -777,7 +777,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userAdmin2.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ user manager token from same domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -791,21 +791,21 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userManagerDifferentDomain.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ default user token from same domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(defaultUserSameDomain.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ default user token from different domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(defaultUserDifferentDomain.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         cleanup:
         reloadableConfiguration.reset()
@@ -884,7 +884,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userAdmin2.username), defaultUser.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ user manager token from same domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -898,21 +898,21 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userManagerDifferentDomain.username), defaultUser.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ default user token from same domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(defaultUserSameDomain.username), defaultUser.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         when: "update w/ default user token from different domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getToken(defaultUserDifferentDomain.username), defaultUser.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        assertUsernameUpdated(response, userUpdates, false, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         cleanup:
         reloadableConfiguration.reset()

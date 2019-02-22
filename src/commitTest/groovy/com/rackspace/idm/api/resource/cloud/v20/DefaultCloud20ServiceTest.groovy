@@ -2530,75 +2530,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "Reset phone pin verifies user level access throws NotAuthorizedException"() {
         when:
-        def result = service.resetPhonePin(authToken, "userId").build()
+        def result = service.resetPhonePin(authToken, "userId", false).build()
 
         then:
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> { throw new NotAuthorizedException() }
 
         assert result.status == 401
-    }
-
-    def "Reset phone pin successfully resets the phone pin and returns pin"() {
-        given:
-        BaseUser caller = entityFactory.createUser().with {
-            it.uniqueId = "uniqueId"
-            it.id = "userId"
-            it
-        }
-        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
-        def phonePinEntity = entityFactory.createPhonePin()
-
-        when:
-        def result = service.resetPhonePin(authToken, "userId").build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContextHolder.getRequestContext().getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
-        1 * identityUserService.checkAndGetEndUserById(_) >> user
-        1 * phonePinService.resetPhonePin(_) >> phonePinEntity
-
-        assert result.status == 200
-
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = result.entity
-        assert phonePin.pin == phonePinEntity.pin
-    }
-
-    def "Reset phone pin returns 403 with caller-userId and user-userId are different"() {
-        given:
-        BaseUser caller = entityFactory.createUser().with {
-            it.uniqueId = "uniqueId"
-            it.id = "userId"
-            it
-        }
-
-        when:
-        def result = service.resetPhonePin(authToken, "userId2").build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-
-        assert result.status == 403
-    }
-
-    def "Reset phone pin returns 403 when caller is Service admin"() {
-        given:
-        BaseUser caller = entityFactory.createUser().with {
-            it.uniqueId = "uniqueId"
-            it.id = "userId1"
-            it
-        }
-
-        when:
-        def result = service.resetPhonePin(authToken, "userId").build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContextHolder.getRequestContext().getEffectiveCallersUserType() >> IdentityUserTypeEnum.SERVICE_ADMIN
-
-        assert result.status == 403
     }
 
     def "Reset phone pin returns 403 for a racker impersonated token"() {
@@ -2611,13 +2548,193 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest() >> true
 
         when:
-        def result = service.resetPhonePin(authToken, "userId").build()
+        def result = service.resetPhonePin(authToken, "userId", false).build()
 
         then:
         1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
 
         assert result.status == 403
+    }
+
+    def "Reset phone pin returns 403 for default user"() {
+        given:
+        def caller = entityFactory.createUser()
+
+        when:
+        def result = service.resetPhonePin(authToken, "userId", false).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.DEFAULT_USER
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
+
+        result.status == SC_FORBIDDEN
+    }
+
+    @Unroll
+    def "Reset phone pin returns 403 for self update #callerType"() {
+        given:
+        def caller = entityFactory.createUser()
+
+        when:
+        def result = service.resetPhonePin(authToken, caller.id, false).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
+
+        result.status == SC_FORBIDDEN
+
+        where:
+        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
+    }
+
+    @Unroll
+    def "Reset phone pin returns 403 for impersonated token #callerType"() {
+        given:
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createUser()
+
+        when:
+        def result = service.resetPhonePin(authToken, user.id, false).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
+        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> true
+
+        result.status == SC_FORBIDDEN
+
+        where:
+        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
+    }
+
+    @Unroll
+    def "Reset phone pin returns 404 for users outside the domain #callerType #domainId"() {
+        given:
+        def caller = entityFactory.createUser("caller", "callerId", domainId, "REGION")
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+
+        when:
+        def result = service.resetPhonePin(authToken, user.id, false).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
+        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
+        1 * userService.checkAndGetUserById(user.id) >> user
+
+        result.status == SC_NOT_FOUND
+
+        where:
+        callerType                          | domainId
+        IdentityUserTypeEnum.USER_ADMIN     | null
+        IdentityUserTypeEnum.USER_ADMIN     | "domainId2"
+        IdentityUserTypeEnum.USER_MANAGER   | null
+        IdentityUserTypeEnum.USER_MANAGER   | "domainId2"
+    }
+
+    @Unroll
+    def "Reset phone pin returns 403 for users without precedence  #callerType"() {
+        given:
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+
+        when:
+        def result = service.resetPhonePin(authToken, user.id, false).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
+        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user) >> {throw new ForbiddenException()}
+
+        result.status == SC_FORBIDDEN
+
+        where:
+        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
+    }
+
+    @Unroll
+    def "Reset phone pin returns 204 for valid authorization #callerType"() {
+        given:
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
+
+        when:
+        def result = service.resetPhonePin(authToken, user.id, false).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
+        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
+        1 * phonePinService.resetPhonePin(user)
+
+        result.status == SC_NO_CONTENT
+
+        where:
+        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
+    }
+
+    @Unroll
+    def "Reset phone pin returns 204 with onlyIfMissing query param when pin is not set #callerType"() {
+        given:
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION").with {
+            it.phonePin = null
+            it
+        }
+
+        when:
+        def result = service.resetPhonePin(authToken, user.id, true).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
+        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
+        1 * phonePinService.resetPhonePin(user)
+
+        result.status == SC_NO_CONTENT
+
+        where:
+        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
+    }
+
+    @Unroll
+    def "Reset phone pin returns 409 with onlyIfMissing query param when pin is already set #callerType"() {
+        given:
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createUser("user", "userId", "domainId", "REGION").with {
+            it.phonePin = "123456"
+            it
+        }
+
+        when:
+        def result = service.resetPhonePin(authToken, user.id, true).build()
+
+        then:
+        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
+        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
+        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
+        0 * phonePinService.resetPhonePin(user)
+
+        result.status == SC_CONFLICT
+
+        where:
+        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
     }
 
     def "getAdminsForDefaultUser - Non-Expired Fed users will return admins"() {

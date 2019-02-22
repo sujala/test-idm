@@ -23,9 +23,10 @@ import org.springframework.util.Assert;
 import javax.annotation.PostConstruct;
 import java.util.*;
 
+import static com.rackspace.idm.GlobalConstants.NOT_AUTHORIZED_MSG;
+
 @Component
 public class DefaultAuthorizationService implements AuthorizationService {
-    public static final String NOT_AUTHORIZED_MSG = "Not Authorized";
     private static final Logger logger = LoggerFactory.getLogger(DefaultAuthorizationService.class);
 
     @Autowired

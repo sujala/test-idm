@@ -42,7 +42,6 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.CreateIdentityAdminService;
 import com.rackspace.idm.domain.service.impl.CreateUserAdminService;
 import com.rackspace.idm.domain.service.impl.CreateUserUtil;
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
@@ -115,6 +114,9 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import static com.rackspace.idm.GlobalConstants.ERROR_MSG_USER_S_NOT_FOUND;
+import static com.rackspace.idm.GlobalConstants.NOT_AUTHORIZED_MSG;
 
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
@@ -2931,26 +2933,50 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder resetPhonePin(String authToken, String userId) {
+    public ResponseBuilder resetPhonePin(String authToken, String userId, boolean onlyIfMissing) {
         try {
             // Verify if the token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            EndUser user;
 
-            // Verify if the caller is either identity:admin or self
-            if (requestContextHolder.getRequestContext().getEffectiveCallersUserType() != IdentityUserTypeEnum.IDENTITY_ADMIN
-                    && !StringUtils.equals(caller.getId(), userId)) {
+            // Verify if the caller is either identity:user-admin identity:user-manage or has the role identity:phone-pin-admin
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+
+            boolean isSelf = caller.getId().equals(userId);
+            if(isSelf) {
                 throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
             }
-            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
-                throw new ForbiddenException("Impersonation tokens cannot be used to reset the phone PIN.", ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+            if (requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest()) {
+                throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
             }
-            PhonePinProtectedUser phonePinProtectedUser = getPhonePinProtectedUser(userId);
-            com.rackspace.idm.domain.entity.PhonePin phonePinEntity = phonePinService.resetPhonePin(phonePinProtectedUser);
-            PhonePin phonePin =  jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createPhonePin();
-            phonePin.setPin(phonePinEntity.getPin());
+            if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName())) {
+                user = userService.checkAndGetUserById(userId);
+            } else if (callerType == IdentityUserTypeEnum.USER_ADMIN || callerType == IdentityUserTypeEnum.USER_MANAGER) {
+                user = userService.checkAndGetUserById(userId);
+                if (caller.getDomainId() == null || !caller.getDomainId().equals(user.getDomainId())) {
+                    String errMsg = String.format(ERROR_MSG_USER_S_NOT_FOUND, user.getId());
+                    logger.warn(errMsg);
+                    throw new NotFoundException(errMsg);
+                }
+                precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user);
+            } else {
+                String errMsg = NOT_AUTHORIZED_MSG;
+                logger.warn(errMsg);
+                throw new ForbiddenException(errMsg);
+            }
 
-            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createPhonePin(phonePin).getValue());
+            if (onlyIfMissing) {
+                if (StringUtils.isEmpty(user.getPhonePin())) {
+                    phonePinService.resetPhonePin((PhonePinProtectedUser) user);
+                } else {
+                    return exceptionHandler.conflictExceptionResponse(ErrorCodes.ERROR_CODE_USER_ALREADY_HAS_A_PHONE_PIN);
+                }
+            } else {
+                phonePinService.resetPhonePin((PhonePinProtectedUser) user);
+            }
+
+            return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -3113,7 +3139,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Iterable<? extends EndUser> result = filterOutUsersInaccessibleByCaller(userList, caller);
             if (!result.iterator().hasNext()) {
                 // If the user was filtered, the caller doesn't have access to that user
-                throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
+                throw new ForbiddenException(NOT_AUTHORIZED_MSG);
             }
 
             org.openstack.docs.identity.api.v2.User userResponse = userConverterCloudV20.toUser(user);
@@ -5728,7 +5754,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         //if NOT expiring own token, the caller token MUST not be a scoped token.
         if (StringUtils.isNotBlank(scopeAccessAdmin.getScope())) {
-            throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
+            throw new ForbiddenException(NOT_AUTHORIZED_MSG);
         }
 
         BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
@@ -5745,7 +5771,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         // users.
         if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
             if (scopeAccess instanceof RackerScopeAccess) {
-                throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
+                throw new ForbiddenException(NOT_AUTHORIZED_MSG);
             }
             String userId = ((BaseUserToken) scopeAccess).getIssuedToUserId();
             EndUser user = identityUserService.getEndUserById(userId);

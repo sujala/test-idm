@@ -438,7 +438,7 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         then: "Return 403"
         // All faults are returned in JSON even if the Accept header is 'text/yaml'
         response.headers.put(HttpHeaders.CONTENT_TYPE, Arrays.asList(MediaType.APPLICATION_JSON))
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultAuthorizationService.NOT_AUTHORIZED_MSG)
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, GlobalConstants.NOT_AUTHORIZED_MSG)
 
         and: "no event was posted"
         cloudFeedsMock.verify(

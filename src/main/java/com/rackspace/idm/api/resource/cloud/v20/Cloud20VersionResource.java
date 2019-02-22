@@ -1502,11 +1502,12 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/RAX-AUTH/phone-pin/reset")
     public Response resetPhonePin(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) {
+            @PathParam("userId") String userId,
+            @QueryParam("only_if_missing") boolean onlyIfMissing) {
         if(!identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()){
             throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
         }
-        return cloud20Service.resetPhonePin(authToken, userId).build();
+        return cloud20Service.resetPhonePin(authToken, userId, onlyIfMissing).build();
     }
 
     // ******************************************************* //

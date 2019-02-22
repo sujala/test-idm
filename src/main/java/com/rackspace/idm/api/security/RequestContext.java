@@ -28,6 +28,8 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.rackspace.idm.GlobalConstants.NOT_AUTHORIZED_MSG;
+
 /**
  * The request context is a container for thread variables. Spring will automatically create a new one per request, meaning
  * the RequestContext object itself will only exist for the lifetime of the request and it will only be used within the
@@ -169,7 +171,7 @@ public class RequestContext {
                     // All end users MUST belong to a domain or it's considered invalid data. Log specific error code
                     // to identify this invalid data scenario.
                     logger.error(String.format("Attempted to retrieve roles for user '%s', but user has no domain!", effectiveCaller.getDomainId()));
-                    throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG, ErrorCodes.ERROR_CODE_INVALID_DOMAIN_FOR_USER);
+                    throw new ForbiddenException(NOT_AUTHORIZED_MSG, ErrorCodes.ERROR_CODE_INVALID_DOMAIN_FOR_USER);
                 }
                 userTenantRoles = tenantService.getSourcedRoleAssignmentsForUser((EndUser) effectiveCaller).asTenantRoles();
             } else {

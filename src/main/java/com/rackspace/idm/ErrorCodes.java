@@ -121,6 +121,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_PHONE_PIN_NOT_FOUND = "PP-000";
     public static final String ERROR_CODE_PHONE_PIN_BAD_REQUEST = "PP-001";
     public static final String ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION = "PP-002";
+    public static final String ERROR_CODE_USER_ALREADY_HAS_A_PHONE_PIN = "User already has a phone PIN";
 
     //PHONE PIN ERROR MESSAGES
     public static final String ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST = "Use six numeric digits (such as 871694). A Phone PIN cannot include more than three repeating numbers. (444 is OK, but 4444 is not.) A Phone PIN cannot include more than three sequential numbers. (234 is OK, but 2345 is not.)";

@@ -1132,8 +1132,17 @@ class Cloud20Methods {
     }
 
     def resetPhonePin(String token, String userId, MediaType accept = MediaType.APPLICATION_XML_TYPE) {
+        resetPhonePin(token, userId, false, accept)
+    }
+
+    def resetPhonePin(String token, String userId, boolean onlyIfMissing, MediaType accept = MediaType.APPLICATION_XML_TYPE) {
+        /** {@link Cloud20VersionResource#resetPhonePin()} */
         initOnUse()
-        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).path(SERVICE_PATH_RESET).header(X_AUTH_TOKEN, token).accept(accept).post(ClientResponse)
+        def queryParams = new MultivaluedMapImpl()
+        if (onlyIfMissing != null) {
+            queryParams.add("only_if_missing", onlyIfMissing)
+        }
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).path(SERVICE_PATH_RESET).queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(accept).post(ClientResponse)
     }
 
     def validateToken(String token, String validateToken, accept = APPLICATION_XML_TYPE){
