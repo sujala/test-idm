@@ -44,11 +44,13 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.NOT_AUTHORIZED;
+import static java.lang.Math.abs;
 
 @Component
 public class Validator20 {
@@ -1181,5 +1183,81 @@ public class Validator20 {
             throw new BadRequestException(ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD_MSG,
                     ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD);
         }
+    }
+
+    /**
+     * This method validates phone against below conditions
+     * and throws error if one or more below condition is not satisfied.
+     * 1. Numeric with length of 6 digits.
+     * 2. Max 3 repeating numbers allowed.
+     * 3. Max 3 sequential numbers allowed.
+     *
+     * @param phonePin
+     * @return void
+     */
+    public void validatePhonePin(String phonePin) {
+        if (!validatePhonePinLength(phonePin) || isPhonePinRepeating(phonePin) || isPhonePinSequential(phonePin)) {
+            throw new BadRequestException(ErrorCodes.ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST, ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Ensure that phone pin is Limited to 3 repeating numbers max.
+     * e.g. 111786 and 121212 is okay, 111186 is not okay.
+     *
+     * @param phonePin
+     * @return Boolean
+     */
+     Boolean isPhonePinRepeating(String phonePin) {
+        Pattern pattern = Pattern.compile("([0-9])\\1{3}");
+        Matcher matcher = pattern.matcher(phonePin);
+        return matcher.find();
+    }
+
+    /**
+     * Ensure that phone pin is Limit to 3 sequential numbers max
+     * e.g. 345 is okay, 3456 is not okay.
+     *
+     * @param phonePin
+     * @return Boolean
+     */
+    Boolean isPhonePinSequential(String phonePin) {
+        char[] lst = phonePin.toCharArray();
+        int sequenceCount = 0;
+
+        boolean isAscendingSequenced = checkSequence(phonePin, lst, sequenceCount, true);
+        boolean isDescendingSequenced = checkSequence(phonePin, lst, sequenceCount,false);
+
+        // if 3 number exists in ascending or descending sequence return true, else false to say they are non sequential
+        return isAscendingSequenced || isDescendingSequenced ;
+    }
+
+    private boolean checkSequence(String phonePin, char[] lst, int sequenceCount , boolean isAscending) {
+
+        Integer gap = isAscending ? 1 : -1;
+        for (int i = 0; i < phonePin.length() - 1; i++) {
+            int difference = lst[i + 1] - lst[i];
+            if (difference == gap) {
+
+                sequenceCount++;
+                if (sequenceCount >= 3) {
+                    return true;
+                }
+            } else {
+                sequenceCount = 0;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Ensure that phone pin is numeric and has lenght of 6 digits.
+     * e.g. 111786 and 121212 is okay, 111186549 is not okay.
+     *
+     * @param phonePin
+     * @return Boolean
+     */
+     Boolean validatePhonePinLength(String phonePin) {
+        return StringUtils.isNumeric(phonePin) && phonePin.length() == GlobalConstants.PHONE_PIN_SIZE;
     }
 }

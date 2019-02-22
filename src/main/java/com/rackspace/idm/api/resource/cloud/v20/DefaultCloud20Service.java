@@ -1058,13 +1058,22 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             EndUser retrievedUser = identityUserService.getEndUserById(userId);
 
+            boolean isPhonePinFeatureEnabled = identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag();
+            boolean isUnverifiedUser = retrievedUser instanceof User && ((User) retrievedUser).isUnverified();
+            boolean isFederatedUser = retrievedUser instanceof FederatedUser;
+            boolean isSelf = caller.getId().equals(userId);
+            boolean impersonationToken = requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest();
+            boolean sendUserEvent = false;
+            String phonePinInRequest = user.getPhonePin();
+
+
             if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
                 user.setContactId(null);
 
                 // Only service and identity admins can update a federated and unverified user.
                 if (retrievedUser != null
-                        && (retrievedUser instanceof FederatedUser
-                        || (retrievedUser instanceof User && ((User) retrievedUser).isUnverified()))) {
+                        && (isFederatedUser
+                        || isUnverifiedUser)) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
@@ -1082,20 +1091,39 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Validate contactId
             validator20.validateAttributeIsNotEmpty("contactId", user.getContactId());
             validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
+            if (phonePinInRequest == null || !isPhonePinFeatureEnabled || !isSelf || impersonationToken || isUnverifiedUser ) {
+                user.setPhonePin(null);
+            } else {
+                // Validate phone pin to ensure all acceptance criteria
+                validator20.validatePhonePin(phonePinInRequest);
+            }
 
-            boolean sendUserEvent = false;
-            if (retrievedUser instanceof FederatedUser) {
+
+            if (isFederatedUser) {
                 FederatedUser fedUser = (FederatedUser) retrievedUser;
+                boolean phonePinUpdated = false;
+                boolean contactIdUpdated = false;
 
                 // Copy over the attributes allowed to be updated and only update if one is changed.
                 if (StringUtils.isNotBlank(user.getContactId())) {
                     if (!user.getContactId().equalsIgnoreCase(fedUser.getContactId())) {
                         fedUser.setContactId(user.getContactId());
-                        identityUserService.updateFederatedUser(fedUser);
-                        sendUserEvent = true;
+                        contactIdUpdated = true;
                     }
                 }
-            } else if (retrievedUser instanceof User && ((User)retrievedUser).isUnverified()) {
+
+                if (StringUtils.isNotBlank(user.getPhonePin())){
+                    fedUser.setPhonePin(user.getPhonePin());
+                    phonePinUpdated = true;
+                }
+
+                // update Fed user if any attribute in fed user was modified.
+                if (phonePinUpdated || contactIdUpdated) {
+                    identityUserService.updateFederatedUser(fedUser);
+                    sendUserEvent = true;
+                }
+
+            } else if (isUnverifiedUser) {
                 User unverifiedUser = (User) retrievedUser;
 
                 // Copy over the attributes allowed to be updated and only update if one is changed.
@@ -1119,7 +1147,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                     }
                 }
 
-                boolean isUpdatingSelf = caller.getId().equals(userId);
                 IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
 
                 // Just identity admins and service admins can update 'tokenFormat', but only when ae tokens are enabled
@@ -1127,7 +1154,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     user.setTokenFormat(null);
                 }
 
-                if (!isUpdatingSelf) {
+                if (!isSelf) {
                     precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(retrievedUser);
                 }
 
@@ -1142,7 +1169,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     validator.isUsernameValid(user.getUsername());
                 }
 
-                if (user.isEnabled() != null && !user.isEnabled() && isUpdatingSelf) {
+                if (user.isEnabled() != null && !user.isEnabled() && isSelf) {
                     throw new BadRequestException("User cannot enable/disable his/her own account.");
                 }
 

@@ -697,4 +697,56 @@ class Validator20Test extends RootServiceTest {
         Exception ex = thrown()
         IdmExceptionAssert.assertException(ex, BadRequestException, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [CLOUD_US]")
     }
+
+    @Unroll
+    def "Test to check phone pin validation error on pin: #testPin"(){
+
+        when:
+        service.validatePhonePin(testPin)
+
+        then: "Validation error is thrown"
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, BadRequestException, ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST, ErrorCodes.ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST)
+
+        where:
+        testPin << [
+                "aseemtest",        // invalid characters
+                "abc#??sng^&*(st",  // invalid characters
+                "78612",            // less than 6 digits
+                "7861249",          // more than 6 digits
+                "666666",           // Same digit throughout
+                "666697",           // Repeats > 3 at beginning of PIN
+                "123456",           // Ascending sequence > 3 for whole PIN
+                "123498",           // Ascending sequence > 3 at beginning of PIN
+                "311234",           // Ascending sequence > 3 at end of PIN
+                "654321",           // Descending sequence > 3 for whole PIN
+                "654378",           // Descending sequence > 3 at beginning of PIN
+                "319876",           // Descending sequence > 3 at end of PIN
+                "-451934",          // Negative number where numeric part is 6 characters
+                "-45193",           // Negative number where string is still 6 characters total
+                "+451934",          // Positive number where numeric part is 6 characters
+                "+45193",           // Positive number where string is still 6 characters total
+                "453.12",           // Decimal where string is still 6 characters total
+                "453.122",          // Decimal where string is still 6 characters total
+        ]
+    }
+
+    def "Test happy path for phone pin validation for pin: #testPin"(){
+
+        when:
+        service.validatePhonePin(testPin)
+
+        then: "It is ok and no exception is thrown"
+        noExceptionThrown()
+
+        where:
+        testPin << [
+                "333197", // 3 same numbers in row at beginning
+                "123678", // 3 sequential numbers in row at beginning and end
+                "987321", // 3 descending numbers in row both at beginning and end
+                "456333", // 3 ascending AND 3 repeating
+                "987333", // 3 descending and 3 repeating
+                "121212"  // non sequential numbers having difference of 1
+        ]
+    }
 }

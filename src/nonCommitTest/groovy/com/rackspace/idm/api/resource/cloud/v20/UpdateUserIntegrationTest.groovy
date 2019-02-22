@@ -962,6 +962,162 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(user)
     }
 
+    def "Test phone pin feature flag"() {
+        given:
+        def username = testUtils.getRandomUUID("username" )
+        def user = utils.createUser(utils.getServiceAdminToken(), username)
+        def userForUpdate = v2Factory.createUser(user.id, user.username)
+        def selfToken = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
+
+        def updatedPhonePin = "786124"
+
+        when: "Feature flag is OFF, phone will not get updated"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
+        userForUpdate.phonePin = updatedPhonePin
+        cloud20.updateUser(selfToken, user.id, userForUpdate)
+
+        then: "Phone Pin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        when: "Feature flag is ON, phone will get updated"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        userForUpdate.phonePin = updatedPhonePin
+        cloud20.updateUser(selfToken, user.id, userForUpdate)
+
+        then: "Pin must get updated"
+        updatedPhonePin == getPhonePinForUser(selfToken, user)
+
+        cleanup:
+        utils.deleteUser(user)
+    }
+
+    def "Test update user phone pin"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        def domainId = utils.createDomain()
+        def users, identityAdmin, userAdmin, userManager, user
+        (identityAdmin, userAdmin, userManager, user) = utils.createUsers(domainId)
+        def userForUpdate = v2Factory.createUser(user.id, user.username)
+
+
+        def selfToken = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
+        def serviceAdminToken = utils.getIdentityAdminToken()
+        def identityAdminToken = utils.getToken(identityAdmin.username, Constants.DEFAULT_PASSWORD)
+        def userAdminToken = utils.getToken(userAdmin.username, Constants.DEFAULT_PASSWORD)
+        def userMangeToken = utils.getToken(userManager.username, Constants.DEFAULT_PASSWORD)
+        def impersonatedToken = utils.impersonateWithRacker(user).token.id
+
+        def defaultPhonePin = testUtils.getEntity(cloud20.getUserById(selfToken, user.id), User).phonePin
+        def updatedPhonePin = "786124"
+
+        when: "User Service admin updates the pin for user"
+        userForUpdate.phonePin = updatedPhonePin
+        cloud20.updateUser(serviceAdminToken, user.id, userForUpdate)
+
+        then: "Pin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        and: "user will still have the default phone pin"
+        defaultPhonePin == getPhonePinForUser(selfToken, user)
+
+        when: "User identity admin updates the pin for user"
+        userForUpdate.phonePin = updatedPhonePin
+        cloud20.updateUser(identityAdminToken, user.id, userForUpdate)
+
+        then: "Pin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        and: "user will still have the default phone pin"
+        defaultPhonePin == getPhonePinForUser(selfToken, user)
+
+        when: "User admin updates the pin for user"
+        userForUpdate.phonePin = updatedPhonePin
+        cloud20.updateUser(userAdminToken, user.id, userForUpdate)
+
+        then: "Pin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        and: "user will still have the default phone pin"
+        defaultPhonePin == getPhonePinForUser(selfToken, user)
+
+        when: "User manager updates the pin for user"
+        userForUpdate.phonePin = updatedPhonePin
+        cloud20.updateUser(userMangeToken, user.id, userForUpdate)
+
+        then: "Pin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        and: "user will still have the default phone pin"
+        defaultPhonePin == getPhonePinForUser(selfToken, user)
+
+        when: "Impersonated user updates the pin for user"
+        userForUpdate.phonePin = updatedPhonePin
+        cloud20.updateUser(impersonatedToken, user.id, userForUpdate)
+
+        then: "Pin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        and: "user will still have the default phone pin"
+        defaultPhonePin == getPhonePinForUser(selfToken, user)
+
+        when: "User self updates the pin"
+        userForUpdate.phonePin = updatedPhonePin
+        cloud20.updateUser(selfToken, user.id, userForUpdate)
+
+        then: "Pin must get updated"
+        updatedPhonePin == getPhonePinForUser(selfToken, user)
+
+        cleanup:
+        utils.deleteUser(user)
+    }
+
+    def "Test phone pin error validation message"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        def username = testUtils.getRandomUUID("username" )
+        def user = utils.createUser(utils.getServiceAdminToken(), username)
+        def userForUpdate = v2Factory.createUser(user.id, user.username)
+        def selfToken = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
+
+        when: "invalid pins are passed in payload"
+        userForUpdate.phonePin = "abc#??sng^&*(st"
+        def userResponse = cloud20.updateUser(selfToken, user.id, userForUpdate)
+
+        then: "Phone Pin must not get updated"
+        getPhonePinForUser(selfToken, user) != "abc#??sng^&*(st"
+
+        and: "Validation error must be thrown"
+        IdmAssert.assertOpenStackV2FaultResponse(userResponse, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST, ErrorCodes.ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST)
+    }
+
+    def "Test valid phone pin combinations accepted while updating users phone pin"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        def username = testUtils.getRandomUUID("username" )
+        def user = utils.createUser(utils.getServiceAdminToken(), username)
+        def userForUpdate = v2Factory.createUser(user.id, user.username)
+        def selfToken = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
+        def phonePinToUpdate = "786124"
+
+        when: "Valid / acceptable pins are passed in payload"
+        userForUpdate.phonePin = phonePinToUpdate
+        cloud20.updateUser(selfToken, user.id, userForUpdate)
+
+        then: "Phone Pin must  get updated"
+        phonePinToUpdate == getPhonePinForUser(selfToken, user)
+    }
+
+    /**
+     *
+     * @param selfToken
+     * @param user
+     * @return String phonePin
+     */
+    private String getPhonePinForUser(String selfToken, User user) {
+        return testUtils.getEntity(cloud20.getUserById(selfToken, user.id), User).phonePin
+    }
+
+
     void assertUsernameUpdated(response, userUpdates, usernameCanBeUpdated, errorMessage = DefaultCloud20Service.USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE) {
         if (usernameCanBeUpdated) {
             assert response.status == 200
