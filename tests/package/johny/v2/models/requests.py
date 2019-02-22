@@ -1263,3 +1263,17 @@ class AcceptInviteUnverifiedUser(base.AutoMarshallingModel):
                     const.SECRET_QUESTION: "Who are you??"}
             }}
         return json.dumps(register_user_request)
+
+
+class PhonePin(base.AutoMarshallingModel):
+
+    def __init__(self, phone_pin):
+        self.phone_pin = phone_pin
+
+    def _obj_to_json(self):
+        verify_phone_pin_request = {
+            const.RAX_AUTH_PHONE_PIN: {
+                const.PIN: self.phone_pin
+            }
+        }
+        return json.dumps(verify_phone_pin_request)

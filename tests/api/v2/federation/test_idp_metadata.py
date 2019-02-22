@@ -58,6 +58,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
     def test_add_idp_auth_fed_user(self):
         '''
         Test to Add IDP with metadata & auth as a fed user for the domain.
+        It also verifies the phone pin for the fed user.
         '''
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
@@ -116,6 +117,27 @@ class TestIDPMetadata(federation.TestBaseFederation):
             const.RAX_AUTH_MULTI_FACTOR_ENABLED)
         self.assertSchema(response=get_resp,
                           json_schema=updated_get_user_schema)
+
+        # verify a correct phone pin
+        fed_user_phone_pin = resp.json()[const.ACCESS][const.USER][
+            const.RAX_AUTH_PHONE_PIN]
+        phone_pin_verify_req = requests.PhonePin(fed_user_phone_pin)
+        verify_resp = self.identity_admin_client.verify_phone_pin_for_user(
+            user_id=fed_user_id, request_object=phone_pin_verify_req)
+        self.assertEqual(verify_resp.status_code, 204)
+
+        # verify an incorrect phone pins
+        wrong_pin = fed_user_phone_pin + '1'
+        phone_pin_verify_req = requests.PhonePin(wrong_pin)
+        verify_resp = self.identity_admin_client.verify_phone_pin_for_user(
+            user_id=fed_user_id, request_object=phone_pin_verify_req)
+        self.assertEqual(verify_resp.status_code, 400)
+
+        wrong_pin = fed_user_phone_pin + ' '
+        phone_pin_verify_req = requests.PhonePin(wrong_pin)
+        verify_resp = self.identity_admin_client.verify_phone_pin_for_user(
+            user_id=fed_user_id, request_object=phone_pin_verify_req)
+        self.assertEqual(verify_resp.status_code, 400)
 
     @tags('positive', 'p0', 'regression')
     @attr(type='regression')

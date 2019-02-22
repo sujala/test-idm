@@ -2014,3 +2014,13 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         return self.request('PUT', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
+
+    def verify_phone_pin_for_user(
+            self, user_id, request_object, requestslib_kwargs=None):
+        """
+        POST v2.0/users/{userId}/RAX-AUTH/phone-pin/verify
+        """
+        url = self.url + const.VERIFY_PHONE_PIN_URL.format(user_id=user_id)
+
+        return self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)

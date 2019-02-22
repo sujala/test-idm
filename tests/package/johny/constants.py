@@ -146,6 +146,7 @@ USER_URL = '/users'
 VALIDATE_TOKENS_URL = '/tokens/{0}'
 VERIFY_OTP_DEVICE_URL = (
     '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices/{device_id}/verify')
+VERIFY_PHONE_PIN_URL = '/users/{user_id}/RAX-AUTH/phone-pin/verify'
 
 '''File or Directory paths'''
 PATH_TO_REPOSE_LOG = '/var/log/repose/current.log'
@@ -347,6 +348,7 @@ PASSWORD_HISTORY_RESTRICTION = 'passwordHistoryRestriction'
 PASSWORD_POLICY = 'passwordPolicy'
 PEM_ENCODED = 'pemEncoded'
 PHONE_PIN = 'phonePin'
+PIN = 'pin'
 PRINCIPAL_DOMAIN_ID = 'principalDomainId'
 PRINCIPAL_ID = 'principalId'
 PRINCIPAL_TYPE = 'principalType'
