@@ -81,6 +81,12 @@ class TestServiceCatalogForImpersonation(base.TestBaseV2):
         self.assertEqual(list_resp.status_code, 200)
         self.assertNotEqual(list_resp.json()[const.ENDPOINTS], [])
 
+        # Validate impersonation token - Verify phone PIN is not returned
+        resp = self.identity_admin_client.validate_token(
+            token_id=impersonation_token)
+        user = resp.json()[const.ACCESS][const.USER]
+        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, user)
+
     @base.base.log_tearDown_error
     @unless_coverage
     def tearDown(self):

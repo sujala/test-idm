@@ -6,6 +6,7 @@ from tests.api.utils import func_helper
 from tests.api.utils import saml_helper
 from tests.api.v2 import base
 from tests.api.v2.federation import federation
+from tests.api.v2.schema import tokens as tokens_json
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
@@ -73,6 +74,14 @@ class TestFedUserContactId(federation.TestBaseFederation):
 
         fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
         self.users.append(fed_user_id)
+
+        # Validate fed token returns the same fields as validate token
+        # for provisioned users.
+        resp = self.identity_admin_client.validate_token(
+            token_id=fed_token_id)
+        self.assertEqual(resp.status_code, 200)
+        self.assertSchema(
+            response=resp, json_schema=tokens_json.validate_token)
 
         # Add Contact ID to the fed user
         contact_id = self.generate_random_string(

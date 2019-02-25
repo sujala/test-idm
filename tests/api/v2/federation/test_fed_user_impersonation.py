@@ -105,6 +105,13 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         idadmin_imp_client = self.generate_client(token=impersonation_token)
         self.validate_get_domain_by_imp_client(client=idadmin_imp_client)
 
+        # Validate fed user impersonation token - Verify phone PIN is not
+        # returned
+        resp = self.identity_admin_client.validate_token(
+            token_id=impersonation_token)
+        user = resp.json()[const.ACCESS][const.USER]
+        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, user)
+
     def validate_get_domain_by_imp_client(self, client):
         get_dom_resp = client.get_domain(domain_id=self.domain_id)
         self.assertEqual(get_dom_resp.status_code, 200)
