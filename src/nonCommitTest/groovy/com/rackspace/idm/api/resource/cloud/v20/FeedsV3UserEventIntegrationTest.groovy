@@ -10,6 +10,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
 
@@ -23,11 +24,17 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityUserService identityUserService
 
+    @Shared
+    def identityAdmin
+
+    @Shared
+    def identityAdminToken
+
     def setupSpec() {
+        resetCloudFeedsMock()
+
         // User version 3 user product schema
         reloadableConfiguration.setProperty(IdentityConfig.FEEDS_USER_PRODUCT_SCHEMA_VERSION_PROP, 3)
-
-        resetCloudFeedsMock()
     }
 
     def cleanupSpec() {
@@ -35,11 +42,20 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
     }
 
+    def setup() {
+        identityAdmin = utils.createIdentityAdmin()
+        identityAdminToken = utils.getToken(identityAdmin.username)
+    }
+
+    def cleanup() {
+        utils.deleteUserQuietly(identityAdmin)
+    }
+
     def "verify one user create call sends correct event feeds"() {
         given:
-        def username = "testUserV2" + testUtils.getRandomUUID()
+        def username = "testUser" + testUtils.getRandomUUID()
         def domainId = utils.createDomain()
-        def user = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+        def user = v2Factory.createUser(username, username, "testemail@rackspace.com", true, "ORD", domainId, "Password1")
         def secretQA = v2Factory.createSecretQA("question", "answer")
         user.secretQA = secretQA
 
@@ -47,7 +63,7 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
         def requestId = UUID.randomUUID().toString()
 
         when: "create user"
-        def response = cloud20.createUser(utils.identityAdminToken, user, MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE, requestId)
+        def response = cloud20.createUser(identityAdminToken, user, MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE, requestId)
         def userEntity = response.getEntity(User).value
 
         then:
@@ -83,7 +99,7 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
         }
 
         when: "update user"
-        def response = cloud20.updateUser(utils.identityAdminToken, user.id, userForUpdate, MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE, requestId)
+        def response = cloud20.updateUser(identityAdminToken, user.id, userForUpdate, MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE, requestId)
 
         then:
         response.status == SC_OK
@@ -196,7 +212,7 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
         resetCloudFeedsMock()
 
         when: "adding user to user group"
-        def response = cloud20.addUserToUserGroup(utils.identityAdminToken, userAdmin.domainId, userGroup.id, userAdmin.id)
+        def response = cloud20.addUserToUserGroup(identityAdminToken, userAdmin.domainId, userGroup.id, userAdmin.id)
 
         then:
         response.status == SC_NO_CONTENT
