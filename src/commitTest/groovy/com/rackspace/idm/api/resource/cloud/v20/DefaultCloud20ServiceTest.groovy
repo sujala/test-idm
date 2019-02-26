@@ -5028,12 +5028,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         when: "access level role is not identity-admin or above"
         def response = service.updateUser(headers, authToken, userId, userForCreate).build()
 
-        then: "return 401 Forbidden"
-        1 * identityUserService.getEndUserById(userId) >> federatedUser
+        then: "Response is 200 and 401 Forbidden will not be thrown"
+        2 * identityUserService.getEndUserById(userId) >> federatedUser
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> false
         0 * identityUserService.updateFederatedUser(_)
 
-        response.status == SC_FORBIDDEN
+        response.status == SC_OK
 
         when: "federated user not found"
         response = service.updateUser(headers, authToken, userId, userForCreate).build()
@@ -6957,7 +6957,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         expectedInvocation * identityUserService.updateFederatedUser(federatedUser)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> federatedUser
         2 * identityUserService.getEndUserById(userId) >> federatedUser
-        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
 
         where:
         phonePinFeatureFlag | expectedInvocation
@@ -7005,7 +7004,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         User user = entityFactory.createUser().with {
             it.id = userId
-            it.phonePin = phonePin
+            it.phonePin = "123786"
             it
         }
 
@@ -7015,7 +7014,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when: "update user phone pin is requested by user him self with valid pin and feature flag ON"
-
         def response = service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then: "phone pin is validated and get updated"
@@ -7052,6 +7050,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         0 * validator20.validatePhonePin(phonePin)
         2 * identityUserService.getEndUserById(userId) >> user
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> user
+
+        when: "phone pin passed in request is same as original/existing phone pin"
+        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
+        userForCreate.setPhonePin("123786")
+        service.updateUser(headers, authToken, userId, userForCreate).build()
+
+        then: "phone pin validation is skipped"
+        0 * validator20.validatePhonePin(_)
+        2 * identityUserService.getEndUserById(userId) >> user
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> user
     }
 
     def "updateUser: update phone pin for Federated User"() {
@@ -7071,11 +7079,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         FederatedUser federatedUser = entityFactory.createFederatedUser().with {
             it.id = userId
+            it.phonePin = "123786"
             it
         }
 
         when: "update federated user for phone pin "
-
         service.updateUser(headers, authToken, userId, userForCreate).build()
         then: "phone pin validator is invoked and fed user service is invoked"
         1 * validator20.validatePhonePin(phonePin)
@@ -7095,13 +7103,24 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         2 * identityUserService.getEndUserById(userId) >> federatedUser
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
 
-
         when: "update federated user with phone pin by some other user"
         reloadableConfig.getEnablePhonePinOnUserFlag() >> true
         service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then: "phone pin validator and updateFederatedUser are not invoked"
         0 * validator20.validatePhonePin(phonePin)
+        0 * identityUserService.updateFederatedUser(federatedUser)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> otherUser
+        2 * identityUserService.getEndUserById(userId) >> federatedUser
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+
+        when: "phone pin passed in request is same as original/existing phone pin"
+        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
+        userForCreate.setPhonePin("123786")
+        service.updateUser(headers, authToken, userId, userForCreate).build()
+
+        then: "phone pin validation is skipped"
+        0 * validator20.validatePhonePin(_)
         0 * identityUserService.updateFederatedUser(federatedUser)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> otherUser
         2 * identityUserService.getEndUserById(userId) >> federatedUser
