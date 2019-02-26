@@ -2097,26 +2097,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
             it
         }
 
-        when: "attempt to update federated user with user-admin"
-        def response = cloud20.updateUser(utils.getToken(userAdmin.username), federatedUserId, userForCreate, mediaType)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
-
-        when: "attempt to update federated user with user-manage"
-        response = cloud20.updateUser(utils.getToken(userManage.username), federatedUserId, userForCreate, mediaType)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
-
-        when: "attempt to update federated user with default user"
-        response = cloud20.updateUser(utils.getToken(defaultUser.username), federatedUserId, userForCreate, mediaType)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
-
         when: "update user with invalid id"
-        response = cloud20.updateUser(utils.getToken(defaultUser.username), "invalid", userForCreate, mediaType)
+        def response = cloud20.updateUser(utils.getToken(defaultUser.username), "invalid", userForCreate, mediaType)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, SC_NOT_FOUND, String.format(DefaultCloud20Service.USER_NOT_FOUND_ERROR_MESSAGE, "invalid"))
@@ -2643,6 +2625,87 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsersQuietly(users)
+    }
+
+    @Unroll
+    def "UpdateUser: User can update only his phone pin and not contactId - media = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        // Create federated user
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def federatedUserId = samlAuthResponse.value.user.id
+        def federatedUser = utils.getUserById(federatedUserId)
+
+        // Update fed user's contactId
+        def contactId = testUtils.getRandomUUID("contactId")
+        def phonePin = "786124"
+
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = federatedUserId
+            it.contactId = contactId
+            it.phonePin = phonePin
+            it
+        }
+
+        when: "identity-admin updates contactId and phonePin for Fed User"
+        def updateUserResp = cloud20.updateUser(utils.getIdentityAdminToken(), federatedUserId, userForCreate, mediaType)
+        samlResponse = cloud20.samlAuthenticate(samlAssertion, mediaType)
+        samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def federatedUserEntity = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user : samlAuthResponse.user
+        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token.id : samlAuthResponse.token.id
+        def response = cloud20.validateToken(utils.getIdentityAdminToken(), samlAuthToken, mediaType)
+        def responseEntity = testUtils.getEntity(response, AuthenticateResponse)
+
+        then: "only contactId should get updated and phonePin and other attributes should get ignored"
+        response.status == SC_OK
+        federatedUserEntity != null
+        responseEntity.user.contactId == contactId
+        responseEntity.user.phonePin != null
+        responseEntity.user.phonePin != phonePin
+
+        and: "update user response should not show phone pin attribute"
+        updateUserResp.status == SC_OK
+        if(mediaType == APPLICATION_XML_TYPE) {
+            updateUserResp.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == null
+        }else{
+            updateUserResp.getEntity(org.openstack.docs.identity.api.v2.User).phonePin != phonePin
+        }
+
+        when: "Fed user updates contactId and phonePin for himself"
+        userForCreate.setContactId("newContactId")
+        updateUserResp = cloud20.updateUser(samlAuthToken, federatedUserId, userForCreate, mediaType)
+        response = cloud20.validateToken(utils.getIdentityAdminToken(), samlAuthToken, mediaType)
+        responseEntity = testUtils.getEntity(response, AuthenticateResponse)
+
+        then: "only phonePin should get updated and contactId and other attributes should get ignored"
+        response.status == SC_OK
+        federatedUserEntity != null
+        responseEntity.user.contactId != "newContactId"
+        responseEntity.user.phonePin != null
+        responseEntity.user.phonePin == phonePin
+
+        and: "update user response should show phone pin attribute"
+        updateUserResp.status == SC_OK
+        if(mediaType == APPLICATION_XML_TYPE) {
+            updateUserResp.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == phonePin
+        }else{
+            updateUserResp.getEntity(org.openstack.docs.identity.api.v2.User).phonePin == phonePin
+        }
+
+        cleanup:
+        utils.logoutFederatedUser(federatedUser.username)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
     }
 
     def getFederatedUser(String domainId, mediaType) {

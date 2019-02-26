@@ -1066,16 +1066,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean isSelf = caller.getId().equals(userId);
             boolean impersonationToken = requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest();
             boolean sendUserEvent = false;
-            String phonePinInRequest = user.getPhonePin();
 
 
             if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
+                // setting contact id to null if caller is not IDENTITY_ADMIN or above
                 user.setContactId(null);
 
-                // Only service and identity admins can update a federated and unverified user.
-                if (retrievedUser != null
-                        && (isFederatedUser
-                        || isUnverifiedUser)) {
+                // Only service and identity admins can update an unverified user.
+                if (retrievedUser != null && isUnverifiedUser) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
@@ -1090,17 +1088,27 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(ID_MISMATCH);
             }
 
+            boolean isPhonePinUnchanged = true;
+
             // Validate contactId
             validator20.validateAttributeIsNotEmpty("contactId", user.getContactId());
             validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
-            if (phonePinInRequest == null || !isPhonePinFeatureEnabled || !isSelf || impersonationToken || isUnverifiedUser ) {
-                user.setPhonePin(null);
-            } else {
-                // Validate phone pin to ensure all acceptance criteria
-                validator20.validatePhonePin(phonePinInRequest);
+
+            // calculate if phone pin is unchanged
+            if (StringUtils.isNotBlank(user.getPhonePin())) {
+                isPhonePinUnchanged = user.getPhonePin().equalsIgnoreCase(retrievedUser.getPhonePin());
             }
 
+            if (user.getPhonePin() == null || !isPhonePinFeatureEnabled || !isSelf || impersonationToken || isUnverifiedUser || isPhonePinUnchanged) {
+                user.setPhonePin(null);
+            } else {
+                // Validate phone pin to ensure all acceptance criteria satisfies
+                validator20.validatePhonePin(user.getPhonePin());
+            }
 
+            // only 2 things can be updated for fed users
+            // 1. Contact id if caller not IDENTITY_ADMIN or above
+            // 2. Phone pin if caller is updating for self
             if (isFederatedUser) {
                 FederatedUser fedUser = (FederatedUser) retrievedUser;
                 boolean phonePinUpdated = false;
@@ -1208,7 +1216,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                 atomHopperClient.asyncPost(endUser, FeedsUserStatusEnum.UPDATE, MDC.get(Audit.GUUID));
             }
 
-            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(endUser)).getValue());
+            org.openstack.docs.identity.api.v2.User value = userConverterCloudV20.toUser(endUser);
+
+            // always show phonePin so long as the caller is non-impersonated self
+            if (isSelf && !impersonationToken) {
+                if (user.getPhonePin() != null) {
+                    value.setPhonePin(user.getPhonePin());
+                } else {
+                    // when phone pin is not part of request payload, retrieve phone pin from user to display in response payload
+                    value.setPhonePin(retrievedUser.getPhonePin());
+                }
+            }
+
+            return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(value).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -2951,9 +2971,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
             }
             if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName())) {
-                user = userService.checkAndGetUserById(userId);
+                user = identityUserService.checkAndGetEndUserById(userId);
             } else if (callerType == IdentityUserTypeEnum.USER_ADMIN || callerType == IdentityUserTypeEnum.USER_MANAGER) {
-                user = userService.checkAndGetUserById(userId);
+                user = identityUserService.checkAndGetUserById(userId);
                 if (caller.getDomainId() == null || !caller.getDomainId().equals(user.getDomainId())) {
                     String errMsg = String.format(ERROR_MSG_USER_S_NOT_FOUND, user.getId());
                     logger.warn(errMsg);

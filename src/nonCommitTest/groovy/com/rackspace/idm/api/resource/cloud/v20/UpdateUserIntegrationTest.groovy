@@ -18,6 +18,7 @@ import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.validation.Validator20
+import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
@@ -32,6 +33,9 @@ import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
+import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 
 class UpdateUserIntegrationTest extends RootIntegrationTest {
 
@@ -925,6 +929,40 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         [featureEnabled, userHasUpdateUsernameRole] << [[true, false], [true, false]].combinations()
     }
 
+    def "updating user with apostrophes in email and phone pin"() {
+        given:
+        def username = testUtils.getRandomUUID("username" )
+        def email = "'test'email@rackspace.com"
+        def user = utils.createUser(utils.getServiceAdminToken(), username)
+        def userForUpdate = v2Factory.createUser(user.id, user.username)
+        userForUpdate.email = email
+        def selftoken = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
+        def defaultPhonePin = testUtils.getEntity(cloud20.getUserById(selftoken, user.id), User).phonePin
+
+        when: "updating the user for email"
+        def response = cloud20.updateUser(selftoken, user.id, userForUpdate)
+
+        then: "the email with apostrophes is valid"
+        response.status == 200
+        def updatedUser = response.getEntity(User).value
+        updatedUser.email == email
+
+        and: "phone pin is always returned in response unless user does not have initial pin"
+        updatedUser.phonePin != null
+        updatedUser.phonePin == defaultPhonePin
+
+        when: "self updating the user for phone pin"
+        userForUpdate.phonePin = "786124"
+        response = cloud20.updateUser(selftoken, user.id, userForUpdate)
+
+        then: "phone pin is updated and returned in response"
+        response.status == 200
+        response.getEntity(User).value.phonePin == "786124"
+
+        cleanup:
+        utils.deleteUser(user)
+    }
+
     def "update username with correct access but invalid username returns correct error"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_USERNAME_UPDATE_PROP, true)
@@ -940,26 +978,6 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         reloadableConfiguration.reset()
-    }
-
-    def "updating user with apostrophes in email"() {
-        given:
-        def username = testUtils.getRandomUUID("username" )
-        def email = "'test'email@rackspace.com"
-        def user = utils.createUser(utils.getServiceAdminToken(), username)
-        def userForUpdate = v2Factory.createUser(user.id, user.username)
-        userForUpdate.email = email
-
-        when: "updating the user"
-        def response = cloud20.updateUser(utils.getToken(username), user.id, userForUpdate)
-
-        then: "the email with apostrophes is valid"
-        response.status == 200
-        def updatedUser = response.getEntity(User).value
-        updatedUser.email == email
-
-        cleanup:
-        utils.deleteUser(user)
     }
 
     def "Test phone pin feature flag"() {
@@ -991,7 +1009,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(user)
     }
 
-    def "Test update user phone pin"() {
+    def "Test update user phone pin for different users to ensure presence of phonePin property in body: media = #mediaTyoe"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def domainId = utils.createDomain()
@@ -999,76 +1017,123 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         (identityAdmin, userAdmin, userManager, user) = utils.createUsers(domainId)
         def userForUpdate = v2Factory.createUser(user.id, user.username)
 
-
         def selfToken = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
         def serviceAdminToken = utils.getIdentityAdminToken()
         def identityAdminToken = utils.getToken(identityAdmin.username, Constants.DEFAULT_PASSWORD)
         def userAdminToken = utils.getToken(userAdmin.username, Constants.DEFAULT_PASSWORD)
-        def userMangeToken = utils.getToken(userManager.username, Constants.DEFAULT_PASSWORD)
+        def userManagerToken = utils.getToken(userManager.username, Constants.DEFAULT_PASSWORD)
         def impersonatedToken = utils.impersonateWithRacker(user).token.id
 
         def defaultPhonePin = testUtils.getEntity(cloud20.getUserById(selfToken, user.id), User).phonePin
         def updatedPhonePin = "786124"
 
-        when: "User Service admin updates the pin for user"
-        userForUpdate.phonePin = updatedPhonePin
-        cloud20.updateUser(serviceAdminToken, user.id, userForUpdate)
-
-        then: "Pin must not get updated"
-        updatedPhonePin != getPhonePinForUser(selfToken, user)
-
-        and: "user will still have the default phone pin"
-        defaultPhonePin == getPhonePinForUser(selfToken, user)
-
-        when: "User identity admin updates the pin for user"
-        userForUpdate.phonePin = updatedPhonePin
-        cloud20.updateUser(identityAdminToken, user.id, userForUpdate)
-
-        then: "Pin must not get updated"
-        updatedPhonePin != getPhonePinForUser(selfToken, user)
-
-        and: "user will still have the default phone pin"
-        defaultPhonePin == getPhonePinForUser(selfToken, user)
-
-        when: "User admin updates the pin for user"
-        userForUpdate.phonePin = updatedPhonePin
-        cloud20.updateUser(userAdminToken, user.id, userForUpdate)
-
-        then: "Pin must not get updated"
-        updatedPhonePin != getPhonePinForUser(selfToken, user)
-
-        and: "user will still have the default phone pin"
-        defaultPhonePin == getPhonePinForUser(selfToken, user)
-
-        when: "User manager updates the pin for user"
-        userForUpdate.phonePin = updatedPhonePin
-        cloud20.updateUser(userMangeToken, user.id, userForUpdate)
-
-        then: "Pin must not get updated"
-        updatedPhonePin != getPhonePinForUser(selfToken, user)
-
-        and: "user will still have the default phone pin"
-        defaultPhonePin == getPhonePinForUser(selfToken, user)
-
         when: "Impersonated user updates the pin for user"
         userForUpdate.phonePin = updatedPhonePin
-        cloud20.updateUser(impersonatedToken, user.id, userForUpdate)
+        def updateUserResponse = cloud20.updateUser(impersonatedToken, user.id, userForUpdate, mediaType)
 
-        then: "Pin must not get updated"
+        then: "phonePin must not get updated"
         updatedPhonePin != getPhonePinForUser(selfToken, user)
 
         and: "user will still have the default phone pin"
         defaultPhonePin == getPhonePinForUser(selfToken, user)
 
-        when: "User self updates the pin"
-        userForUpdate.phonePin = updatedPhonePin
-        cloud20.updateUser(selfToken, user.id, userForUpdate)
+        and: "phonePin attribute should not show up in response body"
+        if(mediaType == APPLICATION_XML_TYPE) {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == null
+        }else{
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin == null
+        }
 
-        then: "Pin must get updated"
+
+        when: "User Service admin updates the pin for user"
+        userForUpdate.phonePin = updatedPhonePin
+        updateUserResponse = cloud20.updateUser(serviceAdminToken, user.id, userForUpdate, mediaType)
+
+        then: "phonePin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        and: "user will still have the default phone pin"
+        defaultPhonePin == getPhonePinForUser(selfToken, user)
+
+        and: "phonePin attribute should not show up in response body"
+        if(mediaType == APPLICATION_XML_TYPE) {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == null
+        }else{
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin == null
+        }
+
+
+        when: "Identity admin updates the phone pin for user"
+        userForUpdate.phonePin = updatedPhonePin
+        updateUserResponse = cloud20.updateUser(identityAdminToken, user.id, userForUpdate, mediaType)
+
+        then: "phonePin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        and: "user will still have the default phone pin"
+        defaultPhonePin == getPhonePinForUser(selfToken, user)
+
+        and: "phonePin attribute should not show up in response body"
+        if(mediaType == APPLICATION_XML_TYPE) {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == null
+        }else{
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin == null
+        }
+
+
+        when: "User admin updates the phone pin for user"
+        userForUpdate.phonePin = updatedPhonePin
+        updateUserResponse = cloud20.updateUser(userAdminToken, user.id, userForUpdate, mediaType)
+
+        then: "phonePin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        and: "user will still have the default phone pin"
+        defaultPhonePin == getPhonePinForUser(selfToken, user)
+
+        and: "phonePin attribute should not show up in response body"
+        if(mediaType == APPLICATION_XML_TYPE) {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == null
+        }else{
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin == null
+        }
+
+
+        when: "User manager updates the phone pin for user"
+        userForUpdate.phonePin = updatedPhonePin
+        updateUserResponse = cloud20.updateUser(userManagerToken, user.id, userForUpdate, mediaType)
+
+        then: "phonePin must not get updated"
+        updatedPhonePin != getPhonePinForUser(selfToken, user)
+
+        and: "user will still have the default phone pin"
+        defaultPhonePin == getPhonePinForUser(selfToken, user)
+
+        and: "phonePin attribute should not show up in response body"
+        if(mediaType == APPLICATION_XML_TYPE) {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == null
+        }else{
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin == null
+        }
+
+        when: "User updates the phone pin for himself"
+        userForUpdate.phonePin = updatedPhonePin
+        updateUserResponse = cloud20.updateUser(selfToken, user.id, userForUpdate, mediaType)
+
+        then: "Pin must get updated and must show in response body"
         updatedPhonePin == getPhonePinForUser(selfToken, user)
+        if(mediaType == APPLICATION_XML_TYPE) {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == updatedPhonePin
+        }else{
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin == updatedPhonePin
+        }
 
         cleanup:
         utils.deleteUser(user)
+
+        where:
+        mediaType  << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
+
     }
 
     def "Test phone pin error validation message"() {
@@ -1090,21 +1155,46 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponse(userResponse, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST, ErrorCodes.ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST)
     }
 
-    def "Test valid phone pin combinations accepted while updating users phone pin"() {
+    def "Test that phone pin is not returned when user do not have initial phone pin: mediaType #mediaType"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-        def username = testUtils.getRandomUUID("username" )
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
+        def username = testUtils.getRandomUUID("username")
         def user = utils.createUser(utils.getServiceAdminToken(), username)
         def userForUpdate = v2Factory.createUser(user.id, user.username)
         def selfToken = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
-        def phonePinToUpdate = "786124"
 
-        when: "Valid / acceptable pins are passed in payload"
-        userForUpdate.phonePin = phonePinToUpdate
-        cloud20.updateUser(selfToken, user.id, userForUpdate)
+        when: "initial phone pin is retrieved"
+        def getUserResp = cloud20.getUserById(selfToken, user.id)
+        def defaultPhonePin = testUtils.getEntity(getUserResp, User).phonePin
 
-        then: "Phone Pin must  get updated"
-        phonePinToUpdate == getPhonePinForUser(selfToken, user)
+        then:
+        defaultPhonePin == null
+
+        when: "update user call is invoked without phone pin in request body"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        def updateUserResponse = cloud20.updateUser(selfToken, user.id, userForUpdate, mediaType)
+
+        then: "phonePin attribute should not show up in response body"
+        if (mediaType == APPLICATION_XML_TYPE) {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == null
+        } else {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin == null
+        }
+
+        when: "update user call is invoked with valid phone pin in request body"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        userForUpdate.phonePin = "786124"
+        updateUserResponse = cloud20.updateUser(selfToken, user.id, userForUpdate, mediaType)
+
+        then: "phonePin attribute should show up in response body"
+        if (mediaType == APPLICATION_XML_TYPE) {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin != null
+        } else {
+            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin != null
+        }
+
+        where:
+        mediaType << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
     }
 
     /**
