@@ -58,10 +58,25 @@ class ResetPhonePinForUserIntegrationTest extends RootIntegrationTest {
         (identityAdminSecondDomain, userAdminSecondDomain, userManagerSecondDomain, defaultUserSecondDomain) = utils.createUsers(domainId2)
         usersSecondDomain = [defaultUserSecondDomain, userManagerSecondDomain, userAdminSecondDomain, identityAdminSecondDomain]
 
+        def fedAuthResponse = utils.createFederatedUserForAuthResponse(domainId)
+        def fedUser = fedAuthResponse.user
+        def fedUserToken = fedAuthResponse.token.id
+
         when: "identity:user-admin: Can reset the Phone PIN for user-manage"
         def previousPhonePin = utils.getUserById(userManager.id, userMangeToken, contentType).phonePin
         def response = cloud20.resetPhonePin(userAdminToken, userManager.id, contentType)
         def updatedPhonePin = utils.getUserById(userManager.id, userMangeToken, contentType).phonePin
+
+        then: "returns no content"
+        response.status == SC_NO_CONTENT
+
+        and: "the phone pin was updated"
+        previousPhonePin != updatedPhonePin
+
+        when: "identity:user-admin: Can reset the Phone PIN for federated user"
+        previousPhonePin = utils.getUserById(fedUser.id, fedUserToken, contentType).phonePin
+        response = cloud20.resetPhonePin(userAdminToken, fedUser.id, contentType)
+        updatedPhonePin = utils.getUserById(fedUser.id, fedUserToken, contentType).phonePin
 
         then: "returns no content"
         response.status == SC_NO_CONTENT

@@ -2951,9 +2951,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
             }
             if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName())) {
-                user = userService.checkAndGetUserById(userId);
+                user = identityUserService.checkAndGetEndUserById(userId);
             } else if (callerType == IdentityUserTypeEnum.USER_ADMIN || callerType == IdentityUserTypeEnum.USER_MANAGER) {
-                user = userService.checkAndGetUserById(userId);
+                user = identityUserService.checkAndGetUserById(userId);
                 if (caller.getDomainId() == null || !caller.getDomainId().equals(user.getDomainId())) {
                     String errMsg = String.format(ERROR_MSG_USER_S_NOT_FOUND, user.getId());
                     logger.warn(errMsg);

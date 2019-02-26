@@ -2624,7 +2624,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
         1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * identityUserService.checkAndGetUserById(user.id) >> user
 
         result.status == SC_NOT_FOUND
 
@@ -2650,7 +2650,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
         1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * identityUserService.checkAndGetUserById(user.id) >> user
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user) >> {throw new ForbiddenException()}
 
         result.status == SC_FORBIDDEN
@@ -2673,7 +2673,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
         1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * identityUserService.checkAndGetUserById(user.id) >> user
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         1 * phonePinService.resetPhonePin(user)
 
@@ -2700,7 +2700,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
         1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * identityUserService.checkAndGetUserById(user.id) >> user
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         1 * phonePinService.resetPhonePin(user)
 
@@ -2727,7 +2727,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
         1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * userService.checkAndGetUserById(user.id) >> user
+        1 * identityUserService.checkAndGetUserById(user.id) >> user
         1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
         0 * phonePinService.resetPhonePin(user)
 
