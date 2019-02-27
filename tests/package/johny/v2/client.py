@@ -1402,6 +1402,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def list_domains_for_user(self, user_id, requestslib_kwargs=None):
+        """List  accessible domains for user
+        """
+        url = self.url + const.LIST_DOMAINS_FOR_USER.format(
+            userId=user_id)
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def delete_domain(self, domain_id, requestslib_kwargs=None):
         """Delete a domain
         :return 204 no response body

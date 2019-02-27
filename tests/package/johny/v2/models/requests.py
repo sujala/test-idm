@@ -840,12 +840,13 @@ class Domain(base.AutoMarshallingModel):
     # TODO: Add _obj_to_xml()
 
     def __init__(self, domain_name=None, domain_id=None,
-                 description=None, rcn=None, enabled=True):
+                 description=None, rcn=None, enabled=True, domain_type=None):
         self.domain_name = domain_name
         self.domain_id = domain_id or domain_name
         self.description = description
         self.enabled = enabled
         self.rcn = rcn
+        self.type = domain_type
 
     def _obj_to_json(self):
         add_domain_request = {const.RAX_AUTH_DOMAIN: {
@@ -864,6 +865,8 @@ class Domain(base.AutoMarshallingModel):
                 self.enabled)
         elif self.enabled is False:
             add_domain_request[const.RAX_AUTH_DOMAIN][const.ENABLED] = False
+        if self.type:
+            add_domain_request[const.RAX_AUTH_DOMAIN][const.TYPE] = self.type
         return json.dumps(add_domain_request)
 
 
