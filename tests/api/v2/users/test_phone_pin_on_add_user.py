@@ -63,9 +63,45 @@ class TestPhonePinOnAddUser(base.TestBaseV2):
             const.USER])
         self.assertEqual(len(get_user_admin_resp.json()[const.USER][
                                  const.RAX_AUTH_PHONE_PIN]), 6)
-        get_user_admin_resp = self.identity_admin_client.get_user(
+        get_user_resp = self.identity_admin_client.get_user(
             user_id=user_id)
-        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, get_user_admin_resp.json()[
+        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, get_user_resp.json()[
+            const.USER])
+
+        # verify if phone pin is not returned for list users
+        list_users_resp = self.identity_admin_client.list_users()
+        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, list_users_resp.json()[
+            const.USERS])
+
+        # verify if phone pin is not returned
+        resp = self.identity_admin_client.list_users(
+            option={'domain_id': input_data['domain_id']})
+        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, resp.json()[
+            const.USERS])
+
+        # verify if phone pin is not returned for list users in domain
+        resp = self.identity_admin_client.list_users_in_domain(
+            domain_id=input_data['domain_id'])
+        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, resp.json()[
+            const.USERS])
+
+        # verify if phone pin is not returned with impersonation token
+        impersonation_request_obj = requests.ImpersonateUser(
+            user_name=user_name)
+
+        # Get Impersonation Token
+        resp = self.identity_admin_client.impersonate_user(
+            request_data=impersonation_request_obj)
+        self.assertEqual(resp.status_code, 200)
+
+        token_id = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+
+        imp_client = self.generate_client(token=token_id)
+
+        # verify if phone pin is not returned
+        get_user_resp = imp_client.get_user(
+            user_id=user_id)
+        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, get_user_resp.json()[
             const.USER])
 
     @tags('positive', 'p0', 'smoke')
