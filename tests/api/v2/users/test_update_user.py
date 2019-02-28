@@ -467,6 +467,49 @@ class TestUpdateUser(base.TestBaseV2):
         )
         self.assertEqual(resp.status_code, 403)
 
+    def test_update_phone_pin_on_user_manager(self):
+        """
+        User manager updating self pin via update user call
+        """
+        input_data = {
+            'is_user_manager': True
+        }
+        user_manager_client = self.generate_client(
+            parent_client=self.user_admin_client,
+            additional_input_data=input_data)
+        user_manager_id = user_manager_client.default_headers[const.X_USER_ID]
+        self.sub_user_ids.append(user_manager_id)
+
+        get_user_resp = user_manager_client.get_user(
+            user_manager_id)
+        current_pin = get_user_resp.json()[const.USER][
+            const.RAX_AUTH_PHONE_PIN]
+        new_pin = '122112'
+        # Making sure new pin is different than current
+        if current_pin == new_pin:
+            new_pin = '122113'
+        update_req = requests.UserUpdate(phone_pin=new_pin)
+        update_resp = user_manager_client.update_user(
+            user_id=user_manager_id,
+            request_object=update_req)
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.json()[const.USER][
+                             const.RAX_AUTH_PHONE_PIN], new_pin)
+
+        # verify new pin
+        verify_req_obj = requests.PhonePin(new_pin)
+        verify_pin_resp = self.identity_admin_client.verify_phone_pin_for_user(
+            user_id=user_manager_id, request_object=verify_req_obj)
+        self.assertEqual(verify_pin_resp.status_code, 204)
+
+        # Negative case not covered in Groovy tests: Spaces in pin
+        new_pin = ' 2211 '
+        update_req = requests.UserUpdate(phone_pin=new_pin)
+        update_resp = user_manager_client.update_user(
+            user_id=user_manager_id,
+            request_object=update_req)
+        self.assertEqual(update_resp.status_code, 400)
+
     @unless_coverage
     def tearDown(self):
         # Delete all users created in the tests

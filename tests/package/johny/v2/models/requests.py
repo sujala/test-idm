@@ -298,7 +298,7 @@ class UserUpdate(base.AutoMarshallingModel):
                  default_region=None, token_format=None, password=None,
                  email=None, enabled=None, mfa_enabled=None,
                  mfa_state=None, mf_enforcement_level=None,
-                 factor_type=None, display_name=None):
+                 factor_type=None, display_name=None, phone_pin=None):
 
         self.user_name = user_name
         self.domain_id = domain_id
@@ -313,6 +313,7 @@ class UserUpdate(base.AutoMarshallingModel):
         self.mf_enforcement_level = mf_enforcement_level
         self.factor_type = factor_type
         self.display_name = display_name
+        self.phone_pin = phone_pin
 
     def _obj_to_json(self):
         update_user_request = {const.USER: {}}
@@ -352,6 +353,9 @@ class UserUpdate(base.AutoMarshallingModel):
         if self.display_name:
             update_user_request[const.USER][const.DISPLAY_NAME] = (
                 self.display_name)
+        # if self.phone_pin:
+        update_user_request[const.USER][const.RAX_AUTH_PHONE_PIN] = (
+            self.phone_pin)
         return json.dumps(update_user_request)
 
         # TODO: insert update user request xml part

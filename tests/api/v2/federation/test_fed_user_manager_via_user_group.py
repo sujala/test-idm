@@ -183,6 +183,21 @@ class TestFedUserManagerViaUserGroups(federation.TestBaseFederation):
             user_id=fed_user_id)
         self.assertEqual(list_role_for_user_resp.status_code, 200)
 
+        # Check phone pin on fed user who is also user-manager
+        current_pin = auth.json()[const.ACCESS][const.USER][
+            const.RAX_AUTH_PHONE_PIN]
+        new_pin = '122112'
+        # Making sure new pin is different than current
+        if current_pin == new_pin:
+            new_pin = '122113'
+        update_req = requests.UserUpdate(phone_pin=new_pin)
+        update_resp = fed_user_client.update_user(
+            user_id=fed_user_id,
+            request_object=update_req)
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.json()[const.USER][
+                             const.RAX_AUTH_PHONE_PIN], new_pin)
+
         # create default user
         user_id = self.create_default_user()
 
