@@ -38,15 +38,9 @@ public interface ScopeAccessService {
 
     void addUserScopeAccess(BaseUser user, ScopeAccess scopeAccess);
 
-    void addApplicationScopeAccess(Application application, ScopeAccess scopeAccess);
-
     boolean authenticateAccessToken(String accessTokenStr);
 
     void deleteScopeAccess(ScopeAccess scopeAccess);
-
-    void deleteScopeAccessesForApplication(Application application, String clientId);
-
-    void deleteScopeAccessesForUser(User user, String clientId);
 
     /**
      * Delete a user's tokens - and error if there was an error deleting one. In general, the {@link #deleteExpiredTokensQuietly(com.rackspace.idm.domain.entity.BaseUser)} should
@@ -61,28 +55,6 @@ public interface ScopeAccessService {
      * @param user
      */
     void deleteExpiredTokensQuietly(BaseUser user);
-
-    /**
-     * @deprecated Use appropriate method from TokenRevocationService
-     */
-    @Deprecated
-    void expireAccessToken(String tokenString);
-
-    void expireAllTokensForClient(String clientId);
-
-    /**
-     * @deprecated Use appropriate method from TokenRevocationService
-     */
-    @Deprecated
-    void expireAllTokensForUser(String username);
-
-    /**
-     * @deprecated Use appropriate method from TokenRevocationService
-     */
-    @Deprecated
-    void expireAllTokensForUserById(String userId);
-
-    ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 
     RackerScopeAccess getRackerScopeAccessByClientId(Racker racker, String clientId);
 
@@ -100,13 +72,7 @@ public interface ScopeAccessService {
 
     Iterable<ScopeAccess> getScopeAccessListByUserId(String userId);
 
-    ScopeAccess loadScopeAccessByAccessToken(String accessToken);
-
-    ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
-
     ScopeAccess getMostRecentDirectScopeAccessForUserByClientId(User user, String clientId);
-
-    UserScopeAccess getUserScopeAccessByClientId(User user, String clientId);
 
     UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId, List<String> authenticateBy);
 
@@ -120,15 +86,9 @@ public interface ScopeAccessService {
 
     Iterable<ScopeAccess> getScopeAccessesForUserByClientId(User user, String clientId);
 
-    Iterable<ScopeAccess> getScopeAccessesForApplicationByClientId(Application application, String clientId);
-
     Iterable<ScopeAccess> getScopeAccessesForUser(User user);
 
-    Iterable<ScopeAccess> getScopeAccessesForApplication(Application application);
-
     List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user);
-
-    List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess scopeAccess);
 
     /**
      * Returns the ServiceCatalogInfo for the given user. This object contains all of the tenant roles, tenants, and

@@ -5755,8 +5755,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) throws IOException, JAXBException {
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.DEFAULT_USER, GlobalConstants.ROLE_NAME_RACKER);
-
-        scopeAccessService.expireAccessToken(authToken);
+        tokenRevocationService.revokeToken(authToken);
         return Response.status(204);
     }
 
@@ -5768,7 +5767,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         //can expire your own token - regardless of type
         if (authToken.equals(tokenId)) {
-            scopeAccessService.expireAccessToken(tokenId);
+            tokenRevocationService.revokeToken(tokenId);
             return Response.status(204);
         }
 
@@ -5798,7 +5797,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyDomain(caller, user);
         }
 
-        scopeAccessService.expireAccessToken(tokenId);
+        tokenRevocationService.revokeToken(tokenId);
         return Response.status(204);
     }
 

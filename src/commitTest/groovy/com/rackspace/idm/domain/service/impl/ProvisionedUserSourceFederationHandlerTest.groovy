@@ -270,7 +270,6 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(_, _) >> null
         def idp = createIdentityProvider()
         mockTenantService.getTenantsByDomainId(_, Boolean.toString(true)) >> tenants
-        mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [new User()].asList()
         mockAuthorizationService.restrictUserAuthentication(_, _) >> false
@@ -594,7 +593,6 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(_, _) >> null
         def idp = createIdentityProvider()
         mockTenantService.getTenantsByDomainId(_, Boolean.toString(true)) >> tenants
-        mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [new User()].asList()
         mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints, IdentityUserTypeEnum.DEFAULT_USER)
@@ -757,7 +755,6 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
 
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(USERNAME, IDP_ID) >> null
         mockTenantService.getTenantsByDomainId(_, Boolean.toString(true)) >> tenants
-        mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
         reloadableConfig.getIdentityFederationMaxUserCountPerDomainForIdp(_) >> 1000
@@ -787,7 +784,6 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> theIdentityProvider
         mockFederatedUserDao.getUserByUsernameForIdentityProviderId(USERNAME, IDP_ID) >> user
         mockTenantService.getTenantsByDomainId(DOMAIN_ID, Boolean.toString(true)) >> tenants
-        mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
         reloadableConfig.getIdentityFederationMaxUserCountPerDomainForIdp(_) >> 1000

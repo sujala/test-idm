@@ -6323,7 +6323,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * scopeAccessService.getScopeAccessByAccessToken(tokenId) >> entityFactory.createFederatedToken()
         1 * identityUserService.getEndUserById(_) >> fedUser
         1 * authorizationService.verifyDomain(caller, fedUser)
-        1 * scopeAccessService.expireAccessToken(tokenId)
+        1 * tokenRevocationService.revokeToken(tokenId)
     }
 
     def "revokeTokenById: error check"() {
@@ -6344,7 +6344,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * scopeAccessService.getScopeAccessByAccessToken(tokenId) >> entityFactory.createFederatedToken()
         1 * identityUserService.getEndUserById(_) >> fedUser
         1 * authorizationService.verifyDomain(caller, fedUser) >> {throw new ForbiddenException()}
-        0 * scopeAccessService.expireAccessToken(tokenId)
+        0 * tokenRevocationService.revokeToken(tokenId)
     }
 
     @Unroll
@@ -7192,6 +7192,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockDelegationService(service)
         mockFederatedIdentityService(service)
         mockIdentityProviderConverterCloudV20(service)
+        mockTokenRevocationService(service)
     }
 
     def mockMisc() {
