@@ -353,9 +353,10 @@ class UserUpdate(base.AutoMarshallingModel):
         if self.display_name:
             update_user_request[const.USER][const.DISPLAY_NAME] = (
                 self.display_name)
-        # if self.phone_pin:
+
         update_user_request[const.USER][const.RAX_AUTH_PHONE_PIN] = (
             self.phone_pin)
+
         return json.dumps(update_user_request)
 
         # TODO: insert update user request xml part

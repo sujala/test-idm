@@ -82,6 +82,7 @@ update_user = {
                 const.ENABLED: {'type': 'boolean'},
                 const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
                 const.RAX_AUTH_CONTACTID: {'type': 'string'},
+                const.RAX_AUTH_PHONE_PIN: {'type': 'string'},
                 const.RAX_AUTH_DEFAULT_REGION: {
                     'type': 'string',
                     'enum': const.DC_LIST},
