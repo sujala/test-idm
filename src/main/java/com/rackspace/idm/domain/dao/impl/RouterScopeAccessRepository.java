@@ -80,36 +80,6 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     }
 
     @Override
-    public ScopeAccess getMostRecentScopeAccessForUser(User user) {
-        return getRouteByBaseUser(user).getMostRecentScopeAccessForUser(user);
-    }
-
-    @Override
-    public ScopeAccess getMostRecentScopeAccessByClientId(UniqueId object, String clientId) {
-        return getRouteByUniqueId(object).getMostRecentScopeAccessByClientId(object, clientId);
-    }
-
-    @Override
-    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserOfUser(BaseUser user, String impersonatingUsername) {
-        return getRouteByBaseUser(user).getMostRecentImpersonatedScopeAccessForUserOfUser(user, impersonatingUsername);
-    }
-
-    @Override
-    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsId(BaseUser user, String impersonatingRsId) {
-        return getRouteByBaseUser(user).getMostRecentImpersonatedScopeAccessForUserRsId(user, impersonatingRsId);
-    }
-
-    @Override
-    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(BaseUser user, String impersonatingRsId, List<String> authenticatedBy) {
-        return getRouteByBaseUser(user).getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(user, impersonatingRsId, authenticatedBy);
-    }
-
-    @Override
-    public ScopeAccess getMostRecentScopeAccessByClientIdAndAuthenticatedBy(UniqueId object, String clientId, List<String> authenticatedBy) {
-        return getRouteByUniqueId(object).getMostRecentScopeAccessByClientIdAndAuthenticatedBy(object, clientId, authenticatedBy);
-    }
-
-    @Override
     public Iterable<ScopeAccess> getScopeAccessesByUserId(String userId) {
         return getRouteByUserId(userId).getScopeAccessesByUserId(userId);
     }
@@ -130,11 +100,6 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     }
 
     @Override
-    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByUsername(BaseUser user, String impersonatingUsername) {
-        return getRouteByBaseUser(user).getAllImpersonatedScopeAccessForUserOfUserByRsId(user, impersonatingUsername);
-    }
-
-    @Override
     public Iterable<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId) {
         return getRouteByUniqueId(object).getScopeAccessesByClientId(object, clientId);
     }
@@ -143,14 +108,4 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     public String getClientIdForParent(ScopeAccess scopeAccess) {
         return getRouteForExistingScopeAccess(scopeAccess).getClientIdForParent(scopeAccess);
     }
-
-    @Override
-    @Deprecated
-    /**
-     * Foundation code. Irrelevant/unused.
-     */
-    public ScopeAccess getScopeAccessByRefreshToken(String refreshToken) {
-        throw new UnsupportedOperationException("Not supported");
-    }
-
 }

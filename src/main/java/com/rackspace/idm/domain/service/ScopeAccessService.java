@@ -56,8 +56,6 @@ public interface ScopeAccessService {
      */
     void deleteExpiredTokensQuietly(BaseUser user);
 
-    RackerScopeAccess getRackerScopeAccessByClientId(Racker racker, String clientId);
-
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
 
     /**
@@ -68,11 +66,7 @@ public interface ScopeAccessService {
      */
     ScopeAccess unmarshallScopeAccess(String tokenString);
 
-    ScopeAccess getScopeAccessForUser(User user);
-
     Iterable<ScopeAccess> getScopeAccessListByUserId(String userId);
-
-    ScopeAccess getMostRecentDirectScopeAccessForUserByClientId(User user, String clientId);
 
     UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId, List<String> authenticateBy);
 

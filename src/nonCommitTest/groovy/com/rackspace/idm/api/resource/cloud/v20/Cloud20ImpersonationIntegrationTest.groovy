@@ -831,11 +831,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         assert actualDate.isAfter(fudgedLowerBound) && actualDate.isBefore(fudgedUpperBound);
     }
 
-    def ScopeAccess getMostRecentTokenForUser(User user) {
-        com.rackspace.idm.domain.entity.User entityUser = userService.getUserById(user.id)
-        return scopeAccessRepository.getMostRecentScopeAccessByClientId(entityUser, scopeAccessService.getCloudAuthClientId());
-    }
-
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)

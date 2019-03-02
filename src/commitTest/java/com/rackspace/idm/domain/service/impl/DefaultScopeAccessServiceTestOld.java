@@ -121,18 +121,6 @@ public class DefaultScopeAccessServiceTestOld {
         }
     }
 
-
-    @Test
-    public void getScopeAccessByUserId_nullUserId_throwsNotFoundException() throws Exception {
-        try{
-            defaultScopeAccessService.getScopeAccessForUser(null);
-            assertTrue("should throw exception",false);
-        } catch (Exception ex){
-            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Invalid user id; user id cannot be null"));
-        }
-    }
-
     @Test
     public void getScopeAccessesForParentByClientId_returnsScopeAccessList() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();

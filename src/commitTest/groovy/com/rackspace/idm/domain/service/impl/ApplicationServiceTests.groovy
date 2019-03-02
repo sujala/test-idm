@@ -115,9 +115,6 @@ public class ApplicationServiceTests {
         EasyMock.expect(applicationDao.getApplicationByClientId(clientId)).andReturn(
             fakeClient);
 
-        EasyMock.expect(
-            scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(EasyMock.anyObject(User.class), EasyMock.anyObject(String.class))).andReturn(getFakeScopeAccess());
-
         List<ClientRole> clientRoles = new ArrayList<ClientRole>();
         EasyMock.expect(applicationRoleDao.getClientRolesForApplication(fakeClient)).andReturn(clientRoles);
 

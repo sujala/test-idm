@@ -71,41 +71,6 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
     }
 
     @Override
-    public ScopeAccess getMostRecentScopeAccessForUser(User user) {
-        return null;
-    }
-
-    @Override
-    public ScopeAccess getScopeAccessByRefreshToken(String refreshToken) {
-        return null;
-    }
-
-    @Override
-    public ScopeAccess getMostRecentScopeAccessByClientId(UniqueId object, String clientId) {
-        return null;
-    }
-
-    @Override
-    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsId(BaseUser user, String impersonatingRsId) {
-        return null;
-    }
-
-    @Override
-    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserRsIdAndAuthenticatedBy(BaseUser user, String impersonatingRsId, List<String> authenticatedBy) {
-        return null;
-    }
-
-    @Override
-    public ScopeAccess getMostRecentScopeAccessByClientIdAndAuthenticatedBy(UniqueId object, String clientId, List<String> authenticatedBy) {
-        return null;
-    }
-
-    @Override
-    public ScopeAccess getMostRecentImpersonatedScopeAccessForUserOfUser(BaseUser user, String impersonatingUsername) {
-        return null;
-    }
-
-    @Override
     public Iterable<ScopeAccess> getScopeAccessesByUserId(String userId) {
         return new ArrayList<ScopeAccess>();
     }
@@ -122,11 +87,6 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
 
     @Override
     public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByRsId(BaseUser user, String impersonatingRsId) {
-        return new ArrayList<ScopeAccess>();
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByUsername(BaseUser user, String impersonatingUsername) {
         return new ArrayList<ScopeAccess>();
     }
 
