@@ -50,7 +50,6 @@ class Cloud10AuthTest extends RootServiceTest {
         given:
         User user = entityFactory.createUser()
         UserScopeAccess sa = entityFactory.createUserToken()
-        scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(_, _, _) >> sa
         AuthResponseTuple authResponseTuple = new AuthResponseTuple(user, sa)
 
         scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple

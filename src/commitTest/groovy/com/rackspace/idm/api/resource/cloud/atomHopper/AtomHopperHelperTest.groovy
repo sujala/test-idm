@@ -39,7 +39,7 @@ class AtomHopperHelperTest extends Specification{
         scopeAccess.setAccessTokenExp(date.plus(1))
         scopeAccess.setClientId("1")
         scopeAccess.setAccessTokenString("token")
-        scopeAccessService.getValidUserScopeAccessForClientId(_, _, _) >> scopeAccess
+        scopeAccessService.addScopeAccess(_, _, _) >> scopeAccess
 
         when:
         String token = atomHopperHelper.getAuthToken()

@@ -36,25 +36,15 @@ public interface ScopeAccessService {
      */
     ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, Date expirationDate, String scope);
 
+    /**
+     * Use on of the add
+     * @param user
+     * @param scopeAccess
+     */
+    @Deprecated
     void addUserScopeAccess(BaseUser user, ScopeAccess scopeAccess);
 
     boolean authenticateAccessToken(String accessTokenStr);
-
-    void deleteScopeAccess(ScopeAccess scopeAccess);
-
-    /**
-     * Delete a user's tokens - and error if there was an error deleting one. In general, the {@link #deleteExpiredTokensQuietly(com.rackspace.idm.domain.entity.BaseUser)} should
-     * be used in preference to this one.
-     *
-     * @param user
-     */
-    void deleteExpiredTokens(EndUser user);
-
-    /**
-     * Delete all the user's tokens quietly. An error trying to delete an expired token does not result in an error. It is simply logged.
-     * @param user
-     */
-    void deleteExpiredTokensQuietly(BaseUser user);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
 
@@ -66,21 +56,18 @@ public interface ScopeAccessService {
      */
     ScopeAccess unmarshallScopeAccess(String tokenString);
 
-    Iterable<ScopeAccess> getScopeAccessListByUserId(String userId);
-
-    UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId, List<String> authenticateBy);
-
     RackerScopeAccess getValidRackerScopeAccessForClientId(Racker racker, String clientId, List<String> authenticatedBy);
 
-    UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username, String apiKey, String clientId);
-
+    /**
+     * This is a legacy method used by v1.1 API. It should not be used for new code.
+     *
+     * @param username
+     * @param password
+     * @param clientId
+     * @return
+     */
+    @Deprecated
     UserScopeAccess getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
-
-    void updateScopeAccess(ScopeAccess scopeAccess);
-
-    Iterable<ScopeAccess> getScopeAccessesForUserByClientId(User user, String clientId);
-
-    Iterable<ScopeAccess> getScopeAccessesForUser(User user);
 
     List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user);
 
@@ -103,22 +90,12 @@ public interface ScopeAccessService {
      */
     ServiceCatalogInfo getServiceCatalogInfoApplyRcnRoles(BaseUser baseUser);
 
-
-    UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy);
+    @Deprecated
+    UserScopeAccess addScopeAccess(User user, String clientId, List<String> authenticatedBy);
 
     boolean isScopeAccessExpired(ScopeAccess scopeAccess);
 
-    void setApplicationService(ApplicationService applicationService);
-
-    void setTenantService(TenantService tenantService);
-
-    void setUserService(UserService userService);
-
-    int getTokenExpirationSeconds(int value);
-
     String getClientIdForParent(ScopeAccess scopeAccess);
-
-    UserScopeAccess createInstanceOfUserScopeAccess(EndUser user, String clientId, String clientRCN);
 
     /**
      * Processes an impersonation request and returns an appropriate ImpersonatedScopeAccess.

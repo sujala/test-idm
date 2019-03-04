@@ -321,8 +321,6 @@ public class DefaultCloud11ServiceTestOld extends Specification {
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
         when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
 
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
-
         when:
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
 
@@ -344,8 +342,6 @@ public class DefaultCloud11ServiceTestOld extends Specification {
         when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(userDO, true));
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
         when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
-
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
 
         when:
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(null, credentials);

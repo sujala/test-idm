@@ -54,16 +54,6 @@ class DefaultScopeAccessServiceConcurrentIntegrationTest extends RootConcurrentI
         for (ScopeAccessStagedTask run : runs) {
             assert run.exceptionEncountered == null
         }
-
-        cleanup:
-        if (userScopeAccess != null) {
-            try {
-                saRepository.deleteScopeAccess(userScopeAccess)
-            }
-            catch (Exception e) {
-                //eat exceptions here cause should have already been deleted as part of test, but want to make sure it's gone
-            }
-        }
     }
 
     private class ScopeAccessStagedTask implements MultiStageTask {
@@ -103,7 +93,7 @@ class DefaultScopeAccessServiceConcurrentIntegrationTest extends RootConcurrentI
             //update the token. This will try to delete the expired tokens. When run concurrently, this will fail.
             try {
                 logger.debug("Updating expired scope access")
-                updatedScopeAccess = scopeAccessService.updateExpiredUserScopeAccess(user, clientId, null);
+                updatedScopeAccess = scopeAccessService.addScopeAccess(user, clientId, null);
             } catch (Exception ex) {
                 logger.error("Exception caught updating expired tokens")
                 ex.printStackTrace()
@@ -116,14 +106,6 @@ class DefaultScopeAccessServiceConcurrentIntegrationTest extends RootConcurrentI
         }
 
         void cleanup() {
-            if (updatedScopeAccess != null) {
-                try {
-                    saRepository.deleteScopeAccess(updatedScopeAccess)
-                }
-                catch (Exception e) {
-                    //eat exceptions here cause some should have already been deleted. An error here is fine.
-                }
-            }
         }
 
     }
