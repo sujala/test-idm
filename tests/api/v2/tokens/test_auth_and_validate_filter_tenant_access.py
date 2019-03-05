@@ -53,7 +53,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
     def create_tenant_with_faws_prefix(cls, domain_id=None):
         if domain_id is None:
             domain_id = cls.domain_id
-        tenant_name = const.TENANT_TYPE_PROTECTED_PREFIX + ':{}'.format(
+        tenant_name = "faws" + ':{}'.format(
             cls.generate_random_string(
                 pattern=const.TENANT_NAME_PATTERN))
         tenant_req = factory.get_add_tenant_object(tenant_name=tenant_name,
@@ -78,7 +78,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
             (role for role in roles
              if role[const.NAME] == const.TENANT_ACCESS_ROLE_NAME and
              str(role[const.TENANT_ID]).startswith(
-                 const.TENANT_TYPE_PROTECTED_PREFIX + ":")), False)
+                 "faws" + ":")), False)
         self.assertIsNotNone(faws_tenant_access_role)
 
     @tags('positive', 'p0', 'smoke')
@@ -96,7 +96,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
             (role for role in roles
              if role[const.NAME] == const.TENANT_ACCESS_ROLE_NAME and
              str(role[const.TENANT_ID]).startswith(
-                 const.TENANT_TYPE_PROTECTED_PREFIX + ":")), False)
+                 "faws" + ":")), False)
         self.assertIsNotNone(faws_tenant_access_role)
 
     @tags('positive', 'p0', 'smoke')
@@ -109,11 +109,12 @@ class AuthAndValidateTokens(base.TestBaseV2):
             self.assertSchema(response=resp,
                               json_schema=tokens_json.validate_token)
         roles = resp.json()[const.ACCESS][const.USER][const.ROLES]
-        tenant_access_role = any(
-            role[const.NAME] ==
-            const.TENANT_ACCESS_ROLE_NAME for role in roles)
-        self.assertEqual(False, tenant_access_role,
-                         "Tenant access role exists")
+        faws_tenant_access_role = next(
+            (role for role in roles
+             if role[const.NAME] == const.TENANT_ACCESS_ROLE_NAME and
+             str(role[const.TENANT_ID]).startswith(
+                 "faws" + ":")), False)
+        self.assertIsNotNone(faws_tenant_access_role)
 
     @unless_coverage
     def tearDown(self):

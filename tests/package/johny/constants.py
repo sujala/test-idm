@@ -126,6 +126,7 @@ MOVE_DOMAIN_TO_RCN_URL = '/RAX-AUTH/domains/{domain_id}/rcn/{rcn}'
 NEW_FED_AUTH_URL = '/RAX-AUTH/federation/saml/auth'
 PASSWORD_POLICY_URL = '/RAX-AUTH/domains/{domain_id}/password-policy'
 ADMIN_CHANGE_URL = '/RAX-AUTH/domains/{domain_id}/domainAdministratorChange'
+RESET_PHONE_PIN_URL = '/users/{user_id}/RAX-AUTH/phone-pin/reset'
 RESET_USER_API_KEY_URL = ('/users/{user_id}/OS-KSADM/credentials/'
                           'RAX-KSKEY:apiKeyCredentials/RAX-AUTH/reset')
 RD_USER_GROUP_TO_DOMAIN_URL = ADD_USER_GROUP_TO_DOMAIN_URL + '/{group_id}'
@@ -511,13 +512,11 @@ NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = (
 TENANT_TYPE = 'tenantType'
 TENANT_TYPE_CLOUD = 'cloud'
 TENANT_TYPE_FAWS = 'faws'
-TENANT_TYPE_PROTECTED_PREFIX = 'protectedprefix'
 TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = 'tenantTypeEndpointRule'
 TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES = 'tenantTypeEndpointRules'
 TYPE = 'type'
 NS_SERVICES = OS_KSADM_NAMESPACE + ':services'
 NS_IMPERSONATION = 'RAX-AUTH:impersonation'
-EXCLUDED_TENANT_TYPES = [TENANT_TYPE_PROTECTED_PREFIX]
 
 '''Query parameters'''
 ALL = 'all'

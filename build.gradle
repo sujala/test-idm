@@ -29,12 +29,16 @@ buildscript {
     }
 }
 
-def featureVersion = '3.29.0'
+def featureVersion = '3.30.0'
 def buildVersion = System.currentTimeMillis()
 def gitRevision = "git rev-parse HEAD".execute().text.trim()
 
 project.group = 'com.rackspace'
-project.version = "$featureVersion" + "-" + "$buildVersion"
+if (project.hasProperty('build_release') && "${build_release.toUpperCase()}" == 'TRUE') {
+    project.version = "$featureVersion" + "-" + "$buildVersion"
+} else {
+    project.version = "$featureVersion" + "-" + "$buildVersion" + "-" + "SNAPSHOT"
+}
 
 project.description = """idm"""
 
