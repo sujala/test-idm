@@ -385,60 +385,6 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
-    def "Verify delegate auth returns roles on hidden tenants appropriately"() {
-        // Create 2 domains in same RCN
-        def ua1 = utils.createCloudAccount()
-        def ua2 = utils.createGenericUserAdmin()
-        utils.domainRcnSwitch(ua1.domainId, commonRcn)
-        utils.domainRcnSwitch(ua2.domainId, commonRcn)
-
-        // Create 3 faws tenants in d1
-        def faws1 = createProtectedTenant(ua1.domainId)
-        def faws2 = createProtectedTenant(ua1.domainId)
-        def faws3 = createProtectedTenant(ua1.domainId)
-
-        def daToCreate = new DelegationAgreement().with {
-            it.name = "a name"
-            it.domainId = sharedUserAdmin.domainId
-            it
-        }
-
-        def ua1Token = utils.getToken(ua1.username)
-
-        // Auth as ua2
-        AuthenticateResponse ua2AuthResponse = utils.authenticate(ua2)
-
-        // Give ua2 access to d1
-        def da = utils.createDelegationAgreement(ua1Token, daToCreate)
-        utils.addUserDelegate(ua1Token, da.id, ua2.id)
-        RoleAssignments assignments = new RoleAssignments().with {
-            it.tenantAssignments = new TenantAssignments().with {
-                tas ->
-                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC1_ID, ["*"]))
-                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, [faws2.id, faws3.id]))
-                    tas
-            }
-            it
-        }
-        utils.grantRoleAssignmentsOnDelegationAgreement(da, assignments, ua1Token)
-
-        when: "Auth as delegate from domain2 under the first domain"
-        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(ua2AuthResponse.token.id, da.id)
-
-        then: "Delegate gets role 1 on faws2 and faw3, but not faws1"
-        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == faws1.id} == null
-        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == faws2.id} != null
-        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC1_ID && it.tenantId == faws3.id} != null
-
-        and: "Delegate gets role 2 on faws2 and faw3, but not faws1"
-        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == faws1.id} == null
-        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == faws2.id} != null
-        delegateAuthResponse.user.roles.role.find {it.id == ROLE_RBAC2_ID && it.tenantId == faws3.id} != null
-
-        cleanup:
-        utils.deleteDelegationAgreement(ua1Token, da)
-    }
-
     def "Verify delegate auth applies whitelist tenant filter"() {
         String tenant_type_x = RandomStringUtils.randomAlphabetic(15).toLowerCase()
         TenantType tenantTypeX = v2Factory.createTenantType(tenant_type_x, "description")

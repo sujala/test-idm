@@ -70,6 +70,8 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
 
         # Impersonate federated user
         fed_user_name = resp.json()[const.ACCESS][const.USER][const.NAME]
+        fed_user_id = resp.json()[const.ACCESS][const.USER][const.ID]
+
         impersonation_request_obj = requests.ImpersonateUser(
             user_name=fed_user_name, idp=self.issuer)
 
@@ -89,6 +91,10 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         # using racker can get fed user's domain
         racker_imp_client = self.generate_client(token=impersonation_token)
         self.validate_get_domain_by_imp_client(client=racker_imp_client)
+
+        # Verify impersonation client cannot reset phone pin
+        resp = racker_imp_client.reset_phone_pin(user_id=fed_user_id)
+        self.assertEqual(resp.status_code, 403)
 
         # Impersonate with identity admin client
         resp = self.identity_admin_client.impersonate_user(

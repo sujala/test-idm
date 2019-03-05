@@ -33,11 +33,6 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
      */
     private UserRoleLookupService userRoleLookupService;
 
-    /**
-     * These tenants are not automatically assigned a global role unless
-     */
-    private Set<String> hiddenTenantPrefixes = Collections.emptySet();
-
     private SourcedRoleAssignments interimSourcedRoleAssignments;
     private SourcedRoleAssignments finalSourcedRoleAssignments;
 
@@ -61,18 +56,6 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
      * Private to force use of static constructor
      */
     private EndUserDenormalizedSourcedRoleAssignmentsBuilder() {}
-
-
-    public void setHiddenTenantPrefixes(Set<String> hiddenTenantPrefixes) {
-        if (finalSourcedRoleAssignments != null) {
-            throw new IllegalArgumentException("Can not change prefixes once roles have been calculated");
-        }
-        if (CollectionUtils.isNotEmpty(hiddenTenantPrefixes)) {
-            this.hiddenTenantPrefixes = new HashSet<>(hiddenTenantPrefixes);
-        } else {
-            this.hiddenTenantPrefixes = Collections.emptySet();
-        }
-    }
 
     public SourcedRoleAssignments build() {
         if (finalSourcedRoleAssignments != null) {
@@ -296,54 +279,9 @@ public class EndUserDenormalizedSourcedRoleAssignmentsBuilder {
 
             if (ArrayUtils.isNotEmpty(domainTenantIds)) {
                 tenantIdsToReceiveDomainRoles = new HashSet<>(Arrays.asList(domainTenantIds));
-
-                // If user is a regular subuser, some tenants remain hidden
-                if (IdentityUserTypeEnum.DEFAULT_USER == userType) {
-
-                    // Calc tenants in domain on which user is not assigned a role directly on the tenant
-                    Set<String> tenantsToCheck = Sets.difference(tenantIdsToReceiveDomainRoles, getTenantsAssignedViaTenantAssignment()).copyInto(new HashSet<String>());
-
-                    // Check these tenants to see if should be excluded from receiving domain level roles
-                    if (!tenantsToCheck.isEmpty() && CollectionUtils.isNotEmpty(hiddenTenantPrefixes)) {
-                        for (String tenantId : tenantsToCheck) {
-                            String tenantPrefix = parseTenantPrefixFromTenantId(tenantId);
-
-                            // While this means the hidden prefixes are case sensitive, other does this to so okay here.
-                            if (StringUtils.isNotBlank(tenantPrefix) && hiddenTenantPrefixes.contains(tenantPrefix)) {
-                                tenantIdsToReceiveDomainRoles.remove(tenantId);
-                            }
-                        }
-                    }
-                }
             }
         }
         return tenantIdsToReceiveDomainRoles;
-    }
-
-    private Set<String> getTenantsAssignedViaTenantAssignment() {
-        Set<String> tenantsAssignedExplicit = new HashSet();
-        for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : interimSourcedRoleAssignments.getSourcedRoleAssignments()) {
-            for (RoleAssignmentSource source : sourcedRoleAssignment.getSources()) {
-                if (source.getAssignmentType() == RoleAssignmentType.TENANT) {
-                    tenantsAssignedExplicit.addAll(source.getTenantIds());
-                }
-            }
-        }
-        return tenantsAssignedExplicit;
-    }
-
-    /**
-     * Given a tenant ID, parse out the tenant prefix. The tenant prefix is anything in the tenant ID up to but excluding
-     * the first ':'. If the tenant ID does not contain a ':', the tenant ID does not have a prefix.
-     * <p>
-     * // TODO Use a utility for this rather than copying code
-     *
-     * @param tenantId
-     * @return
-     */
-    private String parseTenantPrefixFromTenantId(String tenantId) {
-        String[] idComponents = tenantId.split(":");
-        return idComponents.length >= 2 ? idComponents[0] : null;
     }
 
     private RoleAssignmentType determineAssignmentTypeForTenantRole(ImmutableClientRole cr, TenantRole tenantRole) {

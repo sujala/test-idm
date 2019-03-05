@@ -520,18 +520,6 @@ public class DefaultTenantService implements TenantService {
                     ImmutableClientRole autoAssignedRole = getAutoAssignedRole();
                     List<String> tenantIdsToGetAutoAssignRole = new ArrayList<>(Arrays.asList(tenantIds));
 
-                    List<String> excludeTenantPrefixes = identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom();
-                    if (CollectionUtils.isNotEmpty(excludeTenantPrefixes)) {
-                        for (String tenantId : tenantIds) {
-                            String tenantPrefix = parseTenantPrefixFromTenantId(tenantId);
-                            if (StringUtils.isNotBlank(tenantPrefix) && excludeTenantPrefixes.contains(tenantPrefix)) {
-                                if (!(IdentityUserTypeEnum.USER_ADMIN == userType) && !(IdentityUserTypeEnum.USER_MANAGER == userType)) {
-                                    tenantIdsToGetAutoAssignRole.remove(tenantId);
-                                }
-                            }
-                        }
-                    }
-
                     if (autoAssignedRole != null && CollectionUtils.isNotEmpty(tenantIdsToGetAutoAssignRole)) {
                         // Add the auto-assigned role for all tenants in domain.
                         implicitRole = new TenantRole();
@@ -1298,19 +1286,9 @@ public class DefaultTenantService implements TenantService {
         if (isAutoAssignmentOfRoleEnabledForTenantDomain(tenant)) {
             users = new ArrayList<>();
             Iterable<User> domainUsers = userService.getUsersWithDomainAndEnabledFlag(tenant.getDomainId(), true);
-            List<String> excludeTenantPrefixes = identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom();
-            String inferredTenantType = parseTenantPrefixFromTenantId(tenant.getTenantId());
 
             for (User domainUser : domainUsers) {
-                if (CollectionUtils.isNotEmpty(excludeTenantPrefixes) && StringUtils.isNotBlank(inferredTenantType)
-                        && excludeTenantPrefixes.contains(inferredTenantType)) {
-                    IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(domainUser);
-                    if (IdentityUserTypeEnum.USER_ADMIN == userType || IdentityUserTypeEnum.USER_MANAGER == userType) {
-                        users.add(domainUser);
-                    }
-                } else {
-                    users.add(domainUser);
-                }
+                users.add(domainUser);
             }
         }
 
@@ -1675,10 +1653,6 @@ public class DefaultTenantService implements TenantService {
         }
 
         EndUserDenormalizedSourcedRoleAssignmentsBuilder sourcedRoleAssignmentsBuilder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService);
-        List<String> hiddenTenantPrefixes = identityConfig.getReloadableConfig().getTenantPrefixesToExcludeAutoAssignRoleFrom();
-        if (CollectionUtils.isNotEmpty(hiddenTenantPrefixes)) {
-            sourcedRoleAssignmentsBuilder.setHiddenTenantPrefixes(new HashSet<>(hiddenTenantPrefixes));
-        }
         SourcedRoleAssignments finalAssignments = sourcedRoleAssignmentsBuilder.build();
 
         if (identityConfig.getReloadableConfig().isTenantRoleWhitelistVisibilityFilterEnabled()) {

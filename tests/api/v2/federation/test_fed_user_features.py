@@ -12,9 +12,14 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-class TestFedUserContactId(federation.TestBaseFederation):
+class TestFedUserFeatures(federation.TestBaseFederation):
 
-    """Tests for Conatct Id on Fed User."""
+    """Tests for the following features on federated users
+
+       1. Contact id.
+       2. Phone pin is present on create fed user.
+       3. Reset phone on fed user.
+    """
 
     @classmethod
     @unless_coverage
@@ -23,7 +28,7 @@ class TestFedUserContactId(federation.TestBaseFederation):
 
         Create users needed for the tests and generate clients for those users.
         """
-        super(TestFedUserContactId, cls).setUpClass()
+        super(TestFedUserFeatures, cls).setUpClass()
         cls.domain_id = func_helper.generate_randomized_domain_id(
             client=cls.identity_admin_client)
         cls.user_admin_client = cls.generate_client(
@@ -39,12 +44,12 @@ class TestFedUserContactId(federation.TestBaseFederation):
 
     @unless_coverage
     def setUp(self):
-        super(TestFedUserContactId, self).setUp()
+        super(TestFedUserFeatures, self).setUp()
         self.users = []
 
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
-    def test_fed_user_contact_id(self):
+    def test_fed_user_contact_id_phone_pin(self):
         """
         Test to Add Contact Id on a fed user.
         """
@@ -82,6 +87,16 @@ class TestFedUserContactId(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(
             response=resp, json_schema=tokens_json.validate_token)
+
+        # Reset phone PIN with user admin creds
+        resp = self.user_admin_client.reset_phone_pin(
+            user_id=fed_user_id)
+        self.assertEqual(resp.status_code, 204)
+
+        # fed client cannot reset self phone pin
+        fed_client = self.generate_client(token=fed_token_id)
+        resp = fed_client.reset_phone_pin(user_id=fed_user_id)
+        self.assertEqual(resp.status_code, 403)
 
         # Add Contact ID to the fed user
         contact_id = self.generate_random_string(
@@ -123,7 +138,6 @@ class TestFedUserContactId(federation.TestBaseFederation):
         self.assertEqual(
             resp.json()[const.ACCESS][const.USER][const.RAX_AUTH_CONTACTID],
             contact_id)
-        # self.assertEqual(1, 2)
 
     @base.base.log_tearDown_error
     @unless_coverage
@@ -135,10 +149,10 @@ class TestFedUserContactId(federation.TestBaseFederation):
                 resp.status_code, 204,
                 msg='User with ID {0} failed to delete'.format(user_id))
 
-        super(TestFedUserContactId, self).tearDown()
+        super(TestFedUserFeatures, self).tearDown()
 
     @classmethod
     @unless_coverage
     def tearDownClass(cls):
         cls.delete_client(cls.user_admin_client)
-        super(TestFedUserContactId, cls).tearDownClass()
+        super(TestFedUserFeatures, cls).tearDownClass()

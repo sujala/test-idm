@@ -17,14 +17,10 @@ class AutoAssignRoleIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityConfig identityConfig
 
-    @Unroll
-    def "tenants can be excluded from the auto-assign role based on feature flag, excludeTenantType == #excludeTenantType"() {
+    def "All users get the auto-assign role on tenants in domain"() {
         given:
         def domainId = utils.createDomain()
         def tenantType = utils.createTenantType()
-        if (excludeTenantType) {
-            reloadableConfiguration.setProperty(IdentityConfig.FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, "${tenantType.name}".toString())
-        }
         def users, identityAdmin, userAdmin, userManager, defaultUser
         (identityAdmin, userAdmin, userManager, defaultUser) = utils.createUsers(domainId)
         users = [defaultUser, userManager, userAdmin, identityAdmin]
@@ -36,11 +32,11 @@ class AutoAssignRoleIntegrationTest extends RootIntegrationTest {
         def defaultUserAuthResponse = utils.authenticate(defaultUser.username)
         def fedUserAuthResponse = utils.createFederatedUserForAuthResponse(domainId)
 
-        then: "the auto-assigned tenant role is assigned to the users based on the tenant type being in the exclude config"
-        assertAutoAssignRoleOnTenantInAuthResponse(userAdminAuthResponse, tenant, false)
-        assertAutoAssignRoleOnTenantInAuthResponse(userManagerAuthResponse, tenant, false)
-        assertAutoAssignRoleOnTenantInAuthResponse(defaultUserAuthResponse, tenant, excludeTenantType)
-        assertAutoAssignRoleOnTenantInAuthResponse(fedUserAuthResponse, tenant, excludeTenantType)
+        then: "the auto-assigned tenant role is assigned to the users"
+        assertAutoAssignRoleOnTenantInAuthResponse(userAdminAuthResponse, tenant)
+        assertAutoAssignRoleOnTenantInAuthResponse(userManagerAuthResponse, tenant)
+        assertAutoAssignRoleOnTenantInAuthResponse(defaultUserAuthResponse, tenant)
+        assertAutoAssignRoleOnTenantInAuthResponse(fedUserAuthResponse, tenant)
 
         when: "validate the tokens"
         def userAdminValidateTokenResponse = utils.validateToken(userAdminAuthResponse.token.id)
@@ -48,29 +44,29 @@ class AutoAssignRoleIntegrationTest extends RootIntegrationTest {
         def defaultUserValidateTokenResponse = utils.validateToken(defaultUserAuthResponse.token.id)
         def fedUserValidateTokenResponse = utils.validateToken(fedUserAuthResponse.token.id)
 
-        then: "the auto-assigned tenant role is assigned to the users based on the tenant type being in the exclude config"
-        assertAutoAssignRoleOnTenantInAuthResponse(userAdminValidateTokenResponse, tenant, false)
-        assertAutoAssignRoleOnTenantInAuthResponse(userManagerValidateTokenResponse, tenant, false)
-        assertAutoAssignRoleOnTenantInAuthResponse(defaultUserValidateTokenResponse, tenant, excludeTenantType)
-        assertAutoAssignRoleOnTenantInAuthResponse(fedUserValidateTokenResponse, tenant, excludeTenantType)
+        then: "the auto-assigned tenant role is assigned to the users"
+        assertAutoAssignRoleOnTenantInAuthResponse(userAdminValidateTokenResponse, tenant)
+        assertAutoAssignRoleOnTenantInAuthResponse(userManagerValidateTokenResponse, tenant)
+        assertAutoAssignRoleOnTenantInAuthResponse(defaultUserValidateTokenResponse, tenant)
+        assertAutoAssignRoleOnTenantInAuthResponse(fedUserValidateTokenResponse, tenant)
 
         when: "list users for tenant"
         def usersWithTenant = utils.listUsersWithTenant(tenant.id)
 
-        then: "only the users who should get the auto-assign role based on the exclude tenant type property are returned"
+        then: "All users in domain are returned"
         usersWithTenant.user.username.contains(userAdmin.username)
         usersWithTenant.user.username.contains(userManager.username)
-        usersWithTenant.user.username.contains(defaultUser.username) == !excludeTenantType
+        usersWithTenant.user.username.contains(defaultUser.username)
         // List users for tenant does not support federated users
         // usersWithTenant.user.username.contains(fedUserAuthResponse.user.name) == !excludeTenantType
 
         when: "list users for tenant with role"
         def usersForTenantWithRole = utils.listUsersWithTenantAndRole(tenant.id, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
 
-        then: "only the users who should get the auto-assign role based on the exclude tenant type property are returned"
+        then: "All users in domain are returned"
         usersForTenantWithRole.user.username.contains(userAdmin.username)
         usersForTenantWithRole.user.username.contains(userManager.username)
-        usersForTenantWithRole.user.username.contains(defaultUser.username) == !excludeTenantType
+        usersForTenantWithRole.user.username.contains(defaultUser.username)
         // List users with role on tenant does not support federated users
         // usersForTenantWithRole.user.username.contains(fedUserAuthResponse.user.name) == !excludeTenantType
 
@@ -81,33 +77,30 @@ class AutoAssignRoleIntegrationTest extends RootIntegrationTest {
         // List roles for user on tenant does not support federated users
         // def fedUserListRoles = utils.listRolesForUserOnTenant(new User().with {it.id = fedUserAuthResponse.user.id; it}, tenant)
 
-        then: "the user has the auto-assign role on the tenant based on the exclude config"
-        assertAutoAssignRoleOnTenantInRoleList(userAdminListRoles, tenant, false)
-        assertAutoAssignRoleOnTenantInRoleList(userManagerListRoles, tenant, false)
-        assertAutoAssignRoleOnTenantInRoleList(defaultUserListRoles, tenant, excludeTenantType)
+        then: "the user has the auto-assign role on the tenant"
+        assertAutoAssignRoleOnTenantInRoleList(userAdminListRoles, tenant)
+        assertAutoAssignRoleOnTenantInRoleList(userManagerListRoles, tenant)
+        assertAutoAssignRoleOnTenantInRoleList(defaultUserListRoles, tenant)
         // List roles for user on tenant does not support federated users
         // assertAutoAssignRoleOnTenantInRoleList(fedUserListRoles, tenant, excludeTenantType)
 
         cleanup:
         utils.deleteUsers(users)
         utils.deleteTenant(tenant)
-
-        where:
-        excludeTenantType << [true, false]
     }
 
-    void assertAutoAssignRoleOnTenantInAuthResponse(AuthenticateResponse authenticateResponse, Tenant tenant, boolean tenantExcluded) {
+    void assertAutoAssignRoleOnTenantInAuthResponse(AuthenticateResponse authenticateResponse, Tenant tenant) {
         // first assert that the auto-assign role is not displayed as a global role
         assert authenticateResponse.user.roles.role.find { role -> role.name == IdentityRole.IDENTITY_TENANT_ACCESS.roleName && role.tenantId == null } == null
         def autoRoleOnTenant = authenticateResponse.user.roles.role.find { role -> role.name == IdentityRole.IDENTITY_TENANT_ACCESS.roleName && role.tenantId == tenant.id }
-        assert tenantExcluded ? autoRoleOnTenant == null : autoRoleOnTenant != null
+        assert autoRoleOnTenant != null
     }
 
-    void assertAutoAssignRoleOnTenantInRoleList(RoleList roleList, Tenant tenant, boolean tenantExcluded) {
+    void assertAutoAssignRoleOnTenantInRoleList(RoleList roleList, Tenant tenant) {
         // first assert that the auto-assign role is not a global role
         assert roleList.role.find { role -> role.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantId == null } == null
         def autoRoleOnTenant = roleList.role.find { role -> role.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && role.tenantId == tenant.id}
-        assert tenantExcluded ? autoRoleOnTenant == null : autoRoleOnTenant != null
+        assert autoRoleOnTenant != null
     }
 
 }

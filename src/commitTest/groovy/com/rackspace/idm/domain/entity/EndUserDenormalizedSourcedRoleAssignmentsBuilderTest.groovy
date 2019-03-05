@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity
 
-import com.google.common.collect.Sets
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -201,7 +200,7 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
     }
 
     @Unroll
-    def "build: users of type #identityUserType receive domain assigned roles on every tenant in domain even for hidden tenants"() {
+    def "build: users of type #identityUserType receive domain assigned roles on every tenant in domain"() {
         given:
         def tenantIds = ["p1:t1", "p2:t2", "1234"] as String[]
         def domain = defaultDomain().with {
@@ -216,7 +215,6 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         addUserSourceDomainRoles(identityUserType.roleName)
 
         when:
-        builder.setHiddenTenantPrefixes(["p1"] as Set)
         SourcedRoleAssignments sourcedRoleAssignments = builder.build()
 
         then: "result has a single assignment for the single role added"
@@ -234,148 +232,7 @@ class EndUserDenormalizedSourcedRoleAssignmentsBuilderTest extends Specification
         userSource.assignmentType == RoleAssignmentType.DOMAIN
 
         where:
-        identityUserType << [IdentityUserTypeEnum.SERVICE_ADMIN, IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
-    }
-
-    @Unroll
-    def "build: users of type #identityUserType do not receive domain assigned roles on hidden tenants when do not have explicit assignment on it"() {
-        given:
-        def tenantIds = ["p1:t1", "p2:t2", "1234", "p1:t2", "p3:t1"] as String[]
-        def domain = defaultDomain().with {
-            it.tenantIds = tenantIds
-            it
-        }
-        userRoleLookupService.getUserDomain() >> domain
-        userRoleLookupService.getUser() >> defaultUser()
-        userRoleLookupService.getTenantIds() >> tenantIds
-
-        EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
-        addUserSourceDomainRoles(identityUserType.roleName)
-
-        when: "Mark two prefixes as being hidden"
-        builder.setHiddenTenantPrefixes(["p1", "p3"] as Set)
-        SourcedRoleAssignments sourcedRoleAssignments = builder.build()
-
-        then: "result has a single assignment for the single role added"
-        sourcedRoleAssignments != null
-        sourcedRoleAssignments.sourcedRoleAssignments.size() == 1
-        def userTypeAssignment = sourcedRoleAssignments.sourcedRoleAssignments[0]
-
-        and: "user receives domain role only on non-hidden tenants"
-        userTypeAssignment.role.name == identityUserType.roleName
-        def difference = Sets.difference(new HashSet(Arrays.asList(domain.tenantIds)), userTypeAssignment.tenantIds)
-        difference.size() == 3
-        difference.contains("p1:t1")
-        difference.contains("p1:t2")
-        difference.contains("p3:t1")
-
-        and: "source created appropriately"
-        userTypeAssignment.sources.size() == 1
-        def userSource = userTypeAssignment.sources[0]
-        userSource.sourceType == RoleAssignmentSourceType.USER
-        CollectionUtils.isEqualCollection(userSource.tenantIds, ["p2:t2", "1234"] as Set)
-        userSource.assignmentType == RoleAssignmentType.DOMAIN
-
-        where:
-        identityUserType << [IdentityUserTypeEnum.DEFAULT_USER]
-    }
-
-    @Unroll
-    def "build: users of type #identityUserType receive domain assigned roles on hidden tenants when have explicit assignment on it"() {
-        given:
-        def tenantIds = ["p1:t1", "p2:t2", "1234", "p1:t2", "p3:t1"] as String[]
-        def domain = defaultDomain().with {
-            it.tenantIds = tenantIds
-            it
-        }
-        userRoleLookupService.getUserDomain() >> domain
-        userRoleLookupService.getUser() >> defaultUser()
-        userRoleLookupService.getTenantIds() >> tenantIds
-
-        EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
-        builder.setHiddenTenantPrefixes(["p1", "p3"] as Set)
-
-        def tr = createTenantRole().with {
-            it.tenantIds = ["p1:t1"] as Set
-            it.name = "aRole"
-            it
-        }
-        def userTypeTr = createTenantRole().with {
-            it.name = identityUserType.roleName
-            it
-        }
-        addUserSourceRoles(userTypeTr, tr)
-
-        when: "Add explicit assignment of a role on p1:t1 tenants"
-        def sourcedRoleAssignments = builder.build()
-
-        then: "result has a two assignments for the 2 roles assigned"
-        sourcedRoleAssignments != null
-        sourcedRoleAssignments.sourcedRoleAssignments.size() == 2
-
-        and: "one is the user type role domain assignment"
-        def userTypeAssignment = sourcedRoleAssignments.sourcedRoleAssignments.find {it.role.name == identityUserType.roleName}
-        userTypeAssignment != null
-
-        and: "user receives domain role on the hidden tenant on which user has other role"
-        def differencePostAssign = Sets.difference(new HashSet(Arrays.asList(domain.tenantIds)), userTypeAssignment.tenantIds)
-        differencePostAssign.size() == 2
-        !differencePostAssign.contains("p1:t1")
-        differencePostAssign.contains("p1:t2")
-        differencePostAssign.contains("p3:t1")
-
-        where:
-        identityUserType << [IdentityUserTypeEnum.DEFAULT_USER]
-    }
-
-    @Unroll
-    def "build: users of type #identityUserType receive domain assigned roles on all hidden tenants when have explicit assignment on it"() {
-        given:
-        def tenantIds = ["p1:t1", "p2:t2", "1234", "p1:t2", "p3:t1"] as String[]
-        def domain = defaultDomain().with {
-            it.tenantIds = tenantIds
-            it
-        }
-        userRoleLookupService.getUserDomain() >> domain
-        userRoleLookupService.getUser() >> defaultUser()
-        userRoleLookupService.getTenantIds() >> tenantIds
-
-        EndUserDenormalizedSourcedRoleAssignmentsBuilder builder = EndUserDenormalizedSourcedRoleAssignmentsBuilder.endUserBuilder(userRoleLookupService)
-        builder.setHiddenTenantPrefixes(["p1", "p3"] as Set)
-
-        def userTypeTr = createTenantRole().with {
-            it.name = identityUserType.roleName
-            it
-        }
-        def tr = createTenantRole().with {
-            it.tenantIds = ["p1:t1"] as Set
-            it.name = "aRole"
-            it
-        }
-        def tr2 = createTenantRole().with {
-            it.tenantIds = ["p3:t1"] as Set
-            it
-        }
-        addUserSourceRoles(userTypeTr, tr, tr2)
-
-        when: "add explicit assignment of a role on hidden p1:t1 and p3:t1 tenants"
-        def sourcedRoleAssignmentsPostAssign = builder.build()
-
-        then: "result has assignments for the 3 roles assigned"
-        sourcedRoleAssignmentsPostAssign != null
-        sourcedRoleAssignmentsPostAssign.sourcedRoleAssignments.size() == 3
-
-        then: "one is the user type role domain assignment"
-        SourcedRoleAssignments.SourcedRoleAssignment userTypeAssignment = sourcedRoleAssignmentsPostAssign.sourcedRoleAssignments.find {it.role.name == identityUserType.roleName}
-        userTypeAssignment != null
-
-        and: "user now receives domain role on the hidden tenant on which user has other role"
-        def differencePostAssign = Sets.difference(new HashSet(Arrays.asList(domain.tenantIds)), userTypeAssignment.tenantIds)
-        differencePostAssign.size() == 1
-        differencePostAssign.contains("p1:t2")
-
-        where:
-        identityUserType << [IdentityUserTypeEnum.DEFAULT_USER]
+        identityUserType << IdentityUserTypeEnum.values()
     }
 
     def "build: Adding multiple tenant assigned assignments for same role unions the tenants and creates appropriate sources"() {

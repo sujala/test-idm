@@ -386,8 +386,6 @@ public class IdentityConfig {
     public static final String NEW_RELIC_SECURED_API_USE_SHA256_PROP = "feature.enable.new.relic.sha256.hmac";
     public static final boolean NEW_RELIC_SECURED_API_USE_SHA256_DEFAULT = true;
 
-    public static final String FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP = "tenant.prefixes.to.exclude.auto.assign.role.from";
-
     public static final String FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_PROP = "feature.enable.delegation.agreement.services";
     public static final boolean FEATURE_ENABLE_DELEGATION_AGREEMENT_SERVICES_DEFAULT = true;
 
@@ -2187,12 +2185,6 @@ public class IdentityConfig {
         @IdmProp(key = DELEGATION_MAX_NEST_LEVEL_PROP, versionAdded = "3.22.0", description = "The maximum allowed level of delegation agreement nesting allowed by the system.")
         public int getMaxDelegationAgreementNestingLevel() {
             return getIntSafely(reloadableConfiguration, DELEGATION_MAX_NEST_LEVEL_PROP);
-        }
-
-
-        @IdmProp(key = FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, versionAdded = "3.17.0", description = "The list of tenant prefixes to exclude the auto-assigned (identity:tenant-access) role from.")
-        public List<String> getTenantPrefixesToExcludeAutoAssignRoleFrom() {
-            return getListSafely(reloadableConfiguration, FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP);
         }
 
         @IdmProp(key = IDP_MAX_SEACH_RESULT_SIZE_PROP, versionAdded = "3.1.0", description = "Maximum numbers of identity providers allowed to be returned in list providers call")
