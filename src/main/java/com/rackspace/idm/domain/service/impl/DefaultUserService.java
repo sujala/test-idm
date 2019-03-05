@@ -1017,7 +1017,7 @@ public class DefaultUserService implements UserService {
         userDao.updateUser(user);
 
         if(passwordChange) {
-            scopeAccessService.expireAllTokensForUser(user.getUsername());
+            tokenRevocationService.revokeAllTokensForEndUser(user);
             if (identityConfig.getReloadableConfig().isPostCredentialChangeFeedEventsEnabled()) {
                 // Copy over the values needed to populate the credential change feed event.
                 // We have to check the user provided in the method params first and if not provided pull it from the existing user.

@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
@@ -71,6 +72,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
     @Autowired
     ScopeAccessService scopeAccessService
+
+    @Autowired
+    TokenRevocationService tokenRevocationService
 
     @Autowired
     @Qualifier("scopeAccessDao")
@@ -794,7 +798,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         User defaultUser = utils.createUser(userAdminToken)
 
         //make sure all tokens are expired (they should be, but verify just the same)
-        scopeAccessService.expireAllTokensForUserById(defaultUser.id)
+        tokenRevocationService.revokeAllTokensForEndUser(defaultUser.id)
 
         //authenticate normally, to make sure the token is created per usual process
         def defaultUserToken = utils.getToken(defaultUser.username)

@@ -685,7 +685,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.updateUser(user)
 
         then:
-        1 * scopeAccessService.expireAllTokensForUser(_)
+        1 * tokenRevocationService.revokeAllTokensForEndUser(_)
         identityUserService.getProvisionedUserByIdWithPwdHis(_) >> currentUser
         scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
     }
@@ -772,7 +772,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         authorizationService.hasUserAdminRole(_) >> true
         mockFederatedUserDao.getUsersByDomainId(_) >> [federatedSubUser].asList()
-        scopeAccessService.expireAllTokensForUserById(federatedUserId)
+        tokenRevocationService.revokeAllTokensForEndUser(federatedSubUser)
     }
 
     def "disableUserAdminSubUsers does not disable sub users that are disabled"() {

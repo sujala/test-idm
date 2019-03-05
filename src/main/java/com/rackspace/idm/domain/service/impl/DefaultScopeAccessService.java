@@ -165,14 +165,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return endpoints;
     }
 
-    @Override
-    public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
-        BaseUser baseUser = userService.getUserByScopeAccess(token, false);
-
-        ServiceCatalogInfo scInfo = getServiceCatalogInfo(baseUser);
-        return scInfo.getUserEndpoints();
-    }
-
     /**
      * @deprecated Use Identity user service of same name
      * @param baseUser
@@ -498,17 +490,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void addApplicationScopeAccess(Application application, ScopeAccess scopeAccess) {
-        if(scopeAccess == null) {
-            logger.error(NULL_ARGUMENT_PASSED_IN);
-            throw new IllegalArgumentException(NULL_ARGUMENT_PASSED_IN);
-        }
-        logger.info(ADDING_SCOPE_ACCESS, scopeAccess);
-        this.scopeAccessDao.addScopeAccess(application, scopeAccess);
-        logger.info(ADDED_SCOPE_ACCESS);
-    }
-
-    @Override
     public boolean authenticateAccessToken(String accessTokenStr) {
         logger.debug("Authorizing Token: {}", accessTokenStr);
         Boolean authenticated = false;
@@ -533,61 +514,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         this.scopeAccessDao.deleteScopeAccess(scopeAccess);
         logger.info("Deleted ScopeAccess {}", scopeAccess);
-    }
-
-    @Override
-    public void expireAccessToken(String tokenString) {
-        tokenRevocationService.revokeToken(tokenString);
-    }
-
-    @Override
-    public void expireAllTokensForClient(String clientId) {
-        logger.debug("Expiring all tokens for client {}", clientId);
-        final Application client = this.applicationService.getById(clientId);
-        if (client == null) {
-            return;
-        }
-
-        for (ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(client)) {
-            sa.setAccessTokenExpired();
-            this.scopeAccessDao.updateScopeAccess(sa);
-        }
-        logger.debug("Done expiring all tokens for client {}", clientId);
-    }
-
-    @Override
-    public void expireAllTokensForUser(String username) {
-        logger.debug("Expiring all tokens for user {}", username);
-        final User user = this.userService.getUser(username);
-        if (user == null) {
-            return;
-        }
-
-        tokenRevocationService.revokeAllTokensForEndUser(user);
-
-        logger.debug("Done expiring all tokens for user {}", username);
-    }
-
-    @Override
-    public void expireAllTokensForUserById(String userId) {
-        logger.debug("Expiring all tokens for user {}", userId);
-        final EndUser user = identityUserService.getEndUserById(userId);
-        if (user == null) {
-            return;
-        }
-
-        tokenRevocationService.revokeAllTokensForEndUser(user);
-
-        logger.debug("Done expiring all tokens for user {}", userId);
-    }
-
-    @Override
-    public ScopeAccess getAccessTokenByAuthHeader(String authHeader) {
-        logger.debug("Getting access token by auth header {}", authHeader);
-        final String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        final ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByAccessToken(tokenStr);
-        logger.debug("Done getting access token by auth header {}", authHeader);
-        return scopeAccess;
     }
 
     @Override
@@ -651,49 +577,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public ScopeAccess loadScopeAccessByAccessToken(String accessToken) {
-        // Attempts to load the token. If the token is not found or expired
-        // return a not found exception
-        ScopeAccess scopeAccess = getScopeAccessByAccessToken(accessToken);
-        if (scopeAccess == null) {
-            String errorMsg = String.format("Token not found : %s", accessToken);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
-        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-            String errorMsg = String.format("Token expired : %s", accessToken);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
-        return scopeAccess;
-    }
-
-    @Override
-    public ScopeAccess getScopeAccessByRefreshToken(String refreshToken) {
-        logger.debug("Getting ScopeAccess by Refresh Token {}", refreshToken);
-        final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByRefreshToken(refreshToken);
-        logger.debug("Got ScopeAccess {} by Refresh Token {}", scopeAccess, refreshToken);
-        return scopeAccess;
-    }
-
-    @Override
     public Iterable<ScopeAccess> getScopeAccessesForUserByClientId(User user, String clientId) {
         logger.debug("Getting ScopeAccesses by parent {} and clientId", user, clientId);
         return this.scopeAccessDao.getScopeAccessesByClientId(user, clientId);
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getScopeAccessesForApplicationByClientId(Application application, String clientId) {
-        logger.debug("Getting ScopeAccesses by parent {} and clientId", application, clientId);
-        return this.scopeAccessDao.getScopeAccessesByClientId(application, clientId);
-    }
-
-    // Return UserScopeAccess from the directory, valid, expired or null
-    @Override
-    public UserScopeAccess getUserScopeAccessByClientId(User user, String clientId) {
-        return (UserScopeAccess) scopeAccessDao.getMostRecentScopeAccessByClientId(user, clientId);
     }
 
     // Return UserScopeAccess from directory, refreshes expired
@@ -769,20 +655,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Updated ScopeAccess {}", scopeAccess);
     }
 
-
-    @Override
-    public void deleteScopeAccessesForApplication(Application application, String clientId) {
-        for (ScopeAccess sa : getScopeAccessesForApplicationByClientId(application, clientId)) {
-            deleteScopeAccess(sa);
-        }
-    }
-
-    @Override
-    public void deleteScopeAccessesForUser(User user, String clientId) {
-        for (ScopeAccess sa : getScopeAccessesForUserByClientId(user, clientId)) {
-            deleteScopeAccess(sa);
-        }
-    }
 
     @Override
     public void deleteExpiredTokens(EndUser user) {
@@ -1026,11 +898,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public Iterable<ScopeAccess> getScopeAccessesForUser(User user) {
         return scopeAccessDao.getScopeAccesses(user);
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getScopeAccessesForApplication(Application application) {
-        return scopeAccessDao.getScopeAccesses(application);
     }
 
     @Override

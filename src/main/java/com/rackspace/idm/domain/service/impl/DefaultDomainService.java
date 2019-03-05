@@ -40,7 +40,7 @@ public class DefaultDomainService implements DomainService {
     private TenantService tenantService;
 
     @Autowired
-    private ScopeAccessService scopeAccessService;
+    private TokenRevocationService tokenRevocationService;
 
     @Autowired
     private AuthorizationService authorizationService;
@@ -283,7 +283,7 @@ public class DefaultDomainService implements DomainService {
     public void expireAllTokenInDomain(String domainId) {
         for(EndUser user : identityUserService.getEndUsersByDomainId(domainId, User.UserType.VERIFIED)) {
             try {
-                scopeAccessService.expireAllTokensForUserById(user.getId());
+                tokenRevocationService.revokeAllTokensForEndUser(user);
             } catch (Exception ex) {
                 String errMsg = String.format("ACTION NEEDED: Failed to expired all tokens for user %s. This user's tokens must be manually expired because the domain was disabled", user.getUsername());
                 logger.error(errMsg, ex);
