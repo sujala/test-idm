@@ -155,13 +155,11 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
     }
 
     /**
-     * This test verifies that domain roles are correctly applied to hidden tenants. In particular, user-admins/user-managers
-     * should receive their respective roles on those tenants, but regular subusers do not.
+     * This test verifies that domain roles are correctly applied.
      *
      */
-    def "getServiceCatalogInfoApplyRcnRoles - Correctly applies domain roles to hidden tenants"() {
+    def "getServiceCatalogInfoApplyRcnRoles - Correctly applies domain roles"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_TENANT_PREFIXES_TO_EXCLUDE_AUTO_ASSIGN_ROLE_FROM_PROP, Constants.TENANT_TYPE_PROTECTED_PREFIX)
         org.openstack.docs.identity.api.v2.User userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
         def tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), userAdmin.domainId).getEntity(Tenants).value
         def cloudTenant = tenants.tenant.find {
@@ -175,8 +173,8 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         utils.addRoleToUser(userManage, USER_MANAGE_ROLE_ID)
         def defaultUser = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), userAdmin.domainId)
 
-        def tenantId = Constants.TENANT_TYPE_PROTECTED_PREFIX + ":" + testUtils.getRandomUUID()
-        def protectedTenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, [Constants.TENANT_TYPE_PROTECTED_PREFIX]).with {it.domainId = userAdmin.domainId; it})
+        def tenantId = "faws" + ":" + testUtils.getRandomUUID()
+        def protectedTenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["faws"]).with {it.domainId = userAdmin.domainId; it})
 
         when: "retrieve roles for user-admin"
         def userEntity = userService.getUserById(userAdmin.id)
@@ -188,7 +186,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         and: "standard cloud roles appropriately applied"
         assertApplyRcnCloudAccount(IdentityUserTypeEnum.USER_ADMIN, scInfo.userTenantRoles, cloudTenant, filesTenant)
 
-        and: "receives user-admin role on hidden tenant"
+        and: "receives user-admin role on tenant"
         def userAdminRoleAssignment = scInfo.userTenantRoles.find {it.roleRsId == Constants.USER_ADMIN_ROLE_ID}
         assert userAdminRoleAssignment != null
         assert userAdminRoleAssignment.getTenantIds().size() == 3
@@ -204,7 +202,7 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         and: "standard cloud roles appropriately applied"
         assertApplyRcnCloudAccount(IdentityUserTypeEnum.USER_MANAGER, scInfo.userTenantRoles, cloudTenant, filesTenant)
 
-        and: "receives identity:user-manage AND identity:default role on hidden tenant"
+        and: "receives identity:user-manage AND identity:default role"
         def userManageAssignment = scInfo.userTenantRoles.find {it.roleRsId == USER_MANAGE_ROLE_ID}
         assert userManageAssignment != null
         assert userManageAssignment.getTenantIds().size() == 3
@@ -225,11 +223,11 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         and: "standard cloud roles appropriately applied"
         assertApplyRcnCloudAccount(IdentityUserTypeEnum.DEFAULT_USER, scInfo.userTenantRoles, cloudTenant, filesTenant)
 
-        and: "does not receive identity:default role on hidden tenant"
+        and: "Receive identity:default role on tenant"
         def userDefaultAssignment = scInfo.userTenantRoles.find {it.roleRsId == Constants.DEFAULT_USER_ROLE_ID}
         assert userDefaultAssignment != null
-        assert userDefaultAssignment.getTenantIds().size() == 2
-        assert userDefaultAssignment.getTenantIds().find() {it == protectedTenant.id} == null
+        assert userDefaultAssignment.getTenantIds().size() == 3
+        assert userDefaultAssignment.getTenantIds().find() {it == protectedTenant.id} != null
 
         cleanup:
         reloadableConfiguration.reset()

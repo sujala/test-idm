@@ -4376,10 +4376,6 @@ objectClass: rsTenantTypeObject
 cn: *
 description: all tenant type
 
-dn: cn=protectedprefix,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
-objectClass: rsTenantTypeObject
-description: A prefix to test tenant exclusion logic
-
 dn: cn=dp,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsTenantTypeObject
 description: Datapipe tenant type
