@@ -126,6 +126,7 @@ MOVE_DOMAIN_TO_RCN_URL = '/RAX-AUTH/domains/{domain_id}/rcn/{rcn}'
 NEW_FED_AUTH_URL = '/RAX-AUTH/federation/saml/auth'
 PASSWORD_POLICY_URL = '/RAX-AUTH/domains/{domain_id}/password-policy'
 ADMIN_CHANGE_URL = '/RAX-AUTH/domains/{domain_id}/domainAdministratorChange'
+RESET_PHONE_PIN_URL = '/users/{user_id}/RAX-AUTH/phone-pin/reset'
 RESET_USER_API_KEY_URL = ('/users/{user_id}/OS-KSADM/credentials/'
                           'RAX-KSKEY:apiKeyCredentials/RAX-AUTH/reset')
 RD_USER_GROUP_TO_DOMAIN_URL = ADD_USER_GROUP_TO_DOMAIN_URL + '/{group_id}'

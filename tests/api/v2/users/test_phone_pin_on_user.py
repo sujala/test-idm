@@ -10,10 +10,12 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-class TestPhonePinOnAddUser(base.TestBaseV2):
-
+class TestPhonePinOnUser(base.TestBaseV2):
     """
-    Tests for verifying that new user creation adds a phone pin on the user
+    Tests for verifying,
+
+    i. that new user creation adds a phone pin on the user.
+    ii. reset phone pin functionality.
     """
 
     @classmethod
@@ -23,19 +25,21 @@ class TestPhonePinOnAddUser(base.TestBaseV2):
         Class level set up for the tests
         Create users needed for the tests and generate clients for those users.
         """
-        super(TestPhonePinOnAddUser, cls).setUpClass()
+        super(TestPhonePinOnUser, cls).setUpClass()
 
     @unless_coverage
     def setUp(self):
-        super(TestPhonePinOnAddUser, self).setUp()
+        super(TestPhonePinOnUser, self).setUp()
         self.user_admin_clients = []
         self.sub_user_ids = []
 
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
-    def test_add_user_admin_generates_phone_pin(self):
+    def test_user_admin_phone_pin(self):
         """
-        add user admin call generates phone pin for user
+        Test to verify,
+        1. add user admin call generates phone pin for user
+        2. phone pin can/cannot be reset based on caller
         """
         user_name = self.generate_random_string()
         password = self.generate_random_string(pattern=const.PASSWORD_PATTERN)
@@ -47,25 +51,31 @@ class TestPhonePinOnAddUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         user_id = resp.json()[const.USER][const.ID]
 
-        req_obj = requests.AuthenticateWithPassword(
+        auth_req_obj = requests.AuthenticateWithPassword(
             user_name=user_name, password=password
         )
         resp = self.identity_admin_client.get_auth_token(
-            request_object=req_obj)
+            request_object=auth_req_obj)
+        phone_pin = resp.json()[
+            const.ACCESS][const.USER][const.RAX_AUTH_PHONE_PIN]
         user_admin_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
 
         user_admin_client = self.generate_client(token=user_admin_token)
         self.user_admin_clients.append(user_admin_client)
 
-        # check if phone pin exists for the user-admin when called on self
+        # verify phone pin exists for the user-admin when called on self
         get_user_admin_resp = user_admin_client.get_user(user_id=user_id)
         self.assertIn(const.RAX_AUTH_PHONE_PIN, get_user_admin_resp.json()[
             const.USER])
-        self.assertEqual(len(get_user_admin_resp.json()[const.USER][
-                                 const.RAX_AUTH_PHONE_PIN]), 6)
-        get_user_resp = self.identity_admin_client.get_user(
+        phone_pin_length = len(
+            get_user_admin_resp.json()[const.USER][const.RAX_AUTH_PHONE_PIN])
+        self.assertEqual(phone_pin_length, 6)
+
+        # verify phone pin is not returned for the user-admin when called with
+        # identity-admin.
+        get_user_admin_resp = self.identity_admin_client.get_user(
             user_id=user_id)
-        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, get_user_resp.json()[
+        self.assertNotIn(const.RAX_AUTH_PHONE_PIN, get_user_admin_resp.json()[
             const.USER])
 
         # verify if phone pin is not returned for list users
@@ -104,11 +114,26 @@ class TestPhonePinOnAddUser(base.TestBaseV2):
         self.assertNotIn(const.RAX_AUTH_PHONE_PIN, get_user_resp.json()[
             const.USER])
 
+        # Reset phone pin on user admin
+        resp = self.identity_admin_client.reset_phone_pin(user_id=user_id)
+        self.assertEqual(resp.status_code, 204)
+        resp = self.identity_admin_client.get_auth_token(
+            request_object=auth_req_obj)
+        new_phone_pin = resp.json()[
+            const.ACCESS][const.USER][const.RAX_AUTH_PHONE_PIN]
+        self.assertNotEqual(new_phone_pin, phone_pin)
+
+        # Cannot Reset own phone PIN
+        resp = user_admin_client.reset_phone_pin(user_id=user_id)
+        self.assertEqual(resp.status_code, 403)
+
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
-    def test_add_default_user_generates_phone_pin(self):
+    def test_default_user_phone_pin(self):
         """
-        add default user call generates phone pin for user
+        Test to verify,
+        1. add default user call generates phone pin for user.
+        2. phone pin can/cannot be reset based on caller.
         """
         domain_id = func_helper.generate_randomized_domain_id(
             client=self.identity_admin_client)
@@ -131,11 +156,23 @@ class TestPhonePinOnAddUser(base.TestBaseV2):
         # check if phone pin exists for the sub-user when called on self
         self.assertIn(const.RAX_AUTH_PHONE_PIN, get_user_resp.json()[
             const.USER])
-        self.assertEqual(len(get_user_resp.json()[const.USER][
-                                 const.RAX_AUTH_PHONE_PIN]), 6)
+        phone_pin = get_user_resp.json()[const.USER][const.RAX_AUTH_PHONE_PIN]
+        self.assertEqual(len(phone_pin), 6)
         get_user_resp = user_admin_client.get_user(user_id=sub_user_id)
         self.assertNotIn(const.RAX_AUTH_PHONE_PIN, get_user_resp.json()[
             const.USER])
+
+        # Reset phone pin on user admin
+        resp = user_admin_client.reset_phone_pin(user_id=sub_user_id)
+        self.assertEqual(resp.status_code, 204)
+        get_user_resp = sub_user_client.get_user(user_id=sub_user_id)
+        new_phone_pin = get_user_resp.json()[
+            const.USER][const.RAX_AUTH_PHONE_PIN]
+        self.assertNotEqual(new_phone_pin, phone_pin)
+
+        # Cannot Reset own phone PIN
+        resp = sub_user_client.reset_phone_pin(user_id=sub_user_id)
+        self.assertEqual(resp.status_code, 403)
 
     @unless_coverage
     @base.base.log_tearDown_error
@@ -149,10 +186,10 @@ class TestPhonePinOnAddUser(base.TestBaseV2):
                     id_))
         for client in self.user_admin_clients:
             self.delete_client(client)
-        super(TestPhonePinOnAddUser, self).tearDown()
+        super(TestPhonePinOnUser, self).tearDown()
 
     @classmethod
     @unless_coverage
     @base.base.log_tearDown_error
     def tearDownClass(cls):
-        super(TestPhonePinOnAddUser, cls).tearDownClass()
+        super(TestPhonePinOnUser, cls).tearDownClass()

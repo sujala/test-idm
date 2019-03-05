@@ -2033,3 +2033,13 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         return self.request('POST', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
+
+    def reset_phone_pin(
+            self, user_id, request_object=None, requestslib_kwargs=None):
+        """
+        /v2.0/users/{userID}/RAX-AUTH/phone-pin/reset
+        """
+        url = self.url + const.RESET_PHONE_PIN_URL.format(user_id=user_id)
+
+        return self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
