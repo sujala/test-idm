@@ -34,10 +34,14 @@ def buildVersion = System.currentTimeMillis()
 def gitRevision = "git rev-parse HEAD".execute().text.trim()
 
 project.group = 'com.rackspace'
+def partialVersion = "$featureVersion" + "-" + "$buildVersion"
+if (project.hasProperty('version_override')) {
+    partialVersion = project.version_override
+}
 if (project.hasProperty('build_release') && "${build_release.toUpperCase()}" == 'TRUE') {
-    project.version = "$featureVersion" + "-" + "$buildVersion"
+    project.version = partialVersion
 } else {
-    project.version = "$featureVersion" + "-" + "$buildVersion" + "-" + "SNAPSHOT"
+    project.version = partialVersion + "-" + "SNAPSHOT"
 }
 
 project.description = """idm"""
