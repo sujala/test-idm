@@ -87,7 +87,7 @@ def buildImages(sandboxImageTag, identityVersion, branch = master) {
  * @param namespace - the namespace that the sandbox will be installed in
  * @return returns the release name of the sandbox environment
  */
-def createStandboxEnv(sandboxImageTag, sandboxName, namespace = 'identity-test') {
+def createStandboxEnv(sandboxImageTag, sandboxName, namespace = 'customer-identity-cicd') {
     // The chart configuration vars
     sandboxChartName = "customer-identity"
     sandboxChartVersion = "0.1.4"

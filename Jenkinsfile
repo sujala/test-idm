@@ -2,7 +2,7 @@ library "tesla@v0.8.2"
 
 def gitRepo = 'github.rackspace.com/cloud-identity-dev/cloud-identity'
 def githubUrl = "https://${gitRepo}"
-def namespace = 'identity-test'
+def namespace = 'customer-identity-cicd'
 
 properties([
     pipelineTriggers([cron('H * * * *')]),
