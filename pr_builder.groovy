@@ -1,6 +1,3 @@
-
-def namespace = 'identity-test'
-
 def build(scm) {
 
     library "tesla@v0.8.2"

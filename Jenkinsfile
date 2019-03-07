@@ -1,6 +1,7 @@
 library "tesla@v0.8.2"
 
-def githubUrl = 'https://github.rackspace.com/cloud-identity-dev/cloud-identity'
+def gitRepo = 'github.rackspace.com/cloud-identity-dev/cloud-identity'
+def githubUrl = "https://${gitRepo}"
 def namespace = 'identity-test'
 
 properties([
@@ -20,6 +21,7 @@ def scm = [
     ]]
 ]
 
+def testsPassed = false
 try {
 
     // Setup the git configuration so it can be passed as an arg to common code
@@ -68,6 +70,7 @@ try {
         buildSteps.destroySandboxEnv(releaseName)
     }
 
+    testsPassed = true
 } catch (exc) {
     // If tests fail, delete the artifact from artifactory
     node('java') {
@@ -81,7 +84,19 @@ try {
 } finally {
     node('master') {
         cleanWs()
-        // TODO: tag git w/ the artifact that was built ONLY when tests passed
+        if (testsPassed) {
+            checkout scm
+            sh """
+                set +x
+                git config --global user.email "identity@rackspace.com"
+                git config --global user.name "cid-rsi-dev-svc"
+                git remote remove origin
+                git remote add origin https://${env.GITHUB_ENTERPRISE_USERNAME}:${env.GITHUB_ENTERPRISE_PASSWORD}@${gitRepo}.git
+                set -x
+                git tag -a ${env.IDM_VERSION} -m "Version ${env.IDM_VERSION}"
+                git push origin ${env.IDM_VERSION}
+            """
+        }
     }
     // Always build off of master again
     build: "$JOB_NAME"
