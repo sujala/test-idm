@@ -9,6 +9,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.security.AuthenticationContext
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.impl.LdapRepository
@@ -28,6 +29,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
 class DefaultUserServiceTest extends RootServiceTest {
@@ -1595,6 +1597,99 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * mockRoleService.getRoleByName(tenantRole2.name) >> clientRole
         2 * tenantService.addTenantRoleToUser(user, _, false) >>> [null, {throw new Exception()}]
         1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.ROLE, _)
+    }
+
+    def "createDomainIfItDoesNotExist - calls correct services"(){
+        given:
+        def domainId = "domainId"
+
+        when:
+        service.createDomainIfItDoesNotExist(domainId)
+
+        then:
+        1 * domainService.getDomain(domainId) >> null
+        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> false
+        1 * domainService.createNewDomain(domainId)
+    }
+
+    @Unroll
+    def "createDomainIfItDoesNotExist - domain does not exist: feature.enable.use.role.for.domain.management = #featureFlag"(){
+        given:
+        def domainId = "domainId"
+
+        when:
+        service.createDomainIfItDoesNotExist(domainId)
+
+        then:
+        1 * domainService.getDomain(domainId) >> null
+        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> featureFlag
+        1 * domainService.createNewDomain(domainId)
+
+        if (featureFlag) {
+            1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
+        } else {
+            0 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())
+        }
+
+        where:
+        featureFlag << [true, false]
+    }
+
+    def "createDomainIfItDoesNotExist - error check"(){
+        given:
+        def domainId = "domainId"
+
+        when: "caller does not have the identity:identity:rs-domain-admin role and feature.enable.use.role.for.domain.management=true"
+        service.createDomainIfItDoesNotExist(domainId)
+
+        then:
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, null, "Not Authorized")
+
+        1 * domainService.getDomain(domainId) >> null
+        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> true
+        0 * domainService.createNewDomain(domainId)
+    }
+
+    @Unroll
+    def "createDomainUserInCreateOneCall - calls correct services when domain does not exist: feature.enable.use.role.for.domain.management = #featureFlag"(){
+        given:
+        def domainId = "domainId"
+
+        when:
+        service.createDomainUserInCreateOneCall(domainId, true)
+
+        then:
+        1 * reloadableConfig.getTenantDefaultDomainId() >> "defaultDomainId"
+        1 * domainService.getDomain(domainId) >> null
+        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> featureFlag
+        1 * domainService.createNewDomain(domainId)
+
+        if (featureFlag) {
+            1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
+        } else {
+            0 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())
+        }
+
+        where:
+        featureFlag << [true, false]
+    }
+
+    def "createDomainUserInCreateOneCall - error check"(){
+        given:
+        def domainId = "domainId"
+
+        when: "caller does not have the identity:identity:rs-domain-admin role and feature.enable.use.role.for.domain.management=true"
+        service.createDomainUserInCreateOneCall(domainId, true)
+
+        then:
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, null, "Not Authorized")
+
+        1 * reloadableConfig.getTenantDefaultDomainId() >> "defaultDomainId"
+        1 * domainService.getDomain(domainId) >> null
+        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> true
+        0 * domainService.createNewDomain(domainId)
     }
 
     def createStringPaginatorContext() {

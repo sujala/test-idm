@@ -534,7 +534,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         when: "using identity service admin token"
         clearEmailServerMessages()
-        response = cloud20.sendUnverifiedUserInvite(utils.getIdentityAdminToken(), unverifiedUserEntity.id, accept)
+        response = cloud20.sendUnverifiedUserInvite(utils.getServiceAdminToken(), unverifiedUserEntity.id, accept)
         inviteEntity = getInviteEntity(response)
 
         then: "assert valid response"

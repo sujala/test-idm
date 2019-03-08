@@ -10,6 +10,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.AuthenticationContext;
+import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -46,9 +47,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
-import static com.rackspace.idm.GlobalConstants.ERROR_MSG_USER_S_NOT_FOUND;
-import static com.rackspace.idm.GlobalConstants.MOSSO;
-import static com.rackspace.idm.GlobalConstants.NAST;
+import static com.rackspace.idm.GlobalConstants.*;
 
 @Component
 public class DefaultUserService implements UserService {
@@ -215,6 +214,7 @@ public class DefaultUserService implements UserService {
         if (isUserAdmin || isCreateUserInOneCall) {
             createDomainUserInCreateOneCall(user.getDomainId(), isUserAdmin);
         } else {
+            // NOTE: This allows creating an identity:admin user in the default domain.
             createDomainIfItDoesNotExist(user.getDomainId());
         }
 
@@ -1647,7 +1647,11 @@ public class DefaultUserService implements UserService {
 
     private void createDomainIfItDoesNotExist(String domainId) {
         if (StringUtils.isNotBlank(domainId)) {
-            if (domainService.getDomain(domainId) == null ) {
+            if (domainService.getDomain(domainId) == null) {
+                if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()
+                    && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+                }
                 domainService.createNewDomain(domainId);
             }
         }
@@ -1668,6 +1672,10 @@ public class DefaultUserService implements UserService {
                     throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DOMAIN_WITH_USERS);
                 }
             } else {
+                if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()
+                    && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+                }
                 domainService.createNewDomain(domainId);
             }
         }

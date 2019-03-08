@@ -5102,6 +5102,13 @@ roleRsId: fda6705a7ba640598f3eacd9884d8a0e
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 173189
 
+dn: roleRsId=19,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+objectClass: top
+roleRsId: 19
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 173189
+
 dn: rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
@@ -5184,6 +5191,13 @@ dn: roleRsId=055871b85f8911e89da027ba45309430,cn=ROLES,rsId=173190,ou=users,o=ra
 objectClass: top
 objectClass: tenantRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=19,cn=ROLES,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+objectClass: top
+roleRsId: 19
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 173190
 
 dn: roleRsId=67f155a58ae841d28a745a99200a583a,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
  m
