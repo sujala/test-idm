@@ -581,6 +581,7 @@ class Cloud20Utils {
 
     def createUserAdminWithTenantsAndRole(domainId, rolename, tenantId) {
         def identityAdmin = createIdentityAdmin()
+        addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
 
         def identityAdminToken = getToken(identityAdmin.username)
 
@@ -591,6 +592,7 @@ class Cloud20Utils {
 
     def createUserAdminWithTenants(domainId = createDomain()) {
         def identityAdmin = createIdentityAdmin()
+        addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
 
         def identityAdminToken = getToken(identityAdmin.username)
 

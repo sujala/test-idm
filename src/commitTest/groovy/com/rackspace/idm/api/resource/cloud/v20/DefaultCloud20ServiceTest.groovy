@@ -1956,14 +1956,26 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == 200
     }
 
-    def "removeTenantFromDomain verifies access level"() {
+    def "removeTenantFromDomain verifies identity-admin access level when flag is disabled"() {
         when:
+        identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled() >> false
         service.removeTenantFromDomain(authToken, "domainId", "tenantId")
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+    }
+
+    def "removeTenantFromDomain verifies identity-admin access level when flag is enabled"() {
+        when:
+        identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled() >> true
+        service.removeTenantFromDomain(authToken, "domainId", "tenantId")
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName())
     }
 
     def "removeTenantFromDomain removes tenant from domain"() {
@@ -3994,6 +4006,33 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
         1 * createSubUserService.setDefaultsAndCreateUser(_, _) >> entityFactory.createUser()
         1 * userConverter.toUser(_, true) >> v2Factory.createUser()
+    }
+
+    def "addUser for one user call with feature flag enabled verifies identity:rs-tenant-admin"() {
+        given:
+        def user = v2Factory.createUser()
+        user.secretQA = v2Factory.createSecretQA()
+        identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled() >> true
+
+        when:
+        def response = service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        response.build().status == SC_FORBIDDEN
+        1 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName()) >> {throw new ForbiddenException()}
+    }
+
+    def "addUser for one user call with feature flag disabled does not require identity:rs-tenant-admin"() {
+        given:
+        def user = v2Factory.createUser()
+        user.secretQA = v2Factory.createSecretQA()
+        identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled() >> false
+
+        when:
+        service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        0 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName())
     }
 
     def "add new user when user is not authorized returns 403 response" () {

@@ -1905,4 +1905,89 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_NO_CONTENT
     }
+
+    def "Create user single call with tenants works with identity:rs-tenant-admin role"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
+        User identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
+
+        AuthenticateResponse authenticateResponse = utils.authenticate(identityAdmin.username)
+        def token = authenticateResponse.token.id
+
+        def domainId = utils.createDomain()
+        def username=testUtils.getRandomUUID()
+        def user = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        user.groups = new Groups()
+        user.groups.group.add(v1Factory.createGroup("Default", "0" , null))
+
+        when:
+        def response = cloud20.createUser(token, user)
+
+        then:
+        response.status == SC_CREATED
+
+        cleanup:
+        utils.deleteUserQuietly(user)
+        utils.deleteUserQuietly(identityAdmin)
+    }
+
+    def "Create user single call with tenants requires identity:rs-tenant-admin role"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
+        User identityAdmin = utils.createIdentityAdmin()
+
+        AuthenticateResponse authenticateResponse = utils.authenticate(identityAdmin.username)
+        def token = authenticateResponse.token.id
+
+        def domainId = utils.createDomain()
+        def username=testUtils.getRandomUUID()
+        def user = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        user.groups = new Groups()
+        user.groups.group.add(v1Factory.createGroup("Default", "0" , null))
+
+        when:
+        def response = cloud20.createUser(token, user)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUserQuietly(identityAdmin)
+    }
+
+    def "Create user single call with tenants works when feature flag is disabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, false)
+        User identityAdmin = utils.createIdentityAdmin()
+
+        if (addRole) {
+            utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
+        }
+
+        AuthenticateResponse authenticateResponse = utils.authenticate(identityAdmin.username)
+        def token = authenticateResponse.token.id
+
+        def domainId = utils.createDomain()
+        def username=testUtils.getRandomUUID()
+        def user = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        user.groups = new Groups()
+        user.groups.group.add(v1Factory.createGroup("Default", "0" , null))
+
+        when:
+        def response = cloud20.createUser(token, user)
+
+        then:
+        response.status == SC_CREATED
+
+        cleanup:
+        utils.deleteUserQuietly(user)
+        utils.deleteUserQuietly(identityAdmin)
+
+        where:
+        addRole << [true , false]
+    }
 }

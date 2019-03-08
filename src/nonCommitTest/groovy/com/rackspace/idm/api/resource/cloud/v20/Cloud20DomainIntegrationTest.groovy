@@ -35,6 +35,7 @@ import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
 import java.time.Duration
 
+import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.Constants.getUSER_MANAGE_ROLE_ID
 import static javax.servlet.http.HttpServletResponse.*
 import static testHelpers.IdmAssert.*
@@ -494,6 +495,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
 
         User user = utils.createUser(utils.getServiceAdminToken(), testUtils.getRandomUUID("identityAdmin"), testUtils.getRandomUUID("domain"));
+        utils.addRoleToUser(user, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
         def token = utils.getToken(user.username)
         def tenantName = testUtils.getRandomUUID("tenant")
         assert user.domainId != null
@@ -2163,7 +2165,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
         def domainId = utils.createDomain()
         domainService.createNewDomain(domainId)
-        def identityAdminToken = utils.getIdentityAdminToken()
+        def identityAdmin = utils.createIdentityAdmin()
+        def identityAdminToken = utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
         def tenantId = testUtils.getRandomUUID("tenant")
         def tenantToCreate = v2Factory.createTenant(tenantId, tenantId)
 
@@ -2773,6 +2776,85 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "removeTenantFromDomain is allowed with identity:rs-tenant-admin role"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, useRoleForTenantManagement)
+        User identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
+        def token = utils.authenticate(identityAdmin.username).token.id
+
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def tenant = utils.createTenant()
+
+        utils.addTenantToDomain(domainId, tenant.id)
+        utils.disableDomain(domainId)
+
+        when:
+        def response = cloud20.deleteTenantFromDomain(token, domainId, tenant.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUserQuietly(identityAdmin)
+        utils.deleteTenantQuietly(tenant)
+        utils.deleteTestDomainQuietly(domainId)
+
+        where:
+        useRoleForTenantManagement << [true , false]
+    }
+
+    def "removeTenantFromDomain requires identity:rs-tenant-admin role with flag enabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
+        User identityAdmin = utils.createIdentityAdmin()
+        def token = utils.authenticate(identityAdmin.username).token.id
+
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def tenant = utils.createTenant()
+
+        utils.addTenantToDomain(domainId, tenant.id)
+        utils.disableDomain(domainId)
+
+        when:
+        def response = cloud20.deleteTenantFromDomain(token, domainId, tenant.id)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUserQuietly(identityAdmin)
+        utils.deleteTenantQuietly(tenant)
+        utils.deleteTestDomainQuietly(domainId)
+    }
+
+    def "removeTenantFromDomain does not require identity:rs-tenant-admin role with flag disabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, false)
+        User identityAdmin = utils.createIdentityAdmin()
+        def token = utils.authenticate(identityAdmin.username).token.id
+
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def tenant = utils.createTenant()
+
+        utils.addTenantToDomain(domainId, tenant.id)
+        utils.disableDomain(domainId)
+
+        when:
+        def response = cloud20.deleteTenantFromDomain(token, domainId, tenant.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUserQuietly(identityAdmin)
+        utils.deleteTenantQuietly(tenant)
+        utils.deleteTestDomainQuietly(domainId)
     }
 
     def removeDomainFromUser(username) {
