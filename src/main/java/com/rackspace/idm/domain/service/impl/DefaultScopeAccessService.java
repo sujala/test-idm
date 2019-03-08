@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.service.impl;
 import com.newrelic.api.agent.Trace;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType;
 import com.rackspace.idm.audit.Audit;
@@ -12,7 +11,6 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.ProvisionedUserDelegate;
@@ -29,20 +27,16 @@ import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.OpenstackType;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.ServiceCatalogInfo;
 import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TokenRevocationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.modules.endpointassignment.service.RuleService;
-import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -52,15 +46,12 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +65,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public static final String NULL_ARGUMENT_PASSED_IN = "Null argument passed in.";
     public static final String ADDING_SCOPE_ACCESS = "Adding scopeAccess {}";
     public static final String ADDED_SCOPE_ACCESS = "Added scopeAccess {}";
-    public static final String NULL_SCOPE_ACCESS_OBJECT_INSTANCE = "Null scope access object instance.";
 
     public static final String TOKEN_IMPERSONATED_BY_SERVICE_DEFAULT_SECONDS_PROP_NAME = "token.impersonatedByServiceDefaultSeconds";
     public static final String TOKEN_IMPERSONATED_BY_RACKER_DEFAULT_SECONDS_PROP_NAME = "token.impersonatedByRackerDefaultSeconds";
@@ -289,18 +279,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void deleteScopeAccess(ScopeAccess scopeAccess) {
-        logger.info("Deleting ScopeAccess {}", scopeAccess);
-        if (scopeAccess == null) {
-            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
-            logger.error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-        this.scopeAccessDao.deleteScopeAccess(scopeAccess);
-        logger.info("Deleted ScopeAccess {}", scopeAccess);
-    }
-
-    @Override
     public ScopeAccess getScopeAccessByAccessToken(String accessToken) {
         logger.debug("Getting ScopeAccess by Access Token {}", accessToken);
         if (accessToken == null) {
@@ -324,31 +302,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public Iterable<ScopeAccess> getScopeAccessListByUserId(String userId) {
-        logger.debug("Getting ScopeAccess list by user id {}", userId);
-        if (userId == null) {
-            throw new NotFoundException("Invalid user id; user id cannot be null");
-        }
-        return this.scopeAccessDao.getScopeAccessesByUserId(userId);
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getScopeAccessesForUserByClientId(User user, String clientId) {
-        logger.debug("Getting ScopeAccesses by parent {} and clientId", user, clientId);
-        return this.scopeAccessDao.getScopeAccessesByClientId(user, clientId);
-    }
-
-    // Return UserScopeAccess from directory, refreshes expired
-    @Override
-    public UserScopeAccess getValidUserScopeAccessForClientId(User user, String clientId, List<String> authenticateBy) {
-        logger.debug("Getting ScopeAccess by clientId {}", clientId);
-        //if expired update with new token
-        UserScopeAccess scopeAccess = updateExpiredUserScopeAccess(user, clientId, authenticateBy);
-        logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
-        return scopeAccess;
-    }
-
-    @Override
     public RackerScopeAccess getValidRackerScopeAccessForClientId(Racker racker, String clientId, List<String> authenticatedBy) {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
         int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthRackerTokenExpirationSeconds());
@@ -364,16 +317,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    @Override
-    public UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username,
-                                                                                    String apiKey, String clientId) {
-        logger.debug("Getting User {} ScopeAccess by clientId {}", username, clientId);
-        final UserAuthenticationResult result = userService.authenticateWithApiKey(username, apiKey);
-        handleApiKeyUsernameAuthenticationFailure(username, result);
-
-        return this.getValidUserScopeAccessForClientId((User) result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_APIKEY));
-    }
-
     private List<String> authenticateBy(String type) {
         List<String> authenticatedBy = new ArrayList<String>();
         authenticatedBy.add(type);
@@ -387,73 +330,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userService.authenticate(username, password);
         handleAuthenticationFailure(username, result);
 
-        return this.getValidUserScopeAccessForClientId((User) result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_PASSWORD));
+        return this.addScopeAccess((User) result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_PASSWORD));
     }
 
     @Override
-    public void updateScopeAccess(ScopeAccess scopeAccess) {
-
-        if (scopeAccess == null) {
-            String errorMsg = String
-                    .format(NULL_SCOPE_ACCESS_OBJECT_INSTANCE);
-            logger.warn(errorMsg);
-            throw new IllegalArgumentException(errorMsg);
-        }
-
-        logger.info("Updating ScopeAccess {}", scopeAccess);
-
-        //The only uses of this function are expiring a token (not changing the value of the token itself)
-        this.scopeAccessDao.updateScopeAccess(scopeAccess);
-        logger.info("Updated ScopeAccess {}", scopeAccess);
-    }
-
-
-    @Override
-    public void deleteExpiredTokens(EndUser user) {
-        Iterable<ScopeAccess> tokenIterator = this.getScopeAccessListByUserId(user.getId());
-        if (tokenIterator != null) {
-            for (ScopeAccess token : tokenIterator) {
-                if (token.isAccessTokenExpired(new DateTime())) {
-                    this.deleteScopeAccess(token);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void deleteExpiredTokensQuietly(BaseUser user) {
-        Iterable<ScopeAccess> tokenIterator = Collections.EMPTY_LIST;
-        if (user instanceof EndUser) {
-            //little weird that we search for all tokens assigned to this user across entire DIT rather than just under
-            //the user, but this is legacy code
-            tokenIterator = getScopeAccessListByUserId(user.getId());
-        } else if (user instanceof Racker) {
-            tokenIterator = scopeAccessDao.getScopeAccesses(user);
-        }
-
-        try {
-            DateTime now = new DateTime();
-            if (tokenIterator != null) {
-                for (ScopeAccess token : tokenIterator) {
-                    if (token.isAccessTokenExpired(now)) {
-                        try {
-                            this.deleteScopeAccess(token);
-                        } catch (Exception e) {
-                            String tokenStr = token.getAccessTokenString();
-                            String maskedToken = tokenStr != null ? tokenStr.substring(Math.max(tokenStr.length() - 4, 0)) : "";
-                            logger.warn(String.format("Error deleting user '%s' expired token ending in '%s'.", user.getAuditContext(), maskedToken), e);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.warn(String.format("Error deleting expired tokens from user '%s'", user.getAuditContext(), e));
-        }
-    }
-
-    //TODO: Rename this method as it no longer updates anything.
-    @Override
-    public UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy) {
+    public UserScopeAccess addScopeAccess(User user, String clientId, List<String> authenticatedBy) {
         UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
         if (authenticatedBy != null) {
             scopeAccess.setAuthenticatedBy(authenticatedBy);
@@ -526,37 +407,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                     expirationSeconds,
                     userAuthenticationResult.getScope());
         }  else {
-            sa = getValidUserScopeAccessForClientId((User) userAuthenticationResult.getUser(),
+            sa = addScopeAccess((User) userAuthenticationResult.getUser(),
                     identityConfig.getCloudAuthClientId(),
                     userAuthenticationResult.getAuthenticatedBy());
         }
 
         return new AuthResponseTuple((User)userAuthenticationResult.getUser(), sa);
-    }
-
-    private void deleteExpiredScopeAccessesExceptForMostRecent(Iterable<ScopeAccess> scopeAccessList, ScopeAccess mostRecent) {
-        for (ScopeAccess scopeAccess : scopeAccessList) {
-            if (!scopeAccess.getAccessTokenString().equals(mostRecent.getAccessTokenString())) {
-                if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-                    boolean success = deleteScopeAccessQuietly(scopeAccess);
-                }
-            }
-        }
-    }
-
-    /**
-     * Catches any exceptions, but notes whether an exception was actually caught
-     * @param scopeAccess
-     * @return false if exception was caught; true otherwise
-     */
-    private boolean deleteScopeAccessQuietly(ScopeAccess scopeAccess) {
-        try {
-            scopeAccessDao.deleteScopeAccess(scopeAccess);
-            return true;
-        } catch (Exception e) {
-            logger.error(String.format("Error deleting expired scope access token '%s'. This error does not necessarily require manual intervention unless it is a frequent occurrence. It is for notification purposes only.", scopeAccess.getAccessTokenString()), e);
-            return false;
-        }
     }
 
     private UserScopeAccess provisionUserScopeAccess(User user, String clientId) {
@@ -575,8 +431,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return userScopeAccess;
     }
 
-    @Override
-    public int getTokenExpirationSeconds(int value) {
+    private int getTokenExpirationSeconds(int value) {
         Double entropy = getTokenEntropy();
         Integer min = (int)Math.floor(value * (1 - entropy));
         Integer max = (int)Math.ceil(value * (1 + entropy));
@@ -590,17 +445,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess createInstanceOfUserScopeAccess(EndUser user, String clientId, String clientRCN) {
-        UserScopeAccess usa = new UserScopeAccess();
-        usa.setUserRsId(user.getId());
-        usa.setClientId(clientId);
-        usa.setClientRCN(clientRCN);
-        usa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
-        usa.setAccessTokenExp(new DateTime().toDate());
-        return usa;
-    }
-
-    @Override
     public boolean isScopeAccessExpired(ScopeAccess scopeAccess) {
         return scopeAccess == null || scopeAccess.isAccessTokenExpired(new DateTime());
     }
@@ -608,26 +452,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public boolean isSetupMfaScopedToken(ScopeAccess scopeAccess) {
         return scopeAccess == null ? false : GlobalConstants.SETUP_MFA_SCOPE.equals(scopeAccess.getScope());
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getScopeAccessesForUser(User user) {
-        return scopeAccessDao.getScopeAccesses(user);
-    }
-
-    @Override
-    public void setApplicationService(ApplicationService applicationService) {
-        this.applicationService = applicationService;
-    }
-
-    @Override
-    public void setTenantService(TenantService tenantService) {
-        this.tenantService = tenantService;
-    }
-
-    @Override
-    public void setUserService(UserService userService) {
-        this.userService = userService;
     }
 
     @Override

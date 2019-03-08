@@ -666,7 +666,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         1 * tokenRevocationService.revokeAllTokensForEndUser(currentUser)
         userDao.getUserById(_) >> currentUser
-        scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
     }
 
     def "updateUser expires tokens if password attribute is populated"() {
@@ -687,7 +686,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         1 * tokenRevocationService.revokeAllTokensForEndUser(_)
         identityUserService.getProvisionedUserByIdWithPwdHis(_) >> currentUser
-        scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
     }
 
     def "checkIfUserIsBeingDisabled test"() {
@@ -839,7 +837,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         userDao.getUserById(_) >> currentUser
         userDao.getUsersByDomain(_) >> users
         1 * authorizationService.hasUserAdminRole(_) >> true
-        scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
         1 * userDao.updateUser(subUser) >> { User subUser1 ->
             assert (subUser1.enabled == false)
         }

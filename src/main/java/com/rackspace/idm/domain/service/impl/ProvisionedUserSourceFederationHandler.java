@@ -364,9 +364,6 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
             //update roles as necessary
             reconcileRequestedRbacRolesFromRequest(resultUser, request.getUser().getRoles());
-
-            //clean up any expired tokens
-            scopeAccessService.deleteExpiredTokensQuietly(resultUser);
         }
 
         return resultUser;

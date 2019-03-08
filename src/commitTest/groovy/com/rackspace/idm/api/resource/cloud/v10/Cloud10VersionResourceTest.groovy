@@ -84,7 +84,6 @@ public class Cloud10VersionResourceTest extends Specification {
         given:
         User user = new User();
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(new ServiceCatalog());
 
@@ -115,7 +114,6 @@ public class Cloud10VersionResourceTest extends Specification {
         given:
         User user = new User();
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         Service service = new Service();
@@ -141,7 +139,6 @@ public class Cloud10VersionResourceTest extends Specification {
     def getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesCdnService_withEndpoints_withEmptyPublicUrl_doesNotAddHeader() throws Exception {
         given:
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         Service service = new Service();
@@ -163,7 +160,6 @@ public class Cloud10VersionResourceTest extends Specification {
         given:
         User user = new User();
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         Service service = new Service();
@@ -190,7 +186,6 @@ public class Cloud10VersionResourceTest extends Specification {
         given:
         User user = new User();
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         Service service = new Service();
@@ -221,8 +216,6 @@ public class Cloud10VersionResourceTest extends Specification {
         given:
         final User user = new User();
         final UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
-
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         Service service = new Service();
@@ -253,7 +246,6 @@ public class Cloud10VersionResourceTest extends Specification {
         given:
         User user = new User();
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
@@ -278,7 +270,6 @@ public class Cloud10VersionResourceTest extends Specification {
         given:
         User user = new User();
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);

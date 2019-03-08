@@ -26,7 +26,6 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.MultiFactorDevice;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.DateHelper;
@@ -483,7 +482,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
         authBySet.add(authByMethod.getValue());
 
-        UserScopeAccess scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(user, getCloudAuthClientId(), new ArrayList<String>(authBySet));
+        UserScopeAccess scopeAccess = scopeAccessService.addScopeAccess(user, getCloudAuthClientId(), new ArrayList<String>(authBySet));
 
         return new AuthResponseTuple(user, scopeAccess);
     }

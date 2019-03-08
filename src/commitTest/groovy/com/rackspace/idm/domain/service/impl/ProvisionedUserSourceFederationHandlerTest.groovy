@@ -764,8 +764,6 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         def authInfo = provisionedUserSourceFederationHandler.processRequestForProvider(new SamlResponseDecorator(samlResponse), theIdentityProvider)
 
         then:
-        //shouldn't try to delete tokens since it's a new user
-        0 * mockScopeAccessService.deleteExpiredTokensQuietly(_)
         1 * mockFederatedUserDao.addUser(_, _)
         1 * mockScopeAccessService.addUserScopeAccess(_, _)
         1 * mockTenantService.addTenantRolesToUser(_,_)
@@ -795,7 +793,6 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         SamlAuthResponse authInfo = provisionedUserSourceFederationHandler.processRequestForProvider(new SamlResponseDecorator(samlResponse), theIdentityProvider)
 
         then:
-        1 * mockScopeAccessService.deleteExpiredTokensQuietly(user)
         1 * mockScopeAccessService.addUserScopeAccess(user, _)
         0 * mockTenantService.addTenantRolesToUser(_,_)
         0 * mockFederatedUserDao.addUser(_,_)

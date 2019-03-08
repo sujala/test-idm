@@ -1,12 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AEScopeAccessDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TokenScopeEnum;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.MarshallTokenException;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
@@ -17,18 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class AEScopeAccessRepository implements AEScopeAccessDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AEScopeAccessRepository.class);
 
     @Autowired
     private AETokenService aeTokenService;
-
-    @Autowired
-    private IdentityConfig identityConfig;
 
     @Override
     public boolean supportsCreatingTokenFor(UniqueId object, ScopeAccess scopeAccess) {
@@ -58,41 +49,6 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
             LOGGER.debug("Error unmarshalling the token: " + accessToken, e);
             return null;
         }
-    }
-
-    /* Dummy methods (don't make sense for AE tokens) */
-
-    @Override
-    public void deleteScopeAccess(ScopeAccess scopeAccess) {
-    }
-
-    @Override
-    public void updateScopeAccess(ScopeAccess scopeAccess) {
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getScopeAccessesByUserId(String userId) {
-        return new ArrayList<ScopeAccess>();
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getScopeAccesses(UniqueId object) {
-        return new ArrayList<ScopeAccess>();
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUser(BaseUser user) {
-        return new ArrayList<ScopeAccess>();
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getAllImpersonatedScopeAccessForUserOfUserByRsId(BaseUser user, String impersonatingRsId) {
-        return new ArrayList<ScopeAccess>();
-    }
-
-    @Override
-    public Iterable<ScopeAccess> getScopeAccessesByClientId(UniqueId object, String clientId) {
-        return new ArrayList<ScopeAccess>();
     }
 
     /* LDAP compatibility methods */

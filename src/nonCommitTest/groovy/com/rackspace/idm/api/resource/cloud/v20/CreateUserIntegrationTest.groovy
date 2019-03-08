@@ -490,34 +490,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteGroup(group)
     }
 
-    @Unroll
-    @Ignore
-    def "test feature flag for adding expired tokens on user create: addTokens = #addTokens"() {
-        given:
-        staticIdmConfiguration.setProperty(DefaultUserService.ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG, addTokens)
-        def domainId = utils.createDomain()
-        def username = "user" + testUtils.getRandomUUID()
-
-        when:
-        def user = utils.createUser(utils.getIdentityAdminToken(), username, domainId)
-
-        then:
-        def userTokens = scopeAccessService.getScopeAccessListByUserId(user.id)
-        if(addTokens) {
-            assert userTokens.iterator().hasNext()
-        } else {
-            assert !userTokens.iterator().hasNext()
-        }
-
-        cleanup:
-        utils.deleteUser(user)
-
-        where:
-        addTokens   | _
-        true        | _
-        false       | _
-    }
-
     def "create identity admin with no domain creates a domain for the user"() {
         given:
         def username = "identityAdmin" + testUtils.getRandomUUID()

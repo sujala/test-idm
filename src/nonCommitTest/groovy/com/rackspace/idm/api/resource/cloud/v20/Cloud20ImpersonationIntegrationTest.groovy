@@ -820,10 +820,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.updateUser(updateUser)
     }
 
-    def DateTime tokenExpirationAsDateTime(Token token) {
-        return new DateTime(token.expires.toGregorianCalendar().getTime())
-    }
-
     def void assertDateFallsWithinFudgeFactor(DateTime expectedDate, DateTime actualDate) {
         DateTime fudgedLowerBound = expectedDate.minusMinutes(LATENCY_FUDGE_AMOUNT_MINUTES)
         DateTime fudgedUpperBound = expectedDate.plusMinutes(LATENCY_FUDGE_AMOUNT_MINUTES)
@@ -846,18 +842,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     def assertImpersonatedToken(token) {
         token.authenticatedBy.size() == 1
         token.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION)
-    }
-
-    def void expireToken(tokenString) {
-        Date now = new Date()
-        Date past = new Date(now.year - 1, now.month, now.day)
-        setTokenExpiration(tokenString, past)
-    }
-
-    def void setTokenExpiration(tokenString, tokenExp) {
-        def userScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString)
-        userScopeAccess.setAccessTokenExp(tokenExp)
-        scopeAccessRepository.updateScopeAccess(userScopeAccess)
     }
 
     def getScopeAccessFromImpersonationResponse(response, contentType) {
