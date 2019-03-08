@@ -1626,6 +1626,21 @@ public class DefaultTenantService implements TenantService {
             ImmutableClientRole rackerCr = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
             rackerSourcedRoleAssignmentsBuilder.addIdentitySystemSourcedAssignment(rackerCr);
         }
+
+        // Convert racker roles to tenant roles
+        List<String> rackerAdGroups = userService.getRackerEDirRoles(racker.getRackerId());
+        List<TenantRole> rackerTenantRoles = new ArrayList<TenantRole>();
+
+        if (CollectionUtils.isNotEmpty(rackerAdGroups)) {
+            for (String adGroup : rackerAdGroups) {
+                rackerSourcedRoleAssignmentsBuilder.addAdSystemSourcedAssignment(adGroup);
+                List<ImmutableClientRole> implicitIdentityManagedRoles = authorizationService.getImplicitRolesForRole("iam:" + adGroup); // prefix group name to avoid name collisions between IAM group names and Identity roles
+                for (ImmutableClientRole implicitIdentityManagedRole : implicitIdentityManagedRoles) {
+                    rackerSourcedRoleAssignmentsBuilder.addImplicitAssignment(adGroup, implicitIdentityManagedRole);
+                }
+            }
+        }
+
         return rackerSourcedRoleAssignmentsBuilder.build();
     }
 

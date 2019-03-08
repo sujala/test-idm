@@ -6,6 +6,8 @@ import java.util.List;
 
 /**
  * Represents a list of identity roles associated with a calling user against which authorization decisions should be made.
+ *
+ * TODO: Switch this to use {@link com.rackspace.idm.domain.entity.SourcedRoleAssignments} rather than a lists of roles
  */
 public class AuthorizationContext {
 

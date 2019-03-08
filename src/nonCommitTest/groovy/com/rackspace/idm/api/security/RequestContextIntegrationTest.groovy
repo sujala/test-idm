@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.security
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.BaseUser
 import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthorizationService
@@ -168,12 +170,13 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
     }
 
-    def "can load repose-standard roles as implicit roles"() {
+    def "getEffectiveCallerAuthorizationContext: Provisioned users receive implicit roles"() {
         given:
         utils.createUserAdmin()
         def users
         def userAdmin
         (userAdmin, users) = utils.createUserAdmin()
+        def reposeRole = applicationService.getCachedClientRoleByName(IdentityRole.REPOSE_STANDARD.getRoleName())
 
         def uaToken = utils.getToken(userAdmin.username)
         def sa = scopeAccessService.getScopeAccessByAccessToken(uaToken)
@@ -182,25 +185,56 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         when:
         AuthorizationContext authCtx = requestContext.getEffectiveCallerAuthorizationContext()
 
-        then: "implicit tokens are null"
-        authCtx.implicitRoles.size() == 0
+        then: "Does not have the roles implicitly assigned"
+        !authCtx.hasRoleWithName(IdentityRole.VALIDATE_TOKEN_GLOBAL.roleName)
+        !authCtx.hasRoleWithName(IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.roleName)
+        !authCtx.hasRoleWithName(IdentityRole.GET_USER_GROUPS_GLOBAL.roleName)
+        !authCtx.hasRoleWithName(IdentityRole.GET_USER_ROLES_GLOBAL.roleName)
 
         when: "add repose-standard role and reset"
         requestContext.setSecurityContext(createSecurityContext(sa, sa))
-        def reposeRole = applicationService.getCachedClientRoleByName(IdentityRole.REPOSE_STANDARD.getRoleName())
         utils.addRoleToUser(userAdmin, reposeRole.id)
         authCtx = requestContext.getEffectiveCallerAuthorizationContext()
 
         then: "implicit tokens are populated"
-        authCtx.implicitRoles.size() == 4
-        authCtx.implicitRoles.find {it.name == IdentityRole.VALIDATE_TOKEN_GLOBAL.roleName} != null
-        authCtx.implicitRoles.find {it.name == IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.roleName} != null
-        authCtx.implicitRoles.find {it.name == IdentityRole.GET_USER_GROUPS_GLOBAL.roleName} != null
-        authCtx.implicitRoles.find {it.name == IdentityRole.GET_USER_ROLES_GLOBAL.roleName} != null
+        authCtx.hasRoleWithName(IdentityRole.VALIDATE_TOKEN_GLOBAL.roleName)
+        authCtx.hasRoleWithName(IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.roleName)
+        authCtx.hasRoleWithName(IdentityRole.GET_USER_GROUPS_GLOBAL.roleName)
+        authCtx.hasRoleWithName(IdentityRole.GET_USER_ROLES_GLOBAL.roleName)
 
         cleanup:
         utils.deleteUsers(users)
         reloadableConfiguration.reset()
+    }
+
+    def "getEffectiveCallerAuthorizationContext: Rackers without applicable group don't get implicit roles"() {
+        given:
+        def rackerNoGroupsToken = utils.authenticateRacker(Constants.RACKER_NOGROUP, Constants.RACKER_NOGROUP_PASSWORD).token.id
+        def rackerNoGroupsSa = scopeAccessService.getScopeAccessByAccessToken(rackerNoGroupsToken)
+        requestContext.setSecurityContext(createSecurityContext(rackerNoGroupsSa, rackerNoGroupsSa))
+
+        when:
+        AuthorizationContext authCtx = requestContext.getEffectiveCallerAuthorizationContext()
+
+        then: "Does not have the roles implicitly assigned to impersonator AD group"
+        authCtx.hasRoleWithName(GlobalConstants.ROLE_NAME_RACKER)
+        !authCtx.hasRoleWithName(IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.roleName)
+    }
+
+    def "getEffectiveCallerAuthorizationContext: Rackers with mapped group receive implicit roles"() {
+        given:
+        def rackerImpersonateGroupToken = utils.authenticateRacker(Constants.RACKER_IMPERSONATE, Constants.RACKER_IMPERSONATE_PASSWORD).token.id
+        def rackerImpersonateGroupSa = scopeAccessService.getScopeAccessByAccessToken(rackerImpersonateGroupToken)
+
+        requestContext.setSecurityContext(createSecurityContext(rackerImpersonateGroupSa, rackerImpersonateGroupSa))
+
+        when:
+        AuthorizationContext authCtx = requestContext.getEffectiveCallerAuthorizationContext()
+
+        then: "implicit tokens are populated"
+        authCtx.hasRoleWithName(GlobalConstants.ROLE_NAME_RACKER)
+        authCtx.hasRoleWithName(identityConfig.getStaticConfig().getRackerImpersonateRoleName())
+        authCtx.hasRoleWithName(IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.roleName)
     }
 
     def createSecurityContext(ScopeAccess callerToken, ScopeAccess effectiveCallerToken) {

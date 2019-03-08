@@ -9,14 +9,12 @@ import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.event.IdentityApi;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.spi.container.ContainerRequest;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +47,7 @@ public class RequestContext {
     private DomainService domainService;
 
     @Autowired
-    private UserService defaultUserService;
+    private UserService userService;
 
     @Autowired
     private TenantService tenantService;
@@ -117,7 +115,7 @@ public class RequestContext {
             }
 
             //get the user associated with the token. Do NOT verify that the user is enabled and domain is enabled.
-            effectiveCaller = defaultUserService.getUserByScopeAccess(token, false);
+            effectiveCaller = userService.getUserByScopeAccess(token, false);
             getSecurityContext().setEffectiveCaller(effectiveCaller);
         }
 
@@ -165,6 +163,8 @@ public class RequestContext {
             BaseUser effectiveCaller = getEffectiveCaller();
 
             List<TenantRole> userTenantRoles;
+
+            SourcedRoleAssignments callerSourcedRoleAssignments;
             if (effectiveCaller instanceof EndUser) {
                 if (StringUtils.isBlank(effectiveCaller.getDomainId())) {
                     //TODO: Push this validation higher since not all services use this method yet.
@@ -173,27 +173,35 @@ public class RequestContext {
                     logger.error(String.format("Attempted to retrieve roles for user '%s', but user has no domain!", effectiveCaller.getDomainId()));
                     throw new ForbiddenException(NOT_AUTHORIZED_MSG, ErrorCodes.ERROR_CODE_INVALID_DOMAIN_FOR_USER);
                 }
-                userTenantRoles = tenantService.getSourcedRoleAssignmentsForUser((EndUser) effectiveCaller).asTenantRoles();
-            } else {
-                userTenantRoles = IteratorUtils.toList(tenantService.getTenantRolesForUserNoDetail(effectiveCaller).iterator());
-            }
-            //get all the tenant roles for the user
-            for (TenantRole userTenantRole : userTenantRoles) {
-                ImmutableClientRole identityRole = applicationService.getCachedClientRoleById(userTenantRole.getRoleRsId());
+                callerSourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser((EndUser) effectiveCaller);
 
-                if (identityRole != null) {
-                    //role on user is an "identity" role so add to list of effective identity roles
-                    userTenantRole.setName(identityRole.getName());
-                    userTenantRole.setDescription(identityRole.getDescription());
-                    userTenantRole.setRoleType(identityRole.getRoleType());
-                    explicitIdentityRoles.add(new ImmutableTenantRole(userTenantRole));
+                //TODO: Make implicit lookup part of standard getSourcedRoleAsisgnmentsForUser....
+                //get all the tenant roles for the user
+                for (TenantRole userTenantRole : callerSourcedRoleAssignments.asTenantRoles()) {
+                    ImmutableClientRole identityRole = applicationService.getCachedClientRoleById(userTenantRole.getRoleRsId());
 
-                    //get the "implicit" roles associated with the client role, if any. Implicit roles are such that if user has Role X, they implicitly
-                    //have Role A, B, C even though the user is not explicitly assigned those roles (and these roles wouldn't show up in list
-                    //of roles the user has.
-                    List<ImmutableClientRole> implicitRoles = authorizationService.getImplicitRolesForRole(identityRole.getName());
-                    implicitIdentityRoles.addAll(implicitRoles);
+                    if (identityRole != null) {
+                        //role on user is an "identity" role so add to list of effective identity roles
+                        userTenantRole.setName(identityRole.getName());
+                        userTenantRole.setDescription(identityRole.getDescription());
+                        userTenantRole.setRoleType(identityRole.getRoleType());
+                        explicitIdentityRoles.add(new ImmutableTenantRole(userTenantRole));
+
+                        //get the "implicit" roles associated with the client role, if any. Implicit roles are such that if user has Role X, they implicitly
+                        //have Role A, B, C even though the user is not explicitly assigned those roles (and these roles wouldn't show up in list
+                        //of roles the user has.
+                        List<ImmutableClientRole> implicitRoles = authorizationService.getImplicitRolesForRole(userTenantRole.getName());
+                        implicitIdentityRoles.addAll(implicitRoles);
+                    }
                 }
+            } else if (effectiveCaller instanceof Racker) {
+                // Don't differentiate between implicit/explicit here
+                callerSourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForRacker((Racker) effectiveCaller);
+                for (TenantRole userTenantRole : callerSourcedRoleAssignments.asTenantRoles()) {
+                    explicitIdentityRoles.add(new ImmutableTenantRole(userTenantRole));
+                }
+            } else {
+                throw new IllegalStateException("Unknown caller type: " + effectiveCaller);
             }
 
             authorizationContext = new AuthorizationContext(explicitIdentityRoles, implicitIdentityRoles);
