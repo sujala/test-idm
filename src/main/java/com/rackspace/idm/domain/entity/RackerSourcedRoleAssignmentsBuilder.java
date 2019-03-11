@@ -36,7 +36,7 @@ public class RackerSourcedRoleAssignmentsBuilder {
 
     public RackerSourcedRoleAssignmentsBuilder addAdSystemSourcedAssignment(String adGroupName) {
         ClientRole cr = new ClientRole();
-        cr.setId(adGroupName);
+        cr.setId("iam:" + adGroupName); // Prefix the id's of racker roles with "iam" to distinguish from identity managed roles.
         cr.setName(adGroupName);
 
         ImmutableClientRole imr = new ImmutableClientRole(cr);

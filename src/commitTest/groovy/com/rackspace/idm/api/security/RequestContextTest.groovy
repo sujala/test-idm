@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.security
 
 import com.rackspace.idm.api.security.AuthorizationContext
+import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.RackerSourcedRoleAssignmentsBuilder
 import com.rackspace.idm.domain.entity.SourcedRoleAssignments
+import com.rackspace.idm.domain.entity.User
 import testHelpers.RootServiceTest
 
 class RequestContextTest extends RootServiceTest {
@@ -25,8 +27,12 @@ class RequestContextTest extends RootServiceTest {
     def "getEffectiveCallerAuthorizationContext: when racker caller, populates context with racker roles"() {
         given:
         Racker racker = entityFactory.createRacker("rackerId")
-        String adGroupName = "adGroup"
-        SourcedRoleAssignments sourcedRoleAssignments = new RackerSourcedRoleAssignmentsBuilder(racker).addAdSystemSourcedAssignment(adGroupName).build()
+        ImmutableClientRole icr = new ImmutableClientRole(new ClientRole().with {
+            it.name = "Racker"
+            it.id = "Racker"
+            it
+        })
+        SourcedRoleAssignments sourcedRoleAssignments = new RackerSourcedRoleAssignmentsBuilder(racker).addIdentitySystemSourcedAssignment(icr).build()
         def methodSetAuthContext;
 
         when:
@@ -42,8 +48,8 @@ class RequestContextTest extends RootServiceTest {
         }
 
         and:
-        authorizationContext.hasRoleWithName(adGroupName)
-        authorizationContext.hasRoleWithId(adGroupName)
+        authorizationContext.hasRoleWithName(icr.name)
+        authorizationContext.hasRoleWithId(icr.id)
         authorizationContext.getIdentityUserType() == null // Rackers don't have a user type
 
         and:
@@ -52,7 +58,7 @@ class RequestContextTest extends RootServiceTest {
 
     def "getEffectiveCallerAuthorizationContext: Context only populated if does not exist in security context"() {
         given:
-        AuthorizationContext context = new AuthorizationContext(Collections.EMPTY_LIST, Collections.EMPTY_LIST)
+        AuthorizationContext context = new AuthorizationContext(new SourcedRoleAssignments(new User()))
 
         when:
         AuthorizationContext returnedContext = requestContext.getEffectiveCallerAuthorizationContext()

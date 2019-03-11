@@ -271,13 +271,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
         requestContext.getEffectiveCaller() >> caller
 
-        TenantRole tenantRole = new TenantRole().with {
-            it.name = IdentityUserTypeEnum.USER_MANAGER.roleName
-            it
-        }
-        ImmutableTenantRole immutableTenantRole = new ImmutableTenantRole(tenantRole)
-        def authorizationContext = new AuthorizationContext([immutableTenantRole],[])
-
+        def authorizationContext = new AuthorizationContext(genAssignmentsForRoleWithName(user, IdentityUserTypeEnum.USER_MANAGER.roleName))
 
         when:
         service.verifyEffectiveCallerHasManagementAccessToUser(userId)
@@ -373,13 +367,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         }
 
         requestContext.getEffectiveCaller() >> caller
-
-        TenantRole tenantRole = new TenantRole().with {
-            it.name = IdentityRole.RCN_ADMIN.roleName
-            it
-        }
-        ImmutableTenantRole immutableTenantRole = new ImmutableTenantRole(tenantRole)
-        def authorizationContext = new AuthorizationContext([immutableTenantRole],[])
+        def authorizationContext = new AuthorizationContext(genAssignmentsForRoleWithName(user, IdentityRole.RCN_ADMIN.roleName))
 
         when: "principal is a user"
         boolean isAuthorized = service.isCallerAuthorizedToManageDelegationAgreement(daEntity)
@@ -402,6 +390,17 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
         1 * domainService.doDomainsShareRcn(caller.domainId, user.domainId) >> true
         (1.._) * requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
+    }
+
+    SourcedRoleAssignments genAssignmentsForRoleWithName(BaseUser user, String roleName, RoleAssignmentType assignmentType = RoleAssignmentType.DOMAIN) {
+        ImmutableClientRole icr = new ImmutableClientRole(new ClientRole().with {
+            it.name =roleName
+            it.id = roleName + "id"
+            it
+        })
+        SourcedRoleAssignments assignments = new SourcedRoleAssignments(user)
+        assignments.addUserSourcedAssignment(icr, assignmentType, Collections.EMPTY_SET)
+        return assignments
     }
 
     def "isCallerAuthorizedToManageDelegationAgreement: verify authorization for a userAdmin caller"() {
@@ -435,12 +434,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
         requestContext.getEffectiveCaller() >> caller
 
-        TenantRole tenantRole = new TenantRole().with {
-            it.name = IdentityUserTypeEnum.USER_ADMIN.roleName
-            it
-        }
-        ImmutableTenantRole immutableTenantRole = new ImmutableTenantRole(tenantRole)
-        def authorizationContext = new AuthorizationContext([immutableTenantRole],[])
+        def authorizationContext = new AuthorizationContext(genAssignmentsForRoleWithName(user, IdentityUserTypeEnum.USER_ADMIN.roleName))
 
         when: "principal is a user"
         boolean isAuthorized = service.isCallerAuthorizedToManageDelegationAgreement(daEntity)
@@ -496,12 +490,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
         requestContext.getEffectiveCaller() >> caller
 
-        TenantRole tenantRole = new TenantRole().with {
-            it.name = IdentityUserTypeEnum.USER_MANAGER.roleName
-            it
-        }
-        ImmutableTenantRole immutableTenantRole = new ImmutableTenantRole(tenantRole)
-        def authorizationContext = new AuthorizationContext([immutableTenantRole],[])
+        def authorizationContext = new AuthorizationContext(genAssignmentsForRoleWithName(user, IdentityUserTypeEnum.USER_MANAGER.roleName))
 
         when: "principal is a user"
         boolean isAuthorized = service.isCallerAuthorizedToManageDelegationAgreement(daEntity)
@@ -555,10 +544,6 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         requestContext.getEffectiveCaller() >> caller
 
         // Tenant Roles
-        TenantRole rcnAdminTr = new TenantRole().with {
-            it.name = IdentityRole.RCN_ADMIN.roleName
-            it
-        }
         TenantRole userAdminTr = new TenantRole().with {
             it.name = IdentityUserTypeEnum.USER_ADMIN.roleName
             it
@@ -567,7 +552,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
             it.name = IdentityUserTypeEnum.USER_MANAGER.roleName
             it
         }
-        def authorizationContext = new AuthorizationContext([new ImmutableTenantRole(rcnAdminTr)],[])
+        def authorizationContext = new AuthorizationContext(genAssignmentsForRoleWithName(user, IdentityRole.RCN_ADMIN.roleName))
 
         when: "da is null"
         service.isCallerAuthorizedToManageDelegationAgreement(null)
@@ -593,7 +578,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
         when: "userAdmin caller belongs to different domain"
         daEntity.principal.domainId >> "otherDomainId"
-        authorizationContext = new AuthorizationContext([new ImmutableTenantRole(userAdminTr)],[])
+        authorizationContext = new AuthorizationContext(genAssignmentsForRoleWithName(user, IdentityUserTypeEnum.USER_ADMIN.roleName))
         requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
         isAuthorized = service.isCallerAuthorizedToManageDelegationAgreement(daEntity)
 
@@ -605,7 +590,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
 
         when: "userManage caller attempting to update DA with userAdmin principal"
         daEntity.principal.domainId >> user.domainId
-        authorizationContext = new AuthorizationContext([new ImmutableTenantRole(userManageTr)],[])
+        authorizationContext = new AuthorizationContext(genAssignmentsForRoleWithName(user, IdentityUserTypeEnum.USER_MANAGER.roleName))
         requestContext.getEffectiveCallerAuthorizationContext() >> authorizationContext
         isAuthorized = service.isCallerAuthorizedToManageDelegationAgreement(daEntity)
 

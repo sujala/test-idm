@@ -233,7 +233,6 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
 
         then: "implicit tokens are populated"
         authCtx.hasRoleWithName(GlobalConstants.ROLE_NAME_RACKER)
-        authCtx.hasRoleWithName(identityConfig.getStaticConfig().getRackerImpersonateRoleName())
         authCtx.hasRoleWithName(IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.roleName)
     }
 

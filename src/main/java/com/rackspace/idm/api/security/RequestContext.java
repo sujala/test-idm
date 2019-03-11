@@ -24,6 +24,7 @@ import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.rackspace.idm.GlobalConstants.NOT_AUTHORIZED_MSG;
@@ -157,54 +158,39 @@ public class RequestContext {
         AuthorizationContext authorizationContext = getSecurityContext().getEffectiveCallerAuthorizationContext();
 
         if (authorizationContext == null) {
-            List<ImmutableTenantRole> explicitIdentityRoles = new ArrayList<ImmutableTenantRole>();
-            List<ImmutableClientRole> implicitIdentityRoles = new ArrayList<ImmutableClientRole>();
-
             BaseUser effectiveCaller = getEffectiveCaller();
-
-            List<TenantRole> userTenantRoles;
 
             SourcedRoleAssignments callerSourcedRoleAssignments;
             if (effectiveCaller instanceof EndUser) {
                 if (StringUtils.isBlank(effectiveCaller.getDomainId())) {
-                    //TODO: Push this validation higher since not all services use this method yet.
-                    // All end users MUST belong to a domain or it's considered invalid data. Log specific error code
-                    // to identify this invalid data scenario.
                     logger.error(String.format("Attempted to retrieve roles for user '%s', but user has no domain!", effectiveCaller.getDomainId()));
                     throw new ForbiddenException(NOT_AUTHORIZED_MSG, ErrorCodes.ERROR_CODE_INVALID_DOMAIN_FOR_USER);
                 }
                 callerSourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser((EndUser) effectiveCaller);
 
-                //TODO: Make implicit lookup part of standard getSourcedRoleAsisgnmentsForUser....
+                //TODO: Make implicit lookup part of standard getSourcedRoleAssignmentsForUser....
                 //get all the tenant roles for the user
-                for (TenantRole userTenantRole : callerSourcedRoleAssignments.asTenantRoles()) {
-                    ImmutableClientRole identityRole = applicationService.getCachedClientRoleById(userTenantRole.getRoleRsId());
-
-                    if (identityRole != null) {
-                        //role on user is an "identity" role so add to list of effective identity roles
-                        userTenantRole.setName(identityRole.getName());
-                        userTenantRole.setDescription(identityRole.getDescription());
-                        userTenantRole.setRoleType(identityRole.getRoleType());
-                        explicitIdentityRoles.add(new ImmutableTenantRole(userTenantRole));
-
+                for (SourcedRoleAssignments.SourcedRoleAssignment sourcedRoleAssignment : callerSourcedRoleAssignments.getSourcedRoleAssignments()) {
+                    ImmutableClientRole parentRole = sourcedRoleAssignment.getRole();
+                    if (parentRole != null) {
                         //get the "implicit" roles associated with the client role, if any. Implicit roles are such that if user has Role X, they implicitly
                         //have Role A, B, C even though the user is not explicitly assigned those roles (and these roles wouldn't show up in list
                         //of roles the user has.
-                        List<ImmutableClientRole> implicitRoles = authorizationService.getImplicitRolesForRole(userTenantRole.getName());
-                        implicitIdentityRoles.addAll(implicitRoles);
+                        List<ImmutableClientRole> implicitRoles = authorizationService.getImplicitRolesForRole(parentRole.getName());
+                        for (ImmutableClientRole implicitRole : implicitRoles) {
+                            RoleAssignmentSource source = new RoleAssignmentSource(RoleAssignmentSourceType.IMPLICIT, parentRole.getName(), RoleAssignmentType.DOMAIN, Collections.EMPTY_SET);
+                            callerSourcedRoleAssignments.addSourceForRole(implicitRole, source);
+                        }
                     }
                 }
             } else if (effectiveCaller instanceof Racker) {
                 // Don't differentiate between implicit/explicit here
                 callerSourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForRacker((Racker) effectiveCaller);
-                for (TenantRole userTenantRole : callerSourcedRoleAssignments.asTenantRoles()) {
-                    explicitIdentityRoles.add(new ImmutableTenantRole(userTenantRole));
-                }
             } else {
                 throw new IllegalStateException("Unknown caller type: " + effectiveCaller);
             }
 
-            authorizationContext = new AuthorizationContext(explicitIdentityRoles, implicitIdentityRoles);
+            authorizationContext = new AuthorizationContext(callerSourcedRoleAssignments);
             getSecurityContext().setEffectiveCallerAuthorizationContext(authorizationContext);
         }
 
