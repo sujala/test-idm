@@ -1991,13 +1991,11 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         addRole << [true , false]
     }
 
-    def "verify identity admin with the identity:identity:rs-domain-admin role can create user admin when feature.enable.use.role.for.domain.management=true"() {
+    def "verify identity admin with the identity:rs-domain-admin role can create user admin when feature.enable.use.role.for.domain.management=true"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
 
         def identityAdmin = utils.createIdentityAdmin()
-        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
-
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
         // user for create
@@ -2030,7 +2028,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsersQuietly([userEntity, userEntity2])
     }
 
-    def "identity admin without identity:identity:rs-domain-admin role cannot create user admins when feature.enable.use.role.for.domain.management=true"() {
+    def "identity admin without identity:rs-domain-admin role cannot create user admins when feature.enable.use.role.for.domain.management=true"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
 
