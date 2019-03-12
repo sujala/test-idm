@@ -5861,7 +5861,7 @@ rsMossoId: 78543985
 rsNastId: MossoCloudFS_78543985
 rsRegion: ORD
 timeZone: America/Chicago
-uid: keystone_identity_admin
+uid: qe_identity_admin_2
 userPassword: {SSHA512}orFD4KiiB2w6X+iC/iEkS/DWetQL1wGtcQDd+tjrV1sqNRvqCnOYa
  tbzj+FJyEVS/nTfoIaesRpxfAXWuFace3akz9k=
 
@@ -5891,6 +5891,13 @@ objectClass: tenantRole
 roleRsId: 6
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 tenantRsId: 78543985
+userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+
+dn: roleRsId=18,cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,
+ o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 18
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
 
 dn: rsId=9b336a2ba2b14b098c1210aec5ae9616,ou=users,o=rackspace,dc=rackspace,
