@@ -3139,11 +3139,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
-            requestContextHolder.getRequestContext().verifyEffectiveCallerIsNotARacker();
-
-            EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
-
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.DEFAULT_USER, IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.getRoleName());
 
             // NOTE: This service does not allow retrieving federated user by name
             User user = userService.getUser(name);
@@ -3155,12 +3152,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             /*
-                By time we get here we know the specified user exists and the caller is a User. Only check left is to
-                make sure the caller has access to the specified user.
+                The specified user exists. Must make sure the caller has access to the specified user.
              */
             List<User> userList = new ArrayList<>();
             userList.add(user);
-            Iterable<? extends EndUser> result = filterOutUsersInaccessibleByCaller(userList, caller);
+            Iterable<? extends EndUser> result = filterOutUsersInaccessibleByCallerForListUsers(userList, caller);
             if (!result.iterator().hasNext()) {
                 // If the user was filtered, the caller doesn't have access to that user
                 throw new ForbiddenException(NOT_AUTHORIZED_MSG);
@@ -3190,17 +3186,16 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.getRoleName());
 
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_MANAGER);
-
-            EndUser caller  = (EndUser) requestContextHolder.getRequestContext().getEffectiveCaller();
+            BaseUser caller  = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             // NOTE: A federated user with the user-manager role will be able to list all provisioned users in domain
             // other than user-admins. Federated users will not be returned by this call.
             Iterable<User> users = userService.getUsersByEmail(email, userType);
 
             Iterable<? extends EndUser> filteredUsers;
-            filteredUsers = filterOutUsersInaccessibleByCaller(users, caller);
+            filteredUsers = filterOutUsersInaccessibleByCallerForListUsers(users, caller);
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
 
@@ -3221,35 +3216,36 @@ public class DefaultCloud20Service implements Cloud20Service {
      * @param caller
      * @return
      */
-    private Iterable<? extends EndUser> filterOutUsersInaccessibleByCaller(Iterable<? extends EndUser> users, EndUser caller) {
-        Iterable<? extends EndUser> result;
+    private Iterable<? extends EndUser> filterOutUsersInaccessibleByCallerForListUsers(Iterable<? extends EndUser> users, BaseUser caller) {
+        Iterable<? extends EndUser> result = Collections.EMPTY_LIST;
 
-        IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
-        if (callerType.isDomainBasedAccessLevel()) {
-            List<EndUser> domainUsers = new ArrayList<EndUser>();
+        if (authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.getRoleName())) {
+            result = users;
+        } else {
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
+            if (callerType != null && callerType.isDomainBasedAccessLevel()) {
+                List<EndUser> domainUsers = new ArrayList<EndUser>();
 
-            // Filter results based on domain
-            for (EndUser user : users) {
-                if (authorizationService.hasSameDomain(caller, user)) {
-                    if (caller.getId().equals(user.getId())) {
-                        // Can always see self regardless of role
-                        domainUsers.add(user);
-                    } else if (callerType == IdentityUserTypeEnum.USER_MANAGER) {
-                        // Can see all domain users except user-admins
-                        if (!authorizationService.hasUserAdminRole(user)) {
+                // Filter results based on domain
+                for (EndUser user : users) {
+                    if (authorizationService.hasSameDomain((EndUser) caller, user)) {
+                        if (caller.getId().equals(user.getId())) {
+                            // Can always see self regardless of role
+                            domainUsers.add(user);
+                        } else if (callerType == IdentityUserTypeEnum.USER_MANAGER) {
+                            // Can see all domain users except user-admins
+                            if (!authorizationService.hasUserAdminRole(user)) {
+                                domainUsers.add(user);
+                            }
+                        } else if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
+                            // Can see all domain users - including other user-admins for now
                             domainUsers.add(user);
                         }
-                    } else if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
-                        // Can see all domain users - including other user-admins for now
-                        domainUsers.add(user);
                     }
                 }
+                result = domainUsers;
             }
-            result = domainUsers;
-        } else {
-            result = users;
         }
-
         return result;
     }
 
@@ -5316,12 +5312,15 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
-            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum.DEFAULT_USER);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum.DEFAULT_USER, IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.getRoleName());
 
             IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
 
+            // See if has global privs
+            boolean hasGlobalPrivs = authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.getRoleName());
+
             // Verify access to query params
-            if (!callerType.hasAtLeastIdentityAdminAccessLevel()
+            if ((!hasGlobalPrivs)
                     && (StringUtils.isNotBlank(listUsersSearchParams.domainId)
                     || StringUtils.isNotBlank(listUsersSearchParams.tenantId)
                     || listUsersSearchParams.adminOnly != null)) {
@@ -5329,7 +5328,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             // Short circuit. If regular default user, only user can return is self. No need to do any search.
-            if (callerType == IdentityUserTypeEnum.DEFAULT_USER) {
+            if (callerType == IdentityUserTypeEnum.DEFAULT_USER && !hasGlobalPrivs) {
                 List<EndUser> users = ImmutableList.of((EndUser) caller);
                 return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
@@ -5345,6 +5344,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(errorMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
 
+            // Service requires limiting search to a single domain only. If a domain (or tenant) not provided, default to caller's domain
+            if (StringUtils.isBlank(listUsersSearchParams.tenantId) && StringUtils.isBlank(listUsersSearchParams.domainId)) {
+                String defaultSearchDomainId = caller.getDomainId();
+                if (listUsersSearchParams.domainId == null) {
+                    throw new BadRequestException("Caller does not belong to a domain. Must specify domain to limit search.");
+                }
+                listUsersSearchParams.domainId = defaultSearchDomainId;
+            }
+
             Iterable<? extends EndUser> filteredUsers = Collections.emptyList();
             String paginationLinkHeader;
             PaginatorContext<EndUser> paginatorContext = null;
@@ -5353,10 +5361,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (identityConfig.getReloadableConfig().getTenantDefaultDomainId().equalsIgnoreCase(caller.getDomainId())) {
                 // Users in default domain must only show the caller
                 filteredUsers = ImmutableList.of((EndUser) caller);
-            } else if (caller.getDomainId() != null) {
-                paginatorContext = this.identityUserService.getEndUsersPaged(listUsersSearchParams);
             } else {
-                throw new BadRequestException("Caller has no domain");
+                paginatorContext = this.identityUserService.getEndUsersPaged(listUsersSearchParams);
             }
 
             ResponseBuilder builder = Response.status(HttpStatus.SC_OK);
@@ -5366,7 +5372,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 // Current implementation for this is expensive if caller is a user-manage since have to loop through
                 // every user
-                filteredUsers = filterOutUsersInaccessibleByCaller(paginatorContext.getValueList(), (EndUser) caller);
+                filteredUsers = filterOutUsersInaccessibleByCallerForListUsers(paginatorContext.getValueList(), caller);
             }
 
             return builder.entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()

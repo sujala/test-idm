@@ -742,6 +742,72 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         utils.deleteUsersQuietly(users)
     }
 
+    /**
+     * This test assumes the 'test.impersonate' base racker use has the impersonation `role cloud-identity-impersonate`
+     * which is mapped via implicit role mappings to include the `v2_0_list_users_global` identity role.
+     */
+    def "listUsers: Rackers w/ implicit role identity:v2_0_list_users_global can call list users"() {
+        given:
+        def userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
+        def domainId = userAdmin.domainId
+
+        def rackerToken = utils.authenticateRacker(Constants.RACKER_IMPERSONATE, Constants.RACKER_IMPERSONATE_PASSWORD).token.id
+        def rackerNoAccessToken = utils.authenticateRacker(Constants.RACKER_NOGROUP, Constants.RACKER_NOGROUP_PASSWORD).token.id
+
+        when: "Get user by name"
+        def response = cloud20.getUserByName(rackerToken, userAdmin.username)
+        def responseNoAccess = cloud20.getUserByName(rackerNoAccessToken, userAdmin.username)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        and: "Racker w/o implicit role is denied"
+        responseNoAccess.status == SC_FORBIDDEN
+
+        when: "Get user by email"
+        response = cloud20.getUsersByEmail(rackerToken, userAdmin.email)
+        responseNoAccess = cloud20.getUsersByEmail(rackerNoAccessToken, userAdmin.email)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        and: "Racker w/o implicit role is denied"
+        responseNoAccess.status == SC_FORBIDDEN
+
+        when: "Get user by domainId"
+        ListUsersSearchParams params = new ListUsersSearchParams(null, null, null, domainId, null, null, null)
+        response = cloud20.listUsersWithSearchParams(rackerToken, params)
+        responseNoAccess = cloud20.listUsersWithSearchParams(rackerNoAccessToken, params)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        and: "Racker w/o implicit role is denied"
+        responseNoAccess.status == SC_FORBIDDEN
+
+        when: "Get users by tenantId"
+        params = new ListUsersSearchParams(null, null, domainId, null, null, null, null)
+        response = cloud20.listUsersWithSearchParams(rackerToken, params)
+        responseNoAccess = cloud20.listUsersWithSearchParams(rackerNoAccessToken, params)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        and: "Racker w/o implicit role is denied"
+        responseNoAccess.status == SC_FORBIDDEN
+
+        when: "Get admin for domain"
+        params = new ListUsersSearchParams(null, null, null, domainId, true, null, null)
+        response = cloud20.listUsersWithSearchParams(rackerToken, params)
+        responseNoAccess = cloud20.listUsersWithSearchParams(rackerNoAccessToken, params)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        and: "Racker w/o implicit role is denied"
+        responseNoAccess.status == SC_FORBIDDEN
+    }
+
     @Unroll
     def "get admins for user: feature.enable.user.admin.look.up.by.domain = #featureEnabled"() {
         given:
