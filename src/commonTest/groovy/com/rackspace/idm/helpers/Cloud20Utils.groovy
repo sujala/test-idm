@@ -529,7 +529,7 @@ class Cloud20Utils {
 
     def createIdentityAdmin() {
         def serviceAdminToken = getServiceAdminToken()
-        def identityAdmin =  createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
+        def identityAdmin = createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
         // Add the "identity:rs-domain-admin" to all new admins created.
         addRoleToUser(identityAdmin, IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
         return identityAdmin
