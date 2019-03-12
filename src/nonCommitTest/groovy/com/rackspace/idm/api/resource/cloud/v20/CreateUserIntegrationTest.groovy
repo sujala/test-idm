@@ -1958,6 +1958,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUserQuietly(identityAdmin)
     }
 
+    @Unroll
     def "Create user single call with tenants works when feature flag is disabled"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, false)
