@@ -1,4 +1,14 @@
 /**
+ * Sets the endpoints used for interacting with the RSI API.
+ * This includes getting OAuth tokens, installing helm charts,
+ * and any other API calls made in the Jenkins environment.
+ */
+def setRsiEndpoints(scm) {
+    env.RSI_OAUTH_ENDPOINT = 'https://iad.rsi.rackspace.net'
+    env.RSI_MOTOR_ENDPOINT = 'https://motor-tesla-staging.iad.devapps.rsi.rackspace.net'
+}
+
+/**
  * This method defines a single Jenkins build step that does two things in parallel:
  *     1) Builds and publishes a snapshot artifact to Artifactory
  *     2) Runs commit tests on the code used to build the artifact
@@ -90,7 +100,7 @@ def buildImages(sandboxImageTag, identityVersion, branch = master) {
 def createStandboxEnv(sandboxImageTag, sandboxName, namespace = 'customer-identity-cicd') {
     // The chart configuration vars
     sandboxChartName = "customer-identity"
-    sandboxChartVersion = "0.1.4"
+    sandboxChartVersion = "0.1.5"
     sandboxConfig = [
             'customer-identity-deploy': [
                     trigger_tag      : "$sandboxImageTag",
@@ -173,9 +183,9 @@ def createStandboxEnv(sandboxImageTag, sandboxName, namespace = 'customer-identi
     def releaseName, token
     stage('Create Environment') {
         node {
-            token = getOAuthToken('https://rsi.rackspace.net', 'snow-service-account')
+            token = getOAuthToken(env.RSI_OAUTH_ENDPOINT, 'snow-service-account')
             releaseName = motor.install(token, sandboxChartName, sandboxChartVersion, [
-                    url   : motor.STAGING_URL,
+                    url   : env.RSI_MOTOR_ENDPOINT,
                     values: sandboxConfig
             ])
         }
@@ -220,6 +230,11 @@ def deploySandboxEnvironment(releaseName) {
 }
 
 def destroySandboxEnv(releaseName) {
+    if (releaseName == null) {
+        println "No release name given. Not destroying environment."
+        return
+    }
+
     stage('Destroy Environment') {
         node('master') {
 
@@ -247,8 +262,8 @@ def destroySandboxEnv(releaseName) {
                 echo exc.getMessage()
             }
 
-            def token = getOAuthToken('https://rsi.rackspace.net', 'snow-service-account')
-            motor.delete(token, releaseName, [url: motor.STAGING_URL])
+            def token = getOAuthToken(env.RSI_OAUTH_ENDPOINT, 'snow-service-account')
+            motor.delete(token, releaseName, [url: env.RSI_MOTOR_ENDPOINT])
             openshift.withCluster {
                 openshift.selector('all', [release: releaseName]).delete()
             }

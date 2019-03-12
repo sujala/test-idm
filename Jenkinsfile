@@ -30,6 +30,7 @@ try {
             cleanWs()
             checkout scm
             buildSteps = load('jenkins-scripts/jenkins-build-steps.groovy')
+            buildSteps.setRsiEndpoints(scm)
         }
     }
 
