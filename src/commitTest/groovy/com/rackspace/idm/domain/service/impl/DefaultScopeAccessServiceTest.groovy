@@ -2,9 +2,7 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.*
-import com.unboundid.util.LDAPSDKUsageException
 import org.joda.time.DateTime
-import spock.lang.Ignore
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -49,24 +47,11 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def scopeAccess = createUserScopeAccess("expiredOne", "userRsId", "clientId", expiredDate)
 
-        scopeAccessDao.getScopeAccesses(_) >> [scopeAccess].asList()
-
         when:
-        service.getValidUserScopeAccessForClientId(user, "clientId", null)
+        service.addScopeAccess(user, "clientId", null)
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _)
-    }
-
-    def "updateScopeAccess updates scopeAccess (no methods using modify accessToken)"() {
-        given:
-        def mockedScopeAccess = Mock(ScopeAccess)
-
-        when:
-        service.updateScopeAccess(mockedScopeAccess)
-
-        then:
-        1 * scopeAccessDao.updateScopeAccess(_)
     }
 
     def "provisionUserScopeAccess adds necessary values to scopeAccess"() {
@@ -147,14 +132,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         result == false
     }
 
-    def "the Dao is used to retrieve a list of ScopeAccess for the user"() {
-        when:
-        service.getScopeAccessesForUser(entityFactory.createUser())
-
-        then:
-        1 * scopeAccessDao.getScopeAccesses(_)
-    }
-
     def "calling getValidRackerScopeAccessForClientId sets authenticatedBy"() {
         given:
         def authenticatedBy = ["RSA"].asList()
@@ -168,48 +145,17 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
     }
 
-    def "calling updateExpiredUserScopeAccess sets authenticatedBy"() {
+    def "calling addScopeAccess sets authenticatedBy"() {
         given:
         def user = entityFactory.createUser()
         def authenticatedBy = ["RSA"].asList()
 
         when:
-        service.updateExpiredUserScopeAccess(user, "clientId", authenticatedBy)
+        service.addScopeAccess(user, "clientId", authenticatedBy)
 
         then:
         1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
             assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
-        }
-    }
-
-    def "calling getValidUserScopeAccessForClientId sets authenticatedBy"() {
-        given:
-        def user = entityFactory.createUser()
-        def authenticatedBy = ["RSA"].asList()
-
-        when:
-        service.getValidUserScopeAccessForClientId(user, "clientId", authenticatedBy)
-
-        then:
-        1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
-            assert (scopeAccess.authenticatedBy as Set == authenticatedBy as Set)
-        }
-    }
-
-    def "calling getUserScopeAccessForClientIdByUsernameAndApiCredentials sets authenticatedBy"() {
-        given:
-        def user = entityFactory.createUser()
-        def authenticatedBy = ["RSA"].asList()
-
-        when:
-        service.getUserScopeAccessForClientIdByUsernameAndApiCredentials("username", "apiKey", "clientId")
-
-        then:
-        1 * userService.authenticateWithApiKey(_, _) >> new UserAuthenticationResult(user, true)
-
-        then:
-        1 * scopeAccessDao.addScopeAccess(_, _) >> { arg1, ScopeAccess scopeAccess ->
-            assert (scopeAccess.authenticatedBy as Set == [GlobalConstants.AUTHENTICATED_BY_APIKEY] as Set)
         }
     }
 
@@ -298,21 +244,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         then:
         1 * scopeAccessDao.getScopeAccessByAccessToken(_) >> null
         result == false
-    }
-
-    def "delete expired tokens" () {
-        given:
-        def user = Mock(User)
-
-        and:
-        user.getId() >> "id"
-        scopeAccessDao.getScopeAccessesByUserId("id") >> [createScopeAccess(), createScopeAccess("tokenString", new DateTime().minusDays(1).toDate())].asList()
-
-        when:
-        service.deleteExpiredTokens(user)
-
-        then:
-        1 * scopeAccessDao.deleteScopeAccess(_)
     }
 
     def "calling getOpenStackType returns the correct value"() {

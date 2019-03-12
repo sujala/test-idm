@@ -4917,6 +4917,13 @@ objectClass: tenantRole
 roleRsId: 1
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
+dn: roleRsId=18,cn=ROLES,rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 18
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 10044477
+
 dn: rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
@@ -5064,6 +5071,14 @@ objectClass: tenantRole
 objectClass: top
 roleRsId: 1
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=18,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: tenantRole
+objectClass: top
+roleRsId: 18
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 173189
 
 dn: roleRsId=5,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
  m

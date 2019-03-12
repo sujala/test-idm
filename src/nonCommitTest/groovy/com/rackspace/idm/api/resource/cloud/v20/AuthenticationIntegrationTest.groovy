@@ -76,7 +76,6 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         //expire the federate user's second token
         def validTokenId = samlResponse1.token.id
         def expiredTokenId = samlResponse2.token.id
-        expireToken(expiredTokenId)
 
         when: "authenticate as federated user using valid token and MOSSO tenant"
         def authRequest = v2Factory.createTokenAuthenticationRequest(validTokenId, "" + userAdminEntity.mossoId, null)
@@ -527,14 +526,6 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
     def deleteFederatedUser(username) {
         def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
         if(federatedUser != null) ldapFederatedUserRepository.deleteObject(federatedUser)
-    }
-
-    def void expireToken(scopeAccessToExpire) {
-        def token = scopeAccessDao.getScopeAccessByAccessToken(scopeAccessToExpire)
-        Date now = new Date()
-        Date past = new Date(now.year - 1, now.month, now.day)
-        token.setAccessTokenExp(past)
-        scopeAccessDao.updateScopeAccess(token)
     }
 
     def void assertSessionInactivityTimeout(response, contentType, expectedSessionInactivityTimeout) {

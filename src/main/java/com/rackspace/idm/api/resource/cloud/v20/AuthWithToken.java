@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Trace;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.RequestContextHolder;
@@ -92,10 +91,6 @@ public class AuthWithToken {
         UserScopeAccess usa = (UserScopeAccess) sa;
         EndUser user = getUserByIdForAuthentication(usa.getUserRsId());
         requestContextHolder.getAuthenticationContext().setUsername(user.getUsername());
-
-        if(!(user instanceof FederatedUser)) {
-            scopeAccessService.updateExpiredUserScopeAccess((User) user, sa.getClientId(), null);
-        }
 
         return new AuthResponseTuple(user, usa, impersonatedScopeAccess);
     }

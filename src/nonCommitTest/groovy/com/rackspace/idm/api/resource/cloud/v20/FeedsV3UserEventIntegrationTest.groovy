@@ -44,6 +44,7 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
 
     def setup() {
         identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
         identityAdminToken = utils.getToken(identityAdmin.username)
     }
 

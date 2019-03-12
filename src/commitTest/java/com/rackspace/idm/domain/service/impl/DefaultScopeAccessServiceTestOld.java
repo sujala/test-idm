@@ -100,17 +100,6 @@ public class DefaultScopeAccessServiceTestOld {
     }
 
     @Test
-    public void deleteScopeAccess_scopeAccessNull_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.deleteScopeAccess(null);
-            assertTrue("should throw exception",false);
-        }catch (Exception ex){
-            assertThat("exception type", ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument passed in."));
-        }
-    }
-
-    @Test
     public void getScopeAccessByAccessToken_accessTokenNull_throwsNotFoundException() throws Exception {
         try{
             defaultScopeAccessService.getScopeAccessByAccessToken(null);
@@ -119,15 +108,6 @@ public class DefaultScopeAccessServiceTestOld {
             assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
             assertThat("exception message", ex.getMessage(),equalTo("Invalid accessToken; Token cannot be null"));
         }
-    }
-
-    @Test
-    public void getScopeAccessesForParentByClientId_returnsScopeAccessList() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        List<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        list.add(scopeAccess);
-        when(scopeAccessDao.getScopeAccessesByClientId(null, null)).thenReturn(list);
-        assertThat("returns list", defaultScopeAccessService.getScopeAccessesForUserByClientId(null, null), notNullValue());
     }
 
     @Test (expected = NotAuthenticatedException.class)
@@ -142,12 +122,6 @@ public class DefaultScopeAccessServiceTestOld {
         defaultScopeAccessService.handleApiKeyUsernameAuthenticationFailure("username", result);
     }
 
-    @Test (expected = NotAuthenticatedException.class)
-    public void getUserScopeAccessForClientIdByUsernameAndApiCredentials_notAuthenticated_throwsNotAuthenticated() throws Exception {
-        when(userService.authenticateWithApiKey("username", "apiKey")).thenReturn(new UserAuthenticationResult(new User(), false));
-        defaultScopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials("username", "apiKey", "clientId");
-    }
-
     @Test
     public void handleAuthenticationFailure_notAuthenticated_throwsNotAuthenticatedException() throws Exception {
         try{
@@ -160,25 +134,4 @@ public class DefaultScopeAccessServiceTestOld {
         }
     }
 
-    @Test (expected = NotFoundException.class)
-    public void getScopeAccessListByUserId_userIdIsNull_throwsNotFoundException() throws Exception {
-        defaultScopeAccessService.getScopeAccessListByUserId(null);
-    }
-
-    @Test
-    public void getScopeAccessListByUserId_callsScopeAccessDao_getScopeAccessListByUserId() throws Exception {
-        defaultScopeAccessService.getScopeAccessListByUserId("userId");
-        verify(scopeAccessDao).getScopeAccessesByUserId("userId");
-    }
-
-    @Test
-    public void getScopeAccessListByUserId_returnsScopeAccessList() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        List<ScopeAccess> scopeAccessList = new ArrayList<ScopeAccess>();
-        scopeAccessList.add(scopeAccess);
-        when(scopeAccessDao.getScopeAccessesByUserId("userId")).thenReturn(scopeAccessList);
-        Iterable<ScopeAccess> result = defaultScopeAccessService.getScopeAccessListByUserId("userId");
-        assertThat("list", result.iterator().hasNext(), equalTo(true));
-        assertThat("scope access", result.iterator().next(), equalTo(scopeAccess));
-    }
 }

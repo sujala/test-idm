@@ -684,6 +684,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
     def "Verify blank role name throws BadRequest when sent in one user call"() {
         def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
         def identityAdminToken = utils.getToken(identityAdmin.username)
         def domainId = utils.createDomain()
         def tenantId = testUtils.getRandomUUID("AddTenant")
@@ -708,6 +709,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
     def "Verify identity access roles are NOT allowed with create one user call"() {
         given:
         def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
         def identityAdminToken = utils.getToken(identityAdmin.username)
         def domainId = utils.createDomain()
         def tenantId = testUtils.getRandomUUID("AddTenant")

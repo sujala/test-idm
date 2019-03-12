@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
+import com.rackspace.idm.Constants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.DomainDao
@@ -44,7 +45,9 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         serviceAdmin = cloud20.getUserByName(serviceAdminToken, "authQE").getEntity(org.openstack.docs.identity.api.v2.User).value
 
         String adminUsername = "identityAdmin" + sharedRandom
-        cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate(adminUsername, "adminUser", "someEmail@rackspace.com", true, "ORD", null, "Password1"))
+        def response = cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate(adminUsername, "adminUser", "someEmail@rackspace.com", true, "ORD", null, "Password1"))
+        def identityAdminId = response.getEntity(org.openstack.docs.identity.api.v2.User).value.id
+        cloud20.addApplicationRoleToUser(serviceAdminToken, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID, identityAdminId)
         identityAdmin = cloud20.getUserByName(serviceAdminToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User).value
         identityAdminToken = cloud20.authenticate(adminUsername, "Password1").getEntity(AuthenticateResponse).value.token.id
     }

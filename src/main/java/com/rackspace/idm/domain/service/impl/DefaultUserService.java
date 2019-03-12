@@ -72,8 +72,6 @@ public class DefaultUserService implements UserService {
 
     static final String MOSSO_BASE_URL_TYPE = "MOSSO";
     static final String NAST_BASE_URL_TYPE = "NAST";
-    static final String ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG = "add.expired.tokens.user.create";
-    static final boolean ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG_DEFAULT_VALUE = false;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
@@ -189,8 +187,6 @@ public class DefaultUserService implements UserService {
 
         // Update domain's userAdminDN after the user has been created.
         domainService.updateDomainUserAdminDN(user);
-
-        addExpiredScopeAccessesForUser(user);
     }
 
     @Override
@@ -269,8 +265,6 @@ public class DefaultUserService implements UserService {
             // Update domain's userAdminDN after the user has been created.
             domainService.updateDomainUserAdminDN(user);
         }
-
-        addExpiredScopeAccessesForUser(user);
     }
 
     @Override
@@ -385,20 +379,6 @@ public class DefaultUserService implements UserService {
             }
         }
 
-    }
-
-    private void addExpiredScopeAccessesForUser(User user) {
-        if(config.getBoolean(ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG, ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG_DEFAULT_VALUE)) {
-            //Every user by default has the idm application provisioned for them
-            logger.info("Adding User Scope Access for Idm to user {}", user);
-            UserScopeAccess usa = scopeAccessService.createInstanceOfUserScopeAccess(user, getIdmClientId(), getRackspaceCustomerId());
-            this.scopeAccessService.addUserScopeAccess(user, usa);
-
-            //Every user by default has the cloud auth application provisioned for them
-            UserScopeAccess cloudUsa = scopeAccessService.createInstanceOfUserScopeAccess(user, getCloudAuthClientId(), getRackspaceCustomerId());
-            this.scopeAccessService.addUserScopeAccess(user, cloudUsa);
-            logger.info("Added User Scope Access for Idm to user {}", user);
-        }
     }
 
     private boolean isNumeric(String domainId) {

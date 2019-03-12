@@ -1207,6 +1207,7 @@ class Cloud20Methods {
     }
 
     def deleteTenantFromDomain(String token, String domainId, String tenantId) {
+        /** {@link Cloud20VersionResource#removeTenantFromDomain()} */
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
