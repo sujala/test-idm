@@ -2061,16 +2061,12 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Not Authorized")
     }
 
-    def "service admin without identity:rs-domain-admin role cannot create admins when feature.enable.use.role.for.domain.management=true"() {
+    @Unroll
+    def "service admin without identity:rs-domain-admin role can create admins - feature.enable.use.role.for.domain.management = #featureFlag"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, featureFlag)
 
         def serviceAdmin = utils.createServiceAdmin()
-
-        // bypass service restrictions and remove role
-        def endUser = userService.getUserById(serviceAdmin.id)
-        tenantService.deleteTenantRoleForUser(endUser, tenantService.getTenantRoleForUserById(endUser, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID), false)
-
         def serviceAdminToken = utils.getToken(serviceAdmin.username)
 
         // user for create
@@ -2082,6 +2078,9 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def response = cloud20.createUser(serviceAdminToken, user)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Not Authorized")
+        response.status == SC_CREATED
+
+        where:
+        featureFlag << [true, false]
     }
 }

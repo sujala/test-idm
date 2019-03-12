@@ -1649,7 +1649,9 @@ public class DefaultUserService implements UserService {
         if (StringUtils.isNotBlank(domainId)) {
             if (domainService.getDomain(domainId) == null) {
                 if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()
-                    && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
+                    && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                            IdentityUserTypeEnum.SERVICE_ADMIN.getRoleName(),
+                            IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
                     throw new ForbiddenException(NOT_AUTHORIZED_MSG);
                 }
                 domainService.createNewDomain(domainId);

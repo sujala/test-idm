@@ -1626,9 +1626,13 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * domainService.createNewDomain(domainId)
 
         if (featureFlag) {
-            1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
+            1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    IdentityUserTypeEnum.SERVICE_ADMIN.roleName,
+                    IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
         } else {
-            0 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())
+            0 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    IdentityUserTypeEnum.SERVICE_ADMIN.roleName,
+                    IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())
         }
 
         where:
