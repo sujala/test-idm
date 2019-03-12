@@ -23,7 +23,7 @@
             "reloadable": true,
             "description": "",
             "source": "idm.reloadable.properties",
-            "value": false,
+            "value": true,
             "versionAdded": "3.24.0"
         },
         {
@@ -89,7 +89,7 @@
             "reloadable": true,
             "description": "A tenant type for MPC filter testing",
             "source": "idm.reloadable.properties",
-            "value": "billing:observer",
+            "value": "[billing:observer]",
             "versionAdded": "3.24.0"
         },
         {
@@ -382,7 +382,7 @@
             "reloadable": false,
             "description": "Specifies the maximum length of time in milliseconds that a connection in this pool may be established before it should be closed and replaced with another connection.",
             "source": "idm.properties",
-            "value": 0,
+            "value": 150000,
             "versionAdded": "1.0.14.8"
         },
         {
@@ -402,26 +402,6 @@
             "source": "idm.properties",
             "value": 1000,
             "versionAdded": "1.0.14.8"
-        },
-        {
-            "defaultValue": false,
-            "name": "ldap.server.trusted",
-            "reloadable": true,
-            "description": "Specifies if the edir connection is trusted",
-            "source": "idm.properties",
-            "value": true,
-            "versionAdded": "1.0.14.8",
-            "visibility": "Internal"
-        },
-        {
-            "defaultValue": false,
-            "name": "ldap.server.trusted",
-            "reloadable": false,
-            "description": "Specifies if the edir connection is trusted",
-            "source": "idm.properties",
-            "value": true,
-            "versionAdded": "1.0.14.8",
-            "visibility": "External"
         },
         {
             "name": "ldap.server.useSSL",
@@ -509,30 +489,6 @@
             "versionAdded": "2.5.0"
         },
         {
-            "name": "email.locked.out.email.subject",
-            "reloadable": false,
-            "description": "Subject to use when sending MFA locked out email to customer.",
-            "source": "idm.properties",
-            "value": "Your account is locked out",
-            "versionAdded": "2.5.0"
-        },
-        {
-            "name": "email.mfa.disabled.subject",
-            "reloadable": false,
-            "description": "Subject to use when sending MFA disabled email to customer.",
-            "source": "idm.properties",
-            "value": "Rackspace :: Multi-Factor Authentication - Disabled",
-            "versionAdded": "2.5.0"
-        },
-        {
-            "name": "email.mfa.enabled.subject",
-            "reloadable": false,
-            "description": "Subject to use when sending MFA enabled email to customer.",
-            "source": "idm.properties",
-            "value": "Rackspace :: Multi-Factor Authentication - Enabled",
-            "versionAdded": "2.5.0"
-        },
-        {
             "defaultValue": true,
             "name": "email.send.to.only.rackspace.addresses.enabled",
             "reloadable": false,
@@ -565,15 +521,6 @@
             "description": "Whether to load keys from FILE or LDAP",
             "source": "idm.properties",
             "value": "LDAP",
-            "versionAdded": "2.13.0"
-        },
-        {
-            "defaultValue": "UUID",
-            "name": "feature.federated.provider.defaultTokenFormat",
-            "reloadable": true,
-            "description": "When an override property does not exist for a given federated provider, this determines the token format to use for that provide's federated users. AE | UUID",
-            "source": "idm.reloadable.properties",
-            "value": "AE",
             "versionAdded": "2.13.0"
         },
         {
@@ -861,15 +808,6 @@
             "versionAdded": "3.1.1"
         },
         {
-            "defaultValue": false,
-            "name": "feature.support.v11.legacy",
-            "reloadable": true,
-            "description": "Enable v1.1 legacy calls",
-            "source": "idm.reloadable.properties",
-            "value": false,
-            "versionAdded": "3.1.1"
-        },
-        {
             "defaultValue": "no-reply@rackspace.com",
             "name": "email.return.email.address",
             "reloadable": true,
@@ -953,33 +891,6 @@
             "versionAdded": "3.3.3"
         },
         {
-            "defaultValue": true,
-            "name": "feature.ae.tokens.decrypt",
-            "reloadable": true,
-            "description": "Whether or not existing AE Tokens can be received. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0",
-            "source": "idm.reloadable.properties",
-            "value": true,
-            "versionAdded": "3.4.0"
-        },
-        {
-            "defaultValue": true,
-            "name": "feature.ae.tokens.encrypt",
-            "reloadable": true,
-            "description": "Whether or not new AE Tokens can be issued. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0",
-            "source": "idm.reloadable.properties",
-            "value": true,
-            "versionAdded": "3.4.0"
-        },
-        {
-            "defaultValue": false,
-            "name": "feature.issue.restricted.token.session.ids",
-            "reloadable": true,
-            "description": "Whether or not to issued restricted AE Tokens w\/ a sessionid scope for MFA X-Session-Ids",
-            "source": "idm.reloadable.properties",
-            "value": true,
-            "versionAdded": "3.4.0"
-        },
-        {
             "defaultValue": 5,
             "name": "multifactor.sessionid.lifetime",
             "reloadable": true,
@@ -1016,7 +927,7 @@
             "versionAdded": "3.4.0"
         },
         {
-            "name": "atom.hopper.dataCenter",
+            "name": "feeds.dataCenter",
             "reloadable": true,
             "description": "The data center to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
             "source": "idm.reloadable.properties",
@@ -1026,7 +937,7 @@
             "environment": "Staging"            
         },
         {
-            "name": "atom.hopper.dataCenter",
+            "name": "feeds.dataCenter",
             "reloadable": true,
             "description": "The data center to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
             "source": "idm.reloadable.properties",
@@ -1036,7 +947,7 @@
             "environment": "Staging"            
         },
         {
-            "name": "atom.hopper.region",
+            "name": "feeds.region",
             "reloadable": true,
             "description": "The region to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
             "source": "idm.reloadable.properties",
@@ -1046,7 +957,7 @@
             "environment": "Staging"
         },
         {
-            "name": "atom.hopper.region",
+            "name": "feeds.region",
             "reloadable": true,
             "description": "The region to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
             "source": "idm.reloadable.properties",
@@ -1056,7 +967,7 @@
             "environment": "Staging"
         },
         {
-            "name": "atom.hopper.url",
+            "name": "feeds.url",
             "reloadable": true,
             "description": "The URL to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
             "source": "idm.reloadable.properties",
@@ -1066,7 +977,7 @@
             "environment": "Staging"
         },
         {
-            "name": "atom.hopper.url",
+            "name": "feeds.url",
             "reloadable": true,
             "description": "The URL to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.",
             "source": "idm.reloadable.properties",
@@ -1171,7 +1082,7 @@
             "reloadable": false,
             "description": "Specifies whether to check the age of a connection against the configured maximum connection age whenever it is released to the pool.",
             "source": "idm.properties",
-            "value": false,
+            "value": true,
             "versionAdded": "3.6.0"
         },
         {
@@ -1198,7 +1109,7 @@
             "reloadable": false,
             "description": "Specifies the maximum length of time in milliseconds to wait for a connection to become available when trying to obtain a connection from the pool.",
             "source": "idm.properties",
-            "value": 10000,
+            "value": 5000,
             "versionAdded": "3.6.0"
         },
         {
@@ -1472,33 +1383,6 @@
             "versionAdded": "3.13.0"
         },
         {
-            "name": "edir.bind.dn",
-            "reloadable": false,
-            "description": "The bind DN for eDir authenticated connections.",
-            "source": "idm.properties",
-            "value": "cn=cidm-edir-staging,ou=Users,o=rackspace",
-            "versionAdded": "3.15.0",
-            "environment":"Staging"
-        },
-        {
-            "name": "edir.bind.dn",
-            "reloadable": false,
-            "description": "The bind DN for eDir authenticated connections.",
-            "source": "idm.properties",
-            "value": "cn=cidm-edir-prod,ou=Users,o=rackspace",
-            "versionAdded": "3.15.0",
-            "environment":"Prod"
-        },
-        {
-            "defaultValue": true,
-            "name": "feature.cache.roles.without.application.restart",
-            "reloadable": true,
-            "description": "Whether or not to allow caching client roles retrieved by id\/name instead of loading them into memory at application startup.",
-            "source": "idm.reloadable.properties",
-            "value": true,
-            "versionAdded": "3.15.0"
-        },
-        {
             "defaultValue": true,
             "name": "feature.enable.issued_at.in.response",
             "reloadable": true,
@@ -1523,7 +1407,7 @@
             "reloadable": true,
             "description": "Specify the acceptable media types for mapping policies",
             "source": "idm.reloadable.properties",
-            "value": "[application\/json, text\/yaml]",
+            "value": "[application\/xml, application\/json, text\/yaml]",
             "versionAdded": "3.15.0"
         },
         {
@@ -1542,7 +1426,7 @@
             "description": "A comma delimited list of domains for which user groups will be allowed",
             "source": "directory",
             "id": "be9091cec333496a8997e819f9b06af1",
-            "value": "UserGroupDomain513ac917b2ba4f35834148fcc134ef3a,UserGroupDomainUGdf5f823f71644d1ca1c0b71cf1f5753b",
+            "value": "[UserGroupDomain513ac917b2ba4f35834148fcc134ef3a, UserGroupDomainUGdf5f823f71644d1ca1c0b71cf1f5753b]",
             "versionAdded": "3.16.0",
             "environment":"Staging"
         },
@@ -1624,7 +1508,7 @@
             "reloadable": true,
             "description": "Whether to delete all tenant roles when tenant is removed from domain.",
             "source": "idm.reloadable.properties",
-            "value": true,
+            "value": false,
             "versionAdded": "3.23.0"
         },
         {
@@ -1697,7 +1581,7 @@
             "reloadable": true,
             "description": "Whether to enable health check on valid connection for continued use.",
             "source": "idm.reloadable.properties",
-            "value": false,
+            "value": true,
             "versionAdded": "3.19.0"
         },
         {
@@ -1706,7 +1590,7 @@
             "reloadable": true,
             "description": "Whether to enable health check on new LDAP connection.",
             "source": "idm.reloadable.properties",
-            "value": false,
+            "value": true,
             "versionAdded": "3.19.0"
         },
         {
@@ -1751,7 +1635,7 @@
             "reloadable": false,
             "description": "Specifies the minimum length of time in milliseconds that should pass between connections closed because they have been established for longer than the maximum connection age.",
             "source": "idm.properties",
-            "value": 0,
+            "value": 5000,
             "versionAdded": "3.19.0"
         },
         {
@@ -1824,7 +1708,7 @@
             "description": "A comma delimited list of rcns for which delegation\nagreements will be allowed",
             "source": "directory",
             "id": "cf2afde98d884af3aee16d93ed1da93f",
-            "value": "RCN-182-579-723,RCN-493-041-948",
+            "value": "[rcn-182-579-723, rcn-493-041-948]",
             "versionAdded": "3.20.0",
             "environment":"Staging"
         },
@@ -1890,7 +1774,7 @@
             "reloadable": true,
             "description": "Specifies whether to generate and store a user's phone PIN when the user is created. Phone PINs are generated for provisioned users created through v2.0 create user calls and Domain federated users.",
             "source": "idm.reloadable.properties",
-            "value": false,
+            "value": true,
             "versionAdded": "3.21.0"
         },
         {
@@ -1900,15 +1784,6 @@
             "description": "Whether to enable user-admin look up by domain.",
             "source": "idm.reloadable.properties",
             "value": true,
-            "versionAdded": "3.21.0"
-        },
-        {
-            "defaultValue": 6,
-            "name": "user.phone.pin.size",
-            "reloadable": true,
-            "description": "Specifies the length, in characters, of the phone PIN.",
-            "source": "idm.reloadable.properties",
-            "value": 6,
             "versionAdded": "3.21.0"
         },
         {
@@ -1939,6 +1814,380 @@
             "source": "idm.reloadable.properties",
             "value": 5,
             "versionAdded": "3.21.1"
+        },
+        {
+            "defaultValue": 48,
+            "name": "unverified.user.invites.ttl.hours",
+            "reloadable": true,
+            "description": "The TTL in hours for unverified user invites",
+            "source": "idm.reloadable.properties",
+            "value": 48,
+            "versionAdded": "3.25.0"
+        },
+        {
+            "defaultValue": 32,
+            "name": "unverified.user.registration.code.size",
+            "reloadable": true,
+            "description": "The size of the registration code generated on unverified user invite",
+            "source": "idm.reloadable.properties",
+            "value": 32,
+            "versionAdded": "3.25.0"
+        },
+        {
+            "defaultValue": "https://account.rackspace.com/users/%s/registration/%s",
+            "name": "unverified.user.registration.url.format",
+            "reloadable": true,
+            "description": "The registration url for unverified user invite",
+            "source": "idm.reloadable.properties",
+            "value": "https://staging.astra.rackspace.com/registration?user_id=%s&registration_code=%s",
+            "versionAdded": "3.25.0",
+            "environment": "Staging"
+        },
+        {
+            "defaultValue": "https://account.rackspace.com/users/%s/registration/%s",
+            "name": "unverified.user.registration.url.format",
+            "reloadable": true,
+            "description": "The registration url for unverified user invite",
+            "source": "idm.reloadable.properties",
+            "value": " https://login.rackspace.com/registration?user_id=%s&registration_code=%s",
+            "versionAdded": "3.25.0",
+            "environment": "Prod"
+        },
+        {
+            "defaultValue": "PT1S",
+            "name": "repository.property.cache.ttl",
+            "reloadable": false,
+            "description": "The ttl of entries in the repository cache. A ttl of 0 means no cache.",
+            "source": "idm.properties",
+            "value": "PT30S",
+            "versionAdded": "3.26.0"
+        },
+        {
+            "defaultValue": 200,
+            "name": "repository.property.cache.size",
+            "reloadable": false,
+            "description": "The max size of the repository cache.",
+            "source": "idm.properties",
+            "value": 200,
+            "versionAdded": "3.26.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.cache.repository.properties",
+            "reloadable": true,
+            "description": "Whether or not to use cached repository properties. When false, every request for a repository property will hit the repository.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.26.0"
+        },
+        {
+            "defaultValue": "DEV",
+            "name": "feature.identity.deployment.environment",
+            "reloadable": true,
+            "description": "Deployment environment property for identity",
+            "source": "idm.reloadable.properties",
+            "value": "PROD",
+            "versionAdded": "3.26.0",
+            "environment": "Prod"
+        },
+        {
+            "defaultValue": "DEV",
+            "name": "feature.identity.deployment.environment",
+            "reloadable": true,
+            "description": "Deployment environment property for identity",
+            "source": "idm.reloadable.properties",
+            "value": "STAGING",
+            "versionAdded": "3.26.0",
+            "environment": "Staging"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.use.aspect.for.mfa.authorization",
+            "reloadable": true,
+            "description": "Whether to use aspect logic to enforce MFA setup and sessionId use authorization or to continue to use the filter.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.26.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.use.role.for.tenant.management",
+            "reloadable": true,
+            "description": "Control whether a given user is authorized to Create, Delete or Add tenant to domain with a role",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.27.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.use.role.for.domain.management",
+            "reloadable": true,
+            "description": "Control whether a given user is authorized to Create or Delete domains with a role",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.27.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.use.role.for.endpoint.management",
+            "reloadable": true,
+            "description": "Control whether a given user is authorized to Create, Delete or Update endpoints with a role",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.27.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.only.use.tenant.domain.pointers",
+            "reloadable": true,
+            "description": "Whether to only use tenant-domain pointers or use both domain-tenant pointers and tenant-domain pointers",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.27.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.password.blacklist",
+            "reloadable": true,
+            "description": "Whether to validate password with blacklisted passwords.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.27.0"
+        },
+        {
+            "defaultValue": 10,
+            "name": "dynamo.db.password.blacklist.count.max.allowed",
+            "reloadable": true,
+            "description": "Specifies the max count, the number of time a password has been publicly compromised, before a user is no longer allowed to use a given password.",
+            "source": "idm.reloadable.properties",
+            "value": 15,
+            "versionAdded": "3.27.0"
+        },
+        {
+            "defaultValue": "http://localhost:8000",
+            "name": "dynamo.db.service.endpoint",
+            "reloadable": false,
+            "description": "Specifies the endpoint to use for dynamoDB connections.",
+            "source": "idm.properties",
+            "value": "https://dynamodb.us-east-2.amazonaws.com",
+            "versionAdded": "3.27.0",
+            "region": "IAD3",
+            "environment": "Staging"
+        },
+        {
+            "defaultValue": "http://localhost:8000",
+            "name": "dynamo.db.service.endpoint",
+            "reloadable": false,
+            "description": "Specifies the endpoint to use for dynamoDB connections.",
+            "source": "idm.properties",
+            "value": "https://dynamodb.eu-west-2.amazonaws.com",
+            "versionAdded": "3.27.0",
+            "region": "LON3",
+            "environment": "Staging"
+        },
+        {
+            "defaultValue": "us-east-2",
+            "name": "dynamo.db.region",
+            "reloadable": false,
+            "description": "Specifies the region to use for dynamoDB connections",
+            "source": "idm.properties",
+            "value": "us-east-2",
+            "versionAdded": "3.27.0"
+        },
+        {
+            "defaultValue": "PT1.001S",
+            "name": "dynamo.db.request.timeout.duration",
+            "reloadable": false,
+            "description": "Specifies the request timeout to use for connecting to dynamoDB",
+            "source": "idm.properties",
+            "value": "PT1S",
+            "versionAdded": "3.27.0"
+        },
+        {
+            "name": "tenant.role.whitelist.visibility.filter.azure",
+            "reloadable": true,
+            "description": "Specifies the request timeout to use for connecting to dynamoDB",
+            "source": "idm.reloadable.properties",
+            "value": "[identity:service-admin, identity:admin, identity:user-admin, identity:user-manage, admin, observer, creator, ticketing:admin, ticketing:observer, billing:admin, billing:observer]",
+            "versionAdded": "3.27.0"
+        },
+        {
+            "name": "racker.auth.ldap.server",
+            "reloadable": false,
+            "description": "The ldap server to connect to for Racker auth. This was renamed from 'auth.ldap.server",
+            "source": "idm.properties",
+            "value": "ad.auth.rackspace.com",
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": 636,
+            "name": "racker.auth.ldap.server.port",
+            "reloadable": false,
+            "description": "The port to connect to for Racker auth. This was renamed from 'auth.ldap.server.port",
+            "source": "idm.properties",
+            "value": 636,
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": 1,
+            "name": "racker.auth.ldap.server.pool.size.init",
+            "reloadable": false,
+            "description": "The initial connection pool size for Racker auth connection pool. This was renamed from 'auth.ldap.server.pool.size.init",
+            "source": "idm.properties",
+            "value": 2,
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": 100,
+            "name": "racker.auth.ldap.server.pool.size.max",
+            "reloadable": false,
+            "description": "The max connection pool size for Racker auth connection pool. This was renamed from 'auth.ldap.server.pool.size.max",
+            "source": "idm.properties",
+            "value": 10,
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": "ou=users,o=rackspace",
+            "name": "racker.auth.ldap.base.dn",
+            "reloadable": false,
+            "description": "The base DN to search under for Racker auth. This was renamed from 'auth.ldap.base.dn",
+            "source": "idm.properties",
+            "value": "DC=RACKSPACE,DC=CORP",
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "racker.auth.allowed",
+            "reloadable": false,
+            "description": "Specifies whether racker proxy authentication is supported on this server",
+            "source": "idm.properties",
+            "value": true,
+            "versionAdded": "3.28.0",
+            "visibility": "Internal"
+        },
+        {
+            "defaultValue": false,
+            "name": "racker.auth.allowed",
+            "reloadable": false,
+            "description": "Specifies whether racker proxy authentication is supported on this server",
+            "source": "idm.properties",
+            "value": false,
+            "versionAdded": "3.28.0",
+            "visibility": "External"
+        },
+        {
+            "defaultValue": "PT5M",
+            "name": "racker.groups.cache.ttl",
+            "reloadable": false,
+            "description": "The ttl of entries in the racker groups cache. A ttl of 0 means no cache.",
+            "source": "idm.properties",
+            "value": "PT5M",
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": 300,
+            "name": "racker.groups.cache.size",
+            "reloadable": false,
+            "description": "The max size of the racker groups cache.",
+            "source": "idm.properties",
+            "value": 300,
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": "PT5M",
+            "name": "racker.auth.result.cache.ttl",
+            "reloadable": false,
+            "description": "The ttl of entries in the racker auth result cache. A ttl of 0 means no cache.",
+            "source": "idm.properties",
+            "value": "PT10M",
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": 300,
+            "name": "racker.auth.result.cache.size",
+            "reloadable": false,
+            "description": "The max size of the racker auth result cache.",
+            "source": "idm.properties",
+            "value": 300,
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.racker.auth.result.cache",
+            "reloadable": true,
+            "description": "Whether or not to cache racker authentication results.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.28.0",
+            "visibility": "Internal"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.racker.auth.result.cache",
+            "reloadable": true,
+            "description": "Whether or not to cache racker authentication results.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.28.0",
+            "visibility": "External"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.racker.groups.cache",
+            "reloadable": true,
+            "description": "Whether or not to cache racker groups.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.28.0",
+            "visibility": "Internal"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.racker.groups.cache",
+            "reloadable": true,
+            "description": "Whether or not to cache racker groups.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.28.0",
+            "visibility": "External"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.racker.auth.optimize.search",
+            "reloadable": true,
+            "description": "Whether to optimize searching AD for racker by limiting to user object class.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.28.0",
+            "visibility": "Internal"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.racker.auth.optimize.search",
+            "reloadable": true,
+            "description": "Whether to optimize searching AD for racker by limiting to user object class.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.28.0",
+            "visibility": "External"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.open.tracing.auth.filter.span",
+            "reloadable": true,
+            "description": "Whether to enable creating span at authentication filter",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.28.0"
+        },
+        {
+            "defaultValue": 1,
+            "name": "feeds.user.product.schema.version",
+            "reloadable": true,
+            "description": "The user product schema version to use on user event feeds.",
+            "source": "idm.reloadable.properties",
+            "value": 3,
+            "versionAdded": "3.29.0"
         }
     ]
 }
