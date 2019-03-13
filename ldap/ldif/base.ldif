@@ -5896,7 +5896,12 @@ userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
 dn: roleRsId=18,cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,
  o=rackspace,dc=rackspace,dc=com
 objectClass: tenantRole
-roleRsId: 18
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+
+dn: roleRsId=19,cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,
+ o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
 
