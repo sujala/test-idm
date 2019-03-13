@@ -79,6 +79,7 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
 
         //create a new shared identity admin for these tests
         specificationIdentityAdmin = createIdentityAdmin(IDENTITY_ADMIN_USERNAME_PREFIX + SPECIFICATION_RANDOM)
+        cloud20.addApplicationRoleToUser(specificationServiceAdminToken, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID, specificationIdentityAdmin.id)
         def identityAdminAuthResponse = cloud20.authenticatePassword(specificationIdentityAdmin.getUsername(), DEFAULT_PASSWORD).getEntity(AuthenticateResponse)
         //verify the authentication worked before retrieving the token
         assert identityAdminAuthResponse.value instanceof AuthenticateResponse
@@ -530,8 +531,9 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
 
     def createIdentityAdmin(String identityAdminUsername = IDENTITY_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
         cloud20.createUser(specificationServiceAdminToken, v2Factory.createUserForCreate(identityAdminUsername, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
-        def userAdmin = cloud20.getUserByName(specificationServiceAdminToken, identityAdminUsername).getEntity(User).value
-        return userAdmin;
+        def identityAdmin = cloud20.getUserByName(specificationServiceAdminToken, identityAdminUsername).getEntity(User).value
+        cloud20.addApplicationRoleToUser(specificationServiceAdminToken, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID, identityAdmin.id)
+        return identityAdmin;
     }
 
     def createUserAdmin(String callerToken = specificationIdentityAdminToken, String adminUsername = USER_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {

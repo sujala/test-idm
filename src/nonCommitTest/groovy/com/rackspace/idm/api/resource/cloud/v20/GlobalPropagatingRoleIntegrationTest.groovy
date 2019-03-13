@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.Application
@@ -80,6 +81,7 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
 
         //create a new shared identity admin for these tests
         specificationIdentityAdmin = createIdentityAdmin(IDENTITY_ADMIN_USERNAME_PREFIX + SPECIFICATION_RANDOM)
+        cloud20.addApplicationRoleToUser(specificationServiceAdminToken, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID, specificationIdentityAdmin.id)
         def identityAdminAuthResponse = cloud20.authenticatePassword(specificationIdentityAdmin.getUsername(), DEFAULT_PASSWORD).getEntity(AuthenticateResponse)
         //verify the authentication worked before retrieving the token
         assert identityAdminAuthResponse.value instanceof AuthenticateResponse
@@ -533,8 +535,9 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
 
     def createIdentityAdmin(String identityAdminUsername = IDENTITY_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
         cloud20.createUser(specificationServiceAdminToken, v2Factory.createUserForCreate(identityAdminUsername, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
-        def userAdmin = cloud20.getUserByName(specificationServiceAdminToken, identityAdminUsername).getEntity(User).value
-        return userAdmin;
+        def identityAdmin = cloud20.getUserByName(specificationServiceAdminToken, identityAdminUsername).getEntity(User).value
+        cloud20.addApplicationRoleToUser(specificationServiceAdminToken, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID, identityAdmin.id)
+        return identityAdmin;
     }
 
     def createUserAdmin(String callerToken = specificationIdentityAdminToken, String adminUsername = USER_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {

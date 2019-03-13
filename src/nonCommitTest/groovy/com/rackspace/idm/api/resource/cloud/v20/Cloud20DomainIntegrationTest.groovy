@@ -2342,6 +2342,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
         def domainId = utils.createDomain()
         def identityAdmin = utils.createIdentityAdmin()
+        utils.deleteRoleOnUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
         def identityAdminToken = utils.getToken(identityAdmin.username)
         def domainToCreate = v2Factory.createDomain(domainId, domainId, false)
 
@@ -2415,13 +2416,14 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "create domain with type - hasDomainAdminRole = #hasDomainAdminRole"() {
+    def "create domain with type - hasDomainAdminRole = #hasDomainAdminRole, feature.enable.use.role.for.domain.management = #featureFlag"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, featureFlag)
+
         def identityAdmin = utils.createIdentityAdmin()
 
-        if (hasDomainAdminRole) {
-            // Add domain admin role to identity admin
-            utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
+        if (!hasDomainAdminRole) {
+            utils.deleteRoleOnUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
         }
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
@@ -2480,7 +2482,10 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteTestDomainQuietly(domainId)
 
         where:
-        hasDomainAdminRole << [true, false]
+        hasDomainAdminRole  | featureFlag
+        true                | true
+        true                | false
+        false               | false
     }
 
     def "verify domain type is case insensitive"() {
@@ -2643,6 +2648,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         if (hasDomainAdminRole) {
             // Add domain admin role to identity admin
             utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
+        } else {
+            utils.deleteRoleOnUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
         }
 
         def identityAdminToken = utils.getToken(identityAdmin.username)

@@ -513,6 +513,7 @@ class Cloud20Utils {
         def serviceAdmin = this.createIdentityAdmin()
         def serviceAdminEntity = userService.getUser(serviceAdmin.username)
         tenantRoleDao.deleteTenantRoleForUser(serviceAdminEntity, tenantService.getTenantRoleForUserById(serviceAdminEntity, Constants.IDENTITY_ADMIN_ROLE_ID))
+        tenantRoleDao.deleteTenantRoleForUser(serviceAdminEntity, tenantService.getTenantRoleForUserById(serviceAdminEntity, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID))
         def serviceAdminClientRole = applicationService.getClientRoleById(Constants.SERVICE_ADMIN_ROLE_ID)
         TenantRole role = new TenantRole()
         role.setClientId(serviceAdminClientRole.getClientId())
@@ -529,7 +530,10 @@ class Cloud20Utils {
 
     def createIdentityAdmin() {
         def serviceAdminToken = getServiceAdminToken()
-        return createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
+        def identityAdmin = createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
+        // Add the "identity:rs-domain-admin" to all new admins created.
+        addRoleToUser(identityAdmin, IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
+        return identityAdmin
     }
 
     def createIdentityProviderManager() {

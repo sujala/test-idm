@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
@@ -40,6 +41,7 @@ class Cloud20UserManageIntegrationTest extends RootIntegrationTest {
         //create identity admin
         def identityAdminUsername = "identityAdmin$sharedRandom"
         identityAdmin = cloud20Utils.createUser(serviceAdminToken, identityAdminUsername, DEFAULT_PASSWORD)
+        cloud20.addApplicationRoleToUser(serviceAdminToken, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID, identityAdmin.id)
         identityAdminToken = cloud20Utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
 
         //create user admin

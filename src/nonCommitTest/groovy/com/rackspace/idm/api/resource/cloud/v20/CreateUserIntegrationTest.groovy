@@ -1991,4 +1991,97 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         where:
         addRole << [true , false]
     }
+
+    def "verify identity admin with the identity:rs-domain-admin role can create user admin when feature.enable.use.role.for.domain.management=true"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
+
+        def identityAdmin = utils.createIdentityAdmin()
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+
+        // user for create
+        def username = "userAdmin" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def user = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+
+        // one user call
+        username = "userAdmin" + testUtils.getRandomUUID()
+        domainId = utils.createDomain()
+        def user2 = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+        user2.secretQA = secretQA
+
+        when: "add user"
+        def response = cloud20.createUser(identityAdminToken, user)
+        def userEntity = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "one user call"
+        response = cloud20.createUser(identityAdminToken, user2)
+        def userEntity2 = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        cleanup:
+        utils.deleteUsersQuietly([userEntity, userEntity2])
+    }
+
+    def "identity admin without identity:rs-domain-admin role cannot create user admins when feature.enable.use.role.for.domain.management=true"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
+
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.deleteRoleOnUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+
+        // user for create
+        def username = "userAdmin" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def user = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+
+        // one user call
+        username = "userAdmin" + testUtils.getRandomUUID()
+        domainId = utils.createDomain()
+        def user2 = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+        user2.secretQA = secretQA
+
+        when: "add user"
+        def response = cloud20.createUser(identityAdminToken, user)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Not Authorized")
+
+        when: "one user call"
+        response = cloud20.createUser(identityAdminToken, user2)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Not Authorized")
+    }
+
+    @Unroll
+    def "service admin without identity:rs-domain-admin role can create admins - feature.enable.use.role.for.domain.management = #featureFlag"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, featureFlag)
+
+        def serviceAdmin = utils.createServiceAdmin()
+        def serviceAdminToken = utils.getToken(serviceAdmin.username)
+
+        // user for create
+        def username = "identityAdmin" + testUtils.getRandomUUID()
+        def domainId = utils.createDomain()
+        def user = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
+
+        when: "add user"
+        def response = cloud20.createUser(serviceAdminToken, user)
+
+        then:
+        response.status == SC_CREATED
+
+        where:
+        featureFlag << [true, false]
+    }
 }
