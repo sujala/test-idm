@@ -11,7 +11,9 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.validation.PrecedenceValidator;
+import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Autowired
     private ApplicationService applicationService;
 
+    @Setter
     @Autowired
     private IdentityConfig identityConfig;
     @Autowired
@@ -59,36 +62,28 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @PostConstruct
     public void retrieveAccessControlRoles() {
-        //On startup, cache all the identity client roles into easily accessible maps.
-        List<ClientRole> identityRoles = roleService.getAllIdentityRoles();
-        if (identityRoles != null) {
-            for (ClientRole identityRole : identityRoles) {
-                populateImplicitMapWithRoles(identityRole);
-            }
-        }
+        //On startup, cache implicit role map.
+        populateImplicitMapWithRoles();
     }
 
-    private void populateImplicitMapWithRoles(ClientRole role) {
-        String roleName = role.getName();
+    private void populateImplicitMapWithRoles() {
+        Map<String, Set<String>> implicitRoles = identityConfig.getStaticConfig().getImplicitRoleMap();
 
-        if (identityRoleNameToImplicitRoleMap.containsKey(roleName)) {
-            String errorMsg = String.format("Multiple identity authorization roles exists with name '%s'. Ignoring role with id '%s'", roleName, role.getId());
-            logger.error(errorMsg);
-        } else {
-            Set<IdentityRole> implicitRoles = identityConfig.getStaticConfig().getImplicitRolesForRole(roleName);
-
-            List<ImmutableClientRole> implicitClientRoles = new ArrayList<ImmutableClientRole>();
-            if (CollectionUtils.isNotEmpty(implicitRoles)) {
-                for (IdentityRole implicitIdentityRole : implicitRoles) {
-                    ImmutableClientRole implicitClientRole = applicationService.getCachedClientRoleByName(implicitIdentityRole.getRoleName());
+        if (MapUtils.isNotEmpty(implicitRoles)) {
+            for (Map.Entry<String, Set<String>> implicitEntrySet : implicitRoles.entrySet()) {
+                String parentRoleName = implicitEntrySet.getKey();
+                Set<String> implicitRoleNames = implicitEntrySet.getValue();
+                List<ImmutableClientRole> implicitClientRoles = new ArrayList<>();
+                for (String implicitRoleName : implicitRoleNames) {
+                    ImmutableClientRole implicitClientRole = applicationService.getCachedClientRoleByName(implicitRoleName);
                     if (implicitClientRole != null) {
                         implicitClientRoles.add(implicitClientRole);
                     } else {
-                        logger.warn(String.format("Implicit role '%s' for role '%s' was not found. Skipping.", implicitIdentityRole.getRoleName(), roleName));
+                        logger.warn(String.format("Implicit role '%s' for role '%s' was not found. Skipping.", implicitRoleName, parentRoleName));
                     }
                 }
                 if (CollectionUtils.isNotEmpty(implicitClientRoles)) {
-                    identityRoleNameToImplicitRoleMap.put(roleName, Collections.unmodifiableList(implicitClientRoles));
+                    identityRoleNameToImplicitRoleMap.put(parentRoleName, Collections.unmodifiableList(implicitClientRoles));
                 }
             }
         }

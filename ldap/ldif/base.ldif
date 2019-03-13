@@ -1245,6 +1245,14 @@ description: Whether a given user is authorized to Add or Update endpoint t
  emplate
 rsWeight: 50
 
+dn: rsId=21,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:v2_0_list_users_global
+description: Allows a user to list users for any domain
+rsWeight: 50
+
 dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
  4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole

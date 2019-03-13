@@ -1611,6 +1611,13 @@ public class DefaultTenantService implements TenantService {
     }
 
 
+    /**
+     * This returns only the role assignments the user has within the Identity system. It does not include roles the
+     * racker has in AD.
+     *
+     * @param racker
+     * @return
+     */
     public SourcedRoleAssignments getSourcedRoleAssignmentsForRacker(Racker racker) {
         Validate.notNull(racker);
         Validate.notNull(racker.getRackerId());
@@ -1626,6 +1633,21 @@ public class DefaultTenantService implements TenantService {
             ImmutableClientRole rackerCr = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
             rackerSourcedRoleAssignmentsBuilder.addIdentitySystemSourcedAssignment(rackerCr);
         }
+
+        // Convert racker roles to tenant roles
+        List<String> rackerAdGroups = userService.getRackerEDirRoles(racker.getRackerId());
+        List<TenantRole> rackerTenantRoles = new ArrayList<TenantRole>();
+
+        if (CollectionUtils.isNotEmpty(rackerAdGroups)) {
+            for (String adGroup : rackerAdGroups) {
+                String roleNameForImplicit = "iam:" + adGroup; // prefix group name to avoid name collisions between IAM group names and Identity roles
+                List<ImmutableClientRole> implicitIdentityManagedRoles = authorizationService.getImplicitRolesForRole(roleNameForImplicit);
+                for (ImmutableClientRole implicitIdentityManagedRole : implicitIdentityManagedRoles) {
+                    rackerSourcedRoleAssignmentsBuilder.addImplicitAssignment(roleNameForImplicit, implicitIdentityManagedRole);
+                }
+            }
+        }
+
         return rackerSourcedRoleAssignmentsBuilder.build();
     }
 

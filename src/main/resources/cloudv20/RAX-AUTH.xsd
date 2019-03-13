@@ -722,6 +722,7 @@
             <enumeration value="USER"/>
             <enumeration value="USERGROUP"/>
             <enumeration value="SYSTEM"/>
+            <enumeration value="IMPLICIT"/>
         </restriction>
     </simpleType>
 

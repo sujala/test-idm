@@ -7,9 +7,6 @@ import org.apache.commons.lang.StringUtils;
  * The set of identity roles against which authorization decisions can be made.
  * These are distinct from the {@link com.rackspace.idm.domain.service.IdentityUserTypeEnum} roles which
  * classify a user as a specific type.
- *
- * NOTE: Any new roles added to this class will need to be created in the directory PRIOR to the deployment due
- *  to caching of roles. This will be fixed in https://jira.rax.io/browse/CID-114
  */
 public enum IdentityRole {
 
@@ -37,6 +34,7 @@ public enum IdentityRole {
     , IDENTITY_RS_TENANT_ADMIN("identity:rs-tenant-admin")
     , IDENTITY_RS_DOMAIN_ADMIN("identity:rs-domain-admin")
     , IDENTITY_RS_ENDPOINT_ADMIN("identity:rs-endpoint-admin")
+    , IDENTITY_V20_LIST_USERS_GLOBAL("identity:v2_0_list_users_global")
     ;
 
     @Getter
