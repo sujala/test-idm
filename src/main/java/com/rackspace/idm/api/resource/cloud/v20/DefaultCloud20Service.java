@@ -5347,7 +5347,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Service requires limiting search to a single domain only. If a domain (or tenant) not provided, default to caller's domain
             if (StringUtils.isBlank(listUsersSearchParams.tenantId) && StringUtils.isBlank(listUsersSearchParams.domainId)) {
                 String defaultSearchDomainId = caller.getDomainId();
-                if (listUsersSearchParams.domainId == null) {
+                if (defaultSearchDomainId == null) {
                     throw new BadRequestException("Caller does not belong to a domain. Must specify domain to limit search.");
                 }
                 listUsersSearchParams.domainId = defaultSearchDomainId;
