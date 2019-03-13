@@ -5110,6 +5110,13 @@ roleRsId: fda6705a7ba640598f3eacd9884d8a0e
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 173189
 
+dn: roleRsId=19,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+objectClass: top
+roleRsId: 19
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 173189
+
 dn: rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
