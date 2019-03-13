@@ -4,18 +4,21 @@ def build(scm) {
 
     try {
 
+        def namespace = 'customer-identity-cicd'
+
         // Setup the git configuration so it can be passed as an arg to common code
         stage('Setup') {
             node('master') {
                 cleanWs()
                 checkout scm
                 buildSteps = load('jenkins-scripts/jenkins-build-steps.groovy')
+                buildSteps.setRsiEndpoints(scm)
             }
         }
 
         // Build and publish the artifact to test
         env.IDM_VERSION = buildSteps.publishArtifact(scm)
-        env.NAMESPACE_NAME = namespace.toUpperCase().replaceAll('-', '_')
+        env.NAMESPACE_NAME = namespace
         println "idmVersion = ${env.IDM_VERSION}"
 
 

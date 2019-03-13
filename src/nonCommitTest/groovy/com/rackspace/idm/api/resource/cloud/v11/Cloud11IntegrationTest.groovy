@@ -49,6 +49,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def identityAdminId = response.getEntity(org.openstack.docs.identity.api.v2.User).value.id
         cloud20.addApplicationRoleToUser(serviceAdminToken, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID, identityAdminId)
         identityAdmin = cloud20.getUserByName(serviceAdminToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User).value
+        cloud20.addApplicationRoleToUser(serviceAdminToken, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID, identityAdmin.id)
         identityAdminToken = cloud20.authenticate(adminUsername, "Password1").getEntity(AuthenticateResponse).value.token.id
     }
 
