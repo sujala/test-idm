@@ -23,20 +23,26 @@ public class RackerSourcedRoleAssignmentsBuilder {
         interimSourcedRoleAssignments = new SourcedRoleAssignments(user);
     }
 
+    public RackerSourcedRoleAssignmentsBuilder addImplicitAssignment(String adGroupName, ImmutableClientRole role) {
+        RoleAssignmentSource source = new RoleAssignmentSource(RoleAssignmentSourceType.IMPLICIT, adGroupName, RoleAssignmentType.DOMAIN, Collections.EMPTY_SET);
+        interimSourcedRoleAssignments.addSourceForRole(role, source);
+        return this;
+    }
+
     public RackerSourcedRoleAssignmentsBuilder addIdentitySystemSourcedAssignment(ImmutableClientRole role) {
         interimSourcedRoleAssignments.addSystemSourcedAssignment(role, "IDENTITY", RoleAssignmentType.DOMAIN, Collections.EMPTY_SET);
         return this;
     }
 
-    public RackerSourcedRoleAssignmentsBuilder addEdirSystemSourcedAssignment(ImmutableClientRole role) {
-        interimSourcedRoleAssignments.addSystemSourcedAssignment(role, "EDIR", RoleAssignmentType.DOMAIN, Collections.EMPTY_SET);
+    public RackerSourcedRoleAssignmentsBuilder addAdSystemSourcedAssignment(String adGroupName) {
+        ClientRole cr = new ClientRole();
+        cr.setId("iam:" + adGroupName); // Prefix the id's of racker roles with "iam" to distinguish from identity managed roles.
+        cr.setName(adGroupName);
+
+        ImmutableClientRole imr = new ImmutableClientRole(cr);
+        interimSourcedRoleAssignments.addSystemSourcedAssignment(imr, "AD", RoleAssignmentType.DOMAIN, Collections.EMPTY_SET);
         return this;
     }
-
-    public boolean isBuildable() {
-        return true;
-    }
-
 
     public SourcedRoleAssignments build() {
         SourcedRoleAssignments finalSourceRoleAssignments = new SourcedRoleAssignments(user);

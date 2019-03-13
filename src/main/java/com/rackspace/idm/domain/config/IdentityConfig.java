@@ -1464,24 +1464,34 @@ public class IdentityConfig {
             return getBooleanSafely(staticConfiguration, EXPOSE_V11_ADD_BASE_URL_PROP);
         }
 
-        public Set<IdentityRole> getImplicitRolesForRole(String roleName) {
-            Set<IdentityRole> result = Collections.EMPTY_SET;
+        /**
+         * Due to how Apache Configuration works with determining lists from a string value care needs to be taken to
+         * ensure there are no invalid values in the delimited list (e.g. "role1,role2," would result in ["role1", "role2,"])
+         */
+        public Map<String, Set<String>> getImplicitRoleProperties() {
+            Map<String, Set<String>> result = new HashMap<>();
 
-            String[] implicitRolesNames = null;
-            implicitRolesNames = staticConfiguration.getStringArray(String.format(IMPLICIT_ROLE_OVERRIDE_PROP_REG, roleName));
+            Iterator<String> propKeys = staticConfiguration.getKeys(IMPLICIT_ROLE_PROP_PREFIX);
 
-            if (implicitRolesNames != null && implicitRolesNames.length > 0) {
-                result = new HashSet<IdentityRole>();
-                for (String implicitRoleName : implicitRolesNames) {
-                    IdentityRole implicitRole = IdentityRole.fromRoleName(implicitRoleName);
-                    if (implicitRole == null) {
-                        logger.warn(String.format("Role '%s' has invalid implicit role '%s' configured. Role not found. Ignoring implicit role.", roleName, implicitRoleName));
-                    } else {
-                        result.add(implicitRole);
-                    }
-                }
+            while (propKeys.hasNext()) {
+                String key = propKeys.next();
+                Set<String> visibilityRoles = getSetSafely(staticConfiguration, key);
+                visibilityRoles.removeIf(String::isEmpty);
+                result.put(key, visibilityRoles);
             }
 
+            return result;
+        }
+
+        public Map<String, Set<String>> getImplicitRoleMap() {
+            Map<String, Set<String>> propMap = getImplicitRoleProperties();
+
+            Map<String, Set<String>> result = new HashMap<>(propMap.size());
+            for (Map.Entry<String, Set<String>> propertyEntry : propMap.entrySet()) {
+                String key = propertyEntry.getKey();
+                String roleName = StringUtils.removeStart(key, IMPLICIT_ROLE_PROP_PREFIX + ".");
+                result.put(roleName, propertyEntry.getValue());
+            }
             return result;
         }
 

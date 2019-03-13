@@ -23,6 +23,10 @@ import java.util.*;
 public class SourcedRoleAssignments {
     @Getter
     private BaseUser user;
+
+    /**
+     * A map of role ID to the sourcedRoleAssignment for that role.
+     */
     private HashMap<String, SourcedRoleAssignment> sourcedRoleAssignments = new HashMap<>();
 
     /**
@@ -35,6 +39,10 @@ public class SourcedRoleAssignments {
 
     public Set<SourcedRoleAssignment> getSourcedRoleAssignments() {
         return ImmutableSet.copyOf(sourcedRoleAssignments.values());
+    }
+
+    public SourcedRoleAssignment getSourcedRoleAssignmentForRole(String id) {
+        return sourcedRoleAssignments.get(id);
     }
 
     public IdentityUserTypeEnum getUserTypeFromAssignedRoles() {
@@ -133,7 +141,7 @@ public class SourcedRoleAssignments {
      *
      * @param role
      */
-    RoleAssignmentSource addUserSourcedAssignment(ImmutableClientRole role, RoleAssignmentType assignmentType, Set<String> tenantIds) {
+    public RoleAssignmentSource addUserSourcedAssignment(ImmutableClientRole role, RoleAssignmentType assignmentType, Set<String> tenantIds) {
         Validate.notNull(role);
         Validate.notNull(role.getId());
 
@@ -142,7 +150,7 @@ public class SourcedRoleAssignments {
         return source;
     }
 
-    RoleAssignmentSource addUserGroupSourcedAssignment(ImmutableClientRole role, String groupId, RoleAssignmentType assignmentType, Set<String> tenantIds) {
+    public RoleAssignmentSource addUserGroupSourcedAssignment(ImmutableClientRole role, String groupId, RoleAssignmentType assignmentType, Set<String> tenantIds) {
         Validate.notNull(role);
         Validate.notNull(role.getId());
 
@@ -151,7 +159,7 @@ public class SourcedRoleAssignments {
         return source;
     }
 
-    RoleAssignmentSource addSystemSourcedAssignment(ImmutableClientRole role, String systemId, RoleAssignmentType assignmentType, Set<String> tenantIds) {
+    public RoleAssignmentSource addSystemSourcedAssignment(ImmutableClientRole role, String systemId, RoleAssignmentType assignmentType, Set<String> tenantIds) {
         Validate.notNull(role);
         Validate.notNull(role.getId());
 
@@ -160,7 +168,11 @@ public class SourcedRoleAssignments {
         return source;
     }
 
-    void addSourceForRole(ImmutableClientRole role, RoleAssignmentSource source) {
+    public void addSourceForRole(ImmutableClientRole role, RoleAssignmentSource source) {
+        Validate.notNull(role);
+        Validate.notNull(role.getId());
+        Validate.notNull(source);
+
         SourcedRoleAssignment ra = sourcedRoleAssignments.get(role.getId());
 
         if (ra == null) {

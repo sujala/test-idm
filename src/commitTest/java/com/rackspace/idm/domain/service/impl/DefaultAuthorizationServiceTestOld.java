@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ApplicationService;
@@ -37,6 +38,7 @@ public class DefaultAuthorizationServiceTestOld {
     TenantService tenantSerivce = mock(TenantService.class);
     UserService userService = mock(UserService.class);
     RoleService roleService = mock(RoleService.class);
+    IdentityConfig identityConfig;
 
     @Before
     public void setUp() throws Exception {
@@ -46,7 +48,16 @@ public class DefaultAuthorizationServiceTestOld {
         defaultAuthorizationService.setUserService(userService);
         defaultAuthorizationService.setRoleService(roleService);
 
+        identityConfig = mock(IdentityConfig.class);
+        IdentityConfig.ReloadableConfig reloadableConfig = mock(IdentityConfig.ReloadableConfig.class);
+        IdentityConfig.StaticConfig staticConfig = mock(IdentityConfig.StaticConfig.class);
+        when(identityConfig.getReloadableConfig()).thenReturn(reloadableConfig);
+        when(identityConfig.getStaticConfig()).thenReturn(staticConfig);
+        when(staticConfig.getImplicitRoleMap()).thenReturn(Collections.EMPTY_MAP);
+        defaultAuthorizationService.setIdentityConfig(identityConfig);
+
         when(roleService.getAllIdentityRoles()).thenReturn(Collections.EMPTY_LIST);
+
         when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(new ClientRole());
         defaultAuthorizationService.retrieveAccessControlRoles();
     }
