@@ -4,6 +4,7 @@ user_loops=$2
 users_per_loop=$3
 admins_per_loop=$4
 num_of_processes=$5
+admin_username=${6:-keystone_identity_admin}
 mkdir -p users/
 mkdir -p admins/
 mkdir -p default_users/
@@ -14,7 +15,7 @@ do
     filename="users/${today}_data.csv"
     adminfilename="admins/${today}_data.csv"
     defaultuserfilename="default_users/${today}_data.csv"
-    python ./create_user_data.py -p $num_of_processes -u $users_per_loop -o $filename -s $url -f $adminfilename -a $admins_per_loop -d $defaultuserfilename
+    python ./create_user_data.py -p $num_of_processes -u $users_per_loop -o $filename -s $url -f $adminfilename -a $admins_per_loop -d $defaultuserfilename -i ${admin_username}
     echo "******************************"
     echo "finished $i of $1 files."
     echo "******************************"

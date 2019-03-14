@@ -184,7 +184,7 @@ def add_admin_user(number, alt_url=None):
                             "enabled": True,
                             "username": user_name,
                             "OS-KSADM:password": const.TEST_PASSWORD,
-                            "email": "identity_perf_test_{0}@rackspace.com"
+                            "email": "identity_perf_test_admin_{0}@rackspace.com"
                             "".format(user_name)}}
         admin_token = get_token(user_name="keystone_service_admin",
                                 password="Auth1234", alt_url=baseurl)
@@ -237,7 +237,9 @@ if __name__ == '__main__':
         "-s", "--server_url",
         default="https://staging.identity-internal.api.rackspacecloud.com",
         help="Server URL")
-
+    parser.add_argument("-i", "--admin_username",
+                        default="keystone_identity_admin",
+                        help="username of an admin user")
     args = parser.parse_args()
 
     proc_count = args.num_processes
@@ -248,6 +250,7 @@ if __name__ == '__main__':
     num_users = args.num_users
     num_admin_users = args.num_users
     baseurl = args.server_url
+    admin_username = args.admin_username
 
     # authdata = {"auth":
     #             {"passwordCredentials":
@@ -257,7 +260,7 @@ if __name__ == '__main__':
     #             }
 
     # localhost - needs to be an identity admin, not a service admin
-    admin_token = get_token(user_name="keystone_identity_admin",
+    admin_token = get_token(user_name=admin_username,
                             password="Auth1234", alt_url=baseurl)
     print(admin_token)
 
