@@ -1,5 +1,6 @@
 #!/bin/bash -xe
 # data generation
+admin_username=${1:-keystone_identity_admin}
 virtualenv env
 . env/bin/activate
 pip install -r data_generation/requirements.txt
@@ -16,7 +17,7 @@ jar xf ../lib/saml-generator-* sample_keys/fed-origin.crt
 echo "update password in json file"
 ./add_password_to_request.py
 echo "create users against $IDM_ENDPOINT"
-./create_users.sh $IDM_ENDPOINT 1 10 5 1
+./create_users.sh $IDM_ENDPOINT 1 10 5 1 ${admin_username}
 echo "create admins"
 ./generate_files.py -u admins -c admin_file_config.json -o ../localhost/data/identity
 ./generate_files.py -u users -c file_config.json -o ../localhost/data/identity
