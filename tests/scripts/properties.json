@@ -73,7 +73,7 @@
             "reloadable": true,
             "description": "",
             "source": "idm.reloadable.properties",
-            "value": "identity:service-admin,identity:admin,identity:user-admin,identity:user-manage,admin,observer,creator,ticketing:admin,ticketing:observer,billing:admin,billing:observer",
+            "value": "[identity:admin, identity:user-manage, ticketing:observer, billing:admin, creator, admin, ticketing:admin, observer, billing:observer, identity:service-admin, identity:user-admin]",
             "versionAdded": "3.24.0"
         },
         {
@@ -81,7 +81,7 @@
             "reloadable": true,
             "description": "",
             "source": "idm.reloadable.properties",
-            "value": "identity:service-admin,identity:admin,identity:user-admin,identity:user-manage,admin,observer,creator,ticketing:admin,ticketing:observer,billing:admin,billing:observer",
+            "value": "[identity:admin, identity:user-manage, ticketing:observer, billing:admin, creator, admin, ticketing:admin, observer, billing:observer, identity:service-admin, identity:user-admin]",
             "versionAdded": "3.24.0"
         },
         {
@@ -1986,12 +1986,23 @@
             "environment": "Staging"
         },
         {
-            "defaultValue": "us-east-2",
+            "defaultValue": "us-west-2",
             "name": "dynamo.db.region",
             "reloadable": false,
             "description": "Specifies the region to use for dynamoDB connections",
             "source": "idm.properties",
             "value": "us-east-2",
+            "region": "IAD3",
+            "versionAdded": "3.27.0"
+        },
+        {
+            "defaultValue": "us-west-2",
+            "name": "dynamo.db.region",
+            "reloadable": false,
+            "description": "Specifies the region to use for dynamoDB connections",
+            "source": "idm.properties",
+            "value": "eu-west-2",
+            "region": "LON3",
             "versionAdded": "3.27.0"
         },
         {
@@ -2008,8 +2019,8 @@
             "reloadable": true,
             "description": "Specifies the request timeout to use for connecting to dynamoDB",
             "source": "idm.reloadable.properties",
-            "value": "[identity:service-admin, identity:admin, identity:user-admin, identity:user-manage, admin, observer, creator, ticketing:admin, ticketing:observer, billing:admin, billing:observer]",
-            "versionAdded": "3.27.0"
+            "value": "[identity:admin, identity:user-manage, ticketing:observer, billing:admin, creator, admin, ticketing:admin, observer, billing:observer, identity:service-admin, identity:user-admin]",
+            "versionAdded": "3.24.0"
         },
         {
             "name": "racker.auth.ldap.server",
@@ -2178,7 +2189,7 @@
             "description": "Whether to enable creating span at authentication filter",
             "source": "idm.reloadable.properties",
             "value": false,
-            "versionAdded": "3.28.0"
+            "versionAdded": "3.27.0"
         },
         {
             "defaultValue": 1,
