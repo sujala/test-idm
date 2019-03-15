@@ -57,7 +57,7 @@ public interface UserService {
     
     Racker getRackerByRackerId(String rackerId);
     
-    List<String> getRackerEDirRoles(String rackerId);
+    List<String> getRackerIamRoles(String rackerId);
 
     User getUser(String username);
 

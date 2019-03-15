@@ -66,12 +66,12 @@ public class FederatedRackerRequestHandler {
     }
 
     /**
-     * Determine the roles that the new federated user should receive. Roles are pulled from eDir (plus additional
+     * Determine the roles that the new federated user should receive. Roles are pulled from IAM (plus additional
      * "racker" role automatically added).
      *
      * @return
      *
-     * @throws BadRequestException If the specified racker does not exist in the associated eDir system
+     * @throws BadRequestException If the specified racker does not exist in the associated IAM system
      */
     private List<TenantRole> generateRolesForRacker(String rackerUsername) {
         List<TenantRole> roles;

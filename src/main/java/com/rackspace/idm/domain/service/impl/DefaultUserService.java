@@ -621,10 +621,10 @@ public class DefaultUserService implements UserService {
      * @param rackerId
      * @return
      *
-     * @throws NotFoundException If racker not found in eDir
+     * @throws NotFoundException If racker not found in IAM
      */
     @Override
-    public List<String> getRackerEDirRoles(String rackerId) {
+    public List<String> getRackerIamRoles(String rackerId) {
         logger.debug("Getting Roles for Racker: {}", rackerId);
 
         if (!isRackerAuthAllowed()) {
