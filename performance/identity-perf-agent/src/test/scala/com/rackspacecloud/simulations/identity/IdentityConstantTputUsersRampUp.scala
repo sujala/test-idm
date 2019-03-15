@@ -317,9 +317,9 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     scn_wrapper(v20_list_global_roles_for_user_id_internal_scn, V20_LIST_GLOBAL_ROLES_FOR_USER_ID_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
     scn_wrapper(v20_list_global_roles_for_user_id_internal_repl_scn, V20_LIST_GLOBAL_ROLES_FOR_USER_ID_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
 
-    scn_wrapper(v20_crud_user_scn, V20_CRUD_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+//    scn_wrapper(v20_crud_user_scn, V20_CRUD_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 
-    scn_wrapper(v20_create_user_scn, V20_CREATE_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
+//    scn_wrapper(v20_create_user_scn, V20_CREATE_USER_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 
     scn_wrapper(v20_list_all_roles_scn, V20_LIST_ROLES_FOR_IDENTITY_ADMIN_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf)
 //    scn_wrapper(v20_create_user_repl_scn, V20_CREATE_USER_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),

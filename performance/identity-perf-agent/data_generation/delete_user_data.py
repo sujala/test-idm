@@ -119,14 +119,18 @@ if __name__ == '__main__':
         "-s", "--server_url",
         default="https://staging.identity-internal.api.rackspacecloud.com",
         help="Server URL")
+    parser.add_argument("-i", "--admin_username",
+                        default="keystone_identity_admin",
+                        help="username of an admin user")
     args = parser.parse_args()
 
     proc_count = args.num_processes
     input_file_name = args.input_csv_file
     output_file_name = args.output_csv_file
     baseurl = args.server_url
+    admin_username = args.admin_username
 
-    admin_token = get_token(user_name="keystone_identity_admin",
+    admin_token = get_token(user_name=admin_username,
                             password="Auth1234", alt_url=baseurl)
     print admin_token
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json',
