@@ -1696,6 +1696,119 @@ class DefaultUserServiceTest extends RootServiceTest {
         0 * domainService.createNewDomain(domainId)
     }
 
+    def "verifyCallerCanCreateTenants does not verify role when flag is diabled"() {
+        given:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> false
+        def user = entityFactory.createUser()
+
+        when:
+        service.verifyCallerCanCreateTenants(user, false)
+
+        then:
+        0 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+    }
+
+    def "verifyCallerCanCreateTenants does verify role when flag is enabled and user contains missing tenant"() {
+        given:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> true
+        def tenantId = "tenantId"
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.tenantIds = [tenantId]
+            it
+        }
+        def user = entityFactory.createUser().with {
+            it.roles = [tenantRole]
+            it
+        }
+
+        when:
+        service.verifyCallerCanCreateTenants(user, false)
+
+        then:
+        1 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+        1 * tenantService.getTenant(tenantId) >> null
+    }
+
+    def "verifyCallerCanCreateTenants does not verify role when flag is enabled and user contains existing tenant"() {
+        given:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> true
+        def tenantId = "tenantId"
+        def tenant = entityFactory.createTenant(tenantId, tenantId)
+        def tenantRole = entityFactory.createTenantRole().with {
+            it.tenantIds = [tenantId]
+            it
+        }
+        def user = entityFactory.createUser().with {
+            it.roles = [tenantRole]
+            it
+        }
+
+        when:
+        service.verifyCallerCanCreateTenants(user, false)
+
+        then:
+        0 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+        1 * tenantService.getTenant(tenantId) >> tenant
+    }
+
+    def "verifyCallerCanCreateTenants does not verify role when flag is enabled and user contains existing mosso and nast tenant"() {
+        given:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> true
+        def mossoTenantId = "tenantId"
+        def mossoTenant = entityFactory.createTenant(mossoTenantId, mossoTenantId)
+        def nastTenantid = service.getNastTenantId("tenantId")
+        def nastTenant = entityFactory.createTenant(nastTenantid, nastTenantid)
+        def user = entityFactory.createUser().with {
+            it.domainId = mossoTenantId
+            it
+        }
+
+        when:
+        service.verifyCallerCanCreateTenants(user, true)
+
+        then:
+        0 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+        1 * tenantService.getTenant(mossoTenantId) >> mossoTenant
+        1 * tenantService.getTenant(nastTenantid) >> nastTenant
+    }
+
+    def "verifyCallerCanCreateTenants does verify role when flag is enabled and user contains missing mosso tenant"() {
+        given:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> true
+        def mossoTenantId = "tenantId"
+        def user = entityFactory.createUser().with {
+            it.domainId = mossoTenantId
+            it
+        }
+
+        when:
+        service.verifyCallerCanCreateTenants(user, true)
+
+        then:
+        1 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+        1 * tenantService.getTenant(mossoTenantId) >> null
+    }
+
+    def "verifyCallerCanCreateTenants does verify role when flag is enabled and user contains missing nast tenant"() {
+        given:
+        reloadableConfig.isUseRoleForTenantManagementEnabled() >> true
+        def mossoTenantId = "tenantId"
+        def mossoTenant = entityFactory.createTenant(mossoTenantId, mossoTenantId)
+        def nastTenantid = service.getNastTenantId("tenantId")
+        def user = entityFactory.createUser().with {
+            it.domainId = mossoTenantId
+            it
+        }
+
+        when:
+        service.verifyCallerCanCreateTenants(user, true)
+
+        then:
+        1 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+        1 * tenantService.getTenant(mossoTenantId) >> mossoTenant
+        1 * tenantService.getTenant(nastTenantid) >> null
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25

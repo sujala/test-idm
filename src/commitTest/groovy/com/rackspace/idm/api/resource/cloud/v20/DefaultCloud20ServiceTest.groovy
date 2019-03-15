@@ -4014,33 +4014,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userConverter.toUser(_, true) >> v2Factory.createUser()
     }
 
-    def "addUser for one user call with feature flag enabled verifies identity:rs-tenant-admin"() {
-        given:
-        def user = v2Factory.createUser()
-        user.secretQA = v2Factory.createSecretQA()
-        identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled() >> true
-
-        when:
-        def response = service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        response.build().status == SC_FORBIDDEN
-        1 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName()) >> {throw new ForbiddenException()}
-    }
-
-    def "addUser for one user call with feature flag disabled does not require identity:rs-tenant-admin"() {
-        given:
-        def user = v2Factory.createUser()
-        user.secretQA = v2Factory.createSecretQA()
-        identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled() >> false
-
-        when:
-        service.addUser(headers, uriInfo(), authToken, user)
-
-        then:
-        0 * authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName())
-    }
-
     def "add new user when user is not authorized returns 403 response" () {
         given:
         allowUserAccess()

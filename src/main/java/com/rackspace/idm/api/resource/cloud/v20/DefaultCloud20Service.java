@@ -763,10 +763,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            if (identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled() && CreateUserUtil.isCreateUserOneCall(usr)) {
-                authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
-            }
-
             //ignore the mfa attributes
             usr.setMultiFactorEnabled(null);
             usr.setUserMultiFactorEnforcementLevel(null);
