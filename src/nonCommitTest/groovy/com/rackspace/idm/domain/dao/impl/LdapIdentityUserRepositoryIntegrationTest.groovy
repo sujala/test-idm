@@ -249,6 +249,7 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         def username = "testUser" + utils.getRandomUUID()
         def domainId = utils.getRandomIntegerString()
         def email = "email@rackspace.com"
+        def contactId = utils.getRandomUUID("contactId")
         def unverified = false
         User user = entityFactory.createUser().with {
             it.id = null
@@ -256,16 +257,22 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
             it.domainId = domainId
             it.email = email
             it.unverified = unverified
+            it.contactId = contactId
             it.readOnlyEntry = null
             it.uniqueId = null
             it
         }
         provisionedUserDao.addUser(user)
         List<ListUsersSearchParams> listUsersSearchParams = [
-                new ListUsersSearchParams(username, null, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
-                new ListUsersSearchParams(username, email, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
-                new ListUsersSearchParams(null, email, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
-                new ListUsersSearchParams(null, null, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
+                new ListUsersSearchParams(username, null, null, domainId, false, User.UserType.ALL.name(), null, new PaginationParams()),
+                new ListUsersSearchParams(username, email, null, domainId, false, User.UserType.ALL.name(), null, new PaginationParams()),
+                new ListUsersSearchParams(null, email, null, domainId, false, User.UserType.ALL.name(), null, new PaginationParams()),
+                new ListUsersSearchParams(null, null, null, domainId, false, User.UserType.ALL.name(), null, new PaginationParams()),
+                new ListUsersSearchParams(null, null, null, null, false, null, contactId, new PaginationParams()),
+                new ListUsersSearchParams(username, null, null, null, false, null, contactId, new PaginationParams()),
+                new ListUsersSearchParams(null, email, null, null, false, null, contactId, new PaginationParams()),
+                new ListUsersSearchParams(null, null, null, domainId, false, null, contactId, new PaginationParams()),
+                new ListUsersSearchParams(null, null, null, null, false, User.UserType.ALL.name(), contactId, new PaginationParams()),
         ]
         List<PaginatorContext> responses = []
 
@@ -290,6 +297,7 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         def domainId = utils.getRandomIntegerString()
         def email = "email@rackspace.com"
         def unverified = false
+        def contactId = utils.getRandomUUID("contactId")
         User user = entityFactory.createUser().with {
             it.id = null
             it.username = username
@@ -302,10 +310,11 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         }
         provisionedUserDao.addUser(user)
         List<ListUsersSearchParams> listUsersSearchParams = [
-                new ListUsersSearchParams("badName", null, null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
-                new ListUsersSearchParams(username, email, null, "badDomain", false, User.UserType.ALL.name(), new PaginationParams()),
-                new ListUsersSearchParams(null, "badEmail", null, domainId, false, User.UserType.ALL.name(), new PaginationParams()),
-                new ListUsersSearchParams(null, null, null, domainId, false, User.UserType.UNVERIFIED.name(), new PaginationParams()),
+                new ListUsersSearchParams("badName", null, null, domainId, false, User.UserType.ALL.name(), null, new PaginationParams()),
+                new ListUsersSearchParams(username, email, null, "badDomain", false, User.UserType.ALL.name(), null, new PaginationParams()),
+                new ListUsersSearchParams(null, "badEmail", null, domainId, false, User.UserType.ALL.name(), null, new PaginationParams()),
+                new ListUsersSearchParams(null, null, null, domainId, false, User.UserType.UNVERIFIED.name(), null, new PaginationParams()),
+                new ListUsersSearchParams(null, null, null, null, false, null, "badContact", new PaginationParams()),
         ]
         List<PaginatorContext> responses = []
 

@@ -18,6 +18,7 @@ import org.slf4j.Logger
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.EntityFactory
+import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
 import static com.rackspace.idm.domain.service.impl.DefaultIdentityUserService.DELETE_FEDERATED_USER_FORMAT
@@ -431,6 +432,18 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
             ListUsersSearchParams usersSearchParams = args[0]
             assert usersSearchParams.domainId == domain.domainId
         }
+
+        when: "providing 'contact_id' param"
+        params = new ListUsersSearchParams()
+        params.contactId = "contactId"
+        service.getEndUsersPaged(params)
+
+        then:
+        0 * tenantService.checkAndGetTenant(tenant.tenantId)
+        1 * identityUserRepository.getEndUsersPaged(_) >> { args ->
+            ListUsersSearchParams usersSearchParams = args[0]
+            assert usersSearchParams.contactId == "contactId"
+        }
     }
 
     def "getEndUsersPaged with 'admin_only' param set to true: calls correct services and dao"() {
@@ -442,7 +455,6 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         }
         ListUsersSearchParams params
 
-        def caller = entityFactory.createUser()
         def user = entityFactory.createUser()
 
         when: "providing 'tenant_id' param"
@@ -552,6 +564,14 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         then:
         1 * domainService.checkAndGetDomain(domain.domainId) >> {throw new NotFoundException()}
         thrown(NotFoundException)
+
+        when: "contactId and domainId are null"
+        params = new ListUsersSearchParams()
+        service.getEndUsersPaged(params)
+
+        then:
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, BadRequestException, null, "Must specify a domain, tenant, or contactId to limit search.")
     }
 
 }

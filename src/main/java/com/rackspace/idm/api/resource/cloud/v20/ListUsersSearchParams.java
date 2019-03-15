@@ -49,13 +49,19 @@ public class ListUsersSearchParams {
     String userType;
 
     /**
+     * Filters the list to those users with the specified contactId.
+     */
+    @Nullable
+    String contactId;
+
+    /**
      * Specifies the page of results to return
      */
     @Nullable
     private PaginationParams paginationRequest;
 
     public ListUsersSearchParams() {
-        this(null, null, null, null, null, null, new PaginationParams());
+        this(null, null, null, null, null, null, null, new PaginationParams());
     }
 
     public void setDomainId(String domainId) {
