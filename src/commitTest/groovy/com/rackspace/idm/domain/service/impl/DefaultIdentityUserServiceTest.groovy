@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.domain.service.TenantEndpointMeta
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
@@ -374,7 +375,6 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         1 * identityUserRepository.updateIdentityUser(user)
     }
 
-
     def "deleteUser deletes the user from explicit DA assignments"() {
         given:
         def user = new User()
@@ -387,16 +387,24 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         1 * delegationService.removeConsumerFromExplicitDelegationAgreementAssignments(user)
     }
 
+    def "getEndUsersPaged: throws exception if neither domain nor tenant specified"() {
+        ListUsersSearchParams params = new ListUsersSearchParams()
+
+        when:
+        service.getEndUsersPaged(params)
+
+        then:
+        thrown(BadRequestException)
+    }
+
     def "getEndUsersPaged: calls correct services and dao"() {
         given:
         Domain domain = entityFactory.createDomain("domainId")
         Tenant tenant = entityFactory.createTenant().with {
-            it.domainId = "tenant_domain_id"
+            it.domainId = "domainId"
             it
         }
         ListUsersSearchParams params
-
-        def caller =  entityFactory.createUser()
 
         when: "providing 'tenant_id' param"
         params = new ListUsersSearchParams()
@@ -418,20 +426,6 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
 
         then:
         0 * tenantService.checkAndGetTenant(tenant.tenantId)
-        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
-        1 * identityUserRepository.getEndUsersPaged(_) >> { args ->
-            ListUsersSearchParams usersSearchParams = args[0]
-            assert usersSearchParams.domainId == domain.domainId
-        }
-
-        when: "default to callers domain"
-        params = new ListUsersSearchParams()
-        params.domainId =  null
-        service.getEndUsersPaged(params)
-
-        then:
-        0 * tenantService.checkAndGetTenant(tenant.tenantId)
-        1 * requestContext.getEffectiveCaller() >> caller
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain
         1 * identityUserRepository.getEndUsersPaged(_) >> { args ->
             ListUsersSearchParams usersSearchParams = args[0]
@@ -472,20 +466,6 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
 
         then:
         0 * tenantService.checkAndGetTenant(tenant.tenantId)
-        1 * domainService.checkAndGetDomain(domain.domainId) >> domain
-        1 * userService.getUserAdminByDomain(domain) >> user
-
-        paginatorContext.valueList.size() == 1
-
-        when: "default to callers domain"
-        params = new ListUsersSearchParams()
-        params.adminOnly = true
-        params.domainId =  null
-        paginatorContext = service.getEndUsersPaged(params)
-
-        then:
-        0 * tenantService.checkAndGetTenant(tenant.tenantId)
-        1 * requestContext.getEffectiveCaller() >> caller
         1 * domainService.checkAndGetDomain(domain.domainId) >> domain
         1 * userService.getUserAdminByDomain(domain) >> user
 

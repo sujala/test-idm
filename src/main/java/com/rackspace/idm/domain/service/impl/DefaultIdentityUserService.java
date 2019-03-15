@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.User.UserType;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
@@ -218,14 +219,15 @@ public class DefaultIdentityUserService implements IdentityUserService {
         if (StringUtils.isNotBlank(listUsersSearchParams.getTenantId())) {
             tenant = tenantService.checkAndGetTenant(listUsersSearchParams.getTenantId());
             listUsersSearchParams.setDomainId(tenant.getDomainId());
-        } else if (StringUtils.isNotBlank(listUsersSearchParams.getDomainId())) {
-            listUsersSearchParams.setDomainId(listUsersSearchParams.getDomainId());
-        } else {
-            listUsersSearchParams.setDomainId(requestContextHolder.getRequestContext().getEffectiveCaller().getDomainId());
         }
+
+        if (StringUtils.isBlank(listUsersSearchParams.getDomainId())) {
+            throw new BadRequestException("Must specify a domain or tenant to limit search.");
+        }
+
         Domain domain = domainService.checkAndGetDomain(listUsersSearchParams.getDomainId());
 
-        // Avoid searching all users when query param "admin_only" is provided.
+        // Short circuit when query param "admin_only" is provided.
         if (listUsersSearchParams.getAdminOnly() != null &&  listUsersSearchParams.getAdminOnly()) {
             paginatorContext = new PaginatorContext<>();
             User user = userService.getUserAdminByDomain(domain);
@@ -248,6 +250,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
                     listUsersSearchParams.getPaginationRequest().getEffectiveMarker(),
                     listUsersSearchParams.getPaginationRequest().getEffectiveLimit());
         } else {
+            //TODO: Don't use paging by default.
             paginatorContext = identityUserRepository.getEndUsersPaged(listUsersSearchParams);
         }
 
