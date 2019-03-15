@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import groovy.json.JsonSlurper
@@ -824,6 +825,48 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
 
         and: "Racker w/o implicit role is denied"
         responseNoAccess.status == SC_FORBIDDEN
+    }
+
+    def "listUsers: Federated racker w/ implicit identity:v2_0_list_users_global can call list users"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def domainId = userAdmin.domainId
+        AuthenticateResponse fedResponse = utils.authenticateFederatedRacker(Constants.RACKER_IMPERSONATE)
+
+        def fedToken = fedResponse.token.id
+
+        when: "Get user by name"
+        def response = cloud20.getUserByName(fedToken, userAdmin.username)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        when: "Get user by email"
+        response = cloud20.getUsersByEmail(fedToken, userAdmin.email)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        when: "Get user by domainId"
+        ListUsersSearchParams params = new ListUsersSearchParams(null, null, null, domainId, null, null, null)
+        response = cloud20.listUsersWithSearchParams(fedToken, params)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        when: "Get users by tenantId"
+        params = new ListUsersSearchParams(null, null, domainId, null, null, null, null)
+        response = cloud20.listUsersWithSearchParams(fedToken, params)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        when: "Get admin for domain"
+        params = new ListUsersSearchParams(null, null, null, domainId, true, null, null)
+        response = cloud20.listUsersWithSearchParams(fedToken, params)
+
+        then: "Allowed"
+        response.status == SC_OK
     }
 
     @Unroll

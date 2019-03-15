@@ -1958,6 +1958,36 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUserQuietly(identityAdmin)
     }
 
+    def "Create user single call with tenants works without identity:rs-tenant-admin role if tenants exist"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
+        User identityAdmin = utils.createIdentityAdmin()
+
+        AuthenticateResponse authenticateResponse = utils.authenticate(identityAdmin.username)
+        def token = authenticateResponse.token.id
+
+        def domain = utils.createDomainEntity()
+        def domainId = domain.id
+        utils.createTenant(domainId, true, domainId, domainId)
+        def nastTenantId = userService.getNastTenantId(domainId)
+        utils.createTenant(nastTenantId, true, nastTenantId, domainId)
+        def username=testUtils.getRandomUUID()
+        def user = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+        user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        user.groups = new Groups()
+        user.groups.group.add(v1Factory.createGroup("Default", "0" , null))
+
+        when:
+        def response = cloud20.createUser(token, user)
+
+        then:
+        response.status == SC_CREATED
+
+        cleanup:
+        utils.deleteUserQuietly(user)
+        utils.deleteUserQuietly(identityAdmin)
+    }
+
     @Unroll
     def "Create user single call with tenants works when feature flag is disabled"() {
         given:

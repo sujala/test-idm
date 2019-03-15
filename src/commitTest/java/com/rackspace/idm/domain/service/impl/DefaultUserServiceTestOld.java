@@ -140,13 +140,13 @@ public class DefaultUserServiceTestOld {
     @Test (expected = ForbiddenException.class)
     public void getRackerRoles_notallowed_throwsForbiddenException() throws Exception {
         when(staticConfig.isRackerAuthAllowed()).thenReturn(false);
-        defaultUserService.getRackerEDirRoles("rackerId");
+        defaultUserService.getRackerIamRoles("rackerId");
     }
 
     @Test
     public void getRackerRoles_callsAuthDao_getRackerRoles() throws Exception {
         when(staticConfig.isRackerAuthAllowed()).thenReturn(true);
-        defaultUserService.getRackerEDirRoles("rackerId");
+        defaultUserService.getRackerIamRoles("rackerId");
         verify(rackerAuthDao).getRackerRoles("rackerId");
     }
 
@@ -156,7 +156,7 @@ public class DefaultUserServiceTestOld {
         rackeList.add("test");
         when(staticConfig.isRackerAuthAllowed()).thenReturn(true);
         when(rackerAuthDao.getRackerRoles("rackerId")).thenReturn(rackeList);
-        List<String> roles = defaultUserService.getRackerEDirRoles("rackerId");
+        List<String> roles = defaultUserService.getRackerIamRoles("rackerId");
         assertThat("roles", roles.get(0), equalTo("test"));
     }
 

@@ -630,20 +630,15 @@ public interface TenantService {
 
     /**
      * Retrieves the set of "roles" that a Racker within the given rackerId is assigned. The groups the user belongs to
-     * within eDir are retrieved and dynamically converted/adapted into a TenantRole. Additionally, the identity specific
-     * "Racker role" is automatically included.
+     * within IAM are retrieved and dynamically converted/adapted into a "TenantRole" (no roleRsId). Additionally, the
+     * identity specific "Racker role" is automatically included.
+     *
+     * This does *not* include implicit roles the racker may receive in Identity due to membership in an IAM group.
      *
      * @param rackerId
      * @return
      */
     List<TenantRole> getEphemeralRackerTenantRoles(String rackerId);
-
-    /**
-     * Returns a dynamically generated tenant role assignment for the Identity "Racker" client role.
-     *
-     * @return
-     */
-    TenantRole getEphemeralRackerTenantRole();
 
     /**
      * Returns the tenants that are explicitly assigned the specified endpoint.
@@ -669,7 +664,8 @@ public interface TenantService {
     String inferTenantTypeForTenantId(String tenantId);
 
     /**
-     * Returns the set of Identity managed roles associated with the Racker.
+     * Returns the set of Identity managed roles associated with the Racker. This includes implicit roles the user
+     * receives due to IAM group membership. It does *not* return the racker's IAM group memberships.
      *
      * @param racker
      * @return

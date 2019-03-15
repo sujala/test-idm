@@ -763,10 +763,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             EndUser caller = (EndUser) requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            if (identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled() && CreateUserUtil.isCreateUserOneCall(usr)) {
-                authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
-            }
-
             //ignore the mfa attributes
             usr.setMultiFactorEnabled(null);
             usr.setUserMultiFactorEnforcementLevel(null);
@@ -5317,7 +5313,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
 
-            // See if has global privs
+            // See if has global privileges
             boolean hasGlobalPrivs = authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.getRoleName());
 
             // Verify access to query params

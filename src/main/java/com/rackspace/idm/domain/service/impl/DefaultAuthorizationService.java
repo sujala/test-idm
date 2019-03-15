@@ -177,7 +177,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (caller instanceof Racker) {
             //rackers must have impersonate group in edir
             Racker racker = (Racker) caller;
-            List<String> rackerRoles = userService.getRackerEDirRoles(racker.getRackerId());
+            List<String> rackerRoles = userService.getRackerIamRoles(racker.getRackerId());
             if(rackerRoles.isEmpty() || !rackerRoles.contains(identityConfig.getStaticConfig().getRackerImpersonateRoleName())) {
                 throw new ForbiddenException("Missing RackImpersonation role needed for this operation.");
             }

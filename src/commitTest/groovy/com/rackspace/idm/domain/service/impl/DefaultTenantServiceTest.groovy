@@ -624,26 +624,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         "asdf:12345"        | ["files"] as Set    | ["cloud","asdf","files"] as Set    | ["files"] as Set
     }
 
-    def "test getEphemeralRackerTenantRole with retrieving cached role by id from applicationService"() {
-        given:
-        def roleId = "roleId"
-
-        identityConfig.getStaticConfig() >> staticConfig
-        staticConfig.getRackerRoleId() >> roleId
-
-        applicationService.getCachedClientRoleById(roleId) >>  createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-
-        when:
-        def tenantRole = service.getEphemeralRackerTenantRole()
-
-        then:
-        tenantRole.getRoleRsId() != null
-        tenantRole.getRoleRsId() == roleId
-
-        1 * applicationService.getCachedClientRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
-    }
-
-
     def "test getTenantRolesForUserPerformant with retrieving cached role by name from applicationService/authorizationService"() {
         given:
         def domainId = "testDomainId"

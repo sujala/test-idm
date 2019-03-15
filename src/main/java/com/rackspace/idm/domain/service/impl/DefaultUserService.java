@@ -211,6 +211,8 @@ public class DefaultUserService implements UserService {
 
         validator.validateUser(user);
 
+        verifyCallerCanCreateTenants(user, provisionMossoAndNast);
+
         if (isUserAdmin || isCreateUserInOneCall) {
             createDomainUserInCreateOneCall(user.getDomainId(), isUserAdmin);
         } else {
@@ -621,10 +623,10 @@ public class DefaultUserService implements UserService {
      * @param rackerId
      * @return
      *
-     * @throws NotFoundException If racker not found in eDir
+     * @throws NotFoundException If racker not found in IAM
      */
     @Override
-    public List<String> getRackerEDirRoles(String rackerId) {
+    public List<String> getRackerIamRoles(String rackerId) {
         logger.debug("Getting Roles for Racker: {}", rackerId);
 
         if (!isRackerAuthAllowed()) {
@@ -1681,6 +1683,39 @@ public class DefaultUserService implements UserService {
                 domainService.createNewDomain(domainId);
             }
         }
+    }
+
+    private void verifyCallerCanCreateTenants(User user, boolean provisionMossoAndNast) {
+        if (identityConfig.getReloadableConfig().isUseRoleForTenantManagementEnabled() && oneUserCallWouldCreateTenants(user, provisionMossoAndNast)) {
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
+        }
+    }
+
+    private boolean oneUserCallWouldCreateTenants(User user, boolean provisionMossoAndNast) {
+        for (TenantRole role : user.getRoles()) {
+            for (String tenantId : role.getTenantIds()) {
+                Tenant tenant = tenantService.getTenant(tenantId);
+                if (tenant == null) {
+                    return true;
+                }
+            }
+        }
+
+        if (provisionMossoAndNast) {
+            String mossoId = user.getDomainId();
+            String nastId = getNastTenantId(user.getDomainId());
+
+            Tenant mossoTenant = tenantService.getTenant(mossoId);
+            if (mossoTenant == null) {
+                return true;
+            }
+            Tenant nastTenant = tenantService.getTenant(nastId);
+            if (nastTenant == null) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void verifyUserTenantsInCreateOneCall(User user) {

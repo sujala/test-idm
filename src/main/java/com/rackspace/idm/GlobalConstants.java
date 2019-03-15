@@ -132,4 +132,11 @@ public final class GlobalConstants {
     public static final String ALL_RCNS_WILDCARD = "*";
     public static final Integer PHONE_PIN_SIZE = 6;
 
+    /**
+     * This prefix is used in front of IAM groups when defining the implicit roles for that group. For example,
+     * if the IAM group is <i>group</i>, then the property defining the implicit roles would be <i>implicit.roles.iam\:group</i>.
+     * The <b>\</b> before the colon is required.
+     *
+     */
+    public static final String IAM_IMPLICIT_ROLE_PREFIX = "iam:";
 }

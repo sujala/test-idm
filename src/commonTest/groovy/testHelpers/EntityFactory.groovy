@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
@@ -17,6 +18,8 @@ import spock.lang.Specification
 import testHelpers.saml.SamlCredentialUtils
 
 import java.security.cert.X509Certificate
+
+import static com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum.STANDARD
 
 /**
  * Created with IntelliJ IDEA.
@@ -518,5 +521,14 @@ class EntityFactory extends Specification {
         return provider
     }
 
+    def createImmutableClientRole(String name = RandomStringUtils.randomAlphabetic(10), int weight = 1000) {
+        return new ImmutableClientRole(new ClientRole().with {
+            it.name = name
+            it.id = name // Just set id == name since fake roles anyway
+            it.roleType = STANDARD
+            it.rsWeight = weight
+            it
+        })
+    }
 
 }

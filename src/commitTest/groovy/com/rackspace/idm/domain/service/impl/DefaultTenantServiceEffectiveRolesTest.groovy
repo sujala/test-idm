@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
@@ -69,6 +70,7 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         staticConfig.getRackerRoleId() >> rackerRoleId
         Racker racker = new Racker().with {
             it.id = rackerRoleId
+            it.username = rackerRoleId
             it
         }
 
@@ -78,6 +80,44 @@ class DefaultTenantServiceEffectiveRolesTest extends RootServiceTest {
         then:
         assignments.user == racker
         assignments.sourcedRoleAssignments.size() == 1 // only returns default identity racker role. Doesn't hit eDir
+        def assignment = assignments.sourcedRoleAssignments[0]
+        assignment != null
+        assignment.role == rackerCr
+        CollectionUtils.isEmpty(assignment.tenantIds)
+        assignment.sources.size() == 1
+        CollectionUtils.isEmpty(assignment.sources[0].tenantIds)
+        assignment.sources[0].assignmentType == RoleAssignmentType.DOMAIN
+        assignment.sources[0].sourceType == RoleAssignmentSourceType.SYSTEM
+        assignment.sources[0].sourceId == "IDENTITY"
+    }
+
+    def "getSourcedRoleAssignmentsForRacker: Adds the implicit roles for each IAM group to which the user belongs "() {
+        given:
+        String rackerRoleId = "1"
+        def rackerCr = createImmutableClientRole(rackerRoleId, 2000)
+        applicationService.getCachedClientRoleById(rackerRoleId) >> rackerCr
+
+        staticConfig.getRackerRoleId() >> rackerRoleId
+        Racker racker = new Racker().with {
+            it.id = rackerRoleId
+            it.username = rackerRoleId
+            it
+        }
+        List<String> iamGroups = ["group1", "group2"]
+        List<ImmutableClientRole> group1ImplicitRoles = [entityFactory.createImmutableClientRole("group1IdRole")]
+        List<ImmutableClientRole> group2ImplicitRoles = [entityFactory.createImmutableClientRole("group2IdRole")]
+
+        when: "Retrieve identity managed roles for user"
+        SourcedRoleAssignments assignments = service.getSourcedRoleAssignmentsForRacker(racker)
+
+        then: "The appropriate services are called to map IAM groups to identity roles"
+        1 * userService.getRackerIamRoles(racker.id) >> iamGroups
+        1 * authorizationService.getImplicitRolesForRole(GlobalConstants.IAM_IMPLICIT_ROLE_PREFIX + iamGroups[0]) >> group1ImplicitRoles
+        1 * authorizationService.getImplicitRolesForRole(GlobalConstants.IAM_IMPLICIT_ROLE_PREFIX + iamGroups[1]) >> group2ImplicitRoles
+
+        and: "The resultant assignments are appropriate"
+        assignments.user == racker
+        assignments.sourcedRoleAssignments.size() == 3
         def assignment = assignments.sourcedRoleAssignments[0]
         assignment != null
         assignment.role == rackerCr
