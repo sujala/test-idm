@@ -19,6 +19,7 @@ import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.domain.service.federation.v2.FederatedRackerAuthRequest
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.util.OTPHelper
 import com.rackspace.idm.util.SamlUnmarshaller
@@ -45,12 +46,16 @@ import testHelpers.V2Factory
 import testHelpers.saml.SamlFactory
 import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
 import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
+import testHelpers.saml.v2.FederatedRackerAuthGenerationRequest
+import testHelpers.saml.v2.FederatedRackerAuthRequestGenerator
 
 import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.Constants.IDP_V2_RACKER_PRIVATE_KEY
+import static com.rackspace.idm.Constants.IDP_V2_RACKER_PUBLIC_KEY
 import static com.rackspace.idm.SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
@@ -96,6 +101,8 @@ class Cloud20Utils {
     TenantRoleDao tenantRoleDao
 
     FederatedDomainAuthRequestGenerator federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(DEFAULT_BROKER_IDP_PUBLIC_KEY, DEFAULT_BROKER_IDP_PRIVATE_KEY, IDP_V2_DOMAIN_PUBLIC_KEY, IDP_V2_DOMAIN_PRIVATE_KEY)
+
+    FederatedRackerAuthRequestGenerator federatedRackerAuthRequestGenerator = new FederatedRackerAuthRequestGenerator(DEFAULT_BROKER_IDP_PUBLIC_KEY, DEFAULT_BROKER_IDP_PRIVATE_KEY, IDP_V2_RACKER_PUBLIC_KEY, IDP_V2_RACKER_PRIVATE_KEY)
 
     @PostConstruct
     def init() {
@@ -1682,6 +1689,28 @@ class Cloud20Utils {
     def authenticateV2FederatedUser(FederatedDomainAuthGenerationRequest federatedDomainAuthGenerationRequest, boolean apply_rcn_roles = true, mediaType = APPLICATION_XML_TYPE) {
         def inputSamlResponseStr = federatedDomainAuthRequestGenerator.convertResponseToString(federatedDomainAuthRequestGenerator.createSignedSAMLResponse(federatedDomainAuthGenerationRequest))
         def samlResponse = methods.authenticateV2FederatedUser(inputSamlResponseStr, apply_rcn_roles, mediaType)
+        assert samlResponse.status == SC_OK
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
+    }
+
+    def authenticateFederatedRacker(String username = "fedUser${RandomStringUtils.randomAlphanumeric(8)}") {
+        def samlRequest = new FederatedRackerAuthGenerationRequest().with {
+            it.validitySeconds = 1000
+            it.brokerIssuer = Constants.DEFAULT_BROKER_IDP_URI
+            it.originIssuer = Constants.IDP_V2_RACKER_URI
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = username
+            it.groupNames = groupNames
+            it
+        }
+        authenticateV2FederatedRacker(samlRequest)
+    }
+
+    def authenticateV2FederatedRacker(FederatedRackerAuthGenerationRequest federatedRackerAuthRequest, mediaType = APPLICATION_XML_TYPE) {
+        def inputSamlResponseStr = federatedRackerAuthRequestGenerator.convertResponseToString(federatedRackerAuthRequestGenerator.createSignedSAMLResponse(federatedRackerAuthRequest))
+        def samlResponse = methods.authenticateV2FederatedUser(inputSamlResponseStr, false, mediaType)
         assert samlResponse.status == SC_OK
         def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
         return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse

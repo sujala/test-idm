@@ -9,7 +9,6 @@ import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.RackerAuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -183,7 +182,7 @@ public class AuthenticationFilterTests {
         when(requestMock.getPath()).thenReturn("migration/some/path");
         when(requestMock.getHeaderValue(GlobalConstants.X_AUTH_TOKEN)).thenReturn("authToken");
         when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
-        when(userService.getRackerEDirRoles(anyString())).thenReturn(new ArrayList<String >());
+        when(userService.getRackerIamRoles(anyString())).thenReturn(new ArrayList<String >());
         authenticationFilterWithMock.filter(requestMock);
     }
 
@@ -193,7 +192,7 @@ public class AuthenticationFilterTests {
         when(requestMock.getPath()).thenReturn("migration/some/path");
         when(requestMock.getHeaderValue(GlobalConstants.X_AUTH_TOKEN)).thenReturn("authToken");
         when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
-        when(userService.getRackerEDirRoles(anyString())).thenReturn(null);
+        when(userService.getRackerIamRoles(anyString())).thenReturn(null);
         authenticationFilterWithMock.filter(requestMock);
     }
 

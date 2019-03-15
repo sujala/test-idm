@@ -50,6 +50,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.rackspace.idm.GlobalConstants.IAM_IMPLICIT_ROLE_PREFIX;
 import static com.rackspace.idm.GlobalConstants.MANAGED_HOSTING_TENANT_PREFIX;
 
 @Component
@@ -897,9 +898,9 @@ public class DefaultTenantService implements TenantService {
         List<TenantRole> rackerTenantRoles = new ArrayList<TenantRole>();
 
         rackerTenantRoles.add(getEphemeralRackerTenantRole());
-        List<String> rackerEdirGroups = userService.getRackerEDirRoles(rackerId);
-        if (CollectionUtils.isNotEmpty(rackerEdirGroups)) {
-            for (String r : rackerEdirGroups) {
+        List<String> rackerIamGroups = userService.getRackerIamRoles(rackerId);
+        if (CollectionUtils.isNotEmpty(rackerIamGroups)) {
+            for (String r : rackerIamGroups) {
                 TenantRole t = new TenantRole();
                 t.setName(r);
                 rackerTenantRoles.add(t);
@@ -908,8 +909,7 @@ public class DefaultTenantService implements TenantService {
         return rackerTenantRoles;
     }
 
-    @Override
-    public TenantRole getEphemeralRackerTenantRole() {
+    private TenantRole getEphemeralRackerTenantRole() {
         ImmutableClientRole rackerClientRole = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
 
         TenantRole rackerTenantRole = new TenantRole();
@@ -1621,6 +1621,7 @@ public class DefaultTenantService implements TenantService {
     public SourcedRoleAssignments getSourcedRoleAssignmentsForRacker(Racker racker) {
         Validate.notNull(racker);
         Validate.notNull(racker.getRackerId());
+        Validate.notNull(racker.getUsername());
 
         RackerSourcedRoleAssignmentsBuilder rackerSourcedRoleAssignmentsBuilder = RackerSourcedRoleAssignmentsBuilder.rackerBuilder(racker);
 
@@ -1628,29 +1629,24 @@ public class DefaultTenantService implements TenantService {
          Rackers only have one "tenant role" which is the racker role. All other roles are from eDir which are not
          returned by this service as callers expect all roles returned to exist within Identity LDAP
          */
-        TenantRole rackerRole = getEphemeralRackerTenantRole();
-        if (rackerRole != null) {
-            ImmutableClientRole rackerCr = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
+        ImmutableClientRole rackerCr = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
+        if (rackerCr != null) {
             rackerSourcedRoleAssignmentsBuilder.addIdentitySystemSourcedAssignment(rackerCr);
         }
 
-        // Convert racker roles to tenant roles
-        List<String> rackerAdGroups = userService.getRackerEDirRoles(racker.getRackerId());
-        List<TenantRole> rackerTenantRoles = new ArrayList<TenantRole>();
-
+        // Add the implicit roles associated with the racker's IAM groups
+        List<String> rackerAdGroups = userService.getRackerIamRoles(racker.getRackerId());
         if (CollectionUtils.isNotEmpty(rackerAdGroups)) {
             for (String adGroup : rackerAdGroups) {
-                String roleNameForImplicit = "iam:" + adGroup; // prefix group name to avoid name collisions between IAM group names and Identity roles
+                String roleNameForImplicit = IAM_IMPLICIT_ROLE_PREFIX + adGroup; // prefix group name to avoid name collisions between IAM group names and Identity roles
                 List<ImmutableClientRole> implicitIdentityManagedRoles = authorizationService.getImplicitRolesForRole(roleNameForImplicit);
                 for (ImmutableClientRole implicitIdentityManagedRole : implicitIdentityManagedRoles) {
                     rackerSourcedRoleAssignmentsBuilder.addImplicitAssignment(roleNameForImplicit, implicitIdentityManagedRole);
                 }
             }
         }
-
         return rackerSourcedRoleAssignmentsBuilder.build();
     }
-
 
     /**
      * Returns a list of effective roles the user has assigned. This includes all roles the user explicitly has
