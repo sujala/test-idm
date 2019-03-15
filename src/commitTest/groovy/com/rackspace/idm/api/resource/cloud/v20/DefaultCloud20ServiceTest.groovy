@@ -632,7 +632,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         reloadableConfig.getTenantDefaultDomainId() >> "123"
         response4.status == 400
 
-        when: "caller not authorized to user contactId"
+        when: "caller not authorized to use contactId"
         def response5 = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams(null, null, null, null, null, null, "contactId", null)).build()
 
         then:
