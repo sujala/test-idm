@@ -366,6 +366,9 @@ class Cloud20Methods {
         if (params.adminOnly) {
             queryParams.add("admin_only", params.adminOnly)
         }
+        if (StringUtils.isNotBlank(params.contactId)) {
+            queryParams.add("contact_id", params.contactId)
+        }
         def pageParams = params.paginationRequest
         if (pageParams != null && pageParams.limit != null) {
             queryParams.add("limit", pageParams.limit)

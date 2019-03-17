@@ -812,10 +812,11 @@ public class Cloud20VersionResource {
             @QueryParam("domain_id") String domainId,
             @QueryParam("admin_only") Boolean adminOnly,
             @QueryParam("user_type") String userType,
+            @QueryParam("contact_id") String contactId,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
         ListUsersSearchParams listUsersSearchParams = new ListUsersSearchParams(
-                name, email, tenantId, domainId, adminOnly, userType, new PaginationParams(marker, limit));
+                name, email, tenantId, domainId, adminOnly, userType, contactId, new PaginationParams(marker, limit));
         return cloud20Service.listUsers(httpHeaders, uriInfo, authToken, listUsersSearchParams).build();
     }
 

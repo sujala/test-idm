@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import groovy.json.JsonSlurper
 import org.apache.log4j.Logger
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.openstack.docs.identity.api.v2.UserList
@@ -750,6 +751,12 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
     def "listUsers: Rackers w/ implicit role identity:v2_0_list_users_global can call list users"() {
         given:
         def userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
+        def userForUpdate = new UserForCreate().with {
+            it.id = userAdmin.id
+            it.contactId = testUtils.getRandomUUID("contactId")
+            it
+        }
+        userAdmin = utils.updateUser(userForUpdate)
         def domainId = userAdmin.domainId
 
         def rackerToken = utils.authenticateRacker(Constants.RACKER_IMPERSONATE, Constants.RACKER_IMPERSONATE_PASSWORD).token.id
@@ -776,7 +783,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         responseNoAccess.status == SC_FORBIDDEN
 
         when: "Get user by domainId"
-        ListUsersSearchParams params = new ListUsersSearchParams(null, null, null, domainId, null, null, null)
+        ListUsersSearchParams params = new ListUsersSearchParams(null, null, null, domainId, null, null, null, null)
         response = cloud20.listUsersWithSearchParams(rackerToken, params)
         responseNoAccess = cloud20.listUsersWithSearchParams(rackerNoAccessToken, params)
 
@@ -787,7 +794,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         responseNoAccess.status == SC_FORBIDDEN
 
         when: "Get users by tenantId"
-        params = new ListUsersSearchParams(null, null, domainId, null, null, null, null)
+        params = new ListUsersSearchParams(null, null, domainId, null, null, null, null, null)
         response = cloud20.listUsersWithSearchParams(rackerToken, params)
         responseNoAccess = cloud20.listUsersWithSearchParams(rackerNoAccessToken, params)
 
@@ -798,7 +805,18 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         responseNoAccess.status == SC_FORBIDDEN
 
         when: "Get admin for domain"
-        params = new ListUsersSearchParams(null, null, null, domainId, true, null, null)
+        params = new ListUsersSearchParams(null, null, null, domainId, true, null, null, null)
+        response = cloud20.listUsersWithSearchParams(rackerToken, params)
+        responseNoAccess = cloud20.listUsersWithSearchParams(rackerNoAccessToken, params)
+
+        then: "Allowed"
+        response.status == SC_OK
+
+        and: "Racker w/o implicit role is denied"
+        responseNoAccess.status == SC_FORBIDDEN
+
+        when: "Get user by contactId"
+        params = new ListUsersSearchParams(null, null, null, null, null, null, userAdmin.contactId, null)
         response = cloud20.listUsersWithSearchParams(rackerToken, params)
         responseNoAccess = cloud20.listUsersWithSearchParams(rackerNoAccessToken, params)
 

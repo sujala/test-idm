@@ -221,14 +221,17 @@ public class DefaultIdentityUserService implements IdentityUserService {
             listUsersSearchParams.setDomainId(tenant.getDomainId());
         }
 
-        if (StringUtils.isBlank(listUsersSearchParams.getDomainId())) {
-            throw new BadRequestException("Must specify a domain or tenant to limit search.");
+        if (StringUtils.isBlank(listUsersSearchParams.getDomainId()) && StringUtils.isBlank(listUsersSearchParams.getContactId())) {
+            throw new BadRequestException("Must specify a domain, tenant, or contactId to limit search.");
         }
 
-        Domain domain = domainService.checkAndGetDomain(listUsersSearchParams.getDomainId());
+        Domain domain = null;
+        if (StringUtils.isNotBlank(listUsersSearchParams.getDomainId())) {
+            domain = domainService.checkAndGetDomain(listUsersSearchParams.getDomainId());
+        }
 
         // Short circuit when query param "admin_only" is provided.
-        if (listUsersSearchParams.getAdminOnly() != null &&  listUsersSearchParams.getAdminOnly()) {
+        if (listUsersSearchParams.getAdminOnly() != null && listUsersSearchParams.getAdminOnly()) {
             paginatorContext = new PaginatorContext<>();
             User user = userService.getUserAdminByDomain(domain);
 

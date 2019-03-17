@@ -876,7 +876,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             /*
             An unverified user can only use an email address that is *not* already in use by another unverified user within the domain
              */
-            ListUsersSearchParams unverifiedUserSearchParams = new ListUsersSearchParams(null, user.getEmail(), null, user.getDomainId(), null, UserType.UNVERIFIED.name(), new PaginationParams(0, 1));
+            ListUsersSearchParams unverifiedUserSearchParams = new ListUsersSearchParams(null, user.getEmail(), null, user.getDomainId(), null, UserType.UNVERIFIED.name(), null, new PaginationParams(0, 1));
             PaginatorContext<EndUser> paginatorContext = this.identityUserService.getEndUsersPaged(unverifiedUserSearchParams);
             if (paginatorContext != null && paginatorContext.getTotalRecords() > 0) {
                 throw new DuplicateException(ERROR_UNVERIFIED_USERS_MUST_HAVE_UNIQUE_EMAIL_WITHIN_DOMAIN, ErrorCodes.ERROR_CODE_INVALID_VALUE);
@@ -5296,6 +5296,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         // combined with new query params.
         if (StringUtils.isBlank(listUsersSearchParams.domainId)
                 && StringUtils.isBlank(listUsersSearchParams.tenantId)
+                && StringUtils.isBlank(listUsersSearchParams.contactId)
                 && listUsersSearchParams.adminOnly == null) {
             if (StringUtils.isNotBlank(listUsersSearchParams.name) && StringUtils.isBlank(listUsersSearchParams.getUserType())) {
                 return getUserByName(httpHeaders, authToken, listUsersSearchParams.name);
@@ -5319,6 +5320,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if ((!hasGlobalPrivs)
                     && (StringUtils.isNotBlank(listUsersSearchParams.domainId)
                     || StringUtils.isNotBlank(listUsersSearchParams.tenantId)
+                    || StringUtils.isNotBlank(listUsersSearchParams.contactId)
                     || listUsersSearchParams.adminOnly != null)) {
                 throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
             }
@@ -5331,20 +5333,26 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             // Validate query params
-            if (!StringUtils.isBlank(listUsersSearchParams.name) && StringUtils.isNotBlank(listUsersSearchParams.userType)) {
+            if (StringUtils.isNotBlank(listUsersSearchParams.name) && StringUtils.isNotBlank(listUsersSearchParams.userType)) {
                 String errorMsg = String.format(ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN, "user_type", "name");
                 throw new BadRequestException(errorMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
-            if (!StringUtils.isBlank(listUsersSearchParams.tenantId) && StringUtils.isNotBlank(listUsersSearchParams.domainId)) {
+            if (StringUtils.isNotBlank(listUsersSearchParams.tenantId) && StringUtils.isNotBlank(listUsersSearchParams.domainId)) {
                 String errorMsg = String.format(ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN, "tenant_id", "domain_id");
                 throw new BadRequestException(errorMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
             }
+            if (listUsersSearchParams.adminOnly != null && StringUtils.isNotBlank(listUsersSearchParams.contactId)) {
+                String errorMsg = String.format(ErrorCodes.ERROR_CODE_MUTUALLY_EXCLUSIVE_QUERY_PARAMS_FOR_LIST_USERS_MSG_PATTERN, "admin_only", "contact_id");
+                throw new BadRequestException(errorMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            }
 
-            // Service requires limiting search to a single domain only. If a domain (or tenant) not provided, default to caller's domain
-            if (StringUtils.isBlank(listUsersSearchParams.tenantId) && StringUtils.isBlank(listUsersSearchParams.domainId)) {
+            // Service requires limiting search. If a domain, tenant, and contactId are not provided default to the caller's domain.
+            if (StringUtils.isBlank(listUsersSearchParams.contactId)
+                    && StringUtils.isBlank(listUsersSearchParams.tenantId)
+                    && StringUtils.isBlank(listUsersSearchParams.domainId)) {
                 String defaultSearchDomainId = caller.getDomainId();
                 if (defaultSearchDomainId == null) {
-                    throw new BadRequestException("Caller does not belong to a domain. Must specify domain to limit search.");
+                    throw new BadRequestException("Caller does not belong to a domain. Must specify domain, tenant, or contact ID to limit search.");
                 }
                 listUsersSearchParams.domainId = defaultSearchDomainId;
             }

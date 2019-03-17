@@ -149,7 +149,6 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public PaginatorContext<EndUser> getEndUsersPaged(ListUsersSearchParams listUsersSearchParams) {
         Validate.notNull(listUsersSearchParams);
-        Validate.notNull(listUsersSearchParams.getDomainId());
         Validate.notNull(listUsersSearchParams.getPaginationRequest());
 
         return (PaginatorContext) getObjectsPaged(
@@ -163,9 +162,14 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
 
         // Required attributes
         ldapSearchBuilder.addOrAttributes(ENDUSER_CLASS_FILTERS);
-        ldapSearchBuilder.addEqualAttribute(ATTR_DOMAIN_ID, listUsersSearchParams.getDomainId());
 
         // Optional attributes
+        if (StringUtils.isNotBlank(listUsersSearchParams.getDomainId())) {
+            ldapSearchBuilder.addEqualAttribute(ATTR_DOMAIN_ID, listUsersSearchParams.getDomainId());
+        }
+        if (StringUtils.isNotBlank(listUsersSearchParams.getContactId())) {
+            ldapSearchBuilder.addEqualAttribute(ATTR_CONTACT_ID, listUsersSearchParams.getContactId());
+        }
         if (StringUtils.isNotBlank(listUsersSearchParams.getName())) {
             ldapSearchBuilder.addEqualAttribute(ATTR_UID, listUsersSearchParams.getName());
         }

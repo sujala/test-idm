@@ -631,6 +631,28 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
         reloadableConfig.getTenantDefaultDomainId() >> "123"
         response4.status == 400
+
+        when: "caller not authorized to use contactId"
+        def response5 = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams(null, null, null, null, null, null, "contactId", null)).build()
+
+        then:
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> callerToken
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser("username", null, null, "region")
+        requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        reloadableConfig.getTenantDefaultDomainId() >> "123"
+        authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.getRoleName()) >> false
+        response5.status == SC_FORBIDDEN
+
+        when: "using both 'admin_only' and `contact_id`"
+        def response6 = service.listUsers(headers, uriInfo(), authToken, new ListUsersSearchParams(null, null, null, null, true, null, "contactId", null)).build()
+
+        then:
+        securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> callerToken
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> entityFactory.createUser("username", null, null, "region")
+        requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+        reloadableConfig.getTenantDefaultDomainId() >> "123"
+        authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.IDENTITY_V20_LIST_USERS_GLOBAL.getRoleName()) >> true
+        response6.status == SC_BAD_REQUEST
     }
 
     def "listUsersWithRole verifies user admin level access"() {
