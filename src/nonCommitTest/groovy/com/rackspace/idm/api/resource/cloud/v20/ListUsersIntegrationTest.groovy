@@ -848,21 +848,21 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         response.status == SC_OK
 
         when: "Get user by domainId"
-        ListUsersSearchParams params = new ListUsersSearchParams(null, null, null, domainId, null, null, null)
+        ListUsersSearchParams params = new ListUsersSearchParams(null, null, null, domainId, null, null, null, null)
         response = cloud20.listUsersWithSearchParams(fedToken, params)
 
         then: "Allowed"
         response.status == SC_OK
 
         when: "Get users by tenantId"
-        params = new ListUsersSearchParams(null, null, domainId, null, null, null, null)
+        params = new ListUsersSearchParams(null, null, domainId, null, null, null, null, null)
         response = cloud20.listUsersWithSearchParams(fedToken, params)
 
         then: "Allowed"
         response.status == SC_OK
 
         when: "Get admin for domain"
-        params = new ListUsersSearchParams(null, null, null, domainId, true, null, null)
+        params = new ListUsersSearchParams(null, null, null, domainId, true, null, null, null)
         response = cloud20.listUsersWithSearchParams(fedToken, params)
 
         then: "Allowed"
