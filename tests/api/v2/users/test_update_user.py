@@ -467,6 +467,8 @@ class TestUpdateUser(base.TestBaseV2):
         )
         self.assertEqual(resp.status_code, 403)
 
+    @tags('positive', 'p0', 'smoke')
+    @attr(type='smoke')
     def test_update_phone_pin_on_user_manager(self):
         """
         User manager updating self pin via update user call
