@@ -34,14 +34,19 @@ def buildVersion = System.currentTimeMillis()
 def gitRevision = "git rev-parse HEAD".execute().text.trim()
 
 project.group = 'com.rackspace'
-def partialVersion = "$featureVersion" + "-" + "$buildVersion"
 if (project.hasProperty('version_override')) {
-    partialVersion = project.version_override
+    if (project.version_override.count('-') != 1) {
+        throw new InvalidUserDataException("An invalid version number was provided as the version override. The format must be <featureVersion>-<buildVersion>")
+    }
+    def versionParts = project.version_override.split('-')
+    featureVersion = versionParts[0]
+    buildVersion = versionParts[1]
 }
+
 if (project.hasProperty('build_release') && "${build_release.toUpperCase()}" == 'TRUE') {
-    project.version = partialVersion
+    project.version = "$featureVersion" + "-" + "$buildVersion"
 } else {
-    project.version = partialVersion + "-" + "SNAPSHOT"
+    project.version = "$featureVersion" + "-" + "$buildVersion" + "-" + "SNAPSHOT"
 }
 
 project.description = """idm"""
