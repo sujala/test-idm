@@ -541,6 +541,12 @@ public class IdentityConfig {
     private static final String LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP = "ldap.server.pool.health.check.interval";
     private static final long LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT = 60000L;
 
+    private static final String LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT = "ldap.server.connection.connect.timeout";
+    private static final int LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT_DEFAULT = 10000;
+
+    private static final String LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL = "ldap.server.min.available.connection.goal";
+    private static final int LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL_DEFAULT = 10;
+
     private static final String LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP = "ldap.server.pool.check.connection.age.on.release";
     private static final boolean LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_DEFAULT = false;
 
@@ -846,6 +852,8 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP, LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP, LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
+        defaults.put(LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT, LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT_DEFAULT);
+        defaults.put(LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL, LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL_DEFAULT);
         defaults.put(LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_PROP, LDAP_AUTH_PASSWORD_LOCKOUT_DURATION_DEFAULT);
         defaults.put(LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_PROP, LDAP_AUTH_PASSWORD_LOCKOUT_RETRIES_DEFAULT);
 
@@ -1849,6 +1857,15 @@ public class IdentityConfig {
             return getDurationSafely(staticConfiguration, DYNAMO_DB_REQUEST_TIMEOUT_PROP);
         }
 
+        @IdmProp(key = LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT, versionAdded = "3.31.0", description = "Specifies the LDAP connection connect timeout.")
+        public int getLdapConnectionConnectTimeout() {
+            return getIntSafely(staticConfiguration, LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT);
+        }
+
+        @IdmProp(key = LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL, versionAdded = "3.31.0", description = "Specifies the LDAP minimum available connection goal.")
+        public int getLdapMinimumAvailableConnectionGoal() {
+            return getIntSafely(staticConfiguration, LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL);
+        }
     }
 
     /**
