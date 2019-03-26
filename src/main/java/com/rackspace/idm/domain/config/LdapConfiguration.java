@@ -82,7 +82,7 @@ public class LdapConfiguration {
         try {
             LDAPConnectionOptions ldapConnectionOptions = new LDAPConnectionOptions();
             ldapConnectionOptions.setAllowConcurrentSocketFactoryUse(identityConfig.getStaticConfig().getLDAPServerPoolAllowConcurrentSocketFactoryUse());
-            ldapConnectionOptions.setConnectTimeoutMillis(identityConfig.getStaticConfig().getLdapConnectionConnectTimeout());
+            ldapConnectionOptions.setConnectTimeoutMillis(Math.toIntExact(identityConfig.getStaticConfig().getLdapConnectionConnectTimeout().toMillis()));
 
             // TODO: Trusting all certificates is bad practice.
             SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
