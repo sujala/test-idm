@@ -540,7 +540,7 @@ public class IdentityConfig {
     private static final String LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP = "ldap.server.pool.health.check.interval";
     private static final long LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT = 60000L;
 
-    private static final String LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT_DURATION_PROP = "ldap.server.connection.connect.timeout";
+    private static final String LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT_DURATION_PROP = "ldap.server.connection.connect.timeout.duration";
     private static final Duration LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT_DURATION_DEFAULT = Duration.parse("PT10S"); // Seconds
 
     private static final String LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL = "ldap.server.min.available.connection.goal";
