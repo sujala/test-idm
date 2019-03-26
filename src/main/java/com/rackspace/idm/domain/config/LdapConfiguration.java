@@ -80,9 +80,12 @@ public class LdapConfiguration {
 
         LDAPConnectionPool connPool = null;
         try {
-            SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
             LDAPConnectionOptions ldapConnectionOptions = new LDAPConnectionOptions();
             ldapConnectionOptions.setAllowConcurrentSocketFactoryUse(identityConfig.getStaticConfig().getLDAPServerPoolAllowConcurrentSocketFactoryUse());
+            ldapConnectionOptions.setConnectTimeoutMillis(Math.toIntExact(identityConfig.getStaticConfig().getLdapConnectionConnectTimeout().toMillis()));
+
+            // TODO: Trusting all certificates is bad practice.
+            SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
             BindRequest bind = new SimpleBindRequest(bindDn, password);
             ServerSet serverSet;
             if(isSSL) {
@@ -99,6 +102,7 @@ public class LdapConfiguration {
             connPool.setMaxWaitTimeMillis(identityConfig.getStaticConfig().getLDAPServerPoolMaxWaitTime());
             connPool.setHealthCheckIntervalMillis(identityConfig.getStaticConfig().getLDAPServerPoolHeathCheckInterval());
             connPool.setCheckConnectionAgeOnRelease(identityConfig.getStaticConfig().getLDAPServerPoolCheckConnectionAgeOnRelease());
+            connPool.setMinimumAvailableConnectionGoal(identityConfig.getStaticConfig().getLdapMinimumAvailableConnectionGoal());
         } catch (LDAPException e) {
             logger.error(CONNECT_ERROR_STRING, e);
             throw new IllegalStateException(CONNECT_ERROR_STRING, e);
