@@ -27,7 +27,7 @@
     },
     "update_password": {
         "update_input": {
-            "password": "Pas$word01"
+            "password": "Pas$word012#"
         },
         "update_schema_fields": []
     },

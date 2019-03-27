@@ -13,6 +13,8 @@ services:
       - 127.0.0.1:10025:10025
       - 127.0.0.1:16686:16686
       - 127.0.0.1:5775:5775/udp
+      - 127.0.0.1:8000:8000
+
     command: ["sleep", "infinity"]
     stop_signal: SIGKILL
     networks:
@@ -76,6 +78,13 @@ services:
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
+    network_mode: "service:network"
+
+  dynamodb:
+    image: docker.artifacts.rackspace.net/dynamodb
+    volumes:
+      - ../dynamodb/config:/config
+      - ../dynamodb/data:/data
     network_mode: "service:network"
 
 networks:

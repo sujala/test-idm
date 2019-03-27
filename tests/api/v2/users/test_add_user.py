@@ -191,6 +191,30 @@ class TestAddUser(base.TestBaseV2):
             resp, *self.header_validation_functions_HTTP_201)
 
     @unless_coverage
+    @attr(type='regression')
+    def test_add_user_with_blacklisted_password(self):
+        """Add user_admin type users
+
+        various possible test_data for the enabled field is defined in the line
+        above the test method definition.Each of these data is run as a
+        separate test case. This test case currently exists for
+        illustrating a different method of providing test data.
+
+        @todo: This can be merged into the previous test_case
+        'test_add_user_admin_user'.
+        """
+        user_name = self.generate_random_string()
+        password = 'blackListedPassword1'
+        request_object = requests.UserAdd(
+            user_name=user_name,
+            password=password,
+            enabled=True,
+            domain_id=const.DOMAIN_TEST
+        )
+        resp = self.identity_admin_client.add_user(request_object)
+        self.assertEqual(resp.status_code, 400)
+
+    @unless_coverage
     @ddt.data(['  ', 'me@mail.com', True], ['വളം', 'me@mail.com', True],
               ['first last', 'valid@email.com', ''])
     @ddt.unpack

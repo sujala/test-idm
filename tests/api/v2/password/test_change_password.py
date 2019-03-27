@@ -62,6 +62,37 @@ class TestChangePassword(base.TestBaseV2):
         resp = user_admin_client.get_auth_token(request_object=auth_req_obj)
         self.assertEqual(resp.status_code, 200)
 
+    @attr(type='regression')
+    @tags('negative', 'p0')
+    def test_change_to_blacklisted_password(self):
+
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
+        input_data = {
+            'domain_id': domain_id
+        }
+        add_user_object = factory.get_add_user_request_object(
+            input_data=input_data)
+        resp = self.identity_admin_client.add_user(
+            request_object=add_user_object)
+        user_resp = responses.User(resp_json=resp.json())
+        self.user_ids.append(user_resp.id)
+        self.domain_ids.append(user_resp.domain_id)
+
+        user_admin_client = client.IdentityAPIClient(
+            url=self.url,
+            serialize_format=self.test_config.serialize_format,
+            deserialize_format=self.test_config.deserialize_format)
+
+        new_password = 'blackListedPassword1'
+        change_password_req_obj = requests.ChangePassword(
+            user_name=user_resp.user_name,
+            current_password=user_resp.password,
+            new_password=new_password)
+        resp = user_admin_client.change_password(
+            request_object=change_password_req_obj)
+        self.assertEqual(resp.status_code, 400)
+
     @base.base.log_tearDown_error
     @unless_coverage
     def tearDown(self):

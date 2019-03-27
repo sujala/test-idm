@@ -28,5 +28,12 @@
     },
     "update_schema_fields": [],
     "response_status": 400
+  },
+  "update_blacklisted_password": {
+    "update_input": {
+      "password": "blackListedPassword1"
+    },
+    "update_schema_fields": [],
+    "response_status": 400
   }
 }

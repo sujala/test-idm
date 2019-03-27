@@ -13,6 +13,7 @@ services:
       - 127.0.0.1:10025:10025
       - 127.0.0.1:16686:16686
       - 127.0.0.1:5775:5775/udp
+
     command: ["sleep", "infinity"]
     stop_signal: SIGKILL
     networks:
