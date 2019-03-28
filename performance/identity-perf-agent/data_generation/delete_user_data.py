@@ -25,7 +25,7 @@ def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     if alt_url:
         baseurl = alt_url
     # auth to check
-    print "Authing as user"
+    print ("Authing as user")
     authdata = {"auth":
                 {"passwordCredentials":
                  {"username": user_name,
@@ -35,17 +35,17 @@ def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     headers_auth = {'Accept': 'application/json',
                     'Content-Type': 'application/json'}
     t_url = "{0}/v2.0/tokens".format(baseurl)
-    print "authdata: {0}".format(authdata)
+    print ("authdata: {0}".format(authdata))
     r = requests.post(url=t_url, json=authdata,
                       headers=headers_auth, verify=False)
-    print t_url
-    print r
-    print r.json()
+    print (t_url)
+    print (r)
+    print (r.json())
     return r.json()["access"]["token"]["id"]
 
 
 def delete_user(row):
-    print row
+    print (row)
     # delete user
     status = "Success"
     message = None
@@ -58,7 +58,7 @@ def delete_user(row):
             message = del_user.text
         if "status" in row:
             if row["status"] == "Success":
-                print "user already deleted. Skipping."
+                print ("user already deleted. Skipping.")
                 return copy.copy(row)
 
         disable_data = {"RAX-AUTH:domain": {
@@ -132,11 +132,11 @@ if __name__ == '__main__':
 
     admin_token = get_token(user_name=admin_username,
                             password="Auth1234", alt_url=baseurl)
-    print admin_token
+    print (admin_token)
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json',
             'X-Auth-Token': admin_token}
 
-    print "Running {0} processes".format(proc_count)
+    print ("Running {0} processes".format(proc_count))
     # write all the info to a file:
     # username, userid, password, apikey, nastid, mossoid
     with open(input_file_name, 'r') as user_data_file:

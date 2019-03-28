@@ -11,7 +11,7 @@ from create_user_data import add_admin_user
 
 
 def add_role(headers, baseurl, user_id, role_name):
-    print "headers:{0}".format(headers)
+    print ("headers:{0}".format(headers))
     l_url = baseurl + "/v2.0/OS-KSADM/roles"
     list_resp = requests.get(headers=headers, url=l_url,
                              params={"roleName": role_name})
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                          alt_url="{0}".format(server_url))
     # create an admin user
     au = add_admin_user(1, alt_url=server_url)
-    print "added admin user: {0}".format(au)
+    print ("added admin user: {0}".format(au))
     headers = {'Accept': 'application/json',
                'Content-Type': 'application/json',
                'X-AUTH-TOKEN': sa_token}
@@ -76,8 +76,8 @@ if __name__ == '__main__':
         with open(cert_file, 'r') as read_cert:
             with open(output_file_name, 'w') as write_data:
                 a_reader = csv.DictReader(read_data)
-                print cert_file
-                print os.path.isfile(cert_file)
+                print (cert_file)
+                print (os.path.isfile(cert_file))
                 cert = ''.join(map(lambda s: s.strip(),
                                    read_cert.readlines()[1:-1]))
                 print(cert)
@@ -100,16 +100,16 @@ if __name__ == '__main__':
                             ],
                             "publicCertificates": [{
                                 "pemEncoded": "{0}".format(cert)}]}}
-                        print "raw dict: {0}".format(create_idp_data)
-                        print "simplejson: {0}".format(simplejson.dumps(create_idp_data))
-                        print "json: {0}".format(json.dumps(create_idp_data))
-                        print "simplejson: {0}, no ascii".format(simplejson.dumps(create_idp_data, ensure_ascii=False))
-                        print headers, create_idp_data
+                        print ("raw dict: {0}".format(create_idp_data))
+                        print ("simplejson: {0}".format(simplejson.dumps(create_idp_data)))
+                        print ("json: {0}".format(json.dumps(create_idp_data)))
+                        print ("simplejson: {0}, no ascii".format(simplejson.dumps(create_idp_data, ensure_ascii=False)))
+                        print (headers, create_idp_data)
                         r = requests.post(url=idp_url, json=create_idp_data,
                                           headers=headers, verify=False)
-                        print idp_url
-                        print r
-                        print r.text
+                        print (idp_url)
+                        print (r)
+                        print (r.text)
                         if r.status_code == 201:
                             write_data.write(issuer + "\n")
 

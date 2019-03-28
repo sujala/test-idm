@@ -40,7 +40,7 @@ def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     if alt_url:
         baseurl = alt_url
     # auth to check
-    print "Authing as user"
+    print ("Authing as user")
     authdata = {"auth":
                 {"passwordCredentials":
                  {"username": user_name,
@@ -50,10 +50,10 @@ def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     headers_auth = {'Accept': 'application/json',
                     'Content-Type': 'application/json'}
     t_url = "{0}/v2.0/tokens".format(baseurl)
-    print "authdata: {0}".format(authdata)
+    print ("authdata: {0}".format(authdata))
     r = requests.post(url=t_url, json=authdata,
                       headers=headers_auth, verify=False)
-    print r.json()
+    print (r.json())
     return r.json()["access"]["token"]["id"]
 
 
@@ -67,7 +67,7 @@ def add_default_user(number):
         u_url = "{0}/v2.0/users".format(baseurl)
         r = requests.post(url=u_url,
                           json=create_user_data, headers=ua_headers, verify=False)
-        print r.json()
+        print (r.json())
         assert r.status_code == 201
         result_data = r.json()
         user_data = dict()
@@ -99,7 +99,7 @@ if __name__ == '__main__':
                         default="users_in_dom/users_in_domain_data.csv",
                         help="Output CSV file")
     parser.add_argument(
-        "-s", "--server_url", default="http://localhost:8082/idm/cloud",
+        "-s", "--server_url", default="http://localhost:8083/idm/cloud",
         help="Server URL")
 
     args = parser.parse_args()
@@ -132,7 +132,7 @@ if __name__ == '__main__':
                         domain_id = row['domainid']
 
                         with terminating(Pool(processes=proc_count)) as p:
-                            result_rows = p.map(add_default_user, xrange(
+                            result_rows = p.map(add_default_user, range(
                                 int(num_of_default_users)))
 
                         for user_data in result_rows:

@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         "-s", "--server_url",
-        default="http://localhost:8082/idm/cloud",
+        default="http://localhost:8083/idm/cloud",
         help="Server URL")
     parser.add_argument(
         "-i", "--input_file",

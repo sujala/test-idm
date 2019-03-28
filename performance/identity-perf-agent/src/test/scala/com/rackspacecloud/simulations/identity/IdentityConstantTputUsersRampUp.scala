@@ -187,6 +187,9 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val create_nested_da_scn = CreateNestedDAs.create_nested_das
   val delete_parent_da_scn = DeleteParentDAs.delete_parent_das
 
+  // Change password
+  val V20_LIST_USERS_FOR_CHANGE_PASSWORD_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_list_users_for_change_password.users_per_sec")
+  val v20_list_users_for_change_password = Identity.v20_change_password
 
 
   // Not method or version specific.
@@ -298,8 +301,10 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     scn_wrapper(v11_get_user_by_name_scn_internal, V11_GET_USER_BY_NAME_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainInternalConf),
     scn_wrapper(v11_get_user_by_name_scn_internal_repl, V11_GET_USER_BY_NAME_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
 
+    // Change password
+    scn_wrapper(v20_list_users_for_change_password, V20_LIST_USERS_FOR_CHANGE_PASSWORD_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
 
-    // List Groups By User Id
+  // List Groups By User Id
     scn_wrapper(v20_list_groups_for_user_id_scn, V20_LIST_GROUPS_FOR_USER_ID_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
     scn_wrapper(v20_list_groups_for_user_id_repl_scn, V20_LIST_GROUPS_FOR_USER_ID_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
     scn_wrapper(v20_list_groups_for_user_id_internal_scn, V20_LIST_GROUPS_FOR_USER_ID_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),
