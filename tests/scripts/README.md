@@ -58,6 +58,7 @@ docker run -ti --rm \
     -e Staging_DEVOPS_PASSWORD=pass \
     -e PROPERTY_FILE_LOCATION=/opt/properties.json \
     -e LOG_PATH_LOCATION=/var/log \
+    -e ENVIRONMENT_FILE_LOCATION=/opt/environments.staging.day1.json \
     -v $(pwd):/var/log \
     cid-compare:latest sh -c "python /opt/comparison.py | /usr/bin/jq ."
 ```

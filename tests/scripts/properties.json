@@ -1469,14 +1469,6 @@
             "versionAdded": "3.17.0"
         },
         {
-            "name": "tenant.prefixes.to.exclude.auto.assign.role.from",
-            "reloadable": true,
-            "description": "The list of tenant prefixes to exclude the auto-assigned (identity:tenant-access) role from.",
-            "source": "idm.reloadable.properties",
-            "value": "[, ]",
-            "versionAdded": "3.17.0"
-        },
-        {
             "defaultValue": false,
             "name": "feature.enable.global.root.da.creation",
             "reloadable": true,
@@ -1915,7 +1907,7 @@
             "reloadable": true,
             "description": "Control whether a given user is authorized to Create, Delete or Add tenant to domain with a role",
             "source": "idm.reloadable.properties",
-            "value": false,
+            "value": true,
             "versionAdded": "3.27.0"
         },
         {
@@ -1924,7 +1916,7 @@
             "reloadable": true,
             "description": "Control whether a given user is authorized to Create or Delete domains with a role",
             "source": "idm.reloadable.properties",
-            "value": false,
+            "value": true,
             "versionAdded": "3.27.0"
         },
         {
@@ -2199,6 +2191,15 @@
             "source": "idm.reloadable.properties",
             "value": 3,
             "versionAdded": "3.29.0"
+        },
+        {
+            "defaultValue": "identity:v2_0_list_users_global",
+            "name": "implicit.roles.iam\\:RackImpersonation",
+            "reloadable": false,
+            "description": "The user product schema version to use on user event feeds.",
+            "source": "idm.properties",
+            "value": "identity:v2_0_list_users_global",
+            "versionAdded": "3.30.0"
         }
     ]
 }
