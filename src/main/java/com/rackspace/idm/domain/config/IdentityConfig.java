@@ -1857,12 +1857,12 @@ public class IdentityConfig {
         }
 
         @IdmProp(key = LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT_DURATION_PROP, versionAdded = "3.31.0", description = "Specifies the LDAP connection connect timeout.")
-        public Duration getLdapConnectionConnectTimeout() {
+        public Duration getLDAPConnectionConnectTimeout() {
             return getDurationSafely(staticConfiguration, LDAP_SERVER_CONNECTION_CONNECT_TIMEOUT_DURATION_PROP);
         }
 
         @IdmProp(key = LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL, versionAdded = "3.31.0", description = "Specifies the LDAP minimum available connection goal.")
-        public int getLdapMinimumAvailableConnectionGoal() {
+        public int getLDAPMinimumAvailableConnectionGoal() {
             return getIntSafely(staticConfiguration, LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL);
         }
     }
