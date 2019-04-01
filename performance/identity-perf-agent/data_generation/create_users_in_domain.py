@@ -99,7 +99,7 @@ if __name__ == '__main__':
                         default="users_in_dom/users_in_domain_data.csv",
                         help="Output CSV file")
     parser.add_argument(
-        "-s", "--server_url", default="http://localhost:8083/idm/cloud",
+        "-s", "--server_url", default="http://localhost:8082/idm/cloud",
         help="Server URL")
 
     args = parser.parse_args()
