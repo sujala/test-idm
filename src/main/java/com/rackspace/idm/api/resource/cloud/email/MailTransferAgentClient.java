@@ -14,6 +14,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 @Component
@@ -57,6 +61,8 @@ public class MailTransferAgentClient implements EmailClient {
     private static final String ENABLED_ERROR_MSG = "Error sending mfa enabled email to user '%s'";
     private static final String DISABLED_ERROR_MSG = "Error sending mfa disabled email to user '%s'";
     private static final Logger logger = LoggerFactory.getLogger(MailTransferAgentClient.class);
+
+    private static final BigDecimal BIG_DECIMAL_60 = new BigDecimal(60);
 
     @Override
     @Async
@@ -106,13 +112,21 @@ public class MailTransferAgentClient implements EmailClient {
         model.put(EmailTemplateConstants.FORGOT_PASSWORD_USER_NAME_PROP, user.getUsername());
         model.put(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_STRING_PROP, token.getAccessTokenString());
 
-        //set the validity time period for the token
-        DateTime tokenCreation = new DateTime(token.getCreateTimestamp());
-        DateTime tokenExpiration = new DateTime(token.getAccessTokenExp());
-        int validityLength = Minutes.minutesBetween(tokenCreation, tokenExpiration).getMinutes();
+        // Set the validity time period for the token in minutes (rounding up)
+        Instant tokenCreation = Instant.ofEpochMilli(token.getCreateTimestamp().getTime());
+        Instant tokenExpiration = Instant.ofEpochMilli(token.getAccessTokenExp().getTime());
+        Duration validityPeriod = Duration.between(tokenCreation, tokenExpiration);
 
-        model.put(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_VALIDITY_PERIOD_PROP, validityLength);
-        model.put(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_EXPIRATION_PROP, tokenExpiration.toDate());
+        // Fixing per CID-1996 to account for discrepancy between expiration date being set by adding duration to an older datetime than creation date
+        long validitySeconds = validityPeriod.getSeconds();
+        if (validityPeriod.getNano() > 0) {
+            // If there are nanoseconds, round up to the next second.
+            validitySeconds++;
+        }
+        BigDecimal validityLengthMinutes = new BigDecimal(validitySeconds).divide(BIG_DECIMAL_60, RoundingMode.UP); // Convert seconds to minutes. Rounding up
+
+        model.put(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_VALIDITY_PERIOD_PROP, validityLengthMinutes);
+        model.put(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_EXPIRATION_PROP, Date.from(tokenExpiration));
 
         //Calc the config
         String basePathForEmailConfig = FORGOT_PASSWORD_EMAIL_BASE_DIR + File.separator + portal.toLowerCase();
