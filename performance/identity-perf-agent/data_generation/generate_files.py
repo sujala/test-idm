@@ -97,7 +97,6 @@ def generate_files(users_dir, user_config_file, output_dir,
                 if include_all:
                     # This is if you do not need randomness but rather want
                     # all the users included in the data file
-                    # user = user_iterator.next()
                     user = next(user_iterator)
                 else:
                     user = random.choice(users)

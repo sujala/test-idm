@@ -426,7 +426,7 @@ def v20_create_user: ChainBuilder = {
   }
 
   /**
-    * This function add to test change password API
+    * This function is added to test change password API
     *
     */
 

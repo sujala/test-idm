@@ -14,9 +14,9 @@ class ChangePassword extends Simulation {
   val conf = ConfigFactory.load()
 
   // V20 List users for domain
-  val V20_LIST_USERS_FOR_CHANGE_PASSWORD_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_list_users_for_change_password.users_per_sec")
+  val V20_CHANGE_PASSWORD_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_change_password.users_per_sec")
 
-  val v20_list_users_for_change_password = IdentityChangePasswordOfUserAcc.v20_change_password
+  val v20_users_for_change_password = IdentityChangePasswordOfUserAcc.v20_change_password
 
   // Not method or version specific.
   val MAX_DURATION_SECS: Int = conf.getInt("simulation.max_duration_secs_for_change_password")
@@ -35,15 +35,11 @@ class ChangePassword extends Simulation {
   def scn_wrapper(scenario: ScenarioBuilder, calls_per_sec: Double, duration: Int, protocol_conf: Protocol): PopulationBuilder= {
     var local_users_per_sec = calls_per_sec;
     var local_duration = duration;
-    /* if (calls_per_sec <= 0.05){
-      local_users_per_sec = 1;
-      local_duration = 1;
-    } */
     scenario.inject(constantUsersPerSec(local_users_per_sec) during(local_duration seconds)).protocols(protocol_conf)
   }
   def list_scns(): List[PopulationBuilder] = {
     return List(
-      scn_wrapper(v20_list_users_for_change_password, V20_LIST_USERS_FOR_CHANGE_PASSWORD_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf)
+      scn_wrapper(v20_users_for_change_password, V20_CHANGE_PASSWORD_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf)
     )
   }
   setUp(list_scns():_*
