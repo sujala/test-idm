@@ -6,8 +6,7 @@
  *               Otherwise, fail the job if no tags are present.
  * RELEASE - If true, the artifact built will be a release (non-snapshot) artifact
  */
-def build(scm) {
-
+def runBuild(scm) {
     library "tesla@v0.8.2"
 
     // Setup the git configuration so it can be passed as an arg to common code
@@ -61,19 +60,38 @@ def build(scm) {
                 sed -i -e "s|artifactory_user=.*|artifactory_user=\${ARTIFACTORY_USER}|g" gradle.properties
                 sed -i -e "s|artifactory_password=.*|artifactory_password=\${ARTIFACTORY_PASSWORD}|g" gradle.properties
                 set -x
-            """
+                """
             if (env.VERSION_OVERRIDE.length() > 0) {
                 sh """
-                    ./gradlew clean build -x test -x noncommittest -x committest -x commontest artifactorypublish --stacktrace -Pbuild_release=${env.release} -Pversion_override=${env.version_override}
+                    ./gradlew clean build -x test -x noncommittest -x committest -x commontest artifactorypublish --stacktrace -Pbuild_release=${
+                    env.release
+                } -Pversion_override=${env.version_override}
                 """
             } else {
                 sh """
-                    ./gradlew clean build -x test -x noncommittest -x committest -x commontest artifactorypublish --stacktrace -Pbuild_release=${env.release}
+                    ./gradlew clean build -x test -x noncommittest -x committest -x commontest artifactorypublish --stacktrace -Pbuild_release=${
+                    env.release
+                }
                 """
             }
+
+            // Get the artifact version
+            env.APP_REVISION = sh (
+                    script: """
+                        ./gradlew appRevision | sed -n -e '/:appRevision/ {n; p;}'
+                        """,
+                    returnStdout: true
+            ).trim()
+            echo "Build artifact: ${env.APP_REVISION}"
         }
     }
 
+    node('master') {
+        if (env.release) {
+            echo "trigger build-rpm job"
+            build job: 'build-rpm', parameters: [string(name: 'APP_REVISION', value: env.APP_REVISION)], wait: false
+        }
+    }
 }
 
 return this
