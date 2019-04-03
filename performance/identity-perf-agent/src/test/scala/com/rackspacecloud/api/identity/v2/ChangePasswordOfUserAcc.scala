@@ -22,7 +22,7 @@ object ChangePasswordOfUserAcc {
   // Change Password API is called for Users
   // Password Blacklist service is used to test if provided new password is compromised
   // HTTP Status code=400 used here is to verify if API makes use of Password Blacklist service
-  // and not to test to end-to-end flow
+  // and not to test the end-to-end flow
   def v20_change_password = {
     feed(ChangePasswordOfUserAcc.change_password_v20_default_user)
       .exec(http("POST /v2.0/users/RAX-AUTH/change-pwd")
