@@ -63,23 +63,21 @@ def runBuild(scm) {
                 """
             if (env.VERSION_OVERRIDE.length() > 0) {
                 sh """
-                    ./gradlew clean build -x test -x noncommittest -x committest -x commontest artifactorypublish --stacktrace -Pbuild_release=${
-                    env.release
-                } -Pversion_override=${env.version_override}
+                    ./gradlew clean build -x test -x noncommittest -x committest -x commontest artifactorypublish --stacktrace -Pbuild_release=${env.release} -Pversion_override=${env.version_override}
                 """
             } else {
                 sh """
-                    ./gradlew clean build -x test -x noncommittest -x committest -x commontest artifactorypublish --stacktrace -Pbuild_release=${
-                    env.release
-                }
+                    ./gradlew clean build -x test -x noncommittest -x committest -x commontest artifactorypublish --stacktrace -Pbuild_release=${env.release}
                 """
             }
 
-            // Get the artifact version
+            // This variable retrieves the artifact version from gradle since the VERSION_OVERRIDE may not
+            // match the built artifact version. This variable is used as the parameter value passed in the request to
+            // trigger the 'build-rpm' job.
             env.APP_REVISION = sh (
                     script: """
                         ./gradlew appRevision | sed -n -e '/:appRevision/ {n; p;}'
-                        """,
+                    """,
                     returnStdout: true
             ).trim()
             echo "Build artifact: ${env.APP_REVISION}"
