@@ -28,7 +28,7 @@ USERS_FILE_NAME=$(ls users)
 ./create_idp_data.py -f ../localhost/data/identity/dom_users_for_fed.dat -s ${IDM_ENDPOINT}
 #./generate_files.py -u users_in_dom -c users_in_domain.json -o ../localhost/data/identity -i true
 echo "update old password and new password in json file"
-./add_blacklist_pwd.py
+./add_blacklisted_pwd.py
 cd ..
 #rm -rf target/*
 #rm -f data/identity/users_tokens.dat
