@@ -108,6 +108,9 @@ object Identity {
   val v20_list_global_roles_for_user_id_internal      = scenario("V2.0_List_Global_Roles_For_User_Id_Internal").exec(Tokens.v20_list_global_roles_for_user_id).exitHereIfFailed
   val v20_list_global_roles_for_user_id_internal_repl = scenario("V2.0_List_Global_Roles_For_User_Id_Internal_Replication").exec(Tokens.v20_list_global_roles_for_user_id).exitHereIfFailed
 
+  // V20 Change password
+  val v20_change_password = scenario("V2.0_Change_Password").exec(Tokens.v20_change_password).exitHereIfFailed
+
   // V20 List roles
 
   val v20_list_all_roles = scenario("V2.0_List_Roles_For_Identity_Admin").exec(Tokens.v20_list_roles_for_identity_admin).exitHereIfFailed

@@ -18,7 +18,7 @@ def get_users(directory):
             reader = csv.DictReader(afile)
             for row in reader:
                 users.append(row)
-    print "{0} users loaded".format(len(users))
+    print ("{0} users loaded".format(len(users)))
     return users
 
 
@@ -46,19 +46,19 @@ def generate_files(users_dir, user_config_file, output_dir,
     user_marker = 0
 
     ips = load_ip_addresses(400000)
-    print "# ips: {0}".format(len(ips))
+    print ("# ips: {0}".format(len(ips)))
     print(user_config_file)
     with open(user_config_file, "r") as config_file_handle:
         config_file = json.load(config_file_handle)
         # Need a try/except
-        print "Starting with {0}".format(
-            config_file[output_file_marker]["name"])
+        print ("Starting with {0}".format(
+            config_file[output_file_marker]["name"]))
         output_file = open(
             os.path.join(output_dir,
                          config_file[output_file_marker]["name"]), "w")
         mappings = get_col_mapping(config_file[output_file_marker])
-        print "mappings:{0}".format(mappings)
-        print "keys: {0}".format([key for key in config_file[output_file_marker]["columns"]])
+        print ("mappings:{0}".format(mappings))
+        print ("keys: {0}".format([key for key in config_file[output_file_marker]["columns"]]))
         fieldnames = [mappings[key] for key in config_file[output_file_marker]["columns"]]
 
         users = get_users(users_dir)
@@ -76,7 +76,7 @@ def generate_files(users_dir, user_config_file, output_dir,
                     output_file.close()
                     user_marker = 0
                     if output_file_marker >= len(config_file):
-                        print "No more output files"
+                        print ("No more output files")
                         exit(0)
                     print("switching output files: {0}"
                           "".format(config_file[output_file_marker]["name"]))
@@ -87,7 +87,7 @@ def generate_files(users_dir, user_config_file, output_dir,
                         "w")
                     mappings = get_col_mapping(config_file[output_file_marker])
                     fieldnames = [mappings[key] for key in config_file[output_file_marker]["columns"]]
-                    print "mappings:{0}".format(mappings)
+                    print ("mappings:{0}".format(mappings))
                     writer = csv.DictWriter(
                         output_file,
                         fieldnames=fieldnames)
@@ -97,7 +97,7 @@ def generate_files(users_dir, user_config_file, output_dir,
                 if include_all:
                     # This is if you do not need randomness but rather want
                     # all the users included in the data file
-                    user = user_iterator.next()
+                    user = next(user_iterator)
                 else:
                     user = random.choice(users)
                 output = dict()
