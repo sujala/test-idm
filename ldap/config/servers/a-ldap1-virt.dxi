@@ -19,7 +19,7 @@ source "../limits/racklimits.dxc";
 
 # access controls
 clear access;
-source "../access/default.dxc";
+source "../access/rackaccess.dxc";
 
 # ssl
 source "../ssld/default.dxc";
