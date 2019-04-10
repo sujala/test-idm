@@ -12,7 +12,7 @@ def runBuild(scm) {
     stage('Prune Images') {
         node('master') {
             openshift.withCluster {
-                openshift.withProject('customer-identity-dev1') {
+                openshift.withProject('customer-identity-cicd') {
                     def images = openshift.selector('istag')
 
                     images.withEach {
