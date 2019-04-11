@@ -5,10 +5,10 @@ def githubUrl = "https://${gitRepo}"
 def namespace = 'customer-identity-cicd'
 
 properties([
-    pipelineTriggers([cron('H * * * *')]),
+    pipelineTriggers([cron('@daily')]),
     [$class: 'GithubProjectProperty', displayName: '', projectUrlStr: githubUrl],
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')),
-   disableConcurrentBuilds()
+    disableConcurrentBuilds()
 ])
 
 def scm = [
@@ -74,31 +74,37 @@ try {
     testsPassed = true
 } catch (exc) {
     // If tests fail, delete the artifact from artifactory
-    node('java') {
-        sh """
-        set +x
-        source /tmp/secrets/secrets.sh
-        curl -X DELETE https://artifacts.rackspace.net/artifactory/identity-maven-local/com/rackspace/idm/${env.IDM_VERSION}/ -H "X-JFrog-Art-Api: \${ARTIFACTORY_PASSWORD}" -v
-        """
+    try {
+        node('java') {
+            sh """
+            set +x
+            source /tmp/secrets/secrets.sh
+            curl -X DELETE https://artifacts.rackspace.net/artifactory/identity-maven-local/com/rackspace/idm/${env.IDM_VERSION}/ -H "X-JFrog-Art-Api: \${ARTIFACTORY_PASSWORD}" -v
+            """
+        }
+    } finally {
+        // trigger failed job
+        build $JOB_NAME
     }
     throw exc
 } finally {
-    node('master') {
-        cleanWs()
-        if (testsPassed) {
-            checkout scm
-            sh """
-                set +x
-                git config --global user.email "identity@rackspace.com"
-                git config --global user.name "cid-rsi-dev-svc"
-                git remote remove origin
-                git remote add origin https://${env.GITHUB_ENTERPRISE_USERNAME}:${env.GITHUB_ENTERPRISE_PASSWORD}@${gitRepo}.git
-                set -x
-                git tag -a ${env.IDM_VERSION} -m "Version ${env.IDM_VERSION}"
-                git push origin ${env.IDM_VERSION}
-            """
+    if(testPassed) {
+        node('master') {
+            cleanWs()
+                checkout scm
+                sh """
+                    set +x
+                    git config --global user.email "identity@rackspace.com"
+                    git config --global user.name "cid-rsi-dev-svc"
+                    git remote remove origin
+                    git remote add origin https://${env.GITHUB_ENTERPRISE_USERNAME}:${env.GITHUB_ENTERPRISE_PASSWORD}@${gitRepo}.git
+                    set -x
+                    git tag -a ${env.IDM_VERSION} -m "Version ${env.IDM_VERSION}"
+                    git push origin ${env.IDM_VERSION}
+                """
         }
+
+        // trigger push images to Artifactory
+        build job: 'rsi-images', parameters: [string(name: 'APP_REVISION', value: env.IDM_VERSION)], wait: false
     }
-    // Always build off of master again
-    build: "$JOB_NAME"
 }
