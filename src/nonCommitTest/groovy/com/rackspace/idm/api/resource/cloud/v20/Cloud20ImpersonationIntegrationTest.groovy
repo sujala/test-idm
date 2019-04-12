@@ -436,9 +436,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         then: "the token stored in the directory has a userRsId attribute"
         tokenEntity.userRsId == identityAdmin.id
 
-        and: "the token stored in the directory has the hardcoded username attribute"
-        tokenEntity.impersonatingUsername == ImpersonatedScopeAccess.IMPERSONATING_USERNAME_HARDCODED_VALUE
-
         when: "validate to token to verify that is works correctly"
         def validateResponse = cloud20.validateToken(utils.getIdentityAdminToken(), tokenId)
 
@@ -455,9 +452,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         and: "the token stored in the directory does not have a userRsId attribute"
         tokenEntity.userRsId == null
-
-        and: "the token stored in the directory still have a hardcoded impersonating username attribute"
-        tokenEntity.impersonatingUsername == ImpersonatedScopeAccess.IMPERSONATING_USERNAME_HARDCODED_VALUE
 
         when: "validate to token to verify that is works correctly"
         validateResponse = cloud20.validateToken(utils.getIdentityAdminToken(), tokenId)
@@ -543,11 +537,10 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, serviceImpersonatorTokenMaxLifetimeInSeconds())
         UserScopeAccess actualUserTokenUsed = (UserScopeAccess) scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.impersonatingToken)
 
-        then: "impersonation token has username and userid set for impersonator and impersonated"
+        then: "impersonation token has userid set for impersonator and impersonated"
         //caller is the identity admin, whose token was created with password authentication
         impersonatedScopeAccess.userRsId != null
 
-        impersonatedScopeAccess.impersonatingUsername == ImpersonatedScopeAccess.IMPERSONATING_USERNAME_HARDCODED_VALUE
         impersonatedScopeAccess.rsImpersonatingRsId != null
 
         and: "linked user token contains userid"

@@ -1,14 +1,9 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.persist.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,55 +14,22 @@ import java.util.Set;
  */
 @Getter
 @Setter
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS,requestAllAttributes=true, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
-public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToken, Metadata {
+public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToken {
     public static final String IMPERSONATING_USERNAME_HARDCODED_VALUE = "<deprecated>";
 
-    // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
-    @LDAPDNField
     private String uniqueId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_RACKER_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String rackerId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRsId;
 
-    /**
-     * This field is deprecated and should NOT be relied upon to identify the user being impersonated. It is a required field in the
-     * schema, however, so a default/junk value will be persisted. The real value is NOT saved since it's incomplete, and
-     * do not want anyone to get the mistaken belief that is fully answers the question of who the impersonated user is.
-     *
-     * @deprecated use {@link #getRsImpersonatingRsId()}
-     */
-    @Deprecated
-    @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_USERNAME, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String impersonatingUsername = IMPERSONATING_USERNAME_HARDCODED_VALUE;
-
-
-    @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String rsImpersonatingRsId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_TOKEN, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String impersonatingToken;
 
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_ACCESS_TOKEN, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     public String getAccessTokenString() {
         return super.getAccessTokenString();
-    }
-
-    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
-               objectClass=LdapRepository.OBJECTCLASS_METADATA,
-               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
-    )
-    private Set<String> metadata;
-
-    public Set<String> getMedatadata() {
-        if (metadata == null) {
-            metadata = new HashSet<String>();
-        }
-        return metadata;
     }
 
     private DateTime userPasswordExpirationDate;
@@ -95,21 +57,6 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToke
         } else {
             return getUserRsId();
         }
-    }
-
-    /**
-     * Shouldn't set this. The value is hardcoded.
-     * @param impersonatingUsername
-     *
-     * @deprecated
-     */
-    @Deprecated
-    public void setImpersonatingUsername(String impersonatingUsername) {
-        //no-op
-    }
-
-    public String getImpersonatingUsername() {
-        return IMPERSONATING_USERNAME_HARDCODED_VALUE;
     }
 
     /**

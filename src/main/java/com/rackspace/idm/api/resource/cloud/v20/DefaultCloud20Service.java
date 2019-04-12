@@ -1495,7 +1495,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !StringUtils.isBlank(authenticationRequest.getTenantId())) {
                 throw new BadRequestException("Invalid request. Specify tenantId OR tenantName, not both.");
             }
-            // Check for domain in request
+            // Check for domain object in request. This is to auth under Racker logic
             com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = authenticationRequest.getDomain();
             if(domain != null) {
                 // Racker Auth
