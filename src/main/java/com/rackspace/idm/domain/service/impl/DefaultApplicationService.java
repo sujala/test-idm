@@ -156,20 +156,6 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public Application getApplicationByScopeAccess(ScopeAccess scopeAccess) {
-        if(scopeAccess == null) {
-            throw new IllegalArgumentException("ScopeAccess cannot be null");
-        }
-        String clientId = scopeAccessService.getClientIdForParent(scopeAccess);
-        if(clientId == null) {
-            String err = String.format("Application with clientId %s not found", clientId);
-            logger.error(err);
-            throw new NotFoundException(err);
-        }
-        return applicationDao.getApplicationByClientId(clientId);
-    }
-
-    @Override
     public void updateClient(Application client) {
         logger.info("Updating Client: {}", client);
         this.applicationDao.updateApplication(client);
