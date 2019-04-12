@@ -39,7 +39,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
         config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
-        config.getInt("token.refreshWindowHours") >> defaultRefreshHours
+
     }
 
     def "getValidUserScopeAccessForClientId adds scopeAccess"() {

@@ -380,7 +380,6 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         def expiredDate = new Date().plus(1)
         ImpersonatedScopeAccess sa = new ImpersonatedScopeAccess().with {
             it.accessTokenString = token
-            it.impersonatingUsername = username
             it.createTimestamp = createdDate
             it.accessTokenExp = expiredDate
             it

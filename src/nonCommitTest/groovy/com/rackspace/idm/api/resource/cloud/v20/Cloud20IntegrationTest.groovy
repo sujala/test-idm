@@ -109,7 +109,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     static def DEFAULT_PASSWORD = "Password1"
     static def DEFAULT_APIKEY = "0123456789"
 
-    @Shared REFRESH_WINDOW_HOURS
     @Shared CLOUD_CLIENT_ID
     @Shared BASE_DN = "o=rackspace,dc=rackspace,dc=com"
     @Shared SCOPE = SearchScope.SUB
@@ -4378,19 +4377,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     //Helper Methods
     def setConfigValues() {
-        REFRESH_WINDOW_HOURS = config.getInt("token.refreshWindowHours")
-        CLOUD_CLIENT_ID = config.getString("cloudAuth.clientId")
+         CLOUD_CLIENT_ID = config.getString("cloudAuth.clientId")
     }
 
-    def setTokenInRefreshWindow(String uid, String accessToken) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID)(accessToken=$accessToken))","*")
-        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
-            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
-            if (!entity.isAccessTokenWithinRefreshWindow(config.getInt("token.refreshWindowHours"))) {
-                entity.accessTokenExp = new DateTime().plusHours(REFRESH_WINDOW_HOURS).minusHours(2).toDate()
-                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
-                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
-            }
-        }
-    }
 }

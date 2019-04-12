@@ -1,53 +1,20 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPDNField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPGetter;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
 @Data
 @EqualsAndHashCode(callSuper=false)
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS,requestAllAttributes=true, auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
-public class RackerScopeAccess extends ScopeAccess implements BaseUserToken, Metadata {
+public class RackerScopeAccess extends ScopeAccess implements BaseUserToken {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
-    @LDAPDNField
     private String uniqueId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN, objectClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String refreshTokenString;
-
-    @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private Date refreshTokenExp;
-
-    @LDAPField(attribute=LdapRepository.ATTR_RACKER_ID, objectClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String rackerId;
 
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_ACCESS_TOKEN, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     public String getAccessTokenString() {
         return super.getAccessTokenString();
-    }
-
-    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
-               objectClass=LdapRepository.OBJECTCLASS_METADATA,
-               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
-    )
-    private Set<String> metadata;
-
-    public Set<String> getMedatadata() {
-        if (metadata == null) {
-            metadata = new HashSet<String>();
-        }
-        return metadata;
     }
 
     @Override
