@@ -11,6 +11,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.Date;
 import java.util.Stack;
+import java.security.SecureRandom;
 
 /**
  * Let's keep this immutable.
@@ -98,37 +99,37 @@ public final class Password {
         String randomPassword = HashHelper.getRandomSha1();
         randomPassword = randomPassword.substring(0, BASE);
         char[] pw = randomPassword.toCharArray();
-        double secureRandomNumber = HashHelper.getSecureRandom().nextDouble() ;
+        SecureRandom secureRandomNumber = HashHelper.getSecureRandom();
 
         Stack<Integer> usedIndexes = new Stack<Integer>();
-        int randomIndex = (int) (secureRandomNumber * randomPassword.length());
+        int randomIndex = (int) (secureRandomNumber.nextDouble() * randomPassword.length());
         usedIndexes.push(randomIndex);
 
         // insert random number
-        char randomNumeric = (char) ('0' + (int) (secureRandomNumber * BASE));
+        char randomNumeric = (char) ('0' + (int) (secureRandomNumber.nextDouble() * BASE));
         pw[randomIndex] = randomNumeric;
 
         // insert random upper case letter
         while (usedIndexes.contains(randomIndex)) {
-            randomIndex = (int) (secureRandomNumber * randomPassword.length());
+            randomIndex = (int) (secureRandomNumber.nextDouble() * randomPassword.length());
         }
-        char randomUpper = (char) ('A' + (int) (secureRandomNumber * MAX_ALPHABET_LENGTH));
+        char randomUpper = (char) ('A' + (int) (secureRandomNumber.nextDouble() * MAX_ALPHABET_LENGTH));
         pw[randomIndex] = randomUpper;
         usedIndexes.push(randomIndex);
 
         // insert random lower case letter
         while (usedIndexes.contains(randomIndex)) {
-            randomIndex = (int) (secureRandomNumber * randomPassword.length());
+            randomIndex = (int) (secureRandomNumber.nextDouble() * randomPassword.length());
         }
-        char randomLower = (char) ('a' + (int) (secureRandomNumber * MAX_ALPHABET_LENGTH));
+        char randomLower = (char) ('a' + (int) (secureRandomNumber.nextDouble() * MAX_ALPHABET_LENGTH));
         pw[randomIndex] = randomLower;
         usedIndexes.push(randomIndex);
 
         // insert random non-alphanumeric
         while (usedIndexes.contains(randomIndex)) {
-            randomIndex = (int) (secureRandomNumber * randomPassword.length());
+            randomIndex = (int) (secureRandomNumber.nextDouble() * randomPassword.length());
         }
-        int randomInt = (int) (secureRandomNumber * VALID_NON_ALPHA_CHARS.length());
+        int randomInt = (int) (secureRandomNumber.nextDouble() * VALID_NON_ALPHA_CHARS.length());
         int randomNonAlpha = VALID_NON_ALPHA_CHARS.charAt(randomInt);
         pw[randomIndex] = (char) randomNonAlpha;
 
