@@ -98,36 +98,37 @@ public final class Password {
         String randomPassword = HashHelper.getRandomSha1();
         randomPassword = randomPassword.substring(0, BASE);
         char[] pw = randomPassword.toCharArray();
+        double secureRandomNumber = HashHelper.getSecureRandom().nextDouble() ;
 
         Stack<Integer> usedIndexes = new Stack<Integer>();
-        int randomIndex = (int) (HashHelper.getSecureRandom().nextDouble() * randomPassword.length());
+        int randomIndex = (int) (secureRandomNumber * randomPassword.length());
         usedIndexes.push(randomIndex);
 
         // insert random number
-        char randomNumeric = (char) ('0' + (int) (HashHelper.getSecureRandom().nextDouble() * BASE));
+        char randomNumeric = (char) ('0' + (int) (secureRandomNumber * BASE));
         pw[randomIndex] = randomNumeric;
 
         // insert random upper case letter
         while (usedIndexes.contains(randomIndex)) {
-            randomIndex = (int) (HashHelper.getSecureRandom().nextDouble() * randomPassword.length());
+            randomIndex = (int) (secureRandomNumber * randomPassword.length());
         }
-        char randomUpper = (char) ('A' + (int) (HashHelper.getSecureRandom().nextDouble() * MAX_ALPHABET_LENGTH));
+        char randomUpper = (char) ('A' + (int) (secureRandomNumber * MAX_ALPHABET_LENGTH));
         pw[randomIndex] = randomUpper;
         usedIndexes.push(randomIndex);
 
         // insert random lower case letter
         while (usedIndexes.contains(randomIndex)) {
-            randomIndex = (int) (HashHelper.getSecureRandom().nextDouble() * randomPassword.length());
+            randomIndex = (int) (secureRandomNumber * randomPassword.length());
         }
-        char randomLower = (char) ('a' + (int) (HashHelper.getSecureRandom().nextDouble() * MAX_ALPHABET_LENGTH));
+        char randomLower = (char) ('a' + (int) (secureRandomNumber * MAX_ALPHABET_LENGTH));
         pw[randomIndex] = randomLower;
         usedIndexes.push(randomIndex);
 
         // insert random non-alphanumeric
         while (usedIndexes.contains(randomIndex)) {
-            randomIndex = (int) (HashHelper.getSecureRandom().nextDouble() * randomPassword.length());
+            randomIndex = (int) (secureRandomNumber * randomPassword.length());
         }
-        int randomInt = (int) (HashHelper.getSecureRandom().nextDouble() * VALID_NON_ALPHA_CHARS.length());
+        int randomInt = (int) (secureRandomNumber * VALID_NON_ALPHA_CHARS.length());
         int randomNonAlpha = VALID_NON_ALPHA_CHARS.charAt(randomInt);
         pw[randomIndex] = (char) randomNonAlpha;
 
