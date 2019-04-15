@@ -89,7 +89,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def setup() {
         mockServices()
         mockMisc()
-        service.requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(_) >> new ScopeAccess()
+        service.requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(_) >> new UserScopeAccess()
 
         headers = Mock(HttpHeaders)
         jaxbMock = Mock(JAXBElement)
@@ -4991,7 +4991,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def tenantId = "tenantId"
         def contactId = "contactId"
         def roleId = "roleId"
-        def scopeAccess = new ScopeAccess()
+        def scopeAccess = new UserScopeAccess()
 
         when: "provide both roleId and contactId query params"
         requestContext.securityContext.getAndVerifyEffectiveCallerToken(authToken) >> scopeAccess
@@ -6360,7 +6360,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         response.status == SC_NO_CONTENT
 
-        1 * securityContext.getEffectiveCallerToken() >> new ScopeAccess()
+        1 * securityContext.getEffectiveCallerToken() >> new UserScopeAccess()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
         1 * scopeAccessService.getScopeAccessByAccessToken(tokenId) >> entityFactory.createFederatedToken()
@@ -6381,7 +6381,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         thrown(ForbiddenException)
 
-        1 * securityContext.getEffectiveCallerToken() >> new ScopeAccess()
+        1 * securityContext.getEffectiveCallerToken() >> new UserScopeAccess()
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
         1 * requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.USER_ADMIN
         1 * scopeAccessService.getScopeAccessByAccessToken(tokenId) >> entityFactory.createFederatedToken()
