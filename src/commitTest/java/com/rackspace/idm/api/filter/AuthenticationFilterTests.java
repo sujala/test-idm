@@ -130,7 +130,7 @@ public class AuthenticationFilterTests {
         impersonatedScopeAccess.setAccessTokenString("authToken");
         impersonatedScopeAccess.setImpersonatingToken("impToken");
         impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusMinutes(10).toDate());
-        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new ScopeAccess());
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new UserScopeAccess());
         when(reloadableConfig.useAspectForMfaAuthorization()).thenReturn(IdentityConfig.FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT);
         authenticationFilterWithMock.filter(requestMock);
     }
@@ -172,7 +172,7 @@ public class AuthenticationFilterTests {
         when(requestMock.getMethod()).thenReturn("GET");
         when(requestMock.getPath()).thenReturn("migration/some/path");
         when(requestMock.getHeaderValue(GlobalConstants.X_AUTH_TOKEN)).thenReturn("authToken");
-        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new ScopeAccess());
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new UserScopeAccess());
         authenticationFilterWithMock.filter(requestMock);
     }
 

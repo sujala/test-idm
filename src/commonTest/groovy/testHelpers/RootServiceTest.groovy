@@ -1001,21 +1001,6 @@ class RootServiceTest extends Specification {
         return uriInfo
     }
 
-    def createScopeAccess() {
-        return createScopeAccess("tokenString", new DateTime().plusHours(1).toDate())
-    }
-
-    def createScopeAccess(String tokenString, Date expiration) {
-        tokenString = tokenString ? tokenString : "tokenString"
-        def dn = "accessToken=$tokenString,cn=TOKENS,rsId=1234"
-        new ScopeAccess().with {
-            it.accessTokenString = tokenString
-            it.accessTokenExp = expiration
-            it.uniqueId = dn
-            return it
-        }
-    }
-
     def createImpersonatedScopeAccess() {
         return createImpersonatedScopeAccess("username", "impUsername", "tokenString", "impToken", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
     }

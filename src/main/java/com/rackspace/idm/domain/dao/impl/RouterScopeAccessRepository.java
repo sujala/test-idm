@@ -47,9 +47,4 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     public ScopeAccess getScopeAccessByAccessToken(String accessToken) {
         return getRouteForExistingScopeAccess(accessToken).getScopeAccessByAccessToken(accessToken);
     }
-
-    @Override
-    public String getClientIdForParent(ScopeAccess scopeAccess) {
-        return getRouteForExistingScopeAccess(scopeAccess).getClientIdForParent(scopeAccess);
-    }
 }

@@ -440,11 +440,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public String getClientIdForParent(ScopeAccess scopeAccess) {
-        return scopeAccessDao.getClientIdForParent(scopeAccess);
-    }
-
-    @Override
     public boolean isScopeAccessExpired(ScopeAccess scopeAccess) {
         return scopeAccess == null || scopeAccess.isAccessTokenExpired(new DateTime());
     }

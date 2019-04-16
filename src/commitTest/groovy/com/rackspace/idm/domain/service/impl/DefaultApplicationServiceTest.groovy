@@ -196,18 +196,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         result == null
     }
 
-    def "getApplicationByScopeAccess throws error when clientId is null" () {
-        given:
-        ScopeAccess scopeAccess = entityFactory.createScopeAccess()
-
-        when:
-        service.getApplicationByScopeAccess(scopeAccess)
-
-        then:
-        scopeAccessService.getClientIdForParent(_) >> null
-        thrown(NotFoundException)
-    }
-
     def "testing getCachedClientRoleById returning ImmutableClientRole"() {
         given:
         def clientRole = entityFactory.createClientRole().with {

@@ -95,8 +95,6 @@ public interface ScopeAccessService {
 
     boolean isScopeAccessExpired(ScopeAccess scopeAccess);
 
-    String getClientIdForParent(ScopeAccess scopeAccess);
-
     /**
      * Processes an impersonation request and returns an appropriate ImpersonatedScopeAccess.
      *

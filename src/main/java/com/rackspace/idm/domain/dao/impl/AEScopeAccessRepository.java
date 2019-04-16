@@ -50,34 +50,4 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
             return null;
         }
     }
-
-    /* LDAP compatibility methods */
-
-    @Override
-    public String getClientIdForParent(ScopeAccess scopeAccess) {
-        // TODO: Remove dependency with UnboundID
-        String parentDn = null;
-        try {
-            parentDn = new DN(scopeAccess.getUniqueId()).getParentString();
-        } catch (LDAPException e) {
-            //noop
-        }
-        return parseDNForClientId(parentDn);
-    }
-
-    private String parseDNForClientId(String parentDn) {
-        String clientId = null;
-        try {
-            if (parentDn != null) {
-                String[] DN = parentDn.split(",");
-                if (DN.length > 0) {
-                    clientId = DN[0].split("=")[1];
-                }
-            }
-        } catch (Exception e) {
-            //noop
-        }
-        return clientId;
-    }
-
 }

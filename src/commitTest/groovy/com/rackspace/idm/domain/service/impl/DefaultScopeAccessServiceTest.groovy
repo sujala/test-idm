@@ -225,7 +225,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     def "authenticateAccessToken returns true when token is valid" () {
         given:
-        def sa = entityFactory.createScopeAccess()
+        def sa = entityFactory.createUserToken()
         sa.accessTokenExp = new Date()
         sa.accessTokenExp.hours += 24
 

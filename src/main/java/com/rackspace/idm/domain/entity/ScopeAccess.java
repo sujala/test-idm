@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.List;
 
 @Data
-public class ScopeAccess implements Auditable, UniqueId, Token {
+public abstract class ScopeAccess implements Auditable, UniqueId, Token {
 
     private String uniqueId;
 
@@ -27,8 +27,6 @@ public class ScopeAccess implements Auditable, UniqueId, Token {
     private Date createTimestamp;
 
     private String scope;
-
-    private String domainId;
 
     public ScopeAccess() {}
 
@@ -52,13 +50,6 @@ public class ScopeAccess implements Auditable, UniqueId, Token {
     @Override
     public boolean isAccessTokenExpired() {
         return isAccessTokenExpired(new DateTime());
-    }
-
-    public boolean isAccessTokenWithinRefreshWindow(int refreshTokenWindow){
-        DateTime accessToken = new DateTime(this.getAccessTokenExp());
-        Date refreshWindowStart = accessToken.minusHours(refreshTokenWindow).toDate();
-        Date now = new DateTime().toDate();
-        return now.after(refreshWindowStart);
     }
 
     @Override
