@@ -66,7 +66,7 @@ public class DefaultScopeAccessServiceTestOld {
         impersonationRequest.setUser(user);
         when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
         when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
-        when(configuration.getInt("token.refreshWindowHours")).thenReturn(12);
+
     }
 
     @Test
