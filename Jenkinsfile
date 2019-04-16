@@ -88,7 +88,7 @@ try {
     }
     throw exc
 } finally {
-    if(testPassed) {
+    if(testsPassed) {
         node('master') {
             cleanWs()
                 checkout scm
