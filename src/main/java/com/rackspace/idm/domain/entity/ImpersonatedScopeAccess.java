@@ -5,18 +5,9 @@ import lombok.Setter;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
-/**
- * Created by IntelliJ IDEA.
- * User: matt.colton
- * Date: 3/14/12
- * Time: 12:14 PM
- * To change this template use File | Settings | File Templates.
- */
 @Getter
 @Setter
 public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToken {
-    public static final String IMPERSONATING_USERNAME_HARDCODED_VALUE = "<deprecated>";
-
     private String uniqueId;
 
     private String rackerId;
@@ -26,6 +17,8 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToke
     private String rsImpersonatingRsId;
 
     private String impersonatingToken;
+
+    private String authenticationDomainId;
 
     @Override
     public String getAccessTokenString() {
@@ -47,7 +40,7 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements BaseUserToke
 
     /**
      * For impersonated tokens either the rackerId OR the userRsId should be set (mutually exclusive). In existing code the
-     * rackerId appears to take precedence in the off change that both are set.
+     * rackerId appears to take precedence in the off chance that both are set.
      * @return
      */
     @Override

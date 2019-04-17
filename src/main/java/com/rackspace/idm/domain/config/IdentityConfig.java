@@ -243,6 +243,14 @@ public class IdentityConfig {
     public static final String PURGE_TRRS_OBSOLETE_AFTER_PROP = "purge.trrs.after.lifetime.hours";
     public static final int PURGE_TRRS_OBSOLETE_AFTER_DEFAULT = 25;
 
+    public static final String TOKEN_LIFETIME_END_USER_DEFAULT_PROP = "token.cloudAuthExpirationSeconds";
+    public static final int TOKEN_LIFETIME_END_USER_DEFAULT_DEFAULT = 86400;
+
+    public static final String TOKEN_LIFETIME_RACKER_DEFAULT_PROP = "token.cloudAuthRackerExpirationSeconds";
+    public static final int TOKEN_LIFETIME_RACKER_DEFAULT_DEFAULT= 43200;
+
+    public static final String TOKEN_LIFETIME_ENTROPY_PROP = "token.entropy";
+    public static final double TOKEN_LIFETIME_ENTROPY_DEFAULT = .01;
 
     public static final String FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP = "feature.return.json.specific.cloud.version";
     public static final boolean FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT = true;
@@ -632,6 +640,13 @@ public class IdentityConfig {
     public static final String INVITES_SUPPORTED_FOR_RCNS_PROP = "invites.supported.for.rcns";
     public static final String INVITES_SUPPORTED_FOR_RCNS_DEFAULT = "";
 
+    public static final String FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_PROP = "feature.enable.writing.domain.tokens";
+    public static final boolean FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_DEFAULT = false;
+
+    public static final String FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP = "feature.enable.reading.domain.tokens";
+    public static final boolean FEATURE_ENABLE_READING_DOMAIN_TOKENS_DEFAULT = false;
+
+
     /**
      * Opentracing properties
      */
@@ -928,6 +943,9 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_PROP, FEATURE_ENABLE_DELEGATION_GRANT_ROLES_TO_NESTED_DA_DEFAULT);
         defaults.put(INVITES_SUPPORTED_FOR_RCNS_PROP, INVITES_SUPPORTED_FOR_RCNS_DEFAULT);
 
+        defaults.put(FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_PROP, FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_DEFAULT);
+        defaults.put(FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP, FEATURE_ENABLE_READING_DOMAIN_TOKENS_DEFAULT);
+
         defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
 
@@ -987,6 +1005,10 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP, FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT);
+
+        defaults.put(TOKEN_LIFETIME_END_USER_DEFAULT_PROP, TOKEN_LIFETIME_END_USER_DEFAULT_DEFAULT);
+        defaults.put(TOKEN_LIFETIME_RACKER_DEFAULT_PROP, TOKEN_LIFETIME_RACKER_DEFAULT_DEFAULT);
+        defaults.put(TOKEN_LIFETIME_ENTROPY_PROP, TOKEN_LIFETIME_ENTROPY_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -1843,6 +1865,21 @@ public class IdentityConfig {
         @IdmProp(key = DYNAMO_DB_CREDENTIALS_KEY_ID_PROP, versionAdded = "3.27.0", description = "Specifies the credentials key to use for dynamoDB connections.")
         public String getDynamoDbCredentialsKeyId() {
             return getStringSafely(staticConfiguration, DYNAMO_DB_CREDENTIALS_KEY_ID_PROP);
+        }
+
+        @IdmProp(key = TOKEN_LIFETIME_END_USER_DEFAULT_PROP, versionAdded = "1.0.14.8", description = "The default requested lifetime of end user tokens.")
+        public Integer getTokenLifetimeEndUserDefault() {
+            return getIntSafely(staticConfiguration, TOKEN_LIFETIME_END_USER_DEFAULT_PROP);
+        }
+
+        @IdmProp(key = TOKEN_LIFETIME_RACKER_DEFAULT_PROP, versionAdded = "1.0.14.8", description = "The default requested lifetime of racker tokens")
+        public Integer getTokenLifetimeRackerDefault() {
+            return getIntSafely(staticConfiguration, TOKEN_LIFETIME_RACKER_DEFAULT_PROP);
+        }
+
+        @IdmProp(key = TOKEN_LIFETIME_ENTROPY_PROP, versionAdded = "1.0.14.8", description = "The amount of entropy to use when calculating lifetimes based on token default lifetimes.")
+        public Double getTokeLifetimeEntropy() {
+            return getDoubleSafely(staticConfiguration, TOKEN_LIFETIME_ENTROPY_PROP);
         }
 
         // TODO - A "TODO" item is to support marking properties as "protected" or something such that the value is or asterisk'd out when returning in the props service.
@@ -2932,6 +2969,16 @@ public class IdentityConfig {
         public List<String> getDomainTypes() {
             String rawValue = getRepositoryStringSafely(DOMAIN_TYPES_PROP);
             return splitStringPropIntoList(rawValue, true);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_PROP, versionAdded = "3.31.0", description = "Whether or not identity should write the authenticated domains within tokens.")
+        public boolean shouldWriteDomainTokens() {
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP, versionAdded = "3.31.0", description = "Whether or not identity should read tokens that store the authenticated domains.")
+        public boolean shouldReadDomainTokens() {
+            return shouldWriteDomainTokens() || getRepositoryBooleanSafely(FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP);
         }
     }
 

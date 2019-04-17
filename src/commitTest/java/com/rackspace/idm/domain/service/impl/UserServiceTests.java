@@ -137,7 +137,6 @@ public class UserServiceTests {
     private UserScopeAccess getFakeUserScopeAccess() {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setClientId(clientId);
-        usa.setClientRCN(clientRCN);
         usa.setUserRsId(userRsId);
         return usa;
     }

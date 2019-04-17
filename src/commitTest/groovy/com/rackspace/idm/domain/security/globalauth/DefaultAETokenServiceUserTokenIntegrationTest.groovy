@@ -149,7 +149,6 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
             it.accessTokenExp = new Date()
             it.userRsId = hardCodedProvisionedUser.id
             it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
-            it.clientRCN = "RACKSPACE"
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
             it.scope = GlobalConstants.SETUP_MFA_SCOPE

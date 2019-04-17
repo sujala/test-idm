@@ -8,7 +8,8 @@ import javax.ws.rs.core.MediaType;
  * Add globally-used constants here.
  * 
  */
-public final class GlobalConstants {
+public final class
+GlobalConstants {
 
     private GlobalConstants() {}
 

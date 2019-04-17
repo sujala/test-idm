@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper=false)
 public class RackerScopeAccess extends ScopeAccess implements BaseUserToken {
 
-    // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
+    public static final String RACKSPACE_DOMAIN = "RACKSPACE";
     private String uniqueId;
 
     private String rackerId;
@@ -58,5 +58,10 @@ public class RackerScopeAccess extends ScopeAccess implements BaseUserToken {
     @Override
     public String getDelegationAgreementId() {
         return null;
+    }
+
+    @Override
+    public String getAuthenticationDomainId() {
+        return RACKSPACE_DOMAIN;
     }
 }

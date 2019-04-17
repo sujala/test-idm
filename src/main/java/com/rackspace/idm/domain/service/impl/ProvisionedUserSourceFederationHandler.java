@@ -45,7 +45,10 @@ import static com.rackspace.idm.ErrorCodes.*;
 
 /**
  * Handles SAML authentication requests against provisioned users. This means against a particular domain.
+ *
+ * @deprecated v1.0 Fed API is deprecated and should no longer ever be used.
  */
+@Deprecated
 @Component
 public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFederationHandler {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
