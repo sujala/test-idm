@@ -84,7 +84,7 @@ try {
         }
     } finally {
         // trigger failed job
-        build $JOB_NAME
+        build env.JOB_NAME
     }
     throw exc
 } finally {
