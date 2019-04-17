@@ -36,7 +36,7 @@ try {
 
     // Build and publish the artifact to test
     env.IDM_VERSION = buildSteps.publishArtifact(scm)
-    env.NAMESPACE_NAME = namespace.toUpperCase().replaceAll('-', '_')
+    env.NAMESPACE_NAME = namespace
     println "idmVersion = ${env.IDM_VERSION}"
 
 
