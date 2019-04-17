@@ -50,8 +50,6 @@ public class ImpersonationTokenRequest implements TokenRequest<BaseUser, Imperso
             sa.getAuthenticatedBy().addAll(authenticatedByMethodGroup.getAuthenticatedByMethodsAsValues());
         }
 
-//        newImpersonatedScopeAccess.setImpersonatingToken(userTokenForImpersonation.getAccessTokenString());
-
         return sa;
     }
 

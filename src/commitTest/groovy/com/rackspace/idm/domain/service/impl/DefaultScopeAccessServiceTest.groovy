@@ -37,9 +37,9 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         mockTokenFormatSelector(service)
         mockIdentityConfig(service)
 
-        config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
-        config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
-
+        staticConfig.getTokenLifetimeEndUserDefault()  >>  defaultCloudAuthExpirationSeconds
+        staticConfig.getTokenLifetimeRackerDefault()  >>  defaultCloudAuthRackerExpirationSeconds
+        staticConfig.getTokeLifetimeEntropy() >> 0.0
     }
 
     def "getValidUserScopeAccessForClientId adds scopeAccess"() {
@@ -186,8 +186,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         UserScopeAccess scopeAccess = service.addScopeAccess(entityFactory.createUser(), "clientId", [])
 
         then:
-        1 * config.getInt("token.cloudAuthExpirationSeconds", _) >> exSeconds
-        1 * config.getDouble("token.entropy") >> entropy
+        1 * staticConfig.getTokenLifetimeEndUserDefault() >> exSeconds
+        1 * staticConfig.getTokeLifetimeEntropy() >> entropy
         scopeAccess.accessTokenExp <= ((Date)range.get("max"))
         scopeAccess.accessTokenExp >= range.get("min")
 
@@ -207,7 +207,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def result = service.getTokenExpirationSeconds(seconds)
 
         then:
-        1 * config.getDouble(_) >> 0.01
+        1 * staticConfig.getTokeLifetimeEntropy() >> 0.01
         result <= max
         result >= min
     }
@@ -223,7 +223,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def scopeAccess = service.getValidRackerScopeAccessForClientId(entityFactory.createRacker(), clientId, authedBy)
 
         then:
-        1 * config.getDouble("token.entropy") >> entropy
+        1 * staticConfig.getTokeLifetimeEntropy() >> entropy
         scopeAccess.accessTokenExp <= range.get("max")
         scopeAccess.accessTokenExp >= range.get("min")
     }
