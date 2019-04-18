@@ -40,6 +40,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     private static final Logger LOG = LoggerFactory.getLogger(MessagePackTokenDataPacker.class);
 
     private static final byte VERSION_0 = 0;
+    private static final byte VERSION_1 = 1;
 
     private static final byte TOKEN_TYPE_PROVISIONED_USER = 0;
     private static final byte TOKEN_TYPE_PROVISIONED_USER_IMPERSONATING_ENDUSER = 1;
@@ -61,9 +62,6 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
     @Autowired
     private IdentityUserService identityUserService;
-
-    @Autowired
-    private UserService provisionedUserService;
 
     @Autowired
     IdentityProviderDao identityProviderRepository;
@@ -203,6 +201,14 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         return token;
     }
 
+    /**
+     * @deprecated Delegation agreements/tokens are not in use and shouldn't be put into use
+     *
+     * @param user
+     * @param scopeAccess
+     * @return
+     */
+    @Deprecated
     private List<Object> packDelegateToken(ProvisionedUserDelegate user, UserScopeAccess scopeAccess) {
         //validate additional user specific stuff for this packing strategy
         Validate.notNull(user.getId(), "user id required");
@@ -231,6 +237,10 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         return packingItems;
     }
 
+    /**
+     * @deprecated Delegation agreements/tokens are not in use and shouldn't be put into use
+     * @return
+     */
     private ScopeAccess unpackDelegationToken(String webSafeToken, Unpacker unpacker) throws IOException {
         UserScopeAccess scopeAccess = new UserScopeAccess();
 
@@ -267,8 +277,15 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
         List<Object> packingItems = new ArrayList<Object>();
 
-        //packed version format (for future use...)
-        packingItems.add(VERSION_0);
+        // Whether or not to store domain in token. Store locally to ensure same value throughout method
+        boolean shouldWriteDomainTokens = identityConfig.getRepositoryConfig().shouldWriteDomainTokens();
+
+        //packed version
+        if (shouldWriteDomainTokens) {
+            packingItems.add(VERSION_1);
+        } else {
+            packingItems.add(VERSION_0);
+        }
 
         // Timestamps
         packingItems.add(scopeAccess.getAccessTokenExp().getTime());
@@ -281,6 +298,11 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         // UserScopeAccess
         packingItems.add(scopeAccess.getUserRsId());
 
+        // Version 1 writes domain info at end
+        if (shouldWriteDomainTokens) {
+            packingItems.add(scopeAccess.getAuthenticationDomainId());
+        }
+
         return packingItems;
     }
 
@@ -289,7 +311,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
         //packed version format (for future use...)
         byte version = unpacker.readByte();
-        if (version == VERSION_0) {
+        if (version == VERSION_0 || (version == VERSION_1 && identityConfig.getRepositoryConfig().shouldReadDomainTokens())) {
             // Timestamps
             scopeAccess.setAccessTokenExp(new Date(unpacker.readLong()));
             scopeAccess.setCreateTimestamp(new Date(unpacker.readLong()));
@@ -304,6 +326,10 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             // DN
             scopeAccess.setUniqueId(TokenDNCalculator.calculateProvisionedUserTokenDN(scopeAccess.getUserRsId(), webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
+
+            if (version == VERSION_1) {
+                scopeAccess.setAuthenticationDomainId(safeRead(unpacker, String.class));
+            }
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
         }
@@ -317,8 +343,15 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
         List<Object> packingItems = new ArrayList<Object>();
 
-        //packed version format (for future use...)
-        packingItems.add(VERSION_0);
+        // Whether or not to store domain in token. Store locally to ensure same value throughout method
+        boolean shouldWriteDomainTokens = identityConfig.getRepositoryConfig().shouldWriteDomainTokens();
+
+        //packed version
+        if (shouldWriteDomainTokens) {
+            packingItems.add(VERSION_1);
+        } else {
+            packingItems.add(VERSION_0);
+        }
 
         // Timestamps
         packingItems.add(scopeAccess.getAccessTokenExp().getTime());
@@ -330,6 +363,11 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         // UserScopeAccess
         packingItems.add(scopeAccess.getUserRsId());
 
+        // Version 1 writes domain info at end
+        if (shouldWriteDomainTokens) {
+            packingItems.add(scopeAccess.getAuthenticationDomainId());
+        }
+
         return packingItems;
     }
 
@@ -338,7 +376,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
         //packed version format (for future use...)
         byte version = unpacker.readByte();
-        if (version == VERSION_0) {
+        if (version == VERSION_0 || (version == VERSION_1 && identityConfig.getRepositoryConfig().shouldReadDomainTokens())) {
             // Timestamps
             scopeAccess.setAccessTokenExp(new Date(unpacker.readLong()));
             scopeAccess.setCreateTimestamp(new Date(unpacker.readLong()));
@@ -360,6 +398,10 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
             scopeAccess.setUniqueId(TokenDNCalculator.calculateFederatedUserTokenDN(user.getUsername(), idp.getProviderId(), webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
+
+            if (version == VERSION_1) {
+                scopeAccess.setAuthenticationDomainId(safeRead(unpacker, String.class));
+            }
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
         }
@@ -374,8 +416,15 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
         List<Object> packingItems = new ArrayList<Object>();
 
-        //packed version format (for future use...)
-        packingItems.add(VERSION_0);
+        // Whether or not to store domain in token. Store locally to ensure same value throughout method
+        boolean shouldWriteDomainTokens = identityConfig.getRepositoryConfig().shouldWriteDomainTokens();
+
+        //packed version
+        if (shouldWriteDomainTokens) {
+            packingItems.add(VERSION_1);
+        } else {
+            packingItems.add(VERSION_0);
+        }
 
         // Timestamps
         packingItems.add(scopeAccess.getAccessTokenExp().getTime());
@@ -389,6 +438,11 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         packingItems.add(user.getId());
         packingItems.add(scopeAccess.getRsImpersonatingRsId());
 
+        // Version 1 writes domain info at end
+        if (shouldWriteDomainTokens) {
+            packingItems.add(scopeAccess.getAuthenticationDomainId());
+        }
+
         return packingItems;
     }
 
@@ -397,7 +451,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
         //packed version format (for future use...)
         byte version = unpacker.readByte();
-        if (version == VERSION_0) {
+        if (version == VERSION_0 || (version == VERSION_1 && identityConfig.getRepositoryConfig().shouldReadDomainTokens())) {
             // Timestamps
             scopeAccess.setAccessTokenExp(new Date(unpacker.readLong()));
             scopeAccess.setCreateTimestamp(new Date(unpacker.readLong()));
@@ -429,6 +483,10 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             // DN
             scopeAccess.setUniqueId(TokenDNCalculator.calculateProvisionedUserTokenDN(impersonatorId, webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
+
+            if (version == VERSION_1) {
+                scopeAccess.setAuthenticationDomainId(safeRead(unpacker, String.class));
+            }
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
         }
@@ -498,6 +556,8 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             // DN
             scopeAccess.setUniqueId(TokenDNCalculator.calculateRackerTokenDN(impersonatorId, webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
+
+            scopeAccess.setAuthenticationDomainId(RackerScopeAccess.RACKSPACE_DOMAIN);
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
         }
