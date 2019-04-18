@@ -29,8 +29,8 @@ class AtomHopperHelperTest extends Specification{
     def "Get Auth Token good token" (){
         given:
         setupMock()
-        identityConfig.getGaUsername() >> "auth"
-        identityConfig.getCloudAuthClientId() >> "aclient"
+        identityConfig.getStaticConfig().getGaUsername() >> "auth"
+        identityConfig.getStaticConfig().getCloudAuthClientId() >> "aclient"
         User user = new User()
         user.uniqueId = "1"
         userService.getUser(_) >> user

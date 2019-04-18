@@ -402,13 +402,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             }
 
             sa = (UserScopeAccess) addScopedScopeAccess(userAuthenticationResult.getUser(),
-                    identityConfig.getCloudAuthClientId(),
+                    identityConfig.getStaticConfig().getCloudAuthClientId(),
                     userAuthenticationResult.getAuthenticatedBy(),
                     expirationSeconds,
                     userAuthenticationResult.getScope());
         }  else {
             sa = addScopeAccess((User) userAuthenticationResult.getUser(),
-                    identityConfig.getCloudAuthClientId(),
+                    identityConfig.getStaticConfig().getCloudAuthClientId(),
                     userAuthenticationResult.getAuthenticatedBy());
         }
 
