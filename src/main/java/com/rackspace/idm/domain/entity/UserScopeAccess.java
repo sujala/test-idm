@@ -8,10 +8,11 @@ import org.apache.commons.lang.StringUtils;
 @Setter
 public class UserScopeAccess extends ScopeAccess implements BaseUserToken {
 
-    // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     private String uniqueId;
 
     private String userRsId;
+
+    private String authenticationDomainId;
 
     @Override
     public String getAccessTokenString() {

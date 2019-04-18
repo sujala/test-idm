@@ -14,9 +14,12 @@ public abstract class ScopeAccess implements Auditable, UniqueId, Token {
 
     private String uniqueId;
 
+    /**
+     * This is a legacy holdover from OAuth based initial architecture. It's, for all current scenarios, always the
+     * "identity" application, but the value could theoretically change between environments.
+     */
+    @Deprecated
     private String clientId;
-
-    private String clientRCN;
 
     private String accessTokenString;
 

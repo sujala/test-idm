@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.security
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.encrypters.KeyCzarAuthenticatedMessageProvider
@@ -9,6 +10,7 @@ import com.rackspace.idm.domain.security.tokenproviders.TokenProvider
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.GlobalAuthTokenProvider
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
 import com.rackspace.idm.domain.service.AETokenRevocationService
+import com.rackspace.idm.domain.service.IdentityPropertyService
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.commons.collections.CollectionUtils
@@ -33,11 +35,15 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
     @Shared KeyCzarAuthenticatedMessageProvider amProvider
 
     //main controller service for AE tokens
-    @Shared DefaultAETokenService aeTokenService;
+    @Shared DefaultAETokenService aeTokenService
 
     //global auth ae provider
     @Shared GlobalAuthTokenProvider globalAuthTokenProvider
     @Shared MessagePackTokenDataPacker globalAuthTokenDataPacker
+
+    @Shared IdentityPropertyService identityPropertyService
+
+    @Shared IdentityConfig.RepositoryConfig repositoryConfig
 
     AETokenRevocationService aeTokenRevocationService
 
@@ -52,9 +58,13 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
 
         reloadableConfig = new PropertiesConfiguration()
 
+        identityPropertyService = Mock(IdentityPropertyService)
+
         identityConfig = new IdentityConfig()
         identityConfig.staticConfiguration = staticConfig
         identityConfig.reloadableConfiguration = reloadableConfig
+        identityConfig.identityPropertyService = identityPropertyService
+        identityConfig.propertyValueConverter = new IdentityPropertyValueConverter()
 
         identityUserService = Mock()
         userService = Mock()
@@ -67,7 +77,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         globalAuthTokenDataPacker = new MessagePackTokenDataPacker()
         globalAuthTokenDataPacker.identityConfig = identityConfig
         globalAuthTokenDataPacker.identityUserService = identityUserService
-        globalAuthTokenDataPacker.provisionedUserService = userService
         globalAuthTokenDataPacker.aeTokenService = aeTokenService
 
         globalAuthTokenProvider = new GlobalAuthTokenProvider()
@@ -96,6 +105,10 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         aeTokenRevocationService = Mock()
         aeTokenService.aeTokenCache.aeTokenRevocationService = aeTokenRevocationService
         aeTokenService.aeTokenRevocationService = aeTokenRevocationService
+
+        // For each test, reset the repository config
+        repositoryConfig = Mock(IdentityConfig.RepositoryConfig)
+        identityConfig.repositoryConfig = repositoryConfig
     }
 
     def void validateScopeAccessesEqual(ScopeAccess original, ScopeAccess toValidate) {
@@ -159,7 +172,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
             it.accessTokenExp = expiration
             it.userRsId = user.id
             it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
-            it.clientRCN = "clientRCN"
             it.getAuthenticatedBy().addAll(authBy)
             return it
         }
@@ -171,7 +183,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
             it.accessTokenExp = expiration
             it.rackerId = user.id
             it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
-            it.clientRCN = "clientRCN"
             it.getAuthenticatedBy().addAll(authBy)
             return it
         }

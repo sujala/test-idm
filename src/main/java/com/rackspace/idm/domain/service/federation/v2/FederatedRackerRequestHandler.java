@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -88,19 +89,7 @@ public class FederatedRackerRequestHandler {
     }
 
     private RackerScopeAccess createToken(Racker federatedRacker, FederatedRackerAuthRequest authRequest) {
-        RackerScopeAccess token = new RackerScopeAccess();
-        token.setRackerId(federatedRacker.getRackerId());
-
-        token.setAccessTokenString(scopeAccessService.generateToken()); // Will get replaced w/ AE token during save
-        token.setAccessTokenExp(authRequest.getRequestedTokenExpiration().toDate());
-        token.setClientId(identityConfig.getStaticConfig().getCloudAuthClientId());
-
-        // ALL Racker IDP Auth get mapped to FEDERATION + add in whatever IDP specified
-        token.getAuthenticatedBy().add(AuthenticatedByMethodEnum.FEDERATION.getValue());
-        token.getAuthenticatedBy().add(authRequest.getAuthenticatedByForRequest().getValue());
-
-        scopeAccessService.addUserScopeAccess(federatedRacker, token);
-
-        return token;
+        List<String> authBy = Arrays.asList(AuthenticatedByMethodEnum.FEDERATION.getValue(), authRequest.getAuthenticatedByForRequest().getValue());
+        return (RackerScopeAccess) scopeAccessService.addScopedScopeAccess(federatedRacker, identityConfig.getStaticConfig().getCloudAuthClientId(), authBy, authRequest.getRequestedTokenExpiration().toDate(), null);
     }
 }

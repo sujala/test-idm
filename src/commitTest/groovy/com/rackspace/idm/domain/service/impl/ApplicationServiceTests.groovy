@@ -184,7 +184,6 @@ public class ApplicationServiceTests {
     private ScopeAccess getFakeScopeAccess() {
         ScopeAccess sa = new UserScopeAccess()
         sa.setClientId(clientId)
-        sa.setClientRCN(customerId)
         return sa
     }
 }

@@ -92,6 +92,13 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE = "Unable to load and parse the default IDP policy.";
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE = "The default IDP policy is not properly configured.";
 
+    /**
+     * @deprecated v1.0 Fed API is deprecated and should no longer ever be used.
+     * @param response
+     * @return
+     * @throws ServiceUnavailableException
+     */
+    @Deprecated
     @Override
     public SamlAuthResponse processSamlResponse(Response response) throws ServiceUnavailableException {
         return federatedAuthHandlerV1.authenticate(response);

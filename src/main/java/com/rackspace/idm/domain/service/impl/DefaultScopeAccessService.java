@@ -8,35 +8,14 @@ import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.ProvisionedUserDelegate;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.TokenScopeEnum;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.AETokenService;
-import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.OpenstackType;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.ServiceCatalogInfo;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -48,16 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 public class DefaultScopeAccessService implements ScopeAccessService {
@@ -211,47 +181,38 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         DateTime desiredImpersonationTokenExpiration = calculateDesiredImpersonationTokenExpiration(impersonationRequest, impersonatorType, requestInstant);
 
-        UserScopeAccess userTokenForImpersonation = getUserScopeAccessForImpersonationRequest(impersonator, userBeingImpersonated, desiredImpersonationTokenExpiration, requestInstant);
+        AuthenticatedByMethodGroup impersonatorAuthByGroup = AuthenticatedByMethodGroup.getGroup(impersonatorAuthByMethods);
+        ImpersonationTokenRequest impTokenRequest = ImpersonationTokenRequest.builder().issuedToUser(impersonator)
+                .authenticatedByMethodGroup(impersonatorAuthByGroup)
+                .authenticationDomainId(impersonator.getDomainId()) // Impersonation always done under user's domain
+                .clientId(identityConfig.getStaticConfig().getCloudAuthClientId())
+                .creationDate(requestInstant.toDate().toInstant())
+                .expirationDate(desiredImpersonationTokenExpiration.toDate().toInstant())
+                .userToImpersonate(userBeingImpersonated)
+                .build();
 
-        ImpersonatedScopeAccess scopeAccessToUse = createImpersonatedScopeAccess(impersonator, userBeingImpersonated, userTokenForImpersonation, desiredImpersonationTokenExpiration, impersonatorAuthByMethods);
-        logger.info(ADDING_SCOPE_ACCESS, scopeAccessToUse);
-        scopeAccessDao.addScopeAccess(impersonator, scopeAccessToUse);
-        logger.info(ADDED_SCOPE_ACCESS, scopeAccessToUse);
+
+        EndUserTokenRequest userBeingImpersonatedTokenRequest = EndUserTokenRequest.builder().issuedToUser(userBeingImpersonated)
+                .clientId(identityConfig.getStaticConfig().getCloudAuthClientId())
+                .expirationDate(desiredImpersonationTokenExpiration.toDate().toInstant())
+                .authenticatedByMethodGroup(AuthenticatedByMethodGroup.IMPERSONATION)
+                .build();
+
+        UserScopeAccess userBeingImpersonatedToken = (UserScopeAccess) createToken(userBeingImpersonatedTokenRequest);
+        ImpersonatedScopeAccess scopeAccessToUse = (ImpersonatedScopeAccess) createToken(impTokenRequest);
+        scopeAccessToUse.setImpersonatingToken(userBeingImpersonatedToken.getAccessTokenString());
 
         Audit.logSuccessfulImpersonation(scopeAccessToUse);
         return scopeAccessToUse;
     }
 
     /**
-     * Create a new impersonated scope access based on the passed in information
-     *
-     * @param impersonator
-     * @param userTokenForImpersonation
-     * @param impersonationTokenExpirationDate
-     * @return
+     * This is only used by legacy Fed v1.0 API. Will be removed in future release.
+     * @param user
+     * @param scopeAccess
      */
-    private ImpersonatedScopeAccess createImpersonatedScopeAccess(BaseUser impersonator, EndUser userBeingImpersonated, UserScopeAccess userTokenForImpersonation, DateTime impersonationTokenExpirationDate, List<String> impersonatorAuthByMethods) {
-        String clientId = getCloudAuthClientId();
-
-        ImpersonatedScopeAccess newImpersonatedScopeAccess = new ImpersonatedScopeAccess();
-        if (impersonator instanceof Racker) {
-            newImpersonatedScopeAccess.setRackerId(((Racker) impersonator).getRackerId());
-        } else {
-            //federated users are not allowed to impersonate so safe to cast to user at this point
-            newImpersonatedScopeAccess.setUserRsId(((User) impersonator).getId());
-        }
-
-        newImpersonatedScopeAccess.setClientId(clientId);
-        newImpersonatedScopeAccess.setAccessTokenString(this.generateToken());
-        newImpersonatedScopeAccess.setImpersonatingToken(userTokenForImpersonation.getAccessTokenString());
-        newImpersonatedScopeAccess.setAccessTokenExp(impersonationTokenExpirationDate.toDate());
-        newImpersonatedScopeAccess.setRsImpersonatingRsId(userTokenForImpersonation.getUserRsId());
-        newImpersonatedScopeAccess.setAuthenticatedBy(new ArrayList<String>(impersonatorAuthByMethods));
-
-        return newImpersonatedScopeAccess;
-    }
-
     @Override
+    @Deprecated
     public void addUserScopeAccess(BaseUser user, ScopeAccess scopeAccess) {
         if (scopeAccess == null) {
             String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
@@ -301,28 +262,40 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
+    /**
+     * @deprecated use createToken
+     *
+     * @param racker
+     * @param clientId
+     * @param authenticatedBy
+     * @return
+     */
     @Override
     public RackerScopeAccess getValidRackerScopeAccessForClientId(Racker racker, String clientId, List<String> authenticatedBy) {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
-        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthRackerTokenExpirationSeconds());
-        RackerScopeAccess scopeAccess = new RackerScopeAccess();
-        scopeAccess.setClientId(clientId);
-        scopeAccess.setRackerId(racker.getRackerId());
-        scopeAccess.setAccessTokenString(generateToken());
-        scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
-        scopeAccess.setAuthenticatedBy(authenticatedBy);
-        scopeAccessDao.addScopeAccess(racker, scopeAccess);
+        int expirationSeconds = getTokenExpirationSeconds(identityConfig.getStaticConfig().getTokenLifetimeRackerDefault());
+
+        // Convert list to method group
+        AuthenticatedByMethodGroup authGroup = CollectionUtils.isNotEmpty(authenticatedBy) ? AuthenticatedByMethodGroup.getGroup(authenticatedBy) : null;
+
+        RackerTokenRequest tokenRequest = RackerTokenRequest.builder().issuedToUser(racker).clientId(clientId)
+                .expireAfterCreation(expirationSeconds)
+                .authenticatedByMethodGroup(authGroup)
+                .build();
+
+        RackerScopeAccess scopeAccess = (RackerScopeAccess) createToken(tokenRequest);
 
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
 
-    private List<String> authenticateBy(String type) {
-        List<String> authenticatedBy = new ArrayList<String>();
-        authenticatedBy.add(type);
-        return authenticatedBy;
-    }
-
+    /**
+     * @deprecated use createToken
+     * @param username
+     * @param password
+     * @param clientId
+     * @return
+     */
     @Override
     public UserScopeAccess getUserScopeAccessForClientIdByUsernameAndPassword(String username,
                                                                               String password, String clientId) {
@@ -330,68 +303,111 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userService.authenticate(username, password);
         handleAuthenticationFailure(username, result);
 
-        return this.addScopeAccess((User) result.getUser(), clientId, authenticateBy(GlobalConstants.AUTHENTICATED_BY_PASSWORD));
+        return this.addScopeAccess((User) result.getUser(), clientId, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD));
     }
 
+    /**
+     * Ideally this will be the sole mechanism to create a new token while returning in the standard "ScopeAccess" format
+     *
+     * @param tokenRequest
+     * @return
+     */
+    @Override
+    public ScopeAccess createToken(TokenRequest tokenRequest) {
+        ScopeAccess sa = tokenRequest.generateShellScopeAccessForRequest();
+        this.scopeAccessDao.addScopeAccess(tokenRequest.getIssuedToUser(), sa);
+        return sa;
+    }
+
+    /**
+     * @deprecated use createToken
+     * @param user
+     * @param clientId
+     * @param authenticatedBy
+     * @return
+     */
     @Override
     public UserScopeAccess addScopeAccess(User user, String clientId, List<String> authenticatedBy) {
-        UserScopeAccess scopeAccess = provisionUserScopeAccess(user, clientId);
-        if (authenticatedBy != null) {
-            scopeAccess.setAuthenticatedBy(authenticatedBy);
-        }
-        this.scopeAccessDao.addScopeAccess(user, scopeAccess);
-        return scopeAccess;
+        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
+
+        // Convert list to method group
+        AuthenticatedByMethodGroup authGroup = CollectionUtils.isNotEmpty(authenticatedBy) ? AuthenticatedByMethodGroup.getGroup(authenticatedBy) : null;
+
+        EndUserTokenRequest tokenRequest = EndUserTokenRequest.builder().issuedToUser(user)
+                .clientId(clientId)
+                .authenticatedByMethodGroup(authGroup)
+                .expireAfterCreation(expirationSeconds)
+                .build();
+
+        return (UserScopeAccess) createToken(tokenRequest);
     }
 
+    /**
+     * @deprecated use createToken
+     * @param user
+     * @param clientId
+     * @param authenticatedBy
+     * @param expirationSeconds
+     * @param scope
+     * @return
+     */
     @Override
     public ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, int expirationSeconds, String scope) {
         DateTime expiration = new DateTime().plusSeconds(expirationSeconds);
         return addScopedScopeAccess(user, clientId, authenticatedBy, expiration.toDate(), scope);
     }
 
-    // TODO: Refactor all the scope access creation methods. THis is getting unwieldy.
+    /**
+     * @deprecated use createToken
+     * @param user
+     * @param clientId
+     * @param authenticatedBy
+     * @param expirationDate
+     * @param scope
+     * @return
+     */
     @Override
     public ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, Date expirationDate, String scope) {
-        ScopeAccess scopeAccessToAdd = null;
+        boolean isEndUser = user instanceof EndUser;
+        boolean isRacker = user instanceof Racker;
 
-        boolean isProvisionedUser = user instanceof User;
-        boolean isProvisionedUserDelegate = user instanceof ProvisionedUserDelegate;
+        // Convert list to method group
+        AuthenticatedByMethodGroup authGroup = CollectionUtils.isNotEmpty(authenticatedBy) ? AuthenticatedByMethodGroup.getGroup(authenticatedBy) : null;
 
-        if (isProvisionedUser || isProvisionedUserDelegate) {
-            UserScopeAccess userScopeAccess = new UserScopeAccess();
-            userScopeAccess.setUserRsId(user.getId());
-            userScopeAccess.setClientId(clientId);
-            userScopeAccess.setAccessTokenExp(expirationDate);
-            userScopeAccess.setAccessTokenString(generateToken());
-            userScopeAccess.getAuthenticatedBy().addAll(authenticatedBy);
-            userScopeAccess.setScope(scope);
-            scopeAccessToAdd = userScopeAccess;
+        // Convert scope to available
+        TokenScopeEnum scopeType = scope != null ? TokenScopeEnum.fromScope(scope) : null;
 
-            if (isProvisionedUserDelegate) {
-                userScopeAccess.setDelegationAgreementId(((ProvisionedUserDelegate)user).getDelegationAgreement().getId());
-            }
-        }  else {
-            // We can fully implement this method for Federated Users and Rackers, but
-            // for now its just going to be an unsupported method.
-            throw new UnsupportedOperationException();
+        TokenRequest tokenRequest;
+        if (isEndUser) {
+            EndUser endUser = (EndUser) user;
+            tokenRequest = EndUserTokenRequest.builder().issuedToUser(endUser).clientId(clientId)
+                    .expirationDate(expirationDate.toInstant())
+                    .authenticatedByMethodGroup(authGroup)
+                    .scope(scopeType)
+                    .build();
+
+        }  else if (isRacker) {
+            Racker racker = (Racker) user;
+            tokenRequest = RackerTokenRequest.builder().issuedToUser(racker).clientId(clientId)
+                    .expirationDate(expirationDate.toInstant())
+                    .authenticatedByMethodGroup(authGroup)
+                    .build();
+        } else {
+            throw new UnsupportedOperationException("Unrecognized user type.");
         }
 
-        this.scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
-
-        return scopeAccessToAdd;
+        return createToken(tokenRequest);
     }
 
     //TODO - little smelly that result is a AuthResponseTuple, but not able to do a full refactor here
     @Override
     public AuthResponseTuple createScopeAccessForUserAuthenticationResult(UserAuthenticationResult userAuthenticationResult) {
+        int expirationSeconds = 0;
+        String scope = userAuthenticationResult.getScope();
 
-        UserScopeAccess sa;
-
-        // If the token is going to be scoped we create it directly, otherwise we'll go through the usual call
-        if (StringUtils.isNotBlank(userAuthenticationResult.getScope())) {
+        if (StringUtils.isNotBlank(scope)) {
             TokenScopeEnum tokenScope = TokenScopeEnum.fromScope(userAuthenticationResult.getScope());
 
-            int expirationSeconds;
             if (tokenScope == TokenScopeEnum.PWD_RESET) {
                 expirationSeconds = identityConfig.getReloadableConfig().getForgotPasswordTokenLifetime();
             } else if (tokenScope == TokenScopeEnum.SETUP_MFA) {
@@ -400,39 +416,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 throw new UnsupportedOperationException(
                         String.format("Token scope '%s' is not supported as a response to UserAuthenticationResult", tokenScope));
             }
-
-            sa = (UserScopeAccess) addScopedScopeAccess(userAuthenticationResult.getUser(),
-                    identityConfig.getCloudAuthClientId(),
-                    userAuthenticationResult.getAuthenticatedBy(),
-                    expirationSeconds,
-                    userAuthenticationResult.getScope());
         }  else {
-            sa = addScopeAccess((User) userAuthenticationResult.getUser(),
-                    identityConfig.getCloudAuthClientId(),
-                    userAuthenticationResult.getAuthenticatedBy());
+            expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
         }
 
-        return new AuthResponseTuple((User)userAuthenticationResult.getUser(), sa);
-    }
+        UserScopeAccess token = (UserScopeAccess) addScopedScopeAccess(userAuthenticationResult.getUser(), identityConfig.getStaticConfig().getCloudAuthClientId(), userAuthenticationResult.getAuthenticatedBy(), expirationSeconds, scope);
 
-    private UserScopeAccess provisionUserScopeAccess(User user, String clientId) {
-        if (user == null) {
-            throw new NotFoundException("User not found");
-        }
-
-        int expirationSeconds = getTokenExpirationSeconds(getDefaultCloudAuthTokenExpirationSeconds());
-
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setUserRsId(user.getId());
-        userScopeAccess.setClientId(clientId);
-        userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(expirationSeconds).toDate());
-        userScopeAccess.setAccessTokenString(generateToken());
-
-        return userScopeAccess;
+        return new AuthResponseTuple((User)userAuthenticationResult.getUser(), token);
     }
 
     private int getTokenExpirationSeconds(int value) {
-        Double entropy = getTokenEntropy();
+        Double entropy = identityConfig.getStaticConfig().getTokeLifetimeEntropy();
         Integer min = (int)Math.floor(value * (1 - entropy));
         Integer max = (int)Math.ceil(value * (1 + entropy));
         Random random = new Random();
@@ -455,15 +449,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     int getDefaultCloudAuthTokenExpirationSeconds() {
-        return config.getInt("token.cloudAuthExpirationSeconds", 86400);
-    }
-
-    int getDefaultCloudAuthRackerTokenExpirationSeconds() {
-        return config.getInt("token.cloudAuthRackerExpirationSeconds", 43200);
-    }
-
-    Double getTokenEntropy(){
-        return config.getDouble("token.entropy");
+        return identityConfig.getStaticConfig().getTokenLifetimeEndUserDefault();
     }
 
     void handleAuthenticationFailure(String username, final UserAuthenticationResult result) {
@@ -494,40 +480,5 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         DateTime desiredImpersonationTokenExpiration = requestInstant.plusSeconds(desiredImpersonationTokenExpirationInSeconds);
 
         return desiredImpersonationTokenExpiration;
-    }
-
-    /**
-     * Retrieve the user token to which the impersonation token will be linked. Upon creation, impersonated token
-     * lifetimes must be set to the requested (or default) expiration. If this
-     * is greater than the remaining lifetime of the user's token, a new user
-     * token must be generated with the lifetime set to the default lifetime of a user token.
-     */
-    private UserScopeAccess getUserScopeAccessForImpersonationRequest(BaseUser impersonator, EndUser user, DateTime desiredImpersonationTokenExpiration, DateTime requestInstant) {
-        UserScopeAccess scopeAccessForImpersonation = null;
-
-        //format of underlying user token is based on the impersonator, not the user being impersonated
-        TokenFormat tFormat = tokenFormatSelector.formatForNewToken(impersonator);
-
-        if (tFormat == TokenFormat.AE) {
-            //always create a new user token
-            scopeAccessForImpersonation = new UserScopeAccess();
-            scopeAccessForImpersonation.setAccessTokenExp(desiredImpersonationTokenExpiration.toDate());
-            scopeAccessForImpersonation.setUserRsId(user.getId());
-            scopeAccessForImpersonation.setClientId(getCloudAuthClientId());
-            scopeAccessForImpersonation.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION);
-            if (aeTokenService.supportsCreatingTokenFor(user, scopeAccessForImpersonation)) {
-                aeTokenService.marshallTokenForUser(user, scopeAccessForImpersonation); //populates access token string
-            } else {
-                throw new UnsupportedOperationException(String.format("AE Token service does not support creating impersonation tokens against users of type '%s'", user.getClass().getSimpleName()));
-            }
-        } else {
-            throw new IllegalStateException(String.format("Unknown impersonation token format for user '%s'", impersonator.getUsername()));
-        }
-
-        return scopeAccessForImpersonation;
-    }
-
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
     }
 }
