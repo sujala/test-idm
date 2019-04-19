@@ -79,7 +79,11 @@ We are moving our PR pipeline to RSI. The workflow is the following:
 Customer Identity CICD Chart
 --------------------------
 
-The values used in the helm install commands can be found in https://passwordsafe.corp.rackspace.com/projects/19983 project.
+The values used in the helm install commands can be found in the following passwordsafe projects.
+- https://passwordsafe.corp.rackspace.com/projects/19983
+    - Access to this passwordsafe project is managed by the Customer Identity team.
+- https://passwordsafe.corp.rackspace.com/projects/19811
+    - Access to this passwordsafe project is managed by the QE Security team. You can request access to this project in the #codescan channel on Slack.
 
 Customer Identity CICD chart runs Jenkins PR flow. It is located [here](https://github.rackspace.com/tesla/charts/tree/master/app/customer-identity-cicd). To install the PR flow in the new namespace, run:
 
@@ -90,7 +94,10 @@ helm install  app/customer-identity-cicd \
     github-secret.token=<CID-RSI-DEV-SVC-GITHUB-PERSONAL-ACCESS-TOKEN>,\
     jenkins-base.snowUsername=cid-rsi-dev-svc,\
     jenkins-base.snowPassword=<CID-RSI-DEV-SVC-PASSWORD>,\
-    passwordsafe.password=<CID-RSI-DEV-SVC-PASSWORD>
+    passwordsafe.password=<CID-RSI-DEV-SVC-PASSWORD>,\
+    docker-secret.password=<CID-RSI-DEV-SVC-PASSWORD>,\
+    jenkins-base.checkmarxUsername=ci-compliance,\
+    jenkins-base.checkmarxPassword=<CI-COMPLIANCE-PASSWORD>
 ```
 
 Next, in this repo, add the [webhook](https://github.rackspace.com/cloud-identity-dev/cloud-identity/settings/hooks). In payload URL, add https://jenkins-identity-test.devapps.rsi.rackspace.net/ghprbhook/, select `issue comments` and `pull requests` individual events.
@@ -103,7 +110,10 @@ helm upgrade <CHART_NAME>  app/customer-identity-cicd \
     github-secret.token=<CID-RSI-DEV-SVC-PAT-TOKEN>,\
     jenkins-base.snowUsername=cid-rsi-dev-svc,\
     jenkins-base.snowPassword=<CID-RSI-DEV-SVC-PASSWORD>,\
-    passwordsafe.password=<CID-RSI-DEV-SVC-PASSWORD>
+    passwordsafe.password=<CID-RSI-DEV-SVC-PASSWORD>,\
+    docker-secret.password=<CID-RSI-DEV-SVC-PASSWORD>,\
+    jenkins-base.checkmarxUsername=ci-compliance,\
+    jenkins-base.checkmarxPassword=<CI-COMPLIANCE-PASSWORD>
 ```
 
 Customer Identity PR Chart
