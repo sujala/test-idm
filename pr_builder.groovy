@@ -1,7 +1,7 @@
 def build(scm) {
 
     library "tesla@v0.8.2"
-    library "customer-identity@c370c611a02befbcace1a94dcf5461d605471823"
+    library "customer-identity@0.1.0"
 
     try {
 

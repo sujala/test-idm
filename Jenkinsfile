@@ -1,4 +1,5 @@
 library "tesla@v0.8.2"
+library "customer-identity@0.1.0"
 
 def gitRepo = 'github.rackspace.com/cloud-identity-dev/cloud-identity'
 def githubUrl = "https://${gitRepo}"
@@ -30,8 +31,7 @@ try {
         node('master') {
             cleanWs()
             checkout scm
-            buildSteps = load('jenkins-scripts/jenkins-build-steps.groovy')
-            buildSteps.setRsiEndpoints(scm)
+            jenkinsBuildSteps.setRsiEndpoints(scm)
             gitSha1 = sh (
                 script: 'git rev-parse HEAD',
                 returnStdout: true
@@ -40,40 +40,40 @@ try {
     }
 
     // Build and publish the artifact to test
-    env.IDM_VERSION = buildSteps.publishArtifact(scm)
+    env.IDM_VERSION = jenkinsBuildSteps.publishArtifact(scm)
     env.NAMESPACE_NAME = namespace
     println "idmVersion = ${env.IDM_VERSION}"
 
 
     // Build images for the sandbox environment
     def sandboxImageTag = env.IDM_VERSION
-    buildSteps.buildImages(sandboxImageTag, env.IDM_VERSION, 'master')
+    jenkinsBuildSteps.buildImages(sandboxImageTag, env.IDM_VERSION, 'master')
 
     def releaseName = null
     try {
         // Deploy sandbox env
         env.SANDBOX_NAME = "pipeline-nct-${env.BUILD_NUMBER}"
         println "env.SANDBOX_NAME = " + env.SANDBOX_NAME
-        releaseName = buildSteps.createStandboxEnv(sandboxImageTag, env.SANDBOX_NAME)
-        buildSteps.deploySandboxEnvironment(releaseName)
+        releaseName = jenkinsBuildSteps.createStandboxEnv(sandboxImageTag, env.SANDBOX_NAME)
+        jenkinsBuildSteps.deploySandboxEnvironment(releaseName)
 
         // Run non-commit tests
-        buildSteps.runNonCommitTests(scm)
+        jenkinsBuildSteps.runNonCommitTests(scm)
     } finally {
-        buildSteps.destroySandboxEnv(releaseName)
+        jenkinsBuildSteps.destroySandboxEnv(releaseName)
     }
 
     try {
         // Deploy sandbox env
         env.SANDBOX_NAME = "pipeline-jt-${env.BUILD_NUMBER}"
         println "env.SANDBOX_NAME = " + env.SANDBOX_NAME
-        releaseName = buildSteps.createStandboxEnv(sandboxImageTag, env.SANDBOX_NAME)
-        buildSteps.deploySandboxEnvironment(releaseName)
+        releaseName = jenkinsBuildSteps.createStandboxEnv(sandboxImageTag, env.SANDBOX_NAME)
+        jenkinsBuildSteps.deploySandboxEnvironment(releaseName)
 
         // Run Johnny tests
-        buildSteps.runJohnnyTests(scm)
+        jenkinsBuildSteps.runJohnnyTests(scm)
     } finally {
-        buildSteps.destroySandboxEnv(releaseName)
+        jenkinsBuildSteps.destroySandboxEnv(releaseName)
     }
 
     testsPassed = true
