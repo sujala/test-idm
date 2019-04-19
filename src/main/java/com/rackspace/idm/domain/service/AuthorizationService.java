@@ -244,7 +244,7 @@ public interface AuthorizationService {
     /**
      * If the repository feature flag <i>feature.enable.authorization.domain.verification</i> is enabled, this method
      * verifies that the specified user is authorized to authenticate to the specified domain. If not, an UnauthorizedException
-     * is thrown.
+     * is thrown. If the supplied domainId is null or whitespace only, no verification is performed.
      *
      * @param user
      * @param domainId

@@ -129,7 +129,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         if (restrictingAuthByTenant) {
             // Tenant must exist and tenant's domain must match authorization domain
             String authRequestDomain = authenticationRequest.getDomainId();
-            if (tenantInRequest == null || (StringUtils.isNotBlank(authRequestDomain) && !authRequestDomain.equalsIgnoreCase(tenantInRequest.getDomainId()))) {
+            if (identityConfig.getRepositoryConfig().shouldVerifyAuthorizationDomains() && (tenantInRequest == null || (StringUtils.isNotBlank(authRequestDomain) && !authRequestDomain.equalsIgnoreCase(tenantInRequest.getDomainId())))) {
                 throw new NotAuthorizedException(ErrorCodes.ERROR_CODE_AUTH_INVALID_TENANT_MSG, ErrorCodes.ERROR_CODE_AUTH_INVALID_TENANT);
             }
             // User must have a role on the tenant

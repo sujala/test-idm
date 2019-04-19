@@ -529,7 +529,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void verifyUserAuthorizedToAuthenticateOnDomain(BaseUser user, String domainId) {
-        if (identityConfig.getRepositoryConfig().shouldVerifyAuthorizationDomains() && (domainId == null || !user.getDomainId().equalsIgnoreCase(domainId))) {
+        if (identityConfig.getRepositoryConfig().shouldVerifyAuthorizationDomains() && (StringUtils.isNotBlank(domainId) && !domainId.equalsIgnoreCase(user.getDomainId()))) {
             throw new NotAuthorizedException(ErrorCodes.ERROR_CODE_AUTH_INVALID_DOMAIN_MSG, ErrorCodes.ERROR_CODE_AUTH_INVALID_DOMAIN);
         }
     }
