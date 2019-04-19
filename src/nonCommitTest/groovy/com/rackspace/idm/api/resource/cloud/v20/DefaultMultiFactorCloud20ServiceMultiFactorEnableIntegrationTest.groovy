@@ -4,6 +4,7 @@ import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UserDao
@@ -323,7 +324,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         def auth11Response401 = cloud11.authenticate(cred2, requestContentMediaType, acceptMediaType)
 
         then: "receive 401"
-        IdmAssert.assertV1AuthFaultResponse(auth11Response401, UnauthorizedFault.class, com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED, AuthWithApiKeyCredentials.AUTH_FAILURE_MSG)
+        IdmAssert.assertV1AuthFaultResponse(auth11Response401, UnauthorizedFault.class, com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED, ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_AUTH_INVALID_API_KEY, ErrorCodes.ERROR_CODE_AUTH_INVALID_API_KEY_MSG))
 
         where:
         requestContentMediaType | acceptMediaType

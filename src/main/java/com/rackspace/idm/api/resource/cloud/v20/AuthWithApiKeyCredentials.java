@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.newrelic.api.agent.Trace;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -14,9 +15,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AuthWithApiKeyCredentials extends BaseUserAuthenticationFactor {
-
-    public static final String AUTH_FAILURE_MSG = "Username or api key is invalid.";
-
     @Autowired
     private Validator20 validator20;
 
@@ -79,8 +77,7 @@ public class AuthWithApiKeyCredentials extends BaseUserAuthenticationFactor {
     @Override
     public void validateUserAuthenticationResult(final UserAuthenticationResult result) {
         if (!result.isAuthenticated()) {
-            String errorMessage = String.format(AUTH_FAILURE_MSG);
-            throw new NotAuthenticatedException(errorMessage);
+            throw new NotAuthenticatedException(ErrorCodes.ERROR_CODE_AUTH_INVALID_API_KEY_MSG, ErrorCodes.ERROR_CODE_AUTH_INVALID_API_KEY);
         }
     }
 

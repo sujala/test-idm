@@ -2,14 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.entity.IdentityPropertyValueType
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.AuthenticationRequest
-import org.openstack.docs.identity.api.v2.Tenant
-import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.*
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import static org.apache.http.HttpStatus.SC_OK
@@ -21,6 +17,7 @@ import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
 
     @Shared User sharedUserAdmin
+    @Shared String sharedUserAdminToken
     @Shared String sharedIdentityAdminToken
 
     def setupSpec() {
@@ -31,6 +28,8 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
         sharedUserAdmin = cloud20.createCloudAccount(sharedIdentityAdminToken)
         def response = cloud20.addApiKeyToUser(sharedIdentityAdminToken, sharedUserAdmin.id, v2Factory.createApiKeyCredentials(sharedUserAdmin.username, Constants.DEFAULT_API_KEY))
         assert response.status == SC_OK
+
+        sharedUserAdminToken = cloud20.authenticateForToken(sharedUserAdmin.username, Constants.DEFAULT_PASSWORD)
     }
 
     def cleanupSpec() {
@@ -53,12 +52,93 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "Add domainId to request"
         request.setDomainId(sharedUserAdmin.getDomainId())
+        response = cloud20.authenticate(request)
 
         then: "Valid"
         response.status == SC_OK
 
         where:
         [defaultDomain, verifyDomain] << [[true, false], [true, false]].combinations()
+    }
+
+    @Unroll
+    def "authWithX: If provide valid credentials, but domain other than user's, receive appropriate error for credential type: #authRequest.credential.value.getClass().getName()"() {
+        setVerificationFeatureFlag(true)
+
+        when:
+        def response = cloud20.authenticate(authRequest)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, UnauthorizedFault, SC_UNAUTHORIZED, "AUTH-006", "Not authorized for the domain.")
+
+        where:
+        authRequest | _
+        v2Factory.createPasswordAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_PASSWORD).with {
+            it.domainId = "132885"
+            it
+        } | _
+        v2Factory.createApiKeyAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_API_KEY).with {
+            it.domainId = "132885"
+            it
+        } | _
+        v2Factory.createTokenAuthenticationRequest(sharedUserAdminToken, "idonotexist", null).with {
+            it.domainId = "132885"
+            it
+        } | _
+    }
+
+    @Unroll
+    def "authWithX: Credential is verified before domain for credential type: #authRequest.credential.value.getClass().getName()"() {
+        setVerificationFeatureFlag(true)
+
+        when:
+        def response = cloud20.authenticate(authRequest)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, UnauthorizedFault, SC_UNAUTHORIZED, errorCode, errorMessage)
+
+        where:
+        authRequest | errorCode | errorMessage
+        v2Factory.createPasswordAuthenticationRequest(sharedUserAdmin.username, "invalid").with {
+            it.domainId = "132885"
+            it
+        } | "AUTH-004" | "Unable to authenticate user with credentials provided."
+        v2Factory.createApiKeyAuthenticationRequest(sharedUserAdmin.username, "invalid").with {
+            it.domainId = "132885"
+            it
+        } | "AUTH-008" | "Username or api key is invalid."
+        v2Factory.createTokenAuthenticationRequest("badtoken", "idonotexist", null).with {
+            it.domainId = "132885"
+            it
+        } | "AUTH-005" | "Token not authenticated."
+    }
+
+    @Unroll
+    def "authWithX: If provide valid credentials and domain, but bad tenant, receive appropriate error for credential type: #authRequest.credential.value.getClass().getName()"() {
+        setVerificationFeatureFlag(true)
+
+        when:
+        def response = cloud20.authenticate(authRequest)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, UnauthorizedFault, SC_UNAUTHORIZED, "AUTH-007", "Not authorized for the tenant.")
+
+        where:
+        authRequest | _
+        v2Factory.createPasswordAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_PASSWORD).with {
+            it.domainId = sharedUserAdmin.domainId
+            it.tenantId = "idonotexist" // Anything the user does not have access to
+            it
+        } | _
+        v2Factory.createApiKeyAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_API_KEY).with {
+            it.domainId = sharedUserAdmin.domainId
+            it.tenantId = "idonotexist" // Anything the user does not have access to
+            it
+        } | _
+        v2Factory.createTokenAuthenticationRequest(sharedUserAdminToken, "idonotexist", null).with {
+            it.domainId = sharedUserAdmin.domainId
+            it
+        } | _
     }
 
     @Unroll
@@ -76,6 +156,7 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "Add domainId to request"
         request.setDomainId(sharedUserAdmin.getDomainId())
+        response = cloud20.authenticate(request)
 
         then: "Valid"
         response.status == SC_OK
@@ -101,6 +182,7 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "Add domainId to request"
         request.setDomainId(sharedUserAdmin.getDomainId())
+        response = cloud20.authenticate(request)
 
         then: "Valid"
         response.status == SC_OK

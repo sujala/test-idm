@@ -148,6 +148,12 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_AUTH_INVALID_CREDENTIALS_MSG = "Unable to authenticate user with credentials provided.";
 
     /**
+     * User provided invalid api key in auth request
+     */
+    public static final String ERROR_CODE_AUTH_INVALID_API_KEY = "AUTH-008";
+    public static final String ERROR_CODE_AUTH_INVALID_API_KEY_MSG = "Username or api key is invalid.";
+
+    /**
      * User provided invalid token in auth request
      */
     public static final String ERROR_CODE_AUTH_INVALID_TOKEN = "AUTH-005";
@@ -163,7 +169,7 @@ public final class ErrorCodes {
      * User provided tenant in auth request to which user does not have access
      */
     public static final String ERROR_CODE_AUTH_INVALID_TENANT = "AUTH-007";
-    public static final String ERROR_CODE_AUTH_INVALID_TENANT_MSG = " Not authorized for the tenant.";
+    public static final String ERROR_CODE_AUTH_INVALID_TENANT_MSG = "Not authorized for the tenant.";
 
 
     // Delegation Agreements
