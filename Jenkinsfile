@@ -22,6 +22,7 @@ def scm = [
 ]
 
 def testsPassed = false
+def gitSha1
 try {
 
     // Setup the git configuration so it can be passed as an arg to common code
@@ -31,6 +32,10 @@ try {
             checkout scm
             buildSteps = load('jenkins-scripts/jenkins-build-steps.groovy')
             buildSteps.setRsiEndpoints(scm)
+            gitSha1 = sh (
+                script: 'git rev-parse HEAD',
+                returnStdout: true
+            ).trim()
         }
     }
 
@@ -104,7 +109,10 @@ try {
                 """
         }
 
-        // trigger push images to Artifactory
+        // Trigger push images to Artifactory
         build job: 'rsi-images', parameters: [string(name: 'APP_REVISION', value: env.IDM_VERSION)], wait: false
+
+        // Trigger a checkmarx scan
+        build job: 'Customer-Identity-Checkmarx', parameters: [string(name: 'APP_REVISION', value: gitSha1)], wait: false
     }
 }
