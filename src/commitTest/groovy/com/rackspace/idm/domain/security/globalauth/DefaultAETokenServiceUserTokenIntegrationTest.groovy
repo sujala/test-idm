@@ -143,7 +143,11 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         aeTokenService.unmarshallToken(apiPwdToken) != null
     }
 
-    def "marshallTokenForUser() - maximize provisioned user token length; run: #run"() {
+    def "marshallTokenForUser() - maximize provisioned user token length; enableDomainTokens: #enableDomainTokens"() {
+        given:
+        repositoryConfig.shouldWriteDomainTokens() >> enableDomainTokens
+        repositoryConfig.shouldReadDomainTokens() >> enableDomainTokens
+
         UserScopeAccess originalUSA =  new UserScopeAccess().with {
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
@@ -152,6 +156,7 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
             it.scope = GlobalConstants.SETUP_MFA_SCOPE
+            it.authenticationDomainId = UUID.randomUUID().toString().replaceAll("-", "")
             return it
         }
 
@@ -167,6 +172,9 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         then:
         unmarshalledScopeAccess instanceof UserScopeAccess
         validateUserScopeAccessesEqual(originalUSA, (UserScopeAccess) unmarshalledScopeAccess)
+
+        where:
+        enableDomainTokens << [true, false]
     }
 
     @Unroll

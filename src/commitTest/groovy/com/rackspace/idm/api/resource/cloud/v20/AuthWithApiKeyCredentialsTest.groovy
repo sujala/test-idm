@@ -16,6 +16,7 @@ class AuthWithApiKeyCredentialsTest extends RootServiceTest {
     def setup() {
         mockUserService(service)
         mockScopeAccessService(service)
+        mockAuthorizationService(service)
         mockValidator20(service)
     }
 

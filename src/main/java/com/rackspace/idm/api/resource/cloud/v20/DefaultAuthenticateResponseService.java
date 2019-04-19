@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
@@ -10,6 +11,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.collections4.CollectionUtils;
@@ -122,9 +124,15 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
         /**
         * If user specified a tenantId/tenantName for auth request, must verify user has access to that tenant (regardless of
-        * whether the tenant is disabled or not)
+        * whether the tenant is disabled or not). The tenant must also belong to the authorized domain of the request.
          */
         if (restrictingAuthByTenant) {
+            // Tenant must exist and tenant's domain must match authorization domain
+            String authRequestDomain = authenticationRequest.getDomainId();
+            if (tenantInRequest == null || (StringUtils.isNotBlank(authRequestDomain) && !authRequestDomain.equalsIgnoreCase(tenantInRequest.getDomainId()))) {
+                throw new NotAuthorizedException(ErrorCodes.ERROR_CODE_AUTH_INVALID_TENANT_MSG, ErrorCodes.ERROR_CODE_AUTH_INVALID_TENANT);
+            }
+            // User must have a role on the tenant
             verifyUserHasRoleOnSpecifiedTenant(authResponseTuple.getUser(), scInfo, authenticationRequest);
         }
 
@@ -428,7 +436,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
             errorMsg =  String.format("Tenant with Name/Id: '%s' is not valid for User '%s' (id: '%s')", tenantIdentifier, user.getUsername(), user.getId());
         }
         logger.warn(errorMsg);
-        throw new NotAuthenticatedException(errorMsg);
+        throw new NotAuthenticatedException(ErrorCodes.ERROR_CODE_AUTH_INVALID_TENANT_MSG, ErrorCodes.ERROR_CODE_AUTH_INVALID_TENANT);
     }
 
     private boolean isMossoTenant(String tenantId, List<TenantRole> roles) {

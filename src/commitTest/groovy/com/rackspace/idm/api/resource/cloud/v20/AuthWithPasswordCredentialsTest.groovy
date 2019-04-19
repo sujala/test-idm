@@ -16,6 +16,7 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
     def setup() {
         mockValidator20(service)
         mockScopeAccessService(service)
+        mockAuthorizationService(service)
         mockUserService(service)
     }
 

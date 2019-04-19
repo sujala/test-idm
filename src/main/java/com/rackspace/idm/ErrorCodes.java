@@ -141,6 +141,31 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_PASSWORD_HISTORY_MATCH = "AUTH-002";
     public static final String ERROR_CODE_CURRENT_PASSWORD_MATCH = "AUTH-003";
 
+    /**
+     * User provided invalid credentials
+     */
+    public static final String ERROR_CODE_AUTH_INVALID_CREDENTIALS = "AUTH-004";
+    public static final String ERROR_CODE_AUTH_INVALID_CREDENTIALS_MSG = "Unable to authenticate user with credentials provided.";
+
+    /**
+     * User provided invalid token in auth request
+     */
+    public static final String ERROR_CODE_AUTH_INVALID_TOKEN = "AUTH-005";
+    public static final String ERROR_CODE_AUTH_INVALID_TOKEN_MSG = "Token not authenticated.";
+
+    /**
+     * User provided domain in auth request to which user does not have access
+     */
+    public static final String ERROR_CODE_AUTH_INVALID_DOMAIN = "AUTH-006";
+    public static final String ERROR_CODE_AUTH_INVALID_DOMAIN_MSG = "Not authorized for the domain.";
+
+    /**
+     * User provided tenant in auth request to which user does not have access
+     */
+    public static final String ERROR_CODE_AUTH_INVALID_TENANT = "AUTH-007";
+    public static final String ERROR_CODE_AUTH_INVALID_TENANT_MSG = " Not authorized for the tenant.";
+
+
     // Delegation Agreements
     public static final String ERROR_CODE_DA_NOT_ALLOWED_FOR_RCN = "DA-000";
     public static final String ERROR_CODE_DELEGATE_ALREADY_EXISTS = "DA-001";
