@@ -56,6 +56,8 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
 
         then: "Valid"
         response.status == SC_OK
+        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
+        authResponse.user.domainId == sharedUserAdmin.domainId
 
         where:
         [defaultDomain, verifyDomain] << [[true, false], [true, false]].combinations()
@@ -200,7 +202,7 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
      * @return
      */
     @Unroll
-    def "authWithToken: When existing tenant belongs to different domain than user and don't specified explicit domainId. If default=#defaultDomain and verify=#verifyDomain, expect=#expectedResult"() {
+    def "authWithToken: When specified tenant belongs to different domain than user and don't specified explicit domainId. If default=#defaultDomain and verify=#verifyDomain, expect=#expectedResult"() {
         setDefaultFeatureFlag(defaultDomain)
         setVerificationFeatureFlag(verifyDomain)
 
@@ -221,9 +223,9 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
         where:
         defaultDomain | verifyDomain | expectedResult
         false | false | SC_OK // Currently supported use case.
-        false | true | SC_OK // No domain is specified or defaulted, so verification not relevant
-        true | false | SC_OK // Not verifying auth domain
-        true | true | SC_UNAUTHORIZED // The user doesn't belong to the tenant's domain
+        false | true | SC_OK // No domain is specified or defaulted, so verification not performed
+        true | false | SC_OK // Not verifying auth domain, so should pass
+        true | true | SC_UNAUTHORIZED // The user doesn't belong to the tenant's domain, the tenant domain is set as default and being verified
     }
 
     @Unroll

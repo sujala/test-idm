@@ -53,4 +53,25 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
         response.user == user
         response.userScopeAccess == scopeAccess
     }
+
+    def "authenticateForAuthResponse verifies user against auth domain"() {
+        given:
+        def user = entityFactory.createUser()
+        def credential = v2Factory.createJAXBPasswordCredentialsBase("username", "Password1")
+        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential).with {
+            it.domainId = user.domainId
+            it
+        }
+        def scopeAccess = createUserScopeAccess()
+
+        when:
+        service.authenticateForAuthResponse(authRequest)
+
+        then:
+        1 * scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> new AuthResponseTuple(user, scopeAccess)
+        userService.authenticate(_, _) >> new UserAuthenticationResult(user, true)
+        1 * authorizationService.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, authRequest)
+        1 * authorizationService.verifyUserAuthorizedToAuthenticateOnDomain(user, authRequest.domainId)
+    }
+
 }

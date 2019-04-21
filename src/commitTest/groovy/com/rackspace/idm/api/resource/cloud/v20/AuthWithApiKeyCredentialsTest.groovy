@@ -53,4 +53,24 @@ class AuthWithApiKeyCredentialsTest extends RootServiceTest {
         result.userScopeAccess == scopeAccess
         result.user == user
     }
+
+    def "authenticateForAuthResponse verifies user against auth domain"() {
+        given:
+        def user = entityFactory.createUser()
+        def credential = v1Factory.createJAXBApiKeyCredentials("username", "apiKey")
+        def authRequest = v2Factory.createAuthenticationRequest(null, null, credential).with {
+            it.domainId = user.domainId
+            it
+        }
+        def scopeAccess = createUserScopeAccess()
+
+        when:
+        service.authenticateForAuthResponse(authRequest)
+
+        then:
+        1 * scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> new AuthResponseTuple(user, scopeAccess)
+        userService.authenticateWithApiKey(_, _) >> new UserAuthenticationResult(user, true)
+        1 * authorizationService.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, authRequest)
+        1 * authorizationService.verifyUserAuthorizedToAuthenticateOnDomain(user, authRequest.domainId)
+    }
 }
