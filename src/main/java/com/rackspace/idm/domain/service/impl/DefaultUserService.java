@@ -1672,6 +1672,7 @@ public class DefaultUserService implements UserService {
 
                 if (StringUtils.isBlank(domain.getType())) {
                     domain.setType(domainService.inferDomainTypeForDomainId(domain.getDomainId()));
+                    logger.info("Updating existing domain with ID {} to have domain type {}", domain.getType());
                     domainService.updateDomain(domain);
                 }
             } else {

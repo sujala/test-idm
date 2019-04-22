@@ -1934,6 +1934,45 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response2.build().status == 201
     }
 
+    @Unroll
+    def "updateDomain a domain's type can only be updated by users with domain admin role and feature flag is enabled: hasAdminRole = #hasAdminRole, featureEnabled = #featureEnabled"() {
+        given:
+        allowUserAccess()
+        def domain = v1Factory.createDomain().with {
+            it.type = RandomStringUtils.randomAlphanumeric(8).toUpperCase()
+            it
+        }
+        def user = new User().with {
+            it.domainId = domain.id
+            it
+        }
+        requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.USER_ADMIN
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
+
+        when:
+        service.updateDomain(authToken, domain.id, domain)
+
+        then:
+        1 * identityConfig.getReloadableConfig().isFeatureSettingDomainTypeEnabled() >> featureEnabled
+        authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> hasAdminRole
+        1 * domainService.checkAndGetDomain(domain.id) >> new Domain()
+        1 * domainService.updateDomain(_) >> { args ->
+            Domain d = args[0]
+            if (hasAdminRole && featureEnabled) {
+                assert d.type == domain.type
+            } else {
+                assert d.type == null
+            }
+        }
+
+        where:
+        hasAdminRole | featureEnabled
+        true         | true
+        true         | false
+        false        | false
+        false        | true
+    }
+
     def "getEndpointsByDomainId verifies admin access"() {
         given:
         mockEndpointConverter(service)
@@ -7189,6 +7228,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockFederatedIdentityService(service)
         mockIdentityProviderConverterCloudV20(service)
         mockTokenRevocationService(service)
+        mockDomainConverter(service)
     }
 
     def mockMisc() {
