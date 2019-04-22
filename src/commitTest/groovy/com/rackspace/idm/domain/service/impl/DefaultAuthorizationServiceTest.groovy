@@ -8,9 +8,14 @@ import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.api.security.ImmutableTenantRole
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.unboundid.ldap.sdk.DN
+import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import spock.lang.Shared
+import spock.lang.Unroll
+import testHelpers.IdmAssert
+import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
 class DefaultAuthorizationServiceTest extends RootServiceTest {
@@ -601,6 +606,212 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         0 * domainService.doDomainsShareRcn(_, _)
         1 * identityUserService.getEndUserById(user.id) >> user
         1 * tenantService.doesUserContainTenantRole(user, _) >> true
+    }
+
+    def "updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary: When feature disabled, default not set"() {
+        given:
+        repositoryConfig.shouldSetDefaultAuthorizationDomain() >> false
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = domainId
+            it
+        }
+        AuthenticationRequest request = v2Factory.createPasswordAuthenticationRequest("user", "pwd")
+
+        when:
+        service.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, request)
+
+        then:
+        request.domainId == null
+    }
+
+    def "updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary: When feature enabled, default not set if domainId already provided"() {
+        given:
+        repositoryConfig.shouldSetDefaultAuthorizationDomain() >> true
+        def requestedDomain = "aDifferentDomain"
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = "adomain"
+            it
+        }
+        AuthenticationRequest request = v2Factory.createPasswordAuthenticationRequest("user", "pwd").with {
+            it.domainId = requestedDomain
+            it
+        }
+
+        when:
+        service.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, request)
+
+        then:
+        request.domainId == requestedDomain
+    }
+
+    def "updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary: When feature enabled, default pulled from user if no tenant"() {
+        given:
+        repositoryConfig.shouldSetDefaultAuthorizationDomain() >> true
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = "adomain"
+            it
+        }
+        AuthenticationRequest request = v2Factory.createPasswordAuthenticationRequest("user", "pwd")
+
+        when:
+        service.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, request)
+
+        then:
+        request.domainId == user.domainId
+    }
+
+    /**
+     * Verifies that if tenantId is specified, the default is pulled from tenant name
+     * @return
+     */
+    def "updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary: When feature enabled, default pulled from tenantid if exists"() {
+        given:
+        repositoryConfig.shouldSetDefaultAuthorizationDomain() >> true
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = "adomain"
+            it
+        }
+        AuthenticationRequest request = v2Factory.createPasswordAuthenticationRequest("user", "pwd").with {
+            it.tenantId = "tenantId"
+            it
+        }
+        Tenant tenant = entityFactory.createTenant("tenantid", "tenantname").with {
+            it.domainId = "tenantdomain"
+            it
+        }
+
+        when:
+        service.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, request)
+
+        then:
+        1 * tenantService.getTenant(request.tenantId) >> tenant
+        request.domainId == tenant.domainId
+    }
+
+    /**
+     * Verifies that if tenantName is specified, the default is pulled from tenant name
+     * @return
+     */
+    def "updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary: When feature enabled, default pulled from tenant name if exists"() {
+        given:
+        repositoryConfig.shouldSetDefaultAuthorizationDomain() >> true
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = "adomain"
+            it
+        }
+        AuthenticationRequest request = v2Factory.createPasswordAuthenticationRequest("user", "pwd").with {
+            it.tenantName = "tenantName"
+            it
+        }
+        Tenant tenant = entityFactory.createTenant("tenantid", "tenantname").with {
+            it.domainId = "tenantdomain"
+            it
+        }
+
+        when:
+        service.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, request)
+
+        then:
+        1 * tenantService.getTenantByName(request.tenantName) >> tenant
+        request.domainId == tenant.domainId
+    }
+
+    def "updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary: When feature enabled, default pulled from user if tenant does not have domain"() {
+        given:
+        repositoryConfig.shouldSetDefaultAuthorizationDomain() >> true
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = "adomain"
+            it
+        }
+        AuthenticationRequest request = v2Factory.createPasswordAuthenticationRequest("user", "pwd").with {
+            it.tenantId = "tenantId"
+            it
+        }
+        Tenant tenant = entityFactory.createTenant("tenantid", "tenantname")
+
+        when:
+        service.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, request)
+
+        then:
+        1 * tenantService.getTenant(request.tenantId) >> tenant
+        request.domainId == user.domainId
+    }
+
+    def "updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary: When feature enabled, default pulled from user if tenant does not exist"() {
+        given:
+        repositoryConfig.shouldSetDefaultAuthorizationDomain() >> true
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = "adomain"
+            it
+        }
+        AuthenticationRequest request = v2Factory.createPasswordAuthenticationRequest("user", "pwd").with {
+            it.tenantId = "tenantId"
+            it
+        }
+
+        when:
+        service.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, request)
+
+        then:
+        1 * tenantService.getTenant(request.tenantId) >> null
+        request.domainId == user.domainId
+    }
+
+    def "verifyUserAuthorizedToAuthenticateOnDomain: If feature disabled, no exception thrown when not authorized"() {
+        repositoryConfig.shouldVerifyAuthorizationDomains() >> false
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = "adomain"
+            it
+        }
+
+        when:
+        service.verifyUserAuthorizedToAuthenticateOnDomain(user, "otherDomain")
+
+        then:
+        notThrown(NotAuthorizedException)
+    }
+
+    def "verifyUserAuthorizedToAuthenticateOnDomain: If feature enabled, exception thrown when not authorized"() {
+        repositoryConfig.shouldVerifyAuthorizationDomains() >> true
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = "adomain"
+            it
+        }
+
+        when:
+        service.verifyUserAuthorizedToAuthenticateOnDomain(user, "otherDomain")
+
+        then:
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, NotAuthorizedException, "AUTH-006", "Not authorized for the domain.")
+    }
+
+    @Unroll
+    def "verifyUserAuthorizedToAuthenticateOnDomain: If feature enabled and '#domainId' domain passed, exception not thrown"() {
+        repositoryConfig.shouldVerifyAuthorizationDomains() >> true
+        def user = new User().with {
+            it.id = "anId"
+            it.domainId = "adomain"
+            it
+        }
+
+        when:
+        service.verifyUserAuthorizedToAuthenticateOnDomain(user, domainId)
+
+        then:
+        notThrown(NotAuthorizedException)
+
+        where:
+        domainId << [null, "", "   "]
     }
 
     def retrieveIdentityRoles() {
