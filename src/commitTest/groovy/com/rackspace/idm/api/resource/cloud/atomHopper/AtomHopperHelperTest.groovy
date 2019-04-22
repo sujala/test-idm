@@ -21,6 +21,7 @@ class AtomHopperHelperTest extends Specification{
     @Shared IdentityConfig identityConfig
     @Shared UserService userService
     @Shared ScopeAccessService scopeAccessService
+    @Shared IdentityConfig.StaticConfig staticConfig
 
     def setupSpec(){
         atomHopperHelper = new AtomHopperHelper();
@@ -50,6 +51,9 @@ class AtomHopperHelperTest extends Specification{
 
     def setupMock(){
         identityConfig = Mock()
+        staticConfig = Mock()
+        identityConfig.getStaticConfig() >> staticConfig
+
         atomHopperHelper.identityConfig = identityConfig
         userService = Mock()
         atomHopperHelper.userService = userService

@@ -1,19 +1,14 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.google.common.cache.LoadingCache
-import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.RootServiceTest
-import com.rackspace.idm.domain.config.IdentityConfig;
 
 /**
  * Integration test in the sense that it includes testing limited interaction with the loading cache. The rest of the
  * app is not included in this test.
  */
 class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
-
-    @Autowired
-    IdentityConfig identityConfig
 
     FileSystemApiDocRepository fileSystemApiDocRepository = new FileSystemApiDocRepository();
 
@@ -46,7 +41,7 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         fileSystemApiDocRepository.getContent(path)
 
         then:
-        1 * identityConfig.getStaticConfig().reloadableDocsTimeOutInSeconds() >> 100
+        1 * staticConfig.reloadableDocsTimeOutInSeconds() >> 100
         fileSystemApiDocRepository.versionInfo != null
     }
 
@@ -116,7 +111,7 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         def path = tempFile.name
 
         identityConfig.getConfigRoot() >> tempFile.getParentFile().getAbsolutePath()
-        identityConfig.getStaticConfig().reloadableDocsTimeOutInSeconds() >> 0
+        staticConfig.reloadableDocsTimeOutInSeconds() >> 0
 
         when:
         String returnedContent = fileSystemApiDocRepository.getContent(path)
@@ -147,7 +142,7 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         def path = tempFile.name
 
         identityConfig.getConfigRoot() >> tempFile.getParentFile().getAbsolutePath()
-        identityConfig.getStaticConfig().reloadableDocsTimeOutInSeconds() >> 1000
+        staticConfig.reloadableDocsTimeOutInSeconds() >> 1000
         identityConfig.useReloadableDocs() >> true
 
         String returnedContent = fileSystemApiDocRepository.getContent(path)
