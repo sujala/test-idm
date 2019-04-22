@@ -27,6 +27,7 @@ import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
+import com.rackspace.idm.util.IdmCommonUtils;
 import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.validation.Validator;
 import org.apache.commons.collections4.CollectionUtils;
@@ -157,6 +158,9 @@ public class DefaultUserService implements UserService {
     @Qualifier("tokenRevocationService")
     private TokenRevocationService tokenRevocationService;
 
+    @Autowired
+    private IdmCommonUtils idmCommonUtils;
+
     @Override
     public void addUserv11(User user) {
         logger.info("Adding User: {}", user);
@@ -202,7 +206,7 @@ public class DefaultUserService implements UserService {
     @Override
     public void addUserAdminV20(User user, boolean isCreateUserOneCall) {
         //only provision mosso and nast tenants if this is a one-user call and the domain is numeric
-        addUserV20(user, isCreateUserOneCall,  isCreateUserOneCall && isNumeric(user.getDomainId()), true);
+        addUserV20(user, isCreateUserOneCall,  isCreateUserOneCall && idmCommonUtils.isNumeric(user.getDomainId()), true);
     }
 
     private void addUserV20(User user, boolean isCreateUserInOneCall, boolean provisionMossoAndNast, boolean isUserAdmin) {
@@ -381,15 +385,6 @@ public class DefaultUserService implements UserService {
             }
         }
 
-    }
-
-    private boolean isNumeric(String domainId) {
-        try {
-            Integer.parseInt(domainId);
-        } catch(NumberFormatException e) {
-            return false;
-        }
-        return true;
     }
 
     @Override
@@ -1163,7 +1158,7 @@ public class DefaultUserService implements UserService {
             //domain that has a domain ID that is non-numeric. This implies that the domain cannot have a
             //mosso tenant (mosso tenant domain IDs must be numeric). Thus, we need to check to see if this
             //condition is met and not assume that we can create mosso and nast tenants.
-            if(isNumeric(user.getDomainId())) {
+            if(idmCommonUtils.isNumeric(user.getDomainId())) {
                 //original code had this. this is in place to help ensure the user has access to their
                 //default tenants. currently the user-admin role is not tenant specific. don't want to
                 //change existing behavior. Need to have business discussion to determine if a user
@@ -1638,9 +1633,9 @@ public class DefaultUserService implements UserService {
 
     private void setRegionIfNotProvided(User user) {
         if (StringUtils.isBlank(user.getRegion())) {
-            Region region = cloudRegionService.getDefaultRegion(getCloudRegion());
+            Region region = cloudRegionService.getDefaultRegion(identityConfig.getStaticConfig().getCloudRegion());
             if (region == null) {
-                throw new IllegalStateException("default cloud region not found for: " + getCloudRegion());
+                throw new IllegalStateException("default cloud region not found for: " + identityConfig.getStaticConfig().getCloudRegion());
             }
 
             user.setRegion(region.getName());
@@ -1650,8 +1645,7 @@ public class DefaultUserService implements UserService {
     private void createDomainIfItDoesNotExist(String domainId) {
         if (StringUtils.isNotBlank(domainId)) {
             if (domainService.getDomain(domainId) == null) {
-                if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()
-                    && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
                             IdentityUserTypeEnum.SERVICE_ADMIN.getRoleName(),
                             IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
                     throw new ForbiddenException(NOT_AUTHORIZED_MSG);
@@ -1675,9 +1669,13 @@ public class DefaultUserService implements UserService {
                 if (isUserAdminCreateInOneCall  && Iterables.size(domainService.getDomainAdmins(domainId)) != 0) {
                     throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DOMAIN_WITH_USERS);
                 }
+
+                if (StringUtils.isBlank(domain.getType())) {
+                    domain.setType(domainService.inferDomainTypeForDomainId(domain.getDomainId()));
+                    domainService.updateDomain(domain);
+                }
             } else {
-                if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()
-                    && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
+                if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
                     throw new ForbiddenException(NOT_AUTHORIZED_MSG);
                 }
                 domainService.createNewDomain(domainId);
@@ -1920,10 +1918,6 @@ public class DefaultUserService implements UserService {
             }
         }
         return hasRole;
-    }
-
-    String getCloudRegion() {
-        return config.getString("cloud.region");
     }
 
     boolean isRackerAuthAllowed() {

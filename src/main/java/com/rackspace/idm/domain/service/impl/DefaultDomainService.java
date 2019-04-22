@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.*;
@@ -8,6 +9,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.util.IdmCommonUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -56,6 +58,9 @@ public class DefaultDomainService implements DomainService {
     @Autowired
     private DomainDao domainDao;
 
+    @Autowired
+    private IdmCommonUtils idmCommonUtils;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
@@ -82,7 +87,7 @@ public class DefaultDomainService implements DomainService {
         if (domain.getEnabled() == null) {
            domain.setEnabled(true);
         }
-        // Ensure domain's type is always save in upper case
+        // Ensure domain's type is always saved in upper case
         if (domain.getType() != null) {
             domain.setType(domain.getType().toUpperCase());
         }
@@ -255,13 +260,14 @@ public class DefaultDomainService implements DomainService {
     }
 
     @Override
-    public String createNewDomain(String domainId){
+    public String createNewDomain(String domainId) {
         try {
             Domain domain = new Domain();
             domain.setDomainId(domainId);
             domain.setEnabled(true);
             domain.setName(domainId);
             domain.setDescription("Default Domain");
+            domain.setType(inferDomainTypeForDomainId(domainId));
             addDomain(domain);
             return domain.getDomainId();
         }
@@ -483,6 +489,42 @@ public class DefaultDomainService implements DomainService {
             }
         }
         return sameRcn;
+    }
+
+    @Override
+    public String inferDomainTypeForDomainId(String domainId) {
+
+        if (StringUtils.isBlank(domainId)) {
+            return GlobalConstants.DOMAIN_TYPE_UNKNOWN;
+        }
+
+         // If the domainId is parseable as a java integer (either negative or positive), the domain is considered an OPC domain.
+         // The type will be one of the RACKSPACE_CLOUD_XX types. The exact type is based on the value of the API server's static cloud.region property.
+        if (idmCommonUtils.isNumeric(domainId)) {
+            String cloudRegion = identityConfig.getStaticConfig().getCloudRegion();
+            if (GlobalConstants.CLOUD_REGION_US.equalsIgnoreCase(cloudRegion)) {
+                // If US, then the type is RACKSPACE_CLOUD_US.
+                return GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US;
+            } else if (GlobalConstants.CLOUD_REGION_UK.equalsIgnoreCase(cloudRegion)) {
+                // If UK, then the type is RACKSPACE_CLOUD_UK.
+                return GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK;
+            } else {
+                // Else, the type is UNKNOWN.
+                return GlobalConstants.DOMAIN_TYPE_UNKNOWN;
+            }
+        }
+
+        // If the domainId is prefixed with dedicated:, the type is DEDICATED.
+        if (domainId.startsWith(GlobalConstants.DOMAIN_PREFIX_DEDICATED)) {
+            return GlobalConstants.DOMAIN_TYPE_DEDICATED;
+        }
+
+         // If the domainId is prefixed with dp:, the type is DATAPIPE.
+        if (domainId.startsWith(GlobalConstants.DOMAIN_PREFIX_DATAPIPE)) {
+            return GlobalConstants.DOMAIN_TYPE_DATAPIPE;
+        }
+         // Else, the type is UNKNOWN.
+        return GlobalConstants.DOMAIN_TYPE_UNKNOWN;
     }
 
     public void setTenantService(TenantService tenantService) {

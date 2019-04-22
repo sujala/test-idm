@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.*;
@@ -28,9 +29,6 @@ public class DefaultEndpointService implements EndpointService {
     public static final String FEATURE_BASEURL_TO_REGION_MAPPING_STRATEGY = "feature.baseurl.to.cloud.region.mapping.strategy";
     public static final String UK_CLOUD_LON_REGION = "LON";
     public static final int UK_CLOUD_BASEURL_ID_THRESHOLD = 1000;
-    public static final String CLOUD_REGION_UK = "UK";
-    public static final String CLOUD_REGION_US = "US";
-    public static final String CLOUD_REGION_PROP_NAME = "cloud.region";
 
     @Autowired
     private EndpointDao endpointDao;
@@ -452,7 +450,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     private boolean isUkCloudRegion() {
-        return CLOUD_REGION_UK.equalsIgnoreCase(config.getString(CLOUD_REGION_PROP_NAME));
+        return GlobalConstants.CLOUD_REGION_UK.equalsIgnoreCase(identityConfig.getStaticConfig().getCloudRegion());
     }
 
     public enum BaseUrlToRegionMappingStrategy {

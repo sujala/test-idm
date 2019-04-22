@@ -448,9 +448,6 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP = "feature.enable.use.role.for.tenant.management";
     public static final boolean FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_DEFAULT = false;
 
-    public static final String FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP = "feature.enable.use.role.for.domain.management";
-    public static final boolean FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_DEFAULT = false;
-
     public static final String FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP = "feature.enable.use.role.for.endpoint.management";
     public static final boolean FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_DEFAULT = false;
 
@@ -743,6 +740,11 @@ public class IdentityConfig {
     public static final String CACHE_RACKER_GROUPS_SIZE_PROP = "racker.groups.cache.size";
     public static final int CACHE_RACKER_GROUPS_SIZE_DEFAULT = 300;
 
+    public static final String FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP = "feature.enable.setting.domain.type";
+    public static final boolean FEATURE_ENABLE_SETTING_DOMAIN_TYPE_DEFAULT = false;
+
+    public static final String CLOUD_REGION_PROP = "cloud.region";
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -1001,7 +1003,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP, FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_DEFAULT);
         defaults.put(FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_PROP, FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_DEFAULT);
         defaults.put(FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_DEFAULT);
-        defaults.put(FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_DEFAULT);
         defaults.put(FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP, FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT);
@@ -1009,6 +1010,7 @@ public class IdentityConfig {
         defaults.put(TOKEN_LIFETIME_END_USER_DEFAULT_PROP, TOKEN_LIFETIME_END_USER_DEFAULT_DEFAULT);
         defaults.put(TOKEN_LIFETIME_RACKER_DEFAULT_PROP, TOKEN_LIFETIME_RACKER_DEFAULT_DEFAULT);
         defaults.put(TOKEN_LIFETIME_ENTROPY_PROP, TOKEN_LIFETIME_ENTROPY_DEFAULT);
+        defaults.put(FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, FEATURE_ENABLE_SETTING_DOMAIN_TYPE_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -1902,6 +1904,12 @@ public class IdentityConfig {
         public int getLDAPMinimumAvailableConnectionGoal() {
             return getIntSafely(staticConfiguration, LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL);
         }
+
+        @IdmProp(key = CLOUD_REGION_PROP, versionAdded = "1.0.14.8", description = "Specifies the cloud region of the Identity server.")
+        public String getCloudRegion() {
+            return getStringSafely(staticConfiguration, CLOUD_REGION_PROP);
+        }
+
     }
 
     /**
@@ -2729,11 +2737,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, versionAdded = "3.27.0", description = "Control whether a given user is authorized to Create or Delete domains with a role")
-        public boolean isUseRoleForDomainManagementEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP);
-        }
-
         @IdmProp(key = FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, versionAdded = "3.27.0", description = "Control whether a given user is authorized to Create, Delete or Update endpoints with a role")
         public boolean isUseRoleForEndpointManagementEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP);
@@ -2779,6 +2782,11 @@ public class IdentityConfig {
             }
 
             return  version;
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, versionAdded = "3.31.0", description = "Whether or not to allow setting the type on a domain.")
+        public boolean isFeatureSettingDomainTypeEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP);
         }
 
     }

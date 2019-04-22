@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.api.idm.v1.IdmFault
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
@@ -1855,7 +1854,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addDomain(authToken, uriInfo(), v1Factory.createDomain())
 
         then:
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
     }
 
     def "domainMultiFactorEnforcementLevel can not be set on domain creation"() {
@@ -1871,8 +1870,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * requestContext.getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled() >> false
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
         1 * validator20.validateDomainForCreation(domain) >> { arg ->
             com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain d = arg[0]
             assert d.domainMultiFactorEnforcementLevel == null
@@ -1895,9 +1893,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * requestContext.getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled() >> false
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> hasRole
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
         1 * validator20.validateDomainForCreation(domain) >> { arg ->
             com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain d = arg[0]
             if (hasRole) {
@@ -6137,24 +6133,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_TENANT_ADMIN.getRoleName());
     }
 
-    def "addDomain uses identity admin when feature flag is disabled"() {
-        given:
-        allowUserAccess()
-        mockDomainConverter(service)
-        def domain = v1Factory.createDomain()
-        domainConverter.toDomain(_) >> entityFactory.createDomain()
-
-        when:
-        reloadableConfig.isUseRoleForDomainManagementEnabled() >> false
-        def response = service.addDomain(authToken, uriInfo(), domain).build()
-
-        then:
-        response.status == SC_CREATED
-
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
-    }
-
-    def "addDomain uses service-admin or rs-domain-admin role when feature flag is enabled"() {
+    def "addDomain uses service-admin or rs-domain-admin role"() {
         given:
         allowUserAccess()
         mockDomainConverter(service)
@@ -6162,37 +6141,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def domain = v1Factory.createDomain()
 
         when:
-        reloadableConfig.isUseRoleForDomainManagementEnabled() >> true
         def response = service.addDomain(authToken, uriInfo(), domain).build()
 
         then:
         response.status == SC_CREATED
 
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
-    }
-
-    def "deleteDomain uses identity admin when feature flag is disabled"() {
-        given:
-        def domainId = "domainId"
-        def domain = entityFactory.createDomain(domainId).with {
-            it.enabled = false
-            it
-        }
-        reloadableConfig.getTenantDefaultDomainId() >> "default"
-        domainService.checkAndGetDomain(_) >> domain
-        identityUserService.getEndUsersByDomainId(domainId, UserType.ALL) >> [].asList()
-        userGroupService.getGroupsForDomain(domainId) >> [].asList()
-
-        when:
-        reloadableConfig.isUseRoleForDomainManagementEnabled() >> false
-        def response = service.deleteDomain(authToken, "domainId").build()
-
-        then:
-        response.status == SC_NO_CONTENT
-
-        1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
-        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN)
     }
 
     def "deleteDomain uses service-admin or rs-domain-admin role when feature flag is enabled"() {
@@ -6209,7 +6163,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userGroupService.getGroupsForDomain(domainId) >> [].asList()
 
         when:
-        reloadableConfig.isUseRoleForDomainManagementEnabled() >> true
         def response = service.deleteDomain(authToken, "domainId").build()
 
         then:

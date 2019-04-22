@@ -6037,7 +6037,7 @@ objectClass: rsIdentityProperty
 cn: domain.types
 description: A comma delimited list of valid domain types
 rsIdmVersion: 3.29.0
-rsPropertyValue: PUBLIC_CLOUD_US,PUBLIC_CLOUD_UK,DEDICATED,RACKSPACE,UNKNOWN
+rsPropertyValue: RACKSPACE_CLOUD_US,RACKSPACE_CLOUD_UK,DEDICATED,RACKSPACE,DATAPIPE,UNKNOWN
 rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE

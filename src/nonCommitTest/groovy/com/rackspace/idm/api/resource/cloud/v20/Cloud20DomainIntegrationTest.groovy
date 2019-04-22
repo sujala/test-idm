@@ -2416,15 +2416,9 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "create domain with type - hasDomainAdminRole = #hasDomainAdminRole, feature.enable.use.role.for.domain.management = #featureFlag"() {
+    def "create domain with type"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, featureFlag)
-
         def identityAdmin = utils.createIdentityAdmin()
-
-        if (!hasDomainAdminRole) {
-            utils.deleteRoleOnUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
-        }
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
         // Build domain entity
@@ -2444,12 +2438,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domain.name == domainEntity.name
         domain.id == domainEntity.id
         domain.enabled
-
-        if (hasDomainAdminRole) {
-            assert domain.type == "PUBLIC_CLOUD_US"
-        } else {
-            assert domain.type == null // Type is ignored if caller does not have the domain admin role
-        }
+        domain.type == "PUBLIC_CLOUD_US"
 
         when: "get domain"
         response = cloud20.getDomain(identityAdminToken, domain.id)
@@ -2457,12 +2446,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_OK
-
-        if (hasDomainAdminRole) {
-            assert domain.type == "PUBLIC_CLOUD_US"
-        } else {
-            assert domain.type == null // Domain created without a type
-        }
+        domain.type == "PUBLIC_CLOUD_US"
 
         when: "list domains"
         response = cloud20.getAccessibleDomains(identityAdminToken)
@@ -2470,22 +2454,11 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_OK
-
-        if (hasDomainAdminRole) {
-            assert domain.type == "PUBLIC_CLOUD_US"
-        } else {
-            assert domain.type == null // Domain created without a type
-        }
+        domain.type == "PUBLIC_CLOUD_US"
 
         cleanup:
         utils.deleteUserQuietly(identityAdmin)
         utils.deleteTestDomainQuietly(domainId)
-
-        where:
-        hasDomainAdminRole  | featureFlag
-        true                | true
-        true                | false
-        false               | false
     }
 
     def "verify domain type is case insensitive"() {
@@ -2534,57 +2507,6 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteTestDomainQuietly(createdDomain.id)
     }
 
-    def "User with domain admin role can create/update domain with type when 'feature.enable.use.role.for.domain.management'=true"() {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
-
-        def userAdmin = utils.createCloudAccount()
-        utils.addRoleToUser(userAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
-        def userAdminToken = utils.getToken(userAdmin.username)
-
-        // Build domain entity
-        def domainId = testUtils.getRandomUUID("domainId")
-        def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
-            it.type = "PUBLIC_CLOUD_US"
-            it
-        }
-
-        when: "create domain with type"
-        def response = cloud20.addDomain(userAdminToken, domainEntity)
-        def domain = response.getEntity(Domain)
-
-        then:
-        response.status == SC_CREATED
-        domain.type == "PUBLIC_CLOUD_US"
-
-        when: "update own domain's type"
-        domainEntity = new Domain().with {
-            it.type = "PUBLIC_CLOUD_US"
-            it
-        }
-        response = cloud20.updateDomain(userAdminToken, userAdmin.domainId, domainEntity)
-        domain = response.getEntity(Domain)
-
-        then:
-        response.status == SC_OK
-        domain.type == "PUBLIC_CLOUD_US"
-
-        when: "listing accessible domains for user"
-        response = cloud20.getAccessibleDomainsForUser(userAdminToken, userAdmin.id)
-        Domains domains = response.getEntity(Domains)
-
-        then:
-        response.status == SC_OK
-
-        domains.domain.size() == 1
-        domains.domain.get(0).type == "PUBLIC_CLOUD_US"
-
-        cleanup:
-        utils.deleteUserQuietly(userAdmin)
-        utils.deleteTestDomainQuietly(userAdmin.domainId)
-        utils.deleteTestDomainQuietly(domainId)
-    }
-
     def "error check: create domain with type"() {
         given:
         // Create test users
@@ -2606,17 +2528,9 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
             it
         }
 
-        when: "create domain with type - userAdmin with domainAdmin role and 'feature.enable.use.role.for.domain.management'=false"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, false)
-        def response = cloud20.addDomain(userAdminToken, domainEntity)
-        reloadableConfiguration.reset()
-
-        then:
-        response.status == SC_FORBIDDEN
-
         when: "create domain with type - invalid type"
         domainEntity.type = "BAD_TYPE"
-        response = cloud20.addDomain(identityAdminToken, domainEntity)
+        def response = cloud20.addDomain(identityAdminToken, domainEntity)
 
         then:
         assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
