@@ -526,7 +526,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return domainToAuthorize;
     }
 
-
     @Override
     public void verifyUserAuthorizedToAuthenticateOnDomain(BaseUser user, String domainId) {
         if (identityConfig.getRepositoryConfig().shouldVerifyAuthorizationDomains() && (StringUtils.isNotBlank(domainId) && !domainId.equalsIgnoreCase(user.getDomainId()))) {

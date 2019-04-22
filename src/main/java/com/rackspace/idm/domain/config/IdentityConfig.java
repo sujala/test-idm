@@ -2990,15 +2990,13 @@ public class IdentityConfig {
 
         @IdmProp(key = FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP, versionAdded = "3.31.0", description = "Whether or not identity should set a default authorization domain on authentication requests if the caller didn't specify one. The default is based on tenant id/name specified, or user domain if a tenant is not specified. This would impact users that have roles on tenants outside their domain.")
         public boolean shouldSetDefaultAuthorizationDomain() {
-            return shouldWriteDomainTokens() || getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP);
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP);
         }
 
         @IdmProp(key = FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP, versionAdded = "3.31.0", description = "Whether or not identity should verify a user is authorized to access the specified (or defaulted) authorization domain on authentication.")
         public boolean shouldVerifyAuthorizationDomains() {
-            return shouldWriteDomainTokens() || getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP);
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP);
         }
-
-
     }
 
     /**
