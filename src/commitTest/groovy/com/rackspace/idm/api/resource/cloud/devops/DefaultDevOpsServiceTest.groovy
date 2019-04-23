@@ -55,7 +55,7 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
 
         when:
 
-        def scopeAccess = createScopeAccess().with {
+        def scopeAccess = createUserScopeAccess().with {
             it.clientId = "clientId"
             return it
         }

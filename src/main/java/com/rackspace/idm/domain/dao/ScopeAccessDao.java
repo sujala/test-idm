@@ -7,6 +7,4 @@ public interface ScopeAccessDao {
     void addScopeAccess(UniqueId object, ScopeAccess scopeAccess);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
-
-    String getClientIdForParent(ScopeAccess scopeAccess);
 }

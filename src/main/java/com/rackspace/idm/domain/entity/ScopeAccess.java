@@ -1,57 +1,35 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.UniqueId;
-import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Data
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_SCOPEACCESS,
-        postEncodeMethod="doPostEncode", auxiliaryClass = LdapRepository.OBJECTCLASS_METADATA)
-public class ScopeAccess implements Auditable, UniqueId, Token, Metadata {
+public abstract class ScopeAccess implements Auditable, UniqueId, Token {
 
-    // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
-    @LDAPDNField
     private String uniqueId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_CLIENT_ID, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    /**
+     * This is a legacy holdover from OAuth based initial architecture. It's, for all current scenarios, always the
+     * "identity" application, but the value could theoretically change between environments.
+     */
+    @Deprecated
     private String clientId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_CLIENT_RCN, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String clientRCN;
-
-    @LDAPField(attribute = LdapRepository.ATTR_ACCESS_TOKEN, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String accessTokenString;
 
-    @LDAPField(attribute = LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private Date accessTokenExp;
 
-    @LDAPField(attribute = LdapRepository.ATTR_RS_TYPE, objectClass = LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private List<String> authenticatedBy;
 
-    @LDAPField(attribute = LdapRepository.ATTR_CREATED_DATE, objectClass = LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false, inAdd = false, inModify = false)
     private Date createTimestamp;
 
-    @LDAPField(attribute = LdapRepository.ATTR_SCOPE, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String scope;
-
-    @LDAPField(attribute=LdapRepository.ATTR_METADATA_ATTRIBUTE,
-               objectClass=LdapRepository.OBJECTCLASS_METADATA,
-               filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
-    )
-    private Set<String> metadata;
-
-    public Set<String> getMedatadata() {
-        if (metadata == null) {
-            metadata = new HashSet<String>();
-        }
-        return metadata;
-    }
 
     public ScopeAccess() {}
 
@@ -77,13 +55,6 @@ public class ScopeAccess implements Auditable, UniqueId, Token, Metadata {
         return isAccessTokenExpired(new DateTime());
     }
 
-    public boolean isAccessTokenWithinRefreshWindow(int refreshTokenWindow){
-        DateTime accessToken = new DateTime(this.getAccessTokenExp());
-        Date refreshWindowStart = accessToken.minusHours(refreshTokenWindow).toDate();
-        Date now = new DateTime().toDate();
-        return now.after(refreshWindowStart);
-    }
-
     @Override
     public String getAuditContext() {
         final String format = "ScopeAccess(clientId=%s)";
@@ -93,13 +64,6 @@ public class ScopeAccess implements Auditable, UniqueId, Token, Metadata {
     @Override
     public String toString() {
         return getAuditContext() ;
-    }
-
-    private void doPostEncode(final Entry entry) throws LDAPPersistException {
-        String[] rsTypeList = entry.getAttributeValues(LdapRepository.ATTR_RS_TYPE);
-        if (rsTypeList != null && rsTypeList.length == 0) {
-            entry.removeAttribute(LdapRepository.ATTR_RS_TYPE);
-        }
     }
 
     @Override

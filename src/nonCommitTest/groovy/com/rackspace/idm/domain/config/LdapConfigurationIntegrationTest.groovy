@@ -10,6 +10,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.net.ssl.SSLSocketFactory
+import java.time.Duration
 
 @WebAppConfiguration
 @ContextConfiguration(locations = "classpath:app-config.xml")
@@ -61,6 +62,7 @@ class LdapConfigurationIntegrationTest  extends Specification {
         1 * staticConfig.getLDAPServerPoolHeathCheckInterval() >> 100
         1 * staticConfig.getLDAPServerPoolCheckConnectionAgeOnRelease() >> false
         1 * staticConfig.getLDAPServerPoolAllowConcurrentSocketFactoryUse() >> false
+        1 * staticConfig.getLDAPConnectionConnectTimeout() >> Duration.parse("PT3S")
 
         then: "configured correctly"
         assert connection != null
@@ -78,5 +80,7 @@ class LdapConfigurationIntegrationTest  extends Specification {
         connection.getHealthCheckIntervalMillis() == 100
         connection.checkConnectionAgeOnRelease == false
         ((RoundRobinServerSet)connection.serverSet).connectionOptions.allowConcurrentSocketFactoryUse == false
+        ((RoundRobinServerSet)connection.serverSet).getConnectionOptions().getConnectTimeoutMillis() == 3000
+
     }
 }

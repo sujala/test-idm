@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import org.openstack.docs.identity.api.v2.Token
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -35,7 +36,7 @@ public class TokenConverterCloudV20Test extends Specification {
     def "toTokenInternal converts token with null creating date"() {
         given:
         def tenantId = "tenantId"
-        def scopeAccess = new ScopeAccess().with {
+        def scopeAccess = new UserScopeAccess().with {
             it.createTimestamp = null
             it
         }
@@ -52,7 +53,7 @@ public class TokenConverterCloudV20Test extends Specification {
         given:
         Date createTimestamp = new Date()
         def tenantId = "tenantId"
-        def scopeAccess = new ScopeAccess().with {
+        def scopeAccess = new UserScopeAccess().with {
             it.createTimestamp = createTimestamp
             it
         }
@@ -69,7 +70,7 @@ public class TokenConverterCloudV20Test extends Specification {
         given:
         Date createTimestamp = new Date()
         def tenantId = "tenantId"
-        def scopeAccess = new ScopeAccess().with {
+        def scopeAccess = new UserScopeAccess().with {
             it.createTimestamp = createTimestamp
             it
         }
@@ -89,7 +90,7 @@ public class TokenConverterCloudV20Test extends Specification {
             it.authenticatedBy = [AuthenticatedByMethodEnum.PASSWORD.value]
             it
         }
-        def token = new ScopeAccess().with {
+        def token = new UserScopeAccess().with {
             it.authenticatedBy = [AuthenticatedByMethodEnum.PASSWORD.value]
             it
         }

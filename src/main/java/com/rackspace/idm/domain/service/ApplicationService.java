@@ -22,8 +22,6 @@ public interface ApplicationService {
 
     Application checkAndGetApplicationByName(String name);
 
-    Application getApplicationByScopeAccess(ScopeAccess scopeAccess);
-
     ClientSecret resetClientSecret(Application client);
 
     void save(Application client);

@@ -13,8 +13,16 @@ import java.util.List;
 public interface ScopeAccessService {
 
     /**
+     * Given a token request, generates a new AE token and returns in form of a ScopeAccess
+     * @param tokenRequest
+     * @return
+     */
+    ScopeAccess createToken(TokenRequest tokenRequest);
+
+    /**
      * Adds a scoped access token for a BaseUser
      *
+     * @deprecated Use {@link #createToken(TokenRequest)}
      * @param user
      * @param clientId
      * @param authenticatedBy
@@ -22,11 +30,13 @@ public interface ScopeAccessService {
      * @param scope
      * @return
      */
+    @Deprecated
     ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, int expirationSeconds, String scope);
 
     /**
      * Adds a scoped access token for a BaseUser with a specific expiration date
      *
+     * @deprecated Use {@link #createToken(TokenRequest)}
      * @param user
      * @param clientId
      * @param authenticatedBy
@@ -34,10 +44,14 @@ public interface ScopeAccessService {
      * @param scope
      * @return
      */
+    @Deprecated
     ScopeAccess addScopedScopeAccess(BaseUser user, String clientId, List<String> authenticatedBy, Date expirationDate, String scope);
 
     /**
-     * Use on of the add
+     * This method is only used by other deprecated code - fed v1.0 API. That code is slated to be removed as part of
+     * 3.32 release - at which point this method should also be removed.
+     *
+     * @deprecated Use {@link #createToken(TokenRequest)}
      * @param user
      * @param scopeAccess
      */
@@ -90,12 +104,17 @@ public interface ScopeAccessService {
      */
     ServiceCatalogInfo getServiceCatalogInfoApplyRcnRoles(BaseUser baseUser);
 
+    /**
+     * @deprecated Use {@link #createToken(TokenRequest)}
+     * @param user
+     * @param clientId
+     * @param authenticatedBy
+     * @return
+     */
     @Deprecated
     UserScopeAccess addScopeAccess(User user, String clientId, List<String> authenticatedBy);
 
     boolean isScopeAccessExpired(ScopeAccess scopeAccess);
-
-    String getClientIdForParent(ScopeAccess scopeAccess);
 
     /**
      * Processes an impersonation request and returns an appropriate ImpersonatedScopeAccess.
@@ -114,7 +133,10 @@ public interface ScopeAccessService {
 
     /**
      * Generate a UUID token string
+     *
+     * @deprecated No longer necessary since tokens are generated via AE process. Will be removed in future.
      * @return
      */
+    @Deprecated
     String generateToken();
 }

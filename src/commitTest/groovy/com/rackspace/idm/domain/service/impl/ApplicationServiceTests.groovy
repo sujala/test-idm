@@ -1,7 +1,8 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.ApplicationRoleDao;
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 
@@ -181,9 +182,8 @@ public class ApplicationServiceTests {
     }
 
     private ScopeAccess getFakeScopeAccess() {
-        ScopeAccess sa = new ScopeAccess();
-        sa.setClientId(clientId);
-        sa.setClientRCN(customerId);
-        return sa;
+        ScopeAccess sa = new UserScopeAccess()
+        sa.setClientId(clientId)
+        return sa
     }
 }

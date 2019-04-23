@@ -214,12 +214,7 @@ public class ApiEventPostingAdvice {
         if (callerToken == null) {
             // Retrieve v2.0 auth header (which is how security context gets populated in v2.0 requests. This will allow us to provide token
             // even if can't be decrypted (e.g. invalid token)
-            String headerToken = request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN);
-            if (headerToken != null) {
-                ScopeAccess sa = new ScopeAccess();
-                sa.setAccessTokenString(headerToken);
-                tokenStr = sa.getAccessTokenString();
-            }
+            tokenStr = request.getHeaderValue(GlobalConstants.X_AUTH_TOKEN);
         } else {
             tokenStr = callerToken.getAccessTokenString();
         }

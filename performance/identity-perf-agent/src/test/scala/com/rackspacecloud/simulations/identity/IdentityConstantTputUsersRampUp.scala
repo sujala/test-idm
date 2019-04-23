@@ -187,6 +187,10 @@ class IdentityConstantTputUsersRampUp extends Simulation {
   val create_nested_da_scn = CreateNestedDAs.create_nested_das
   val delete_parent_da_scn = DeleteParentDAs.delete_parent_das
 
+  // Change password
+  val V20_CHANGE_PASSWORD_USERS_PER_SEC : Double =  conf.getDouble("soa.v20_change_password.users_per_sec")
+  val v20_users_for_change_password = Identity.v20_change_password
+  val MAX_DURATION_FOR_CHANGE_PWD: Int = conf.getInt("simulation.max_duration_secs_for_change_password")
 
 
   // Not method or version specific.
@@ -241,6 +245,16 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     }
     scenario.inject(constantUsersPerSec(local_users_per_sec) during(local_duration seconds)).protocols(protocol_conf)
   }
+
+  // scn_wrapper function for Change Password
+  // Number of requests are minimal compared to other API calls
+  // So users_per_sec has been set to value less that 0.05 in application.properties
+  def scn_wrapper1(scenario: ScenarioBuilder, users_per_sec: Double, duration: Int, protocol_conf: Protocol, wait_time: Int=0): PopulationBuilder= {
+    var local_users_per_sec = users_per_sec;
+    var local_duration = duration;
+    scenario.inject(constantUsersPerSec(local_users_per_sec) during(local_duration seconds)).protocols(protocol_conf)
+  }
+
   def list_scns(): List[PopulationBuilder] = {
      return List(
      scn_wrapper(v11_apikey_auth_scn, V11_AUTHENTICATE_APIKEY_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
@@ -298,8 +312,10 @@ class IdentityConstantTputUsersRampUp extends Simulation {
     scn_wrapper(v11_get_user_by_name_scn_internal, V11_GET_USER_BY_NAME_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainInternalConf),
     scn_wrapper(v11_get_user_by_name_scn_internal_repl, V11_GET_USER_BY_NAME_INTERNAL_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplInternalConf),
 
+    // Change password
+    scn_wrapper1(v20_users_for_change_password, V20_CHANGE_PASSWORD_USERS_PER_SEC, MAX_DURATION_FOR_CHANGE_PWD, httpMainExternalConf),
 
-    // List Groups By User Id
+  // List Groups By User Id
     scn_wrapper(v20_list_groups_for_user_id_scn, V20_LIST_GROUPS_FOR_USER_ID_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
     scn_wrapper(v20_list_groups_for_user_id_repl_scn, V20_LIST_GROUPS_FOR_USER_ID_REPL_USERS_PER_SEC, MAX_DURATION_SECS, httpMainExternalConf),
     scn_wrapper(v20_list_groups_for_user_id_internal_scn, V20_LIST_GROUPS_FOR_USER_ID_INTERNAL_USERS_PER_SEC, MAX_DURATION_SECS, httpReplExternalConf),

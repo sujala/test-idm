@@ -126,6 +126,7 @@ object Tokens {
   val daFeeder = IdentityFeederCircular
   val anotherDAFeeder = IdentityFeederAlternatingCircular
   val parentDADelegatePairingFeeder = IdentityFeederCircular
+  val defaultUsersForChangePassword = csv(DATA_LOCATION + "data/identity/default_users.dat").circular
 
   // Can uncomment once we are ready to add this memory-leak test to regular perf suite
   // val usersInDomainFeeder = csv(DATA_LOCATION + "data/identity/users_in_domain.dat").circular
@@ -422,6 +423,21 @@ def v20_create_user: ChainBuilder = {
         .header("x-auth-token", "${admin_token}")
         .check(jsonPath("$.user.id").saveAs("user_id")))
       .exitHereIfFailed
+  }
+
+  /**
+    * This function is added to test change password API
+    *
+    */
+
+  def v20_change_password = {
+    feed(defaultUsersForChangePassword)
+      .exec(http("POST /v2.0/users/RAX-AUTH/change-pwd")
+        .post("/v2.0/users/RAX-AUTH/change-pwd")
+        .body(ElFileBody("request-bodies/identity/v2/change_password_v2.json")).asJSON
+        .check(status.is(400)))
+      .exitHereIfFailed
+
   }
 
   /**

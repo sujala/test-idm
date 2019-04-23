@@ -50,7 +50,7 @@ public class AuthConverterCloudV20TestOld {
         Token token = new Token();
         token.setId("tokenId");
         when(tokenConverterCloudV20.toToken(any(ScopeAccess.class), any(List.class))).thenReturn(token);
-        ImpersonationResponse impersonationResponse = authConverter.toImpersonationResponse(new ScopeAccess());
+        ImpersonationResponse impersonationResponse = authConverter.toImpersonationResponse(new UserScopeAccess());
         assertThat("token id", impersonationResponse.getToken().getId(), equalTo("tokenId"));
     }
 }

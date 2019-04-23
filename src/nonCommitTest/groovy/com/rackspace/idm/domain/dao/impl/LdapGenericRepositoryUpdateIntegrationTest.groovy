@@ -65,7 +65,7 @@ class LdapGenericRepositoryUpdateIntegrationTest extends Specification {
         String originalName = app.getName()
         String newName = UUID.randomUUID().toString()
         Boolean originalEnabled = app.getEnabled()
-        final Boolean behindTheScenesEnableChange = !originalEnabled
+        Boolean behindTheScenesEnableChange = !originalEnabled
         overriddenGenericApplicationRepository.addObject(app)
 
         //get a fresh object as persisted in CA and modify it
@@ -116,7 +116,7 @@ class LdapGenericRepositoryUpdateIntegrationTest extends Specification {
         String originalName = app.getName()
         String newName = UUID.randomUUID().toString()
         Boolean originalEnabled = app.getEnabled()
-        final Boolean behindTheScenesEnableChange = !originalEnabled
+        Boolean behindTheScenesEnableChange = !originalEnabled
         overriddenGenericApplicationRepository.addObject(app)
 
         //get a fresh object as persisted in CA and modify it

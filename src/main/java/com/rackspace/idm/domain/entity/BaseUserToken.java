@@ -12,6 +12,13 @@ public interface BaseUserToken extends Token {
     String getIssuedToUserId();
 
     /**
+     * The domain against which the user was authenticated against, and for which this token is valid.
+     *
+     * @return
+     */
+    String getAuthenticationDomainId();
+
+    /**
      * Whether or not the token is a delegation token. A delegation token must have a delegationId associated
      * with it ({@link #getDelegationAgreementId()}
      *

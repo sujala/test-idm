@@ -95,7 +95,7 @@ class DomainAdminChangeServiceTest extends Specification {
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
 
         then: "Verifies the provided token"
-        1 * securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        1 * securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
     }
 
     def "Negative Test: Invalid caller token passes thrown exception to exceptionhandler as-is"() {
@@ -118,7 +118,7 @@ class DomainAdminChangeServiceTest extends Specification {
         given:
         def callerToken = "atoken"
         DomainAdministratorChange changeRequest = new DomainAdministratorChange()
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
 
         when:
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
@@ -132,7 +132,7 @@ class DomainAdminChangeServiceTest extends Specification {
         given:
         def callerToken = "atoken"
         DomainAdministratorChange changeRequest = new DomainAdministratorChange()
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
 
         when:
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
@@ -160,7 +160,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = demoteUser
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
 
         when:
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
@@ -186,7 +186,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = "auser"
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
 
         when:
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
@@ -208,7 +208,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = demoteUser
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
 
         when:
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
@@ -237,7 +237,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = "demoteUser"
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
 
         when:
         defaultCloud20Service.modifyDomainAdministrator(callerToken, urlDomain, changeRequest)
@@ -280,7 +280,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = demoteUser
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
 
         when:
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
@@ -317,7 +317,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = demoteUser
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
 
         when:
         defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
@@ -353,7 +353,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = "useradmin2"
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
         identityUserService.checkAndGetEndUserById(_) >> {new User().with{
             it.enabled=true
             it.domainId="domainx" // Same domain
@@ -389,7 +389,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = "demoteUser"
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
         identityUserService.checkAndGetEndUserById("promoteUser") >> promoteUser
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
@@ -423,7 +423,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = "demoteUser"
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
         identityUserService.checkAndGetEndUserById("promoteUser") >> promoteUser
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
@@ -462,7 +462,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = "demoteUser"
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
         identityUserService.checkAndGetEndUserById("promoteUser") >> promoteUser
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
@@ -499,7 +499,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = "demoteUser"
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
         identityUserService.checkAndGetEndUserById("promoteUser") >> promoteUser
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
@@ -537,7 +537,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = "demoteUser"
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
         identityUserService.checkAndGetEndUserById("promoteUser") >> promoteUser
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
@@ -589,7 +589,7 @@ class DomainAdminChangeServiceTest extends Specification {
             it.demoteUserId = "demoteUser"
             it
         }
-        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
+        securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new UserScopeAccess()
         identityUserService.checkAndGetEndUserById("promoteUser") >> promoteUser
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 

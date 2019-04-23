@@ -37,9 +37,9 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         mockTokenFormatSelector(service)
         mockIdentityConfig(service)
 
-        config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
-        config.getInt("token.cloudAuthRackerExpirationSeconds", _) >>  defaultCloudAuthRackerExpirationSeconds
-        config.getInt("token.refreshWindowHours") >> defaultRefreshHours
+        staticConfig.getTokenLifetimeEndUserDefault()  >>  defaultCloudAuthExpirationSeconds
+        staticConfig.getTokenLifetimeRackerDefault()  >>  defaultCloudAuthRackerExpirationSeconds
+        staticConfig.getTokeLifetimeEntropy() >> 0.0
     }
 
     def "getValidUserScopeAccessForClientId adds scopeAccess"() {
@@ -54,7 +54,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         1 * scopeAccessDao.addScopeAccess(_, _)
     }
 
-    def "provisionUserScopeAccess adds necessary values to scopeAccess"() {
+    def "addScopeAccess adds necessary values to scopeAccess"() {
         given:
         def user = new User().with() {
             it.username = "username"
@@ -63,13 +63,18 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
 
         when:
-        UserScopeAccess scopeAccessOne = service.provisionUserScopeAccess(user, sharedRandom)
+        UserScopeAccess scopeAccessOne = service.addScopeAccess(user, sharedRandom, [])
 
         then:
         scopeAccessOne.getUserRsId().equals("id")
         scopeAccessOne.getClientId().equals(sharedRandom)
         scopeAccessOne.getAccessTokenString() != null
         scopeAccessOne.getAccessTokenExp() != null
+
+        1 * scopeAccessDao.addScopeAccess(_, _) >> {args ->
+            ScopeAccess access = args[1]
+            access.setAccessTokenString("atoken")
+        }
     }
 
     def "can get endpoints from getOpenstackEndpointsForUser"() {
@@ -134,7 +139,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     def "calling getValidRackerScopeAccessForClientId sets authenticatedBy"() {
         given:
-        def authenticatedBy = ["RSA"].asList()
+        def authenticatedBy = ["RSAKEY"].asList()
 
         when:
         service.getValidRackerScopeAccessForClientId(entityFactory.createRacker(), "clientId", authenticatedBy)
@@ -148,7 +153,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     def "calling addScopeAccess sets authenticatedBy"() {
         given:
         def user = entityFactory.createUser()
-        def authenticatedBy = ["RSA"].asList()
+        def authenticatedBy = ["RSAKEY"].asList()
 
         when:
         service.addScopeAccess(user, "clientId", authenticatedBy)
@@ -175,14 +180,14 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
     }
 
-    def "Verify provision user scope access adds token expiration entropy"() {
+    def "addScopeAccess: Verify adds token expiration entropy"() {
         when:
         def range = getRange(exSeconds, entropy)
-        UserScopeAccess scopeAccess = service.provisionUserScopeAccess(entityFactory.createUser(), "clientId")
+        UserScopeAccess scopeAccess = service.addScopeAccess(entityFactory.createUser(), "clientId", [])
 
         then:
-        1 * config.getInt("token.cloudAuthExpirationSeconds", _) >> exSeconds
-        1 * config.getDouble("token.entropy") >> entropy
+        1 * staticConfig.getTokenLifetimeEndUserDefault() >> exSeconds
+        1 * staticConfig.getTokeLifetimeEntropy() >> entropy
         scopeAccess.accessTokenExp <= ((Date)range.get("max"))
         scopeAccess.accessTokenExp >= range.get("min")
 
@@ -202,7 +207,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def result = service.getTokenExpirationSeconds(seconds)
 
         then:
-        1 * config.getDouble(_) >> 0.01
+        1 * staticConfig.getTokeLifetimeEntropy() >> 0.01
         result <= max
         result >= min
     }
@@ -218,14 +223,14 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         def scopeAccess = service.getValidRackerScopeAccessForClientId(entityFactory.createRacker(), clientId, authedBy)
 
         then:
-        1 * config.getDouble("token.entropy") >> entropy
+        1 * staticConfig.getTokeLifetimeEntropy() >> entropy
         scopeAccess.accessTokenExp <= range.get("max")
         scopeAccess.accessTokenExp >= range.get("min")
     }
 
     def "authenticateAccessToken returns true when token is valid" () {
         given:
-        def sa = entityFactory.createScopeAccess()
+        def sa = entityFactory.createUserToken()
         sa.accessTokenExp = new Date()
         sa.accessTokenExp.hours += 24
 

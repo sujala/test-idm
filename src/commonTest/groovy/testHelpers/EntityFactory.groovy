@@ -440,13 +440,6 @@ class EntityFactory extends Specification {
         return ClientSecret.newInstance(secret)
     }
 
-    def createScopeAccess() {
-        new ScopeAccess().with {
-            it.accessTokenString = "ats"
-            return it
-        }
-    }
-
     def createRackerScopeAccess() {
         new RackerScopeAccess().with {
             it.accessTokenString = "ats"
