@@ -5,7 +5,12 @@ def build(scm) {
     try {
 
         def namespace = 'customer-identity-cicd'
-        def runNonCommitTests = true
+        def runNonCommitTests = false
+
+        // Note: This will not work yet. We need to update our base chart to have a regex trigger phrase that allows for this
+        if (env?.ghprbCommentBody &&  env.ghprbCommentBody.contains('Run all tests')) {
+            runNonCommitTests = true
+        }
 
         // Setup the git configuration so it can be passed as an arg to common code
         stage('Setup') {
