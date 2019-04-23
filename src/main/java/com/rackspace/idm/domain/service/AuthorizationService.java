@@ -1,9 +1,11 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
 import java.util.Collection;
 import java.util.List;
@@ -225,4 +227,27 @@ public interface AuthorizationService {
      * @throws IllegalArgumentException if the delegationAgreement, or delegationAgreement's principal is null.
      */
     boolean isCallerAuthorizedToManageDelegationAgreement(DelegationAgreement delegationAgreement);
+
+    /**
+     * If the passed in AuthenticationRequest does not contain a domainId, this service will update it with a default
+     * domainId based on:
+     * 1. If the request specifies a tenantId or tenantName and the tenant exists, the domainid is set to the tenant's domain
+     * 2. Else the domainId is set to the user's domain
+     *
+     * The update will only occur if the repository feature flag <i>feature.enable.authorization.domain.default</i> is enabled.
+     * @param user
+     * @param authenticationRequest
+     * @return
+     */
+    String updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(BaseUser user, AuthenticationRequest authenticationRequest);
+
+    /**
+     * If the repository feature flag <i>feature.enable.authorization.domain.verification</i> is enabled, this method
+     * verifies that the specified user is authorized to authenticate to the specified domain. If not, an UnauthorizedException
+     * is thrown. If the supplied domainId is null or whitespace only, no verification is performed.
+     *
+     * @param user
+     * @param domainId
+     */
+    void verifyUserAuthorizedToAuthenticateOnDomain(BaseUser user, String domainId);
 }

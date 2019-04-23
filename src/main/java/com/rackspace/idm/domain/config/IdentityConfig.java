@@ -643,6 +643,11 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP = "feature.enable.reading.domain.tokens";
     public static final boolean FEATURE_ENABLE_READING_DOMAIN_TOKENS_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP = "feature.enable.authorization.domain.verification";
+    public static final boolean FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_DEFAULT = false;
+
+    public static final String FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP = "feature.enable.authorization.domain.default";
+    public static final boolean FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_DEFAULT = false;
 
     /**
      * Opentracing properties
@@ -950,6 +955,8 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_PROP, FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_DEFAULT);
         defaults.put(FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP, FEATURE_ENABLE_READING_DOMAIN_TOKENS_DEFAULT);
+        defaults.put(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP, FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_DEFAULT);
+        defaults.put(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP, FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
@@ -2996,6 +3003,16 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP, versionAdded = "3.31.0", description = "Whether or not identity should read tokens that store the authenticated domains.")
         public boolean shouldReadDomainTokens() {
             return shouldWriteDomainTokens() || getRepositoryBooleanSafely(FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP, versionAdded = "3.31.0", description = "Whether or not identity should set a default authorization domain on authentication requests if the caller didn't specify one. The default is based on tenant id/name specified, or user domain if a tenant is not specified. This would impact users that have roles on tenants outside their domain.")
+        public boolean shouldSetDefaultAuthorizationDomain() {
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP, versionAdded = "3.31.0", description = "Whether or not identity should verify a user is authorized to access the specified (or defaulted) authorization domain on authentication.")
+        public boolean shouldVerifyAuthorizationDomains() {
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP);
         }
     }
 

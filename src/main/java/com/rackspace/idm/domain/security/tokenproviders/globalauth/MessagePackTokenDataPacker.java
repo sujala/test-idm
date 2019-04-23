@@ -557,6 +557,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             scopeAccess.setUniqueId(TokenDNCalculator.calculateRackerTokenDN(impersonatorId, webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
 
+            // Racker domain is hardcoded
             scopeAccess.setAuthenticationDomainId(RackerScopeAccess.RACKSPACE_DOMAIN);
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));

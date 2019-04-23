@@ -17,10 +17,9 @@ class AuthWithTokenTest extends RootServiceTest {
     }
 
     def setup() {
-        mockUserService(service)
         mockScopeAccessService(service)
-        mockTenantService(service)
         mockIdentityUserService(service)
+        mockAuthorizationService(service)
         mockRequestContextHolder(service)
     }
 
@@ -29,7 +28,7 @@ class AuthWithTokenTest extends RootServiceTest {
         def authRequest = v2Factory.createAuthenticationRequest("", "tenantId", "tenantName")
 
         when:
-        service.authenticate(authRequest)
+        service.authenticateForAuthResponse(authRequest)
 
         then:
         thrown(BadRequestException)
@@ -40,7 +39,7 @@ class AuthWithTokenTest extends RootServiceTest {
         def authRequest = v2Factory.createAuthenticationRequest("tokenId", "", "")
 
         when:
-        service.authenticate(authRequest)
+        service.authenticateForAuthResponse(authRequest)
 
         then:
         thrown(BadRequestException)
@@ -61,7 +60,7 @@ class AuthWithTokenTest extends RootServiceTest {
         userService.checkAndGetUserById(_) >> entityFactory.createUser()
 
         when:
-        service.authenticate(authRequest)
+        service.authenticateForAuthResponse(authRequest)
 
         then:
         thrown(NotAuthorizedException)
@@ -84,14 +83,45 @@ class AuthWithTokenTest extends RootServiceTest {
         identityUserService.checkAndGetUserById(_) >> user
 
         when:
-        def result = service.authenticate(authRequest)
+        def result = service.authenticateForAuthResponse(authRequest)
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken("impToken") >> scopeAccess
+        1 * authorizationService.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, authRequest)
+        1 * authorizationService.verifyUserAuthorizedToAuthenticateOnDomain(user, authRequest.domainId)
+
         result != null
         result.impersonatedScopeAccess == impScopeAccess
         result.userScopeAccess == scopeAccess
         result.user == user
+    }
+
+    def "authenticate gets impersonated scopeAccess; verifies user against auth domain"() {
+        given:
+        def user = entityFactory.createUser()
+        def authRequest = v2Factory.createAuthenticationRequest("tokenId", "tenantId", "").with {
+            it.domainId = user.domainId
+            it
+        }
+        def impScopeAccess = createImpersonatedScopeAccess(
+                "username",
+                "impUsername",
+                "tokenString",
+                "impToken",
+                new DateTime().plusDays(1).toDate()
+        )
+        def scopeAccess = createUserScopeAccess()
+
+        scopeAccessService.getScopeAccessByAccessToken("tokenId") >> impScopeAccess
+        identityUserService.checkAndGetUserById(_) >> user
+
+        when:
+        def result = service.authenticateForAuthResponse(authRequest)
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken("impToken") >> scopeAccess
+        1 * authorizationService.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, authRequest)
+        1 * authorizationService.verifyUserAuthorizedToAuthenticateOnDomain(user, authRequest.domainId)
     }
 
     def "authenticate gets userScopeAccess; throws NotAuthenticatedException when expired"() {
@@ -105,7 +135,7 @@ class AuthWithTokenTest extends RootServiceTest {
         )
 
         when:
-        service.authenticate(authRequest)
+        service.authenticateForAuthResponse(authRequest)
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken("tokenId") >> scopeAccess
@@ -124,7 +154,7 @@ class AuthWithTokenTest extends RootServiceTest {
         )
 
         when:
-        def result = service.authenticate(authRequest)
+        def result = service.authenticateForAuthResponse(authRequest)
 
         then:
         1 * scopeAccessService.getScopeAccessByAccessToken("tokenId") >> scopeAccess

@@ -16,7 +16,8 @@ public abstract class ScopeAccess implements Auditable, UniqueId, Token {
 
     /**
      * This is a legacy holdover from OAuth based initial architecture. It's, for all current scenarios, always the
-     * "identity" application, but the value could theoretically change between environments.
+     * "identity" application. AE tokens don't even store the clientId - it just always populates this variable
+     * with the identity clientid whenever a token is unencrypted.
      */
     @Deprecated
     private String clientId;

@@ -1522,7 +1522,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException("Invalid " + MultiFactorCloud20Service.X_SESSION_ID_HEADER_NAME);
                 }
                 try {
-                    authResponseTuple = multiFactorCloud20Service.authenticateSecondFactor(sessionIdList.get(0), authenticationRequest.getCredential().getValue());
+                    authResponseTuple = multiFactorCloud20Service.authenticateSecondFactor(sessionIdList.get(0), authenticationRequest);
                 } catch (MultiFactorNotEnabledException e) {
                     logger.warn("Request for multifactor authentication was made on account for which multifactor is not enabled", e);
                     throw new BadRequestException("Unknown credential type");
@@ -1534,7 +1534,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (authenticationRequest.getScope() != null) {
                     throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
                 }
-                authResponseTuple = authWithToken.authenticate(authenticationRequest);
+                authResponseTuple = authWithToken.authenticateForAuthResponse(authenticationRequest);
             } else if (authenticationRequest.getCredential().getValue() instanceof DelegationCredentials) {
                 NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthWithTokenDelegation.getTransactionName());
                 if (!identityConfig.getReloadableConfig().isDelegationAuthenticationEnabled()) {

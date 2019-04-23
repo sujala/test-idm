@@ -35,6 +35,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.UnauthorizedFault;
 import org.slf4j.Logger;
@@ -391,7 +392,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Trace
     @Override
-    public AuthResponseTuple authenticateSecondFactor(String encodedSessionId, CredentialType credential) {
+    public AuthResponseTuple authenticateSecondFactor(String encodedSessionId, AuthenticationRequest authenticationRequest) {
+        CredentialType credential = authenticationRequest.getCredential().getValue();
         if (!(credential instanceof PasscodeCredentials)) {
             throw new BadRequestException("Not a valid credential. Only passcode credential supported for multifactor");
         }
@@ -421,7 +423,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);
         }
 
-        //is valid restricted token.
+        //is valid sessionId token.
         UserScopeAccess token = (UserScopeAccess)restrictedToken;
         authenticatedBy = restrictedToken.getAuthenticatedBy();
         userId = token.getIssuedToUserId();
@@ -450,6 +452,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         Audit mfaAudit = Audit.authUser(String.format("User(rsId=%s):(PASSCODE)", userId));
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
             mfaAudit.succeed();
+
+            // Verify authorized for the specified domain
+            authorizationService.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, authenticationRequest);
+            authorizationService.verifyUserAuthorizedToAuthenticateOnDomain(user, authenticationRequest.getDomainId());
+
             return createSuccessfulSecondFactorResponse(user, response, authenticatedBy);
         } else {
             if (response.getDecisionReason() == MfaAuthenticationDecisionReason.LOCKEDOUT) {
