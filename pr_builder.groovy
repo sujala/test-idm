@@ -5,6 +5,7 @@ def build(scm) {
     try {
 
         def namespace = 'customer-identity-cicd'
+        def runNonCommitTests = true
 
         // Setup the git configuration so it can be passed as an arg to common code
         stage('Setup') {
@@ -27,6 +28,21 @@ def build(scm) {
         buildSteps.buildImages(sandboxImageTag, env.IDM_VERSION, 'master')
 
         def releaseName = null
+        if (runNonCommitTests) {
+            try {
+                // Deploy sandbox env
+                env.SANDBOX_NAME = "pr-pipeline-nct-${env.BUILD_NUMBER}"
+                println "env.SANDBOX_NAME = " + env.SANDBOX_NAME
+                releaseName = buildSteps.createStandboxEnv(sandboxImageTag, env.SANDBOX_NAME)
+                buildSteps.deploySandboxEnvironment(releaseName)
+
+                // Run non-commit tests
+                buildSteps.runNonCommitTests(scm)
+            } finally {
+                buildSteps.destroySandboxEnv(releaseName)
+            }
+        }
+
         try {
             // Deploy sandbox env
             env.SANDBOX_NAME = "pr-pipeline-jt-${env.BUILD_NUMBER}"

@@ -4043,7 +4043,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if(StringUtils.isNotBlank(domain.getType())) {
-                if (domainDO.getType() != null && !domainDO.getType().equals(domain.getType())) {
+                if (domainDO.getType() != null && !domainDO.getType().equalsIgnoreCase(domain.getType())) {
                     String errMsg = String.format("Domain '%s' already has type '%s' and cannot be updated.", domainId, domainDO.getType());
                     throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
                 }
