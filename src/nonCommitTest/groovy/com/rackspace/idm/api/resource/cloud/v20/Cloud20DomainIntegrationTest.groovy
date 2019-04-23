@@ -2385,14 +2385,21 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "create domain with type"() {
+    def "create domain with type - allowSettingType = #allowSettingType, inferType = #inferType"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, allowSettingType)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, inferType)
         def identityAdmin = utils.createIdentityAdmin()
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
         // Build domain entity
         def domainId = RandomStringUtils.randomNumeric(6)
-        def domainEntity = v2Factory.createDomain(domainId, domainId, true)
+        def specifiedType = GlobalConstants.DOMAIN_TYPE_DATAPIPE
+        def inferredType = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
+            it.type = specifiedType // set the type to something other than the inferred type
+            it
+        }
 
         when: "create domain with type"
         def response = cloud20.addDomain(identityAdminToken, domainEntity)
@@ -2404,7 +2411,13 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domain.name == domainEntity.name
         domain.id == domainEntity.id
         domain.enabled
-        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        if (allowSettingType) {
+            assert domain.type == specifiedType
+        } else if (inferType) {
+            assert domain.type == inferredType
+        } else {
+            assert domain.type == null
+        }
 
         when: "get domain"
         response = cloud20.getDomain(identityAdminToken, domain.id)
@@ -2412,7 +2425,13 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_OK
-        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        if (allowSettingType) {
+            assert domain.type == specifiedType
+        } else if (inferType) {
+            assert domain.type == inferredType
+        } else {
+            assert domain.type == null
+        }
 
         when: "list domains"
         response = cloud20.getAccessibleDomains(identityAdminToken)
@@ -2420,11 +2439,24 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_OK
-        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        if (allowSettingType) {
+            assert domain.type == specifiedType
+        } else if (inferType) {
+            assert domain.type == inferredType
+        } else {
+            assert domain.type == null
+        }
 
         cleanup:
         utils.deleteUserQuietly(identityAdmin)
         utils.deleteTestDomainQuietly(domainId)
+
+        where:
+        allowSettingType | inferType
+        true             | false
+        true             | true
+        false            | true
+        false            | false
     }
 
     def "verify domain type is case insensitive"() {
@@ -2518,7 +2550,59 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "update domain's type - hasDomainAdminRole = #hasDomainAdminRole"() {
+    def "update domain's type - allowSettingType = #allowSettingType, inferType = #inferType"() {
+        given:
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+
+        // Build domain entity
+        def inferredType = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        def specifiedType = GlobalConstants.DOMAIN_TYPE_DATAPIPE
+        def domainEntity = new Domain().with {
+            it.type = specifiedType
+            it
+        }
+
+        // Disable inferring the domain type when we create it so the domain type is null after creation
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, false)
+        def createdDomain = utils.createDomainEntity(RandomStringUtils.randomNumeric(6))
+
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, inferType)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, allowSettingType)
+
+        when: "update domain"
+        def response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
+        def domain = response.getEntity(Domain)
+
+        then:
+        response.status == SC_OK
+        domain.name == createdDomain.name
+        domain.id == createdDomain.id
+        domain.enabled
+        if (allowSettingType) {
+            assert domain.type == specifiedType
+        } else if (inferType) {
+            // TODO: will need to update this if we update the domain to the inferred type on the v2.0 update domain API call
+            assert domain.type == null
+        } else {
+            assert domain.type == null
+        }
+
+        cleanup:
+        utils.deleteUserQuietly(identityAdmin)
+        utils.deleteDomain(createdDomain.id)
+
+        where:
+        allowSettingType | inferType
+        true             | true
+        true             | false
+        false            | false
+        false            | true
+    }
+
+    @Unroll
+    def "update domain's type - hasAdminRole = #hasAdminRole"() {
         given:
         def identityAdmin = utils.createIdentityAdmin()
 

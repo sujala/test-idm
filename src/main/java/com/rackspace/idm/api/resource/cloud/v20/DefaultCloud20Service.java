@@ -4013,6 +4013,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 domain = updateDomain;
             }
 
+            // TODO: will need to update this if we update the domain to the inferred type on the v2.0 update domain API call
             if (!identityConfig.getReloadableConfig().isFeatureSettingDomainTypeEnabled()
                     || !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
                 // Do not allow users to set the domain type if the feature flag is disabled

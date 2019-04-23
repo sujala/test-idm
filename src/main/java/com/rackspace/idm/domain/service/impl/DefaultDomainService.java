@@ -493,6 +493,9 @@ public class DefaultDomainService implements DomainService {
 
     @Override
     public String inferDomainTypeForDomainId(String domainId) {
+        if (!identityConfig.getReloadableConfig().isFeatureInferDomainTypeEnabled()) {
+            return null;
+        }
 
         if (StringUtils.isBlank(domainId)) {
             return GlobalConstants.DOMAIN_TYPE_UNKNOWN;

@@ -743,6 +743,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP = "feature.enable.setting.domain.type";
     public static final boolean FEATURE_ENABLE_SETTING_DOMAIN_TYPE_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP = "feature.enable.infer.domain.type";
+    public static final boolean FEATURE_ENABLE_INFER_DOMAIN_TYPE_DEFAULT = false;
+
     public static final String CLOUD_REGION_PROP = "cloud.region";
 
     @Qualifier("staticConfiguration")
@@ -1011,6 +1014,7 @@ public class IdentityConfig {
         defaults.put(TOKEN_LIFETIME_RACKER_DEFAULT_PROP, TOKEN_LIFETIME_RACKER_DEFAULT_DEFAULT);
         defaults.put(TOKEN_LIFETIME_ENTROPY_PROP, TOKEN_LIFETIME_ENTROPY_DEFAULT);
         defaults.put(FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, FEATURE_ENABLE_SETTING_DOMAIN_TYPE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, FEATURE_ENABLE_INFER_DOMAIN_TYPE_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -2787,6 +2791,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, versionAdded = "3.31.0", description = "Whether or not to allow setting the type on a domain.")
         public boolean isFeatureSettingDomainTypeEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, versionAdded = "3.31.0", description = "Whether or not to infer the type on a domain when the domain is created and a type is not set.")
+        public boolean isFeatureInferDomainTypeEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP);
         }
 
     }
