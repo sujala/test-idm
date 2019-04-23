@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.api.security.RequestContext;
@@ -9,6 +10,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import lombok.Setter;
@@ -16,6 +18,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -495,6 +498,39 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         return isAuthorized;
+    }
+
+    @Override
+    public String updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(BaseUser user, AuthenticationRequest authenticationRequest) {
+        String domainToAuthorize = authenticationRequest.getDomainId();
+
+        if (StringUtils.isBlank(domainToAuthorize) && identityConfig.getRepositoryConfig().shouldSetDefaultAuthorizationDomain()) {
+            String tenantName = authenticationRequest.getTenantName();
+            String tenantId = authenticationRequest.getTenantId();
+            Tenant tenant = null;
+            if (StringUtils.isNotBlank(tenantId)) {
+                tenant = tenantService.getTenant(tenantId);
+            } else if (StringUtils.isNotBlank(tenantName)) {
+                tenant = tenantService.getTenantByName(tenantName);
+            }
+
+            if (tenant != null && StringUtils.isNotBlank(tenant.getDomainId())) {
+                domainToAuthorize = tenant.getDomainId();
+            } else {
+                domainToAuthorize = user.getDomainId();
+            }
+
+            authenticationRequest.setDomainId(domainToAuthorize);
+        }
+
+        return domainToAuthorize;
+    }
+
+    @Override
+    public void verifyUserAuthorizedToAuthenticateOnDomain(BaseUser user, String domainId) {
+        if (identityConfig.getRepositoryConfig().shouldVerifyAuthorizationDomains() && (StringUtils.isNotBlank(domainId) && !domainId.equalsIgnoreCase(user.getDomainId()))) {
+            throw new NotAuthorizedException(ErrorCodes.ERROR_CODE_AUTH_INVALID_DOMAIN_MSG, ErrorCodes.ERROR_CODE_AUTH_INVALID_DOMAIN);
+        }
     }
 
     public void setTenantService(TenantService tenantService) {

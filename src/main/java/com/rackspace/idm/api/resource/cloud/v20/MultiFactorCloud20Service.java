@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.User;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.CredentialType;
 
 import javax.ws.rs.core.Response;
@@ -142,7 +143,7 @@ public interface MultiFactorCloud20Service {
      * user.
      *
      * If the request requires a second authentication request a WWW-Authenticate header must be returned in the response
-     * with an encrypted sessionId string to be passed into the {@link #authenticateSecondFactor(String, org.openstack.docs.identity.api.v2.CredentialType)}.
+     * with an encrypted sessionId string to be passed into the {@link #authenticateSecondFactor(String, AuthenticationRequest)}.
      *
      * @throws com.rackspace.idm.exception.MultiFactorNotEnabledException - if multifactor is not enabled for this user account
      */
@@ -152,14 +153,14 @@ public interface MultiFactorCloud20Service {
      * authenticates a 2-factor credential
      *
      * @param sessionId
-     * @param credential
+     * @param authenticationRequest
      * @throws IllegalArgumentException If the credential provided is not a supported 2-factor credential or sessionId is null
      * @throws com.rackspace.idm.exception.NotAuthenticatedException If the supplied sessionId and credential are not valid
      * @return AuthResponseTuple - Only returned in the authentication is successful. Exceptions should be thrown otherwise.
      *
      * @throws com.rackspace.idm.exception.MultiFactorNotEnabledException - if multifactor is not enabled for this user account
      */
-    AuthResponseTuple authenticateSecondFactor(String sessionId, CredentialType credential);
+    AuthResponseTuple authenticateSecondFactor(String sessionId, AuthenticationRequest authenticationRequest);
 
      /**
      * The multifactor service to list devices for a given user.

@@ -1,11 +1,16 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
+import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.*
 import org.apache.commons.lang3.RandomStringUtils
+import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -810,5 +815,30 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         IdentityUserTypeEnum.USER_ADMIN         | _
         IdentityUserTypeEnum.USER_MANAGER       | _
         IdentityUserTypeEnum.DEFAULT_USER       | _
+    }
+
+    def "authenticateSecondFactor: On successful credential authentication, verifies auth domain"() {
+        User user = entityFactory.createUser()
+        def sessionId = "sessionId"
+        def passcode = "passcode"
+        AuthenticationRequest request = v2Factory.createPasscodeAuthenticationRequest(passcode).with {
+            it.domainId = user.domainId
+            it
+        }
+
+        scopeAccessService.unmarshallScopeAccess(sessionId) >> entityFactory.createUserToken().with {
+            it.scope = TokenScopeEnum.MFA_SESSION_ID.scope
+            it.userRsId = user.id
+            it
+        }
+        userService.getUserById(user.id) >> user
+        multiFactorService.verifyPasscode(user.id, passcode) >> new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, "", null)
+
+        when:
+        def response = service.authenticateSecondFactor(sessionId, request)
+
+        then:
+        1 * authorizationService.updateAuthenticationRequestAuthorizationDomainWithDefaultIfNecessary(user, request);
+        1 * authorizationService.verifyUserAuthorizedToAuthenticateOnDomain(user, request.getDomainId());
     }
 }

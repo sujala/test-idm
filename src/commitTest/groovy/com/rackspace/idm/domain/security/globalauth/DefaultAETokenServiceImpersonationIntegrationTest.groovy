@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.DefaultAETokenServiceBaseIntegrationTest
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
+import org.apache.commons.lang3.RandomStringUtils
 import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -39,9 +40,13 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
     }
 
     @Unroll
-    def "marshall/unmarshall fully populated impersonation token for impersonator of type #methodDesc"() {
+    def "marshall/unmarshall fully populated impersonation token for impersonator of type #methodDesc; enableDomainTokens: #enableDomainTokens"() {
+        repositoryConfig.shouldWriteDomainTokens() >> enableDomainTokens
+        repositoryConfig.shouldReadDomainTokens() >> enableDomainTokens
+
         ImpersonatedScopeAccess originalSA = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
+            it.authenticationDomainId = RandomStringUtils.randomAlphabetic(32)
             return it
         }
 
@@ -59,9 +64,11 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
         validateImpersonationScopeAccessesEqual(originalSA, (ImpersonatedScopeAccess) unmarshalledScopeAccess)
 
         where:
-        impersonatorUser | methodDesc
-        impersonatorProvisionedUser | "Provisioned User"
-        impersonatorRackerUser | "Racker"
+        impersonatorUser | enableDomainTokens | methodDesc
+        impersonatorProvisionedUser | true | "Provisioned User"
+        impersonatorProvisionedUser | false | "Provisioned User"
+        impersonatorRackerUser | true | "Racker"
+        impersonatorRackerUser | false | "Racker"
     }
 
     @Unroll
