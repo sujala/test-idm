@@ -2583,7 +2583,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         if (allowSettingType) {
             assert domain.type == specifiedType
         } else if (inferType) {
-            // TODO: will need to update this if we update the domain to the inferred type on the v2.0 update domain API call
+            // An inferred type is not set on update. If you need one set then it needs to be explicitly set.
             assert domain.type == null
         } else {
             assert domain.type == null

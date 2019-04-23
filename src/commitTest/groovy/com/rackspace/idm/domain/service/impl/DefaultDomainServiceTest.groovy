@@ -550,6 +550,7 @@ class DefaultDomainServiceTest extends RootServiceTest {
         then:
         inferredType == expectedType
         identityConfig.getStaticConfig().getCloudRegion() >> cloudRegion
+        identityConfig.getReloadableConfig().isFeatureInferDomainTypeEnabled() >> true
 
         where:
         domainId                                                                                | cloudRegion  | expectedType
