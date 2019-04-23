@@ -13,4 +13,8 @@ public class NotAuthorizedException extends IdmException {
     public NotAuthorizedException(String message, Throwable clause) {
         super(message, clause);
     }
+
+    public NotAuthorizedException(String message, String errorCode) {
+        super(message, errorCode);
+    }
 }

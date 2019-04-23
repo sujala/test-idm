@@ -199,6 +199,12 @@ class Constants {
     public static final String ROLE_RBAC2_NAME = "rbacRole2"
     public static final String ROLE_RBAC2_ID = "122776"
 
+    /* ******************************
+    Repository property ids
+     ******************************* */
+    public static final String REPO_PROP_FEATURE_AUTHORIZATION_DOMAIN_DEFAULT_ID = "aswerfbmwersdf"
+    public static final String REPO_PROP_FEATURE_AUTHORIZATION_DOMAIN_VERIFICATION_ID = "kjajkhweroiudfnwer"
+
     /**
      * Hierarchical roles for nested da
      */

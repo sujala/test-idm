@@ -195,6 +195,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         EndUserTokenRequest userBeingImpersonatedTokenRequest = EndUserTokenRequest.builder().issuedToUser(userBeingImpersonated)
                 .clientId(identityConfig.getStaticConfig().getCloudAuthClientId())
                 .expirationDate(desiredImpersonationTokenExpiration.toDate().toInstant())
+                .authenticationDomainId(userBeingImpersonated.getDomainId())
                 .authenticatedByMethodGroup(AuthenticatedByMethodGroup.IMPERSONATION)
                 .build();
 
@@ -336,6 +337,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         EndUserTokenRequest tokenRequest = EndUserTokenRequest.builder().issuedToUser(user)
                 .clientId(clientId)
                 .authenticatedByMethodGroup(authGroup)
+                .authenticationDomainId(user.getDomainId()) // Initially only support authenticating to user's domain
                 .expireAfterCreation(expirationSeconds)
                 .build();
 
@@ -383,6 +385,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             tokenRequest = EndUserTokenRequest.builder().issuedToUser(endUser).clientId(clientId)
                     .expirationDate(expirationDate.toInstant())
                     .authenticatedByMethodGroup(authGroup)
+                    .authenticationDomainId(user.getDomainId()) // Initially only support authenticating to user's domain
                     .scope(scopeType)
                     .build();
 

@@ -7,6 +7,7 @@ import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationRespons
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -110,7 +111,7 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         def auth11ResponseWrongApi = cloud11.authenticate(cred2, requestContentMediaType, acceptMediaType)
 
         then: "receive 401"
-        IdmAssert.assertV1AuthFaultResponse(auth11ResponseWrongApi, com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault.class, com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED, AuthWithApiKeyCredentials.AUTH_FAILURE_MSG)
+        IdmAssert.assertV1AuthFaultResponse(auth11ResponseWrongApi, com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault.class, com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED, ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_AUTH_INVALID_API_KEY, ErrorCodes.ERROR_CODE_AUTH_INVALID_API_KEY_MSG))
 
         when: "try to auth via 2.0 with correct API"
         def auth20ResponseCorrectApi = cloud20.authenticateApiKey(finalUserAdmin.getUsername(), finalUserAdmin.apiKey, requestContentMediaType, acceptMediaType)
