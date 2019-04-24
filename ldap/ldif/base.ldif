@@ -6007,6 +6007,28 @@ rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE
 
+dn: rsId=aswerfbmwersdf,ou=properties,ou=cloud,o=configura
+ tion,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: feature.enable.authorization.domain.default
+description: Whether to default authorizationDomainsId if not specified
+rsIdmVersion: 3.31.0
+rsPropertyValue: FALSE
+rsPropertyValueType: Boolean
+rsReloadable: TRUE
+rsSearchable: TRUE
+
+dn: rsId=kjajkhweroiudfnwer,ou=properties,ou=cloud,o=configura
+ tion,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: feature.enable.authorization.domain.verification
+description: Whether to verify authorizationDomainId
+rsIdmVersion: 3.31.0
+rsPropertyValue: FALSE
+rsPropertyValueType: Boolean
+rsReloadable: TRUE
+rsSearchable: TRUE
+
 dn: rsId=7f4b028ac7a543ffbf8ac2da81029498,ou=properties,ou=cloud,o=configura
  tion,dc=rackspace,dc=com
 objectClass: rsIdentityProperty
@@ -6037,7 +6059,7 @@ objectClass: rsIdentityProperty
 cn: domain.types
 description: A comma delimited list of valid domain types
 rsIdmVersion: 3.29.0
-rsPropertyValue: PUBLIC_CLOUD_US,PUBLIC_CLOUD_UK,DEDICATED,RACKSPACE,UNKNOWN
+rsPropertyValue: RACKSPACE_CLOUD_US,RACKSPACE_CLOUD_UK,DEDICATED,RACKSPACE,DATAPIPE,UNKNOWN
 rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE

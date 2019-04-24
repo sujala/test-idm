@@ -115,12 +115,6 @@ public class DefaultDomainServiceTestOld {
         defaultDomainService.removeTenantFromDomain(null, null);
     }
 
-    @Test
-    public void createNewDoamin_validDomainId_returnsDomainId() throws Exception{
-        String domainId = defaultDomainService.createNewDomain("1");
-        assertThat("verify DomainId",domainId,equalTo("1"));
-    }
-
     @Test(expected = BadRequestException.class)
     public void addDomain_invalidIdCharacters_throwsBadRequest() throws Exception {
         Domain domain = new Domain();

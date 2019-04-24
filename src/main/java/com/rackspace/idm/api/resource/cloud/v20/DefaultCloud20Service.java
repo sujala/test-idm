@@ -1522,7 +1522,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException("Invalid " + MultiFactorCloud20Service.X_SESSION_ID_HEADER_NAME);
                 }
                 try {
-                    authResponseTuple = multiFactorCloud20Service.authenticateSecondFactor(sessionIdList.get(0), authenticationRequest.getCredential().getValue());
+                    authResponseTuple = multiFactorCloud20Service.authenticateSecondFactor(sessionIdList.get(0), authenticationRequest);
                 } catch (MultiFactorNotEnabledException e) {
                     logger.warn("Request for multifactor authentication was made on account for which multifactor is not enabled", e);
                     throw new BadRequestException("Unknown credential type");
@@ -1534,7 +1534,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (authenticationRequest.getScope() != null) {
                     throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
                 }
-                authResponseTuple = authWithToken.authenticate(authenticationRequest);
+                authResponseTuple = authWithToken.authenticateForAuthResponse(authenticationRequest);
             } else if (authenticationRequest.getCredential().getValue() instanceof DelegationCredentials) {
                 NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthWithTokenDelegation.getTransactionName());
                 if (!identityConfig.getReloadableConfig().isDelegationAuthenticationEnabled()) {
@@ -3925,18 +3925,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()) {
-                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
-            } else {
-                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
-            }
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
 
             // Attribute domainMultiFactorEnforcementLevel cannot be set on domain creation
             domain.setDomainMultiFactorEnforcementLevel(null);
 
-            // Ignore domain type if caller does not have the "identity:rs-domain-admin" role.
-            if (domain.getType() != null && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
-                domain.setType(null);
+            // Set a default domain type if
+            // 1) A domain type is not specified
+            if (StringUtils.isBlank(domain.getType())
+                    // 2) OR the feature flag to allow setting a domain type is disabled
+                    || !identityConfig.getReloadableConfig().isFeatureSettingDomainTypeEnabled()) {
+                domain.setType(domainService.inferDomainTypeForDomainId(domain.getId()));
             }
 
             validator20.validateDomainForCreation(domain);
@@ -4014,8 +4013,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 domain = updateDomain;
             }
 
-            // Ignore domain type if caller does not have the "identity:rs-domain-admin" role.
-            if (domain.getType() != null && !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
+            if (!identityConfig.getReloadableConfig().isFeatureSettingDomainTypeEnabled()
+                    || !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
+                // Do not allow users to set the domain type if the feature flag is disabled
                 domain.setType(null);
             }
 
@@ -4043,7 +4043,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if(StringUtils.isNotBlank(domain.getType())) {
-                if (domainDO.getType() != null && !domainDO.getType().equals(domain.getType())) {
+                if (domainDO.getType() != null && !domainDO.getType().equalsIgnoreCase(domain.getType())) {
                     String errMsg = String.format("Domain '%s' already has type '%s' and cannot be updated.", domainId, domainDO.getType());
                     throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
                 }
@@ -4244,11 +4244,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            if (identityConfig.getReloadableConfig().isUseRoleForDomainManagementEnabled()) {
-                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
-            } else {
-                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
-            }
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName());
 
             String defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
             if (defaultDomainId.equals(domainId)) {
@@ -4760,7 +4756,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
 
-        Iterable<com.rackspace.idm.domain.entity.Region> regions = this.cloudRegionService.getRegions(config.getString("cloud.region"));
+        Iterable<com.rackspace.idm.domain.entity.Region> regions = this.cloudRegionService.getRegions(identityConfig.getStaticConfig().getCloudRegion());
         return Response.ok().entity(regionConverterCloudV20.toRegions(regions).getValue());
     }
 
