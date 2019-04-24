@@ -20,6 +20,7 @@ import com.rackspace.idm.validation.Validator20
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
@@ -2263,10 +2264,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(userAdmin)
     }
 
-    @Unroll
-    def "Protect Create/Delete domain w/ role - serviceAdmin is allowed when feature flag is set to #useRoleForDomainManagement"() {
+    def "Protect Create/Delete domain w/ role - serviceAdmin is allowed"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, useRoleForDomainManagement)
         def domainId = utils.createDomain()
         def serviceAdminToken = utils.getServiceAdminToken()
         def domainToCreate = v2Factory.createDomain(domainId, domainId, false)
@@ -2282,15 +2281,11 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_NO_CONTENT
-
-        where:
-        useRoleForDomainManagement << [true , false]
     }
 
     @Unroll
-    def "Protect Create/Delete domain w/ role - userAdmin is not allowed when feature flag is set to #useRoleForDomainManagement"() {
+    def "Protect Create/Delete domain w/ role - userAdmin is not allowed"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, useRoleForDomainManagement)
         def domainId = utils.createDomain()
         def userAdmin
         (userAdmin) = utils.createUserAdmin(domainId)
@@ -2312,34 +2307,10 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(userAdmin)
         utils.deleteDomain(domainId)
-
-        where:
-        useRoleForDomainManagement << [true , false]
     }
 
-    def "Protect Create/Delete domain w/ role - identityAdmin is allowed when feature flag is off"() {
+    def "Protect Create/Delete domain w/ role - identityAdmin is not allowed"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, false)
-        def domainId = utils.createDomain()
-        def identityAdminToken = utils.getIdentityAdminToken()
-        def domainToCreate = v2Factory.createDomain(domainId, domainId, false)
-
-        when:
-        def response = cloud20.addDomain(identityAdminToken, domainToCreate)
-
-        then:
-        response.status == HttpStatus.SC_CREATED
-
-        when:
-        response = cloud20.deleteDomain(identityAdminToken, domainId)
-
-        then:
-        response.status == SC_NO_CONTENT
-    }
-
-    def "Protect Create/Delete domain w/ role - identityAdmin is not allowed when feature flag is on"() {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
         def domainId = utils.createDomain()
         def identityAdmin = utils.createIdentityAdmin()
         utils.deleteRoleOnUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
@@ -2362,9 +2333,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteUserQuietly(identityAdmin)
     }
 
-    def "Protect Create/Delete domain w/ role - identityAdmin is allowed when feature flag is on and role is assigned"() {
+    def "Protect Create/Delete domain w/ role - identityAdmin is allowed when role is assigned"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
         def domainId = utils.createDomain()
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
@@ -2387,9 +2357,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(identityAdmin)
     }
 
-    def "Protect Create/Delete domain w/ role - userAdmin is allowed when feature flag is on and role is assigned"() {
+    def "Protect Create/Delete domain w/ role - userAdmin is allowed when role is assigned"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
         def userAdminDomainId = utils.createDomain()
         def domainId = utils.createDomain()
         def userAdmin
@@ -2416,21 +2385,19 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "create domain with type - hasDomainAdminRole = #hasDomainAdminRole, feature.enable.use.role.for.domain.management = #featureFlag"() {
+    def "create domain with type - allowSettingType = #allowSettingType, inferType = #inferType"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, featureFlag)
-
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, allowSettingType)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, inferType)
         def identityAdmin = utils.createIdentityAdmin()
-
-        if (!hasDomainAdminRole) {
-            utils.deleteRoleOnUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
-        }
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
         // Build domain entity
-        def domainId = testUtils.getRandomUUID("domainId")
+        def domainId = RandomStringUtils.randomNumeric(6)
+        def specifiedType = GlobalConstants.DOMAIN_TYPE_DATAPIPE
+        def inferredType = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
         def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
-            it.type = "PUBLIC_CLOUD_US"
+            it.type = specifiedType // set the type to something other than the inferred type
             it
         }
 
@@ -2444,11 +2411,12 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domain.name == domainEntity.name
         domain.id == domainEntity.id
         domain.enabled
-
-        if (hasDomainAdminRole) {
-            assert domain.type == "PUBLIC_CLOUD_US"
+        if (allowSettingType) {
+            assert domain.type == specifiedType
+        } else if (inferType) {
+            assert domain.type == inferredType
         } else {
-            assert domain.type == null // Type is ignored if caller does not have the domain admin role
+            assert domain.type == null
         }
 
         when: "get domain"
@@ -2457,11 +2425,12 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_OK
-
-        if (hasDomainAdminRole) {
-            assert domain.type == "PUBLIC_CLOUD_US"
+        if (allowSettingType) {
+            assert domain.type == specifiedType
+        } else if (inferType) {
+            assert domain.type == inferredType
         } else {
-            assert domain.type == null // Domain created without a type
+            assert domain.type == null
         }
 
         when: "list domains"
@@ -2470,11 +2439,12 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_OK
-
-        if (hasDomainAdminRole) {
-            assert domain.type == "PUBLIC_CLOUD_US"
+        if (allowSettingType) {
+            assert domain.type == specifiedType
+        } else if (inferType) {
+            assert domain.type == inferredType
         } else {
-            assert domain.type == null // Domain created without a type
+            assert domain.type == null
         }
 
         cleanup:
@@ -2482,10 +2452,11 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteTestDomainQuietly(domainId)
 
         where:
-        hasDomainAdminRole  | featureFlag
-        true                | true
-        true                | false
-        false               | false
+        allowSettingType | inferType
+        true             | false
+        true             | true
+        false            | true
+        false            | false
     }
 
     def "verify domain type is case insensitive"() {
@@ -2496,9 +2467,9 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
         // Build domain entity
-        def domainId = testUtils.getRandomUUID("domainId")
+        def domainId = RandomStringUtils.randomNumeric(6)
         def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
-            it.type = "public_cloud_us"
+            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US.toLowerCase()
             it
         }
 
@@ -2512,12 +2483,12 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domain.name == domainEntity.name
         domain.id == domainEntity.id
         domain.enabled
-        domain.type == "PUBLIC_CLOUD_US"
+        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
 
         when: "update domain with type"
-        def createdDomain = utils.createDomainEntity()
+        def createdDomain = utils.createDomainEntity(RandomStringUtils.randomNumeric(6))
         domainEntity = new Domain().with {
-            it.type = "public_cloud_us"
+            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US.toLowerCase()
             it
         }
         response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
@@ -2526,63 +2497,12 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_OK
 
-        domain.type == "PUBLIC_CLOUD_US"
+        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
 
         cleanup:
         utils.deleteUserQuietly(identityAdmin)
         utils.deleteTestDomainQuietly(domainId)
         utils.deleteTestDomainQuietly(createdDomain.id)
-    }
-
-    def "User with domain admin role can create/update domain with type when 'feature.enable.use.role.for.domain.management'=true"() {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
-
-        def userAdmin = utils.createCloudAccount()
-        utils.addRoleToUser(userAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
-        def userAdminToken = utils.getToken(userAdmin.username)
-
-        // Build domain entity
-        def domainId = testUtils.getRandomUUID("domainId")
-        def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
-            it.type = "PUBLIC_CLOUD_US"
-            it
-        }
-
-        when: "create domain with type"
-        def response = cloud20.addDomain(userAdminToken, domainEntity)
-        def domain = response.getEntity(Domain)
-
-        then:
-        response.status == SC_CREATED
-        domain.type == "PUBLIC_CLOUD_US"
-
-        when: "update own domain's type"
-        domainEntity = new Domain().with {
-            it.type = "PUBLIC_CLOUD_US"
-            it
-        }
-        response = cloud20.updateDomain(userAdminToken, userAdmin.domainId, domainEntity)
-        domain = response.getEntity(Domain)
-
-        then:
-        response.status == SC_OK
-        domain.type == "PUBLIC_CLOUD_US"
-
-        when: "listing accessible domains for user"
-        response = cloud20.getAccessibleDomainsForUser(userAdminToken, userAdmin.id)
-        Domains domains = response.getEntity(Domains)
-
-        then:
-        response.status == SC_OK
-
-        domains.domain.size() == 1
-        domains.domain.get(0).type == "PUBLIC_CLOUD_US"
-
-        cleanup:
-        utils.deleteUserQuietly(userAdmin)
-        utils.deleteTestDomainQuietly(userAdmin.domainId)
-        utils.deleteTestDomainQuietly(domainId)
     }
 
     def "error check: create domain with type"() {
@@ -2600,40 +2520,29 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
         // Build domain entity
-        def domainId = testUtils.getRandomUUID("domainId")
-        def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
-            it.type = "PUBLIC_CLOUD_US"
-            it
-        }
-
-        when: "create domain with type - userAdmin with domainAdmin role and 'feature.enable.use.role.for.domain.management'=false"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, false)
-        def response = cloud20.addDomain(userAdminToken, domainEntity)
-        reloadableConfiguration.reset()
-
-        then:
-        response.status == SC_FORBIDDEN
+        def domainId = RandomStringUtils.randomNumeric(6)
+        def domainEntity = v2Factory.createDomain(domainId, domainId, true)
 
         when: "create domain with type - invalid type"
         domainEntity.type = "BAD_TYPE"
-        response = cloud20.addDomain(identityAdminToken, domainEntity)
+        def response = cloud20.addDomain(identityAdminToken, domainEntity)
 
         then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [RACKSPACE_CLOUD_US, RACKSPACE_CLOUD_UK, DEDICATED, RACKSPACE, DATAPIPE, UNKNOWN]")
 
         when: "create domain - invalid type - starting with valid type"
         domainEntity.type = "PUBLIC_CLOUD_US_BAD"
         response = cloud20.addDomain(identityAdminToken, domainEntity)
 
         then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [RACKSPACE_CLOUD_US, RACKSPACE_CLOUD_UK, DEDICATED, RACKSPACE, DATAPIPE, UNKNOWN]")
 
         when: "create domain - invalid type - multiple valid types"
         domainEntity.type = "PUBLIC_CLOUD_US PUBLIC_CLOUD_UK"
         response = cloud20.addDomain(identityAdminToken, domainEntity)
 
         then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [RACKSPACE_CLOUD_US, RACKSPACE_CLOUD_UK, DEDICATED, RACKSPACE, DATAPIPE, UNKNOWN]")
 
         cleanup:
         utils.deleteUserQuietly(identityAdmin)
@@ -2641,7 +2550,59 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "update domain's type - hasDomainAdminRole = #hasDomainAdminRole"() {
+    def "update domain's type - allowSettingType = #allowSettingType, inferType = #inferType"() {
+        given:
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+
+        // Build domain entity
+        def inferredType = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        def specifiedType = GlobalConstants.DOMAIN_TYPE_DATAPIPE
+        def domainEntity = new Domain().with {
+            it.type = specifiedType
+            it
+        }
+
+        // Disable inferring the domain type when we create it so the domain type is null after creation
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, false)
+        def createdDomain = utils.createDomainEntity(RandomStringUtils.randomNumeric(6))
+
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, inferType)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, allowSettingType)
+
+        when: "update domain"
+        def response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
+        def domain = response.getEntity(Domain)
+
+        then:
+        response.status == SC_OK
+        domain.name == createdDomain.name
+        domain.id == createdDomain.id
+        domain.enabled
+        if (allowSettingType) {
+            assert domain.type == specifiedType
+        } else if (inferType) {
+            // An inferred type is not set on update. If you need one set then it needs to be explicitly set.
+            assert domain.type == null
+        } else {
+            assert domain.type == null
+        }
+
+        cleanup:
+        utils.deleteUserQuietly(identityAdmin)
+        utils.deleteDomain(createdDomain.id)
+
+        where:
+        allowSettingType | inferType
+        true             | true
+        true             | false
+        false            | false
+        false            | true
+    }
+
+    @Unroll
+    def "update domain's type - hasAdminRole = #hasAdminRole"() {
         given:
         def identityAdmin = utils.createIdentityAdmin()
 
@@ -2656,10 +2617,10 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         // Build domain entity
         def domainEntity = new Domain().with {
-            it.type = "PUBLIC_CLOUD_US"
+            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
             it
         }
-        def createdDomain = utils.createDomainEntity()
+        def createdDomain = utils.createDomainEntity(RandomStringUtils.randomNumeric(6))
 
         when: "update domain"
         def response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
@@ -2671,11 +2632,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domain.name == createdDomain.name
         domain.id == createdDomain.id
         domain.enabled
-        if (hasDomainAdminRole) {
-            assert domain.type == "PUBLIC_CLOUD_US"
-        } else {
-            assert domain.type ==  null // Type is ignored if caller does not have the domain admin role
-        }
+        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
 
         cleanup:
         utils.deleteUserQuietly(identityAdmin)
@@ -2700,51 +2657,43 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
         // Build domain entity
-        def domainEntity = new Domain().with {
-            it.type = "PUBLIC_CLOUD_US"
-            it
-        }
-        def createdDomain = utils.createDomainEntity()
+        def domainEntity = new Domain()
+        def createdDomain = utils.createDomainEntity(RandomStringUtils.randomNumeric(6))
 
         when: "update domain - invalid type"
         domainEntity.type = "BAD_TYPE"
         def response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
 
         then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [RACKSPACE_CLOUD_US, RACKSPACE_CLOUD_UK, DEDICATED, RACKSPACE, DATAPIPE, UNKNOWN]")
 
         when: "update domain - invalid type - starting with valid type"
         domainEntity.type = "PUBLIC_CLOUD_US_BAD"
         response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
 
         then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [RACKSPACE_CLOUD_US, RACKSPACE_CLOUD_UK, DEDICATED, RACKSPACE, DATAPIPE, UNKNOWN]")
 
         when: "update domain - invalid type - multiple valid types"
         domainEntity.type = "PUBLIC_CLOUD_US PUBLIC_CLOUD_UK"
         response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
 
         then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [RACKSPACE_CLOUD_US, RACKSPACE_CLOUD_UK, DEDICATED, RACKSPACE, DATAPIPE, UNKNOWN]")
 
         when: "update domain - existing type on domain"
-        // Update domain's type
-        domainEntity.type = "PUBLIC_CLOUD_US"
-        response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
-        assert response.status == SC_OK
-
-        domainEntity.type = "PUBLIC_CLOUD_UK"
+        domainEntity.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
         response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
 
         then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, String.format("Domain '%s' already has type '%s' and cannot be updated.", createdDomain.id, "PUBLIC_CLOUD_US"));
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, String.format("Domain '%s' already has type '%s' and cannot be updated.", createdDomain.id, "RACKSPACE_CLOUD_US"));
 
         when: "update domain - cannot unset domain's type"
         domainEntity.type = ""
         response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
 
         then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [PUBLIC_CLOUD_US, PUBLIC_CLOUD_UK, DEDICATED, RACKSPACE, UNKNOWN]")
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [RACKSPACE_CLOUD_US, RACKSPACE_CLOUD_UK, DEDICATED, RACKSPACE, DATAPIPE, UNKNOWN]")
 
         cleanup:
         utils.deleteUserQuietly(userAdmin)

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Tenant
@@ -178,33 +179,34 @@ class DefaultEndpointServiceTest extends RootServiceTest {
             return it
         })
         config.getString(DefaultEndpointService.FEATURE_BASEURL_TO_REGION_MAPPING_STRATEGY) >> DefaultEndpointService.BaseUrlToRegionMappingStrategy.HYBRID.getCode()
-        config.getString(DefaultEndpointService.CLOUD_REGION_PROP_NAME) >> cloudRegion
+        identityConfig.getStaticConfig().getCloudRegion() >> cloudRegion
         reloadableConfig.getEndpointDefaultRegionId() >> "DEFAULT"
 
         expect:
         doesBaseUrlBelongToCloudRegionResult == service.doesBaseUrlBelongToCloudRegion(baseUrl)
 
         where:
-        cloudRegion                             |   baseUrlID   |   baseUrlrsRegion     |   doesBaseUrlBelongToCloudRegionResult
-        DefaultEndpointService.CLOUD_REGION_US  |   -1000       |   null                |   true
-        DefaultEndpointService.CLOUD_REGION_US  |   999         |   null                |   true
-        DefaultEndpointService.CLOUD_REGION_US  |   1000        |   null                |   false
-        DefaultEndpointService.CLOUD_REGION_US  |   500         |   "DFW"               |   true
-        DefaultEndpointService.CLOUD_REGION_US  |   10000       |   "DFW"               |   true
-        DefaultEndpointService.CLOUD_REGION_US  |   10000       |   "LON"               |   false
-        DefaultEndpointService.CLOUD_REGION_US  |   200         |   "LON"               |   false
-        DefaultEndpointService.CLOUD_REGION_UK  |   -1000       |   null                |   false
-        DefaultEndpointService.CLOUD_REGION_UK  |   999         |   null                |   false
-        DefaultEndpointService.CLOUD_REGION_UK  |   1000        |   null                |   true
-        DefaultEndpointService.CLOUD_REGION_UK  |   500         |   "DFW"               |   false
-        DefaultEndpointService.CLOUD_REGION_UK  |   10000       |   "DFW"               |   false
-        DefaultEndpointService.CLOUD_REGION_UK  |   10000       |   "LON"               |   true
-        DefaultEndpointService.CLOUD_REGION_UK  |   200         |   "LON"               |   true
-        DefaultEndpointService.CLOUD_REGION_US  |   -1000       |   "DEFAULT"           |   true
-        DefaultEndpointService.CLOUD_REGION_US  |   999         |   "DEFAULT"           |   true
-        DefaultEndpointService.CLOUD_REGION_US  |   1000        |   "DEFAULT"           |   false
-        DefaultEndpointService.CLOUD_REGION_UK  |   -1000       |   "DEFAULT"           |   false
-        DefaultEndpointService.CLOUD_REGION_UK  |   999         |   "DEFAULT"           |   false
-        DefaultEndpointService.CLOUD_REGION_UK  |   1000        |   "DEFAULT"           |   true
+        cloudRegion      |  baseUrlID | baseUrlrsRegion | doesBaseUrlBelongToCloudRegionResult
+        CLOUD_REGION_US  |  -1000     |  null           | true
+        CLOUD_REGION_US  |  999       |  null           | true
+        CLOUD_REGION_US  |  1000      |  null           | false
+        CLOUD_REGION_US  |  500       |  "DFW"          | true
+        CLOUD_REGION_US  |  10000     |  "DFW"          | true
+        CLOUD_REGION_US  |  10000     |   "LON"         | false
+        CLOUD_REGION_US  |  200       |   "LON"         | false
+        CLOUD_REGION_UK  |  -1000     |   null          | false
+        CLOUD_REGION_UK  |  999       |   null          | false
+        CLOUD_REGION_UK  |  1000      |   null          | true
+        CLOUD_REGION_UK  |  500       |   "DFW"         | false
+        CLOUD_REGION_UK  |  10000     |   "DFW"         | false
+        CLOUD_REGION_UK  |  10000     |   "LON"         | true
+        CLOUD_REGION_UK  |  200       |   "LON"         | true
+        CLOUD_REGION_US  |  -1000     |   "DEFAULT"     | true
+        CLOUD_REGION_US  |  999       |   "DEFAULT"     | true
+        CLOUD_REGION_US  |  1000      |   "DEFAULT"     | false
+        CLOUD_REGION_UK  |  -1000     |   "DEFAULT"     | false
+        CLOUD_REGION_UK  |  999       |   "DEFAULT"     | false
+        CLOUD_REGION_UK  |  1000      |   "DEFAULT"     | true
     }
+
 }
