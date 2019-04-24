@@ -2022,10 +2022,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         addRole << [true , false]
     }
 
-    def "verify identity admin with the identity:rs-domain-admin role can create user admin when feature.enable.use.role.for.domain.management=true"() {
+    def "verify identity admin with the identity:rs-domain-admin role can create user admin"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
-
         def identityAdmin = utils.createIdentityAdmin()
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
@@ -2059,10 +2057,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsersQuietly([userEntity, userEntity2])
     }
 
-    def "identity admin without identity:rs-domain-admin role cannot create user admins when feature.enable.use.role.for.domain.management=true"() {
+    def "identity admin without identity:rs-domain-admin role cannot create user admins"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, true)
-
         def identityAdmin = utils.createIdentityAdmin()
         utils.deleteRoleOnUser(identityAdmin, Constants.IDENTITY_RS_DOMAIN_ADMIN_ROLE_ID)
         def identityAdminToken = utils.getToken(identityAdmin.username)
@@ -2092,11 +2088,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Not Authorized")
     }
 
-    @Unroll
-    def "service admin without identity:rs-domain-admin role can create admins - feature.enable.use.role.for.domain.management = #featureFlag"() {
+    def "service admin without identity:rs-domain-admin role can create admins"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, featureFlag)
-
         def serviceAdmin = utils.createServiceAdmin()
         def serviceAdminToken = utils.getToken(serviceAdmin.username)
 
@@ -2110,8 +2103,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_CREATED
-
-        where:
-        featureFlag << [true, false]
     }
+
 }

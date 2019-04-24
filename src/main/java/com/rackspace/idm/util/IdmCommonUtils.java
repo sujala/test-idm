@@ -11,4 +11,14 @@ public class IdmCommonUtils {
                 && (Boolean.TRUE.toString().equalsIgnoreCase(value))
                 || (Boolean.FALSE.toString().equalsIgnoreCase(value)) ? Boolean.valueOf(value) : null;
     }
+
+    public boolean isNumeric(String value) {
+        try {
+            Integer.parseInt(value);
+        } catch(NumberFormatException e) {
+            return false;
+        }
+        return true;
+    }
+
 }

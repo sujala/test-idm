@@ -1,8 +1,10 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.util.IdmCommonUtils
 import com.unboundid.ldap.sdk.DN
 import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
@@ -24,6 +26,7 @@ class DefaultDomainServiceTest extends RootServiceTest {
         mockDomainDao(service)
         mockAuthorizationService(service)
         mockIdentityConfig(service)
+        service.idmCommonUtils = new IdmCommonUtils()
     }
 
     def "filterUserAdmins checks users for user-admin role"() {
@@ -537,6 +540,26 @@ class DefaultDomainServiceTest extends RootServiceTest {
         d1Rcn | d2Rcn
         "r1" | "r1"
         "r1" | "R1"
+    }
+
+    @Unroll
+    def "inferDomainTypeForDomainId correctly infers the domain type based on the provided domain ID - domainId == #domainId"() {
+        when:
+        def inferredType = service.inferDomainTypeForDomainId(domainId)
+
+        then:
+        inferredType == expectedType
+        identityConfig.getStaticConfig().getCloudRegion() >> cloudRegion
+        identityConfig.getReloadableConfig().isFeatureInferDomainTypeEnabled() >> true
+
+        where:
+        domainId                                                                                | cloudRegion  | expectedType
+        "${RandomStringUtils.randomNumeric(4)}"                                           | "US"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        "${RandomStringUtils.randomNumeric(4)}"                                           | "UK"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
+        "${RandomStringUtils.randomNumeric(4)}"                                           | "INVALID"    | GlobalConstants.DOMAIN_TYPE_UNKNOWN
+        "${GlobalConstants.DOMAIN_PREFIX_DATAPIPE}${RandomStringUtils.randomNumeric(4)}"  | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_DATAPIPE
+        "${GlobalConstants.DOMAIN_PREFIX_DEDICATED}${RandomStringUtils.randomNumeric(4)}" | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_DEDICATED
+        "${RandomStringUtils.randomNumeric(20)}"                                          | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_UNKNOWN
     }
 
 }

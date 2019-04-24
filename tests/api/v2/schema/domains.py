@@ -15,6 +15,7 @@ domain_item = {
         const.ENABLED: {'type': 'boolean'},
         const.RCN_LONG: {'type': 'string'},
         const.SESSION_TIMEOUT: {'type': 'string'},
+        const.TYPE: {'type': 'string'}
     },
     'required': [const.NAME, const.ID, const.SESSION_TIMEOUT],
     'additionalProperties': False

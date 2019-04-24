@@ -141,6 +141,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockAtomHopperClient(service)
         mockTokenRevocationService(service)
         mockPhonePinService(service)
+        mockIdmCommonUtils(service)
         service.authenticationContext = Mock(AuthenticationContext)
     }
 
@@ -264,6 +265,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, _);
         1 * tenantService.addTenantRoleToUser(user, _, false);
         1 * domainService.updateDomainUserAdminDN(user)
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_, ) >> true
         endpointService.doesBaseUrlBelongToCloudRegion(_) >> true
 
         user.password != null
@@ -304,6 +306,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * userDao.addUser(user)
         1 * tenantService.addTenantRoleToUser(user, _, false);
         1 * domainService.updateDomainUserAdminDN(user)
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_, ) >> true
 
         user.password != null
         user.userPassword != null
@@ -407,6 +410,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.addUserv11(user)
 
         then:
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_, ) >> true
         thrown(BadRequestException)
     }
 
@@ -1366,6 +1370,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         phonePinService.generatePhonePin() >> "246971"
         mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
         cryptHelper.generateSalt() >> salt
+        authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_, ) >> true
 
         when:
         service.addUserAdminV20(user, false)
@@ -1416,6 +1421,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         userDao.nextUserId >> "nextId"
         mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
         cryptHelper.generateSalt() >> "a1 b2"
+        authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_, ) >> true
 
         when:
         service.addUserAdminV20(user, false)
@@ -1608,12 +1614,11 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * domainService.getDomain(domainId) >> null
-        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> false
         1 * domainService.createNewDomain(domainId)
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_, ) >> true
     }
 
-    @Unroll
-    def "createDomainIfItDoesNotExist - domain does not exist: feature.enable.use.role.for.domain.management = #featureFlag"(){
+    def "createDomainIfItDoesNotExist - domain does not exist"(){
         given:
         def domainId = "domainId"
 
@@ -1622,28 +1627,17 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * domainService.getDomain(domainId) >> null
-        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> featureFlag
         1 * domainService.createNewDomain(domainId)
-
-        if (featureFlag) {
-            1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
-                    IdentityUserTypeEnum.SERVICE_ADMIN.roleName,
-                    IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
-        } else {
-            0 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
-                    IdentityUserTypeEnum.SERVICE_ADMIN.roleName,
-                    IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())
-        }
-
-        where:
-        featureFlag << [true, false]
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                IdentityUserTypeEnum.SERVICE_ADMIN.roleName,
+                IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
     }
 
-    def "createDomainIfItDoesNotExist - error check"(){
+    def "createDomainIfItDoesNotExist - error check"() {
         given:
         def domainId = "domainId"
 
-        when: "caller does not have the identity:identity:rs-domain-admin role and feature.enable.use.role.for.domain.management=true"
+        when: "caller does not have the identity:identity:rs-domain-admin role"
         service.createDomainIfItDoesNotExist(domainId)
 
         then:
@@ -1651,12 +1645,10 @@ class DefaultUserServiceTest extends RootServiceTest {
         IdmExceptionAssert.assertException(ex, ForbiddenException, null, "Not Authorized")
 
         1 * domainService.getDomain(domainId) >> null
-        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> true
         0 * domainService.createNewDomain(domainId)
     }
 
-    @Unroll
-    def "createDomainUserInCreateOneCall - calls correct services when domain does not exist: feature.enable.use.role.for.domain.management = #featureFlag"(){
+    def "createDomainUserInCreateOneCall - calls correct services when domain does not exist"() {
         given:
         def domainId = "domainId"
 
@@ -1666,24 +1658,15 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         1 * reloadableConfig.getTenantDefaultDomainId() >> "defaultDomainId"
         1 * domainService.getDomain(domainId) >> null
-        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> featureFlag
         1 * domainService.createNewDomain(domainId)
-
-        if (featureFlag) {
-            1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
-        } else {
-            0 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())
-        }
-
-        where:
-        featureFlag << [true, false]
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
     }
 
     def "createDomainUserInCreateOneCall - error check"(){
         given:
         def domainId = "domainId"
 
-        when: "caller does not have the identity:identity:rs-domain-admin role and feature.enable.use.role.for.domain.management=true"
+        when: "caller does not have the identity:identity:rs-domain-admin role"
         service.createDomainUserInCreateOneCall(domainId, true)
 
         then:
@@ -1692,7 +1675,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         1 * reloadableConfig.getTenantDefaultDomainId() >> "defaultDomainId"
         1 * domainService.getDomain(domainId) >> null
-        1 * reloadableConfig.isUseRoleForDomainManagementEnabled() >> true
         0 * domainService.createNewDomain(domainId)
     }
 
