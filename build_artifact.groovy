@@ -8,13 +8,12 @@
  */
 def runBuild(scm) {
     library "tesla@v0.8.2"
+    library "customer-identity@0.1.0"
 
     // Setup the git configuration so it can be passed as an arg to common code
-    def buildSteps
     node('master') {
         cleanWs()
         checkout scm
-        buildSteps = load('jenkins-scripts/jenkins-build-steps.groovy')
     }
 
     // Verify that the git commit has been tagged as passing tests

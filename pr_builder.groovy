@@ -1,6 +1,7 @@
 def build(scm) {
 
     library "tesla@v0.8.2"
+    library "customer-identity@0.1.0"
 
     try {
 
@@ -17,20 +18,19 @@ def build(scm) {
             node('master') {
                 cleanWs()
                 checkout scm
-                buildSteps = load('jenkins-scripts/jenkins-build-steps.groovy')
-                buildSteps.setRsiEndpoints(scm)
+                jenkinsBuildSteps.setRsiEndpoints(scm)
             }
         }
 
         // Build and publish the artifact to test
-        env.IDM_VERSION = buildSteps.publishArtifact(scm)
+        env.IDM_VERSION = jenkinsBuildSteps.publishArtifact(scm)
         env.NAMESPACE_NAME = namespace
         println "idmVersion = ${env.IDM_VERSION}"
 
 
         // Build images for the sandbox environment
         def sandboxImageTag = env.IDM_VERSION
-        buildSteps.buildImages(sandboxImageTag, env.IDM_VERSION, 'master')
+        jenkinsBuildSteps.buildImages(sandboxImageTag, env.IDM_VERSION, 'master')
 
         def releaseName = null
         if (runNonCommitTests) {
@@ -52,13 +52,13 @@ def build(scm) {
             // Deploy sandbox env
             env.SANDBOX_NAME = "pr-pipeline-jt-${env.BUILD_NUMBER}"
             println "sandboxName = " + env.SANDBOX_NAME
-            releaseName = buildSteps.createStandboxEnv(sandboxImageTag, env.SANDBOX_NAME)
-            buildSteps.deploySandboxEnvironment(releaseName)
+            releaseName = jenkinsBuildSteps.createStandboxEnv(sandboxImageTag, env.SANDBOX_NAME)
+            jenkinsBuildSteps.deploySandboxEnvironment(releaseName)
 
             // Run Johnny tests
-            buildSteps.runJohnnyTests(scm)
+            jenkinsBuildSteps.runJohnnyTests(scm)
         } finally {
-            buildSteps.destroySandboxEnv(releaseName)
+            jenkinsBuildSteps.destroySandboxEnv(releaseName)
         }
 
     } catch (exc) {
