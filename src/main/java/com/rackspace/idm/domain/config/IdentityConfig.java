@@ -448,9 +448,6 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP = "feature.enable.use.role.for.tenant.management";
     public static final boolean FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_DEFAULT = false;
 
-    public static final String FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP = "feature.enable.use.role.for.domain.management";
-    public static final boolean FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_DEFAULT = false;
-
     public static final String FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP = "feature.enable.use.role.for.endpoint.management";
     public static final boolean FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_DEFAULT = false;
 
@@ -646,6 +643,11 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP = "feature.enable.reading.domain.tokens";
     public static final boolean FEATURE_ENABLE_READING_DOMAIN_TOKENS_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP = "feature.enable.authorization.domain.verification";
+    public static final boolean FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_DEFAULT = false;
+
+    public static final String FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP = "feature.enable.authorization.domain.default";
+    public static final boolean FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_DEFAULT = false;
 
     /**
      * Opentracing properties
@@ -742,6 +744,14 @@ public class IdentityConfig {
 
     public static final String CACHE_RACKER_GROUPS_SIZE_PROP = "racker.groups.cache.size";
     public static final int CACHE_RACKER_GROUPS_SIZE_DEFAULT = 300;
+
+    public static final String FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP = "feature.enable.setting.domain.type";
+    public static final boolean FEATURE_ENABLE_SETTING_DOMAIN_TYPE_DEFAULT = false;
+
+    public static final String FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP = "feature.enable.infer.domain.type";
+    public static final boolean FEATURE_ENABLE_INFER_DOMAIN_TYPE_DEFAULT = false;
+
+    public static final String CLOUD_REGION_PROP = "cloud.region";
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -945,6 +955,8 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_PROP, FEATURE_ENABLE_WRITING_DOMAIN_TOKENS_DEFAULT);
         defaults.put(FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP, FEATURE_ENABLE_READING_DOMAIN_TOKENS_DEFAULT);
+        defaults.put(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP, FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_DEFAULT);
+        defaults.put(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP, FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_DEFAULT);
         defaults.put(FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_PROP, FEATURE_ENABLE_SEND_NEW_RELIC_CUSTOM_DATA_DEFAULT);
@@ -1001,7 +1013,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_PROP, FEATURE_IDENTITY_DEPLOYMENT_ENVIRONMENT_DEFAULT);
         defaults.put(FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_PROP, FEATURE_ENABLE_ONLY_USE_TENANT_DOMAIN_POINTERS_DEFAULT);
         defaults.put(FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_DEFAULT);
-        defaults.put(FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_DEFAULT);
         defaults.put(FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP, FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_DEFAULT);
@@ -1009,6 +1020,8 @@ public class IdentityConfig {
         defaults.put(TOKEN_LIFETIME_END_USER_DEFAULT_PROP, TOKEN_LIFETIME_END_USER_DEFAULT_DEFAULT);
         defaults.put(TOKEN_LIFETIME_RACKER_DEFAULT_PROP, TOKEN_LIFETIME_RACKER_DEFAULT_DEFAULT);
         defaults.put(TOKEN_LIFETIME_ENTROPY_PROP, TOKEN_LIFETIME_ENTROPY_DEFAULT);
+        defaults.put(FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, FEATURE_ENABLE_SETTING_DOMAIN_TYPE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, FEATURE_ENABLE_INFER_DOMAIN_TYPE_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -1902,6 +1915,12 @@ public class IdentityConfig {
         public int getLDAPMinimumAvailableConnectionGoal() {
             return getIntSafely(staticConfiguration, LDAP_SERVER_MINIMUM_AVAILABLE_CONNECTION_GOAL);
         }
+
+        @IdmProp(key = CLOUD_REGION_PROP, versionAdded = "1.0.14.8", description = "Specifies the cloud region of the Identity server.")
+        public String getCloudRegion() {
+            return getStringSafely(staticConfiguration, CLOUD_REGION_PROP);
+        }
+
     }
 
     /**
@@ -2729,11 +2748,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP, versionAdded = "3.27.0", description = "Control whether a given user is authorized to Create or Delete domains with a role")
-        public boolean isUseRoleForDomainManagementEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ROLE_FOR_DOMAIN_MANAGEMENT_PROP);
-        }
-
         @IdmProp(key = FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP, versionAdded = "3.27.0", description = "Control whether a given user is authorized to Create, Delete or Update endpoints with a role")
         public boolean isUseRoleForEndpointManagementEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP);
@@ -2779,6 +2793,16 @@ public class IdentityConfig {
             }
 
             return  version;
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, versionAdded = "3.31.0", description = "Whether or not to allow setting the type on a domain.")
+        public boolean isFeatureSettingDomainTypeEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, versionAdded = "3.31.0", description = "Whether or not to infer the type on a domain when the domain is created and a type is not set.")
+        public boolean isFeatureInferDomainTypeEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP);
         }
 
     }
@@ -2979,6 +3003,16 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP, versionAdded = "3.31.0", description = "Whether or not identity should read tokens that store the authenticated domains.")
         public boolean shouldReadDomainTokens() {
             return shouldWriteDomainTokens() || getRepositoryBooleanSafely(FEATURE_ENABLE_READING_DOMAIN_TOKENS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP, versionAdded = "3.31.0", description = "Whether or not identity should set a default authorization domain on authentication requests if the caller didn't specify one. The default is based on tenant id/name specified, or user domain if a tenant is not specified. This would impact users that have roles on tenants outside their domain.")
+        public boolean shouldSetDefaultAuthorizationDomain() {
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP, versionAdded = "3.31.0", description = "Whether or not identity should verify a user is authorized to access the specified (or defaulted) authorization domain on authentication.")
+        public boolean shouldVerifyAuthorizationDomains() {
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP);
         }
     }
 

@@ -80,4 +80,22 @@ public interface DomainService {
      * @return
      */
     boolean doDomainsShareRcn(String domainId1, String domainId2);
+
+    /**
+     * Given a domain ID, use the following logic to infer the domain type.
+     *
+     * If the domainId is parsable as a java integer (either negative or positive), the domain is considered an
+     * OPC domain. The type will be one of the RACKSPACE_CLOUD_XX types. The exact type is based on the value of
+     * the API server's static cloud.region property.
+     *     If US, then the type is RACKSPACE_CLOUD_US.
+     *     If UK, then the type is RACKSPACE_CLOUD_UK.
+     * If the domainId is prefixed with dedicated:, the type is DEDICATED.
+     * If the domainId is prefixed with dp:, the type is DATAPIPE.
+     * Else, the type is UNKNOWN.
+     *
+     * @param domainId
+     * @return
+     */
+    String inferDomainTypeForDomainId(String domainId);
+    
 }
