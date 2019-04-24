@@ -352,7 +352,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
         int sessionIdLifetimeMinutes = identityConfig.getReloadableConfig().getMfaSessionIdLifetime();
         ScopeAccess sa = scopeAccessService.addScopedScopeAccess(user,
-                identityConfig.getCloudAuthClientId(),
+                identityConfig.getStaticConfig().getCloudAuthClientId(),
                 alreadyAuthenticatedBy,
                 sessionIdLifetimeMinutes * 60,
                 TokenScopeEnum.MFA_SESSION_ID.getScope());

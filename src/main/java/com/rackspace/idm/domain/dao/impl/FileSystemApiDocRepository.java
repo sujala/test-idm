@@ -79,7 +79,7 @@ public class FileSystemApiDocRepository implements ApiDocDao {
     private LoadingCache<String, String> initVersionInfo() {
         LoadingCache<String, String> versionCache = CacheBuilder.newBuilder()
                 .maximumSize(100)
-                .expireAfterWrite(identityConfig.reloadableDocsTimeOutInSeconds(), TimeUnit.SECONDS)
+                .expireAfterWrite(identityConfig.getStaticConfig().reloadableDocsTimeOutInSeconds(), TimeUnit.SECONDS)
                 .build(
                         new CacheLoader<String, String>() {
                             /**

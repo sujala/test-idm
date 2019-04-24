@@ -16,7 +16,7 @@ public class LdapKeyCzarKeyMetadataRepository extends LdapGenericRepository<Ldap
 
     @Override
     public String getBaseDn() {
-        return config.getKeyCzarDN();
+        return config.getStaticConfig().getKeyCzarDN();
     }
 
     @Override

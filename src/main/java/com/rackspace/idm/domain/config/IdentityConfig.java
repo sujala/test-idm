@@ -1589,11 +1589,6 @@ public class IdentityConfig {
          * @deprecated
          * @return
          */
-        @Deprecated
-        @IdmProp(key = MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, versionAdded = "2.5.0", description="The location of the legacy encryption keys")
-        public String getMfaKeyLocation() {
-            return getStringSafely(staticConfiguration, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME);
-        }
 
         @IdmProp(key = FEEDS_MAX_CONNECTIONS_PROP, versionAdded = "3.5.0", description = "The total http connections allowed by the HttpClient used to post feed events")
         public int getFeedsMaxTotalConnections() {
@@ -3047,31 +3042,6 @@ public class IdentityConfig {
         }
 
         return values;
-    }
-
-    @Deprecated
-    public String getGaUsername() {
-        return getStaticConfig().getGaUsername();
-    }
-
-    @Deprecated
-    public String getCloudAuthClientId() {
-        return getStaticConfig().getCloudAuthClientId();
-    }
-
-    @Deprecated
-    public String getKeyCzarDN() {
-        return getStaticConfig().getKeyCzarDN();
-    }
-
-    @Deprecated
-    public int reloadableDocsTimeOutInSeconds() {
-        return getStaticConfig().reloadableDocsTimeOutInSeconds();
-    }
-
-    @Deprecated
-    public boolean getV11AddBaseUrlExposed() {
-        return getStaticConfig().getV11AddBaseUrlExposed();
     }
 
     public String getConfigRoot() {

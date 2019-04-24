@@ -141,7 +141,7 @@ public class Cloud11VersionResource {
     @Path("baseURLs")
     public Response addBaseURL(@Context HttpServletRequest request, @Context HttpHeaders httpHeaders, BaseURL baseUrl)
             throws IOException, JAXBException {
-        if(identityConfig.getV11AddBaseUrlExposed()) {
+        if(identityConfig.getStaticConfig().getV11AddBaseUrlExposed()) {
             return cloud11Service.addBaseURL(request, httpHeaders, baseUrl).build();
         } else {
             throw new NotFoundException("Resource Not Found");

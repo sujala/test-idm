@@ -41,7 +41,7 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         fileSystemApiDocRepository.getContent(path)
 
         then:
-        1 * identityConfig.reloadableDocsTimeOutInSeconds() >> 100
+        1 * staticConfig.reloadableDocsTimeOutInSeconds() >> 100
         fileSystemApiDocRepository.versionInfo != null
     }
 
@@ -111,7 +111,7 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         def path = tempFile.name
 
         identityConfig.getConfigRoot() >> tempFile.getParentFile().getAbsolutePath()
-        identityConfig.reloadableDocsTimeOutInSeconds() >> 0
+        staticConfig.reloadableDocsTimeOutInSeconds() >> 0
 
         when:
         String returnedContent = fileSystemApiDocRepository.getContent(path)
@@ -142,7 +142,7 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         def path = tempFile.name
 
         identityConfig.getConfigRoot() >> tempFile.getParentFile().getAbsolutePath()
-        identityConfig.reloadableDocsTimeOutInSeconds() >> 1000
+        staticConfig.reloadableDocsTimeOutInSeconds() >> 1000
         identityConfig.useReloadableDocs() >> true
 
         String returnedContent = fileSystemApiDocRepository.getContent(path)

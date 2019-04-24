@@ -21,6 +21,7 @@ class AtomHopperHelperTest extends Specification{
     @Shared IdentityConfig identityConfig
     @Shared UserService userService
     @Shared ScopeAccessService scopeAccessService
+    @Shared IdentityConfig.StaticConfig staticConfig
 
     def setupSpec(){
         atomHopperHelper = new AtomHopperHelper();
@@ -29,8 +30,8 @@ class AtomHopperHelperTest extends Specification{
     def "Get Auth Token good token" (){
         given:
         setupMock()
-        identityConfig.getGaUsername() >> "auth"
-        identityConfig.getCloudAuthClientId() >> "aclient"
+        identityConfig.getStaticConfig().getGaUsername() >> "auth"
+        identityConfig.getStaticConfig().getCloudAuthClientId() >> "aclient"
         User user = new User()
         user.uniqueId = "1"
         userService.getUser(_) >> user
@@ -50,6 +51,9 @@ class AtomHopperHelperTest extends Specification{
 
     def setupMock(){
         identityConfig = Mock()
+        staticConfig = Mock()
+        identityConfig.getStaticConfig() >> staticConfig
+
         atomHopperHelper.identityConfig = identityConfig
         userService = Mock()
         atomHopperHelper.userService = userService

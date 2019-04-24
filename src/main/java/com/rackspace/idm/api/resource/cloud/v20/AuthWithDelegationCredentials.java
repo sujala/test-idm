@@ -134,7 +134,7 @@ public class AuthWithDelegationCredentials {
         authByList.add(AuthenticatedByMethodEnum.DELEGATE.getValue());
 
         ScopeAccess delegateToken = scopeAccessService.addScopedScopeAccess(delegate,
-                identityConfig.getCloudAuthClientId(),
+                identityConfig.getStaticConfig().getCloudAuthClientId(),
                 authByList,
                 token.getAccessTokenExp(),
                 null);
