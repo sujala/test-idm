@@ -155,6 +155,17 @@ public class Validator {
         return isPatternCheckOk;
     }
 
+    public boolean validatePasswordComposition(String password) {
+        boolean result = false;
+        try {
+            result = checkPattern(PASSWORD, password);
+        } catch (Exception ex) {
+            logger.error("Encountered unexpected error validating password against composition check. Failing validation.", ex);
+        }
+
+        return result;
+    }
+
     private boolean checkPattern(String pattern, String value) {
         logger.warn("Checking regex pattern");
         com.rackspace.idm.domain.entity.Pattern tempPattern = ldapPatternRepository.getPattern(pattern);

@@ -205,6 +205,25 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_BLACKLISTED_PASSWORD = "PB-000";
     public static final String ERROR_CODE_BLACKLISTED_PASSWORD_MSG = "The password you submitted resembles one or more found in compromised data sets on the Internet, so we did not save it. Instead, use a new unique, strong password.";
 
+    //Password Validation service error messages
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_COMPOSITION_FAILED = "VP-000";
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_COMPOSITION_FAILED_MSG = "Passwords must be between 8 and 100 characters in length and must contain at least one uppercase, one lowercase, and one numeric character. While passwords cannot begin with a space, they can contain a space, and they can start with or include any of the following special characters: ~ ! @ # $ % ^ & * _ - + = ` | \\ ( ) { } [ ] : ; \" ' <> , . ? / £ ";
+
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_FAILED = "VP-001";
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_FAILED_MSG = "The password you submitted might have been compromised in data breaches outside of Rackspace. Choose another password.";
+
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_SKIPPED = "VP-002";
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_SKIPPED_MSG = "Password screening was skipped.";
+
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_DISABLED = "VP-003";
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_DISABLED_MSG = "Password screening is currently disabled.";
+
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_INDETERMINATE_RETRY = "VP-004";
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_INDETERMINATE_RETRY_MSG = "Password screening is experiencing some difficulties. Try again later.";
+
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_INDETERMINATE_ERROR = "VP-005";
+    public static final String ERROR_CODE_VALIDATE_PASSWORD_BLACKLIST_INDETERMINATE_ERROR_MSG = "Password screening is experiencing some difficulties. Contact an administrator.";
+
     /**
      * PLEASE ADD REUSABLE ERROR MESSAGES HERE.
      */

@@ -6,8 +6,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.newrelic.api.agent.Trace;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordCheckResultTypeEnum;
 import com.rackspace.idm.domain.config.DynamoDBClientConfiguration;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.entity.ValidatePasswordResult;
 import com.rackspace.idm.domain.service.PasswordBlacklistService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -31,8 +33,13 @@ public class DefaultPasswordBlacklistService implements PasswordBlacklistService
 
     @Trace
     @Override
-    public boolean isPasswordInBlacklist(String password) {
+    public PasswordCheckResultTypeEnum checkPasswordInBlacklist(String password) {
         try {
+
+            if (!identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled()){
+                return PasswordCheckResultTypeEnum.DISABLED;
+            }
+
             String passwordHash = DigestUtils.sha1Hex(password).toUpperCase();
             int thresholdCount = identityConfig.getReloadableConfig().getDynamoDBPasswordBlacklistCountMaxAllowed();
 
@@ -50,7 +57,7 @@ public class DefaultPasswordBlacklistService implements PasswordBlacklistService
                 int pwdCount = Integer.parseInt(countString);
                 if (pwdCount > thresholdCount) {
                     logger.debug("Password has been publicly compromised more then password threshold limit which set to " + thresholdCount);
-                    return true;
+                    return PasswordCheckResultTypeEnum.FAILED;
                 }
             }
         } catch (AmazonServiceException ase) {
@@ -60,14 +67,29 @@ public class DefaultPasswordBlacklistService implements PasswordBlacklistService
                     System.lineSeparator() + "AWS Error Code: " + ase.getErrorCode() +
                     System.lineSeparator() + "Error Type:     " + ase.getErrorType() +
                     System.lineSeparator() + "Request ID:     " + ase.getRequestId());
+            return PasswordCheckResultTypeEnum.INDETERMINATE_ERROR;
 
         } catch (AmazonClientException ace) {
             logger.error("Internal error occurred communicating with DynamoDB");
             logger.error("Error Message:  " + ace.getMessage());
+            return PasswordCheckResultTypeEnum.INDETERMINATE_RETRY;
         } catch (Exception e) {
             logger.error("Unable to check the password blacklist for user password due to error.", e);
+            return PasswordCheckResultTypeEnum.INDETERMINATE_ERROR;
         }
 
+        return PasswordCheckResultTypeEnum.PASSED;
+    }
+
+    @Override
+    public boolean isPasswordInBlacklist(String password) {
+        try {
+
+            PasswordCheckResultTypeEnum checkResult = checkPasswordInBlacklist(password);
+            return checkResult == PasswordCheckResultTypeEnum.FAILED;
+        } catch (Exception ex) {
+            logger.error("Error occurred during password blacklist check:  " + ex.getMessage());
+        }
         return false;
     }
 }

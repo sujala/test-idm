@@ -1,19 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ChangePasswordCredentials;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainAdministratorChange;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordReset;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -188,6 +175,35 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             PasswordReset passwordReset) {
         return cloud20Service.passwordReset(httpHeaders, authToken, passwordReset).build();
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Change user password")
+    @POST
+    @Path("/users/RAX-AUTH/change-pwd")
+    public Response changeUserPassword(
+            @Context HttpHeaders httpHeaders,
+            ChangePasswordCredentials changePasswordCredentials) {
+        if (!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()) {
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
+        return cloud20Service.changeUserPassword(httpHeaders, changePasswordCredentials).build();
+    }
+
+    /**
+     * This service validates that the password follows the standard Identity password composition
+     * and that the password is not blacklisted.
+     */
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Validate password")
+    @POST
+    @Path("/users/RAX-AUTH/validate-pwd")
+    public Response validatePassword(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            ValidatePasswordRequest validatePasswordRequest) {
+        if (!identityConfig.getReloadableConfig().isPasswordValidationServiceEnabled()) {
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
+        return cloud20Service.validatePassword(httpHeaders, authToken, validatePasswordRequest).build();
     }
 
     /**
@@ -674,18 +690,6 @@ public class Cloud20VersionResource {
             throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
         }
         return cloud20Service.deleteDomainPasswordPolicy(httpHeaders, authToken, domainId).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 Change user password")
-    @POST
-    @Path("/users/RAX-AUTH/change-pwd")
-    public Response changeUserPassword(
-            @Context HttpHeaders httpHeaders,
-            ChangePasswordCredentials changePasswordCredentials) {
-        if (!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()) {
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
-        return cloud20Service.changeUserPassword(httpHeaders, changePasswordCredentials).build();
     }
 
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name="v2.0 List tenants for domain")

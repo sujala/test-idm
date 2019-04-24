@@ -125,6 +125,8 @@
     <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
     <element name="forgotPasswordCredentials" type="RAX-AUTH:ForgotPasswordCredentials" />
     <element name="changePasswordCredentials" type="RAX-AUTH:ChangePasswordCredentials" />
+    <element name="validatePassword" type="RAX-AUTH:ValidatePassword" />
+    <element name="validatePasswordRequest" type="RAX-AUTH:ValidatePasswordRequest" />
     <element name="delegationCredentials" type="RAX-AUTH:DelegationCredentials" substitutionGroup="identity:credential" />
     <element name="bypassCodes" type="RAX-AUTH:BypassCodes"/>
     <element name="multiFactorDomain" type="RAX-AUTH:MultiFactorDomain"/>
@@ -635,6 +637,87 @@
         </complexContent>
     </complexType>
 
+    <complexType name="PasswordReset">
+        <attribute name="password" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The password to reset the user password to.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="ValidatePasswordRequest">
+        <attribute name="password" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The password to validate.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="ValidatePassword">
+        <attribute name="valid" type="RAX-AUTH:PasswordValidityTypeEnum" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The result of password validation.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="nonPassingCheckNames" type="RAX-AUTH:StringList" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        List of all non passing checks.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="compositionCheck" type="RAX-AUTH:PasswordCheckResultTypeEnum" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The result of password composition check.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="blacklistCheck" type="RAX-AUTH:PasswordCheckResultTypeEnum" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The result of password blacklist check.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="compositionCheckMessage" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Message with details related to composition check.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="blacklistCheckMessage" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Message with details related to blacklist check.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
     <complexType name="ForgotPasswordCredentials">
         <complexContent>
             <extension base="identity:CredentialType">
@@ -807,6 +890,25 @@
             <enumeration value="RACKER"/>
             <enumeration value="DOMAIN"/>
             <enumeration value="BROKER"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="PasswordValidityTypeEnum">
+        <restriction base="xsd:string">
+            <enumeration value="TRUE"/>
+            <enumeration value="FALSE"/>
+            <enumeration value="INDETERMINATE"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="PasswordCheckResultTypeEnum">
+        <restriction base="xsd:string">
+            <enumeration value="PASSED"/>
+            <enumeration value="FAILED"/>
+            <enumeration value="SKIPPED"/>
+            <enumeration value="DISABLED"/>
+            <enumeration value="INDETERMINATE-RETRY"/>
+            <enumeration value="INDETERMINATE-ERROR"/>
         </restriction>
     </simpleType>
 
@@ -1178,18 +1280,6 @@
         <sequence>
             <element name="publicCertificate" type="RAX-AUTH:PublicCertificate" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
-    </complexType>
-
-    <complexType name="PasswordReset">
-        <attribute name="password" type="xsd:string" use="required">
-            <annotation>
-                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        The password to reset the user password to.
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
     </complexType>
 
     <complexType name="EndpointAssignmentRule" abstract="true">

@@ -369,4 +369,6 @@ public interface Cloud20Service {
     ResponseBuilder switchDomainRcn(String authToken, String domainId, String destinationRcn);
 
     ResponseBuilder listEffectiveRolesForUser(HttpHeaders httpHeaders, String authToken, String userId, ListEffectiveRolesForUserParams params);
+
+    ResponseBuilder validatePassword(HttpHeaders httpHeaders, String authToken, ValidatePasswordRequest validatePassword);
 }

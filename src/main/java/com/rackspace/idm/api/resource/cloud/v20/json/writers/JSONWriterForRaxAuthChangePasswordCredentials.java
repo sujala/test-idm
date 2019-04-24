@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ChangePasswordCredentials;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials;
 import com.rackspace.idm.JSONConstants;
 
 import javax.ws.rs.Produces;

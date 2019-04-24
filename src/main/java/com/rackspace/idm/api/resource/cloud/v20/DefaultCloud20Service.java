@@ -399,6 +399,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private IdmCommonUtils idmCommonUtils;
 
+    @Autowired
+    private PasswordValidationService passwordValidationService;
+
+    @Autowired
+    private ValidatePasswordConverterCloudV20 validatePasswordConverterCloudV20;
+
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private LogoutResponseMarshaller marshaller = new LogoutResponseMarshaller();
@@ -1468,6 +1474,26 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    @Override
+    public ResponseBuilder validatePassword(HttpHeaders httpHeaders, String authToken, ValidatePasswordRequest validatePasswordRequest) {
+        try {
+            // Make sure only identity admins can call this service.
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+
+            ValidatePasswordResult validatePasswordResult = passwordValidationService.validatePassword(validatePasswordRequest.getPassword());
+
+            ValidatePassword validatePasswordResponse = validatePasswordConverterCloudV20.toResponse(validatePasswordResult);
+
+            return Response.ok(validatePasswordResponse);
+
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+
     }
 
     @Override

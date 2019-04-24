@@ -451,6 +451,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_PROP = "feature.enable.use.role.for.endpoint.management";
     public static final boolean FEATURE_ENABLE_USE_ROLE_FOR_ENDPOINT_MANAGEMENT_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_PASSWORD_VALIDATION_SERVICES_PROP = "feature.enable.validate.password.service";
+    public static final boolean FEATURE_ENABLE_PASSWORD_VALIDATION_SERVICES_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -1062,6 +1065,9 @@ public class IdentityConfig {
          * Feeds default configurations
          */
         defaults.put(FEEDS_USER_PRODUCT_SCHEMA_VERSION_PROP, FEEDS_USER_PRODUCT_SCHEMA_VERSION_DEFAULT);
+
+        // Password validation service default
+        defaults.put(FEATURE_ENABLE_PASSWORD_VALIDATION_SERVICES_PROP, FEATURE_ENABLE_PASSWORD_VALIDATION_SERVICES_DEFAULT);
 
         return defaults;
     }
@@ -2086,7 +2092,7 @@ public class IdentityConfig {
         public Set<String> getOpenTracingExcludedWebResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_OPEN_TRACING_EXCLUDE_WEB_RESOURCES_PROP);
         }
-            
+
         @IdmProp(key = FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP, versionAdded = "3.19.0", description = "The custom attributes to push for auth api resources. '*' means all available")
         public Set<String> getIncludedNewRelicCustomDataAttributesForAuthResources() {
             return getSetSafely(reloadableConfiguration, FEATURE_INCLUDE_AUTH_RESOURCE_ATTRIBUTES_PROP);
@@ -2788,6 +2794,11 @@ public class IdentityConfig {
             }
 
             return  version;
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_PASSWORD_VALIDATION_SERVICES_PROP, versionAdded = "3.31.0", description = "Whether or not password validation service is enabled")
+        public boolean isPasswordValidationServiceEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_PASSWORD_VALIDATION_SERVICES_PROP);
         }
 
         @IdmProp(key = FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, versionAdded = "3.31.0", description = "Whether or not to allow setting the type on a domain.")

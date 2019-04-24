@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordCheckResultTypeEnum;
+import com.rackspace.idm.domain.entity.ValidatePasswordResult;
+
 public interface PasswordBlacklistService {
 
     /**
@@ -12,4 +15,6 @@ public interface PasswordBlacklistService {
      * @return
      */
     boolean isPasswordInBlacklist(String password);
+
+    PasswordCheckResultTypeEnum checkPasswordInBlacklist(String password);
 }

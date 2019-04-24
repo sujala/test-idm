@@ -4,7 +4,9 @@ import com.amazonaws.AmazonClientException
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.GetItemResult
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordCheckResultTypeEnum
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.entity.ValidatePasswordResult
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -14,25 +16,24 @@ class DefaultPasswordBlacklistServiceTest extends RootServiceTest {
     @Shared
     DefaultPasswordBlacklistService service
 
-
     def setup() {
         service = new DefaultPasswordBlacklistService()
         mockIdentityConfig(service)
         mockDynamoDB(service)
     }
 
-    def "Test default behavior is to handle exceptions and return false instead of propagating exception"() {
+    def "Test default behavior is to handle exceptions and return INDETERMINATE_ERROR instead of propagating exception"() {
         given:
         identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled() >> true
 
         when: "password blacklist service is called"
-        boolean isPasswordInBlacklisted = service.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+        def isPasswordInBlacklisted = service.checkPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
 
         then: "by default it handles all exceptions and logs them"
         noExceptionThrown()
 
         and: "returns that password is not black listed"
-        isPasswordInBlacklisted == false
+        isPasswordInBlacklisted == PasswordCheckResultTypeEnum.INDETERMINATE_ERROR
     }
 
     @Unroll
@@ -53,7 +54,7 @@ class DefaultPasswordBlacklistServiceTest extends RootServiceTest {
         }
 
         when: "Black listed password with compromised count more then threshold limit is passed"
-        boolean blackListedPasswordIsBlocked = service.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+        def blackListedPasswordIsBlocked = service.checkPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
 
         then: "password is considered black listed"
         blackListedPasswordIsBlocked == expectation
@@ -62,13 +63,13 @@ class DefaultPasswordBlacklistServiceTest extends RootServiceTest {
 
         where:
         countNumber | expectation
-        -2000       | false
-        -2          | false
-        0           | false
-        1           | false
-        10          | false
-        1000        | true
-        null        | false
+        -2000       | PasswordCheckResultTypeEnum.PASSED
+        -2          | PasswordCheckResultTypeEnum.PASSED
+        0           | PasswordCheckResultTypeEnum.PASSED
+        1           | PasswordCheckResultTypeEnum.PASSED
+        10          | PasswordCheckResultTypeEnum.PASSED
+        1000        | PasswordCheckResultTypeEnum.FAILED
+        null        | PasswordCheckResultTypeEnum.INDETERMINATE_ERROR
     }
 
     @Unroll
@@ -78,16 +79,27 @@ class DefaultPasswordBlacklistServiceTest extends RootServiceTest {
 
         when:
         1 * dynamoDB.getItem(_) >> exception
-        def result = service.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+        def result = service.checkPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
 
         then:
-        result == expectedResult
+        result == PasswordCheckResultTypeEnum.INDETERMINATE_ERROR
         1 * identityConfig.getReloadableConfig().getDynamoDBPasswordBlacklistCountMaxAllowed() >> 10
 
         where:
-        exception                                            | expectedResult
-        new AmazonServiceException("test service exception") | false
-        new AmazonClientException("test client exception")   | false
-        new Exception("test exception")                      | false
+        exception << [new AmazonServiceException("test service exception"),
+                      new AmazonClientException("test client exception"),
+                      new Exception("test exception")]
+    }
+
+    def "Test when feature flag is turned off then result with DISABLE value is returned"() {
+        given:
+        identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled() >> false
+
+        when:
+        def result = service.checkPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+
+        then:
+        result == PasswordCheckResultTypeEnum.DISABLED
     }
 }
+

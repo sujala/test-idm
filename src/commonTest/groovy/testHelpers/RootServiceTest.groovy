@@ -121,6 +121,7 @@ class RootServiceTest extends Specification {
     @Shared ScopeAccessService scopeAccessService
     @Shared PasswordComplexityService passwordComplexityService
     @Shared PasswordBlacklistService passwordBlacklistService
+    @Shared PasswordValidationService passwordValidationService
     @Shared TenantService tenantService
     @Shared TenantTypeService tenantTypeService
     @Shared SecretQAService secretQAService
@@ -623,6 +624,11 @@ class RootServiceTest extends Specification {
     def mockPasswordBlacklistService(service) {
         passwordBlacklistService = Mock()
         service.passwordBlacklistService = passwordBlacklistService
+    }
+
+    def mockPasswordValidationService(service) {
+        passwordValidationService = Mock()
+        service.passwordValidationService = passwordValidationService
     }
 
     def mockDefaultDomainService(service) {
