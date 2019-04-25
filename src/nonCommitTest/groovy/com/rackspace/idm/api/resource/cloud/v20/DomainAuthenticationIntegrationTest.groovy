@@ -8,6 +8,8 @@ import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
+import javax.ws.rs.core.MediaType
+
 import static org.apache.http.HttpStatus.SC_OK
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 
@@ -38,29 +40,31 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "authWithPassword: Can authenticate if omit domain or specify own domain regardless of flags: defaultDomainId: #defaultDomain ; verifyDomainId: #verifyDomain"() {
+    def "authWithPassword: Can authenticate if omit domain or specify own domain regardless of flags: defaultDomainId: #defaultDomain ; verifyDomainId: #verifyDomain ; mediaType: #mediaType"() {
         setDefaultFeatureFlag(defaultDomain)
         setVerificationFeatureFlag(verifyDomain)
 
-        AuthenticationRequest request = v2Factory.createPasswordAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_PASSWORD)
-
         when: "Auth without domainId"
-        def response = cloud20.authenticate(request)
+        AuthenticationRequest request = v2Factory.createPasswordAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_PASSWORD)
+        def response = cloud20.authenticateForRequest(request)
 
         then: "Valid"
         response.status == SC_OK
 
         when: "Add domainId to request"
-        request.setDomainId(sharedUserAdmin.getDomainId())
-        response = cloud20.authenticate(request)
+        request = v2Factory.createPasswordAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_PASSWORD).with {
+            it.domainId = sharedUserAdmin.getDomainId()
+            it
+        }
+        response = cloud20.authenticateForRequest(request, null, mediaType)
 
         then: "Valid"
         response.status == SC_OK
-        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
+        AuthenticateResponse authResponse = mediaType == MediaType.APPLICATION_JSON_TYPE ? response.getEntity(AuthenticateResponse) : response.getEntity(AuthenticateResponse).value
         authResponse.user.domainId == sharedUserAdmin.domainId
 
         where:
-        [defaultDomain, verifyDomain] << [[true, false], [true, false]].combinations()
+        [defaultDomain, verifyDomain, mediaType] << [[true, false], [true, false], [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]].combinations()
     }
 
     @Unroll
@@ -68,7 +72,7 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
         setVerificationFeatureFlag(true)
 
         when:
-        def response = cloud20.authenticate(authRequest)
+        def response = cloud20.authenticateForRequest(authRequest)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, UnauthorizedFault, SC_UNAUTHORIZED, "AUTH-006", "Not authorized for the domain.")
@@ -94,7 +98,7 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
         setVerificationFeatureFlag(true)
 
         when:
-        def response = cloud20.authenticate(authRequest)
+        def response = cloud20.authenticateForRequest(authRequest)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, UnauthorizedFault, SC_UNAUTHORIZED, errorCode, errorMessage)
@@ -120,7 +124,7 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
         setVerificationFeatureFlag(true)
 
         when:
-        def response = cloud20.authenticate(authRequest)
+        def response = cloud20.authenticateForRequest(authRequest)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, UnauthorizedFault, SC_UNAUTHORIZED, "AUTH-007", "Not authorized for the tenant.")
@@ -148,17 +152,19 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
         setDefaultFeatureFlag(defaultDomain)
         setVerificationFeatureFlag(verifyDomain)
 
-        AuthenticationRequest request = v2Factory.createApiKeyAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_API_KEY)
-
         when: "Auth without domainId"
-        def response = cloud20.authenticate(request)
+        AuthenticationRequest request = v2Factory.createApiKeyAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_API_KEY)
+        def response = cloud20.authenticateForRequest(request)
 
         then: "Valid"
         response.status == SC_OK
 
         when: "Add domainId to request"
-        request.setDomainId(sharedUserAdmin.getDomainId())
-        response = cloud20.authenticate(request)
+        request = v2Factory.createApiKeyAuthenticationRequest(sharedUserAdmin.username, Constants.DEFAULT_API_KEY).with {
+            it.domainId = sharedUserAdmin.getDomainId()
+            it
+        }
+        response = cloud20.authenticateForRequest(request)
 
         then: "Valid"
         response.status == SC_OK
@@ -174,17 +180,19 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
 
         String token = utils.getToken(sharedUserAdmin.username, Constants.DEFAULT_PASSWORD)
 
-        AuthenticationRequest request = v2Factory.createTokenAuthenticationRequest(token, sharedUserAdmin.domainId, null)
-
         when: "Auth without domainId"
-        def response = cloud20.authenticate(request)
+        AuthenticationRequest request = v2Factory.createTokenAuthenticationRequest(token, sharedUserAdmin.domainId, null)
+        def response = cloud20.authenticateForRequest(request)
 
         then: "Valid"
         response.status == SC_OK
 
         when: "Add domainId to request"
-        request.setDomainId(sharedUserAdmin.getDomainId())
-        response = cloud20.authenticate(request)
+        request = v2Factory.createTokenAuthenticationRequest(token, sharedUserAdmin.domainId, null).with {
+            it.domainId = sharedUserAdmin.getDomainId()
+            it
+        }
+        response = cloud20.authenticateForRequest(request)
 
         then: "Valid"
         response.status == SC_OK
@@ -215,7 +223,7 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
         AuthenticationRequest request = v2Factory.createTokenAuthenticationRequest(token, tenantInOtherDomain.id, null)
 
         when: "Auth without explicit domainId"
-        def response = cloud20.authenticate(request)
+        def response = cloud20.authenticateForRequest(request)
 
         then:
         response.status == expectedResult
@@ -245,7 +253,7 @@ class DomainAuthenticationIntegrationTest extends RootIntegrationTest {
         }
 
         when: "Auth without explicit domainId"
-        def response = cloud20.authenticate(request)
+        def response = cloud20.authenticateForRequest(request)
 
         then:
         response.status == expectedResult

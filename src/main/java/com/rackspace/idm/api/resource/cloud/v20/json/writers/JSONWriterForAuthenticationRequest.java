@@ -54,6 +54,7 @@ public class JSONWriterForAuthenticationRequest implements MessageBodyWriter<Aut
         prefixValues.put(AUTH_DOMAIN_PATH, RAX_AUTH_DOMAIN);
         prefixValues.put(AUTH_PASSCODE_CREDENTIALS_PATH, RAX_AUTH_PASSCODE_CREDENTIALS);
         prefixValues.put(AUTH_DELEGATION_CREDENTIALS_PATH, RAX_AUTH_DELEGATION_CREDENTIALS);
+        prefixValues.put(AUTH_DOMAINID_PATH, RAX_AUTH_DOMAIN_ID);
 
         write(authenticationRequest, entityStream, prefixValues);
     }
