@@ -634,9 +634,6 @@ public class IdentityConfig {
     public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_PROP = "enable.delegation.agreements.for.rcns";
     public static final String ENABLE_RCNS_FOR_DELEGATION_AGREEMENTS_DEFAULT = "";
 
-    public static final String FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP = "feature.enable.phone.pin.on.user";
-    public static final boolean FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT = false;
-
     public static final String INVITES_SUPPORTED_FOR_RCNS_PROP = "invites.supported.for.rcns";
     public static final String INVITES_SUPPORTED_FOR_RCNS_DEFAULT = "";
 
@@ -993,8 +990,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_PROP, FEATURE_ENABLE_IGNORE_COMMENTS_FOR_SAML_PARSER_DEFAULT);
 
         defaults.put(FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_PROP, FEATURE_ENABLE_GRANT_ROLES_TO_USER_SERVICE_DEFAULT);
-
-        defaults.put(FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, FEATURE_ENABLE_PHONE_PIN_ON_USER_DEFAULT);
 
         defaults.put(RACKER_AUTH_ALLOWED_PROP, RACKER_AUTH_ALLOWED_DEFAULT);
 
@@ -2596,11 +2591,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP, versionAdded = "3.26.0", description = "Whether to use aspect logic to enforce MFA setup and sessionId use authorization or to continue to use the filter.")
         public boolean useAspectForMfaAuthorization() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_ASPECT_FOR_MFA_AUTHORIZATION_PROP);
-        }
-
-        @IdmProp(key = FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, versionAdded = "3.21.0", description = "Specifies whether to generate and store a user's phone PIN when the user is created. Phone PINs are generated for provisioned users created through v2.0 create user calls and Domain federated users.")
-        public boolean getEnablePhonePinOnUserFlag() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP);
         }
 
         @IdmProp(key = FEATURE_ENABLE_USER_ADMIN_LOOK_UP_BY_DOMAIN_PROP, versionAdded = "3.21.0", description = "Whether to enable user-admin look up by domain.")

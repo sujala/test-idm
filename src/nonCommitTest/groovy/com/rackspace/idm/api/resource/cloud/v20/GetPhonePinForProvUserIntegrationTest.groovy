@@ -129,19 +129,5 @@ class GetPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         where:
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
-
-    def "Get phone pin returns 404 when phone pin feature is disabled" () {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-
-        when:
-        def response = cloud20.getPhonePin(utils.getServiceAdminToken(), "anyUserId", MediaType.APPLICATION_JSON_TYPE)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Service Not Found")
-
-        cleanup:
-        staticIdmConfiguration.reset()
-    }
 }
 

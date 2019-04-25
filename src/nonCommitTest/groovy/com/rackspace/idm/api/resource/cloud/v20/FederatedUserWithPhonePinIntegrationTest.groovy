@@ -80,11 +80,8 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         cloud20.deleteUser(sharedServiceAdminToken, sharedUserAdmin.id)
     }
 
-    @Unroll
-    def "SAML assertion 2.0 - Create a federated user with phone PIN - featureEnabled == #featureEnabled"() {
+    def "SAML assertion 2.0 - Create a federated user with phone PIN"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, featureEnabled)
-
         def fedRequest = createFedRequest()
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
@@ -103,15 +100,11 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         assert fedUser.username == fedRequest.username
         assert fedUser.domainId == fedRequest.domainId
 
-        if (featureEnabled) {
-            assert fedUser.phonePin != null
-            assert fedUser.encryptedPhonePin != null
-            assert fedUser.salt != null
-            assert fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
-            assert fedUser.phonePin.isNumber()
-        } else {
-            assert fedUser.phonePin == null
-        }
+        assert fedUser.phonePin != null
+        assert fedUser.encryptedPhonePin != null
+        assert fedUser.salt != null
+        assert fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
+        assert fedUser.phonePin.isNumber()
 
         cleanup:
         try {
@@ -119,16 +112,10 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         } catch (Exception ex) {
             // Eat
         }
-
-        where:
-        featureEnabled << [true, false]
     }
 
-    @Unroll
-    def "SAML assertion 1.0 - Create a federated user with phone PIN - featureEnabled == #featureEnabled"() {
+    def "SAML assertion 1.0 - Create a federated user with phone PIN"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, featureEnabled)
-
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "test@rackspace.com"
@@ -146,16 +133,11 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         def fedUser = federatedUserRepository.getUserById(authResponse.user.id)
 
         then:
-
-        if (featureEnabled) {
-            assert fedUser.phonePin != null
-            assert fedUser.encryptedPhonePin != null
-            assert fedUser.salt != null
-            assert fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
-            assert fedUser.phonePin.isNumber()
-        } else {
-            assert fedUser.phonePin == null
-        }
+        assert fedUser.phonePin != null
+        assert fedUser.encryptedPhonePin != null
+        assert fedUser.salt != null
+        assert fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
+        assert fedUser.phonePin.isNumber()
 
         cleanup:
         try {
@@ -163,9 +145,6 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         } catch (Exception ex) {
             // Eat
         }
-
-        where:
-        featureEnabled << [true, false]
     }
 
 

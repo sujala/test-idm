@@ -30,6 +30,7 @@ import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.util.IdmCommonUtils;
 import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.validation.Validator;
+import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
@@ -111,6 +112,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private Validator validator;
+
+    @Autowired
+    private Validator20 validator20;
 
     @Autowired
     private DomainService domainService;
@@ -258,9 +262,19 @@ public class DefaultUserService implements UserService {
         user.setSalt(cryptHelper.generateSalt());
         user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
 
-        if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
+        // Validate/generate phone pin
+        if (StringUtils.isNotBlank(user.getPhonePin())) {
+            // Verify caller is authorized to set phone pin
+            if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName())) {
+                throw new ForbiddenException("Not authorized to set phone pin.", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            validator20.validatePhonePin(user.getPhonePin());
+        } else {
             user.setPhonePin(phonePinService.generatePhonePin());
         }
+
         userDao.addUser(user);
 
         atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, MDC.get(Audit.GUUID));

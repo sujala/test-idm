@@ -6970,8 +6970,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         callerType << IdentityUserTypeEnum.values()
     }
 
-    @Unroll
-    def "updateUser: update phone pin for Federated User with feature flag: #phonePinFeatureFlag"() {
+    def "updateUser: update phone pin for Fed User"() {
         given:
         def userId = "userId"
         def phonePin = "786124"
@@ -6984,23 +6983,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when: "update federated user for phone pin"
-        reloadableConfig.getEnablePhonePinOnUserFlag() >> phonePinFeatureFlag
         service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then: "test invocation phone pin validator and updateFederatedUser"
-        expectedInvocation * validator20.validatePhonePin(phonePin)
-        expectedInvocation * identityUserService.updateFederatedUser(federatedUser)
+        1 * validator20.validatePhonePin(phonePin)
+        1 * identityUserService.updateFederatedUser(federatedUser)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> federatedUser
         2 * identityUserService.getEndUserById(userId) >> federatedUser
-
-        where:
-        phonePinFeatureFlag | expectedInvocation
-        true                | 1
-        false               | 0
     }
 
-    @Unroll
-    def "updateUser: update phone pin for Provisioned User with feature flag: #phonePinFeatureFlag"() {
+    def "updateUser: update phone pin for user"() {
         given:
         def userId = "userId"
         def phonePin = "786124"
@@ -7013,24 +7005,17 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         when: "update provisioned user for phone pin"
-        reloadableConfig.getEnablePhonePinOnUserFlag() >> phonePinFeatureFlag
         service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then: "test invocation phone pin validator"
-        expectedInvocation * validator20.validatePhonePin(phonePin)
+        1 * validator20.validatePhonePin(phonePin)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> provisionedUser
         2 * identityUserService.getEndUserById(userId) >> provisionedUser
-
-        where:
-        phonePinFeatureFlag | expectedInvocation
-        true                | 1
-        false               | 0
     }
 
 
     def "updateUser: update phone pin for Provisioned User"() {
         given:
-        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
         def userId = "userId"
         def otherUserId = "otherUserId"
         def phonePin = "786124"
@@ -7077,7 +7062,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> user
 
         when: "update user phone pin is requested by impersonated user"
-        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
         userForCreate.setPhonePin(null)
         service.updateUser(headers, authToken, userId, userForCreate).build()
 
@@ -7087,7 +7071,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> user
 
         when: "phone pin passed in request is same as original/existing phone pin"
-        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
         userForCreate.setPhonePin("123786")
         service.updateUser(headers, authToken, userId, userForCreate).build()
 
@@ -7099,7 +7082,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "updateUser: update phone pin for Federated User"() {
         given:
-        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
         allowUserAccess()
         def userId = "fedUserId"
         def otherUserId = "otherUserId"
@@ -7120,6 +7102,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         when: "update federated user for phone pin "
         service.updateUser(headers, authToken, userId, userForCreate).build()
+
         then: "phone pin validator is invoked and fed user service is invoked"
         1 * validator20.validatePhonePin(phonePin)
         1 * identityUserService.updateFederatedUser(federatedUser)
@@ -7139,7 +7122,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
 
         when: "update federated user with phone pin by some other user"
-        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
         service.updateUser(headers, authToken, userId, userForCreate).build()
 
         then: "phone pin validator and updateFederatedUser are not invoked"
@@ -7150,7 +7132,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
 
         when: "phone pin passed in request is same as original/existing phone pin"
-        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
         userForCreate.setPhonePin("123786")
         service.updateUser(headers, authToken, userId, userForCreate).build()
 
@@ -7165,7 +7146,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "updateUser: Impersonated user cannot update phone pin"() {
         given:
-        reloadableConfig.getEnablePhonePinOnUserFlag() >> true
         def userId = "userId"
         def phonePin = "786124"
         UserForCreate userForCreate = new UserForCreate()

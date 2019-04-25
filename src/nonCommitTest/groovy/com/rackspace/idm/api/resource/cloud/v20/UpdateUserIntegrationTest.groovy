@@ -980,7 +980,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
     }
 
-    def "Test phone pin feature flag"() {
+    def "Test updating user's phone pin"() {
         given:
         def username = testUtils.getRandomUUID("username" )
         def user = utils.createUser(utils.getServiceAdminToken(), username)
@@ -989,16 +989,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
         def updatedPhonePin = "786124"
 
-        when: "Feature flag is OFF, phone will not get updated"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-        userForUpdate.phonePin = updatedPhonePin
-        cloud20.updateUser(selfToken, user.id, userForUpdate)
-
-        then: "Phone Pin must not get updated"
-        updatedPhonePin != getPhonePinForUser(selfToken, user)
-
-        when: "Feature flag is ON, phone will get updated"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
+        when: "phone pin will get updated"
         userForUpdate.phonePin = updatedPhonePin
         cloud20.updateUser(selfToken, user.id, userForUpdate)
 
@@ -1011,7 +1002,6 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
     def "Test update user phone pin for different users to ensure presence of phonePin property in body: media = #mediaTyoe"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def domainId = utils.createDomain()
         def users, identityAdmin, userAdmin, userManager, user
         (identityAdmin, userAdmin, userManager, user) = utils.createUsers(domainId)
@@ -1138,7 +1128,6 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
     def "Test phone pin error validation message"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def username = testUtils.getRandomUUID("username" )
         def user = utils.createUser(utils.getServiceAdminToken(), username)
         def userForUpdate = v2Factory.createUser(user.id, user.username)
@@ -1153,48 +1142,6 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
         and: "Validation error must be thrown"
         IdmAssert.assertOpenStackV2FaultResponse(userResponse, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST, ErrorCodes.ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST)
-    }
-
-    def "Test that phone pin is not returned when user do not have initial phone pin: mediaType #mediaType"() {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-        def username = testUtils.getRandomUUID("username")
-        def user = utils.createUser(utils.getServiceAdminToken(), username)
-        def userForUpdate = v2Factory.createUser(user.id, user.username)
-        def selfToken = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
-
-        when: "initial phone pin is retrieved"
-        def getUserResp = cloud20.getUserById(selfToken, user.id)
-        def defaultPhonePin = testUtils.getEntity(getUserResp, User).phonePin
-
-        then:
-        defaultPhonePin == null
-
-        when: "update user call is invoked without phone pin in request body"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-        def updateUserResponse = cloud20.updateUser(selfToken, user.id, userForUpdate, mediaType)
-
-        then: "phonePin attribute should not show up in response body"
-        if (mediaType == APPLICATION_XML_TYPE) {
-            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin == null
-        } else {
-            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin == null
-        }
-
-        when: "update user call is invoked with valid phone pin in request body"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-        userForUpdate.phonePin = "786124"
-        updateUserResponse = cloud20.updateUser(selfToken, user.id, userForUpdate, mediaType)
-
-        then: "phonePin attribute should show up in response body"
-        if (mediaType == APPLICATION_XML_TYPE) {
-            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).value.phonePin != null
-        } else {
-            updateUserResponse.getEntity(org.openstack.docs.identity.api.v2.User).phonePin != null
-        }
-
-        where:
-        mediaType << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
     }
 
     /**
