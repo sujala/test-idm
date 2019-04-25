@@ -91,9 +91,6 @@ public class IdentityConfig {
     public static final String IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP = "federated.max.identity.provider.per.domain";
     public static final int IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_DEFAULT = 10;
 
-    public static final String IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP = "feature.enable.external.user.idp.management";
-    public static final boolean IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT = false;
-
     private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
 
     //OPTIONAL PROPERTIES
@@ -934,7 +931,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, FEATURE_MAINTAIN_PASSWORD_HISTORY_DEFAULT);
         defaults.put(PASSWORD_HISTORY_MAX_PROP, PASSWORD_HISTORY_MAX_DEFAULT);
 
-        defaults.put(IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT);
 
         defaults.put(FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP, FEATURE_MAX_USER_GROUPS_IN_DOMAIN_DEFAULT);
         defaults.put(FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP, FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_DEFAULT);
@@ -2548,10 +2544,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP);
         }
 
-        @IdmProp(key = IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")
-        public boolean getEnableExternalUserIdpManagement() {
-            return getBooleanSafely(reloadableConfiguration, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP);
-        }
 
         @IdmProp(key = MAPPING_POLICY_ACCEPT_FORMATS_PROP, versionAdded = "3.15.0", description = "Specify the acceptable media types for mapping policies")
         public Set getMappingPolicyAcceptFormats() {
