@@ -553,13 +553,16 @@ class DefaultDomainServiceTest extends RootServiceTest {
         identityConfig.getReloadableConfig().isFeatureInferDomainTypeEnabled() >> true
 
         where:
-        domainId                                                                                | cloudRegion  | expectedType
-        "${RandomStringUtils.randomNumeric(4)}"                                           | "US"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
-        "${RandomStringUtils.randomNumeric(4)}"                                           | "UK"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
-        "${RandomStringUtils.randomNumeric(4)}"                                           | "INVALID"    | GlobalConstants.DOMAIN_TYPE_UNKNOWN
-        "${GlobalConstants.DOMAIN_PREFIX_DATAPIPE}${RandomStringUtils.randomNumeric(4)}"  | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_DATAPIPE
-        "${GlobalConstants.DOMAIN_PREFIX_DEDICATED}${RandomStringUtils.randomNumeric(4)}" | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_DEDICATED
-        "${RandomStringUtils.randomNumeric(20)}"                                          | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_UNKNOWN
+        domainId                                         | cloudRegion  | expectedType
+        "1234"                                           | "US"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        "-1234"                                          | "US"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        "1234"                                           | "UK"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
+        "-1234"                                          | "UK"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
+        "1234"                                           | "INVALID"    | GlobalConstants.DOMAIN_TYPE_UNKNOWN
+        "${GlobalConstants.DOMAIN_PREFIX_DATAPIPE}1234"  | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_DATAPIPE
+        "${GlobalConstants.DOMAIN_PREFIX_DEDICATED}1234" | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_DEDICATED
+        "1234567890" * 2                                 | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_UNKNOWN
+        "something:abc"                                  | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_UNKNOWN
     }
 
 }
