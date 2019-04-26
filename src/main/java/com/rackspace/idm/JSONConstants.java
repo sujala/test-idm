@@ -161,6 +161,7 @@ public final class JSONConstants {
     public static final String TITLE = "title";
     public static final String CALL_BACK_URL = "callBackUrl";
     public static final String SCOPE = "scope";
+    public static final String DOMAINID = "domainId";
     public static final String SECRET_CREDENTIALS = "secretCredentials";
     public static final String APPLICATION_SECRET_CREDENTIALS = "applicationSecretCredentials";
     public static final String CLIENT_SECRET = "clientSecret";
@@ -292,10 +293,12 @@ public final class JSONConstants {
     public static final String AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH = "auth.RAX-AUTH:rsaCredentials";
     public static final String AUTH_RAX_AUTH_DOMAIN_PATH = "auth.RAX-AUTH:domain";
     public static final String AUTH_RAX_AUTH_SCOPE_PATH = "auth.RAX-AUTH:scope";
+    public static final String AUTH_RAX_AUTH_DOMAINID_PATH = "auth.RAX-AUTH:domainId";
     public static final String AUTH_PASSCODE_CREDENTIALS_PATH = "auth.passcodeCredentials";
     public static final String AUTH_RAX_AUTH_PASSCODE_CREDENTIALS_PATH = "auth.RAX-AUTH:passcodeCredentials";
     public static final String AUTH_DELEGATION_CREDENTIALS_PATH = "auth." + DELEGATION_CREDENTIALS;
     public static final String AUTH_RAX_AUTH_DELEGATION_CREDENTIALS_PATH = "auth.RAX-AUTH:" + DELEGATION_CREDENTIALS;
+    public static final String AUTH_DOMAINID_PATH = "auth." + DOMAINID;
 
     public static final String ENDPOINT_LINKS_PATH = "endpoint.link";
     public static final String ENDPOINT_ENDPOINT_LINKS_PATH = "endpoint.endpoint_links";

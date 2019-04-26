@@ -578,6 +578,12 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).queryParams(queryParams).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
+    def authenticateForRequest(AuthenticationRequest request, MultivaluedMap queryParams = new MultivaluedMapImpl(), MediaType mediaType = APPLICATION_JSON_TYPE) {
+        initOnUse()
+        queryParams = queryParams == null ? new MultivaluedMapImpl() : queryParams
+        resource.path(path20).path(TOKENS).queryParams(queryParams).accept(mediaType).type(mediaType).entity(request).post(ClientResponse)
+    }
+
     def samlAuthenticate(request, accept = APPLICATION_XML, contentType = APPLICATION_XML, String requestId = null) {
         initOnUse()
         def builder = resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(accept).type(contentType).entity(request)
