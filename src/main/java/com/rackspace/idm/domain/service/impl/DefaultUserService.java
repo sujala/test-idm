@@ -28,9 +28,7 @@ import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.util.IdmCommonUtils;
-import com.rackspace.idm.util.RandomGeneratorUtil;
 import com.rackspace.idm.validation.Validator;
-import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
@@ -112,9 +110,6 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private Validator validator;
-
-    @Autowired
-    private Validator20 validator20;
 
     @Autowired
     private DomainService domainService;
@@ -251,6 +246,11 @@ public class DefaultUserService implements UserService {
         setApiKeyIfNotProvided(user);
         setRegionIfNotProvided(user);
 
+        // Generate phone pin if not provided
+        if (StringUtils.isBlank(user.getPhonePin())) {
+            user.setPhonePin(phonePinService.generatePhonePin());
+        }
+
         if (provisionMossoAndNast) {
             //hack alert!! code requires the user object to have the nastid attribute set. this attribute
             //should no longer be required as users have roles on a tenant instead. once this happens, remove
@@ -261,19 +261,6 @@ public class DefaultUserService implements UserService {
         user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
         user.setSalt(cryptHelper.generateSalt());
         user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
-
-        // Validate/generate phone pin
-        if (StringUtils.isNotBlank(user.getPhonePin())) {
-            // Verify caller is authorized to set phone pin
-            if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
-                    IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName())) {
-                throw new ForbiddenException("Not authorized to set phone pin.", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
-            }
-
-            validator20.validatePhonePin(user.getPhonePin());
-        } else {
-            user.setPhonePin(phonePinService.generatePhonePin());
-        }
 
         userDao.addUser(user);
 

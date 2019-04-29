@@ -131,7 +131,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockAuthorizationService(service)
         mockCloudRegionService(service)
         mockValidator(service)
-        mockValidator20(service)
         mockDomainService(service)
         mockPropertiesService(service)
         mockCryptHelper(service)
@@ -1408,12 +1407,11 @@ class DefaultUserServiceTest extends RootServiceTest {
         user1.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
     }
 
-    def "addUserV20: Set phone PIN on creation"() {
+    def "addUserV20: Generate phone PIN on creation if not provided"() {
         given:
         def user = this.createUser("DFW", true, domainId).with {
             it.roles = [entityFactory.createTenantRole("identity:user-admin")].asList()
             it.username = "userWithPin"
-            it.phonePin = "246972"
             it
         }
 
@@ -1427,38 +1425,12 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.addUserV20(user, false, false, false)
 
         then:
-        1 * validator20.validatePhonePin(user.phonePin)
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.roleName) >> true
+        1 * phonePinService.generatePhonePin() >> 324617
         1 * userDao.addUser(user) >> { args ->
             def u = args[0]
             assert u.phonePin != null
             assert u.phonePin == user.phonePin
         }
-
-        0 * phonePinService.generatePhonePin()
-    }
-
-    def "addUserV20: user without the 'identity:phone-pin-admin' cannot set phone pin"() {
-        given:
-        def user = this.createUser("DFW", true, domainId).with {
-            it.roles = [entityFactory.createTenantRole("identity:user-admin")].asList()
-            it.username = "userWithPin"
-            it.phonePin = "246972"
-            it
-        }
-
-        authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
-                IdentityUserTypeEnum.SERVICE_ADMIN.getRoleName(),
-                IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
-        userDao.getUsersByDomain(domainId) >> [].asList()
-        mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
-
-        when:
-        service.addUserV20(user, false, false, false)
-
-        then:
-        Exception ex = thrown()
-        IdmExceptionAssert.assertException(ex, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, "Not authorized to set phone pin.")
     }
 
     def "getUserAdminByDomain: call correct dao method"() {
