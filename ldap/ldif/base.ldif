@@ -6024,7 +6024,7 @@ objectClass: rsIdentityProperty
 cn: feature.enable.authorization.domain.verification
 description: Whether to verify authorizationDomainId
 rsIdmVersion: 3.31.0
-rsPropertyValue: FALSE
+rsPropertyValue: TRUE
 rsPropertyValueType: Boolean
 rsReloadable: TRUE
 rsSearchable: TRUE
