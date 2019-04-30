@@ -20,6 +20,7 @@ CAFE_TEST_LOG_PATH=/tmp/.identity/logs
 CAFE_CONFIG_ALL=CAFE_ENGINE_CONFIG_FILE_PATH=$(CAFE_CONFIG_FILE_PATH) CAFE_CONFIG_FILE_PATH=$(CAFE_CONFIG_FILE_PATH) CAFE_ROOT_LOG_PATH=$(CAFE_ROOT_LOG_PATH) CAFE_TEST_LOG_PATH=$(CAFE_TEST_LOG_PATH)
 
 API ?= "api"
+TOX_PY_ENV ?= py27
 
 PIP_CONFIG_FILE = $(PWD)/pip.conf
 PIP = PIP_CONFIG_FILE=$(PIP_CONFIG_FILE) $(VENV)/bin/pip
@@ -68,8 +69,8 @@ test_no_build:
 	@test -d $(VENV) || virtualenv $(VENV) --no-site-packages
 	# install tox
 	$(PIP) install tox
-	# run py27
-	$(CAFE_CONFIG_ALL) $(TOX) -e py27
+	# run $(TOX_PY_ENV)
+	$(CAFE_CONFIG_ALL) $(VENV)/bin/tox -e $(TOX_PY_ENV)
 
 test: build test_no_build
 
