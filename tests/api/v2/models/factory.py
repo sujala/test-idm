@@ -60,7 +60,7 @@ def get_add_user_request_object_pull(user_name=None, enabled=True,
     default_data["roles"] = []
     default_data["secret_qa"] = {"question": "When isn't it?",
                                  "answer": "When it is!!"}
-    for k in input_data.keys():
+    for k in list(input_data.keys()):
         if input_data[k] is not None:
             default_data[k] = input_data[k]
     return requests.UserAdd(**default_data)

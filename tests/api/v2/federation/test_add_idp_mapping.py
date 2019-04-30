@@ -67,7 +67,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=provider_id,
             request_data=mapping,
             content_type=const.YAML)
-        self.assertEquals(resp_put_manager.status_code, 204)
+        self.assertEqual(resp_put_manager.status_code, 204)
         resp_get_ro = api_client.get_idp_mapping(
             idp_id=provider_id, headers={
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
@@ -78,10 +78,10 @@ class TestAddMappingIDP(federation.TestBaseFederation):
     def add_idp(self, idp_ia_client):
         request_object = factory.get_add_idp_request_object()
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
-        self.assertEquals(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
+        self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
                           request_object.idp_name)
         return provider_id
 
@@ -149,10 +149,10 @@ class TestAddMappingIDP(federation.TestBaseFederation):
 
         resp_get_ro = self.create_and_validate_idp_mapping(
             mapping, provider_id, api_client=self.identity_admin_client)
-        self.assertEquals(resp_get_ro.status_code, 200)
-        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+        self.assertEqual(resp_get_ro.status_code, 200)
+        self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
                           const.YAML_CONTENT_TYPE_VALUE)
-        self.assertEquals(resp_get_ro.text, mapping)
+        self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_user_auth_bad_request(
             cert_path, domain_id, issuer, key_path, self.identity_admin_client)
@@ -173,16 +173,16 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=self.idp_id,
             request_data=mapping,
             content_type=const.YAML)
-        self.assertEquals(resp_put_manager.status_code, 204)
+        self.assertEqual(resp_put_manager.status_code, 204)
 
         resp_get_ro = self.create_and_validate_idp_mapping(
             mapping, self.idp_id, api_client=self.idp_user_admin_client
         )
 
-        self.assertEquals(resp_get_ro.status_code, 200)
-        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+        self.assertEqual(resp_get_ro.status_code, 200)
+        self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
                           const.YAML_CONTENT_TYPE_VALUE)
-        self.assertEquals(resp_get_ro.text, mapping)
+        self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_user_auth_bad_request(
             cert_path, self.domain_id, self.issuer, key_path,
@@ -203,10 +203,10 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_get_ro = self.create_and_validate_idp_mapping(
             mapping, self.idp_id, api_client=self.idp_user_manage_client)
 
-        self.assertEquals(resp_get_ro.status_code, 200)
-        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+        self.assertEqual(resp_get_ro.status_code, 200)
+        self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
                           const.YAML_CONTENT_TYPE_VALUE)
-        self.assertEquals(resp_get_ro.text, mapping)
+        self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_user_auth_bad_request(
             cert_path, self.domain_id, self.issuer, key_path,
@@ -248,16 +248,16 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=self.idp_id,
             request_data=mapping,
             content_type=const.YAML)
-        self.assertEquals(resp_put_manager.status_code, 204)
+        self.assertEqual(resp_put_manager.status_code, 204)
 
         resp_get_ro = self.idp_user_admin_client.get_idp_mapping(
             idp_id=self.idp_id, headers={
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
             })
-        self.assertEquals(resp_get_ro.status_code, 200)
-        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+        self.assertEqual(resp_get_ro.status_code, 200)
+        self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
                           const.YAML_CONTENT_TYPE_VALUE)
-        self.assertEquals(resp_get_ro.text, mapping)
+        self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_auth_success(
             cert_path, self.domain_id, self.issuer, key_path,
@@ -279,16 +279,16 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=self.idp_id,
             request_data=mapping,
             content_type=const.YAML)
-        self.assertEquals(resp_put_manager.status_code, 204)
+        self.assertEqual(resp_put_manager.status_code, 204)
 
         resp_get_ro = self.idp_user_manage_client.get_idp_mapping(
             idp_id=self.idp_id, headers={
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
             })
-        self.assertEquals(resp_get_ro.status_code, 200)
-        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+        self.assertEqual(resp_get_ro.status_code, 200)
+        self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
                           const.YAML_CONTENT_TYPE_VALUE)
-        self.assertEquals(resp_get_ro.text, mapping)
+        self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_auth_success(
             cert_path, self.domain_id, self.issuer, key_path,
@@ -302,11 +302,11 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id, request_data=mapping)
-        self.assertEquals(resp_put_manager.status_code, 204)
+        self.assertEqual(resp_put_manager.status_code, 204)
 
         resp_get_manager = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
-        self.assertEquals(resp_get_manager.status_code, 200)
+        self.assertEqual(resp_get_manager.status_code, 200)
 
     @unless_coverage
     @attr(type='regression')
@@ -317,15 +317,15 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
             request_data=mapping)
-        self.assertEquals(resp_put_manager.status_code, 204)
+        self.assertEqual(resp_put_manager.status_code, 204)
 
         resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
-        self.assertEquals(resp_get_ro.status_code, 200)
-        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+        self.assertEqual(resp_get_ro.status_code, 200)
+        self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
                           const.CONTENT_TYPE_VALUE.format(
                               const.JSON))
-        self.assertEquals(resp_get_ro.json(), mapping)
+        self.assertEqual(resp_get_ro.json(), mapping)
 
     @tags('negative', 'p0')
     # @attr(type='regression')
@@ -342,22 +342,22 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=provider_id,
             request_data=mapping,
             content_type=const.YAML)
-        self.assertEquals(resp_put_manager.status_code, 400)
+        self.assertEqual(resp_put_manager.status_code, 400)
 
         resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id, headers={
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
             })
-        self.assertEquals(resp_get_ro.status_code, 404)
-        self.assertEquals(resp_get_ro.json()["itemNotFound"]["message"],
+        self.assertEqual(resp_get_ro.status_code, 404)
+        self.assertEqual(resp_get_ro.json()["itemNotFound"]["message"],
                           "No [YAML] mapping policy found for IDP with "
                           "ID {}.".format(provider_id))
 
         resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
-        self.assertEquals(resp_get_ro.status_code, 200)
-        self.assertNotEquals(resp_get_ro.text, mapping)
-        self.assertEquals(resp_get_ro.json(), current_resp_policy.json())
+        self.assertEqual(resp_get_ro.status_code, 200)
+        self.assertNotEqual(resp_get_ro.text, mapping)
+        self.assertEqual(resp_get_ro.json(), current_resp_policy.json())
 
     @tags('positive', 'p0', 'regression')
     @attr(type='regression')
@@ -376,8 +376,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
 
         resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
-        self.assertEquals(resp_get_ro.status_code, 404)
-        self.assertEquals(resp_get_ro.json()["itemNotFound"]["message"],
+        self.assertEqual(resp_get_ro.status_code, 404)
+        self.assertEqual(resp_get_ro.json()["itemNotFound"]["message"],
                           "No [JSON] mapping policy found for IDP with "
                           "ID {}.".format(provider_id))
 
@@ -394,13 +394,13 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
             request_data=mapping)
-        self.assertEquals(resp_put_manager.status_code, 400)
+        self.assertEqual(resp_put_manager.status_code, 400)
 
         resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
-        self.assertEquals(resp_get_ro.status_code, 200)
-        self.assertNotEquals(resp_get_ro.json(), mapping)
-        self.assertEquals(resp_get_ro.json(), current_resp_policy.json())
+        self.assertEqual(resp_get_ro.status_code, 200)
+        self.assertNotEqual(resp_get_ro.json(), mapping)
+        self.assertEqual(resp_get_ro.json(), current_resp_policy.json())
 
     # idp missing causes 404
     @unless_coverage
@@ -411,8 +411,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         idp_id = "xxx{0}xxx".format(provider_id)
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=idp_id, request_data=mapping)
-        self.assertEquals(resp_put_manager.status_code, 404)
-        self.assertEquals(resp_put_manager.json()[const.ITEM_NOT_FOUND][
+        self.assertEqual(resp_put_manager.status_code, 404)
+        self.assertEqual(resp_put_manager.json()[const.ITEM_NOT_FOUND][
             const.MESSAGE], "Identity Provider with id/name: '{0}' was"
                             " not found.".format(idp_id))
 
@@ -430,7 +430,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             content_type=None)
         self.identity_admin_client.default_headers[const.CONTENT_TYPE] = (
             self.default_headers[const.CONTENT_TYPE])
-        self.assertEquals(resp_put_manager.status_code, 400)
+        self.assertEqual(resp_put_manager.status_code, 400)
 
     @unless_coverage
     @ddt.data("text", "x-www-form-urlencoded")
@@ -444,7 +444,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             content_type=None)
         self.identity_admin_client.default_headers[const.CONTENT_TYPE] = (
             self.default_headers[const.CONTENT_TYPE])
-        self.assertEquals(resp_put_manager.status_code, 415)
+        self.assertEqual(resp_put_manager.status_code, 415)
 
     @unless_coverage
     @ddt.data("xml", "xhtml_xml", "x-www-form-urlencoded")
@@ -468,8 +468,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         if resp_put_manager.status_code == 204:
             resp_get_ro = self.identity_admin_client.get_idp_mapping(
                 idp_id=provider_id)
-            self.assertEquals(resp_get_ro.status_code, 200)
-            self.assertEquals(resp_get_ro.json(), mapping)
+            self.assertEqual(resp_get_ro.status_code, 200)
+            self.assertEqual(resp_get_ro.json(), mapping)
 
     @tags('negative', 'p0', 'regression')
     @attr(type='regression')
@@ -490,9 +490,9 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
             request_data=mapping)
-        self.assertEquals(resp_put_manager.status_code, 400)
-        self.assertEquals(resp_put_manager.json()[const.BAD_REQUEST][
-            const.MESSAGE], u"Max size exceed. Policy file must be less tha"
+        self.assertEqual(resp_put_manager.status_code, 400)
+        self.assertEqual(resp_put_manager.json()[const.BAD_REQUEST][
+            const.MESSAGE], "Max size exceed. Policy file must be less tha"
                             "n {max_size}"
                             " Kilobytes.".format(max_size=max_size_in_kilo))
 
@@ -512,7 +512,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
             request_data=mapping)
-        self.assertEquals(resp_put_manager.status_code, 204)
+        self.assertEqual(resp_put_manager.status_code, 204)
 
     @base.base.log_tearDown_error
     @unless_coverage

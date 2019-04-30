@@ -59,10 +59,10 @@ class TestSAMLAuth(federation.TestBaseFederation):
         resp = self.identity_admin_client.auth_with_saml(
             saml=assertion, content_type=content_type,
             base64_url_encode=base64_url_encode, new_url=new_url)
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.FORBIDDEN][const.MESSAGE],
             "Error code: 'FED2-004'; The Origin IDP is not valid")
-        self.assertEquals(403, resp.status_code)
+        self.assertEqual(403, resp.status_code)
 
     @unless_coverage
     def tearDown(self):

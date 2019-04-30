@@ -280,7 +280,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 200)
         resp_parsed = Munch.fromDict(resp.json())
-        role_ids = map(lambda role_: role_.id, resp_parsed.access.user.roles)
+        role_ids = [role_.id for role_ in resp_parsed.access.user.roles]
         self.assertNotIn(role.id, role_ids)
 
     def validate_delete_role_from_DA(self, client, da_id, role):

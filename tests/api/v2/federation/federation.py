@@ -87,7 +87,7 @@ class TestBaseFederation(base.TestBaseV2):
             approved_domain_ids=dom_ids, federation_type=fed_type,
             approved_domain_group=dom_group, public_certificates=certs)
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
         return request_object
@@ -97,8 +97,8 @@ class TestBaseFederation(base.TestBaseV2):
         request_object = factory.get_add_idp_request_object()
         request_object.idp_name = name
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 400)
-        self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                           "Error code: 'GEN-005'; Identity provider name must"
                           " consist of only alphanumeric, '.', and '-'"
                           " characters.")
@@ -107,14 +107,14 @@ class TestBaseFederation(base.TestBaseV2):
         idp = self.create_idp_helper(fed_type=const.BROKER, certs=certs)
         idp_list = self.identity_admin_client.list_idp(
             option={"name": idp.idp_name}).json()[const.NS_IDENTITY_PROVIDERS]
-        self.assertEquals(len(idp_list), 1)
-        self.assertEquals(idp_list[0][const.FEDERATION_TYPE], "BROKER")
+        self.assertEqual(len(idp_list), 1)
+        self.assertEqual(idp_list[0][const.FEDERATION_TYPE], "BROKER")
         get_resp = self.identity_admin_client.get_idp(
             idp_id=idp_list[0][const.ID])
         get_name = get_resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
-        self.assertEquals(get_name, idp.idp_name)
+        self.assertEqual(get_name, idp.idp_name)
 
-        self.assertEquals(get_resp.json()[
+        self.assertEqual(get_resp.json()[
             const.NS_IDENTITY_PROVIDER][const.FEDERATION_TYPE], "BROKER")
         return idp
 
@@ -195,7 +195,7 @@ class TestBaseFederation(base.TestBaseV2):
         if auth_client is None:
             auth_client = self.identity_admin_client
         resp = auth_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
 
         updated_idp_schema = copy.deepcopy(idp_json.identity_provider)
         updated_idp_schema[const.PROPERTIES][const.NS_IDENTITY_PROVIDER][

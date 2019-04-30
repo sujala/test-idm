@@ -90,7 +90,7 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
         resp = self.identity_admin_client.get_user(user_id)
 
         # validate that delegation agreement exists in response
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.USER][const.RAX_AUTH_DELEGATION_AGREEMENT_ID],
             da_id)
 

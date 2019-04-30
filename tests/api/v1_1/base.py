@@ -1,4 +1,4 @@
-import urlparse
+import urllib.parse
 import base64
 from tests.api import base
 from tests.api.utils import header_validation
@@ -11,9 +11,9 @@ class TestBaseV1(base.TestBase):
 
         super(TestBaseV1, cls).setUpClass()
         VERSION = 'v1.1'
-        cls.url = urlparse.urljoin(
+        cls.url = urllib.parse.urljoin(
             cls.identity_config.base_url, cls.identity_config.cloud_url)
-        cls.url = urlparse.urljoin(cls.url, VERSION)
+        cls.url = urllib.parse.urljoin(cls.url, VERSION)
         cls.identity_admin_client = client.IdentityAPIClient(
             url=cls.url,
             serialize_format=cls.test_config.serialize_format,
@@ -21,7 +21,7 @@ class TestBaseV1(base.TestBase):
         username = cls.identity_config.identity_admin_user_name
         password = cls.identity_config.identity_admin_password
         encrypted_password = (
-            base64.encodestring('{0}:{1}'.format(username, password))[:-1])
+            base64.encodestring('{0}:{1}'.format(username, password).encode('utf-8'))[:-1])
         cls.identity_admin_client.default_headers['Authorization'] = \
             'Basic {0}'.format(encrypted_password)
 

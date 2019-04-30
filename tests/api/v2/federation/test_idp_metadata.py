@@ -217,7 +217,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
         resp = self.add_idp_with_metadata(
             cert_path=cert_path, api_client=self.idp_user_default_client)
 
-        self.assertEquals(resp.status_code, 403)
+        self.assertEqual(resp.status_code, 403)
 
     @tags('negative', 'p1', 'regression')
     def test_add_idp_with_dup_entityid(self):
@@ -234,7 +234,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
 
         resp = self.add_idp_with_metadata(
             cert_path=cert_path, api_client=self.user_admin_client)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         self.provider_ids.append(
             resp.json()[const.NS_IDENTITY_PROVIDER][const.ID])
         issuer = resp.json()[const.NS_IDENTITY_PROVIDER][const.ISSUER]
@@ -243,7 +243,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
             cert_path=cert_path, api_client=self.user_admin_client,
             issuer=issuer)
 
-        self.assertEquals(resp.status_code, 409)
+        self.assertEqual(resp.status_code, 409)
         self.assertEqual(
             resp.json()[const.BAD_REQUEST][const.MESSAGE],
             "Error code: 'FED_IDP-004'; Provider already exists with this "

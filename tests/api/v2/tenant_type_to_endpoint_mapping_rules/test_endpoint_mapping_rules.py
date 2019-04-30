@@ -627,7 +627,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         actually exist or not. So, any list of endpoint ids with more than
         the limit would be sufficient to test it.
         """
-        endpoint_ids = range(1, ENDPOINTS_LIMIT + 2)
+        endpoint_ids = list(range(1, ENDPOINTS_LIMIT + 2))
         tenant_type = const.TENANT_TYPE_CLOUD
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,

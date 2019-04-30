@@ -86,7 +86,7 @@ class TestMPCWhitelistForFedUserListTenants(federation.TestBaseFederation):
                 federation_type='DOMAIN', approved_domain_ids=[domain_id],
                 issuer=issuer, public_certificates=[pem_encoded_cert])
             resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
 

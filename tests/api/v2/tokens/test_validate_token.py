@@ -145,7 +145,7 @@ class TestValidateToken(base.TestBaseV2):
         roles = resp.json()[const.ACCESS][const.USER][const.ROLES]
         roles_on_wl_tenant = [
             role for role in roles if
-            const.TENANT_ID in role.keys() and
+            const.TENANT_ID in list(role.keys()) and
             tenant_1.id == role[const.TENANT_ID]]
         self.assertGreater(len(roles_on_wl_tenant), 0)
 
@@ -161,7 +161,7 @@ class TestValidateToken(base.TestBaseV2):
         roles = resp.json()[const.ACCESS][const.USER][const.ROLES]
         roles_on_wl_tenant = [
             role for role in roles if
-            const.TENANT_ID in role.keys() and
+            const.TENANT_ID in list(role.keys()) and
             self.test_config.mpc_whitelist_tenant_type
             in role[const.TENANT_ID]]
         self.assertEqual(len(roles_on_wl_tenant), 0)

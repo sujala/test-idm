@@ -96,18 +96,18 @@ class TestListDelegates(delegation.TestBaseDelegation):
         resp = self.user_admin_client.list_delegates_for_delegation_agreement(
             self.da_id
         )
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
 
         assert_user_group_is_returned = False
         assert_user_is_returned = False
 
         for delegate in resp.json()[const.DELEGATE_REFERENCES]:
             if delegate[const.DELEGATE_TYPE] == const.USER.upper():
-                self.assertEquals(delegate[const.DELEGATE_ID],
+                self.assertEqual(delegate[const.DELEGATE_ID],
                                   self.sub_user_id)
                 assert_user_is_returned = True
             elif delegate[const.DELEGATE_TYPE] == const.USER_GROUP:
-                self.assertEquals(delegate[const.DELEGATE_ID],
+                self.assertEqual(delegate[const.DELEGATE_ID],
                                   self.user_group_id)
                 assert_user_group_is_returned = True
 
@@ -123,17 +123,17 @@ class TestListDelegates(delegation.TestBaseDelegation):
         resp = self.user_admin_client.list_delegates_for_delegation_agreement(
             self.da_id
         )
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         assert_user_group_is_returned = False
         assert_user_is_returned = False
 
         for delegate in resp.json()[const.DELEGATE_REFERENCES]:
             if delegate[const.DELEGATE_TYPE] == const.USER.upper():
-                self.assertEquals(delegate[const.DELEGATE_ID],
+                self.assertEqual(delegate[const.DELEGATE_ID],
                                   self.sub_user_id)
                 assert_user_is_returned = True
             elif delegate[const.DELEGATE_TYPE] == const.USER_GROUP:
-                self.assertEquals(delegate[const.DELEGATE_ID],
+                self.assertEqual(delegate[const.DELEGATE_ID],
                                   self.user_group_id)
                 assert_user_group_is_returned = True
 

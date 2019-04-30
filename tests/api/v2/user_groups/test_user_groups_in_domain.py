@@ -44,7 +44,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
     @attr(type='smoke_alpha')
     def test_list_user_groups_in_a_domain(self):
 
-        for i in xrange(2):
+        for i in range(2):
             self.add_user_group()
 
         list_resp = self.user_admin_client.list_user_groups_for_domain(

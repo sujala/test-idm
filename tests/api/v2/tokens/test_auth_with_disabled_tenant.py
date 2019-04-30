@@ -7,7 +7,7 @@ from tests.api.v2 import base
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
-import urlparse
+import urllib.parse
 from tests.api.v2.models import factory
 from tests.api.v1_1 import client
 import base64
@@ -22,9 +22,9 @@ class TestAuthWithDisabledTenant(base.TestBaseV2):
         """
         super(TestAuthWithDisabledTenant, cls).setUpClass()
         VERSION = 'v1.1'
-        url = urlparse.urljoin(
+        url = urllib.parse.urljoin(
             cls.identity_config.base_url, cls.identity_config.cloud_url)
-        url = urlparse.urljoin(url, VERSION)
+        url = urllib.parse.urljoin(url, VERSION)
         cls.identity_admin_client_v1_1 = client.IdentityAPIClient(
             url=url,
             serialize_format=cls.test_config.serialize_format,

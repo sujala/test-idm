@@ -80,14 +80,14 @@ class TestListDelegationGlobalGroups(delegation.TestBaseDelegation):
         resp = delegation_client.list_groups(user_id)
 
         # validate that the default global groups are returned (only 1)
-        self.assertEquals(len(resp.json()[const.NS_GROUPS]), 1)
+        self.assertEqual(len(resp.json()[const.NS_GROUPS]), 1)
 
         # validate that the default global group is returned
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.NS_GROUPS][0][const.NAME], "Default")
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.NS_GROUPS][0][const.ID], "0")
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.NS_GROUPS][0][const.DESCRIPTION],
             "Default Limits")
 

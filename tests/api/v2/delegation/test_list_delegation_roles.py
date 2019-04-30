@@ -83,8 +83,8 @@ class TestListDelegationRoles(delegation.TestBaseDelegation):
         tenant_roles = [tenant_role for tenant_role in resp.json()[
             const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]]
         self.assertEqual(len(tenant_roles), 1)
-        self.assertEquals(role.name, tenant_roles[0][const.ON_ROLE_NAME])
-        self.assertEquals(role.id, tenant_roles[0][const.ON_ROLE])
+        self.assertEqual(role.name, tenant_roles[0][const.ON_ROLE_NAME])
+        self.assertEqual(role.id, tenant_roles[0][const.ON_ROLE])
         self.assertIn(tenant.name, tenant_roles[0][const.FOR_TENANTS])
 
     @unless_coverage

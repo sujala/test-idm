@@ -2,10 +2,10 @@ import jsonschema
 import logging
 from lxml import etree
 import os
-from StringIO import StringIO
+from io import StringIO
 from strgen import StringGenerator
 from itertools import combinations
-import urlparse
+import urllib.parse
 
 from cafe.drivers.unittest import fixtures
 
@@ -34,12 +34,12 @@ class TestBase(fixtures.BaseTestFixture):
 
         cls.identity_config = config.IdentityConfig()
         cls.test_config = config.TestConfig()
-        cls.url = urlparse.urljoin(
+        cls.url = urllib.parse.urljoin(
             cls.identity_config.base_url, cls.identity_config.cloud_url)
-        cls.url = urlparse.urljoin(cls.url, cls.identity_config.api_version)
-        cls.internal_url = urlparse.urljoin(
+        cls.url = urllib.parse.urljoin(cls.url, cls.identity_config.api_version)
+        cls.internal_url = urllib.parse.urljoin(
             cls.identity_config.internal_url, cls.identity_config.cloud_url)
-        cls.internal_url = urlparse.urljoin(cls.internal_url,
+        cls.internal_url = urllib.parse.urljoin(cls.internal_url,
                                             cls.identity_config.api_version)
 
         cls.devops_url = "{0}{1}{2}".format(
@@ -92,7 +92,7 @@ class TestBase(fixtures.BaseTestFixture):
         response_string = str(response.text)
         response_doc = etree.parse(StringIO(response_string))
         # Validate the xml response against the defined schema
-        relaxng.assert_(response_doc)
+        relaxng.assertTrue(response_doc)
 
     def assertHeaders(self, response, *functions):
         for function in functions:
@@ -161,7 +161,7 @@ class TestBase(fixtures.BaseTestFixture):
         end_start = '</start>'
         end_grammar = '</grammar>'
 
-        for element in json_schema['properties'].keys():
+        for element in list(json_schema['properties'].keys()):
             # Adds default identity namespace for elements with no namespace
             if ':' not in element:
                 element_name = 'identity:' + element
@@ -233,7 +233,7 @@ class TestBase(fixtures.BaseTestFixture):
     @classmethod
     def remove_namespace(cls, doc, namespace):
         """Remove namespace in the passed document in place."""
-        ns = u'{%s}' % namespace
+        ns = '{%s}' % namespace
         nsl = len(ns)
         for elem in doc.getiterator():
             for key in elem.attrib:

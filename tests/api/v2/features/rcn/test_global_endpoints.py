@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from nose.plugins.attrib import attr
-from urlparse import urljoin
+from urllib.parse import urljoin
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base

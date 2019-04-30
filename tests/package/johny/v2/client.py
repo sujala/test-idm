@@ -1,7 +1,7 @@
 """Identity API Base Client."""
 
 import types
-from urlparse import urlparse
+from urllib.parse import urlparse
 from lxml import objectify
 
 from cafe.engine.http import client
@@ -64,7 +64,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 resp_json[const.ACCESS][const.USER] = {}
                 resp_json[const.ACCESS][const.USER][const.RAX_AUTH_DEFAULT_REGION] = 1 # noqa
                 resp_json[const.ACCESS][const.USER][const.ID] = \
-                    unicode(user.attrib[const.ID])
+                    str(user.attrib[const.ID])
                 resp_json[const.ACCESS][const.USER][const.ROLES] = []
                 resp_json[const.ACCESS][const.USER][const.NAME] = \
                     user.attrib[const.NAME]

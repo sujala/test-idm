@@ -59,13 +59,13 @@ def create_self_signed_cert(cert_path=None, key_path=None, create_files=True,
 )
 
     subject = issuer = x509.Name([
-    x509.NameAttribute(NameOID.COUNTRY_NAME, unicode(country, 'utf-8')),
-    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, unicode(state, 'utf-8')),
-    x509.NameAttribute(NameOID.LOCALITY_NAME, unicode(locality, 'utf-8')),
+    x509.NameAttribute(NameOID.COUNTRY_NAME, str(country, 'utf-8')),
+    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, str(state, 'utf-8')),
+    x509.NameAttribute(NameOID.LOCALITY_NAME, str(locality, 'utf-8')),
     x509.NameAttribute(
-        NameOID.ORGANIZATION_NAME, unicode(organization, 'utf-8')),
+        NameOID.ORGANIZATION_NAME, str(organization, 'utf-8')),
     x509.NameAttribute(
-        NameOID.COMMON_NAME, unicode(organization_unit, 'utf-8')),
+        NameOID.COMMON_NAME, str(organization_unit, 'utf-8')),
     ])
     cert = x509.CertificateBuilder().subject_name(
         subject

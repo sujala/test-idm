@@ -306,7 +306,7 @@ class TestRoleApiCalls(base.TestBaseV2):
 
         # create 3 new users add role to each
         new_user_ids = []
-        for i in xrange(3):
+        for i in range(3):
             user_id = self.create_admin_user()
             new_user_ids.append(user_id)
             resp = self.identity_admin_client.add_role_to_user(

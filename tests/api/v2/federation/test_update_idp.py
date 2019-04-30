@@ -61,7 +61,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
     def add_idp_user(self):
         request_object = factory.get_add_idp_request_object()
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
         provider_name = resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
@@ -263,7 +263,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         request_object = factory.get_add_idp_request_object(
             federation_type='DOMAIN', approved_domain_ids=[domain_id])
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
 
@@ -286,7 +286,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         request_object = factory.get_add_idp_request_object(
             federation_type='DOMAIN', approved_domain_ids=[domain_id])
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
 
@@ -349,7 +349,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         request_object = factory.get_add_idp_request_object(
             federation_type='DOMAIN', approved_domain_ids=[domain_id])
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
 
@@ -465,7 +465,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             const.NS_IDENTITY_PROVIDER][const.ID])
         get_name = get_name_resp.json()[const.NS_IDENTITY_PROVIDER][
             const.NAME]
-        self.assertEquals(get_name, new_idp_name)
+        self.assertEqual(get_name, new_idp_name)
 
         client_instance.default_headers[
             const.CONTENT_TYPE] = 'application/xml'

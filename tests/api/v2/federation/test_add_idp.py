@@ -46,7 +46,7 @@ class TestAddIDP(federation.TestBaseFederation):
             email_domains=email_domains)
 
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         idp_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(idp_id)
 
@@ -92,10 +92,10 @@ class TestAddIDP(federation.TestBaseFederation):
 
         request_object = factory.get_add_idp_request_object()
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
-        self.assertEquals(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
+        self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
                           request_object.idp_name)
 
     @tags('negative', 'p1', 'regression')
@@ -104,8 +104,8 @@ class TestAddIDP(federation.TestBaseFederation):
         request_object = factory.get_add_idp_request_object()
         request_object.idp_name = None
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 400)
-        self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                           "Error code: 'GEN-001'; 'name' is a required"
                           " attribute")
 
@@ -116,8 +116,8 @@ class TestAddIDP(federation.TestBaseFederation):
         request_object = factory.get_add_idp_request_object()
         request_object.idp_name = ""
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 400)
-        self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                           "Error code: 'GEN-001'; 'name' is a required"
                           " attribute")
 
@@ -126,12 +126,12 @@ class TestAddIDP(federation.TestBaseFederation):
         '''Add with dup name.'''
         request_object = factory.get_add_idp_request_object()
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 409)
-        self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                           "Error code: 'FED_IDP-005'; Identity provider with "
                           "name {0} already exist.".format(
                               request_object.idp_name))
@@ -143,7 +143,7 @@ class TestAddIDP(federation.TestBaseFederation):
         request_object.idp_name = self.generate_random_string(
             const.MAX_IDP_NAME_PATTERN)
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
 
@@ -151,13 +151,13 @@ class TestAddIDP(federation.TestBaseFederation):
         get_name_resp = self.identity_admin_client.get_idp(idp_id=resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
         get_name = get_name_resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
-        self.assertEquals(get_name, request_object.idp_name)
+        self.assertEqual(get_name, request_object.idp_name)
 
         # Try with longer name
         request_object.idp_name += "B"
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 400)
-        self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                           "Error code: 'GEN-002'; name length cannot exceed "
                           "255 characters")
 
@@ -198,9 +198,9 @@ class TestAddIDP(federation.TestBaseFederation):
             approved_domain_ids=dom_ids, federation_type=fed_type,
             approved_domain_group=dom_group)
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 400)
+        self.assertEqual(resp.status_code, 400)
 
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.BAD_REQUEST][const.MESSAGE],
             "Error code: 'FED_IDP-001'; When BROKER IDP is specified, the"
             " approvedDomainGroup must be set, and specified as GLOBAL")
@@ -211,14 +211,14 @@ class TestAddIDP(federation.TestBaseFederation):
         '''Verify get provider by id has name attribute.'''
         request_object = factory.get_add_idp_request_object()
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
 
         get_name_resp = self.identity_admin_client.get_idp(
             idp_id=resp.json()[const.NS_IDENTITY_PROVIDER][const.ID])
         get_name = get_name_resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
-        self.assertEquals(get_name, request_object.idp_name)
+        self.assertEqual(get_name, request_object.idp_name)
 
     @tags('positive', 'p0', 'regression')
     @attr(type='regression')
@@ -230,13 +230,13 @@ class TestAddIDP(federation.TestBaseFederation):
             federation_type=const.DOMAIN.upper(),
             approved_domain_group=const.APPROVED_DOMAIN_GROUP_GLOBAL)
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
 
         idp_resp = self.identity_admin_client.list_idp(
             option={const.ISSUER: request_object.issuer})
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         idps = idp_resp.json()[const.NS_IDENTITY_PROVIDERS]
 
         found = False
@@ -244,7 +244,7 @@ class TestAddIDP(federation.TestBaseFederation):
             idp_name = idp[const.NAME]
             if idp_name == request_object.idp_name:
                 found = True
-        self.assertEquals(found, True)
+        self.assertEqual(found, True)
 
     @unless_coverage
     @attr(type='regression')
@@ -257,7 +257,7 @@ class TestAddIDP(federation.TestBaseFederation):
 
         self.create_idp_helper()
         idp_resp = self.identity_admin_client.list_idp(option={name: value})
-        self.assertEquals(idp_resp.status_code, 200)
+        self.assertEqual(idp_resp.status_code, 200)
         idp_list = idp_resp.json()[
             const.NS_IDENTITY_PROVIDERS]
 
@@ -272,7 +272,7 @@ class TestAddIDP(federation.TestBaseFederation):
         idp_list = idp_resp.json()[
             const.NS_IDENTITY_PROVIDERS]
 
-        self.assertEquals(idp_resp.status_code, 200)
+        self.assertEqual(idp_resp.status_code, 200)
         self.assertTrue(len(idp_list) == 0)
 
     @unless_coverage
@@ -287,12 +287,12 @@ class TestAddIDP(federation.TestBaseFederation):
         idp_resp = self.identity_admin_client.list_idp(
             option={name: value})
 
-        self.assertEquals(idp_resp.status_code, 200)
+        self.assertEqual(idp_resp.status_code, 200)
         idp_list = idp_resp.json()[
             const.NS_IDENTITY_PROVIDERS]
 
         idp_resp2 = self.identity_admin_client.list_idp()
-        self.assertEquals(idp_resp.status_code, 200)
+        self.assertEqual(idp_resp.status_code, 200)
         idp_list2 = idp_resp2.json()[
             const.NS_IDENTITY_PROVIDERS]
 
@@ -314,12 +314,12 @@ class TestAddIDP(federation.TestBaseFederation):
                 value = [idp.issuer, "blah"]
             idp_resp = self.identity_admin_client.list_idp(
                 option={name: value})
-            self.assertEquals(idp_resp.status_code, 200)
+            self.assertEqual(idp_resp.status_code, 200)
             idp_list = idp_resp.json()[
                 const.NS_IDENTITY_PROVIDERS]
             if len(idp_list) < 1 or idp_list[0][const.NAME] != idp.idp_name:
                 found = False
-        self.assertEquals(found, True)
+        self.assertEqual(found, True)
 
     @unless_coverage
     # use_property means to get that property from the generated idp object.
@@ -355,7 +355,7 @@ class TestAddIDP(federation.TestBaseFederation):
             option = {name: value,
                       "approved_DomainId": dom_id}
             idp_resp = self.identity_admin_client.list_idp(option=option)
-            self.assertEquals(idp_resp.status_code, 200)
+            self.assertEqual(idp_resp.status_code, 200)
             idp_list = idp_resp.json()[
                 const.NS_IDENTITY_PROVIDERS]
 
@@ -366,7 +366,7 @@ class TestAddIDP(federation.TestBaseFederation):
             elif len(idp_list) < 1:
                 found = False
 
-        self.assertEquals(found, True)
+        self.assertEqual(found, True)
 
     @unless_coverage
     @attr(type='regression')
@@ -392,7 +392,7 @@ class TestAddIDP(federation.TestBaseFederation):
             request_object = factory.get_add_idp_request_object(
                 federation_type=idp_flavor, issuer=issuer)
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
         option = {
