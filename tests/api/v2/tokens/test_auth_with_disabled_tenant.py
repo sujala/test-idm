@@ -32,9 +32,9 @@ class TestAuthWithDisabledTenant(base.TestBaseV2):
         username = cls.identity_config.identity_admin_user_name
         password = cls.identity_config.identity_admin_password
         encrypted_password = (
-            base64.encodestring('{0}:{1}'.format(username, password))[:-1])
+            base64.encodebytes('{0}:{1}'.format(username, password).encode())[:-1])
         cls.identity_admin_client_v1_1.default_headers['Authorization'] = \
-            'Basic {0}'.format(encrypted_password)
+            'Basic {0}'.format(encrypted_password.decode())
 
     @unless_coverage
     def setUp(self):

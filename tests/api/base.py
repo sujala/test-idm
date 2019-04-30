@@ -161,7 +161,7 @@ class TestBase(fixtures.BaseTestFixture):
         end_start = '</start>'
         end_grammar = '</grammar>'
 
-        for element in list(json_schema['properties'].keys()):
+        for element in json_schema['properties'].keys():
             # Adds default identity namespace for elements with no namespace
             if ':' not in element:
                 element_name = 'identity:' + element

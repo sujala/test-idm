@@ -479,14 +479,18 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         mapping = self.get_valid_mapping_policy()
         # get current size of the mapping policy, so that we can add more
         # characters to cross max size
-        current_size = sys.getsizeof(mapping)
+        current_size = len(json.dumps(mapping))
 
         # this size will make it larger than the max limit
-        mapping['mapping']['rules'][0]['remote'][0]['path'] = (
+        # (note: need to append to current path, which may be non-empty)
+        mapping['mapping']['rules'][0]['remote'][0]['path'] += (
             self.generate_random_string(
                 const.IDP_MAPPING_PATTERN.format(
                     mapping_size=(int(
-                        max_size_in_kilo) * 1025 - current_size + 2))))
+                        max_size_in_kilo) * 1024 - current_size + 2))))
+        # sanity check: make sure size is correct
+        self.assertGreater(len(json.dumps(mapping)), int(max_size_in_kilo) * 1024)
+
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
             request_data=mapping)
@@ -503,12 +507,15 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         mapping = self.get_valid_mapping_policy()
         # get current size of the mapping policy, so that we can add more
         # characters to reach max size
-        current_size = sys.getsizeof(mapping)
+        current_size = len(json.dumps(mapping))
 
         # this size will pad it up to the max limit
-        mapping['mapping']['rules'][0]['remote'][0]['path'] = (
+        mapping['mapping']['rules'][0]['remote'][0]['path'] += (
             self.generate_random_string(const.IDP_MAPPING_PATTERN.format(
-                mapping_size=(int(max_size_in_kilo) * 1025 - current_size))))
+                mapping_size=(int(max_size_in_kilo) * 1024 - current_size))))
+        # sanity check: make sure size is correct
+        self.assertEqual(len(json.dumps(mapping)), int(max_size_in_kilo) * 1024)
+
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
             request_data=mapping)

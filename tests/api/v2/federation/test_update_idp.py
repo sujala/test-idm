@@ -434,9 +434,9 @@ class TestUpdateIDP(federation.TestBaseFederation):
                 email=self.test_email, private_key_path=key_path,
                 public_key_path=cert_path, response_flavor='v2DomainOrigin',
                 output_format='xml', roles=roles)
-        first_part = role.name[:len(role.name)/2]
-        second_part = role.name[len(role.name)/2:]
-        cert = cert.replace(
+        first_part = role.name[:len(role.name)//2]
+        second_part = role.name[len(role.name)//2:]
+        cert = cert.decode().replace(
             roles[0], first_part + '<!-- -->' + second_part)
 
         # Get fed auth token

@@ -138,7 +138,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             new_data = copy.deepcopy(self.common_input)
             rand_string = self.generate_random_string(
                 pattern=const.LOWER_CASE_LETTERS)
-            for key in list(new_data.keys()):
+            for key in new_data.keys():
                 new_data[key] = new_data[key].replace(
                     "special", rand_string)
             new_data[const.REGION] = rand_string[:3].upper()
@@ -527,7 +527,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         new_data = copy.deepcopy(self.common_input)
         rand_string = self.generate_random_string(
             pattern=const.LOWER_CASE_LETTERS)
-        for key in list(new_data.keys()):
+        for key in new_data.keys():
             new_data[key] = new_data[key].replace("special", rand_string)
         new_data[const.REGION] = rand_string[:3].upper()
         new_data['version_id'] = '2'
@@ -560,7 +560,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         new_data = copy.deepcopy(self.common_input)
         rand_string = self.generate_random_string(
             pattern=const.LOWER_CASE_LETTERS)
-        for key in list(new_data.keys()):
+        for key in new_data.keys():
             new_data[key] = new_data[key].replace("special", rand_string)
         new_data[const.REGION] = rand_string[:3].upper()
         new_data['version_id'] = '2'
@@ -655,7 +655,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         new_data = copy.deepcopy(self.common_input)
         rand_string = self.generate_random_string(
             pattern=const.LOWER_CASE_LETTERS)
-        for key in list(new_data.keys()):
+        for key in new_data.keys():
             new_data[key] = new_data[key].replace("special", rand_string)
         new_data[const.REGION] = rand_string[:3].upper()
         new_data['version_id'] = '2'
@@ -803,7 +803,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         new_data = copy.deepcopy(self.common_input)
         rand_string = self.generate_random_string(
             pattern=const.LOWER_CASE_LETTERS)
-        for key in list(new_data.keys()):
+        for key in new_data.keys():
             new_data[key] = new_data[key].replace("special", rand_string)
         new_data[const.REGION] = rand_string[:3].upper()
         new_data['version_id'] = '2'

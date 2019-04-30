@@ -16,8 +16,8 @@ class Auth(base.AutoMarshallingModel):
 
     @classmethod
     def _json_to_obj(cls, serialized_str):
-        ret = json.loads(serialized_str)
-        return cls._dict_to_obj(ret.get(cls.ROOT_TAG))
+        ret = json.loads(serialized_str.decode())
+        return cls._dict_to_obj(ret.get(cls.ROOT_TAG, {}))
 
     @classmethod
     def _dict_to_obj(cls, dic):
@@ -59,6 +59,11 @@ class Token(base.AutoMarshallingModel):
         self.expires = expires
 
     @classmethod
+    def _json_to_obj(cls, serialized_str):
+        ret = json.loads(serialized_str.decode())
+        return Token(id=ret['token']['id'], expires=ret['token']['expires'])
+
+    @classmethod
     def _xml_ele_to_obj(cls, xml_ele):
         kwargs = {const.ID: xml_ele.get(const.ID), const.EXPIRES: xml_ele.get(
             const.EXPIRES)}
@@ -81,7 +86,7 @@ class ServiceCatalog(base.AutoMarshallingModel):
 
     @classmethod
     def _json_to_obj(cls, serialized_str):
-        ret = json.loads(serialized_str)
+        ret = json.loads(serialized_str.decode())
         ret = cls._dict_to_obj(ret.get(cls.ROOT_TAG))
         return ret
 
@@ -208,7 +213,7 @@ class User(base.AutoMarshallingModel):
 
     @classmethod
     def _json_to_obj(cls, serialized_str):
-        ret = json.loads(serialized_str)
+        ret = json.loads(serialized_str.decode())
         return cls._dict_to_obj(ret.get(cls.ROOT_TAG))
 
     @classmethod
@@ -257,7 +262,7 @@ class BaseURLs(base.AutoMarshallingModel):
 
     @classmethod
     def _json_to_obj(cls, serialized_str):
-        ret = json.loads(serialized_str)
+        ret = json.loads(serialized_str.decode())
         return cls._list_to_obj(ret.get(cls.ROOT_TAG))
 
     @classmethod
@@ -302,7 +307,7 @@ class BaseURL(base.AutoMarshallingModel):
 
     @classmethod
     def _json_to_obj(cls, serialized_str):
-        ret = json.loads(serialized_str)
+        ret = json.loads(serialized_str.decode())
         return BaseURL(**ret.get(cls.ROOT_TAG))
 
     @classmethod

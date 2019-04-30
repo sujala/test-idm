@@ -48,8 +48,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
                 'nast_id': nastId}
 
     def validate_resp_token(self, token):
-        resp = self.identity_admin_client.validate_token(
-            token_id=token)
+        resp = self.identity_admin_client.validate_token(token_id=token)
         self.assertEqual(resp.status_code, 200)
         header_validation.validate_header_not_present('response-source')(resp)
 

@@ -235,7 +235,7 @@ if __name__ == '__main__':
         environments_json = json.loads(f.read())
 
     environment_tuple_list = [
-        tuple(e.split('_')) for e in list(environments_json.keys())]
+        tuple(e.split('_')) for e in environments_json.keys()]
     for environment in environment_tuple_list:
         error_list = error_list + compare_environment_configurations(
             environments_json, *environment)

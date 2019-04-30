@@ -221,7 +221,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             if endpoint[const.ENDPOINTS][0][const.TENANT_ID] == tenant_id:
                 endpoints.append(endpoint[const.NAME])
         # check for duplicate in list of endpoint name for tenant
-        for item, count in list(collections.Counter(endpoints).items()):
+        for item, count in collections.Counter(endpoints).items():
             self.assertFalse(count > 1, "Duplicated item {0}".format(item))
 
     def verify_auth_w_password(self, user_name, password, tenant=None,

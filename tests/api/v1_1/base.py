@@ -21,9 +21,9 @@ class TestBaseV1(base.TestBase):
         username = cls.identity_config.identity_admin_user_name
         password = cls.identity_config.identity_admin_password
         encrypted_password = (
-            base64.encodestring('{0}:{1}'.format(username, password).encode('utf-8'))[:-1])
+            base64.encodebytes('{0}:{1}'.format(username, password).encode('utf-8'))[:-1])
         cls.identity_admin_client.default_headers['Authorization'] = \
-            'Basic {0}'.format(encrypted_password)
+            'Basic {0}'.format(encrypted_password.decode())
 
         cls.unexpected_headers_HTTP_201 = [
             header_validation.validate_transfer_encoding_header_not_present]
