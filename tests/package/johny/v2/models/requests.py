@@ -404,6 +404,23 @@ class PasswordCredentialsAdd(base.AutoMarshallingModel):
         raise Exception("Not implemented yet")
 
 
+class PasswordValidation(base.AutoMarshallingModel):
+    """Marshalling for Password Validation Request"""
+
+    def __init__(self, password):
+        self.password = password
+
+    def _obj_to_json(self):
+        password_validation_request = {
+            "RAX-AUTH:validatePassword": {
+            "password": self.password}
+        }
+        return json.dumps(password_validation_request)
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
+
+
 class ApiKeyCredentialsUpdate(base.AutoMarshallingModel):
     """Marshalling for Update Api key Request"""
 
