@@ -9,6 +9,7 @@
 SHELL := /bin/bash
 
 UNAME := $(shell uname)
+PWD := $(shell pwd)
 
 VENV=/tmp/.venv
 VENV_ACTIVATE=source $(VENV)/bin/activate
@@ -16,9 +17,13 @@ VENV_DEACTIVATE=deactivate
 CAFE_CONFIG_FILE_PATH=/tmp/.identity/api.conf
 CAFE_ROOT_LOG_PATH=/tmp/.identity/logs
 CAFE_TEST_LOG_PATH=/tmp/.identity/logs
-CAFE_CONFIG_ALL=CAFE_CONFIG_FILE_PATH=$(CAFE_CONFIG_FILE_PATH) CAFE_ROOT_LOG_PATH=$(CAFE_ROOT_LOG_PATH) CAFE_TEST_LOG_PATH=$(CAFE_TEST_LOG_PATH)
+CAFE_CONFIG_ALL=CAFE_ENGINE_CONFIG_FILE_PATH=$(CAFE_CONFIG_FILE_PATH) CAFE_CONFIG_FILE_PATH=$(CAFE_CONFIG_FILE_PATH) CAFE_ROOT_LOG_PATH=$(CAFE_ROOT_LOG_PATH) CAFE_TEST_LOG_PATH=$(CAFE_TEST_LOG_PATH)
 
 API ?= "api"
+
+PIP_CONFIG_FILE = $(PWD)/pip.conf
+PIP = PIP_CONFIG_FILE=$(PIP_CONFIG_FILE) $(VENV)/bin/pip
+TOX = PIP_CONFIG_FILE=$(PIP_CONFIG_FILE) $(VENV)/bin/tox
 
 all: test flake_no_build
 
@@ -54,17 +59,17 @@ flake_no_build:
 	# make sure .venv directory exists prior to creating it
 	@test -d $(VENV) || virtualenv $(VENV) --no-site-packages
 	# install tox
-	$(VENV)/bin/pip install tox
+	$(PIP) install tox
 	# run flake8
-	$(VENV)/bin/tox -e flake8
+	$(TOX) -e flake8
 
 test_no_build:
 	# make sure .venv directory exists prior to creating it
 	@test -d $(VENV) || virtualenv $(VENV) --no-site-packages
 	# install tox
-	$(VENV)/bin/pip install tox
+	$(PIP) install tox
 	# run py27
-	$(CAFE_CONFIG_ALL) $(VENV)/bin/tox -e py27
+	$(CAFE_CONFIG_ALL) $(TOX) -e py27
 
 test: build test_no_build
 
@@ -78,9 +83,9 @@ test_nose_no_build:
 	@rm -rf $(VENV)
 	@test -d $(VENV) || virtualenv $(VENV) --no-site-packages
 	# run nosetests stuff and optionally pass in module
-	$(VENV)/bin/pip install -r api/requirements.txt
+	$(PIP) install -r api/requirements.txt
 	# install opencafe
-	$(VENV)/bin/pip install opencafe
+	$(PIP) install opencafe
 	# create virtualenv and initialize cafe
 	$(VENV_ACTIVATE) && cafe-config init && cafe-config plugins install http && $(VENV_DEACTIVATE)
 	# create virtualenv and run nose tests (optionally pass in module)
