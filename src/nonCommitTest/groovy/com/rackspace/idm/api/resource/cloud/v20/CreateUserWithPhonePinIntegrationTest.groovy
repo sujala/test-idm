@@ -296,6 +296,12 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def userForCreate = v2Factory.userForCreate(testUtils.getRandomUUID('userWithPin'), null, "test@racksapce.com", true, "ORD", domainId, Constants.DEFAULT_PASSWORD)
 
+        def domainId2 = utils.createDomain()
+        def users, defaultUser
+        (defaultUser, users) = utils.createDefaultUser(domainId2)
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_PHONE_PIN_ADMIN_ROLE_ID)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+
         when: "invalid phone pin"
         userForCreate.phonePin = "111122"
         def response = cloud20.createUser(identityAdminToken, userForCreate)
@@ -303,8 +309,16 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST, ErrorCodes.ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST)
 
+        when: "default user with 'identity:phone-pin-admin' role"
+        userForCreate.domainId = domainId2
+        response = cloud20.createUser(defaultUserToken, userForCreate)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, null, "Not Authorized")
+
         cleanup:
         utils.deleteUserQuietly(identityAdmin)
+        utils.deleteUsersQuietly(users)
     }
 
 }
