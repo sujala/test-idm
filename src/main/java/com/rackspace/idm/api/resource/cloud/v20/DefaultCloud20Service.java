@@ -1797,7 +1797,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
-            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()));
+
             com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProviderWithMetadataById(providerId);
 
             IdentityUserTypeEnum callerUserType = requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType();
