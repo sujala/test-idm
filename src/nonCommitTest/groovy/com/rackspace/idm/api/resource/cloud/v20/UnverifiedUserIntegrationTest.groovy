@@ -1165,6 +1165,81 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "accept invite for unverified users with phone pin: mediaType = #mediaType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
+
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def email = "${RandomStringUtils.randomAlphabetic(8)}@rackspace.com"
+        def user = new User().with {
+            it.email = email
+            it.domainId = userAdmin.domainId
+            it
+        }
+        utils.domainRcnSwitch(userAdmin.domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
+
+        // Create unverified user
+        def response = cloud20.createUnverifiedUser(userAdminToken, user)
+        assert response.status == HttpStatus.SC_CREATED
+        def unverifiedUserEntity = response.getEntity(User).value
+
+        // Send invite
+        response = cloud20.sendUnverifiedUserInvite(userAdminToken, unverifiedUserEntity.id)
+        assert response.status == HttpStatus.SC_OK
+        def inviteEntity = getInviteEntity(response)
+
+        def username = testUtils.getRandomUUID("user")
+        def phonePin = "531247"
+        UserForCreate userForCreate = new UserForCreate().with {
+            it.id = inviteEntity.userId
+            it.username = username
+            it.password = Constants.DEFAULT_PASSWORD
+            it.registrationCode = inviteEntity.registrationCode
+            it.secretQA = v2Factory.createSecretQA()
+            it.phonePin = phonePin
+            it
+        }
+
+        when: "accept invite"
+        response = cloud20.acceptUnverifiedUserInvite(userForCreate, mediaType, mediaType)
+        def userEntity = testUtils.getEntity(response, User)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        and: "expected attributes"
+        userEntity.id == inviteEntity.userId
+        userEntity.username == username
+        userEntity.domainId == userAdmin.domainId
+        userEntity.email == email
+        !userEntity.unverified
+        userEntity.enabled
+
+        and: "assert phone pin, password, and registration code are not returned"
+        userEntity.registrationCode == null
+        userEntity.password == null
+        userEntity.phonePin == null
+
+        when: "get self"
+        def userToken = utils.getToken(username)
+        response = cloud20.getUserById(userToken, userEntity.id, mediaType)
+        userEntity = testUtils.getEntity(response, User)
+
+
+        then: "assert phone pin"
+        response.status == HttpStatus.SC_OK
+
+        userEntity.phonePin == phonePin
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
     def "error check: accept invite for unverified users: mediaType = #mediaType"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_CREATE_INVITES_PROP, true)
@@ -1309,6 +1384,15 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, "Your registration code has expired, please request a new invite.")
+
+        when: "invalid phone pin"
+        invalidUserForCreate = new UserForCreate()
+        InvokerHelper.setProperties(invalidUserForCreate, userForCreate.properties)
+        invalidUserForCreate.phonePin = "123456"
+        response = cloud20.acceptUnverifiedUserInvite(invalidUserForCreate, mediaType, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST, ErrorCodes.ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST)
 
         cleanup:
         reloadableConfiguration.reset()
