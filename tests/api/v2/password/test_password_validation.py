@@ -5,6 +5,7 @@ from nose.plugins.attrib import attr
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
+from tests.api.v2.schema import password as password_json
 
 from tests.package.johny.v2.models import requests
 
@@ -13,15 +14,9 @@ from tests.package.johny.v2.models import requests
 class TestPasswordValidation(base.TestBaseV2):
     """Tests for password validation endpoint."""
 
-    # @classmethod
-    # @unless_coverage
-    # def setUpClass(cls):
-    #     super(TestPasswordValidation, cls).setUpClass()
-
     @unless_coverage
     def setUp(self):
         super(TestPasswordValidation, self).setUp()
-
 
     @tags('positive', 'p0', 'smoke')
     @attr(type='smoke_alpha')
@@ -34,9 +29,8 @@ class TestPasswordValidation(base.TestBaseV2):
         resp = self.identity_admin_client.validate_password(
             request_object=pwd_validation_obj)
         self.assertEqual(resp.status_code, 200)
-
+        self.assertSchema(resp, password_json.password_validation)
 
     @unless_coverage
     def tearDown(self):
         super(TestPasswordValidation, self).tearDown()
-
