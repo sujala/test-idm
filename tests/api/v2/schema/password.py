@@ -14,7 +14,7 @@ password_policy = {
     'required': [const.PASSWORD_POLICY],
     'additionalProperties': False}
 
-password_validation = password_policy = {
+password_validation = {
     'type': 'object',
     'properties': {
         const.RAX_AUTH_VALIDATE_PASSWORD: {
