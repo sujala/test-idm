@@ -96,7 +96,7 @@ class TestAddIDP(federation.TestBaseFederation):
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
         self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
-                          request_object.idp_name)
+                         request_object.idp_name)
 
     @tags('negative', 'p1', 'regression')
     def test_add_idp_with_no_name(self):
@@ -106,8 +106,8 @@ class TestAddIDP(federation.TestBaseFederation):
         resp = self.identity_admin_client.create_idp(request_object)
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
-                          "Error code: 'GEN-001'; 'name' is a required"
-                          " attribute")
+                         "Error code: 'GEN-001'; 'name' is a required"
+                         " attribute")
 
     @tags('negative', 'p1', 'regression')
     @pytest.mark.skip_at_gate
@@ -118,8 +118,8 @@ class TestAddIDP(federation.TestBaseFederation):
         resp = self.identity_admin_client.create_idp(request_object)
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
-                          "Error code: 'GEN-001'; 'name' is a required"
-                          " attribute")
+                         "Error code: 'GEN-001'; 'name' is a required"
+                         " attribute")
 
     @tags('negative', 'p1', 'regression')
     def test_add_idp_with_dup_name(self):
@@ -132,8 +132,8 @@ class TestAddIDP(federation.TestBaseFederation):
         resp = self.identity_admin_client.create_idp(request_object)
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
-                          "Error code: 'FED_IDP-005'; Identity provider with "
-                          "name {0} already exist.".format(
+                         "Error code: 'FED_IDP-005'; Identity provider with "
+                         "name {0} already exist.".format(
                               request_object.idp_name))
 
     @tags('negative', 'p1', 'regression')
@@ -158,8 +158,8 @@ class TestAddIDP(federation.TestBaseFederation):
         resp = self.identity_admin_client.create_idp(request_object)
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
-                          "Error code: 'GEN-002'; name length cannot exceed "
-                          "255 characters")
+                         "Error code: 'GEN-002'; name length cannot exceed "
+                         "255 characters")
 
     @tags('negative', 'p1', 'regression')
     @pytest.mark.skip_at_gate

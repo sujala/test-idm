@@ -2,7 +2,6 @@
 import copy
 import json
 import os
-import sys
 
 import ddt
 import pytest
@@ -82,7 +81,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
         self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
-                          request_object.idp_name)
+                         request_object.idp_name)
         return provider_id
 
     def get_valid_mapping_policy(self):
@@ -151,7 +150,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             mapping, provider_id, api_client=self.identity_admin_client)
         self.assertEqual(resp_get_ro.status_code, 200)
         self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
-                          const.YAML_CONTENT_TYPE_VALUE)
+                         const.YAML_CONTENT_TYPE_VALUE)
         self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_user_auth_bad_request(
@@ -181,7 +180,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
 
         self.assertEqual(resp_get_ro.status_code, 200)
         self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
-                          const.YAML_CONTENT_TYPE_VALUE)
+                         const.YAML_CONTENT_TYPE_VALUE)
         self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_user_auth_bad_request(
@@ -205,7 +204,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
 
         self.assertEqual(resp_get_ro.status_code, 200)
         self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
-                          const.YAML_CONTENT_TYPE_VALUE)
+                         const.YAML_CONTENT_TYPE_VALUE)
         self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_user_auth_bad_request(
@@ -256,7 +255,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             })
         self.assertEqual(resp_get_ro.status_code, 200)
         self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
-                          const.YAML_CONTENT_TYPE_VALUE)
+                         const.YAML_CONTENT_TYPE_VALUE)
         self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_auth_success(
@@ -287,7 +286,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             })
         self.assertEqual(resp_get_ro.status_code, 200)
         self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
-                          const.YAML_CONTENT_TYPE_VALUE)
+                         const.YAML_CONTENT_TYPE_VALUE)
         self.assertEqual(resp_get_ro.text, mapping)
 
         self.validate_fed_auth_success(
@@ -323,8 +322,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=provider_id)
         self.assertEqual(resp_get_ro.status_code, 200)
         self.assertEqual(resp_get_ro.headers[const.CONTENT_TYPE],
-                          const.CONTENT_TYPE_VALUE.format(
-                              const.JSON))
+                         const.CONTENT_TYPE_VALUE.format(const.JSON))
         self.assertEqual(resp_get_ro.json(), mapping)
 
     @tags('negative', 'p0')
@@ -350,8 +348,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             })
         self.assertEqual(resp_get_ro.status_code, 404)
         self.assertEqual(resp_get_ro.json()["itemNotFound"]["message"],
-                          "No [YAML] mapping policy found for IDP with "
-                          "ID {}.".format(provider_id))
+                         "No [YAML] mapping policy found for IDP with "
+                         "ID {}.".format(provider_id))
 
         resp_get_ro = self.identity_admin_client.get_idp_mapping(
             idp_id=provider_id)
@@ -378,8 +376,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=provider_id)
         self.assertEqual(resp_get_ro.status_code, 404)
         self.assertEqual(resp_get_ro.json()["itemNotFound"]["message"],
-                          "No [JSON] mapping policy found for IDP with "
-                          "ID {}.".format(provider_id))
+                         "No [JSON] mapping policy found for IDP with "
+                         "ID {}.".format(provider_id))
 
     @unless_coverage
     # Try none, empty {} [] for set
@@ -489,7 +487,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                     mapping_size=(int(
                         max_size_in_kilo) * 1024 - current_size + 2))))
         # sanity check: make sure size is correct
-        self.assertGreater(len(json.dumps(mapping)), int(max_size_in_kilo) * 1024)
+        self.assertGreater(len(json.dumps(mapping)),
+                           int(max_size_in_kilo) * 1024)
 
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,
@@ -514,7 +513,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.generate_random_string(const.IDP_MAPPING_PATTERN.format(
                 mapping_size=(int(max_size_in_kilo) * 1024 - current_size))))
         # sanity check: make sure size is correct
-        self.assertEqual(len(json.dumps(mapping)), int(max_size_in_kilo) * 1024)
+        self.assertEqual(len(json.dumps(mapping)),
+                         int(max_size_in_kilo) * 1024)
 
         resp_put_manager = self.identity_admin_client.add_idp_mapping(
             idp_id=provider_id,

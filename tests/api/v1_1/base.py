@@ -20,8 +20,9 @@ class TestBaseV1(base.TestBase):
             deserialize_format=cls.test_config.deserialize_format)
         username = cls.identity_config.identity_admin_user_name
         password = cls.identity_config.identity_admin_password
-        encrypted_password = (
-            base64.encodebytes('{0}:{1}'.format(username, password).encode('utf-8'))[:-1])
+        encrypted_password = base64.encodebytes(
+            '{0}:{1}'.format(username, password).encode('utf-8')
+        )[:-1]
         cls.identity_admin_client.default_headers['Authorization'] = \
             'Basic {0}'.format(encrypted_password.decode())
 

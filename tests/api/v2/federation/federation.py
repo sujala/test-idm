@@ -99,9 +99,9 @@ class TestBaseFederation(base.TestBaseV2):
         resp = self.identity_admin_client.create_idp(request_object)
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
-                          "Error code: 'GEN-005'; Identity provider name must"
-                          " consist of only alphanumeric, '.', and '-'"
-                          " characters.")
+                         "Error code: 'GEN-005'; Identity provider name must"
+                         " consist of only alphanumeric, '.', and '-'"
+                         " characters.")
 
     def add_and_check_broker_idp(self, certs=None):
         idp = self.create_idp_helper(fed_type=const.BROKER, certs=certs)

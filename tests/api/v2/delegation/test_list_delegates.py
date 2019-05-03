@@ -103,12 +103,11 @@ class TestListDelegates(delegation.TestBaseDelegation):
 
         for delegate in resp.json()[const.DELEGATE_REFERENCES]:
             if delegate[const.DELEGATE_TYPE] == const.USER.upper():
-                self.assertEqual(delegate[const.DELEGATE_ID],
-                                  self.sub_user_id)
+                self.assertEqual(delegate[const.DELEGATE_ID], self.sub_user_id)
                 assert_user_is_returned = True
             elif delegate[const.DELEGATE_TYPE] == const.USER_GROUP:
                 self.assertEqual(delegate[const.DELEGATE_ID],
-                                  self.user_group_id)
+                                 self.user_group_id)
                 assert_user_group_is_returned = True
 
         self.assertBoolean('true', assert_user_group_is_returned)
@@ -130,11 +129,11 @@ class TestListDelegates(delegation.TestBaseDelegation):
         for delegate in resp.json()[const.DELEGATE_REFERENCES]:
             if delegate[const.DELEGATE_TYPE] == const.USER.upper():
                 self.assertEqual(delegate[const.DELEGATE_ID],
-                                  self.sub_user_id)
+                                 self.sub_user_id)
                 assert_user_is_returned = True
             elif delegate[const.DELEGATE_TYPE] == const.USER_GROUP:
                 self.assertEqual(delegate[const.DELEGATE_ID],
-                                  self.user_group_id)
+                                 self.user_group_id)
                 assert_user_group_is_returned = True
 
         self.assertBoolean('true', assert_user_group_is_returned)
