@@ -1159,6 +1159,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         reloadableConfiguration.reset()
+        utils.deleteUserQuietly(userEntity)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -1234,6 +1235,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         reloadableConfiguration.reset()
+        utils.deleteUserQuietly(userEntity)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
