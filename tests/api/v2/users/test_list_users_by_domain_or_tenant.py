@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
+import unittest
 import pytest
-from nose.plugins.skip import SkipTest
 
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -323,7 +323,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
                              self.domain_id_2)
             self.assertEqual(user[const.EMAIL], self.email_sub_user_2)
 
-    @SkipTest
+    @unittest.skip("skipping, as it fails on the repose side")
     @tags('negative', 'p1', 'regression')
     @pytest.mark.regression
     def test_list_users_for_nonexisting_domain_id(self):
@@ -520,7 +520,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             "Error code: 'GEN-000'; The 'tenant_id' parameter"
             " can not be used with the 'domain_id' parameter.")
 
-    @SkipTest
+    @unittest.skip("skipping, as it fails on the repose side")
     @tags('negative', 'p1', 'regression')
     @pytest.mark.regression
     def test_list_users_for_nonexisting_tenant_id(self):
