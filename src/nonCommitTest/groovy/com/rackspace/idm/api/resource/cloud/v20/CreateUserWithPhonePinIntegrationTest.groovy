@@ -245,7 +245,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "userManager with the 'identity:phone-pin-admin' role can set a phone pin on user creation - mediaType = #mediaType"() {
+    def "userManager with role 'identity:phone-pin-admin' is allowed to set a phone pin on user creation - mediaType = #mediaType"() {
         given:
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
@@ -314,7 +314,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         response = cloud20.createUser(defaultUserToken, userForCreate)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, null, "Not Authorized")
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, null, DefaultCloud20Service.NOT_AUTHORIZED)
 
         cleanup:
         utils.deleteUserQuietly(identityAdmin)
