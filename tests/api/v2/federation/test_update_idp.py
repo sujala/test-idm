@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper, saml_helper
@@ -68,7 +68,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         return provider_id, provider_name
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_idp_valid_name(self):
         """Test update with valid name randomly generate name with
         alphanumeric, '.', and '-' characters in range from 1 to 255
@@ -84,7 +84,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
                          idp_name)
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_idp_name_with_empty_string(self):
         """Update with empty string"""
         provider_id, _ = self.add_idp_user()
@@ -107,7 +107,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 200)
 
     @unless_coverage
-    @attr(type='skip_at_gate')
+    @pytest.mark.skip_at_gate
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_approved_domain_ids_with_spaces(self, test_data):
 
@@ -141,7 +141,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_enable_disable_idp(self, test_data):
 
@@ -216,7 +216,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_domain_and_re_auth(self, test_data):
 
@@ -251,7 +251,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             issuer=issuer, domain_1=domain_id, domain_2=domain_id_2)
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_idp_approved_domain_ids_with_duplicates(self):
         domain_id = func_helper.generate_randomized_domain_id(
             client=self.identity_admin_client)
@@ -276,7 +276,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             [domain_id])
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_idp_by_rcn_admin(self):
 
         request_object = factory.get_domain_request_object({})
@@ -335,7 +335,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 200)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_idp_by_user_clients(self):
         domain_id = func_helper.generate_randomized_domain_id(
             client=self.identity_admin_client)
@@ -362,7 +362,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assert_update_idp(provider_id, user_client)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.data("user:admin", "user:manage")
     def test_update_idp_by_user_clients_metadata(self, client_key):
         (pem_encoded_cert, cert_path, _, key_path,
@@ -401,7 +401,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         return role
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('modified_saml_fed_auth.json')
     def test_fed_auth_with_modified_saml(self, test_data):
 

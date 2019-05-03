@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 import ddt
 
@@ -35,7 +35,7 @@ class TestSAMLAuth(federation.TestBaseFederation):
         self.idp = self.add_and_check_broker_idp(certs=[self.pem_encoded_cert])
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_cant_auth_with_broker_idp(self):
         """ Note: will fail once broker auth is enabled. """
         test_data = {"fed_input": {

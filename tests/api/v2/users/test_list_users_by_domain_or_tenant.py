@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from nose.plugins.skip import SkipTest
 
 from qe_coverage.opencafe_decorators import tags, unless_coverage
@@ -130,7 +130,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
         super(TestSearchUserAdminByTenantOrDomain, self).setUp()
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_user_admin_for_specified_domain(self):
         """List user admin by domain_id and
            admin_only param true
@@ -147,7 +147,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             self.assertEqual(user[const.EMAIL], self.email_user_admin_1)
 
     @tags('negative', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_users_by_user_admin_with_param_domainid(self):
         """List user admin by domain_id and
            admin_only param true
@@ -159,7 +159,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
         self.assertEqual(resp.status_code, 403)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_users_by_domain_id_and_name(self):
         """List verified users by query param domain_id,fed user name
             and admin_only=false
@@ -178,7 +178,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             self.assertEqual(user[const.USERNAME], self.subject)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_user_admin_of_specified_domain_by_name_email(self):
         # search by tenant_id, admin_only=true and useradmin email, name
         resp = self.identity_admin_client.list_users(
@@ -208,7 +208,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
         self.assertEqual(len(resp.json()[const.USERS]), 0)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_unverified_users_by_specific_domain_and_email(self):
         """List unverified users with query parameter domain_id, user_type
            and email by identity admin user
@@ -228,7 +228,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             self.assertEqual(user[const.EMAIL], self.unverified_user_email)
 
     @tags('positive', 'p1', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_unverified_users_by_specific_domain_and_admin_only(self):
         """List unverified users with query parameter domain_id, user_type
            and admin_only
@@ -242,7 +242,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
         self.assertEqual(len(resp.json()[const.USERS]), 0)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_verified_users_by_domain_id_and_fed_user_email(self):
         """List all users by query param domain_id, email and user_type
         """
@@ -260,7 +260,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             self.assertEqual(user[const.EMAIL], self.fed_user_email)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_all_users_by_domain_id(self):
         """List verified users by query param domain_id,user_type
         """
@@ -279,7 +279,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
         self.assertIn(self.fed_user_id, user_ids)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_users_in_specified_domain(self):
         """List users in specified domain by domain_id param
         """
@@ -306,7 +306,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             self.assertEqual(user[const.RAX_AUTH_DOMAIN_ID], self.domain_id_2)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_verified_users_by_domain_id_and_email(self):
         """List verified users by query param domain_id, email and user_type
         """
@@ -325,7 +325,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
 
     @SkipTest
     @tags('negative', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_users_for_nonexisting_domain_id(self):
         """Validate the error msg for nonexisting domain_id.
             skipping this test, as it is failing on repose
@@ -340,7 +340,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             "Domain with ID {0} not found.".format(self.non_existing_id))
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_users_for_specified_tenant(self):
         """List all users for a specified tenant's domain
         """
@@ -367,7 +367,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
                              self.domain_id_2)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_all_users_for_specified_tenant_by_name(self):
         """List users for a tenant_id, admin_only and name
         """
@@ -384,7 +384,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             self.assertEqual(user[const.USERNAME], self.sub_user_name_2)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_user_admin_for_specified_tenant(self):
         """List user admin for specified tenant's domain
            with admin_only param true
@@ -401,7 +401,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             self.assertEqual(user[const.EMAIL], self.email_user_admin_2)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_user_admin_for_specified_tenant_by_email(self):
         # search by tenant_id, admin_only=true and useradmin email
         resp = self.identity_admin_client.list_users(
@@ -428,7 +428,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
         self.assertEqual(len(resp.json()[const.USERS]), 0)
 
     @tags('positive', 'p1', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_user_admin_for_specified_tenant_by_email_name(self):
 
         """search by tenant_id, admin_only=true and useradmin email and
@@ -445,7 +445,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
         self.assertEqual(len(resp.json()[const.USERS]), 0)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_verified_user_admin_for_specified_tenant(self):
         """List verified users with query params tenant_id, admin_only,
             user_type and email
@@ -466,7 +466,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             self.assertEqual(user[const.EMAIL], self.email_user_admin_2)
 
     @tags('positive', 'p1', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_unverified_user_for_specified_tenant(self):
         """List unverified users with query params tenant_id,
             user_type
@@ -479,7 +479,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
         self.assertEqual(len(resp.json()[const.USERS]), 0)
 
     @tags('negative', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_all_users_for_specified_tenant_by_user_type_name(self):
         """verify 'user_type' parameter
            cannot be used with the 'name' parameter.
@@ -495,7 +495,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
             " can not be used with the 'name' parameter.")
 
     @tags('negative', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_users_by_user_admin_with_param_tenant_id(self):
         """tenant_id and admin_only cannot be accessed by user-admin
         """
@@ -506,7 +506,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
         self.assertEqual(resp.status_code, 403)
 
     @tags('negative', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_users_by_tenant_id_and_domain_id(self):
         """tenant_id and domain_id both cannot be specified
         """
@@ -522,7 +522,7 @@ class TestSearchUserAdminByTenantOrDomain(base.TestBaseV2):
 
     @SkipTest
     @tags('negative', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_users_for_nonexisting_tenant_id(self):
         """Validate error msg for non existing tenant_id
            skipping this test, as it is failing on repose side

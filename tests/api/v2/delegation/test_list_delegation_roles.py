@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -45,7 +45,7 @@ class TestListDelegationRoles(delegation.TestBaseDelegation):
         super(TestListDelegationRoles, self).setUp()
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_delegation_roles(self):
         # create role
         role = self.create_role()

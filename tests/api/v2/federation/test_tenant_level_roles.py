@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper, saml_helper
@@ -119,7 +119,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         self.assertEqual(role_present, positive)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('data_tenant_level_roles.json')
     def test_tenant_level_roles_in_fed_auth(self, test_data):
         ''' Verify appropriate roles are on the federated users.'''
@@ -222,7 +222,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         return role_1, tenant_1
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_whitelist_roles_for_fed_user_on_tenant(self):
 
         test_data = {"fed_input": {
@@ -290,7 +290,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             self.assertEqual(role_count, 1)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_wl_role_for_fed_user_on_tenant(self):
 
         test_data = {"fed_input": {

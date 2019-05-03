@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -90,7 +90,7 @@ class TestListDelegates(delegation.TestBaseDelegation):
         return user_group_resp.json()[const.RAX_AUTH_USER_GROUP][const.ID]
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_delegates(self):
         # get all delegates
         resp = self.user_admin_client.list_delegates_for_delegation_agreement(

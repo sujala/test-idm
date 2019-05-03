@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -89,7 +89,7 @@ class TestListVerifiedUnverifiedUsers(base.TestBaseV2):
         super(TestListVerifiedUnverifiedUsers, self).setUp()
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_all_users_by_identity_admin(self):
         """List all users with unverified user email by identity admin
            and verfiy unverified user is listed"
@@ -108,7 +108,7 @@ class TestListVerifiedUnverifiedUsers(base.TestBaseV2):
             self.assertEqual(user[const.ENABLED], False)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_unverified_users_by_identity_admin(self):
         """List unverified users with query parameter unverified
            and email by identity admin user
@@ -128,7 +128,7 @@ class TestListVerifiedUnverifiedUsers(base.TestBaseV2):
             self.assertEqual(user[const.EMAIL], self.unverified_user_email)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_verified_users_by_identity_admin(self):
         """List verified users by identity admin
         """
@@ -151,7 +151,7 @@ class TestListVerifiedUnverifiedUsers(base.TestBaseV2):
         self.assertEqual(resp.status_code, 400)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_verified_users_by_user_admin(self):
         """List verified users by User Admin
         """
@@ -162,7 +162,7 @@ class TestListVerifiedUnverifiedUsers(base.TestBaseV2):
         self.assertEqual(len(resp.json()[const.USERS]), 0)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_verified_users_by_user_manager(self):
         """List verified users by User Manager
         """
@@ -173,7 +173,7 @@ class TestListVerifiedUnverifiedUsers(base.TestBaseV2):
         self.assertEqual(len(resp.json()[const.USERS]), 0)
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_verified_users_by_user_default(self):
         """List verified users by default user
         """

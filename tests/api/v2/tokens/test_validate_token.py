@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 
@@ -93,7 +93,7 @@ class TestValidateToken(base.TestBaseV2):
             tenant_types=[self.test_config.mpc_whitelist_tenant_type])
         return role_1, tenant_1
 
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     @tags('positive', 'p0', 'smoke')
     def test_validate_token_reports_contact_id(self):
         """Check for contact id in validate token response

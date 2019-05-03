@@ -2,7 +2,7 @@
 from allpairspy import AllPairs
 
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.federation import federation
@@ -32,7 +32,7 @@ class TestAddIDP(federation.TestBaseFederation):
         super(TestAddIDP, self).setUp()
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_idp_email_domain(self):
         email_domains = []
         email_domains.append(self.generate_random_string(const.EMAIL_PATTERN))
@@ -86,7 +86,7 @@ class TestAddIDP(federation.TestBaseFederation):
             json_schema=idp_json.identity_provider_w_email_domain)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_idp_with_name(self):
         '''Add with a name.'''
 
@@ -110,7 +110,7 @@ class TestAddIDP(federation.TestBaseFederation):
                           " attribute")
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_idp_with_empty_name(self):
         '''Add with empty name.'''
         request_object = factory.get_add_idp_request_object()
@@ -162,14 +162,14 @@ class TestAddIDP(federation.TestBaseFederation):
                           "255 characters")
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_idp_with_bad_char(self):
         '''Add with bad characters in name
         '''
         self.check_bad_name(name="DSAFDSFA#@$@$#@$AFAS")
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_idp_with_spaces_at_end(self):
         '''Add with spaces at the end of the name.
         '''
@@ -177,7 +177,7 @@ class TestAddIDP(federation.TestBaseFederation):
             name=self.generate_random_string(const.IDP_NAME_PATTERN) + "  ")
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_idp_with_spaces_at_the_beginning(self):
         '''Add with spaces at the beginning of the name.
         '''
@@ -189,7 +189,7 @@ class TestAddIDP(federation.TestBaseFederation):
         self.add_and_check_broker_idp()
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_adg_with_broker_idp(self):
         fed_type = const.BROKER
         dom_group = "BADVALUE"
@@ -206,7 +206,7 @@ class TestAddIDP(federation.TestBaseFederation):
             " approvedDomainGroup must be set, and specified as GLOBAL")
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_idp_with_name_get_idp(self):
         '''Verify get provider by id has name attribute.'''
         request_object = factory.get_add_idp_request_object()
@@ -221,7 +221,7 @@ class TestAddIDP(federation.TestBaseFederation):
         self.assertEqual(get_name, request_object.idp_name)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_idp_with_name_list_idp(self):
         """
         Verify list providers has name attribute.
@@ -247,7 +247,7 @@ class TestAddIDP(federation.TestBaseFederation):
         self.assertEqual(found, True)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.data(*AllPairs([["issuer", "name"],
                          ["test12345", "*"]]))
     def test_list_idp_query_param_name_missed_hit(self, data):
@@ -369,7 +369,7 @@ class TestAddIDP(federation.TestBaseFederation):
         self.assertEqual(found, True)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.data('GLOBAL', 'RACKER', 'BROKER')
     def test_list_idps_for_global_and_racker_idps(self, idp_flavor):
         """

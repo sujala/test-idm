@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import copy
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -54,7 +54,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
         super(TestIDPMetadata, self).setUp()
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_idp_auth_fed_user(self):
         '''
         Test to Add IDP with metadata & auth as a fed user for the domain.
@@ -140,7 +140,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
         self.assertEqual(verify_resp.status_code, 400)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_idp_cert_w_metadata(self):
         '''
         Test to Add IDP with metadata & auth as a fed user for the domain.
@@ -195,7 +195,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 403)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_idp(self):
         '''Test to List IDP.'''
         (pem_encoded_cert, cert_path, _, key_path,
@@ -209,7 +209,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
         self.assertSchema(response=resp, json_schema=idp_json.list_idps)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_mapping_user_default(self):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()

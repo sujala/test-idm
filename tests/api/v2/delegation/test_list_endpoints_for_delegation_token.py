@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -75,7 +75,7 @@ class TestListEndpointsForDelegationToken(delegation.TestBaseDelegation):
         return responses.Tenant(add_tenant_resp.json())
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_endpoints_for_delegation_token(self):
 
         # Commented till CID-1439 is fixed...will need to add more checks once

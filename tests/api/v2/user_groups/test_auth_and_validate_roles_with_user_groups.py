@@ -9,7 +9,7 @@
      identityAdmin validates the resulting token
 """
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.user_groups import usergroups
@@ -120,7 +120,7 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
                          const.USER_ADMIN_ROLE_NAME)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_and_validate_group_with_roles(self):
         self.user_admin_wl_domain_client = self.generate_client(
             parent_client=self.identity_admin_client,
@@ -194,7 +194,7 @@ class AuthAndValidateRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertIn(const.USER_ADMIN_ROLE_NAME, role_name_list)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_and_validate_group_domain_not_whitelisted(self):
         domain_id = self.generate_random_string(
             pattern=const.DOMAIN_PATTERN

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper, saml_helper
@@ -123,7 +123,7 @@ class TestMPCWhitelistForFedUserListTenants(federation.TestBaseFederation):
         return role_1, tenant_1
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_whitelist_roles_for_fed_user_list_tenants(self):
 
         test_data = {"fed_input": {

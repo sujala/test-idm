@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 import json
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -91,7 +91,7 @@ class TestRoleApiCalls(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_add_role.json')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_add_role_by_identity_admin(self, test_data):
         """Add Role, Get Role
         Using data read from json file
@@ -118,7 +118,7 @@ class TestRoleApiCalls(base.TestBaseV2):
     @unless_coverage
     @ddt.file_data('data_add_role.json')
     @api_base.skip_if_no_service_admin_available
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_role_w_new_service_by_identity_admin(self, test_data):
         """Add Role with new service, Get Role
         Using data read from json file
@@ -146,7 +146,7 @@ class TestRoleApiCalls(base.TestBaseV2):
     @unless_coverage
     @ddt.data('{}', '{"limit": 5}', '{"marker": 10}',
               '{"limit": 10, "marker": 5}')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_roles_api(self, test_data):
         """List Roles"""
         option = json.loads(test_data)
@@ -162,7 +162,7 @@ class TestRoleApiCalls(base.TestBaseV2):
     @ddt.data('{}', '{"limit": 5}', '{"marker": 10}',
               '{"limit": 10, "marker": 5}')
     @api_base.skip_if_no_service_admin_available
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_list_roles_api_w_service_admin(self, test_data):
         """List Roles with service admin"""
         option = json.loads(test_data)
@@ -197,7 +197,7 @@ class TestRoleApiCalls(base.TestBaseV2):
             "Limit must be non negative")
 
     @tags('positive', 'p1', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_get_roles_for_identity_admin(self):
         """
         Get role for self identity admin
@@ -209,7 +209,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertSchema(response=resp, json_schema=roles_json.list_roles)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_add_and_delete_role_from_user(self):
         """
         Test Add role to User and Delete role from user
@@ -293,7 +293,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertNotIn(role_id, str(resp.json()[const.ROLES]))
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_users_for_role(self):
         """
         Test list users for specific role
@@ -323,7 +323,7 @@ class TestRoleApiCalls(base.TestBaseV2):
             self.assertIn(user, str(resp.json()[const.USERS]))
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_delete_identity_classification_role_from_user(self):
 
         user_id = self.create_admin_user()
@@ -335,7 +335,7 @@ class TestRoleApiCalls(base.TestBaseV2):
             "Cannot delete identity user-type roles from a user.")
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_delete_identity_classification_role(self):
 
         delete_role_resp = self.identity_admin_client.delete_role(

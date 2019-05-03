@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -34,7 +34,7 @@ class TestPhonePinOnUser(base.TestBaseV2):
         self.sub_user_ids = []
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_user_admin_phone_pin(self):
         """
         Test to verify,
@@ -128,7 +128,7 @@ class TestPhonePinOnUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 403)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_default_user_phone_pin(self):
         """
         Test to verify,

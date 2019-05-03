@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -63,7 +63,7 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
         self.auth_resp = responses.Access(saml_resp.json())
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_delete_federated_user_and_validate_token(self):
         resp = self.user_admin_client.delete_user(
             user_id=self.auth_resp.access.user.id)

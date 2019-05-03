@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
@@ -27,7 +27,7 @@ class TestRackerToken(base.TestBaseV2):
         self.racker_token = self.racker_client.default_headers[
             const.X_AUTH_TOKEN]
 
-    @attr(type='smoke_no_log_alpha')
+    @pytest.mark.smoke_no_log_alpha
     @tags('positive', 'p0', 'smoke')
     def test_get_validate_racker_token(self):
         """
@@ -43,7 +43,7 @@ class TestRackerToken(base.TestBaseV2):
         resp = self.racker_client.validate_token(token_id=self.racker_token)
         self.assertEqual(resp.status_code, 200)
 
-    @attr(type='smoke_no_log_alpha')
+    @pytest.mark.smoke_no_log_alpha
     @tags('positive', 'p1', 'smoke')
     def test_revoke_racker_token(self):
         # validate token using identity admin client, before revoke
@@ -60,7 +60,7 @@ class TestRackerToken(base.TestBaseV2):
             token_id=self.racker_token)
         self.assertEqual(val_resp.status_code, 404)
 
-    @attr(type='smoke_no_log_alpha')
+    @pytest.mark.smoke_no_log_alpha
     @tags('positive', 'p0', 'smoke')
     def test_revoke_racker_token_by_id(self):
         # validate token using identity admin client, before revoke
@@ -78,7 +78,7 @@ class TestRackerToken(base.TestBaseV2):
             token_id=self.racker_token)
         self.assertEqual(val_resp.status_code, 404)
 
-    @attr(type='regression')
+    @pytest.mark.regression
     @tags('positive', 'p0', 'regression')
     def test_identity_admin_can_revoke_racker_token(self):
         # validate token using identity admin client, before revoke
@@ -96,7 +96,7 @@ class TestRackerToken(base.TestBaseV2):
             token_id=self.racker_token)
         self.assertEqual(val_resp.status_code, 404)
 
-    @attr(type='regression')
+    @pytest.mark.regression
     @tags('positive', 'p1', 'regression')
     def test_user_admin_cannot_revoke_racker_token(self):
         # revoke token by id

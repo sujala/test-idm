@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -59,7 +59,7 @@ class TestAuthWithDisabledTenant(base.TestBaseV2):
         self.tenant_ids = [item[const.ID] for item in tenants]
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_with_all_tenants_disabled(self):
         """
         Given a user has associated tenants, When all tenants are disabled
@@ -82,7 +82,7 @@ class TestAuthWithDisabledTenant(base.TestBaseV2):
         self.validate_nast_auth(expected_response=403)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_with_one_tenant_disabled(self):
         """
         Given a user has associated tenants And 1 or more of the tenants is

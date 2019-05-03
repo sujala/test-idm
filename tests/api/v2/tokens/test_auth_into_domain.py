@@ -1,5 +1,5 @@
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -87,7 +87,7 @@ class AuthIntoDomain(base.TestBaseV2):
                 'password': create_user_with_tenant_resp.password}
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_with_api_key_when_tenant_belongs_to_user_domain(self):
         tenant_name = self.acct_info['tenant_name']
         username = self.acct_info['username']
@@ -113,7 +113,7 @@ class AuthIntoDomain(base.TestBaseV2):
                               json_schema=tokens_json.auth)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_auth_with_api_key_when_tenant_belongs_diff_domain(self):
 
         username = self.acct_info['username']
@@ -139,7 +139,7 @@ class AuthIntoDomain(base.TestBaseV2):
                          " Not authorized for the tenant.")
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_with_pwd_when_tenant_belongs_to_user_domain(self):
         tenant_name = self.acct_info['tenant_name']
         username = self.acct_info['username']
@@ -157,7 +157,7 @@ class AuthIntoDomain(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_auth_with_pwd_when_tenant_belongs_diff_domain(self):
         # tenant belongs to different domain than user
         # and specify user's domainId.
@@ -178,7 +178,7 @@ class AuthIntoDomain(base.TestBaseV2):
                          " Not authorized for the tenant.")
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_auth_with_pwd_for_unauthorized_domain(self):
         tenant_name = self.acct_info['tenant_name']
         username = self.acct_info['username']
@@ -198,7 +198,7 @@ class AuthIntoDomain(base.TestBaseV2):
                          " Not authorized for the domain.")
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_mfa_auth_when_tenant_belongs_diff_domain(self):
         username = self.acct_info['username']
         password = self.acct_info['password']
@@ -235,7 +235,7 @@ class AuthIntoDomain(base.TestBaseV2):
         return self.identity_admin_client.auth_with_mfa_cred(**kwargs)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_as_tenant_with_token(self):
         token = self.acct_info['token']
         tenant_name = self.acct_info['tenant_name']

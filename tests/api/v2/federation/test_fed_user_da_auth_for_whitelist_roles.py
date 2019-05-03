@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from munch import Munch
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -173,7 +173,7 @@ class TestWhitelistRolesForFedDAAuth(federation.TestBaseFederation):
         return role_1, tenant_1, da_id
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_whitelist_roles_for_d_auth_of_fed_user_as_effective_delegate(
             self):
 

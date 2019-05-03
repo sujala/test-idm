@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -50,7 +50,7 @@ class TestListDelegationGlobalGroups(delegation.TestBaseDelegation):
         return da_id
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_auth_list_global_groups(self):
 
         # create DA with sub user

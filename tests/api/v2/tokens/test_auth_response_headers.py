@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 import time
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import func_helper, header_validation
@@ -152,7 +152,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
     @ddt.data(['user_password', False], ['user_password', True],
               ['user_apikey', False])
     @ddt.unpack
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_not_specify_tenant(self, auth_type, use_mfa):
         """
         Create user with one call logic
@@ -260,7 +260,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
               ('user_password', 'tenant_name', False),
               ('user_apikey', 'tenant_name', False))
     @ddt.unpack
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_with_nast_tenant(self, auth_type, with_tenant, use_mfa):
         one_call_user_info = self.create_user_one_call_logic()
         username = one_call_user_info['username']
@@ -293,7 +293,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
               ('user_password', 'tenant_name', False),
               ('user_apikey', 'tenant_name', False))
     @ddt.unpack
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_with_other_tenant(self, auth_type, with_tenant, use_mfa):
         """
         User with multi tenants
@@ -471,7 +471,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
 
     @unless_coverage
     @ddt.data(True, False)
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_w_user_no_tenant(self, use_mfa):
         user_info = self.create_user()
         username = user_info['username']

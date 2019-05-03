@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from hypothesis import given, strategies
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 import ast
 import copy
@@ -365,7 +365,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                     expected_endpoint_in_catalog=expected_endpoint_in_catalog)
 
     @unless_coverage
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     @ddt.file_data('data_add_endpoint_template_negative_cases.json')
     def test_add_endpoint_template_negative(self, test_data):
         """

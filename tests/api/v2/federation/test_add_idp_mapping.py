@@ -5,7 +5,7 @@ import os
 import sys
 
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import data_file_iterator
@@ -134,7 +134,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         fed_token, _, _ = self.parse_auth_response(fed_auth)
 
     @tags('positive', 'p0', 'regression')
-    # @attr(type='regression')
+    # @pytest.mark.regression
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
     ))
@@ -158,7 +158,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path, domain_id, issuer, key_path, self.identity_admin_client)
 
     @tags('positive', 'p0')
-    # @attr(type='regression')
+    # @pytest.mark.regression
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
     ))
@@ -189,7 +189,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.idp_user_admin_client)
 
     @tags('positive', 'p0')
-    # @attr(type='regression')
+    # @pytest.mark.regression
     @data_file_iterator.data_file_provider((
         "yaml/blacklist_mapping_policy.yaml",
     ))
@@ -213,7 +213,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.idp_user_manage_client)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
     ))
@@ -233,7 +233,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cert_path, domain_id, issuer, key_path, self.identity_admin_client)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
     ))
@@ -264,7 +264,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.idp_user_admin_client)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
     ))
@@ -296,7 +296,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
 
     # verify must have role manager for put, read only for get
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('data_update_idp_mapping_policy.json')
     def test_add_mapping_manager_role(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
@@ -309,7 +309,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertEqual(resp_get_manager.status_code, 200)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('data_update_idp_valid_mapping_policy.json')
     def test_add_mapping_valid_json(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
@@ -328,7 +328,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertEqual(resp_get_ro.json(), mapping)
 
     @tags('negative', 'p0')
-    # @attr(type='regression')
+    # @pytest.mark.regression
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_invalid_policy.yaml",
     ))
@@ -360,7 +360,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertEqual(resp_get_ro.json(), current_resp_policy.json())
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     @data_file_iterator.data_file_provider((
         "yaml/default_mapping_policy.yaml",
         "yaml/blacklist_mapping_policy.yaml",
@@ -405,7 +405,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
     # idp missing causes 404
     @unless_coverage
     @ddt.file_data('data_update_idp_mapping_policy.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_mapping_missing_idp(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
         idp_id = "xxx{0}xxx".format(provider_id)
@@ -418,7 +418,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
 
     @unless_coverage
     @ddt.data("xml", "xhtml_xml")
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_idp_mapping_content_type_xml(self, content_type):
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)
 
@@ -472,7 +472,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             self.assertEqual(resp_get_ro.json(), mapping)
 
     @tags('negative', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_idp_mapping_max_size(self):
         max_size_in_kilo = self.test_config.max_mapping_policy_size_in_kb
         provider_id = self.add_idp(idp_ia_client=self.identity_admin_client)

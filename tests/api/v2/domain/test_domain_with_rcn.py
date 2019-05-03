@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import copy
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -30,7 +30,7 @@ class TestRCNDomain(base.TestBaseV2):
         self.domain_ids = []
         self.user_ids = []
 
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def create_domain_with_rcn(self):
         domain_id = func_helper.generate_randomized_domain_id(
             client=self.identity_admin_client)
@@ -63,7 +63,7 @@ class TestRCNDomain(base.TestBaseV2):
             rcn, resp.json()[const.RAX_AUTH_DOMAIN][const.RCN_LONG])
 
     @tags('positive', 'p1', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_update_domain_with_rcn(self):
         resp = self.create_domain_with_rcn()
         self.assertEqual(resp.status_code, 201)

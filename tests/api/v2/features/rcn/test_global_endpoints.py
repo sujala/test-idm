@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from urllib.parse import urljoin
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -138,7 +138,7 @@ class TestGlobalEndpoints(base.TestBaseV2):
         return resp.json()[const.ROLES][0][const.ID]
 
     @tags('positive', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_assign_global_endpoints_on_tenant(self):
         """Tests that a user receives MOSSO global endpoints when granted
         the compute:default role and NAST global endpoints when granted

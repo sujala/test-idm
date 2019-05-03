@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from random import randrange
 
 from qe_coverage.opencafe_decorators import tags, unless_coverage
@@ -81,7 +81,7 @@ class TestListUsers(base.TestBaseV2):
                           json_schema=users_json.list_users)
 
     @tags('positive', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_list_user_email_by_service_admin(self):
         """List by admin user filter by email
         """
@@ -97,7 +97,7 @@ class TestListUsers(base.TestBaseV2):
             self.assertEqual(user[const.EMAIL], self.EMAIL_TEST)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_users_by_identity_admin(self):
         """List by identity admin user
         """

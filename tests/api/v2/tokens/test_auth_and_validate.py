@@ -9,7 +9,7 @@
      identityAdmin validates the resulting token
 """
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -76,7 +76,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
                 'password': create_user_with_tenant_resp.password}
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_validate_useradmin_token_from_userpass_auth(self):
         token = self.acct_info['token']
         resp = self.identity_admin_client.validate_token(token)
@@ -86,7 +86,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
                               json_schema=tokens_json.validate_token)
 
     @tags('positive', 'p1', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_groups_of_useradmin(self):
         user_id = self.acct_info['user_id']
         resp = self.identity_admin_client.list_groups(user_id=user_id)
@@ -96,7 +96,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
                               json_schema=groups_json.list_groups)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_with_api_key(self):
         username = self.acct_info['username']
         user_id = self.acct_info['user_id']
@@ -117,7 +117,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
         self.assertIsNotNone(access_resp.access.token.id)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_validate_token_from_auth_tenant_user_pass(self):
         tenant_name = self.acct_info['tenant_name']
         username = self.acct_info['username']
@@ -148,7 +148,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
                               json_schema=tokens_json.validate_token)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_validate_token_from_auth_tenant_user_api_key(self):
         tenant_name = self.acct_info['tenant_name']
         username = self.acct_info['username']
