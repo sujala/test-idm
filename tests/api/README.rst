@@ -26,7 +26,7 @@ Setting up Conf file & log path
 Running the tests - with tox
 ============================
 
-1. To run the tests against a py27 env::
+1. To run the tests against a py35 env::
 
     $ cd cloud-identity/tests
     $ tox
@@ -41,8 +41,7 @@ Running the tests - without tox
 
 1. Create a new virtualenv and install the dependencies::
 
-    NOTE: At the time of this writing opencafe is not compatible with python 3.
-          So you will need to create virtualenv with python 2.
+    NOTE: Python 3.5+ is required
 
     $ pip install -r tests/api/requirements.txt
     $ pip install opencafe
@@ -51,12 +50,12 @@ Running the tests - without tox
 
 6. Once you are ready to run the tests::
 
-    $ nosetests api (OR)
-    $ nosetests --nologcapture api (to avoid the verbose requests log)
+    $ pytest api (OR)
+    $ pytest --no-print-logs api (to avoid the verbose requests log)
 
     To calculate qe-coverage metrics, run the tests like the following command :
 
-    $ coverage-opencafe api project::identity nosetests tests/api/v2/tokens/test_auth_and_validate.py --dry-run
+    $ coverage-opencafe api project::identity pytest tests/api/v2/tokens/test_auth_and_validate.py --dry-run
 
     With dry-run option, it will give you info if any tags were missed or were out of order.
     Without that option, the tagged tests' info will be sent to Splunk.

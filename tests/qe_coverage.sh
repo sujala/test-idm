@@ -6,4 +6,4 @@ export PIP_CONFIG_FILE="$SCRIPT_DIR/pip.conf"
 mkdir -p ~/.identity/logs
 pip install -r $SCRIPT_DIR/api/requirements.txt
 cafe-config plugins install http
-coverage-opencafe api project::identity nosetests $SCRIPT_DIR/api/.
+coverage-opencafe api project::identity pytest $SCRIPT_DIR/api/.

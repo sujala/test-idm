@@ -4,7 +4,7 @@
 # Commentary:
 # * Makefile for building and running tests
 
-.PHONY: help build test test_nose flake8 test_nose_no_build flake_no_build
+.PHONY: help build test test_pytest flake8 test_pytest_no_build flake_no_build
 
 SHELL := /bin/bash
 
@@ -33,15 +33,15 @@ help:
 	@echo "help                 - show help information"
 	@echo "flake                - build + run tox flake8"
 	@echo "test                 - build + run tox"
-	@echo "test_nose            - build + run nosetests"
+	@echo "test_pytest          - build + run pytest"
 	@echo "build                - build"
 	@echo "flake_no_build       - run tox flake8"
 	@echo "test_no_build        - run tox"
-	@echo "test_nose_no_build   - run nosetests"
+	@echo "test_pytest_no_build - run pytest"
 	@echo "testenv              - connect to testenv"
 	@echo "testenv_flake        - testenv run tox flake8"
 	@echo "testenv_test         - testenv run tox"
-	@echo "testenv_test_nose    - testenv run nosetests"
+	@echo "testenv_test_pytest  - testenv run pytest"
 	@echo ""
 
 # clean up ../build/libs
@@ -74,23 +74,23 @@ test_no_build:
 
 test: build test_no_build
 
-test_nose: build test_nose_no_build clean
+test_pytest: build test_pytest_no_build clean
 
-test_nose_no_build:
+test_pytest_no_build:
 	# make sure docker is running
 	$(eval RUNNING_CONTAINERS = $(shell docker-compose ps | wc -l))
 	@if [ "$(RUNNING_CONTAINERS)" = "2" ]; then echo "No containers are running. Run make build.";  exit 1; fi
 	# remove virtualenv directory because cloudcafe doesn't like it
 	@rm -rf $(VENV)
 	@test -d $(VENV) || virtualenv $(VENV) --no-site-packages
-	# run nosetests stuff and optionally pass in module
+	# run pytest and optionally pass in module
 	$(PIP) install -r api/requirements.txt
 	# install opencafe
 	$(PIP) install opencafe
 	# create virtualenv and initialize cafe
 	$(VENV_ACTIVATE) && cafe-config init && cafe-config plugins install http && $(VENV_DEACTIVATE)
-	# create virtualenv and run nose tests (optionally pass in module)
-	$(VENV_ACTIVATE) && $(CAFE_CONFIG_ALL) nosetests ${API} || true && $(VENV_DEACTIVATE)
+	# create virtualenv and run pytest (optionally pass in module)
+	$(VENV_ACTIVATE) && pytest $(API)
 
 testenv:
 	@docker-compose exec testenv bash
@@ -101,8 +101,8 @@ testenv_flake:
 testenv_test:
 	@docker-compose exec testenv make test_no_build
 
-testenv_test_nose:
-	@docker-compose exec testenv make test_nose_no_build
+testenv_test_pytest:
+	@docker-compose exec testenv make test_pytest_no_build
 
 clean:
 	# remove virtualenv directory

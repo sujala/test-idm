@@ -36,10 +36,10 @@ cp etc/api.conf $TEST_CONFIG_DIR/api.conf
 sed -i -e "s|service_admin_auth_token=.*|service_admin_auth_token=${TOKEN}|g" $TEST_CONFIG_DIR/api.conf
 sed -i -e "s|base_url=.*|base_url=${TEST_ENDPOINT}|g" $TEST_CONFIG_DIR/api.conf
 sed -i -e "s|internal_url=.*|internal_url=${TEST_ENDPOINT}|g" $TEST_CONFIG_DIR/api.conf
-sed -i -e "s|nosetests --with-xunit --xunit-file=nosetests.xml|nosetests -a '!skip_at_gate' --with-xunit --xunit-file=nosetests.xml|g" tox.ini
 
 export CAFE_CONFIG_FILE_PATH=$TEST_CONFIG_DIR/api.conf
 export CAFE_ENGINE_CONFIG_FILE_PATH=$CAFE_CONFIG_FILE_PATH
 export CAFE_ROOT_LOG_PATH=$TEST_CONFIG_DIR/logs
 export CAFE_TEST_LOG_PATH=$TEST_CONFIG_DIR/logs
-tox
+tox -e flake8
+tox -e py35 -- -m 'not skip_at_gate'

@@ -33,7 +33,11 @@ class TestRackerToken(base.TestBaseV2):
         """
         Using a separate tag 'smoke_no_log_alpha' for this test, because
         we want to run it separately from other tests in Staging and avoid
-        creating log file by using --nologcapture option of nosetests.
+        creating log file by using `--log-level=99 --no-print-logs`
+        options of pytest. Setting the log level to 99 means all the usual
+        log lines are not printed (DEBUG=10, INFO=20, WARNING=30, ERROR=40,
+        CRITICAL=50) since 99 is a higher value.
+
         Currently, we do not have a way to mask the credentials in the test
         log files. Hence, for time being, running this test by preventing
         log file creation. If something fails, console output can still help

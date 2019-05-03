@@ -48,9 +48,9 @@ Run flake8: `make flake8`
 
 Run tests via tox: `make test`
 
-Run specific modules: `make API=api.v2.federation test_nose`
+Run specific modules: `make API=api/v2/federation test_pytest`
 
-Run multiple times without cleaning up after every iteration: `make build && make API=api.v2.federation test_nose_no_build && ... && make clean`
+Run multiple times without cleaning up after every iteration: `make build && make API=api/v2/federation test_pytest_no_build && ... && make clean`
 
 Contributing
 ------------
