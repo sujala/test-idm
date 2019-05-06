@@ -375,7 +375,6 @@ class FederatedDomainRequestHandlerTest extends RootServiceTest {
         domainService.getDomainAdmins(domainId) >> [userAdmin]
         applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> new ImmutableClientRole(new ClientRole())
         tenantService.getTenantRolesForUser(userAdmin) >> []
-        identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag() >> false
         scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
         def userGroupToRemove = new UserGroup().with {
             it.uniqueId = "group=${RandomStringUtils.randomAlphanumeric(8)}"

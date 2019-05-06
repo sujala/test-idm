@@ -2,18 +2,16 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.service.UserService
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.User
-import org.openstack.docs.identity.api.v2.UserList
+import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
-import javax.print.attribute.standard.Media
 import javax.ws.rs.core.MediaType
 
 class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
@@ -26,12 +24,9 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     @Autowired
     UserService userService
 
-    @Unroll
-    def "Create identityAdmin, userAdmin, userManage, defaultUser with phone PIN - featureEnabled == #featureEnabled" () {
+    def "Create identityAdmin, userAdmin, userManage, defaultUser with phone PIN" () {
         given:
         def domainId = utils.createDomain()
-
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, featureEnabled)
 
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
@@ -42,35 +37,18 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         def defaultUserEntity = userService.getUserById(defaultUser.id)
 
         then:
-
-        if (featureEnabled) {
-            IdmAssert.assertPhonePin(identityAdminUserEntity)
-            IdmAssert.assertPhonePin(userAdminUserEntity)
-            IdmAssert.assertPhonePin(userManageUserEntity)
-            IdmAssert.assertPhonePin(defaultUserEntity)
-
-        } else {
-            assert identityAdminUserEntity.phonePin == null
-            assert userAdminUserEntity.phonePin == null
-            assert userManageUserEntity.phonePin == null
-            assert defaultUserEntity.phonePin == null
-        }
+        IdmAssert.assertPhonePin(identityAdminUserEntity)
+        IdmAssert.assertPhonePin(userAdminUserEntity)
+        IdmAssert.assertPhonePin(userManageUserEntity)
+        IdmAssert.assertPhonePin(defaultUserEntity)
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
-
-        where:
-        featureEnabled << [true, false]
     }
 
     def "When a user's token is validated - return Phone PIN" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-        def userWithoutPhonePin = utils.createCloudAccount()
-        AuthenticateResponse federatedAuthResponseWithoutPhonePin = utils.createFederatedUserForAuthResponse(userWithoutPhonePin.domainId)
-
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def user = utils.createCloudAccount()
         AuthenticateResponse federatedAuthResponse = utils.createFederatedUserForAuthResponse(user.domainId)
 
@@ -88,30 +66,9 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         then: "returns phone pin"
         validateResponse.user.phonePin != null
 
-        when: "authenticate"
-        response = cloud20.authenticate(userWithoutPhonePin.username, Constants.DEFAULT_PASSWORD, contentType)
-        authResponse = testUtils.getEntity(response, AuthenticateResponse)
-
-        then: "does not returns phone pin"
-        authResponse.user.phonePin == null
-
-        when: "validate"
-        response = cloud20.validateToken(utils.getServiceAdminToken(), authResponse.token.id, contentType)
-        validateResponse = testUtils.getEntity(response, AuthenticateResponse)
-
-        then: "does not returns phone pin"
-        validateResponse.user.phonePin == null
-
         when: "validate impersonated token"
         ImpersonationResponse impersonationResponse = utils.impersonateWithRacker(user)
         response = cloud20.validateToken(utils.getServiceAdminToken(), impersonationResponse.token.id, contentType)
-        validateResponse = testUtils.getEntity(response, AuthenticateResponse)
-
-        then: "does not return phone pin"
-        validateResponse.user.phonePin == null
-
-        when: "validate federated user"
-        response = cloud20.validateToken(utils.getServiceAdminToken(), federatedAuthResponseWithoutPhonePin.token.id, contentType)
         validateResponse = testUtils.getEntity(response, AuthenticateResponse)
 
         then: "does not return phone pin"
@@ -126,7 +83,6 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUser(user)
-        utils.deleteUser(userWithoutPhonePin)
 
         where:
         contentType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -134,28 +90,16 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
     def "Get user by userId - return Phone PIN" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-        def userWithoutPhonePin = utils.createCloudAccount()
-
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def user = utils.createCloudAccount()
 
         AuthenticateResponse federatedAuthResponse = utils.createFederatedUserForAuthResponse(user.domainId)
 
-        def tokenWithoutPhonePin = utils.authenticate(userWithoutPhonePin.username, Constants.DEFAULT_PASSWORD).token.id
         def token = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
         def impersonatedToken = utils.impersonateWithRacker(user).token.id
 
         when: "when caller is making request"
-        def response = cloud20.getUserById(tokenWithoutPhonePin, userWithoutPhonePin.id, contentType)
-        User responseUser = testUtils.getEntity(response, User)
-
-        then: "does not return phone pin"
-        responseUser.phonePin == null
-
-        when: "when caller is making request"
-        response = cloud20.getUserById(token, user.id, contentType)
-        responseUser = testUtils.getEntity(response, User)
+        def response = cloud20.getUserById(token, user.id, contentType)
+        def responseUser = testUtils.getEntity(response, User)
 
         then: "returns phone pin"
         responseUser.phonePin != null
@@ -183,7 +127,6 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUser(user)
-        utils.deleteUser(userWithoutPhonePin)
 
         where:
         contentType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -191,7 +134,6 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
     def "Other user services - do not return Phone PIN" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def user = utils.createCloudAccount()
         def token = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
 
@@ -231,6 +173,152 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
         where:
         contentType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "only users with the 'identity:phone-pin-admin' role can set a phone pin on user creation - mediaType = #mediaType"() {
+        given:
+        def identityAdmin = utils.createIdentityAdmin()
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def domainId = utils.createDomain()
+        def phonePin = "236972"
+        def userForCreate = v2Factory.userForCreate(testUtils.getRandomUUID('userWithPin'), null, "test@racksapce.com", true, "ORD", domainId, Constants.DEFAULT_PASSWORD).with {
+            it.phonePin = phonePin
+            it
+        }
+
+        when: "identity admin without 'identity:phone-pin-admin' role"
+        def response = cloud20.createUser(identityAdminToken, userForCreate, mediaType, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, "Not authorized to set phone pin.")
+
+        when: "identity admin with 'identity:phone-pin-admin' role"
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_PHONE_PIN_ADMIN_ROLE_ID)
+        identityAdminToken = utils.getToken(identityAdmin.username)
+        response = cloud20.createUser(identityAdminToken, userForCreate, mediaType, mediaType)
+        User userAdmin = testUtils.getEntity(response, User)
+
+        then: "assert user got created"
+        response.status == HttpStatus.SC_CREATED
+        userAdmin.phonePin == null
+
+        when: "get self"
+        def userToken = utils.getToken(userAdmin.username)
+        response = cloud20.getUserById(userToken, userAdmin.id, mediaType)
+        userAdmin = testUtils.getEntity(response, User)
+
+        then: "assert phone pin set on user"
+        userAdmin.phonePin == phonePin
+
+        when: "userAdmin without 'identity:phone-pin-admin' role"
+        userForCreate.username = testUtils.getRandomUUID('userManager')
+        def userAdminToken = utils.getToken(userAdmin.username)
+        response = cloud20.createUser(userAdminToken, userForCreate, mediaType, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, "Not authorized to set phone pin.")
+
+        when: "userAdmin with 'identity:phone-pin-admin' role"
+        utils.addRoleToUser(userAdmin, Constants.IDENTITY_PHONE_PIN_ADMIN_ROLE_ID)
+        userAdminToken = utils.getToken(userAdmin.username)
+        response = cloud20.createUser(userAdminToken, userForCreate, mediaType, mediaType)
+        User defaultUser = testUtils.getEntity(response, User)
+
+        then: "assert user got created"
+        response.status == HttpStatus.SC_CREATED
+        defaultUser.phonePin == null
+
+        when: "get self"
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        response = cloud20.getUserById(defaultUserToken, defaultUser.id, mediaType)
+        defaultUser = testUtils.getEntity(response, User)
+
+        then: "assert phone pin set on user"
+        defaultUser.phonePin == phonePin
+
+        cleanup:
+        utils.deleteUsersQuietly([identityAdmin, userAdmin, defaultUser])
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "userManager with role 'identity:phone-pin-admin' is allowed to set a phone pin on user creation - mediaType = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userManageToken = utils.getToken(userManage.username)
+        def phonePin = "236972"
+        def userForCreate = v2Factory.userForCreate(testUtils.getRandomUUID('userWithPin'), null, "test@racksapce.com", true, "ORD", domainId, Constants.DEFAULT_PASSWORD).with {
+            it.phonePin = phonePin
+            it
+        }
+
+        when: "userManage without 'identity:phone-pin-admin' role"
+        def response = cloud20.createUser(userManageToken, userForCreate, mediaType, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, "Not authorized to set phone pin.")
+
+        when: "userManage with 'identity:phone-pin-admin' role"
+        utils.addRoleToUser(userManage, Constants.IDENTITY_PHONE_PIN_ADMIN_ROLE_ID)
+        userManageToken = utils.getToken(userManage.username)
+        response = cloud20.createUser(userManageToken, userForCreate, mediaType, mediaType)
+        User defaultUser2 = testUtils.getEntity(response, User)
+
+        then: "assert user got created"
+        response.status == HttpStatus.SC_CREATED
+        defaultUser.phonePin == null
+
+        when: "get self"
+        def defaultUserToken = utils.getToken(defaultUser2.username)
+        response = cloud20.getUserById(defaultUserToken, defaultUser2.id, mediaType)
+        defaultUser2 = testUtils.getEntity(response, User)
+
+        then: "assert phone pin set on user"
+        defaultUser2.phonePin == phonePin
+
+        cleanup:
+        utils.deleteUsersQuietly([defaultUser2, defaultUser, userManage, userAdmin, identityAdmin])
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "error check: create user with phone pin"() {
+        given:
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_PHONE_PIN_ADMIN_ROLE_ID)
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def domainId = utils.createDomain()
+        def userForCreate = v2Factory.userForCreate(testUtils.getRandomUUID('userWithPin'), null, "test@racksapce.com", true, "ORD", domainId, Constants.DEFAULT_PASSWORD)
+
+        def domainId2 = utils.createDomain()
+        def users, defaultUser
+        (defaultUser, users) = utils.createDefaultUser(domainId2)
+        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_PHONE_PIN_ADMIN_ROLE_ID)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+
+        when: "invalid phone pin"
+        userForCreate.phonePin = "111122"
+        def response = cloud20.createUser(identityAdminToken, userForCreate)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST, ErrorCodes.ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST)
+
+        when: "default user with 'identity:phone-pin-admin' role"
+        userForCreate.domainId = domainId2
+        response = cloud20.createUser(defaultUserToken, userForCreate)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, null, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        cleanup:
+        utils.deleteUserQuietly(identityAdmin)
+        utils.deleteUsersQuietly(users)
     }
 
 }

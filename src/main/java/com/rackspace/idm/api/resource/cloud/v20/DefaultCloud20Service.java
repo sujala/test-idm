@@ -1066,7 +1066,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             EndUser retrievedUser = identityUserService.getEndUserById(userId);
 
-            boolean isPhonePinFeatureEnabled = identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag();
             boolean isUnverifiedUser = retrievedUser instanceof User && ((User) retrievedUser).isUnverified();
             boolean isFederatedUser = retrievedUser instanceof FederatedUser;
             boolean isSelf = caller.getId().equals(userId);
@@ -1105,7 +1104,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 isPhonePinUnchanged = user.getPhonePin().equalsIgnoreCase(retrievedUser.getPhonePin());
             }
 
-            if (user.getPhonePin() == null || !isPhonePinFeatureEnabled || !isSelf || impersonationToken || isUnverifiedUser || isPhonePinUnchanged) {
+            if (user.getPhonePin() == null || !isSelf || impersonationToken || isUnverifiedUser || isPhonePinUnchanged) {
                 user.setPhonePin(null);
             } else {
                 // Validate phone pin to ensure all acceptance criteria satisfies

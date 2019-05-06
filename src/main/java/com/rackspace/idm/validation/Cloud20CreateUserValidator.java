@@ -1,6 +1,8 @@
 package com.rackspace.idm.validation;
 
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
+import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.EndUser;
@@ -43,10 +45,24 @@ public class Cloud20CreateUserValidator {
     @Autowired
     private Validator20 validator20;
 
+    @Autowired
+    private PhonePinService phonePinService;
+
     public User validateCreateUserAndGetUserForDefaults(org.openstack.docs.identity.api.v2.User user, EndUser caller) {
 
         if (StringUtils.isNotBlank(user.getContactId())) {
             validator20.validateStringMaxLength("contactId", user.getContactId(), Validator20.MAX_LENGTH_64);
+        }
+
+        // Validate phone pin
+        if (StringUtils.isNotBlank(user.getPhonePin())) {
+            // Verify caller is authorized to set phone pin
+            if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName())) {
+                throw new ForbiddenException("Not authorized to set phone pin.", ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+            }
+
+            validator20.validatePhonePin(user.getPhonePin());
         }
 
         if (CreateUserUtil.isCreateUserOneCall(user)) {

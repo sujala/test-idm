@@ -12,21 +12,12 @@ import static javax.servlet.http.HttpServletResponse.*
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class ResetPhonePinForUserIntegrationTest extends RootIntegrationTest {
 
-    def "The availability of the service must be controlled by using the feature flag - feature.enable.phone.pin.on.user" () {
+    def "reset phone pin"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def user = utils.createCloudAccount()
 
-        when: "If feature.enable.phone.pin.on.user is flase"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
+        when: "reset pin"
         def response = cloud20.resetPhonePin(utils.getServiceAdminToken(), user.id, contentType)
-
-        then: "returns not found"
-        assert response.status == SC_NOT_FOUND
-
-        when: "If feature.enable.phone.pin.on.user is true"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-        response = cloud20.resetPhonePin(utils.getServiceAdminToken(), user.id, contentType)
 
         then: "returns no content"
         assert response.status == SC_NO_CONTENT
@@ -40,7 +31,6 @@ class ResetPhonePinForUserIntegrationTest extends RootIntegrationTest {
 
     def "This service is only available to specific roles"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def domainId = utils.createDomain()
         def users, identityAdmin, userAdmin, userManager, defaultUser
         (identityAdmin, userAdmin, userManager, defaultUser) = utils.createUsers(domainId)
@@ -178,10 +168,6 @@ class ResetPhonePinForUserIntegrationTest extends RootIntegrationTest {
 
     def "reset phone pin - only_if_missing" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-        def userWithoutPhonePin = utils.createCloudAccount()
-
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def user = utils.createCloudAccount()
         def token = utils.getToken(user.username, Constants.DEFAULT_PASSWORD)
         def phonePin = utils.getUserById(user.id, token).phonePin
@@ -195,13 +181,6 @@ class ResetPhonePinForUserIntegrationTest extends RootIntegrationTest {
 
         and: "phone pin is not changed"
         phonePin == updatedPhonePin
-
-        when: "reset phone pin without a phone pin"
-        response = cloud20.resetPhonePin(utils.getServiceAdminToken(), userWithoutPhonePin.id, true, contentType)
-
-        then: "returns no content"
-        assert response.status == SC_NO_CONTENT
-        utils.getUserById(user.id, token).phonePin != null
 
         cleanup:
         utils.deleteUser(user)
