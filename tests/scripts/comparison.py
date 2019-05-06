@@ -95,7 +95,7 @@ def check_key_is_equivalent(key, prop, server_prop, server_name, error_list,
             error_list.append({
                 "{}:{}".format(prop['name'], key): {
                     "local": prop[key],
-                    server_name: f"Missing field '{key}'"
+                    server_name: "Missing field '{}'".format(key),
                 }
             })
             return
