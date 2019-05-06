@@ -32,7 +32,6 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Verify correct phone pin can be validated by identity:phone-pin-admin; requestType = #requestType" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def userAdmin = utils.createGenericUserAdmin()
         def userAdminToken = utils.getToken(userAdmin.username)
         def pin = userService.checkAndGetUserById(userAdmin.id).phonePin
@@ -69,7 +68,6 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
 
     def "Verify phone pin can be validated on disabled user" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def userAdmin = utils.createGenericUserAdmin()
         utils.disableUser(userAdmin)
 
@@ -91,8 +89,6 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
 
     def "Verify phone pin can be validated on user in disabled domain" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-
         def userAdmin = utils.createGenericUserAdmin()
         utils.disableDomain(userAdmin.domainId)
 
@@ -115,7 +111,6 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Verify incorrect phone pin with authorized user returns appropriate error; requestType = #requestType" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def userAdmin = utils.createGenericUserAdmin()
         def pin = userService.checkAndGetUserById(userAdmin.id).phonePin
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
@@ -138,7 +133,6 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
 
     def "Super admins without identity:phone-pin-admin can not verify pin" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def userAdmin = utils.createGenericUserAdmin()
         def pin = userService.checkAndGetUserById(userAdmin.id).phonePin
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
@@ -170,8 +164,6 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
      */
     @Unroll
     def "Verify must supply a phone pin to verify against: specifiedPhonePin: #pin; requestType: #requestType" () {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-
         User user = userService.checkAndGetUserByName("uaGlobalRolesUser") // pre-existing user
         assert user.phonePin == null
 
@@ -195,8 +187,6 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
     }
 
     def "Verify verifying pin of user without one returns correct error" () {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-
         User user = userService.checkAndGetUserByName("uaGlobalRolesUser") // pre-existing user
         assert user.phonePin == null
 
@@ -217,8 +207,6 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
      */
     @Unroll
     def "Verify user with no phone pin returns as unmatched against null object phone pin: requestType: #requestType" () {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-
         User user = userService.checkAndGetUserByName("uaGlobalRolesUser") // pre-existing user
         assert user.phonePin == null
 
@@ -232,21 +220,5 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         requestType | expectedMessage
         MediaType.APPLICATION_XML_TYPE | "Invalid XML"
         MediaType.APPLICATION_JSON_TYPE | "Invalid json request body"
-    }
-
-    def "Verify phone pin returns 404 when phone pin feature is disabled" () {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, false)
-
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = "1234"
-            it
-        }
-
-        when:
-        def response = cloud20.verifyPhonePin(utils.getServiceAdminToken(), "anyUserId", phonePin)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Service Not Found")
     }
 }

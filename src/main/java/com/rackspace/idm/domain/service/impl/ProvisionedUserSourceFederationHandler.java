@@ -454,9 +454,8 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
             userToCreate.getRsGroupId().add(groupId);
         }
 
-        if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
-            userToCreate.setPhonePin(phonePinService.generatePhonePin());
-        }
+        // Generate phone pin
+        userToCreate.setPhonePin(phonePinService.generatePhonePin());
 
         federatedUserDao.addUser(request.getIdentityProvider(), userToCreate);
 

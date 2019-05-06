@@ -536,9 +536,9 @@ public class FederatedDomainRequestHandler {
         for (UserGroup userGroup : requestedUserGroups) {
             federatedUser.getUserGroupDNs().add(userGroup.getGroupDn());
         }
-        if(identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()) {
-            federatedUser.setPhonePin(phonePinService.generatePhonePin());
-        }
+
+        // Generate a phone pin
+        federatedUser.setPhonePin(phonePinService.generatePhonePin());
 
         federatedUserDao.addUser(originIdp, federatedUser);
 
