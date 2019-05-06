@@ -64,6 +64,11 @@ class IdentityProviderServiceTest extends RootServiceTest {
 
         1 * securityContext.getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
         1 * requestContext.getEffectiveCaller() >> entityFactory.createUser()
+        1 * authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                IdentityRole.RCN_ADMIN.getRoleName()))
         1 * federatedIdentityService.checkAndGetIdentityProviderWithMetadataById("id") >> entityFactory.createIdentityProviderWithoutCertificate()
         1 * requestContextHolder.getRequestContext().getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
         1 * federatedIdentityService.updateIdentityProvider(_)
