@@ -997,6 +997,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             validator20.validateRequiredAttribute("answer", user.getSecretQA().getAnswer());
             validator20.validateRequiredAttribute("question", user.getSecretQA().getQuestion());
 
+            // Validate optional phone pin attribute
+            if (StringUtils.isNotBlank(user.getPhonePin())) {
+                validator20.validatePhonePin(user.getPhonePin());
+            }
+
             /*
              * Convert unverified user from unverified to registered user by updating the username, password, and
              * secret question and answer.
@@ -1017,6 +1022,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             retrievedUnverifiedUser.setUserPassword(user.getPassword());
             retrievedUnverifiedUser.setSecretQuestion(user.getSecretQA().getQuestion());
             retrievedUnverifiedUser.setSecretAnswer(user.getSecretQA().getAnswer());
+
+            // Set optional attributes
+            if (StringUtils.isNotBlank(user.getPhonePin())) {
+                retrievedUnverifiedUser.setPhonePin(user.getPhonePin());
+            }
 
             userService.updateUser(retrievedUnverifiedUser);
 

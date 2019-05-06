@@ -5758,10 +5758,54 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * openStackIdentityV2Factory.createUser(_) >> new JAXBElement<User>(org.openstack.docs.identity.api.v2.ObjectFactory._User_QNAME, User.class, null, v2Factory.createUser())
     }
 
+    def "acceptUnverifiedUserInvite: allows to set optional attribute phone pin"() {
+        given:
+        // Setup mocks
+        mockJAXBObjectFactories(service)
+        service.userConverterCloudV20 = Mock(UserConverterCloudV20)
+
+        def userId = "id"
+        def registrationCode = "code"
+        UserForCreate user = new UserForCreate().with {
+            it.id = userId
+            it.username = "username"
+            it.registrationCode = registrationCode
+            it.password = "password"
+            it.secretQA = v2Factory.createSecretQA()
+            it.phonePin = "342156"
+            it
+        }
+        def entityUser = entityFactory.createUser().with {
+            it.id = userId
+            it.registrationCode = registrationCode
+            it.inviteSendDate = new Date()
+            it.unverified = true
+            it.enabled = false
+            it.username = null
+            it
+        }
+
+        identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 48
+        service.userConverterCloudV20.toUser(entityUser) >> v2Factory.createUser()
+        openStackIdentityV2Factory.createUser(_) >> new JAXBElement<User>(org.openstack.docs.identity.api.v2.ObjectFactory._User_QNAME, User.class, null, v2Factory.createUser())
+
+        when:
+        def response = service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        response.build().status == SC_OK
+
+        1 * userService.updateUser(entityUser) >> { args ->
+            def u = args[0]
+            assert u.phonePin == user.phonePin
+        }
+        1 * validator20.validatePhonePin(user.phonePin)
+    }
+
     def "acceptUnverifiedUserInvite: error check"() {
         given:
         // Setup Mocks
-        mockValidator20(service)
         mockExceptionHandler(service)
         mockJAXBObjectFactories(service)
 
@@ -5870,6 +5914,22 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             IdmExceptionAssert.assertException(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, "Your registration code has expired, please request a new invite.")
             return Response.status(SC_FORBIDDEN)
         }
+
+        when: "invalid phone pin"
+        user.phonePin = "invalid"
+        def response = service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+
+        then:
+        response.build().status == SC_BAD_REQUEST
+
+        1 * identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        1 * identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 48
+        1 * validator20.validatePhonePin("invalid") >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            return Response.status(SC_BAD_REQUEST)
+        }
+
+        0 * userService.updateUser(_)
     }
 
     def "updateUser: update unverified user's contactId"() {
