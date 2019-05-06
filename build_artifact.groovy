@@ -85,6 +85,8 @@ def runBuild(scm) {
 
     node('master') {
         if (env.release) {
+            echo "trigger rsi-images job"
+            build job: 'rsi-images', parameters: [string(name: 'APP_REVISION', value: env.APP_REVISION)], wait: false
             echo "trigger build-rpm job"
             build job: 'build-rpm', parameters: [string(name: 'APP_REVISION', value: env.APP_REVISION)], wait: false
         }

@@ -9,15 +9,20 @@ class AuthenticateWithApiKey(base.AutoMarshallingModel):
         Tenant_id and tenant_name as optional (either or none but not both)
     """
 
-    def __init__(self, user_name, api_key, tenant_id=None, tenant_name=None):
+    def __init__(self, user_name, api_key, domain_id=None,
+                 tenant_id=None, tenant_name=None):
         self.user_name = user_name
         self.api_key = api_key
+        self.domain_id = domain_id
         self.tenant_id = tenant_id
         self.tenant_name = tenant_name
 
     def _obj_to_json(self):
         get_token_request = {const.AUTH: {const.NS_API_KEY_CREDENTIALS: {
             const.USERNAME: self.user_name, const.API_KEY: self.api_key}}}
+        if self.domain_id:
+            get_token_request[const.AUTH][const.RAX_AUTH_DOMAIN_ID] = (
+                self.domain_id)
         if self.tenant_id:
             get_token_request[const.AUTH][const.TENANT_ID] = self.tenant_id
         if self.tenant_name:
@@ -29,6 +34,8 @@ class AuthenticateWithApiKey(base.AutoMarshallingModel):
         etree.SubElement(
             auth, const.API_KEY_CREDENTIALS, xmlns=const.XMLNS_RAX_KSKEY,
             username=self.user_name, apiKey=self.api_key)
+        if self.domain_id:
+            etree.SubElement(auth, domainId=self.domain_id)
         if self.tenant_id:
             etree.SubElement(auth, tenantId=self.tenant_id)
         if self.tenant_name:
@@ -42,15 +49,20 @@ class AuthenticateWithPassword(base.AutoMarshallingModel):
         Tenant_id and tenant_name as optional (either or none but not both)
     """
 
-    def __init__(self, user_name, password, tenant_id=None, tenant_name=None):
+    def __init__(self, user_name, password, domain_id=None,
+                 tenant_id=None, tenant_name=None):
         self.user_name = user_name
         self.password = password
+        self.domain_id = domain_id
         self.tenant_id = tenant_id
         self.tenant_name = tenant_name
 
     def _obj_to_json(self):
         get_token_request = {const.AUTH: {const.PASSWORD_CREDENTIALS: {
             const.USERNAME: self.user_name, const.PASSWORD: self.password}}}
+        if self.domain_id:
+            get_token_request[const.AUTH][const.RAX_AUTH_DOMAIN_ID] = (
+                self.domain_id)
         if self.tenant_id:
             get_token_request[const.AUTH][const.TENANT_ID] = self.tenant_id
         if self.tenant_name:
@@ -59,6 +71,8 @@ class AuthenticateWithPassword(base.AutoMarshallingModel):
 
     def _obj_to_xml(self):
         auth = etree.Element(const.AUTH)
+        if self.domain_id:
+            etree.SubElement(auth, domainId=self.domain_id)
         if self.tenant_id:
             etree.SubElement(auth, tenantId=self.tenant_id)
         if self.tenant_name:
@@ -74,15 +88,20 @@ class AuthenticateAsTenantWithToken(base.AutoMarshallingModel):
         auth token with either tenant_id of tenant_name or none but noth both
     """
 
-    def __init__(self, token_id, tenant_id=None, tenant_name=None):
+    def __init__(self, token_id, domain_id=None,
+                 tenant_id=None, tenant_name=None):
         self.token_id = token_id
+        self.domain_id = domain_id
         self.tenant_id = tenant_id
         self.tenant_name = tenant_name
 
     def _obj_to_json(self):
         tenant_with_token_auth = {const.AUTH: {
             const.TOKEN: {const.ID: self.token_id}}}
-
+        if self.domain_id:
+            tenant_with_token_auth[const.AUTH][const.RAX_AUTH_DOMAIN_ID] = (
+                self.domain_id
+            )
         if self.tenant_id:
             tenant_with_token_auth[const.AUTH][const.TENANT_ID] = (
                 self.tenant_id
@@ -100,8 +119,10 @@ class AuthenticateAsTenantWithToken(base.AutoMarshallingModel):
 class AuthenticateWithMFA(base.AutoMarshallingModel):
     """Marshalling for Authentication request with MFA cred"""
 
-    def __init__(self, pass_code, tenant_id=None, tenant_name=None):
+    def __init__(self, pass_code, domain_id=None,
+                 tenant_id=None, tenant_name=None):
         self.pass_code = pass_code
+        self.domain_id = domain_id
         self.tenant_id = tenant_id
         self.tenant_name = tenant_name
 
@@ -113,6 +134,9 @@ class AuthenticateWithMFA(base.AutoMarshallingModel):
                 }
             }
         }
+        if self.domain_id:
+            mfa_auth_request[const.AUTH][const.RAX_AUTH_DOMAIN_ID] = (
+                self.domain_id)
         if self.tenant_id:
             mfa_auth_request[const.AUTH][const.TENANT_ID] = self.tenant_id
         if self.tenant_name:

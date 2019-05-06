@@ -127,9 +127,6 @@ class TestRCNDomain(base.TestBaseV2):
         self.check_users_rcn_role(user_id=user_id)
 
         new_rcn = self.generate_random_string(const.RCN_PATTERN)
-        resp = self.identity_admin_client.move_domain_to_rcn(
-            domain_id=domain_id, rcn=new_rcn)
-        self.assertEqual(resp.status_code, 403)
 
         # Adding the required role to make the call
         if self.test_config.run_service_admin_tests:

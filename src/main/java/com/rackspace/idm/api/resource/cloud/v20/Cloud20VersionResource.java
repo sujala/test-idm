@@ -1496,9 +1496,6 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
             PhonePin phonePin){
-        if(!identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.verifyPhonePin(authToken, userId, phonePin).build();
     }
 
@@ -1509,9 +1506,6 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
             @QueryParam("only_if_missing") boolean onlyIfMissing) {
-        if(!identityConfig.getReloadableConfig().getEnablePhonePinOnUserFlag()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.resetPhonePin(authToken, userId, onlyIfMissing).build();
     }
 

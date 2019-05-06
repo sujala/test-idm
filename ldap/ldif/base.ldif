@@ -5117,6 +5117,12 @@ roleRsId: 19
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 173189
 
+dn: roleRsId=1f83e03681cc11e7a7e037b1affb8d28,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+objectClass: top
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 173189
+
 dn: rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
@@ -6024,7 +6030,7 @@ objectClass: rsIdentityProperty
 cn: feature.enable.authorization.domain.verification
 description: Whether to verify authorizationDomainId
 rsIdmVersion: 3.31.0
-rsPropertyValue: FALSE
+rsPropertyValue: TRUE
 rsPropertyValueType: Boolean
 rsReloadable: TRUE
 rsSearchable: TRUE

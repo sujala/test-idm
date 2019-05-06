@@ -24,6 +24,7 @@ import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.domain.service.PhonePinService
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
@@ -87,6 +88,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
     @Shared def theIdentityProvider
     @Shared def mockAuthenticationContext
     @Shared AtomHopperClient mockAtomHopperClient
+    @Shared PhonePinService phonePinService
 
     def mockAuthorizationService = Mock(AuthorizationService)
 
@@ -135,6 +137,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockScopeAccessService(provisionedUserSourceFederationHandler)
         mockTenantService(provisionedUserSourceFederationHandler)
         mockDateHelper(provisionedUserSourceFederationHandler)
+        mockPhonePinService(provisionedUserSourceFederationHandler)
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
         mockAuthenticationContext = Mock(AuthenticationContext)
         provisionedUserSourceFederationHandler.authenticationContext = mockAuthenticationContext
@@ -897,6 +900,11 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockDateHelper = Mock(DateHelper)
         mockDateHelper.addSecondsToDate(_, _) >> new Date()
         service.dateHelper = mockDateHelper
+    }
+
+    def mockPhonePinService(service) {
+        phonePinService = Mock()
+        service.phonePinService = phonePinService
     }
 
     def createIdentityProvider() {

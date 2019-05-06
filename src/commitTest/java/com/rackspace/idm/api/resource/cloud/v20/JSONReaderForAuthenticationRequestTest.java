@@ -11,8 +11,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,6 +38,15 @@ public class JSONReaderForAuthenticationRequestTest {
             "            \"username\":\"jsmith\",\n" +
             "            \"password\":\"theUsersPassword\"\n" +
             "        }\n" +
+            "    }\n" +
+            "}";
+    String authRequestWithPasswordAndDomainId = "{\n" +
+            "    \"auth\":{\n" +
+            "        \"passwordCredentials\":{\n" +
+            "            \"username\":\"jsmith\",\n" +
+            "            \"password\":\"theUsersPassword\"\n" +
+            "        },\n" +
+            "        \"RAX-AUTH:domainId\":\"12345\"\n" +
             "    }\n" +
             "}";
     String authRequestWithToken = "{\n" +
@@ -86,4 +94,11 @@ public class JSONReaderForAuthenticationRequestTest {
         jsonReaderForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, inputStream);
     }
 
+    @Test
+    public void readValidJsonWithDomainId() throws Exception {
+        InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(authRequestWithPasswordAndDomainId.getBytes()));
+        AuthenticationRequest authenticationRequest = jsonReaderForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, inputStream);
+        assertThat("authentication request credentials", authenticationRequest, not(nullValue()));
+        assertEquals("12345", authenticationRequest.getDomainId());
+    }
 }

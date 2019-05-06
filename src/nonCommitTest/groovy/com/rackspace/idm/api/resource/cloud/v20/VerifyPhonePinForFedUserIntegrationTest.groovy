@@ -86,7 +86,6 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "SAML assertion 2.0 - Verify phone pin for a federated user; media = #accept"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
         def fedRequest = createFedRequest()
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
@@ -164,8 +163,6 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "SAML assertion 1.0 - Verify phone pin for a federated user; media = #accept"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PHONE_PIN_ON_USER_PROP, true)
-
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, Constants.DEFAULT_SAML_EXP_SECS, sharedUserAdmin.domainId, null, "test@rackspace.com")
 

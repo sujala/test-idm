@@ -8,7 +8,7 @@ def runBuild(scm) {
 
     library "tesla@v0.8.2"
 
-    def images = ['ca-directory', 'customer-identity', 'repose', 'active-directory', 'dynamodb']
+    def images = ['customer-identity', 'ca-directory', 'repose', 'active-directory', 'dynamodb']
 
     stage('Push to artifactory') {
         node('master') {
@@ -41,6 +41,9 @@ def runBuild(scm) {
         }
 
         node('java') {
+            // Rename image 'customer-identity' to 'cloud-identity' when copying to latest version in artifactory
+            images.set(0, 'cloud-identity')
+
             images.each {
                 def name = it
                 // building images only pushes to the latest tag, this copy operation creates a docker images
