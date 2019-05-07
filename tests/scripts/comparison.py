@@ -89,7 +89,16 @@ def check_key_is_equivalent(key, prop, server_prop, server_name, error_list,
                             value_comparer=False):
     if key in prop:
         local_property = prop[key]
-        server_property = server_prop[key]
+        try:
+            server_property = server_prop[key]
+        except KeyError:
+            error_list.append({
+                "{}:{}".format(prop['name'], key): {
+                    "local": prop[key],
+                    server_name: "Missing field '{}'".format(key),
+                }
+            })
+            return
         if value_comparer and 'multivalue' in prop:
             # the values are arrays in a string.  But they're not valid arrays
             # so first, take out the leading and trailing [] and then split
