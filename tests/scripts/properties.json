@@ -498,13 +498,13 @@
             "versionAdded": "2.5.0"
         },
         {
-            "defaultValue": "\/etc\/idm\/config\/keys",
-            "name": "multifactor.key.location",
-            "reloadable": false,
-            "description": "The location of the legacy encryption keys",
-            "source": "idm.properties",
-            "value": "\/etc\/idm",
-            "versionAdded": "2.5.0"
+             "defaultValue": "\/etc\/idm\/config\/keys",
+             "name": "multifactor.key.location",
+             "reloadable": false,
+             "description": "The location of the legacy encryption keys",
+             "source": "idm.properties",
+             "value": "\/etc\/idm",
+             "versionAdded": "2.5.0"
         },
         {
             "name": "token.scoped.expirationSeconds",
@@ -934,7 +934,7 @@
             "value": "ORD1",
             "versionAdded": "3.5.0",
             "region": "IAD3",
-            "environment": "Staging"            
+            "environment": "Staging"
         },
         {
             "name": "feeds.dataCenter",
@@ -944,7 +944,7 @@
             "value": "LON3",
             "versionAdded": "3.5.0",
             "region": "LON3",
-            "environment": "Staging"            
+            "environment": "Staging"
         },
         {
             "name": "feeds.region",
@@ -1073,7 +1073,7 @@
             "reloadable": false,
             "description": " Indicates whether to allow a socket factory instance to be used to create multiple sockets concurrently.",
             "source": "idm.properties",
-            "value": false,
+            "value": true,
             "versionAdded": "3.6.0"
         },
         {
@@ -1145,7 +1145,7 @@
             "reloadable": true,
             "description": "Determines the max size in kilobytes for an IDP's policy file.",
             "source": "idm.reloadable.properties",
-            "value": 8,
+            "value": 48,
             "versionAdded": "3.9.0"
         },
         {
@@ -1456,7 +1456,7 @@
             "reloadable": true,
             "description": "Maximum number of user groups that can be created per domain",
             "source": "idm.reloadable.properties",
-            "value": 100,
+            "value": 120,
             "versionAdded": "3.16.0"
         },
         {
@@ -1912,15 +1912,6 @@
         },
         {
             "defaultValue": false,
-            "name": "feature.enable.use.role.for.domain.management",
-            "reloadable": true,
-            "description": "Control whether a given user is authorized to Create or Delete domains with a role",
-            "source": "idm.reloadable.properties",
-            "value": true,
-            "versionAdded": "3.27.0"
-        },
-        {
-            "defaultValue": false,
             "name": "feature.enable.use.role.for.endpoint.management",
             "reloadable": true,
             "description": "Control whether a given user is authorized to Create, Delete or Update endpoints with a role",
@@ -2193,6 +2184,14 @@
             "versionAdded": "3.29.0"
         },
         {
+            "name": "feature.enable.authorization.domain.default",
+            "reloadable": true,
+            "description": "Whether or not identity should set a default authorization domain on authentication requests if the caller didn't specify one.",
+            "source": "directory",
+            "value": false,
+            "versionAdded": "3.31.0"
+        },
+        {
             "defaultValue": "identity:v2_0_list_users_global",
             "name": "implicit.roles.iam\\:RackImpersonation",
             "reloadable": false,
@@ -2200,6 +2199,65 @@
             "source": "idm.properties",
             "value": "identity:v2_0_list_users_global",
             "versionAdded": "3.30.0"
+        },
+        {
+            "name": "feature.enable.authorization.domain.verification",
+            "reloadable": true,
+            "description": "Whether or not identity should verify a user is authorized to access the specified (or defaulted) authorization domain on authentication.",
+            "source": "directory",
+            "value": true,
+            "versionAdded": "3.31.0"
+        },
+        {
+            "name": "feature.enable.writing.domain.tokens",
+            "reloadable": true,
+            "description": "Whether or not identity should write the authenticated domains within tokens.",
+            "source": "directory",
+            "value": false,
+            "versionAdded": "3.31.0"
+        },
+        {
+            "name": "feature.enable.reading.domain.tokens",
+            "reloadable": true,
+            "description": "Whether or not identity should read tokens that store the authenticated domains.",
+            "source": "directory",
+            "value": false,
+            "versionAdded": "3.31.0"
+        },
+        {
+            "name": "domain.types",
+            "reloadable": true,
+            "description": "List of acceptable domain type",
+            "source": "idm.reloadable.properties",
+            "value": "RACKSPACE_CLOUD_US,RACKSPACE_CLOUD_UK,DEDICATED,RACKSPACE,DATAPIPE,UNKNOWN",
+            "versionAdded": "3.31.0"
+        },
+        {
+            "defaultValue": true,
+            "name": "feature.enable.validate.password.service",
+            "reloadable": true,
+            "description": "This feature flag will turn on the password validation service.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.31.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.setting.domain.type",
+            "reloadable": true,
+            "description": "Whether or not to allow setting the type on a domain.",
+            "source": "idm.reloadable.properties",
+            "value": false,
+            "versionAdded": "3.31.0"
+        },
+        {
+            "defaultValue": false,
+            "name": "feature.enable.infer.domain.type",
+            "reloadable": true,
+            "description": "Whether or not to infer the type on a domain when the domain is created and a type is not set.",
+            "source": "idm.reloadable.properties",
+            "value": true,
+            "versionAdded": "3.31.0"
         }
     ]
 }
