@@ -8,7 +8,7 @@
  */
 def runBuild(scm) {
     library "tesla@v0.8.2"
-    library "customer-identity@0.1.0"
+    library "customer-identity@0.3.0"
 
     // Setup the git configuration so it can be passed as an arg to common code
     node('master') {

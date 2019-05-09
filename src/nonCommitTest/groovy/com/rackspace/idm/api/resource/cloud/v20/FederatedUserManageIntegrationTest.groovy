@@ -83,7 +83,6 @@ class FederatedUserManageIntegrationTest extends RootIntegrationTest {
 
     def setup() {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
-        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, false)
 
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
