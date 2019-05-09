@@ -412,9 +412,7 @@ class PasswordValidation(base.AutoMarshallingModel):
 
     def _obj_to_json(self):
         password_validation_request = {
-            "RAX-AUTH:validatePassword": {
-            "password": self.password}
-        }
+            "RAX-AUTH:validatePassword": {"password": self.password}}
         return json.dumps(password_validation_request)
 
     def _obj_to_xml(self):

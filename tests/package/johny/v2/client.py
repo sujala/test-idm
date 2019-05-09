@@ -1668,7 +1668,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
     def validate_password(self, request_object, requestslib_kwargs=None):
         """Return response object from the validate password api call
-
         POST
          /users/RAX-AUTH/validate-pwd
         """
