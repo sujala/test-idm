@@ -31,7 +31,7 @@ cafe-config plugins install http
 ls -latr
 TEST_ENDPOINT=https://repose-${SANDBOX_NAME}-${NAMESPACE_NAME}.iad.devapps.rsi.rackspace.net
 check_status $TEST_ENDPOINT/idm/cloud
-TOKEN=`curl -s -X POST "${TEST_ENDPOINT}/idm/cloud/v2.0/tokens" -H 'content-type: application/json' -d "{ \"auth\": { \"passwordCredentials\":{ \"username\":\"AuthQE\", \"password\": \"Auth1234\" }}}" | python  -c 'import sys, json; print json.load(sys.stdin)["access"]["token"]["id"]'`
+TOKEN=`curl -s -X POST "${TEST_ENDPOINT}/idm/cloud/v2.0/tokens" -H 'content-type: application/json' -d "{ \"auth\": { \"passwordCredentials\":{ \"username\":\"AuthQE\", \"password\": \"Auth1234\" }}}" | python  -c 'import sys, json; print(json.load(sys.stdin)["access"]["token"]["id"])'`
 cp etc/api.conf $TEST_CONFIG_DIR/api.conf
 sed -i -e "s|service_admin_auth_token=.*|service_admin_auth_token=${TOKEN}|g" $TEST_CONFIG_DIR/api.conf
 sed -i -e "s|base_url=.*|base_url=${TEST_ENDPOINT}|g" $TEST_CONFIG_DIR/api.conf
