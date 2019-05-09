@@ -74,9 +74,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityProviderDao identityProviderDao
 
-    def setup() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, false)
-    }
 
     @Unroll
     def "CRUD a DOMAIN IDP with approvedDomainGroup, but no certs - request: #requestContentType"() {
@@ -5472,7 +5469,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "List identity providers always returns approvedDomainId when flag enabled:  enabled = #enabled; request: #contentType"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, enabled)
         def token = utils.getServiceAdminToken() // service admin included in base dataset has appropriate permission
 
         when: "List Racker IDP"

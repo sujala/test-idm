@@ -137,8 +137,6 @@ public class IdentityConfig {
     public static final String FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP = "feature.multifactor.locking.attempts.maximumNumber";
     public static final int FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_DEFAULT = 3;
 
-    public static final String FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP = "feature.enable.always.return.approved.domainids.for.list.idps";
-    public static final boolean FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_DEFAULT = true;
 
     public static final String FEATURE_DELETE_UNUSED_DUO_PHONES_PROP = "feature.delete.unused.duo.phones";
     public static final boolean FEATURE_DELETE_UNUSED_DUO_PHONES_DEFAULT = true;
@@ -892,7 +890,6 @@ public class IdentityConfig {
         defaults.put(IDP_POLICY_MAX_KILOBYTE_SIZE_PROP, IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT);
         defaults.put(FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_DEFAULT);
 
-        defaults.put(FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_DEFAULT);
 
         defaults.put(FEEDS_DEAMON_EVICTION_ENABLED_PROP, FEEDS_DEAMON_ENABLED_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT);
@@ -2168,10 +2165,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, versionAdded = "3.20.1", description = "Whether or not list idps should always return an approvedDomainId attribute for all idps.")
-        public boolean listIdpsAlwaysReturnsApprovedDomainIds() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP);
-        }
 
         @IdmProp(key = FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME, versionAdded = "3.1.0", description = "The max token lifetime for a provisioned federated user token")
         public int getFederatedDomainTokenLifetimeMax() {
