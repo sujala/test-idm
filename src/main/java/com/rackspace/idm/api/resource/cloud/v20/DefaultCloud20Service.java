@@ -2966,12 +2966,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Must supply a Phone PIN.", ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
             }
 
+            // TODO: Must change the response from a 204 to a 200
             try {
                 if (!phonePinService.verifyPhonePinOnUser(userId, phonePin.getPin())) {
                     throw new BadRequestException(String.format("Incorrect Phone PIN."),
                             ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
                 }
-            } catch (NoPinSetException ex) {
+            } catch (NoPinSetException | PhonePinLockedException ex) {
                 // Convert to standard BadRequest to indicate verification failure, but provide reason.
                 throw new BadRequestException(ex.getRawMessage(), ex.getErrorCode());
             }

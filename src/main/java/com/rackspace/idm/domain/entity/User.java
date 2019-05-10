@@ -345,6 +345,27 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
         return PhonePinStateEnum.ACTIVE;
      }
 
+    public int getPhonePinAuthenticationFailureCount() {
+        return phonePinAuthenticationFailureCount == null ? 0 : phonePinAuthenticationFailureCount.intValue();
+    }
+
+    /**
+     * Increment the counter and record the timestamp.
+     */
+    @Override
+    public void recordFailedPinAuthentication() {
+        phonePinAuthenticationFailureCount = getPhonePinAuthenticationFailureCount() + 1;
+        phonePinAuthenticationLastFailureDate = new Date();
+    }
+
+    /**
+     * Set the failure count to zero, but do not clear out the last failure timestamp.
+     */
+    @Override
+    public void recordSuccessfulPinAuthentication() {
+        phonePinAuthenticationFailureCount = 0;
+    }
+
     public void setUserPassword(String password) {
         if (StringUtils.isNotBlank(password)) {
             this.userPassword = password;
