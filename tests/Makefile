@@ -85,8 +85,6 @@ test_pytest_no_build:
 	@test -d $(VENV) || virtualenv $(VENV) --no-site-packages
 	# run pytest and optionally pass in module
 	$(PIP) install -r api/requirements.txt
-	# install opencafe
-	$(PIP) install opencafe
 	# create virtualenv and initialize cafe
 	$(VENV_ACTIVATE) && cafe-config init && cafe-config plugins install http && $(VENV_DEACTIVATE)
 	# create virtualenv and run pytest (optionally pass in module)

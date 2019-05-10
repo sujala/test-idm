@@ -44,7 +44,6 @@ Running the tests - without tox
     NOTE: Python 3.5+ is required
 
     $ pip install -r tests/api/requirements.txt
-    $ pip install opencafe
     $ cafe-config init
     $ cafe-config plugins install http
 

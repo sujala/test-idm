@@ -250,4 +250,4 @@ if __name__ == '__main__':
             logging.debug(error)
             results['error_list'].append(error)
     logging.debug("finish comparison of property variables")
-    print((json.dumps(results)))
+    print(json.dumps(results))
