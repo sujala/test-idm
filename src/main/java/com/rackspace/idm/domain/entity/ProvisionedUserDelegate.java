@@ -132,4 +132,9 @@ public class ProvisionedUserDelegate implements EndUserDelegate {
     public String getAuditContext() {
         return String.format("%s;delegationAgreementId=%s", originalEndUser.getAuditContext(), delegationAgreement.getId());
     }
+
+    @Override
+    public PhonePinStateEnum getPhonePinState() {
+        return originalEndUser.getPhonePinState();
+    }
 }

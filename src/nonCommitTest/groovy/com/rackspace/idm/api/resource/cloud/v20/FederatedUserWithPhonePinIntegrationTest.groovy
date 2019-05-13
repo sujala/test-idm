@@ -8,6 +8,7 @@ import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.domain.entity.PhonePinStateEnum
 import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.opensaml.security.credential.Credential
@@ -86,7 +87,7 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when:
-        def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+        def authClientResponse = cloud20.authenticateV2FederatedUser(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
 
         then:
         assert authClientResponse.status == HttpServletResponse.SC_OK
@@ -96,15 +97,20 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
 
         then:
-        assert fedUser.id == authResponse.user.id
-        assert fedUser.username == fedRequest.username
-        assert fedUser.domainId == fedRequest.domainId
+        fedUser.id == authResponse.user.id
+        fedUser.username == fedRequest.username
+        fedUser.domainId == fedRequest.domainId
 
-        assert fedUser.phonePin != null
-        assert fedUser.encryptedPhonePin != null
-        assert fedUser.salt != null
-        assert fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
-        assert fedUser.phonePin.isNumber()
+        fedUser.phonePin != null
+        fedUser.encryptedPhonePin != null
+        fedUser.salt != null
+        fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
+        fedUser.phonePin.isNumber()
+
+        and: "related attributes defaulted appropriately"
+        fedUser.getPhonePinState() == PhonePinStateEnum.ACTIVE
+        fedUser.getPhonePinAuthenticationFailureCount() == 0
+        fedUser.getPhonePinAuthenticationLastFailureDate() == null
 
         cleanup:
         try {

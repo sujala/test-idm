@@ -64,6 +64,16 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
     private byte[] encryptedPhonePin;
     private String phonePin;
 
+    @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_FAILURE_COUNT,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED, defaultDecodeValue = "0", defaultEncodeValue = "0")
+    private Integer phonePinAuthenticationFailureCount;
+
+    @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_LAST_FAILURE_DATE,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    private Date phonePinAuthenticationLastFailureDate;
+
     private String password;
 
     private boolean passwordIsNew = true;
@@ -324,6 +334,16 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
     public Password getPasswordObj() {
         return new Password(password, passwordIsNew, passwordLastUpdated, passwordWasSelfUpdated);
     }
+
+    public PhonePinStateEnum getPhonePinState() {
+        if (StringUtils.isEmpty(phonePin)) {
+            return PhonePinStateEnum.INACTIVE;
+        }
+        if (phonePinAuthenticationFailureCount != null && phonePinAuthenticationFailureCount >= GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD) {
+            return PhonePinStateEnum.LOCKED;
+        }
+        return PhonePinStateEnum.ACTIVE;
+     }
 
     public void setUserPassword(String password) {
         if (StringUtils.isNotBlank(password)) {
