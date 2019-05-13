@@ -353,6 +353,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="phonePin"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='VerifyPhonePinResult']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="verifyPhonePinResult"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='ValidatePassword']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="validatePasswordRequest"/>

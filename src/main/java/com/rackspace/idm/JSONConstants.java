@@ -268,6 +268,9 @@ public final class JSONConstants {
     public static final String DELEGATION_CREDENTIALS = "delegationCredentials";
     public static final String RAX_AUTH_DELEGATION_CREDENTIALS = "RAX-AUTH:" + DELEGATION_CREDENTIALS;
 
+    public static final String VERIFY_PHONE_PIN_RESULT = "verifyPhonePinResult";
+    public static final String RAX_AUTH_VERIFY_PHONE_PIN_RESULT = "RAX-AUTH:" + VERIFY_PHONE_PIN_RESULT;
+
     //faults
     public static final String OPENSTACK_BAD_REQUEST = "badRequest";
     public static final String OPENSTACK_FORBIDDEN_REQUEST = "forbidden";
