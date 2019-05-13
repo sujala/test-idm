@@ -35,4 +35,6 @@ public interface EndUser extends BaseUser, PhonePinProtectedUser {
      * @return
      */
     String getContactId();
+
+    PhonePinStateEnum getPhonePinState();
 }

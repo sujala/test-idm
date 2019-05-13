@@ -4,12 +4,14 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.GroupDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.Group
+import com.rackspace.idm.domain.entity.PhonePinStateEnum
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.EncryptionService
 import com.rackspace.idm.helpers.CloudTestUtils
 import com.unboundid.ldap.sdk.LDAPException
 import org.apache.commons.collections4.IteratorUtils
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.lang3.RandomStringUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
@@ -76,8 +78,14 @@ class UserRepositoryIntegrationTest extends Specification {
         retrievedUser.isPasswordWasSelfUpdated() == false
         retrievedUser.getPasswordFailureDate() == null
 
+        and: "phone pin attributes defaulted appropriately"
+        retrievedUser.getPhonePinState() == PhonePinStateEnum.INACTIVE
+        retrievedUser.getPhonePin() == null
+        retrievedUser.getPhonePinAuthenticationFailureCount() == 0
+        retrievedUser.getPhonePinAuthenticationLastFailureDate() == null
+
         when: "delete object already deleted when using recursion delete algorithm"
-        userDao.deleteUser(retrievedUser2);
+        userDao.deleteUser(retrievedUser2)
 
         then: "an illegal state exception is thrown"
         def e = thrown(IllegalStateException)
@@ -96,6 +104,35 @@ class UserRepositoryIntegrationTest extends Specification {
 
         then:
         success == true
+    }
+
+    def "addUser: Phone pin attributes stored/retrieve correctly"() {
+        given:
+        def username = RandomStringUtils.randomAlphabetic(10)
+        User user = createUser("ignore", username,"999999","someEmail@rackspace.com", true, "ORD", "password").with {
+            it.phonePin = "123654"
+            it.phonePinAuthenticationFailureCount = 1
+            it.phonePinAuthenticationLastFailureDate = new Date()
+            it
+        }
+
+        when:
+        userDao.addUser(user)
+
+        then:
+        notThrown(Exception)
+
+        when: "retrieve user"
+        def retrievedUser = userDao.getUserByUsername(username)
+
+        then: "Pin attributes returned as expected"
+        retrievedUser.getPhonePin() == user.phonePin
+        retrievedUser.getPhonePinAuthenticationFailureCount() == user.getPhonePinAuthenticationFailureCount()
+        retrievedUser.getPhonePinAuthenticationLastFailureDate().equals(user.getPhonePinAuthenticationLastFailureDate())
+        retrievedUser.getPhonePinState() == user.getPhonePinState()
+
+        cleanup:
+        userDao.deleteUser(username)
     }
 
     def "retrieving users in a domain returns all users within the domain"() {
