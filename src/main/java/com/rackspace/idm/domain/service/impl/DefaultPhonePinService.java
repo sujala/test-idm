@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
@@ -19,14 +18,15 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DefaultPhonePinService implements PhonePinService {
+    public static final String PHONE_PIN_NOT_SET_AUDIT_MSG = "User has not set a Phone PIN.";
+    public static final String PHONE_PIN_INCORRECT_NOW_LOCKED_AUDIT_MSG = "Incorrect Phone PIN provided. Maximum attempts reached. Phone PIN is now locked.";
+    public static final String PHONE_PIN_LOCKED_AUDIT_MSG = "Phone PIN is locked.";
+    public static final String PHONE_PIN_INCORRET_PIN_AUDIT_MSG = "Incorrect Phone PIN provided.";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private IdentityUserService identityUserService;
-
-    @Autowired
-    private IdentityConfig identityConfig;
 
     @Autowired
     private IdentityUserDao identityUserDao;
@@ -46,12 +46,12 @@ public class DefaultPhonePinService implements PhonePinService {
 
         Audit audit = Audit.verifyPhonePin(user);
         if (user.getPhonePinState() == PhonePinStateEnum.INACTIVE) {
-            audit.fail("User has not set a Phone PIN.");
+            audit.fail(PHONE_PIN_NOT_SET_AUDIT_MSG);
             throw new NoPinSetException();
         }
 
         if (user.getPhonePinState() == PhonePinStateEnum.LOCKED) {
-            audit.fail("User's phone PIN is locked.");
+            audit.fail(PHONE_PIN_LOCKED_AUDIT_MSG);
             throw new PhonePinLockedException();
         }
 
@@ -66,8 +66,16 @@ public class DefaultPhonePinService implements PhonePinService {
         }
 
         // Record failure
-        audit.fail("Incorrect Phone PIN provided.");
         user.recordFailedPinAuthentication();
+
+        // If this failure causes the phone pin to become locked, need distinct error message. Record in audit before saving.
+        if (user.getPhonePinState() == PhonePinStateEnum.LOCKED) {
+            audit.fail(PHONE_PIN_INCORRECT_NOW_LOCKED_AUDIT_MSG);
+        } else {
+            audit.fail(PHONE_PIN_INCORRET_PIN_AUDIT_MSG);
+        }
+
+        // Update the user
         identityUserService.updateEndUser(user);
 
         return false;

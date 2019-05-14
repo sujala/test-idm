@@ -23,7 +23,6 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
     def setupSpec() {
         InitializationService.initialize()
         service = new DefaultPhonePinService()
-        service.identityConfig = identityConfig
     }
 
     def setup() {
@@ -216,7 +215,6 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
 
     def mockServices() {
         mockIdentityUserDao(service)
-        mockIdentityConfig(service)
         mockIdentityUserService(service)
     }
 }
