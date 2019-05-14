@@ -137,4 +137,14 @@ public class ProvisionedUserDelegate implements EndUserDelegate {
     public PhonePinStateEnum getPhonePinState() {
         return originalEndUser.getPhonePinState();
     }
+
+    @Override
+    public void recordFailedPinAuthentication() {
+        originalEndUser.recordFailedPinAuthentication();
+    }
+
+    @Override
+    public void recordSuccessfulPinAuthentication() {
+        originalEndUser.recordSuccessfulPinAuthentication();
+    }
 }

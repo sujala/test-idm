@@ -4,24 +4,18 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.PhonePin;
-import com.rackspace.idm.domain.entity.PhonePinProtectedUser;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.PhonePinService;
-import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NoPinSetException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.PhonePinLockedException;
 import com.rackspace.idm.util.RandomGeneratorUtil;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 public class DefaultPhonePinService implements PhonePinService {
@@ -51,18 +45,31 @@ public class DefaultPhonePinService implements PhonePinService {
         EndUser user = identityUserService.checkAndGetEndUserById(userId);
 
         Audit audit = Audit.verifyPhonePin(user);
-        if (user.getPhonePin() == null) {
+        if (user.getPhonePinState() == PhonePinStateEnum.INACTIVE) {
             audit.fail("User has not set a Phone PIN.");
             throw new NoPinSetException();
+        }
+
+        if (user.getPhonePinState() == PhonePinStateEnum.LOCKED) {
+            audit.fail("User's phone PIN is locked.");
+            throw new PhonePinLockedException();
         }
 
         // A blank pin must never match a pin on a user
         if (StringUtils.isNotBlank(pin) && StringUtils.equals(pin, user.getPhonePin())) {
             audit.succeed();
+
+            // Record the success
+            user.recordSuccessfulPinAuthentication();
+            identityUserService.updateEndUser(user);
             return true;
         }
 
+        // Record failure
         audit.fail("Incorrect Phone PIN provided.");
+        user.recordFailedPinAuthentication();
+        identityUserService.updateEndUser(user);
+
         return false;
     }
 
