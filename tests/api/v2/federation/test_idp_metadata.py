@@ -124,20 +124,20 @@ class TestIDPMetadata(federation.TestBaseFederation):
         phone_pin_verify_req = requests.PhonePin(fed_user_phone_pin)
         verify_resp = self.identity_admin_client.verify_phone_pin_for_user(
             user_id=fed_user_id, request_object=phone_pin_verify_req)
-        self.assertEqual(verify_resp.status_code, 204)
+        self.assertEqual(verify_resp.status_code, 200)
 
         # verify an incorrect phone pins
         wrong_pin = fed_user_phone_pin + '1'
         phone_pin_verify_req = requests.PhonePin(wrong_pin)
         verify_resp = self.identity_admin_client.verify_phone_pin_for_user(
             user_id=fed_user_id, request_object=phone_pin_verify_req)
-        self.assertEqual(verify_resp.status_code, 400)
+        self.assertEqual(verify_resp.status_code, 200)
 
         wrong_pin = fed_user_phone_pin + ' '
         phone_pin_verify_req = requests.PhonePin(wrong_pin)
         verify_resp = self.identity_admin_client.verify_phone_pin_for_user(
             user_id=fed_user_id, request_object=phone_pin_verify_req)
-        self.assertEqual(verify_resp.status_code, 400)
+        self.assertEqual(verify_resp.status_code, 200)
 
     @tags('positive', 'p0', 'regression')
     @attr(type='regression')
