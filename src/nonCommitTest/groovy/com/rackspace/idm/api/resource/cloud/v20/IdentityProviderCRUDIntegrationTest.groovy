@@ -5487,8 +5487,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         if (enabled) {
             assert rackerProvider.approvedDomainIds != null
             assert rackerProvider.approvedDomainIds.approvedDomainId != null
-        } else {
-            assert rackerProvider.approvedDomainIds == null
         }
 
         when: "List GLOBAL IDPs"
@@ -5508,8 +5506,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         if (enabled) {
             assert globalProvider.approvedDomainIds != null
             assert globalProvider.approvedDomainIds.approvedDomainId != null
-        } else {
-            assert globalProvider.approvedDomainIds == null
         }
 
         when: "List all IDPs"
