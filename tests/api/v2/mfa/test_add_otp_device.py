@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import func_helper
@@ -30,7 +30,7 @@ class AddOtpDeviceForUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.data("", "  ", None)
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_otp_device_with_invalid_name(self, device_name):
 
         otp_req = requests.OTPDeviceAdd(device_name=device_name)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from munch import Munch
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -85,7 +85,7 @@ class TestDelegationRolesWithUserGroups(usergroups.TestUserGroups):
         self.assertTrue(role_2_present)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_da_roles_for_user_group_principal(self):
 
         # create user group for domain & add user admin to the user group

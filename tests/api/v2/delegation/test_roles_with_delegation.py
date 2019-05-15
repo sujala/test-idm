@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 from munch import Munch
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -106,7 +106,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         return role_1, role_2, tenant_1, da_id
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_grant_and_delete_roles_to_da_when_user_manager_principal(self):
         """
         Tests for when user manager is a principal for a DA.
@@ -183,7 +183,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
             tenant_1=tenant)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_grant_roles_to_da_when_default_user_principal(self):
         """
         Tests for when default user is a principal for a DA. Various
@@ -280,7 +280,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         resp = self.identity_admin_client.get_auth_token(delegation_auth_req)
         self.assertEqual(resp.status_code, 200)
         resp_parsed = Munch.fromDict(resp.json())
-        role_ids = map(lambda role_: role_.id, resp_parsed.access.user.roles)
+        role_ids = [role_.id for role_ in resp_parsed.access.user.roles]
         self.assertNotIn(role.id, role_ids)
 
     def validate_delete_role_from_DA(self, client, da_id, role):
@@ -300,7 +300,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         self.assertEqual(delete_resp.status_code, 404)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_roles_on_nested_DA(self):
 
         # Create parent DA
@@ -361,7 +361,7 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
         self.assertEqual(resp.status_code, 403)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_hierarchical_role_on_nested_DA(self):
 
         # Create parent DA

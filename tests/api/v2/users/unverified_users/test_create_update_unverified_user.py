@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from random import randrange
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -23,7 +23,7 @@ class UnverifiedUsersTests(unverified.TestBaseUnverifiedUser):
         super(UnverifiedUsersTests, self).setUp()
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_create_and_update_unverified_user(self):
 
         test_email = self.generate_random_string(

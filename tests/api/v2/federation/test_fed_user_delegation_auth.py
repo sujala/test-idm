@@ -2,7 +2,7 @@
 from collections import defaultdict
 import ddt
 from munch import Munch
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -173,7 +173,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         return tenant
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_d_auth_with_fed_users_as_principal_and_delegate(self):
         '''
         Tests with federated User as Principal & Delegate.
@@ -266,7 +266,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 404)
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_d_auth_fed_user_with_user_group_as_delegate(self):
 
         # create user group for domain 2

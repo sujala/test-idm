@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from random import randrange
 
 from qe_coverage.opencafe_decorators import tags, unless_coverage
@@ -50,7 +50,7 @@ class TestListUsers(base.TestBaseV2):
         self.sub_user_ids = []
         self.EMAIL_TEST = 'test-api@rackspace.com'
 
-        for i in xrange(2):
+        for i in range(2):
             # create user admin to test
             user_name = self.generate_random_string()
             domain_id = func_helper.generate_randomized_domain_id(
@@ -81,7 +81,7 @@ class TestListUsers(base.TestBaseV2):
                           json_schema=users_json.list_users)
 
     @tags('positive', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_list_user_email_by_service_admin(self):
         """List by admin user filter by email
         """
@@ -97,7 +97,7 @@ class TestListUsers(base.TestBaseV2):
             self.assertEqual(user[const.EMAIL], self.EMAIL_TEST)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_users_by_identity_admin(self):
         """List by identity admin user
         """
@@ -111,7 +111,7 @@ class TestListUsers(base.TestBaseV2):
             const.USERS] if user['id'] in self.sub_user_ids), None)
 
         self.assertEqual(resp.status_code, 200)
-        self.assertEquals(found_user, None)
+        self.assertEqual(found_user, None)
 
         self.assertSchema(response=resp,
                           json_schema=users_json.list_users)

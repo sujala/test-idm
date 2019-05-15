@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -44,7 +44,7 @@ class RestrictServicesUnverifiedUsersTests(base.TestBaseV2):
         super(RestrictServicesUnverifiedUsersTests, self).setUp()
 
     @tags('negative', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_reset_apikey(self):
         resp = self.identity_admin_client.reset_api_key(self.user_id)
         self.assertEqual(

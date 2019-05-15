@@ -2,7 +2,7 @@
 JIRA CID-612
 Migrate default mapping policy to LDAP Based Reloadable Property
 """
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 import ddt
 import json
@@ -135,7 +135,7 @@ class TestMigrateDefaultIDPtoLDAP(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_create_invalid_prop_types.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_create_invalid_devops_prop_type(self, test_data):
         prop = self.generate_prop(test_data)
         req_obj = requests.DevopsProp(**prop)

@@ -1,4 +1,4 @@
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -77,7 +77,7 @@ class TestFedUserGroups(federation.TestBaseFederation):
         return tenant_assignment_request
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_fed_user_groups(self):
         """
         Test to List fed user's groups:

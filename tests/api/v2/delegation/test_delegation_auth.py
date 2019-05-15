@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -51,7 +51,7 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
         return da_id
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_auth_validate_delegation_token(self):
 
         # create DA with sub user
@@ -90,12 +90,12 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
         resp = self.identity_admin_client.get_user(user_id)
 
         # validate that delegation agreement exists in response
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.USER][const.RAX_AUTH_DELEGATION_AGREEMENT_ID],
             da_id)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_reconcile_DA_delegate_user_delete(self):
 
         # create DA, with sub user as the delegate
@@ -114,7 +114,7 @@ class TestAuthUnderDelegationAgreement(delegation.TestBaseDelegation):
         self.assertEqual(resp.status_code, 401)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_mfa_auth_followed_by_delegation(self):
         sub_user_name_2 = self.generate_random_string(
             pattern=const.SUB_USER_PATTERN)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
@@ -49,14 +49,14 @@ class TestListTenantsInDomain(base.TestBaseV2):
         super(TestListTenantsInDomain, self).setUp()
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_enabled_tenants_in_domain(self):
         '''Test for list enabled tenants in domain API. '''
         self.validate_list_tenants_in_domain_response(
             True, self.enabled_tenant_id)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_disabled_tenants_in_domain(self):
         '''Test for list disabled tenants API. '''
         self.validate_list_tenants_in_domain_response(
@@ -74,7 +74,7 @@ class TestListTenantsInDomain(base.TestBaseV2):
                              self.domain_id)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_tenants_in_domain_for_param_with_invalid_value(self):
         '''Tests for list tenants API with invalid
             value for enabled query param. '''

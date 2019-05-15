@@ -1,5 +1,5 @@
 from qe_coverage.opencafe_decorators import tags, unless_coverage
-from nose.plugins.attrib import attr
+import pytest
 
 from tests.api.v2 import base
 from tests.api.v2.schema import groups as groups_json
@@ -43,13 +43,13 @@ class TestGroups(base.TestBaseV2):
         return resp
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_group(self):
         create_resp = self.add_group()
         self.assertEqual(create_resp.status_code, 201)
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_get_group_by_id(self):
         create_resp = self.add_group()
         group_id = create_resp.json()[const.NS_GROUP][const.ID]
@@ -58,7 +58,7 @@ class TestGroups(base.TestBaseV2):
         self.assertEqual(get_resp.json()[const.NS_GROUP][const.ID], group_id)
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_group(self):
         create_resp = self.add_group()
         group_id = create_resp.json()[const.NS_GROUP][const.ID]
@@ -71,7 +71,7 @@ class TestGroups(base.TestBaseV2):
                          'updated_group_name')
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_user_to_group(self):
         create_resp = self.add_group()
         group_id = create_resp.json()[const.NS_GROUP][const.ID]

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import unless_coverage
 import ddt
 
@@ -117,7 +117,7 @@ class ForbidImpersonation(base.TestBaseV2):
     @ddt.data(['identity_admin', True], ['racker', True],
               ['identity_admin', False], ['racker', False])
     @ddt.unpack
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_forbid_impersonation_of_sub_user(
             self, impersonator, is_user_manager):
         """

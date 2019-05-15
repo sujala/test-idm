@@ -13,7 +13,7 @@ Tests verify
         preserved.
 """
 
-from nose.plugins.attrib import attr
+import pytest
 import ddt
 from qe_coverage.opencafe_decorators import unless_coverage
 
@@ -184,7 +184,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
 
     @unless_coverage
     @ddt.data('identity-admin', 'user-admin', 'user-default', 'user-manager')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_identity_product_role_weight50_to_user_on_tenant(self, user):
         """
         Verify allow to add identity product roles to user on tenant
@@ -336,7 +336,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
     @ddt.data(const.IDENTITY_ADMIN_ROLE_ID, const.USER_ADMIN_ROLE_ID,
               const.USER_DEFAULT_ROLE_ID, const.SERVICE_ADMIN_ROLE_ID,
               const.USER_MANAGER_ROLE_ID)
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_identity_user_classification_and_feature_roles(self,
                                                                 role_id):
         """

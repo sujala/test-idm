@@ -595,7 +595,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
                acct_info=acct_info, service_name=service_name,
                template_data=new_data,
                tenant_id=acct_info['tenant_name'])
-        except Exception, e:
+        except Exception as e:
             verification_error = str(e)
         self.assertEqual(verification_error,
                          "Endpoint with name {service_name} not found".
@@ -770,7 +770,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
                     token=token, template_data=tupleset[2],
                     service_name=tupleset[1],
                     tenant_id=meta_data['tenant_id'])
-            except Exception, e:
+            except Exception as e:
                 verification_error = str(e)
             self.assertEqual(verification_error,
                              "{service_name} not found".
@@ -835,7 +835,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
                     token=token, template_data=new_data,
                     service_name=service_name,
                     tenant_id=acct_info['tenant_name']))
-        except Exception, e:
+        except Exception as e:
             verification_error = str(e)
         self.assertEqual(verification_error,
                          "{service_name} not found".
@@ -890,7 +890,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
                     service_name=tupleset[1],
                     template_data=tupleset[2],
                     tenant_id=meta_data['tenant_name'])
-            except Exception, e:
+            except Exception as e:
                 verification_error = str(e)
             self.assertEqual(verification_error,
                              "Endpoint with name {service_name} not found".

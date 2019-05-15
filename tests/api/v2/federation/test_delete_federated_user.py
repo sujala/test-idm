@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -59,33 +59,33 @@ class TestDeleteFederatedUser(federation.TestBaseFederation):
             saml=self.assertion, content_type=const.XML,
             base64_url_encode=False,
             new_url=False)
-        self.assertEquals(saml_resp.status_code, 200)
+        self.assertEqual(saml_resp.status_code, 200)
         self.auth_resp = responses.Access(saml_resp.json())
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_delete_federated_user_and_validate_token(self):
         resp = self.user_admin_client.delete_user(
             user_id=self.auth_resp.access.user.id)
-        self.assertEquals(resp.status_code, 204)
+        self.assertEqual(resp.status_code, 204)
 
         validate_token_resp = self.user_admin_client.validate_token(
             token_id=self.auth_resp.access.token.id)
-        self.assertEquals(validate_token_resp.status_code, 403)
+        self.assertEqual(validate_token_resp.status_code, 403)
 
         validate_token_resp = self.identity_admin_client.validate_token(
             token_id=self.auth_resp.access.token.id)
-        self.assertEquals(validate_token_resp.status_code, 404)
+        self.assertEqual(validate_token_resp.status_code, 404)
 
         # checking if can re-auth
         saml_resp = self.identity_admin_client.auth_with_saml(
             saml=self.assertion, content_type=const.XML,
             base64_url_encode=False,
             new_url=False)
-        self.assertEquals(saml_resp.status_code, 200)
+        self.assertEqual(saml_resp.status_code, 200)
         resp = self.user_admin_client.delete_user(
             user_id=saml_resp.json()[const.ACCESS][const.USER][const.ID])
-        self.assertEquals(resp.status_code, 204)
+        self.assertEqual(resp.status_code, 204)
 
     @unless_coverage
     def tearDown(self):

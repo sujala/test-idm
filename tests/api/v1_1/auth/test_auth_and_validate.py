@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 from tests.api.utils import header_validation
@@ -48,13 +48,12 @@ class TestAuthAndValidationV11(base.TestBaseV1):
                 'nast_id': nastId}
 
     def validate_resp_token(self, token):
-        resp = self.identity_admin_client.validate_token(
-            token_id=token)
+        resp = self.identity_admin_client.validate_token(token_id=token)
         self.assertEqual(resp.status_code, 200)
         header_validation.validate_header_not_present('response-source')(resp)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_auth_with_key_and_validate_token(self):
         username = self.user_info['id']
         key = self.user_info['key']
@@ -77,7 +76,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.validate_resp_token(token=token_id)
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_auth_with_invalid_key(self):
         username = self.user_info['id']
         key = "invalid"
@@ -89,7 +88,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
                 [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_auth_with_key_and_mosso_and_validate_token(self):
         key = self.user_info['key']
         mosso_id = self.user_info['mosso_id']
@@ -113,7 +112,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.validate_resp_token(token=token_id)
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_auth_with_invalid_key_and_mosso(self):
         key = 'invalid'
         mosso_id = self.user_info['mosso_id']
@@ -125,7 +124,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
             [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_auth_with_key_and_nast_and_validate_token(self):
         key = self.user_info['key']
         nast_id = self.user_info['nast_id']
@@ -148,7 +147,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.validate_resp_token(token=token_id)
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_auth_with_invalid_key_and_nast(self):
         key = 'invalid'
         nast_id = self.user_info['nast_id']
@@ -160,7 +159,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
             [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_auth_with_username_password(self):
         admin_password = self.identity_config.identity_admin_password
         admin_username = self.identity_config.identity_admin_user_name
@@ -186,7 +185,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.validate_resp_token(token=token_id)
 
     @tags('negative', 'p0', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_auth_with_username_and_invalid_password(self):
         admin_password = 'invalid'
         admin_username = self.identity_config.identity_admin_user_name

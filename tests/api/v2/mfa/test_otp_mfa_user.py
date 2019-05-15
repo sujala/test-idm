@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -57,7 +57,7 @@ class TestOtpMfaUser(base.TestBaseV2):
         return self.identity_admin_client.auth_with_mfa_cred(**kwargs)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_when_otp_mfa_user_disabled_mfa_is_still_enabled(self):
         # when an OTP MFA user is disabled, MFA is still enabled
         # if user account is enabled

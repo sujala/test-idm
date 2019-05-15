@@ -1,4 +1,4 @@
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 
@@ -22,7 +22,7 @@ class InviteUnverifiedUserTest(unverified.TestBaseUnverifiedUser):
         super(InviteUnverifiedUserTest, self).setUp()
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_invite_unverified_user(self):
 
         user_id = self.create_unverified_user()
