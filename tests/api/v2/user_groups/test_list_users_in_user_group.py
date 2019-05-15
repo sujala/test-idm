@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -51,7 +51,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
 
     @unless_coverage
     @ddt.data('user_admin', 'user_manager')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_users_in_user_group_for_domain(self, user_type):
 
         group_req = factory.get_add_user_group_request(self.domain_id)
@@ -107,7 +107,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
             negative=True)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_users_in_user_group_after_user_update(self):
 
         group_req = factory.get_add_user_group_request(self.domain_id)
@@ -190,7 +190,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
 
     @unless_coverage
     @ddt.data('user_admin', 'user_manager')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_get_users_in_user_group(self, user_type):
 
         group_req = factory.get_add_user_group_request(self.domain_id)
@@ -265,7 +265,7 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
             user_group_id_list)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_users_in_user_group_with_query_params(self):
 
         # Adding a sub user client to test if list users in user group with

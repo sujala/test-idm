@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from qe_coverage.opencafe_decorators import tags, unless_coverage
-from nose.plugins.attrib import attr
+import pytest
 
 from tests.api.v2 import base
 from tests.package.johny import constants as const
@@ -30,7 +30,7 @@ class TestLockDownAbilityToCreateTenants(base.TestBaseV2):
         self.tenant_ids = []
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_identity_admin_can_create_tenant_with_role(self):
         # Create Tenant with Role identity:rs-tenant-admin
         tenant_object = requests.Tenant(

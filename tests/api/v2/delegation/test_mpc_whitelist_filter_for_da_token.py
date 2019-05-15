@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -68,7 +68,7 @@ class TestMPCWhitelistFilterForDAToken(delegation.TestBaseDelegation):
         return role_1, role_2, tenant_1, da_id
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_whitelist_filter_for_mpc_tenant(self):
         """
         Tests for when user manager is a principal for a DA.

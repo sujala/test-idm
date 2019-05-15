@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import copy
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import unless_coverage
 from random import randrange
 
@@ -54,7 +54,7 @@ class GetUsersForTenantTests(base.TestBaseV2):
 
     @unless_coverage
     @ddt.data('identity_admin', 'user_admin')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_get_users_for_tenant_by_contact_id(self, user_type):
 
         option = {

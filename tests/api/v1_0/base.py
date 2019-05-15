@@ -1,4 +1,4 @@
-import urlparse
+import urllib.parse
 from tests.api import base
 from tests.api.v1_0 import client
 
@@ -11,13 +11,13 @@ class TestBaseV10(base.TestBase):
     def setUpClass(cls):
         super(TestBaseV10, cls).setUpClass()
         VERSION = 'v1.0'
-        cls.url = urlparse.urljoin(
+        cls.url = urllib.parse.urljoin(
             cls.identity_config.base_url, cls.identity_config.cloud_url)
 
         if cls.test_path == 'auth':
-            cls.url = urlparse.urljoin(cls.url, cls.test_path)
+            cls.url = urllib.parse.urljoin(cls.url, cls.test_path)
         else:
-            cls.url = urlparse.urljoin(cls.url, VERSION)
+            cls.url = urllib.parse.urljoin(cls.url, VERSION)
 
         cls.identity_client = client.IdentityAPIClient(
             url=cls.url,

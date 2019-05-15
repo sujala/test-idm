@@ -18,6 +18,7 @@ check_status() {
     done
 }
 cd tests
+export PIP_CONFIG_FILE="`pwd`/pip.conf"
 TEST_CONFIG_DIR=/tmp/.identity
 mkdir -p $TEST_CONFIG_DIR
 mkdir -p $TEST_CONFIG_DIR/logs
@@ -30,14 +31,15 @@ cafe-config plugins install http
 ls -latr
 TEST_ENDPOINT=https://repose-${SANDBOX_NAME}-${NAMESPACE_NAME}.iad.devapps.rsi.rackspace.net
 check_status $TEST_ENDPOINT/idm/cloud
-TOKEN=`curl -s -X POST "${TEST_ENDPOINT}/idm/cloud/v2.0/tokens" -H 'content-type: application/json' -d "{ \"auth\": { \"passwordCredentials\":{ \"username\":\"AuthQE\", \"password\": \"Auth1234\" }}}" | python  -c 'import sys, json; print json.load(sys.stdin)["access"]["token"]["id"]'`
+TOKEN=`curl -s -X POST "${TEST_ENDPOINT}/idm/cloud/v2.0/tokens" -H 'content-type: application/json' -d "{ \"auth\": { \"passwordCredentials\":{ \"username\":\"AuthQE\", \"password\": \"Auth1234\" }}}" | python  -c 'import sys, json; print(json.load(sys.stdin)["access"]["token"]["id"])'`
 cp etc/api.conf $TEST_CONFIG_DIR/api.conf
 sed -i -e "s|service_admin_auth_token=.*|service_admin_auth_token=${TOKEN}|g" $TEST_CONFIG_DIR/api.conf
 sed -i -e "s|base_url=.*|base_url=${TEST_ENDPOINT}|g" $TEST_CONFIG_DIR/api.conf
 sed -i -e "s|internal_url=.*|internal_url=${TEST_ENDPOINT}|g" $TEST_CONFIG_DIR/api.conf
-sed -i -e "s|nosetests --with-xunit --xunit-file=nosetests.xml|nosetests -a '!skip_at_gate' --with-xunit --xunit-file=nosetests.xml|g" tox.ini
 
 export CAFE_CONFIG_FILE_PATH=$TEST_CONFIG_DIR/api.conf
+export CAFE_ENGINE_CONFIG_FILE_PATH=$CAFE_CONFIG_FILE_PATH
 export CAFE_ROOT_LOG_PATH=$TEST_CONFIG_DIR/logs
 export CAFE_TEST_LOG_PATH=$TEST_CONFIG_DIR/logs
-tox
+tox -e flake8
+tox -e py35 -- -m 'not skip_at_gate'

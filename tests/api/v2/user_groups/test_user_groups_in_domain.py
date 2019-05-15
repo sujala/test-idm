@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.models import factory
@@ -41,10 +41,10 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
         return user_group_resp.json()
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_user_groups_in_a_domain(self):
 
-        for i in xrange(2):
+        for i in range(2):
             self.add_user_group()
 
         list_resp = self.user_admin_client.list_user_groups_for_domain(
@@ -72,7 +72,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
             json_schema=user_groups.list_user_groups_for_domain)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_update_user_group_in_a_domain(self):
 
         user_group = self.add_user_group()
@@ -97,7 +97,7 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
             updated_group_name)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_delete_user_group_in_a_domain(self):
 
         user_group = self.add_user_group()

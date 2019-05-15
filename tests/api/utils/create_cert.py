@@ -53,19 +53,17 @@ def create_self_signed_cert(cert_path=None, key_path=None, create_files=True,
 
     # create a key pair
     key = rsa.generate_private_key(
-    public_exponent=65537,
-    key_size=1024,
-    backend=default_backend()
-)
+        public_exponent=65537,
+        key_size=1024,
+        backend=default_backend()
+    )
 
     subject = issuer = x509.Name([
-    x509.NameAttribute(NameOID.COUNTRY_NAME, unicode(country, 'utf-8')),
-    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, unicode(state, 'utf-8')),
-    x509.NameAttribute(NameOID.LOCALITY_NAME, unicode(locality, 'utf-8')),
-    x509.NameAttribute(
-        NameOID.ORGANIZATION_NAME, unicode(organization, 'utf-8')),
-    x509.NameAttribute(
-        NameOID.COMMON_NAME, unicode(organization_unit, 'utf-8')),
+        x509.NameAttribute(NameOID.COUNTRY_NAME, country),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, state),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, locality),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization),
+        x509.NameAttribute(NameOID.COMMON_NAME, organization_unit),
     ])
     cert = x509.CertificateBuilder().subject_name(
         subject
@@ -94,9 +92,9 @@ def create_self_signed_cert(cert_path=None, key_path=None, create_files=True,
         encryption_algorithm=serialization.NoEncryption())
 
     if create_files:
-        with open(cert_path, 'wt+') as cert_handler:
+        with open(cert_path, 'wb') as cert_handler:
             cert_handler.write(cert_contents)
-        with open(key_path, 'wt+') as key_handler:
+        with open(key_path, 'wb') as key_handler:
             key_handler.write(key_contents)
 
     der_key_path = None
@@ -106,10 +104,10 @@ def create_self_signed_cert(cert_path=None, key_path=None, create_files=True,
         der_key_path = '{0}{1}'.format(partial_path, '.pkcs8')
 
         if create_files:
-            with open(der_key_path, 'wt+') as key_handler:
+            with open(der_key_path, 'wb') as key_handler:
                 key_handler.write(der_pkcs_key)
 
-    cert_contents_cleanup = cert_contents.\
+    cert_contents_cleanup = cert_contents.decode().\
         replace('-----BEGIN CERTIFICATE-----', '').\
         replace('-----END CERTIFICATE-----', '').\
         replace('\n', '')

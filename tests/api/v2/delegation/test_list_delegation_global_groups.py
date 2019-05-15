@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -50,7 +50,7 @@ class TestListDelegationGlobalGroups(delegation.TestBaseDelegation):
         return da_id
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_auth_list_global_groups(self):
 
         # create DA with sub user
@@ -80,14 +80,14 @@ class TestListDelegationGlobalGroups(delegation.TestBaseDelegation):
         resp = delegation_client.list_groups(user_id)
 
         # validate that the default global groups are returned (only 1)
-        self.assertEquals(len(resp.json()[const.NS_GROUPS]), 1)
+        self.assertEqual(len(resp.json()[const.NS_GROUPS]), 1)
 
         # validate that the default global group is returned
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.NS_GROUPS][0][const.NAME], "Default")
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.NS_GROUPS][0][const.ID], "0")
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.NS_GROUPS][0][const.DESCRIPTION],
             "Default Limits")
 

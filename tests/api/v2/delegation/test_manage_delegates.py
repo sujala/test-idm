@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -33,13 +33,13 @@ class TestManageDelegates(delegation.TestBaseDelegation):
         super(TestManageDelegates, self).setUp()
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_and_remove_user_delegate(self):
         self.verify_add_and_remove_user_delegate(
             client=self.user_admin_client)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_add_and_remove_user_delegate_rcn_admin(self):
         self.verify_add_and_remove_user_delegate(
             client=self.rcn_admin_client)

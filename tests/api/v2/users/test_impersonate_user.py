@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import copy
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -45,7 +45,7 @@ class TestImpersonateUser(base.TestBaseV2):
         self.racker_client = self.generate_racker_client()
 
     @tags('positive', 'p0', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_impersonate_user(self):
         '''Test for user impersonation.'''
         impersonation_request_obj = requests.ImpersonateUser(

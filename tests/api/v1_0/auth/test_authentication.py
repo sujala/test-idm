@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 from tests.api.v1_0 import base
 from tests.api.utils import header_validation
@@ -36,7 +36,7 @@ class TestAuthentication(base.TestBaseV10):
             self.assertIsNotNone(resp.headers[header])
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_base_authentication_username_and_key(self):
         normal_response_codes = [200, 204]
         auth_resp = self.identity_client.authenticate(
@@ -51,7 +51,7 @@ class TestAuthentication(base.TestBaseV10):
         header_validation.validate_username_header_not_present(auth_resp)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_base_authentication_username_and_key_storage(self):
         normal_response_codes = [200, 204]
         auth_resp = self.identity_client.authenticate_storage(
@@ -66,7 +66,7 @@ class TestAuthentication(base.TestBaseV10):
         header_validation.validate_username_header_not_present(auth_resp)
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_authentication_username_and_key_invalid_creds(self):
         normal_response_codes = [401]
         unexpected_headers = [const.X_USER_NAME, const.X_TENANT_ID]

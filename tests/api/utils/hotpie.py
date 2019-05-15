@@ -82,7 +82,7 @@ def generate_16char_base32(pre):
     Warning: Decoding is not a part of this example
     since it adds a random integer to the end of string
     """
-    prefix = unicode(pre)
+    prefix = str(pre)
     prefix_len = len(prefix)
     if prefix_len > 10:
         return None
@@ -92,7 +92,7 @@ def generate_16char_base32(pre):
         random_from = 10 ** (remaining-1)
         random_to = (10 ** remaining) - 1
         random_int = random.randint(random_from, random_to)
-        random_int_str = unicode(random_int)
+        random_int_str = str(random_int)
     str_to_encode = prefix + random_int_str
     encoded_str = base64.b32encode(str_to_encode)
     return encoded_str

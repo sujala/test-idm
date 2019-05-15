@@ -1,5 +1,5 @@
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -58,7 +58,7 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         return role
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_fed_user_global_roles(self):
         """
         Test to List fed user's global roles.
@@ -189,7 +189,7 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         self.assertEqual(update_resp.status_code, 200)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_fed_auth_with_v2_saml(self):
 
         (pem_encoded_cert, cert_path, _, key_path,

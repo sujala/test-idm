@@ -3,9 +3,9 @@ ddt==1.0.0
 hypothesis==3.4.0
 jsonschema==2.5.1
 lxml==3.6.0
-nose==1.3.7
-opencafe==0.3.0
-requests==2.10.0
+pytest==4.4.1
+opencafe==0.3.5
+requests==2.21.0
 StringGenerator==0.1.9
 flake8==3.0.3
 crypto==1.4.1
@@ -13,6 +13,4 @@ cryptography==1.7.2
 pyOpenSSL==16.2.0
 allpairspy==2.1.0
 munch==2.2.0
-https://artifacts.rackspace.net/artifactory/api/pypi/tableread-pypi-local/tableread/1.0.3/tableread-1.0.3.tar.gz
-https://artifacts.rackspace.net/artifactory/api/pypi/qecommon_tools-pypi-local/qecommon_tools/1.1.3/qecommon_tools-1.1.3.tar.gz
-https://artifacts.rackspace.net/artifactory/api/pypi/qe_coverage-pypi-local/qe_coverage/1.5.1/qe_coverage-1.5.1.tar.gz
+qe_coverage==1.9.2
