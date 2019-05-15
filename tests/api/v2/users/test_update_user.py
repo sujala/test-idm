@@ -502,7 +502,7 @@ class TestUpdateUser(base.TestBaseV2):
         verify_req_obj = requests.PhonePin(new_pin)
         verify_pin_resp = self.identity_admin_client.verify_phone_pin_for_user(
             user_id=user_manager_id, request_object=verify_req_obj)
-        self.assertEqual(verify_pin_resp.status_code, 204)
+        self.assertEqual(verify_pin_resp.status_code, 200)
 
         # Negative case not covered in Groovy tests: Spaces in pin
         new_pin = ' 2211 '

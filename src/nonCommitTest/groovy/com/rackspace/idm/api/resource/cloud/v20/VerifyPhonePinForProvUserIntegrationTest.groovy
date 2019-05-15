@@ -1,24 +1,20 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerifyPhonePinResult
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.UserService
-import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Ignore
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST
-import static org.apache.http.HttpStatus.SC_NO_CONTENT
+import static org.apache.http.HttpStatus.SC_OK
 
 class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
 
@@ -43,8 +39,8 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         when: "Verify with authorized user"
         def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), userAdmin.id, phonePin, requestType)
 
-        then: "get back 204"
-        assert response.status == SC_NO_CONTENT
+        then: "get back 200"
+        assert response.status == SC_OK
 
         when: "Verify with user without role"
         response = cloud20.verifyPhonePin(userAdminToken, userAdmin.id, phonePin, requestType)
@@ -56,8 +52,8 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         utils.addRoleToUser(userAdmin, Constants.IDENTITY_PHONE_PIN_ADMIN_ROLE_ID)
         response = cloud20.verifyPhonePin(userAdminToken, userAdmin.id, phonePin, requestType)
 
-        then: "get back 204"
-        assert response.status == SC_NO_CONTENT
+        then: "get back 200"
+        assert response.status == SC_OK
 
         cleanup:
         utils.deleteUserQuietly(userAdmin)
@@ -80,8 +76,8 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         when: "Verify with authorized user"
         def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), userAdmin.id, phonePin)
 
-        then: "get back 204"
-        assert response.status == SC_NO_CONTENT
+        then: "get back 200"
+        assert response.status == SC_OK
 
         cleanup:
         utils.deleteUserQuietly(userAdmin)
@@ -101,8 +97,8 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         when: "Verify with authorized user"
         def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), userAdmin.id, phonePin)
 
-        then: "get back 204"
-        assert response.status == SC_NO_CONTENT
+        then: "get back 200"
+        assert response.status == SC_OK
 
         cleanup:
         utils.deleteUserQuietly(userAdmin)
@@ -121,8 +117,14 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         when: "Verify with authorized user"
         def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), userAdmin.id, phonePin, requestType)
 
-        then: "get back error"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect Phone PIN.")
+        then: "Returns 200 response"
+        response.status == SC_OK
+
+        and: "Response is appropriate"
+        VerifyPhonePinResult result = response.getEntity(VerifyPhonePinResult)
+        !result.authenticated
+        result.failureCode == "PP-003"
+        result.failureMessage == "Incorrect Phone PIN."
 
         cleanup:
         utils.deleteUserQuietly(userAdmin)
@@ -158,20 +160,17 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUserQuietly(userAdmin)
     }
 
-    /**
-     * This test assumes the specified user does *not* have a phone pin associated with it
-     * @return
-     */
     @Unroll
-    def "Verify must supply a phone pin to verify against: specifiedPhonePin: #pin; requestType: #requestType" () {
+    def "Verify must supply a phone pin: specifiedPhonePin: #pin; requestType: #requestType" () {
         User user = userService.checkAndGetUserByName("uaGlobalRolesUser") // pre-existing user
         assert user.phonePin == null
 
-        when: "Verify with authorized user"
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
             it.pin = pin
             it
         }
+
+        when: "Verify with authorized user"
         def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), user.id, phonePin, requestType)
 
         then: "Returns as invalid"
@@ -186,39 +185,29 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         " "  | MediaType.APPLICATION_JSON_TYPE
     }
 
-    def "Verify verifying pin of user without one returns correct error" () {
+    @Unroll
+    def "Verifying pin of user without one returns correct error: mediaType: #mediaType" () {
         User user = userService.checkAndGetUserByName("uaGlobalRolesUser") // pre-existing user
         assert user.phonePin == null
 
-        when: "Verify with authorized user"
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
             it.pin = "12324"
             it
         }
+
+        when: "Verify with authorized user"
         def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), user.id, phonePin)
 
-        then: "Returns as invalid"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-000'; The user has not set a Phone PIN.")
-    }
+        then: "Returns 200 response"
+        response.status == SC_OK
 
-    /**
-     * This test assumes the specified user does *not* have a phone pin associated with it
-     * @return
-     */
-    @Unroll
-    def "Verify user with no phone pin returns as unmatched against null object phone pin: requestType: #requestType" () {
-        User user = userService.checkAndGetUserByName("uaGlobalRolesUser") // pre-existing user
-        assert user.phonePin == null
-
-        when: "Send in null request body"
-        def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), user.id, null, requestType)
-
-        then: "Get invalid request back"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, expectedMessage)
+        and: "Response is appropriate"
+        VerifyPhonePinResult result = response.getEntity(VerifyPhonePinResult)
+        !result.authenticated
+        result.failureCode == "PP-000"
+        result.failureMessage == "The user has not set a Phone PIN."
 
         where:
-        requestType | expectedMessage
-        MediaType.APPLICATION_XML_TYPE | "Invalid XML"
-        MediaType.APPLICATION_JSON_TYPE | "Invalid json request body"
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 }

@@ -2966,17 +2966,23 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Must supply a Phone PIN.", ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
             }
 
+            VerifyPhonePinResult result = new VerifyPhonePinResult();
             try {
                 if (!phonePinService.verifyPhonePinOnUser(userId, phonePin.getPin())) {
-                    throw new BadRequestException(String.format("Incorrect Phone PIN."),
-                            ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+                    result.setAuthenticated(false);
+                    result.setFailureCode(ErrorCodes.ERROR_CODE_PHONE_PIN_INCORRECT);
+                    result.setFailureMessage(ErrorCodes.ERROR_MESSAGE_PHONE_PIN_INCORRECT);
+                } else {
+                    result.setAuthenticated(true);
                 }
-            } catch (NoPinSetException ex) {
+            } catch (NoPinSetException | PhonePinLockedException ex) {
                 // Convert to standard BadRequest to indicate verification failure, but provide reason.
-                throw new BadRequestException(ex.getRawMessage(), ex.getErrorCode());
+                result.setAuthenticated(false);
+                result.setFailureCode( ex.getErrorCode());
+                result.setFailureMessage(ex.getRawMessage());
             }
 
-            return Response.noContent();
+            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createVerifyPhonePinResult(result).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
