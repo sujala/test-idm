@@ -22,7 +22,7 @@ clear access;
 source "../access/rackaccess.dxc";
 
 # ssl
-source "../ssld/default.dxc";
+source "../ssld/rsSsld.dxc";
 
 # replication agreements (rarely used)
 # source "../replication/";
