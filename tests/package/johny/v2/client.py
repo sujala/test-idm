@@ -1665,7 +1665,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return self.request('POST', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
 
-
     def validate_password(self, request_object, requestslib_kwargs=None):
         """Return response object from the validate password api call
         POST
@@ -1675,12 +1674,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return self.request('POST', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
 
-
     def change_administrators(self, domain_id, request_object,
                               requestslib_kwargs=None):
         """Return response object from list users in domain
         PUT
-        {{AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}/domainAdministratorChange
+        {{AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}/
+        domainAdministratorChange
         """
         url = self.url + const.ADMIN_CHANGE_URL.format(domain_id=domain_id)
         return self.request('PUT', url, request_entity=request_object,
