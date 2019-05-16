@@ -291,6 +291,7 @@ public final class JSONConstants {
     public static final String RAX_AUTH_CHANGE_PWD_CREDENTIALS = "RAX-AUTH:changePasswordCredentials";
     public static final String RAX_AUTH_PASSWORD_RESET = "RAX-AUTH:passwordReset";
     public static final String RAX_AUTH_VALIDATE_PWD = "RAX-AUTH:validatePassword";
+    public static final String RAX_AUTH_VALIDATE_PWD_REQUEST = "RAX-AUTH:validatePasswordRequest";
     public static final String AUTH_DOMAIN_PATH = "auth.domain";
     public static final String AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH = "auth.RAX-KSKEY:apiKeyCredentials";
     public static final String AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH = "auth.RAX-AUTH:rsaCredentials";
@@ -401,5 +402,6 @@ public final class JSONConstants {
 
     // Constants for Validate password
     public static final String VALIDATE_PWD = "validatePassword";
+    public static final String VALIDATE_PWD_REQUEST = "validatePasswordRequest";
 
 }

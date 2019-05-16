@@ -64,6 +64,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_IDENTITY_PROVIDERS = "identity-providers"
     static def SERVICE_PATH_FORGOT_PASSWORD = "forgot-pwd"
     static def SERVICE_PATH_PASSWORD_RESET = "pwd-reset"
+    static def SERVICE_PATH_VALIDATE_PASSWORD = "validate-pwd"
     static def SERVICE_PATH_RULES = "rules"
     static def SERVICE_PATH_MAPPING = "mapping"
     static def SERVICE_PATH_METADATA = "metadata"
@@ -1355,6 +1356,15 @@ class Cloud20Methods {
     def forgotPassword(ForgotPasswordCredentials forgotPasswordCredentials, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_FORGOT_PASSWORD).type(requestContentMediaType).entity(forgotPasswordCredentials).post(ClientResponse)
+    }
+
+    /**
+     * Integration test for service endpoint
+     * POST /v2.0/users/RAX-AUTH/validate-pwd
+     */
+    def validatePassword(String token, def validatePasswordRequest, MediaType requestContentMediaType = MediaType.APPLICATION_JSON_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_VALIDATE_PASSWORD).type(requestContentMediaType).entity(validatePasswordRequest).header(X_AUTH_TOKEN, token).post(ClientResponse)
     }
 
     def resetPassword(def token, def passwordReset, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
