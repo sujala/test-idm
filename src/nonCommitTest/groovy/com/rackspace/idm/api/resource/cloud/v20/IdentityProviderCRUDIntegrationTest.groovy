@@ -5467,7 +5467,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "List identity providers always returns approvedDomainId when flag enabled:  enabled = #enabled; request: #contentType"() {
+    def "List identity providers always returns approvedDomainId; request: #contentType"() {
         given:
         def token = utils.getServiceAdminToken() // service admin included in base dataset has appropriate permission
 
