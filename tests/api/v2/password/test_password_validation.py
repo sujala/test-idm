@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
@@ -19,7 +19,7 @@ class TestPasswordValidation(base.TestBaseV2):
         super(TestPasswordValidation, self).setUp()
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     @ddt.data('Password', 'Str0ngPassw#rd')
     def test_password_validation(self, password):
 
