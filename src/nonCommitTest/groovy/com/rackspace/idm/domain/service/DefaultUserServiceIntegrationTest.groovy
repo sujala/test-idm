@@ -47,11 +47,11 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
     }
 
     def "Password history is stored when enabled; even when other password policy features are disabled"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, false)
+        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
+        //reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
 
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
+        //reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
 
         User user = utils.createGenericUserAdmin()
 
@@ -116,11 +116,11 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
     @Unroll
     def "The number of previous passwords stored in password history depends on config property: setting: #maxHistory"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, false)
+        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
+        //reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
 
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
+        //reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.PASSWORD_HISTORY_MAX_PROP, maxHistory)
 
         User user = utils.createGenericUserAdmin()
@@ -157,11 +157,11 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
     }
 
     def "History is not added to, but not nulled out, if maintain history property is disabled"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, false)
+        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
+        //reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
 
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
+        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
         reloadableConfiguration.setProperty(IdentityConfig.PASSWORD_HISTORY_MAX_PROP, 5)
 
         User user = utils.createGenericUserAdmin()
@@ -181,7 +181,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
         cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
 
         when: "Disable history and change password"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, false)
+        //reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, false)
         userService.updateUser(userUpdate)
         userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
         pwdHistory = userEntity.getPasswordHistory()
@@ -192,10 +192,10 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
     }
 
     def "getUserById loading without password history"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
+        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, false)
+        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
+        //reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        //reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
 
         User user = utils.createGenericUserAdmin()
         com.rackspace.idm.domain.entity.User userUpdate = new com.rackspace.idm.domain.entity.User().with {

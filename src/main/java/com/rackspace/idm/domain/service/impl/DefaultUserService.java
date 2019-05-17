@@ -410,7 +410,7 @@ public class DefaultUserService implements UserService {
             }
 
             // Apply password rotation policy if applicable
-            if (domain != null && identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordExpiration()) {
+            if (domain != null ) {
                 DateTime pwdExpireDate = getPasswordExpiration(user, domain);
                 boolean expired = isPasswordExpired(user, domain);
                 if (pwdExpireDate != null) {
@@ -1093,8 +1093,6 @@ public class DefaultUserService implements UserService {
         user.setPasswordHistory(currentUser.getPasswordHistory());
         List<String> userPasswordHistory = currentUser.getPasswordHistory();
 
-        if (identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordExpiration()
-                || identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordHistory()) {
 
             // Pull history policy from user's domain
             String domainForPolicy = StringUtils.isNotEmpty(user.getDomainId()) ? user.getDomainId() : currentUser.getDomainId();
@@ -1105,8 +1103,7 @@ public class DefaultUserService implements UserService {
                     PasswordPolicy policy = domain.getPasswordPolicy();
 
                     // History is only enforced if the application wide feature is enabled AND the user's domain uses it
-                    boolean historyEnforced = identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordHistory()
-                            && policy.calculateEffectivePasswordHistoryRestriction() >= 0;
+                    boolean historyEnforced = policy.calculateEffectivePasswordHistoryRestriction() >= 0;
 
                     // User can't set password to existing password when password policy is not null regardless of whether
                     // rotation/history enforcement is actually used
@@ -1135,7 +1132,6 @@ public class DefaultUserService implements UserService {
                     }
                 }
             }
-        }
     }
 
     /**

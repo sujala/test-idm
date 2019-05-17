@@ -72,7 +72,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
             Store the password in the history for the user if enabled. This is done
             regardless of whether the individual user has a password policy in effect.
              */
-            if (identityConfig.getReloadableConfig().maintainPasswordHistory()) {
+
                 // Add the password to the history list and limit to 10
                 String hashedPwd = cryptHelper.createLegacySHA(user.getPassword());
                 List<String> history = user.getPasswordHistory();
@@ -88,7 +88,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
                     history = new ArrayList(history.subList(history.size() - maxhistory, history.size()));
                     user.setPasswordHistory(history);
                 }
-            }
+
         }
     }
 
