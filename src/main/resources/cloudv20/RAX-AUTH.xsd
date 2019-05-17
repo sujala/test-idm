@@ -32,6 +32,7 @@
     <attribute name="tenantAlias" type="xsd:string" />
     <attribute name="multiFactorEnabled" type="xsd:boolean"/>
     <attribute name="multiFactorState" type="RAX-AUTH:MultiFactorStateEnum" />
+    <attribute name="phonePinState" type="RAX-AUTH:PhonePinStateEnum" />
     <attribute name="userMultiFactorEnforcementLevel" type="RAX-AUTH:UserMultiFactorEnforcementLevelEnum" />
     <attribute name="scope" type="RAX-AUTH:ScopeEnum" />
     <attribute name="federationType" type="RAX-AUTH:IdentityProviderFederationTypeEnum" />
@@ -261,6 +262,14 @@
 
     <simpleType name="MultiFactorStateEnum">
         <restriction base="xsd:string">
+            <enumeration value="ACTIVE"/>
+            <enumeration value="LOCKED"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="PhonePinStateEnum">
+        <restriction base="xsd:string">
+            <enumeration value="INACTIVE"/>
             <enumeration value="ACTIVE"/>
             <enumeration value="LOCKED"/>
         </restriction>

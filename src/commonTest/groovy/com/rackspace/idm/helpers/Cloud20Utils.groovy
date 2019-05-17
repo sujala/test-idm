@@ -1139,18 +1139,11 @@ class Cloud20Utils {
     def getUsersByEmail(String email, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
         def response = methods.getUsersByEmail(token, email, mediaType)
         assert (response.status == SC_OK)
+        def userList = response.getEntity(UserList)
         if (mediaType == APPLICATION_XML_TYPE) {
-            List<User> users = response.getEntity(UserList).value.user
-            return users
-        } else {
-            return new ObjectMapper().readValue(response.getEntity(String), Map)
+            userList = userList.value
         }
-    }
-
-    def getUserByEmail(String email, String token=getServiceAdminToken()){
-        def users = getUsersByEmail(email, token)
-        assert (users.size() == 1)
-        users.get(0)
+        userList.user
     }
 
     def listUsers(String token=getServiceAdminToken(), MediaType mediaType = MediaType.APPLICATION_XML_TYPE){

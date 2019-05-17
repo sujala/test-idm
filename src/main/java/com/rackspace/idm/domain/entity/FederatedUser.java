@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.entity;
 
 import com.google.common.collect.ImmutableSet;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;

@@ -87,17 +87,18 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         response = cloud20.validateToken(utils.getServiceAdminToken(), token, accept)
         assert (response.status == SC_OK)
 
-        validateResponse = getEntity(response, AuthenticateResponse)
+        AuthenticateResponse validateResponseEntity = getEntity(response, AuthenticateResponse)
 
         then:
-        validateResponse != null
-        validateResponse.token.authenticatedBy.credential.contains("PASSWORD")
+        validateResponseEntity != null
+        validateResponseEntity.token.authenticatedBy.credential.contains("PASSWORD")
+        validateResponseEntity.user.phonePinState != null
 
         validateIssued(token, authenticateResponse, issued)
-        validateIssued(token, validateResponse, issued)
+        validateIssued(token, validateResponseEntity, issued)
 
         // Validates the expiration time for "User"
-        def deltaInSeconds = (validateResponse.token.expires.toGregorianCalendar().timeInMillis - System.currentTimeMillis()) / 1000
+        def deltaInSeconds = (validateResponseEntity.token.expires.toGregorianCalendar().timeInMillis - System.currentTimeMillis()) / 1000
         deltaInSeconds < expirationTimeInSeconds + marginOfErrorInSeconds
         deltaInSeconds > expirationTimeInSeconds - marginOfErrorInSeconds
 

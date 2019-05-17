@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
 import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.domain.service.DomainSubUserDefaults;
 import com.unboundid.ldap.sdk.DN;

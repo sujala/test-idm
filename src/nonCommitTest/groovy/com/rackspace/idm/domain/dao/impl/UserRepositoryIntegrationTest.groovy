@@ -1,10 +1,10 @@
 package com.rackspace.idm.domain.dao.impl
 
+
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.GroupDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.Group
-import com.rackspace.idm.domain.entity.PhonePinStateEnum
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.EncryptionService
 import com.rackspace.idm.helpers.CloudTestUtils
@@ -79,7 +79,7 @@ class UserRepositoryIntegrationTest extends Specification {
         retrievedUser.getPasswordFailureDate() == null
 
         and: "phone pin attributes defaulted appropriately"
-        retrievedUser.getPhonePinState() == PhonePinStateEnum.INACTIVE
+        retrievedUser.getPhonePinState() == com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum.INACTIVE
         retrievedUser.getPhonePin() == null
         retrievedUser.getPhonePinAuthenticationFailureCount() == 0
         retrievedUser.getPhonePinAuthenticationLastFailureDate() == null

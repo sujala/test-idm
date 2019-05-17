@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.converter.cloudv20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
@@ -23,6 +24,7 @@ import org.openstack.docs.identity.api.v2.RoleList
 import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.xml.datatype.DatatypeFactory
 
@@ -275,6 +277,26 @@ class UserConverterCloudV20Test extends Specification {
         then:
         user.id == userEntity.id
         user.username == userEntity.name
+    }
+
+    /**
+     * Auth/Validate both use this service to generate the user returned in the auth/validate responses. This test
+     * therefore validates that the phone pin state is returned appropriately.
+     */
+    @Unroll
+    def "toUserForAuthenticateResponse: Sets phone pin state on user returned for auth/validate response appropriately"() {
+        given:
+        User user = Mock()
+
+        when:
+        org.openstack.docs.identity.api.v2.UserForAuthenticateResponse userEntity = converterCloudV20.toUserForAuthenticateResponse(user, null)
+
+        then:
+        1 * user.getPhonePinState() >> state
+        userEntity.phonePinState == state
+
+        where:
+        state << PhonePinStateEnum.values()
     }
 
     def "convert user from ldap to UserForAuthenticateResponse (racker) jersey object"() {
