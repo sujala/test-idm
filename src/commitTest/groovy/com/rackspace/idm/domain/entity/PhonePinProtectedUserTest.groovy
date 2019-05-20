@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.idm.GlobalConstants
 import spock.lang.Specification
 import spock.lang.Unroll

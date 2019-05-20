@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
+
 public interface PhonePinProtectedUser {
     String getPhonePin();
     void setPhonePin(String phonePin);

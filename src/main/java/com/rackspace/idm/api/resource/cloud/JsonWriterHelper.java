@@ -169,6 +169,9 @@ public final class JsonWriterHelper {
                 outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_TYPE, user.getFactorType().name());
             }
         }
+        if (user.getPhonePinState() != null) {
+            outer.put(JSONConstants.RAX_AUTH_PHONE_PIN_STATE, user.getPhonePinState().name());
+        }
 
         //display the user multifactor enforcement level if it's non-null regardless of the mfa setting
         if (user.getUserMultiFactorEnforcementLevel() != null) {
@@ -310,6 +313,10 @@ public final class JsonWriterHelper {
 
         if (user.getPhonePin() != null) {
             userInner.put(JSONConstants.RAX_AUTH_PHONE_PIN, user.getPhonePin());
+        }
+
+        if (user.getPhonePinState() != null) {
+            userInner.put(JSONConstants.RAX_AUTH_PHONE_PIN_STATE, user.getPhonePinState().name());
         }
 
         return userInner;

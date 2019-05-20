@@ -438,7 +438,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
                 }
             }
         }
-        def expectedUnverifiedUserProperties = ['id', 'email', 'enabled', 'RAX-AUTH:defaultRegion', 'RAX-AUTH:domainId', 'RAX-AUTH:unverified']
+        def expectedUnverifiedUserProperties = ['id', 'email', 'enabled', 'RAX-AUTH:defaultRegion', 'RAX-AUTH:domainId', 'RAX-AUTH:unverified', 'RAX-AUTH:phonePinState']
 
         when:
         def response = cloud20.createUnverifiedUser(utils.getServiceAdminToken(), userReq, MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_JSON_TYPE)

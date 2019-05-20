@@ -1,9 +1,9 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.FederatedUser
-import com.rackspace.idm.domain.entity.PhonePinStateEnum
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.NoPinSetException
 import com.rackspace.idm.exception.NotFoundException

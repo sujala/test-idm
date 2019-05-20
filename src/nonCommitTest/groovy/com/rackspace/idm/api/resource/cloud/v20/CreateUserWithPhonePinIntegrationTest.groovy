@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.service.UserService
@@ -56,30 +57,34 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         def response = cloud20.authenticate(user.username, Constants.DEFAULT_PASSWORD, contentType)
         AuthenticateResponse authResponse = testUtils.getEntity(response, AuthenticateResponse)
 
-        then: "returns phone pin"
+        then: "returns phone pin and state"
         authResponse.user.phonePin != null
+        authResponse.user.phonePinState != null
 
         when: "validate"
         response = cloud20.validateToken(utils.getServiceAdminToken(), authResponse.token.id, contentType)
         AuthenticateResponse validateResponse = testUtils.getEntity(response, AuthenticateResponse)
 
-        then: "returns phone pin"
+        then: "returns phone pin and state"
         validateResponse.user.phonePin != null
+        validateResponse.user.phonePinState != null
 
         when: "validate impersonated token"
         ImpersonationResponse impersonationResponse = utils.impersonateWithRacker(user)
         response = cloud20.validateToken(utils.getServiceAdminToken(), impersonationResponse.token.id, contentType)
         validateResponse = testUtils.getEntity(response, AuthenticateResponse)
 
-        then: "does not return phone pin"
+        then: "does not return phone pin, but does return state"
         validateResponse.user.phonePin == null
+        validateResponse.user.phonePinState != null
 
         when: "validate federated user"
         response = cloud20.validateToken(utils.getServiceAdminToken(), federatedAuthResponse.token.id, contentType)
         validateResponse = testUtils.getEntity(response, AuthenticateResponse)
 
-        then: "return phone pin"
+        then: "return phone pin and state"
         validateResponse.user.phonePin != null
+        validateResponse.user.phonePinState != null
 
         cleanup:
         utils.deleteUser(user)
@@ -184,6 +189,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         def phonePin = "236972"
         def userForCreate = v2Factory.userForCreate(testUtils.getRandomUUID('userWithPin'), null, "test@racksapce.com", true, "ORD", domainId, Constants.DEFAULT_PASSWORD).with {
             it.phonePin = phonePin
+            it.phonePinState == PhonePinStateEnum.LOCKED
             it
         }
 
@@ -210,6 +216,9 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
 
         then: "assert phone pin set on user"
         userAdmin.phonePin == phonePin
+
+        and: "Phone pin state in creation request was ignored and is returned correctly"
+        userAdmin.phonePinState == PhonePinStateEnum.ACTIVE
 
         when: "userAdmin without 'identity:phone-pin-admin' role"
         userForCreate.username = testUtils.getRandomUUID('userManager')

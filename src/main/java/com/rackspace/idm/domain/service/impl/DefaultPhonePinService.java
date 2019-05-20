@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.IdentityUserDao;

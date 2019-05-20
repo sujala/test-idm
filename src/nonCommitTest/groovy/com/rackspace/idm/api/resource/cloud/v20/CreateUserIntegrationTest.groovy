@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
@@ -1190,23 +1191,26 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsersQuietly([defaultUser, userAdmin, idmAdmin] as List<User>)
     }
 
-    def "users cannot be created with factorType"() {
+    def "users cannot be created with factorType or phone pin state"() {
         given:
         def domainId = utils.createDomain()
         def identityAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("idmAdmin"), "display", "email@email.com", true, null, null, DEFAULT_PASSWORD).with {
             it.factorType = FactorTypeEnum.OTP
+            it.phonePinState == PhonePinStateEnum.LOCKED
             it
         }
         def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.factorType = FactorTypeEnum.OTP
+            it.phonePinState == PhonePinStateEnum.LOCKED
             it
         }
         def defaultUserToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("defaultUser"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.factorType = FactorTypeEnum.OTP
+            it.phonePinState == PhonePinStateEnum.LOCKED
             it
         }
 
-        when: "try to create the identity admin with factor type"
+        when: "try to create the identity admin with factor type and phone pin state"
         def response = cloud20.createUser(utils.getServiceAdminToken(), identityAdminToCreate)
 
         then: "identity admin created but mfa enforcement level not set"
@@ -1214,13 +1218,16 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def idmAdmin = response.getEntity(User).value
         idmAdmin.factorType == null
 
+        and: "pin state in creation request is ignored, returned appropriately"
+        idmAdmin.phonePinState == PhonePinStateEnum.ACTIVE
+
         when:
         def authResponse = cloud20.authenticate(idmAdmin.username, DEFAULT_PASSWORD)
 
         then: "success"
         authResponse.status == 200
 
-        when: "try to create the user admin with mfa factor type"
+        when: "try to create the user admin with mfa factor type and phone pin state"
         response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
 
         then: "user admin created but mfa enforcement level not set"
@@ -1228,19 +1235,25 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def userAdmin = response.getEntity(User).value
         userAdmin.factorType == null
 
+        and: "pin state in creation request is ignored, returned appropriately"
+        userAdmin.phonePinState == PhonePinStateEnum.ACTIVE
+
         when:
         authResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
 
         then: "success"
         authResponse.status == 200
 
-        when: "try to create the defualt user with mfa factor type"
+        when: "try to create the defualt user with mfa factor type and phone pin state"
         response = cloud20.createUser(utils.getToken(userAdmin.username), defaultUserToCreate)
 
         then: "default user created but mfa enforcement level not set"
         response.status == 201
         def defaultUser = response.getEntity(User).value
         defaultUser.factorType == null
+
+        and: "pin state in creation request is ignored, returned appropriately"
+        defaultUser.phonePinState == PhonePinStateEnum.ACTIVE
 
         when:
         authResponse = cloud20.authenticate(defaultUser.username, DEFAULT_PASSWORD)

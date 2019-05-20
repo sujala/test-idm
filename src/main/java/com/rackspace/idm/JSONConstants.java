@@ -233,6 +233,10 @@ public final class JSONConstants {
     public static final String PHONE_PIN = "phonePin";
     public static final String RAX_AUTH_PHONE_PIN = "RAX-AUTH:" + PHONE_PIN;
 
+    public static final String PHONE_PIN_STATE = "phonePinState";
+    public static final String RAX_AUTH_PHONE_PIN_STATE = "RAX-AUTH:" + PHONE_PIN_STATE;
+
+
     public static final String OTP_DEVICES = "otpDevices";
     public static final String RAX_AUTH_OTP_DEVICES = "RAX-AUTH:otpDevices";
 
@@ -339,6 +343,8 @@ public final class JSONConstants {
     public static final String USER_RAX_AUTH_MULTI_FACTOR_ENFORCEMENT_LEVEL_PATH = "user.RAX-AUTH:userMultiFactorEnforcementLevel";
     public static final String USER_PHONE_PIN_PATH = "user.phonePin";
     public static final String USER_RAX_AUTH_PHONE_PIN_PATH = "user.RAX-AUTH:phonePin";
+    public static final String USER_RAX_AUTH_PHONE_PIN_STATE_PATH = "user.RAX-AUTH:phonePinState";
+    public static final String USER_PHONE_PIN_STATE_PATH = "user.phonePinState";
 
     public static final String TENANT_DOMAIN_ID_PATH = "tenant.domainId";
     public static final String TENANT_RAX_AUTH_DOMAIN_ID_PATH = "tenant.RAX-AUTH:domainId";
