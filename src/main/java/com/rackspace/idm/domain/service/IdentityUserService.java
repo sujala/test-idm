@@ -303,6 +303,13 @@ public interface IdentityUserService {
      * @param user
      */
     void updateFederatedUser(FederatedUser user);
+
+    /**
+     * A pass-through service to update an end user in the backend.
+     *
+     * @param user
+     */
+    void updateEndUser(EndUser user);
 }
 
 

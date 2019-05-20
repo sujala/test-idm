@@ -896,6 +896,37 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         featureEnabled << [true, false]
     }
 
+    def "listUsers: Standard response attributes returned; mediaType = #mediaType"() {
+        given:
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        when: "Get user by name"
+        def user = utils.getUserByName(userAdmin.username, userAdminToken, mediaType)
+
+        then:
+        user.phonePinState != null
+
+        when: "Get user by email"
+        List<User> userList = utils.getUsersByEmail(userAdmin.email, userAdminToken, mediaType)
+
+        then:
+        userList.each {
+            assert it.phonePinState != null
+        }
+
+        when: "List Users"
+        userList = utils.listUsers(userAdminToken, mediaType)
+
+        then:
+        userList.each {
+            assert it.phonePinState != null
+        }
+
+        where:
+        mediaType << [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]
+    }
+
     def getUsersFromListUsers(response) {
         if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
             return response.getEntity(UserList).value

@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*
+import unittest
+
 from qe_coverage.opencafe_decorators import tags, unless_coverage
-from nose.plugins.skip import SkipTest
 
 from tests.api.v2 import base
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
+@unittest.skip(
+    "skipping until feature.enable.use.role.for.domain.management=true or "
+    "have seperate johny config"
+)
 class TestDomainTypeAttribute(base.TestBaseV2):
     """
     Test Domain Type Attribute
@@ -51,7 +56,6 @@ class TestDomainTypeAttribute(base.TestBaseV2):
             role_id = resp.json()[const.ROLES][0][const.ID]
         return role_id
 
-    @SkipTest
     @tags('positive', 'p1', 'regression')
     def test_update_domain(self):
         domain_req = requests.Domain(domain_type='PUBLIC_CLOUD_US')
@@ -60,7 +64,6 @@ class TestDomainTypeAttribute(base.TestBaseV2):
         self.assertEqual(
             resp.json()[const.RAX_AUTH_DOMAIN][const.TYPE], 'PUBLIC_CLOUD_US')
 
-    @SkipTest
     @tags('positive', 'p1', 'regression')
     def test_existing_domain_type_cannot_be_updated(self):
 
@@ -73,7 +76,6 @@ class TestDomainTypeAttribute(base.TestBaseV2):
             "Error code: 'GEN-000'; Domain '{0}' already has type"
             " 'PUBLIC_CLOUD_US' and cannot be updated.".format(self.domain_id))
 
-    @SkipTest
     @tags('positive', 'p1', 'regression')
     def test_get_domain(self):
         resp = self.identity_admin_client.get_domain(domain_id=self.domain_id)
@@ -83,7 +85,6 @@ class TestDomainTypeAttribute(base.TestBaseV2):
         self.assertEqual(
             resp.json()[const.RAX_AUTH_DOMAIN][const.TYPE], 'PUBLIC_CLOUD_US')
 
-    @SkipTest
     @tags('positive', 'p1', 'regression')
     def test_list_domains(self):
         resp = self.identity_admin_client.list_domains()
@@ -93,7 +94,6 @@ class TestDomainTypeAttribute(base.TestBaseV2):
             if domain[const.ID] == self.domain_id:
                 self.assertEqual(domain[const.TYPE], 'PUBLIC_CLOUD_US')
 
-    @SkipTest
     @tags('positive', 'p1', 'regression')
     def test_accessible_domains_for_user(self):
         user_name = self.generate_random_string()

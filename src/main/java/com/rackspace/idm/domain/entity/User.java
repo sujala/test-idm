@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 import com.google.common.collect.ImmutableSet;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.GlobalConstants;
@@ -63,6 +64,16 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private byte[] encryptedPhonePin;
     private String phonePin;
+
+    @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_FAILURE_COUNT,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED, defaultDecodeValue = "0", defaultEncodeValue = "0")
+    private Integer phonePinAuthenticationFailureCount;
+
+    @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_LAST_FAILURE_DATE,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    private Date phonePinAuthenticationLastFailureDate;
 
     private String password;
 
@@ -323,6 +334,37 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
 
     public Password getPasswordObj() {
         return new Password(password, passwordIsNew, passwordLastUpdated, passwordWasSelfUpdated);
+    }
+
+    public PhonePinStateEnum getPhonePinState() {
+        if (StringUtils.isEmpty(phonePin)) {
+            return PhonePinStateEnum.INACTIVE;
+        }
+        if (phonePinAuthenticationFailureCount != null && phonePinAuthenticationFailureCount >= GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD) {
+            return PhonePinStateEnum.LOCKED;
+        }
+        return PhonePinStateEnum.ACTIVE;
+     }
+
+    public int getPhonePinAuthenticationFailureCount() {
+        return phonePinAuthenticationFailureCount == null ? 0 : phonePinAuthenticationFailureCount.intValue();
+    }
+
+    /**
+     * Increment the counter and record the timestamp.
+     */
+    @Override
+    public void recordFailedPinAuthentication() {
+        phonePinAuthenticationFailureCount = getPhonePinAuthenticationFailureCount() + 1;
+        phonePinAuthenticationLastFailureDate = new Date();
+    }
+
+    /**
+     * Set the failure count to zero, but do not clear out the last failure timestamp.
+     */
+    @Override
+    public void recordSuccessfulPinAuthentication() {
+        phonePinAuthenticationFailureCount = 0;
     }
 
     public void setUserPassword(String password) {

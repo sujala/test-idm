@@ -1,7 +1,7 @@
 def build(scm) {
 
     library "tesla@v0.8.2"
-    library "customer-identity@0.1.0"
+    library "customer-identity@0.3.0"
 
     try {
 
@@ -56,7 +56,7 @@ def build(scm) {
             jenkinsBuildSteps.deploySandboxEnvironment(releaseName)
 
             // Run Johnny tests
-            jenkinsBuildSteps.runJohnnyTests(scm)
+            jenkinsBuildSteps.runJohnnyTests(scm, 'py35')
         } finally {
             jenkinsBuildSteps.destroySandboxEnv(releaseName)
         }

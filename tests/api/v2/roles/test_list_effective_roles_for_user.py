@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 
@@ -50,7 +50,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         self.tenant_ids = []
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_effective_roles_for_default_user(self):
         # create and add role to user
         role_name = self.create_role_and_add_to_user(
@@ -300,7 +300,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         )
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_effective_roles_for_manage_user(self):
         # create and add role to user
         role_name = self.create_role_and_add_to_user(
@@ -497,7 +497,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         )
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_effective_roles_mpc_whitelist_filter(self):
 
         self.sub_user_client = self.generate_client(
@@ -554,7 +554,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         return role_id
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_effective_roles_for_admin_user(self):
         # create and add role to user
         role_name = self.create_role_and_add_to_user(

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -90,25 +90,24 @@ class TestListDelegates(delegation.TestBaseDelegation):
         return user_group_resp.json()[const.RAX_AUTH_USER_GROUP][const.ID]
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_delegates(self):
         # get all delegates
         resp = self.user_admin_client.list_delegates_for_delegation_agreement(
             self.da_id
         )
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
 
         assert_user_group_is_returned = False
         assert_user_is_returned = False
 
         for delegate in resp.json()[const.DELEGATE_REFERENCES]:
             if delegate[const.DELEGATE_TYPE] == const.USER.upper():
-                self.assertEquals(delegate[const.DELEGATE_ID],
-                                  self.sub_user_id)
+                self.assertEqual(delegate[const.DELEGATE_ID], self.sub_user_id)
                 assert_user_is_returned = True
             elif delegate[const.DELEGATE_TYPE] == const.USER_GROUP:
-                self.assertEquals(delegate[const.DELEGATE_ID],
-                                  self.user_group_id)
+                self.assertEqual(delegate[const.DELEGATE_ID],
+                                 self.user_group_id)
                 assert_user_group_is_returned = True
 
         self.assertBoolean('true', assert_user_group_is_returned)
@@ -123,18 +122,18 @@ class TestListDelegates(delegation.TestBaseDelegation):
         resp = self.user_admin_client.list_delegates_for_delegation_agreement(
             self.da_id
         )
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         assert_user_group_is_returned = False
         assert_user_is_returned = False
 
         for delegate in resp.json()[const.DELEGATE_REFERENCES]:
             if delegate[const.DELEGATE_TYPE] == const.USER.upper():
-                self.assertEquals(delegate[const.DELEGATE_ID],
-                                  self.sub_user_id)
+                self.assertEqual(delegate[const.DELEGATE_ID],
+                                 self.sub_user_id)
                 assert_user_is_returned = True
             elif delegate[const.DELEGATE_TYPE] == const.USER_GROUP:
-                self.assertEquals(delegate[const.DELEGATE_ID],
-                                  self.user_group_id)
+                self.assertEqual(delegate[const.DELEGATE_ID],
+                                 self.user_group_id)
                 assert_user_group_is_returned = True
 
         self.assertBoolean('true', assert_user_group_is_returned)

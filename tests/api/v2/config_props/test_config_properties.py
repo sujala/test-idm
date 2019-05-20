@@ -1,4 +1,4 @@
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
@@ -40,7 +40,7 @@ class TestConfigProperties(base.TestBaseV2):
                                 config_name))
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_get_config_properties(self):
         """
         Verify the response for get config properties api service

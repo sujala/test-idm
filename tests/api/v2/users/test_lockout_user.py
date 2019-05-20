@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -46,7 +46,7 @@ class TestLockoutUser(base.TestBaseV2):
         self.user_id = resp.json()[const.USER][const.ID]
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_lock_out_user(self):
         """Lock out user
         """
@@ -70,7 +70,7 @@ class TestLockoutUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 401)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_almost_lock_out_user(self):
         """Lock out user
         """

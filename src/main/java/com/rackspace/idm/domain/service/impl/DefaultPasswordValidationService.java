@@ -8,17 +8,11 @@ import com.rackspace.idm.domain.entity.ValidatePasswordResultBuilder;
 import com.rackspace.idm.domain.service.PasswordBlacklistService;
 import com.rackspace.idm.domain.service.PasswordValidationService;
 import com.rackspace.idm.validation.Validator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-
 @Component
 public class DefaultPasswordValidationService implements PasswordValidationService {
-
-    private static final Logger logger = LoggerFactory.getLogger(DefaultPasswordValidationService.class);
-
 
     @Autowired
     IdentityConfig identityConfig;
@@ -29,31 +23,24 @@ public class DefaultPasswordValidationService implements PasswordValidationServi
     @Autowired
     Validator validator;
 
-
     @Trace
     @Override
     public ValidatePasswordResult validatePassword(String password) {
 
-            boolean compositionCheckResult = validator.validatePasswordComposition(password);
+        // Do password composition check.
+        boolean compositionCheckResult = validator.validatePasswordComposition(password);
 
-            PasswordCheckResultTypeEnum blacklistCheckResult = PasswordCheckResultTypeEnum.SKIPPED;
+        PasswordCheckResultTypeEnum blacklistCheckResult = PasswordCheckResultTypeEnum.SKIPPED;
 
-            if (compositionCheckResult) {
-                blacklistCheckResult = passwordBlacklistService.checkPasswordInBlacklist(password);
-            }
+        // Do password blacklist check only if composition check passes .
+        if (compositionCheckResult) {
+            blacklistCheckResult = passwordBlacklistService.checkPasswordInBlacklist(password);
+        }
 
-            ValidatePasswordResult result = ValidatePasswordResultBuilder.builder()
-                    .withCompositionResult(compositionCheckResult)
-                    .withPasswordCheckResult(blacklistCheckResult)
-                    .build();
-
-            return result;
-
+        // Build and return ValidatePasswordResult object.
+        return ValidatePasswordResultBuilder.builder()
+                .withCompositionResult(compositionCheckResult)
+                .withPasswordCheckResult(blacklistCheckResult)
+                .build();
     }
-
-
-
-
-
-
 }

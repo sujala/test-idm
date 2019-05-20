@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
@@ -38,7 +38,7 @@ class TestGetDomain(base.TestBaseV2):
         return domain_id
 
     @tags('positive', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_get_domain(self):
         domain_id = self.create_domain()
         resp = self.identity_admin_client.get_domain(domain_id=domain_id)

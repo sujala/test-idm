@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
 import com.rackspace.idm.api.security.ImmutableTenantRole;
 import com.rackspace.idm.domain.service.DomainSubUserDefaults;
 import com.unboundid.ldap.sdk.DN;
@@ -131,5 +132,20 @@ public class ProvisionedUserDelegate implements EndUserDelegate {
     @Override
     public String getAuditContext() {
         return String.format("%s;delegationAgreementId=%s", originalEndUser.getAuditContext(), delegationAgreement.getId());
+    }
+
+    @Override
+    public PhonePinStateEnum getPhonePinState() {
+        return originalEndUser.getPhonePinState();
+    }
+
+    @Override
+    public void recordFailedPinAuthentication() {
+        originalEndUser.recordFailedPinAuthentication();
+    }
+
+    @Override
+    public void recordSuccessfulPinAuthentication() {
+        originalEndUser.recordSuccessfulPinAuthentication();
     }
 }

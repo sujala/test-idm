@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import func_helper
@@ -41,7 +41,7 @@ class AddUserGroupForDomain(base.TestBaseV2):
 
     @unless_coverage
     @ddt.data('user_admin', 'user_manager')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_add_and_get_user_group_for_domain(self, user_type):
 
         group_name = self.generate_random_string(

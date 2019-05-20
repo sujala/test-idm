@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -7,7 +7,7 @@ from tests.api.v2 import base
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
-import urlparse
+import urllib.parse
 from tests.api.v2.models import factory
 from tests.api.v1_1 import client
 import base64
@@ -22,19 +22,20 @@ class TestAuthWithDisabledTenant(base.TestBaseV2):
         """
         super(TestAuthWithDisabledTenant, cls).setUpClass()
         VERSION = 'v1.1'
-        url = urlparse.urljoin(
+        url = urllib.parse.urljoin(
             cls.identity_config.base_url, cls.identity_config.cloud_url)
-        url = urlparse.urljoin(url, VERSION)
+        url = urllib.parse.urljoin(url, VERSION)
         cls.identity_admin_client_v1_1 = client.IdentityAPIClient(
             url=url,
             serialize_format=cls.test_config.serialize_format,
             deserialize_format=cls.test_config.deserialize_format)
         username = cls.identity_config.identity_admin_user_name
         password = cls.identity_config.identity_admin_password
-        encrypted_password = (
-            base64.encodestring('{0}:{1}'.format(username, password))[:-1])
+        encrypted_password = base64.encodebytes(
+            '{0}:{1}'.format(username, password).encode('utf-8')
+        )[:-1]
         cls.identity_admin_client_v1_1.default_headers['Authorization'] = \
-            'Basic {0}'.format(encrypted_password)
+            'Basic {0}'.format(encrypted_password.decode())
 
     @unless_coverage
     def setUp(self):
@@ -59,7 +60,7 @@ class TestAuthWithDisabledTenant(base.TestBaseV2):
         self.tenant_ids = [item[const.ID] for item in tenants]
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_with_all_tenants_disabled(self):
         """
         Given a user has associated tenants, When all tenants are disabled
@@ -82,7 +83,7 @@ class TestAuthWithDisabledTenant(base.TestBaseV2):
         self.validate_nast_auth(expected_response=403)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_with_one_tenant_disabled(self):
         """
         Given a user has associated tenants And 1 or more of the tenants is

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -27,7 +27,7 @@ class TestServiceCatalogForImpersonation(base.TestBaseV2):
             client=self.identity_admin_client)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_display_catalog_for_impersonation_token(self):
 
         username = self.generate_random_string(pattern='Username[\w]{12}')

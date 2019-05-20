@@ -1806,16 +1806,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
-            // Verify user has appropriate role
-            if(identityConfig.getReloadableConfig().getEnableExternalUserIdpManagement()) {
-                authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
-                        IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
-                        IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
-                        IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
-                        IdentityRole.RCN_ADMIN.getRoleName()));
-            } else {
-                authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
-            }
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()));
 
             com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProviderWithMetadataById(providerId);
 
@@ -2971,17 +2966,23 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Must supply a Phone PIN.", ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
             }
 
+            VerifyPhonePinResult result = new VerifyPhonePinResult();
             try {
                 if (!phonePinService.verifyPhonePinOnUser(userId, phonePin.getPin())) {
-                    throw new BadRequestException(String.format("Incorrect Phone PIN."),
-                            ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+                    result.setAuthenticated(false);
+                    result.setFailureCode(ErrorCodes.ERROR_CODE_PHONE_PIN_INCORRECT);
+                    result.setFailureMessage(ErrorCodes.ERROR_MESSAGE_PHONE_PIN_INCORRECT);
+                } else {
+                    result.setAuthenticated(true);
                 }
-            } catch (NoPinSetException ex) {
+            } catch (NoPinSetException | PhonePinLockedException ex) {
                 // Convert to standard BadRequest to indicate verification failure, but provide reason.
-                throw new BadRequestException(ex.getRawMessage(), ex.getErrorCode());
+                result.setAuthenticated(false);
+                result.setFailureCode( ex.getErrorCode());
+                result.setFailureMessage(ex.getRawMessage());
             }
 
-            return Response.noContent();
+            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createVerifyPhonePinResult(result).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

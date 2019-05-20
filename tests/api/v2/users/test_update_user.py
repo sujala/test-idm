@@ -2,7 +2,7 @@ import copy
 from random import randrange
 
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
@@ -173,7 +173,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_info.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_identity_admin_with_its_token(self, test_data):
         """
         Test update user admin with its own token
@@ -220,7 +220,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_info.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_sub_user_with_its_token(self, test_data):
         """
         Test update sub user with its own token
@@ -244,7 +244,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_multi_attrs.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_identity_admin_user_multi_info_mfa_attrs(self, test_data):
         """Update identity admin user
 
@@ -324,7 +324,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_multi_attrs.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_default_user_multi_info_n_mfa_attrs(self, test_data):
         """Update identity admin user
 
@@ -357,7 +357,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_info_neg.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_identity_admin_user_neg(self, test_data):
         """
         Test with invalid data form json data file
@@ -390,7 +390,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_info_neg.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_default_user_neg(self, test_data):
         """
         Test with invalid data form json data file
@@ -468,7 +468,7 @@ class TestUpdateUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 403)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_update_phone_pin_on_user_manager(self):
         """
         User manager updating self pin via update user call
@@ -502,7 +502,7 @@ class TestUpdateUser(base.TestBaseV2):
         verify_req_obj = requests.PhonePin(new_pin)
         verify_pin_resp = self.identity_admin_client.verify_phone_pin_for_user(
             user_id=user_manager_id, request_object=verify_req_obj)
-        self.assertEqual(verify_pin_resp.status_code, 204)
+        self.assertEqual(verify_pin_resp.status_code, 200)
 
         # Negative case not covered in Groovy tests: Spaces in pin
         new_pin = ' 2211 '

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 import copy
 import ddt
 from qe_coverage.opencafe_decorators import tags, unless_coverage
@@ -167,7 +167,7 @@ class TestAddTenant(base.TestBaseV2):
         self.assertHeaders(response=resp)
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_tenant_with_non_existing_tenant_type(self):
 
         # Randomness is making sure it does not exist before. This avoids

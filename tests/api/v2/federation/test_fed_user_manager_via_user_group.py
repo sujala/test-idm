@@ -1,4 +1,4 @@
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -93,7 +93,7 @@ class TestFedUserManagerViaUserGroups(federation.TestBaseFederation):
         return sub_user_id
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_accesses_for_fed_user_manager_via_user_group(self):
 
         (pem_encoded_cert, cert_path, _, key_path,

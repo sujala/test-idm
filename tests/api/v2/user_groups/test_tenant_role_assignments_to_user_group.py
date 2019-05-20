@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.models import factory, responses
@@ -38,7 +38,7 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         return responses.UserGroup(create_group_resp.json())
 
     @unless_coverage
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     @ddt.data(True, False)
     def test_crud_tenant_role_assignments_to_user_group(
             self, assign_user_manager_role):
@@ -141,7 +141,7 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.assertEqual(assignments[0][const.FOR_TENANTS], ["*"])
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_add_and_delete_role_from_user_group_for_tenant(self):
         group = self.setup_user_group()
         role = self.create_role()

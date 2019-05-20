@@ -86,6 +86,7 @@ public class UserConverterCloudV20 {
         jaxbUser.setDomainId(user.getDomainId());
         jaxbUser.setContactId(user.getContactId());
         jaxbUser.setPhonePin(user.getPhonePin());
+        jaxbUser.setPhonePinState(user.getPhonePinState());
 
         String region = user.getRegion();
         if(org.apache.commons.lang.StringUtils.isBlank(region)) {
@@ -231,6 +232,7 @@ public class UserConverterCloudV20 {
             // Null out the registration code for unverified users
             jaxbUser.setRegistrationCode(null);
 
+            jaxbUser.setPhonePinState(user.getPhonePinState());
             jaxbUser.setMultiFactorState(basicMultiFactorService.getLogicalUserMultiFactorState(user));
             if (user.isMultiFactorEnabled()) {
                 jaxbUser.setFactorType(user.getMultiFactorTypeAsEnum());
