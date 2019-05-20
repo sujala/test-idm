@@ -5518,6 +5518,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
 
         where:
-        [contentType] << [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE].combinations()
+        [contentType] << [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]
     }
 }
