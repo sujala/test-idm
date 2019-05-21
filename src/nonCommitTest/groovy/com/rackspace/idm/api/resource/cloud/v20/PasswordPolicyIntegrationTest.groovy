@@ -510,7 +510,6 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
 
 
         when: "reset the password with new password when rotation enforced"
-        // reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, true)
         emailToken = getPasswordResetToken(user)
         response = cloud20.resetPassword(emailToken, v2Factory.createPasswordReset(passworda))
 
