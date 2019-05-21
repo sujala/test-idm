@@ -7,9 +7,7 @@ import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.PhonePinService;
-import com.rackspace.idm.exception.NoPinSetException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.PhonePinLockedException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.RandomGeneratorUtil;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -22,6 +20,7 @@ public class DefaultPhonePinService implements PhonePinService {
     public static final String PHONE_PIN_NOT_SET_AUDIT_MSG = "User has not set a Phone PIN.";
     public static final String PHONE_PIN_INCORRECT_NOW_LOCKED_AUDIT_MSG = "Incorrect Phone PIN provided. Maximum attempts reached. Phone PIN is now locked.";
     public static final String PHONE_PIN_LOCKED_AUDIT_MSG = "Phone PIN is locked.";
+    public static final String PHONE_PIN_IS_NOT_LOCKED_AUDIT_MSG = "Phone PIN is not locked.";
     public static final String PHONE_PIN_INCORRET_PIN_AUDIT_MSG = "Incorrect Phone PIN provided.";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -80,6 +79,27 @@ public class DefaultPhonePinService implements PhonePinService {
         identityUserService.updateEndUser(user);
 
         return false;
+    }
+
+    @Override
+    public void unlockPhonePin(String userId) {
+
+        EndUser user = identityUserService.checkAndGetEndUserById(userId);
+        Audit unlockPinAudit = Audit.unlockPhonePin(user);
+
+        if (user.getPhonePinState() == PhonePinStateEnum.INACTIVE) {
+            unlockPinAudit.fail(PHONE_PIN_NOT_SET_AUDIT_MSG);
+            throw new ForbiddenException(ErrorCodes.ERROR_CODE_PHONE_PIN_NOT_FOUND_MSG, ErrorCodes.ERROR_CODE_PHONE_PIN_NOT_FOUND);
+        }
+
+        if (user.getPhonePinState() == PhonePinStateEnum.LOCKED) {
+            user.recordSuccessfulPinAuthentication();
+            identityUserService.updateEndUser(user);
+            unlockPinAudit.succeed();
+        } else {
+            unlockPinAudit.fail(PHONE_PIN_IS_NOT_LOCKED_AUDIT_MSG);
+            throw new ForbiddenException(ErrorCodes.ERROR_MESSAGE_PHONE_PIN_NOT_LOCKED, ErrorCodes.ERROR_CODE_PHONE_PIN_NOT_LOCKED);
+        }
     }
 
     @Override

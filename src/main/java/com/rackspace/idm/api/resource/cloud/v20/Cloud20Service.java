@@ -266,6 +266,8 @@ public interface Cloud20Service {
 
     ResponseBuilder resetPhonePin(String authToken, String userId, boolean onlyIfMissing);
 
+    ResponseBuilder unlockPhonePin(String authToken, String userId);
+
     ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId, String serviceId,  boolean applyRcnRoles) ;
 
     ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String group, Integer marker, Integer limit) ;

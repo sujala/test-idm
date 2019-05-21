@@ -23,4 +23,6 @@ public interface PhonePinService {
     boolean verifyPhonePinOnUser(String userId, String pin);
     PhonePin checkAndGetPhonePin(PhonePinProtectedUser userId);
     String generatePhonePin();
+
+    void unlockPhonePin(String user);
 }

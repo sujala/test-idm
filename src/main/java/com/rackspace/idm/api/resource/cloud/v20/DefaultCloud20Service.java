@@ -3026,13 +3026,43 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (StringUtils.isEmpty(user.getPhonePin())) {
                     phonePinService.resetPhonePin((PhonePinProtectedUser) user);
                 } else {
-                    return exceptionHandler.conflictExceptionResponse(ErrorCodes.ERROR_CODE_USER_ALREADY_HAS_A_PHONE_PIN);
+                    return exceptionHandler.conflictExceptionResponse(ErrorCodes.ERROR_MESSAGE_USER_ALREADY_HAS_A_PHONE_PIN);
                 }
             } else {
                 phonePinService.resetPhonePin((PhonePinProtectedUser) user);
             }
 
             return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder unlockPhonePin(String authToken, String userId) {
+        try {
+            // VALIDATION 1: Token exists and is valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // VALIDATION 2:  request is not impersonated
+            if (requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest()) {
+                throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+            }
+
+            boolean isSelf = caller.getId().equals(userId);
+            boolean isPhonePinAdmin = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName());
+
+            // VALIDATION 3: Caller is self or has the role identity:phone-pin-admin
+            if (isSelf || isPhonePinAdmin) {
+                phonePinService.unlockPhonePin(userId);
+            } else {
+                String errMsg = NOT_AUTHORIZED_MSG;
+                logger.warn(errMsg);
+                throw new ForbiddenException(errMsg);
+            }
+            return Response.noContent();
+
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
