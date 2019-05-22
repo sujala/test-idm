@@ -429,7 +429,7 @@ class PhonePinServiceTest extends RootServiceTest {
         result.status == HttpStatus.SC_CONFLICT
         def responseEntity = result.getEntity()
         responseEntity.code == HttpStatus.SC_CONFLICT
-        responseEntity.message == "User already has a phone PIN"
+        responseEntity.message == "The user already has a phone PIN."
 
         where:
         pinState << [PhonePinStateEnum.ACTIVE, PhonePinStateEnum.LOCKED]
