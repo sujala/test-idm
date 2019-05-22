@@ -209,6 +209,8 @@ public class UserConverterCloudV20 {
 
     public User toUser(com.rackspace.idm.domain.entity.User user, boolean includeOtherAttributes) {
         User jaxbUser = mapper.map(user, User.class);
+
+        // Default is to never return the phone pin
         jaxbUser.setPhonePin(null);
 
         try {
@@ -267,6 +269,9 @@ public class UserConverterCloudV20 {
 
     public User toFederatedUser(FederatedUser user) {
         User jaxbUser = mapper.map(user, User.class);
+
+        // Default is to never return the phone pin
+        jaxbUser.setPhonePin(null);
 
         try {
             if (user.getCreated() != null) {

@@ -4,8 +4,19 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
 
 public interface PhonePinProtectedUser {
     String getPhonePin();
+
+    /**
+     * Standard setter for the phone pin. If the phone pin is currently not null, and the phone pin is being changed, must reset the
+     * failure count
+     *
+     * @param phonePin
+     */
     void setPhonePin(String phonePin);
 
+    /**
+     * Returns the phone pin state for the user.
+     * @return
+     */
     PhonePinStateEnum getPhonePinState();
 
     /**
@@ -19,4 +30,12 @@ public interface PhonePinProtectedUser {
      * Callers must then persist the user.
      */
     void recordSuccessfulPinAuthentication();
+
+    /**
+     * Updates the phone pin on the user. If the phone pin is currently not null and the phone pin is being changed,
+     * must reset the failure count. The caller must subsequently save the user.
+     *
+     * @param phonePin
+     */
+    void updatePhonePin(String phonePin);
 }

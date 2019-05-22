@@ -21,7 +21,9 @@ public interface PhonePinService {
      * @throws com.rackspace.idm.exception.NoPinSetException If the specified user does not have a pin set
      */
     boolean verifyPhonePinOnUser(String userId, String pin);
+
     PhonePin checkAndGetPhonePin(PhonePinProtectedUser userId);
+
     String generatePhonePin();
 
     void unlockPhonePin(String user);

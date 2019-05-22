@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Invite
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
@@ -1111,7 +1112,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         when: "accept invite"
         response = cloud20.acceptUnverifiedUserInvite(userForCreate, mediaType, mediaType)
-        def userEntity = testUtils.getEntity(response, User)
+        User userEntity = testUtils.getEntity(response, User)
 
         then:
         response.status == HttpStatus.SC_OK
@@ -1128,6 +1129,9 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         userEntity.registrationCode == null
         userEntity.password == null
 
+        and: "phone pin state is returned"
+        userEntity.phonePinState == PhonePinStateEnum.ACTIVE
+
         and: "assert create event is sent when unverified user accept invite"
         cloudFeedsMock.verify(
                 testUtils.createUserFeedsRequest(userEntity, EventType.CREATE),
@@ -1140,6 +1144,10 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
         then: "registration/invitesend attributes are now null"
         persistedUser.registrationCode == null
         persistedUser.inviteSendDate == null
+
+        and: "phone pin state is correct"
+        persistedUser.phonePinState == PhonePinStateEnum.ACTIVE
+        persistedUser.phonePinAuthenticationFailureCount == 0
 
         when: "retrieve secretQA"
         response = cloud20.getSecretQA(utils.identityAdminToken, userEntity.id)

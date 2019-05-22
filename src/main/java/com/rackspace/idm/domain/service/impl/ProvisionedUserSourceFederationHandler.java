@@ -455,7 +455,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         }
 
         // Generate phone pin
-        userToCreate.setPhonePin(phonePinService.generatePhonePin());
+        userToCreate.updatePhonePin(phonePinService.generatePhonePin());
 
         federatedUserDao.addUser(request.getIdentityProvider(), userToCreate);
 

@@ -11,6 +11,8 @@ import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.EndUserDelegateReference;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.PhonePinLockedException;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 import com.unboundid.ldap.sdk.DN;
@@ -348,6 +350,15 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
 
     public int getPhonePinAuthenticationFailureCount() {
         return phonePinAuthenticationFailureCount == null ? 0 : phonePinAuthenticationFailureCount.intValue();
+    }
+
+    @Override
+    public void updatePhonePin(String phonePin) {
+        // Only update the counter if the phone pin is changing from a non-null value to a new value
+        if (StringUtils.isNotBlank(this.phonePin) && !this.phonePin.equals(phonePin)) {
+            phonePinAuthenticationFailureCount = 0;
+        }
+        setPhonePin(phonePin);
     }
 
     /**
