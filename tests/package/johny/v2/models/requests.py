@@ -202,7 +202,7 @@ class UserAdd(base.AutoMarshallingModel):
                  email=None, enabled=None, mf_enabled=None,
                  user_mf_enforcement_level=None, factor_type=None,
                  display_name=None, roles=None,
-                 groups=None, secret_qa=None):
+                 groups=None, secret_qa=None, phone_pin=None):
         self.user_name = user_name
         self.domain_id = domain_id
         self.contact_id = contact_id
@@ -218,6 +218,7 @@ class UserAdd(base.AutoMarshallingModel):
         self.roles = roles
         self.groups = groups
         self.secret_qa = secret_qa
+        self.phone_pin = phone_pin
 
     def _obj_to_json(self):
         add_user_request = {
@@ -257,6 +258,9 @@ class UserAdd(base.AutoMarshallingModel):
             add_user_request[const.USER][const.NS_GROUPS] = self.groups
         if self.secret_qa:
             add_user_request[const.USER][const.NS_SECRETQA] = self.secret_qa
+        if self.phone_pin:
+            add_user_request[const.USER][
+                const.RAX_AUTH_PHONE_PIN] = self.phone_pin
         return json.dumps(add_user_request)
 
     def _obj_to_xml(self):
