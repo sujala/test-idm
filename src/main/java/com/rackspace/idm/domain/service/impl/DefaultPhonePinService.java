@@ -33,7 +33,7 @@ public class DefaultPhonePinService implements PhonePinService {
 
     @Override
     public PhonePin resetPhonePin(PhonePinProtectedUser user) {
-        user.setPhonePin(generatePhonePin());
+        user.updatePhonePin(generatePhonePin());
 
         identityUserDao.updateIdentityUser((BaseUser) user);
 

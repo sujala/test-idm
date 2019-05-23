@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.EmailDomains
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
@@ -30,6 +31,7 @@ import com.unboundid.ldap.sdk.DN
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang3.RandomStringUtils
+import org.apache.http.HttpStatus
 import org.dozer.DozerBeanMapper
 import org.joda.time.DateTime
 import org.opensaml.core.config.InitializationService
@@ -69,9 +71,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def setupSpec() {
         InitializationService.initialize()
-
         sharedRandom = ("$sharedRandomness").replace('-',"")
+    }
 
+    def setup() {
         //service being tested
         service = new DefaultCloud20Service()
 
@@ -83,9 +86,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         exceptionHandler = new ExceptionHandler()
         exceptionHandler.objFactories = objFactories
         service.exceptionHandler = exceptionHandler
-    }
 
-    def setup() {
         mockServices()
         mockMisc()
         service.requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(_) >> new UserScopeAccess()
@@ -2516,215 +2517,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         assert result.status == 403
     }
 
-    def "Reset phone pin verifies user level access throws NotAuthorizedException"() {
-        when:
-        def result = service.resetPhonePin(authToken, "userId", false).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken) >> { throw new NotAuthorizedException() }
-
-        assert result.status == 401
-    }
-
-    def "Reset phone pin returns 403 for a racker impersonated token"() {
-        given:
-        BaseUser caller = entityFactory.createUser().with {
-            it.uniqueId = "uniqueId"
-            it.id = "userId"
-            it
-        }
-        requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest() >> true
-
-        when:
-        def result = service.resetPhonePin(authToken, "userId", false).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken)
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-
-        assert result.status == 403
-    }
-
-    def "Reset phone pin returns 403 for default user"() {
-        given:
-        def caller = entityFactory.createUser()
-
-        when:
-        def result = service.resetPhonePin(authToken, "userId", false).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> IdentityUserTypeEnum.DEFAULT_USER
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
-
-        result.status == SC_FORBIDDEN
-    }
-
-    @Unroll
-    def "Reset phone pin returns 403 for self update #callerType"() {
-        given:
-        def caller = entityFactory.createUser()
-
-        when:
-        def result = service.resetPhonePin(authToken, caller.id, false).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
-
-        result.status == SC_FORBIDDEN
-
-        where:
-        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
-    }
-
-    @Unroll
-    def "Reset phone pin returns 403 for impersonated token #callerType"() {
-        given:
-        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
-        def user = entityFactory.createUser()
-
-        when:
-        def result = service.resetPhonePin(authToken, user.id, false).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
-        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> true
-
-        result.status == SC_FORBIDDEN
-
-        where:
-        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
-    }
-
-    @Unroll
-    def "Reset phone pin returns 404 for users outside the domain #callerType #domainId"() {
-        given:
-        def caller = entityFactory.createUser("caller", "callerId", domainId, "REGION")
-        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
-
-        when:
-        def result = service.resetPhonePin(authToken, user.id, false).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
-        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * identityUserService.checkAndGetUserById(user.id) >> user
-
-        result.status == SC_NOT_FOUND
-
-        where:
-        callerType                          | domainId
-        IdentityUserTypeEnum.USER_ADMIN     | null
-        IdentityUserTypeEnum.USER_ADMIN     | "domainId2"
-        IdentityUserTypeEnum.USER_MANAGER   | null
-        IdentityUserTypeEnum.USER_MANAGER   | "domainId2"
-    }
-
-    @Unroll
-    def "Reset phone pin returns 403 for users without precedence  #callerType"() {
-        given:
-        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
-        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
-
-        when:
-        def result = service.resetPhonePin(authToken, user.id, false).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
-        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * identityUserService.checkAndGetUserById(user.id) >> user
-        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user) >> {throw new ForbiddenException()}
-
-        result.status == SC_FORBIDDEN
-
-        where:
-        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
-    }
-
-    @Unroll
-    def "Reset phone pin returns 204 for valid authorization #callerType"() {
-        given:
-        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
-        def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
-
-        when:
-        def result = service.resetPhonePin(authToken, user.id, false).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
-        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * identityUserService.checkAndGetUserById(user.id) >> user
-        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
-        1 * phonePinService.resetPhonePin(user)
-
-        result.status == SC_NO_CONTENT
-
-        where:
-        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
-    }
-
-    @Unroll
-    def "Reset phone pin returns 204 with onlyIfMissing query param when pin is not set #callerType"() {
-        given:
-        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
-        def user = entityFactory.createUser("user", "userId", "domainId", "REGION").with {
-            it.phonePin = null
-            it
-        }
-
-        when:
-        def result = service.resetPhonePin(authToken, user.id, true).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
-        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * identityUserService.checkAndGetUserById(user.id) >> user
-        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
-        1 * phonePinService.resetPhonePin(user)
-
-        result.status == SC_NO_CONTENT
-
-        where:
-        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
-    }
-
-    @Unroll
-    def "Reset phone pin returns 409 with onlyIfMissing query param when pin is already set #callerType"() {
-        given:
-        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
-        def user = entityFactory.createUser("user", "userId", "domainId", "REGION").with {
-            it.phonePin = "123456"
-            it
-        }
-
-        when:
-        def result = service.resetPhonePin(authToken, user.id, true).build()
-
-        then:
-        1 * requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        1 * requestContext.getEffectiveCallerAuthorizationContext().getIdentityUserType() >> callerType
-        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> false
-        1 * requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest() >> false
-        1 * identityUserService.checkAndGetUserById(user.id) >> user
-        1 * precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(user)
-        0 * phonePinService.resetPhonePin(user)
-
-        result.status == SC_CONFLICT
-
-        where:
-        callerType << [IdentityUserTypeEnum.USER_ADMIN, IdentityUserTypeEnum.USER_MANAGER]
-    }
-
     def "getAdminsForDefaultUser - Non-Expired Fed users will return admins"() {
         given:
         allowUserAccess()
@@ -2949,7 +2741,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         users.user.size() == 1
     }
 
-    def "Disabling a enabled user sends an atom feed"(){
+    def "updateUser: Disabling a enabled user sends an atom feed"(){
         given:
         allowUserAccess()
         def converter = new UserConverterCloudV20()
@@ -2981,7 +2773,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.UPDATE, _)
     }
 
-    def "Update token format as a identity admin when ae tokens enabled doesn't reset the data"() {
+    def "updateUser: Update token format as a identity admin when ae tokens enabled doesn't reset the data"() {
         given:
         allowUserAccess()
 
@@ -3004,7 +2796,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         0 * userInput.setTokenFormat(_)
     }
 
-    def "Update token format as a service admin doesn't reset the data"() {
+    def "updateUser: Update token format as a service admin doesn't reset the data"() {
         given:
         allowUserAccess()
         authorizationService.authorizeCloudServiceAdmin(_) >> true
@@ -3028,7 +2820,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         0 * userInput.setTokenFormat(_)
     }
 
-    def "Update token format as a non service/identity admin reset the data"() {
+    def "updateUser: Update token format as a non service/identity admin reset the data"() {
         given:
         allowUserAccess()
         authorizationService.authorizeCloudServiceAdmin(_) >> false
@@ -3052,7 +2844,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userInput.setTokenFormat(null)
     }
 
-    def "Disabling a disabled user does not send an atom feed"(){
+    def "updateUser: Disabling a disabled user does not send an atom feed"(){
         given:
         allowUserAccess()
         service.userConverterCloudV20 = new UserConverterCloudV20()
@@ -3078,7 +2870,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         0 * atomHopperClient.asyncPost(_, _, _)
     }
 
-    def "Enabling a enabled user does not send an atom feed"(){
+    def "updateUser: Enabling a enabled user does not send an atom feed"(){
         given:
         allowUserAccess()
         service.userConverterCloudV20 = new UserConverterCloudV20()
@@ -3200,7 +2992,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * atomHopperClient.asyncPost(_, _, _)
     }
 
-    def "Enabling a disabled user does send an atom feed"(){
+    def "updateUser: Enabling a disabled user does send an atom feed"(){
         given:
         allowUserAccess()
         service.userConverterCloudV20 = Mock(UserConverterCloudV20)
@@ -3232,7 +3024,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * atomHopperClient.asyncPost(_, FeedsUserStatusEnum.UPDATE, _)
     }
 
-    def "Disabling a enabled user does send an atom feed"(){
+    def "updateUser: Disabling a enabled user does send an atom feed"(){
         given:
         allowUserAccess()
         service.userConverterCloudV20 = Mock(UserConverterCloudV20)
@@ -3396,6 +3188,42 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         response.status == 403
+    }
+
+    def "updateUser: Updating own phone pin resets failure count"(){
+        given:
+        allowUserAccess()
+        service.userConverterCloudV20 = Mock(UserConverterCloudV20)
+        UserForCreate user = new UserForCreate().with {
+            it.id = "2"
+            it.phonePin = "123654"
+            return it
+        }
+
+        // The "existing" user
+        User updateUser = entityFactory.createUser()
+        updateUser.id = user.id
+        updateUser.enabled = true
+        updateUser.phonePinAuthenticationFailureCount = 3
+        updateUser.phonePin ="987123"
+
+        User updatedUser = entityFactory.createUser()
+        updateUser.enabled = false
+        updateUser.id = 2
+
+        identityUserService.getEndUserById(_) >> updateUser
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> updateUser
+        service.userConverterCloudV20.fromUser(_) >> updatedUser
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
+
+        when:
+        service.updateUser(headers, authToken, "2", user)
+
+        then:
+        1 * userService.updateUser(_) >> {args ->
+            User userToUpdate = args[0]
+            assert userToUpdate.phonePinAuthenticationFailureCount == 0
+        }
     }
 
     def "addUserCredential validates that user to update matches credentials for passwordCredentials"() {
@@ -5717,6 +5545,98 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * validator20.validatePhonePin(user.phonePin)
     }
 
+    def "acceptUnverifiedUserInvite: Not allowed to update phone PIN if PIN is locked"() {
+        given:
+        // Setup mocks
+        mockJAXBObjectFactories(service)
+        service.userConverterCloudV20 = Mock(UserConverterCloudV20)
+
+        def userId = "id"
+        def registrationCode = "code"
+        UserForCreate user = new UserForCreate().with {
+            it.id = userId
+            it.username = "username"
+            it.registrationCode = registrationCode
+            it.password = "password"
+            it.secretQA = v2Factory.createSecretQA()
+            it.phonePin = "342156"
+            it
+        }
+        User entityUser = Mock()
+        entityUser.id >> userId
+        entityUser.registrationCode >> registrationCode
+        entityUser.inviteSendDate >> new Date()
+        entityUser.unverified >> true
+        entityUser.enabled >> false
+        entityUser.username >> null
+
+        identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 48
+        service.userConverterCloudV20.toUser(entityUser) >> v2Factory.createUser()
+        openStackIdentityV2Factory.createUser(_) >> new JAXBElement<User>(org.openstack.docs.identity.api.v2.ObjectFactory._User_QNAME, User.class, null, v2Factory.createUser())
+
+        when:
+        def responseBuilder = service.acceptUnverifiedUserInvite(headers, uriInfo(), user)
+        def response = responseBuilder.build()
+        def responseEntity = response.getEntity()
+
+        then:
+        1 * entityUser.phonePinState >> PhonePinStateEnum.LOCKED
+        0 * entityUser.updatePhonePin(user.phonePin)
+        0 * userService.updateUser(entityUser)
+        0 * validator20.validatePhonePin(user.phonePin)
+
+        and:
+        response.status == SC_FORBIDDEN
+        responseEntity.code == HttpStatus.SC_FORBIDDEN
+        responseEntity.message == "Error code: 'PP-004'; User's PIN is locked."
+    }
+
+    def "acceptUnverifiedUserInvite: When update phone PIN, call appropriate update PIN service"() {
+        given:
+        // Setup mocks
+        mockJAXBObjectFactories(service)
+        service.userConverterCloudV20 = Mock(UserConverterCloudV20)
+
+        def userId = "id"
+        def registrationCode = "code"
+        UserForCreate user = new UserForCreate().with {
+            it.id = userId
+            it.username = "username"
+            it.registrationCode = registrationCode
+            it.password = "password"
+            it.secretQA = v2Factory.createSecretQA()
+            it.phonePin = "342156"
+            it
+        }
+        User entityUser = Mock()
+        entityUser.id >> userId
+        entityUser.registrationCode >> registrationCode
+        entityUser.inviteSendDate >> new Date()
+        entityUser.unverified >> true
+        entityUser.enabled >> false
+        entityUser.username >> null
+
+        identityUserService.getProvisionedUserById(user.getId()) >> entityUser
+        identityConfig.getReloadableConfig().getUnverifiedUserInvitesTTLHours() >> 48
+        service.userConverterCloudV20.toUser(entityUser) >> v2Factory.createUser()
+        openStackIdentityV2Factory.createUser(_) >> new JAXBElement<User>(org.openstack.docs.identity.api.v2.ObjectFactory._User_QNAME, User.class, null, v2Factory.createUser())
+
+        when:
+        def response = service.acceptUnverifiedUserInvite(headers, uriInfo(), user).build()
+
+        then:
+        1 * entityUser.phonePinState >> PhonePinStateEnum.ACTIVE
+        1 * userService.updateUser(entityUser)
+        1 * validator20.validatePhonePin(user.phonePin)
+
+        and:
+        1 * entityUser.updatePhonePin(user.phonePin)
+
+        and: "results are appropriate"
+        response.status == SC_OK
+    }
+
     def "acceptUnverifiedUserInvite: error check"() {
         given:
         // Setup Mocks
@@ -7071,6 +6991,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         FederatedUser federatedUser = entityFactory.createFederatedUser().with {
             it.id = userId
             it.phonePin = "123786"
+            it.phonePinAuthenticationFailureCount = 3
             it
         }
 
@@ -7083,6 +7004,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> federatedUser
         2 * identityUserService.getEndUserById(userId) >> federatedUser
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+
+        and: "phone pin failure count is reset to 0"
+        federatedUser.phonePinAuthenticationFailureCount == 0
 
         when: "update federated user with phone pin as null"
         userForCreate.setPhonePin(null)
@@ -7115,8 +7039,25 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> otherUser
         2 * identityUserService.getEndUserById(userId) >> federatedUser
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
-    }
 
+        when: "Update just contactId on federated user"
+        federatedUser.phonePinAuthenticationFailureCount = 3
+        federatedUser.phonePin = "022776"
+        userForCreate.setPhonePin(null)
+        userForCreate.setContactId("12345")
+        service.updateUser(headers, authToken, userId, userForCreate).build()
+
+        then: "User is updated"
+        1 * identityUserService.updateFederatedUser(federatedUser)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> federatedUser
+        2 * identityUserService.getEndUserById(userId) >> federatedUser
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+
+        and: "phone pin is not changed"
+        federatedUser.phonePin == "022776"
+        federatedUser.phonePinAuthenticationFailureCount == 3
+        federatedUser.contactId == "12345"
+    }
 
     def "updateUser: Impersonated user cannot update phone pin"() {
         given:

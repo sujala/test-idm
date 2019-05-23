@@ -258,4 +258,13 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
     public void recordSuccessfulPinAuthentication() {
         phonePinAuthenticationFailureCount = 0;
     }
+
+    @Override
+    public void updatePhonePin(String phonePin) {
+        // Only update the counter if the phone pin is changing from a non-null value to a new value
+        if (StringUtils.isNotBlank(this.phonePin) && !this.phonePin.equals(phonePin)) {
+            phonePinAuthenticationFailureCount = 0;
+        }
+        setPhonePin(phonePin);
+    }
 }
