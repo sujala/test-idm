@@ -38,7 +38,17 @@ Dev Environment Setup
 Johny (integration) Tests
 -------------------------
 
-Pre-requisites: docker, python2.7, pip
+Pre-requisites: docker, python 3.5, pip, virtualenv
+
+```
+May need to install zlib and/or sqlite on mac before installing python 3.5
+$ brew install zlib
+$ export LDFLAGS="-L/usr/local/opt/zlib/lib -L/usr/local/opt/sqlite/lib"
+$ export CPPFLAGS="-I/usr/local/opt/zlib/include -I/usr/local/opt/sqlite/include"
+$ pyenv install 3.5.5
+
+# Can then create virtualenv (and pip install virtualenv in it)
+```
 
 CD into `tests/` directory
 
