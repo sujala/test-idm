@@ -81,7 +81,7 @@ class UserRepositoryIntegrationTest extends Specification {
         and: "phone pin attributes defaulted appropriately"
         retrievedUser.getPhonePinState() == com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum.INACTIVE
         retrievedUser.getPhonePin() == null
-        retrievedUser.getPhonePinAuthenticationFailureCount() == 0
+        retrievedUser.getPhonePinAuthenticationFailureCountNullSafe() == 0
         retrievedUser.getPhonePinAuthenticationLastFailureDate() == null
 
         when: "delete object already deleted when using recursion delete algorithm"
@@ -127,7 +127,7 @@ class UserRepositoryIntegrationTest extends Specification {
 
         then: "Pin attributes returned as expected"
         retrievedUser.getPhonePin() == user.phonePin
-        retrievedUser.getPhonePinAuthenticationFailureCount() == user.getPhonePinAuthenticationFailureCount()
+        retrievedUser.getPhonePinAuthenticationFailureCountNullSafe() == user.getPhonePinAuthenticationFailureCountNullSafe()
         retrievedUser.getPhonePinAuthenticationLastFailureDate().equals(user.getPhonePinAuthenticationLastFailureDate())
         retrievedUser.getPhonePinState() == user.getPhonePinState()
 

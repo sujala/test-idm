@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
@@ -13,6 +14,7 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
@@ -44,6 +46,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
     @Autowired TenantRoleDao tenantRoleDao
     @Autowired ApplicationService applicationService
     @Autowired ApplicationRoleDao applicationRoleDao
+    @Autowired IdentityUserService identityUserService
 
     @Unroll
     def "update user v1.1 without enabled attribute does not enable user, accept = #acceptContentType, request = #requestContentType"() {
@@ -962,6 +965,64 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(user)
     }
+
+    def "updateUser: Phone pin failed count is only modified if pin is changed to new value"() {
+        given:
+        def username = testUtils.getRandomUUID("username" )
+
+        when: "create initial user"
+        def apiInitialUser = utils.createUser(utils.getServiceAdminToken(), username)
+        def initialUserEntity = identityUserService.getEndUserById(apiInitialUser.id)
+
+        then: "stored user has phone pin created with failure count set to 0"
+        initialUserEntity.phonePin != null
+        initialUserEntity.phonePinAuthenticationFailureCount == 0
+
+        and: "phone pin is not returned in response, but state is active"
+        apiInitialUser.phonePin == null
+        apiInitialUser.phonePinState == PhonePinStateEnum.ACTIVE
+
+        when: "Failed pin verifications occur"
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin invalidPhonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
+            it.pin = "99999"
+            it
+        }
+        cloud20.verifyPhonePin(utils.getIdentityAdminToken(), apiInitialUser.id, invalidPhonePin)
+        def failedUserEntity = identityUserService.getEndUserById(apiInitialUser.id)
+
+        then: "stored user has failure count increased to 1"
+        failedUserEntity.phonePin == initialUserEntity.phonePin
+        failedUserEntity.phonePinAuthenticationFailureCount == 1
+
+        when: "Update user's pin to same value"
+        def selftoken = utils.authenticate(apiInitialUser.username, Constants.DEFAULT_PASSWORD).token.id
+        def apiRequestUpdateUser = new User().with {
+            it.phonePin = initialUserEntity.phonePin
+            it
+        }
+        def apiUserAfterSamePinUpdate = utils.updateUserWithToken(selftoken, apiInitialUser.id, apiRequestUpdateUser)
+        def userEntityAfterSamePinUpdate = identityUserService.getEndUserById(apiInitialUser.id)
+
+        then: "PIN stays same, but does not update failure count"
+        userEntityAfterSamePinUpdate.phonePin == initialUserEntity.phonePin
+        userEntityAfterSamePinUpdate.phonePinAuthenticationFailureCount == failedUserEntity.phonePinAuthenticationFailureCount
+
+        when: "Update user's pin to new value"
+        def apiRequestUpdateUserNewPin = new User().with {
+            it.phonePin = "129012"
+            it
+        }
+        def apiUserAfterNewPinUpdate = utils.updateUserWithToken(selftoken, apiInitialUser.id, apiRequestUpdateUserNewPin)
+        def userEntityAfterNewPinUpdate = identityUserService.getEndUserById(apiInitialUser.id)
+
+        then: "PIN is returned, but does not update failure count"
+        userEntityAfterNewPinUpdate.phonePin == apiRequestUpdateUserNewPin.phonePin
+        userEntityAfterNewPinUpdate.phonePinAuthenticationFailureCount == 0
+
+        cleanup:
+        utils.deleteUser(apiInitialUser)
+    }
+
 
     def "update username with correct access but invalid username returns correct error"() {
         given:

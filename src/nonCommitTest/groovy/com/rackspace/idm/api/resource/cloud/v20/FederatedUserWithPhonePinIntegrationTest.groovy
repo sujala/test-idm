@@ -104,10 +104,11 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         fedUser.salt != null
         fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
         fedUser.phonePin.isNumber()
+        fedUser.phonePinState == PhonePinStateEnum.ACTIVE
 
         and: "related attributes defaulted appropriately"
         fedUser.getPhonePinState() == PhonePinStateEnum.ACTIVE
-        fedUser.getPhonePinAuthenticationFailureCount() == 0
+        fedUser.getPhonePinAuthenticationFailureCountNullSafe() == 0
         fedUser.getPhonePinAuthenticationLastFailureDate() == null
 
         cleanup:

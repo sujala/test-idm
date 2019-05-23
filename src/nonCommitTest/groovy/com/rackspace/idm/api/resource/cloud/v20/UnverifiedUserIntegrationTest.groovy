@@ -1147,7 +1147,7 @@ class UnverifiedUserIntegrationTest extends RootIntegrationTest {
 
         and: "phone pin state is correct"
         persistedUser.phonePinState == PhonePinStateEnum.ACTIVE
-        persistedUser.phonePinAuthenticationFailureCount == 0
+        persistedUser.phonePinAuthenticationFailureCountNullSafe == 0
 
         when: "retrieve secretQA"
         response = cloud20.getSecretQA(utils.identityAdminToken, userEntity.id)

@@ -1246,7 +1246,7 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(RAX_KSKEY_API_KEY_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credential).post ClientResponse
     }
 
-    def impersonate(String token, User user, Integer expireTime = 10800, MediaType requestType=MediaType.APPLICATION_XML_TYPE, MediaType accept=MediaType.APPLICATION_XML_TYPE) {
+    def impersonate(String token, User user, Integer expireTime = 10800, MediaType requestType=APPLICATION_XML_TYPE, MediaType accept=APPLICATION_XML_TYPE) {
         initOnUse()
         def request = new ImpersonationRequest().with {
             it.user = new User().with {

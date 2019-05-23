@@ -4,7 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.openstack.docs.identity.api.v2.ForbiddenFault
@@ -208,7 +207,7 @@ class ResetPhonePinForUserIntegrationTest extends RootIntegrationTest {
         User userEntity = identityUserService.getEndUserById(user.id)
         userEntity.recordFailedPinAuthentication()
         identityUserService.updateEndUser(userEntity)
-        assert userEntity.phonePinAuthenticationFailureCount > 0
+        assert userEntity.phonePinAuthenticationFailureCountNullSafe > 0
 
         when: "reset phone pin"
         def response = cloud20.resetPhonePin(utils.getServiceAdminToken(), user.id, false, contentType)
@@ -218,7 +217,7 @@ class ResetPhonePinForUserIntegrationTest extends RootIntegrationTest {
 
         and:
         User userEntityAfter = identityUserService.getEndUserById(user.id)
-        userEntityAfter.phonePinAuthenticationFailureCount == 0
+        userEntityAfter.phonePinAuthenticationFailureCountNullSafe == 0
 
         cleanup:
         utils.deleteUser(user)

@@ -3201,19 +3201,20 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         }
 
         // The "existing" user
-        User updateUser = entityFactory.createUser()
-        updateUser.id = user.id
-        updateUser.enabled = true
-        updateUser.phonePinAuthenticationFailureCount = 3
-        updateUser.phonePin ="987123"
+        User existingUser = entityFactory.createUser()
+        existingUser.id = user.id
+        existingUser.enabled = true
+        existingUser.phonePinAuthenticationFailureCount = 3
+        existingUser.phonePin ="987123"
 
-        User updatedUser = entityFactory.createUser()
-        updateUser.enabled = false
-        updateUser.id = 2
+        User convertedUserForUpdate = entityFactory.createUser()
+        convertedUserForUpdate.id = user.id
+        convertedUserForUpdate.enabled = true
+        convertedUserForUpdate.phonePin = user.phonePin
 
-        identityUserService.getEndUserById(_) >> updateUser
-        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> updateUser
-        service.userConverterCloudV20.fromUser(_) >> updatedUser
+        identityUserService.getEndUserById(_) >> existingUser
+        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> existingUser
+        service.userConverterCloudV20.fromUser(_) >> convertedUserForUpdate
         authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
         when:
@@ -3221,8 +3222,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * userService.updateUser(_) >> {args ->
-            User userToUpdate = args[0]
-            assert userToUpdate.phonePinAuthenticationFailureCount == 0
+            User userStateForUpdate = args[0]
+            assert userStateForUpdate.phonePin == convertedUserForUpdate.phonePin
+            assert userStateForUpdate.phonePinAuthenticationFailureCountNullSafe == 0
         }
     }
 
@@ -7006,7 +7008,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
 
         and: "phone pin failure count is reset to 0"
-        federatedUser.phonePinAuthenticationFailureCount == 0
+        federatedUser.phonePinAuthenticationFailureCountNullSafe == 0
 
         when: "update federated user with phone pin as null"
         userForCreate.setPhonePin(null)
@@ -7055,7 +7057,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         and: "phone pin is not changed"
         federatedUser.phonePin == "022776"
-        federatedUser.phonePinAuthenticationFailureCount == 3
+        federatedUser.phonePinAuthenticationFailureCountNullSafe == 3
         federatedUser.contactId == "12345"
     }
 

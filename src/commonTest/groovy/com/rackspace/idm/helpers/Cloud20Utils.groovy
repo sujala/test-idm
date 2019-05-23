@@ -730,8 +730,8 @@ class Cloud20Utils {
         response.getEntity(ImpersonationResponse)
     }
 
-    ImpersonationResponse impersonate(String token, User user, Integer expireTime = 10800) {
-        def response = methods.impersonate(token, user, expireTime)
+    ImpersonationResponse impersonate(String token, User user, Integer expireTime = 10800, MediaType mediaType = APPLICATION_XML_TYPE) {
+        def response = methods.impersonate(token, user, expireTime, mediaType, mediaType)
         assert (response.status == SC_OK)
         response.getEntity(ImpersonationResponse)
     }
@@ -753,6 +753,13 @@ class Cloud20Utils {
 
     String getImpersonatedTokenWithToken(String token, User user) {
         impersonate(token, user).token.id
+    }
+
+    User updateUserWithToken(String token, String updateUserId, User user, MediaType mediaType = APPLICATION_XML_TYPE) {
+        def response = methods.updateUser(token, updateUserId, user, mediaType, mediaType)
+        assert (response.status == SC_OK)
+        def entity = response.getEntity(User)
+        return mediaType == APPLICATION_XML_TYPE ? entity.value : entity
     }
 
     User updateUser(user, userId = user.id, MediaType requestMediaType = APPLICATION_XML_TYPE) {
