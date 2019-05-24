@@ -2222,7 +2222,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             IdentityProviders providers = identityProviderConverterCloudV20.toIdentityProviderList(providerEntities);
 
             // If enabled, ensure an approvedDomainIds object exists for every provider
-            if (providers != null && CollectionUtils.isNotEmpty(providers.getIdentityProvider()) && identityConfig.getReloadableConfig().listIdpsAlwaysReturnsApprovedDomainIds()) {
+            if (providers != null && CollectionUtils.isNotEmpty(providers.getIdentityProvider())) {
                 for (IdentityProvider identityProvider : providers.getIdentityProvider()) {
                     if (identityProvider.getApprovedDomainIds() == null) {
                         identityProvider.setApprovedDomainIds(new ApprovedDomainIds());
