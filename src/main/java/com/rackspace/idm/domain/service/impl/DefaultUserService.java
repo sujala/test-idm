@@ -248,7 +248,7 @@ public class DefaultUserService implements UserService {
 
         // Generate phone pin if not provided
         if (StringUtils.isBlank(user.getPhonePin())) {
-            user.setPhonePin(phonePinService.generatePhonePin());
+            user.updatePhonePin(phonePinService.generatePhonePin());
         }
 
         if (provisionMossoAndNast) {

@@ -148,4 +148,9 @@ public class ProvisionedUserDelegate implements EndUserDelegate {
     public void recordSuccessfulPinAuthentication() {
         originalEndUser.recordSuccessfulPinAuthentication();
     }
+
+    @Override
+    public void updatePhonePin(String phonePin) {
+        originalEndUser.updatePhonePin(phonePin);
+    }
 }

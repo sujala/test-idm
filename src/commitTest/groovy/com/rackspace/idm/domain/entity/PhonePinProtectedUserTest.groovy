@@ -17,7 +17,7 @@ class PhonePinProtectedUserTest extends Specification {
 
         expect:
         user.@phonePinAuthenticationFailureCount == testData[0]
-        user.getPhonePinAuthenticationFailureCount() == testData[1]
+        user.getPhonePinAuthenticationFailureCountNullSafe() == testData[1]
 
         where:
         // testData is of format [testCount, expectedResult]

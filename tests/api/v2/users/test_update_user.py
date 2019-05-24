@@ -496,7 +496,7 @@ class TestUpdateUser(base.TestBaseV2):
             request_object=update_req)
         self.assertEqual(update_resp.status_code, 200)
         self.assertEqual(update_resp.json()[const.USER][
-                             const.RAX_AUTH_PHONE_PIN], new_pin)
+            const.RAX_AUTH_PHONE_PIN], new_pin)
 
         # verify new pin
         verify_req_obj = requests.PhonePin(new_pin)
@@ -505,12 +505,37 @@ class TestUpdateUser(base.TestBaseV2):
         self.assertEqual(verify_pin_resp.status_code, 200)
 
         # Negative case not covered in Groovy tests: Spaces in pin
-        new_pin = ' 2211 '
-        update_req = requests.UserUpdate(phone_pin=new_pin)
-        update_resp = user_manager_client.update_user(
+        invalid_pin = ' 2211 '
+        update_req = requests.UserUpdate(phone_pin=invalid_pin)
+        invalid_resp = user_manager_client.update_user(
             user_id=user_manager_id,
             request_object=update_req)
-        self.assertEqual(update_resp.status_code, 400)
+        self.assertEqual(invalid_resp.status_code, 400)
+
+        # Lock the pin by sending invalid pin 6 times
+        verify_req_obj = requests.PhonePin('111111')
+        for _ in range(6):
+            resp = self.identity_admin_client.verify_phone_pin_for_user(
+                user_id=user_manager_id, request_object=verify_req_obj)
+            self.assertEqual(resp.status_code, 200)
+            verify_msg = resp.json()[const.RAX_AUTH_VERIFY_PIN_RESULT][
+                const.FAILURE_MESSAGE]
+            self.assertEqual(verify_msg, const.INCORRECT_PIN_MSG)
+
+        # Verify failure message reflects locked PIN
+        resp = self.identity_admin_client.verify_phone_pin_for_user(
+            user_id=user_manager_id, request_object=verify_req_obj)
+        self.assertEqual(resp.status_code, 200)
+        verify_msg = resp.json()[const.RAX_AUTH_VERIFY_PIN_RESULT][
+            const.FAILURE_MESSAGE]
+        self.assertEqual(verify_msg, const.LOCKED_PIN_MSG)
+
+        # Verify correct pin also reflects locked PIN.
+        verify_req_obj = requests.PhonePin(new_pin)
+        verify_pin_resp = self.identity_admin_client.verify_phone_pin_for_user(
+            user_id=user_manager_id, request_object=verify_req_obj)
+        self.assertEqual(verify_pin_resp.status_code, 200)
+        self.assertEqual(verify_msg, const.LOCKED_PIN_MSG)
 
     @unless_coverage
     def tearDown(self):

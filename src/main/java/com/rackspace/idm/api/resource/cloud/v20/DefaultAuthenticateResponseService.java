@@ -284,8 +284,6 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         BaseUser impersonator = userService.getUserByScopeAccess(isa);
         UserScopeAccess usaImpersonatedToken = (UserScopeAccess) impersonatedToken;
         EndUser user = identityUserService.getEndUserById(usaImpersonatedToken.getUserRsId());
-        //Phone PIN must not be returned where token being validated is an impersonation token
-        user.setPhonePin(null);
 
         if (applyRcnRoles) {
             SourcedRoleAssignments sourcedRoleAssignments = tenantService.getSourcedRoleAssignmentsForUser(user);
@@ -327,6 +325,9 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory();
         JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = objectFactory.createImpersonator(userForAuthenticateResponse);
         authenticateResponse.getAny().add(impersonatorJAXBElement);
+
+        //Phone PIN must not be returned where token being validated is an impersonation token
+        authenticateResponse.getUser().setPhonePin(null);
 
         return authenticateResponse;
     }

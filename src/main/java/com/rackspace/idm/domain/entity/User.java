@@ -67,7 +67,7 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
 
     @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_FAILURE_COUNT,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.ALWAYS_ALLOWED, defaultDecodeValue = "0", defaultEncodeValue = "0")
+            filterUsage=FilterUsage.ALWAYS_ALLOWED, defaultDecodeValue = "0")
     private Integer phonePinAuthenticationFailureCount;
 
     @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_LAST_FAILURE_DATE,
@@ -346,8 +346,22 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
         return PhonePinStateEnum.ACTIVE;
      }
 
-    public int getPhonePinAuthenticationFailureCount() {
+    /**
+     * A getter that will translate a null count to 0. Need a different name than standard getter or everytime the user
+     * is updated to CA, will be reset to 0 when null rather than not updating the field.
+      * @return
+     */
+    public int getPhonePinAuthenticationFailureCountNullSafe() {
         return phonePinAuthenticationFailureCount == null ? 0 : phonePinAuthenticationFailureCount.intValue();
+    }
+
+    @Override
+    public void updatePhonePin(String phonePin) {
+        // Only update the counter if the phone pin is changing from a non-null value to a new value
+        if (StringUtils.isNotBlank(this.phonePin) && !this.phonePin.equals(phonePin)) {
+            phonePinAuthenticationFailureCount = 0;
+        }
+        setPhonePin(phonePin);
     }
 
     /**
@@ -355,7 +369,7 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
      */
     @Override
     public void recordFailedPinAuthentication() {
-        phonePinAuthenticationFailureCount = getPhonePinAuthenticationFailureCount() + 1;
+        phonePinAuthenticationFailureCount = getPhonePinAuthenticationFailureCountNullSafe() + 1;
         phonePinAuthenticationLastFailureDate = new Date();
     }
 

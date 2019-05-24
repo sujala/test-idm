@@ -123,13 +123,15 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION = "PP-002";
     public static final String ERROR_CODE_PHONE_PIN_INCORRECT = "PP-003";
     public static final String ERROR_CODE_PHONE_PIN_LOCKED = "PP-004";
-    public static final String ERROR_CODE_USER_ALREADY_HAS_A_PHONE_PIN = "User already has a phone PIN";
+    public static final String ERROR_CODE_PHONE_PIN_NOT_LOCKED = "PP-005";
 
     //PHONE PIN ERROR MESSAGES
+    public static final String ERROR_MESSAGE_USER_ALREADY_HAS_A_PHONE_PIN = "The user already has a phone PIN.";
     public static final String ERROR_MESSAGE_PHONE_PIN_INCORRECT = "Incorrect Phone PIN.";
     public static final String ERROR_MESSAGE_PHONE_PIN_BAD_REQUEST = "Use six numeric digits (such as 871694). A Phone PIN cannot include more than three repeating numbers. (444 is OK, but 4444 is not.) A Phone PIN cannot include more than three sequential numbers. (234 is OK, but 2345 is not.)";
     public static final String ERROR_CODE_PHONE_PIN_NOT_FOUND_MSG = "The user has not set a Phone PIN.";
     public static final String ERROR_MESSAGE_PHONE_PIN_LOCKED = "User's PIN is locked.";
+    public static final String ERROR_MESSAGE_PHONE_PIN_NOT_LOCKED = "The Phone PIN is not locked.";
 
     // Unverified users
     public static final String ERROR_CODE_UNVERIFIED_USERS_DOMAIN_WITHOUT_ACCOUNT_ADMIN = "UU-000";

@@ -96,7 +96,7 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
 
     @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_FAILURE_COUNT,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
-            filterUsage=FilterUsage.ALWAYS_ALLOWED, defaultDecodeValue = "0", defaultEncodeValue = "0")
+            filterUsage=FilterUsage.ALWAYS_ALLOWED, defaultDecodeValue = "0")
     private Integer phonePinAuthenticationFailureCount;
 
     @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_LAST_FAILURE_DATE,
@@ -238,7 +238,7 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
         return PhonePinStateEnum.ACTIVE;
     }
 
-    public int getPhonePinAuthenticationFailureCount() {
+    public int getPhonePinAuthenticationFailureCountNullSafe() {
         return phonePinAuthenticationFailureCount == null ? 0 : phonePinAuthenticationFailureCount.intValue();
     }
 
@@ -247,7 +247,7 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
      */
     @Override
     public void recordFailedPinAuthentication() {
-        phonePinAuthenticationFailureCount = getPhonePinAuthenticationFailureCount() + 1;
+        phonePinAuthenticationFailureCount = getPhonePinAuthenticationFailureCountNullSafe() + 1;
         phonePinAuthenticationLastFailureDate = new Date();
     }
 
@@ -257,5 +257,14 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
     @Override
     public void recordSuccessfulPinAuthentication() {
         phonePinAuthenticationFailureCount = 0;
+    }
+
+    @Override
+    public void updatePhonePin(String phonePin) {
+        // Only update the counter if the phone pin is changing from a non-null value to a new value
+        if (StringUtils.isNotBlank(this.phonePin) && !this.phonePin.equals(phonePin)) {
+            phonePinAuthenticationFailureCount = 0;
+        }
+        setPhonePin(phonePin);
     }
 }

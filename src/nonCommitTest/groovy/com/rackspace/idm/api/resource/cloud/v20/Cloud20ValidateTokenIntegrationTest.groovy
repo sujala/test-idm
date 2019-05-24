@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.security.IdentityRole
@@ -181,6 +182,9 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         validateIssued(token, authenticateResponse, issued)
         validateIssued(token, validateResponse, issued)
 
+        and: "No phone pin state"
+        validateResponse.user.phonePinState == null
+
         cleanup:
         reloadableConfiguration.reset()
 
@@ -202,17 +206,21 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     }
 
     @Unroll
-    def "Validate Impersonated user's token: accept = #accept, request = #request" () {
+    def "Validate Impersonated user's token: mediaType = #mediaType, issuedFlag = #issued" () {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_ISSUED_IN_RESPONSE_PROP, issued)
         def domainId = utils.createDomain()
         (defaultUser, users) = utils.createDefaultUser(domainId)
 
         when:
-        def impersonateResponse = utils.impersonateWithToken(utils.getIdentityAdminToken(), defaultUser)
+        /**
+         * Force the impersonation request to use JSON due to a defect in how ImpersonationResponses are marshalled to
+         * XML. See https://jira.rax.io/browse/CID-2110
+         */
+        def impersonateResponse = utils.impersonate(utils.getIdentityAdminToken(), defaultUser, 10800, MediaType.APPLICATION_JSON_TYPE)
         def token = impersonateResponse.token.id
 
-        def response = cloud20.validateToken(utils.getServiceAdminToken(), token, accept)
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), token, mediaType)
         assert (response.status == SC_OK)
 
         AuthenticateResponse validateResponse = getEntity(response, AuthenticateResponse)
@@ -223,17 +231,16 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         validateIssued(token, impersonateResponse, issued)
         validateIssued(token, validateResponse, issued)
 
+        and: "Phone pin state for impersonated user is returned"
+        validateResponse.user.phonePinState == PhonePinStateEnum.ACTIVE
+
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         reloadableConfiguration.reset()
 
         where:
-        accept                          | request                           | issued
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false
-        //MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true
-        //MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true
+        [mediaType, issued] << [[MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE], [true, false]].combinations()
     }
 
     def "Validate Impersonated user's token using a racker" () {
