@@ -1094,44 +1094,44 @@ public class DefaultUserService implements UserService {
         List<String> userPasswordHistory = currentUser.getPasswordHistory();
 
 
-            // Pull history policy from user's domain
-            String domainForPolicy = StringUtils.isNotEmpty(user.getDomainId()) ? user.getDomainId() : currentUser.getDomainId();
+        // Pull history policy from user's domain
+        String domainForPolicy = StringUtils.isNotEmpty(user.getDomainId()) ? user.getDomainId() : currentUser.getDomainId();
 
-            if (StringUtils.isNotEmpty(domainForPolicy)) {
-                Domain domain = domainService.getDomain(domainForPolicy);
-                if (domain != null && domain.getPasswordPolicy() != null) {
-                    PasswordPolicy policy = domain.getPasswordPolicy();
+        if (StringUtils.isNotEmpty(domainForPolicy)) {
+            Domain domain = domainService.getDomain(domainForPolicy);
+            if (domain != null && domain.getPasswordPolicy() != null) {
+                PasswordPolicy policy = domain.getPasswordPolicy();
 
-                    // History is only enforced if the application wide feature is enabled AND the user's domain uses it
-                    boolean historyEnforced = policy.calculateEffectivePasswordHistoryRestriction() >= 0;
+                // History is only enforced if the application wide feature is enabled AND the user's domain uses it
+                boolean historyEnforced = policy.calculateEffectivePasswordHistoryRestriction() >= 0;
 
-                    // User can't set password to existing password when password policy is not null regardless of whether
-                    // rotation/history enforcement is actually used
-                    if (cryptHelper.verifyLegacySHA(user.getPassword(), currentUser.getUserPassword())) {
-                        throw new BadRequestException(String.format("Must not repeat current password"), ErrorCodes.ERROR_CODE_CURRENT_PASSWORD_MATCH);
-                    }
+                // User can't set password to existing password when password policy is not null regardless of whether
+                // rotation/history enforcement is actually used
+                if (cryptHelper.verifyLegacySHA(user.getPassword(), currentUser.getUserPassword())) {
+                    throw new BadRequestException(String.format("Must not repeat current password"), ErrorCodes.ERROR_CODE_CURRENT_PASSWORD_MATCH);
+                }
 
-                    if (historyEnforced) {
-                        if (CollectionUtils.isNotEmpty(userPasswordHistory)) {
-                            int pwdHistoryRestriction = domain.getPasswordPolicy().calculateEffectivePasswordHistoryRestriction();
-                            if (pwdHistoryRestriction > 0) {
-                                /*
-                                Check the password history from the end (ignoring current password) as the entries are ordered oldest first
+                if (historyEnforced) {
+                    if (CollectionUtils.isNotEmpty(userPasswordHistory)) {
+                        int pwdHistoryRestriction = domain.getPasswordPolicy().calculateEffectivePasswordHistoryRestriction();
+                        if (pwdHistoryRestriction > 0) {
+                            /*
+                            Check the password history from the end (ignoring current password) as the entries are ordered oldest first
 
-                                Subtract 2 from history length to determine index to array (1 due to 0 based index, 1 due to last
-                                entry is "current" password, which is already checked above so no point in checking again)
-                                */
-                                int historyIndex = userPasswordHistory.size() - 2;
-                                for (int i = 0; i < pwdHistoryRestriction && historyIndex >= 0; ++i, historyIndex--) {
-                                    if (cryptHelper.verifyLegacySHA(user.getPassword(), userPasswordHistory.get(historyIndex))) {
-                                        throw new BadRequestException(String.format("Must not repeat current or up to '%s' previous password(s)", pwdHistoryRestriction), ErrorCodes.ERROR_CODE_PASSWORD_HISTORY_MATCH);
-                                    }
+                            Subtract 2 from history length to determine index to array (1 due to 0 based index, 1 due to last
+                            entry is "current" password, which is already checked above so no point in checking again)
+                            */
+                            int historyIndex = userPasswordHistory.size() - 2;
+                            for (int i = 0; i < pwdHistoryRestriction && historyIndex >= 0; ++i, historyIndex--) {
+                                if (cryptHelper.verifyLegacySHA(user.getPassword(), userPasswordHistory.get(historyIndex))) {
+                                    throw new BadRequestException(String.format("Must not repeat current or up to '%s' previous password(s)", pwdHistoryRestriction), ErrorCodes.ERROR_CODE_PASSWORD_HISTORY_MATCH);
                                 }
                             }
                         }
                     }
                 }
             }
+        }
     }
 
     /**
