@@ -40,16 +40,6 @@ class TestRoleAssignmentsWithDelegation(delegation.TestBaseDelegation):
     def setUp(self):
         super(TestRoleAssignmentsWithDelegation, self).setUp()
 
-    @classmethod
-    def get_role_id_by_name(cls, role_name):
-
-        option = {
-            const.PARAM_ROLE_NAME: role_name
-        }
-        get_role_resp = cls.user_admin_client.list_roles(option=option)
-        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
-        return role_id
-
     def create_delegation_agreement(self, client, user_id, principal_id):
 
         da_name = self.generate_random_string(

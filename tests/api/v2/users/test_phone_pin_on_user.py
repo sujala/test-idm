@@ -261,10 +261,13 @@ class TestPhonePinOnUser(base.TestBaseV2):
 
         # Add the phone-pin-admin role to the user-manager and user-admin
         # note: 403 unless we do this with the service_admin_client?
+        phone_pin_role_id = self.get_role_id_by_name(
+            self.service_admin_client, const.PHONE_PIN_ADMIN_ROLE_NAME,
+        )
         for client in [user_admin_client, user_manager_client]:
             add_role_resp = self.service_admin_client.add_role_to_user(
                 user_id=client.default_headers[const.X_USER_ID],
-                role_id=const.PHONE_PIN_ADMIN_ROLE_ID,
+                role_id=phone_pin_role_id,
             )
             self.assertEqual(add_role_resp.status_code, 200)
 

@@ -47,14 +47,7 @@ class TestDomainTypeAttribute(base.TestBaseV2):
 
     @classmethod
     def get_role_id_by_name(cls, role_name):
-        """return a role id"""
-        role_id = None
-        option = {'roleName': role_name}
-        resp = cls.service_admin_client.list_roles(option=option)
-        assert resp.status_code == 200
-        if resp.json()[const.ROLES]:
-            role_id = resp.json()[const.ROLES][0][const.ID]
-        return role_id
+        return super().get_role_id_by_name(cls.service_admin_client, role_name)
 
     @tags('positive', 'p1', 'regression')
     def test_update_domain(self):
