@@ -68,4 +68,25 @@ class PhonePinProtectedUserTest extends Specification {
         where:
         user << [new User(), new FederatedUser()]
     }
+
+    @Unroll
+    def "unlockPhonePin: verify getPhonePinAuthenticationFailureCount becomes zero after unlocking for type #user.class.name"() {
+        given:
+        user.phonePin = "234985"
+        user.phonePinAuthenticationFailureCount = 6
+
+        assert user.phonePinState == PhonePinStateEnum.LOCKED
+
+        when: "phone pin is unlocked"
+        user.unlockPhonePin()
+
+        then: "users phone pin is in active state"
+        user.phonePinState == PhonePinStateEnum.ACTIVE
+
+        and: "PhonePinAuthenticationFailureCount becomes zero"
+        user.phonePinAuthenticationFailureCount == 0
+
+        where:
+        user << [new User(), new FederatedUser()]
+    }
 }

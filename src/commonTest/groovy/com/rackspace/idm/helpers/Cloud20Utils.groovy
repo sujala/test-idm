@@ -11,12 +11,15 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.federation.v2.FederatedRackerAuthRequest
@@ -99,6 +102,12 @@ class Cloud20Utils {
 
     @Autowired
     TenantRoleDao tenantRoleDao
+
+    @Autowired
+    IdentityUserService identityUserService
+
+    @Autowired
+    FederatedUserDao federatedUserRepository
 
     FederatedDomainAuthRequestGenerator federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(DEFAULT_BROKER_IDP_PUBLIC_KEY, DEFAULT_BROKER_IDP_PRIVATE_KEY, IDP_V2_DOMAIN_PUBLIC_KEY, IDP_V2_DOMAIN_PRIVATE_KEY)
 
@@ -1775,5 +1784,45 @@ class Cloud20Utils {
     def getPhonePin(String userId, String userToken) {
         def user = userDao.getUserById(userId)
         return user.phonePin
+    }
+
+    def deleteFederatedUserQuietly(username) {
+        try {
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
+            if (federatedUser != null) {
+                federatedUserRepository.deleteObject(federatedUser)
+            }
+        } catch (Exception e) {
+            // Eat but log
+            LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", username), e)
+        }
+    }
+
+    def createFedRequest(def userAdmin, def brokerIssuer, def originIssuer) {
+        new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = userAdmin.domainId
+            it.validitySeconds = 100
+            it.brokerIssuer = sharedBrokerIdp.issuer
+            it.originIssuer = sharedOriginIdp.issuer
+            it.email = Constants.DEFAULT_FED_EMAIL
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = UUID.randomUUID().toString()
+            it.roleNames = [] as Set
+            it
+        }
+    }
+
+    /**
+     * Method is used to lock phone pin for user
+     * @param userId
+     */
+    def lockPhonepin(String userId) {
+        EndUser user = identityUserService.checkAndGetEndUserById(userId)
+        user.phonePinAuthenticationFailureCount = GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD
+        identityUserService.updateEndUser(user)
+
+        def userUpdated = identityUserService.checkAndGetUserById(userId)
+        assert userUpdated.getPhonePinState() == PhonePinStateEnum.LOCKED
     }
 }

@@ -7095,6 +7095,42 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userService.updateUser(_)
     }
 
+
+    def "unlockPhonePin: test with different callers trying to unlock a phone pin"() {
+        given:
+        def userId = "userId"
+        def otherUserId = "otherUserId"
+
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it.phonePin = "123786"
+            it
+        }
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
+
+        when: "user unlocks his own phone pin"
+        def response = service.unlockPhonePin(authToken, userId).build()
+
+        then:
+        1 * phonePinService.unlockPhonePin(userId)
+        response.status == SC_NO_CONTENT
+
+        when: "user without phone pin admin role unlocks other user's phone pin"
+        response = service.unlockPhonePin(authToken, otherUserId).build()
+
+        then:
+        0 * phonePinService.unlockPhonePin(otherUserId)
+        response.status == SC_FORBIDDEN
+
+        when: "user with phone pin admin role unlocks other user's phone pin"
+        response = service.unlockPhonePin(authToken, userId).build()
+
+        then:
+        1 * phonePinService.unlockPhonePin(userId)
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> true
+        response.status == SC_NO_CONTENT
+    }
+
     def mockServices() {
         mockEndpointConverter(service)
         mockRackerAuthenticationService(service)

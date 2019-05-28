@@ -93,7 +93,7 @@ public class DefaultPhonePinService implements PhonePinService {
         }
 
         if (user.getPhonePinState() == PhonePinStateEnum.LOCKED) {
-            user.recordSuccessfulPinAuthentication();
+            user.unlockPhonePin();
             identityUserService.updateEndUser(user);
             unlockPinAudit.succeed();
         } else {

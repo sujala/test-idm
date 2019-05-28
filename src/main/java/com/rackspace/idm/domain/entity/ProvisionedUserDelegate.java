@@ -153,4 +153,9 @@ public class ProvisionedUserDelegate implements EndUserDelegate {
     public void updatePhonePin(String phonePin) {
         originalEndUser.updatePhonePin(phonePin);
     }
+
+
+    public void unlockPhonePin() {
+        originalEndUser.unlockPhonePin();
+    }
 }

@@ -38,4 +38,9 @@ public interface PhonePinProtectedUser {
      * @param phonePin
      */
     void updatePhonePin(String phonePin);
+
+    /**
+     * Unlocks the phone pin for the user.
+     */
+    void unlockPhonePin();
 }
