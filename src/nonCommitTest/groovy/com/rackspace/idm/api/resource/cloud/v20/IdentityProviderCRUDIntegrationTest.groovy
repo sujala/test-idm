@@ -74,9 +74,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityProviderDao identityProviderDao
 
-    def setup() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, false)
-    }
 
     @Unroll
     def "CRUD a DOMAIN IDP with approvedDomainGroup, but no certs - request: #requestContentType"() {
@@ -5363,9 +5360,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "List identity providers always returns approvedDomainId when flag enabled:  enabled = #enabled; request: #contentType"() {
+    def "List identity providers always returns approvedDomainId; request: #contentType"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, enabled)
         def token = utils.getServiceAdminToken() // service admin included in base dataset has appropriate permission
 
         when: "List Racker IDP"
@@ -5381,12 +5377,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         // Verify this is a racker IDP, or we're not testing what we are supposed to be
         rackerProvider.federationType == IdentityProviderFederationTypeEnum.RACKER
-        if (enabled) {
-            assert rackerProvider.approvedDomainIds != null
-            assert rackerProvider.approvedDomainIds.approvedDomainId != null
-        } else {
-            assert rackerProvider.approvedDomainIds == null
-        }
+        assert rackerProvider.approvedDomainIds != null
+        assert rackerProvider.approvedDomainIds.approvedDomainId != null
+
 
         when: "List GLOBAL IDPs"
         identityProviderSearchParams = new IdentityProviderSearchParams()
@@ -5402,12 +5395,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         // Verify this is a global IDP, or we're not testing what we are supposed to be
         globalProvider.federationType == IdentityProviderFederationTypeEnum.DOMAIN
         globalProvider.approvedDomainGroup == ApprovedDomainGroupEnum.GLOBAL.name()
-        if (enabled) {
-            assert globalProvider.approvedDomainIds != null
-            assert globalProvider.approvedDomainIds.approvedDomainId != null
-        } else {
-            assert globalProvider.approvedDomainIds == null
-        }
+        assert globalProvider.approvedDomainIds != null
+        assert globalProvider.approvedDomainIds.approvedDomainId != null
+
 
         when: "List all IDPs"
         identityProviderSearchParams = new IdentityProviderSearchParams()
@@ -5416,14 +5406,11 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_OK
-        if (enabled) {
-            // No provider returned without approved domainIds. Extra check. Can't really validate for disabled case
-            // since don't know at runtime exactly which IDPs are returned
-            assert providers.identityProvider.find { it.approvedDomainIds == null } == null
-            assert providers.identityProvider.find { it.approvedDomainIds.approvedDomainId == null } == null
-        }
+        assert providers.identityProvider.find { it.approvedDomainIds == null } == null
+        assert providers.identityProvider.find { it.approvedDomainIds.approvedDomainId == null } == null
+
 
         where:
-        [contentType, enabled] << [[MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE],[true,false]].combinations()
+        [contentType] << [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE]
     }
 }
