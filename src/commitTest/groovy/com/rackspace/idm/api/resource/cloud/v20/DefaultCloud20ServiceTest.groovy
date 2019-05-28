@@ -3107,33 +3107,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 400
     }
 
-    def "updateUser should not allow unverified user to be updated"() {
-        given:
-        allowUserAccess()
-        service.userConverterCloudV20 = new UserConverterCloudV20()
-        UserForCreate user = new UserForCreate().with {
-            it.id = "2"
-            it.enabled = false
-            it.email = "someEmail@rackspace.com"
-            it
-        }
-
-        User updateUser = entityFactory.createUnverifiedUser()
-        updateUser.id = 2
-        identityUserService.getEndUserById(_) >> updateUser
-        userService.getUserById(_) >> updateUser
-        def caller = entityFactory.createUser()
-        caller.id = "2"
-        userService.getUserByScopeAccess(_) >> caller
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
-        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
-        when:
-        def result = service.updateUser(headers, authToken, "2", user).build()
-
-        then:
-        result.status == 403
-    }
-
     def "updateUser validates that user ID in URL matches user ID in updated user"() {
         given:
         allowUserAccess()
@@ -3152,42 +3125,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         response.status == 400
-    }
-
-    def "updateUser validates that sub users who are not user-managers can only update their own accounts"() {
-        given:
-        allowUserAccess()
-        def converter = new UserConverterCloudV20()
-        converter.mapper = new DozerBeanMapper()
-        service.userConverterCloudV20 = converter
-        def username = "name"
-        def userId = 2
-        def updateUserId = userId + 1
-        UserForCreate user = new UserForCreate().with {
-            it.username = username
-            it.id = "${updateUserId}"
-            it.enabled = true
-            it.email = "someEmail@rackspace.com"
-            it
-        }
-        User updateUser = entityFactory.createUser()
-        updateUser.username = username
-        updateUser.enabled = true
-        updateUser.id = userId
-        identityUserService.getEndUserById(_) >> updateUser
-        def caller = entityFactory.createUser()
-        caller.id = userId
-        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> caller
-        authorizationContext.getIdentityUserType() >> IdentityUserTypeEnum.DEFAULT_USER
-        precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(_) >> {
-            throw new ForbiddenException()
-        }
-
-        when:
-        def response = service.updateUser(headers, authToken, "${updateUserId}", user).build()
-
-        then:
-        response.status == 403
     }
 
     def "updateUser: Updating own phone pin resets failure count"(){
@@ -4860,11 +4797,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         when: "federated user not found"
         response = service.updateUser(headers, authToken, userId, userForCreate).build()
 
-        then: "return 404 Forbidden"
+        then: "return 404"
         1 * identityUserService.getEndUserById(userId) >> null
-        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
         0 * identityUserService.updateFederatedUser(_)
-
         response.status == SC_NOT_FOUND
     }
 
@@ -7093,6 +7028,42 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         2 * identityUserService.getEndUserById(userId) >> user
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled() >> user
         1 * userService.updateUser(_)
+    }
+
+
+    def "unlockPhonePin: test with different callers trying to unlock a phone pin"() {
+        given:
+        def userId = "userId"
+        def otherUserId = "otherUserId"
+
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it.phonePin = "123786"
+            it
+        }
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> user
+
+        when: "user unlocks his own phone pin"
+        def response = service.unlockPhonePin(authToken, userId).build()
+
+        then:
+        1 * phonePinService.unlockPhonePin(userId)
+        response.status == SC_NO_CONTENT
+
+        when: "user without phone pin admin role unlocks other user's phone pin"
+        response = service.unlockPhonePin(authToken, otherUserId).build()
+
+        then:
+        0 * phonePinService.unlockPhonePin(otherUserId)
+        response.status == SC_FORBIDDEN
+
+        when: "user with phone pin admin role unlocks other user's phone pin"
+        response = service.unlockPhonePin(authToken, userId).build()
+
+        then:
+        1 * phonePinService.unlockPhonePin(userId)
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName()) >> true
+        response.status == SC_NO_CONTENT
     }
 
     def mockServices() {

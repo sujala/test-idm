@@ -267,4 +267,12 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
         }
         setPhonePin(phonePin);
     }
+
+    /**
+     * Set the failure count to zero to unlock the phone pin
+     */
+    @Override
+    public void unlockPhonePin() {
+        phonePinAuthenticationFailureCount = 0;
+    }
 }

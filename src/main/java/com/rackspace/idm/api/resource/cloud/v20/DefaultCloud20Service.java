@@ -1079,6 +1079,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             EndUser retrievedUser = identityUserService.getEndUserById(userId);
 
+            if (retrievedUser == null) {
+                String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+
             boolean isUnverifiedUser = retrievedUser instanceof User && ((User) retrievedUser).isUnverified();
             boolean isFederatedUser = retrievedUser instanceof FederatedUser;
             boolean isSelf = caller.getId().equals(userId);
@@ -1086,20 +1092,30 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean sendUserEvent = false;
 
 
+            /*
+            This method supports updating 3 "types" of users:
+            - Provisioned users
+            - Unverified users
+            - Federated users
+             */
             if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
-                // setting contact id to null if caller is not IDENTITY_ADMIN or above
-                user.setContactId(null);
-
-                // Only service and identity admins can update an unverified user.
-                if (retrievedUser != null && isUnverifiedUser) {
+                // Only service and identity admins can update an unverified user. Can be self updated.
+                if (isUnverifiedUser) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
-            }
 
-            if (retrievedUser == null) {
-                String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
-                logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
+                if (!isSelf) {
+                    // Federated users can only be updated by identity:admin+ (contactId) and the fed user themself (phone pin)
+                    if (isFederatedUser) {
+                        throw new ForbiddenException(NOT_AUTHORIZED);
+                    } else {
+                        // For provisioned users, must verify precedence of user
+                        precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(retrievedUser);
+                    }
+                }
+
+                // setting contact id to null if caller is not IDENTITY_ADMIN or above
+                user.setContactId(null);
             }
 
             if (!userId.equals(user.getId()) && user.getId() != null) {

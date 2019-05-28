@@ -480,4 +480,12 @@ public class User implements EndUser, DelegationPrincipal, DelegationDelegate, P
     public DelegateReference getDelegateReference() {
         return new EndUserDelegateReference(id);
     }
+
+    /**
+     * Set the failure count to zero to unlock the phone pin
+     */
+    @Override
+    public void unlockPhonePin() {
+        phonePinAuthenticationFailureCount = 0;
+    }
 }

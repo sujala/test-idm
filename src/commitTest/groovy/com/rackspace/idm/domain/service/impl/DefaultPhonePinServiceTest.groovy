@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.NoPinSetException
 import com.rackspace.idm.exception.NotFoundException
@@ -211,6 +212,43 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
             assert IdmAssert.isPhonePinNonRepeating(pp)
             assert IdmAssert.isPhonePinNonSequential(pp)
         }
+    }
+
+    def "unlock phone pin: Verify only locked phone pin can be unlocked"() {
+        given:
+        User user = Mock()
+        user.id >> "id"
+        user.phonePin >> "123123"
+        user.phonePinState >> PhonePinStateEnum.LOCKED
+
+        when:
+        service.unlockPhonePin(user.id)
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+
+        and: "Pin get unlocked"
+        1 * user.unlockPhonePin()
+        1 * identityUserService.updateEndUser(user)
+    }
+
+    def "unlock phone pin: Verify exception when user try to unlock phone PIN with active state "() {
+        given:
+        User user = Mock()
+        user.id = "id"
+        user.phonePinState >> PhonePinStateEnum.ACTIVE
+
+        when:
+        service.unlockPhonePin(user.id)
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        0 * user.unlockPhonePin()
+        0 * identityUserService.updateEndUser(user)
+
+        and: "Exception is thrown"
+        Exception exception = thrown()
+        IdmExceptionAssert.assertException(exception, ForbiddenException, "PP-005", "The Phone PIN is not locked.")
     }
 
     def mockServices() {
