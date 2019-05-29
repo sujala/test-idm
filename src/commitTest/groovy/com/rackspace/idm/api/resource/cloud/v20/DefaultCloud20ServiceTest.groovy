@@ -3127,43 +3127,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 400
     }
 
-    def "updateUser: Updating own phone pin resets failure count"(){
-        given:
-        allowUserAccess()
-        service.userConverterCloudV20 = Mock(UserConverterCloudV20)
-        UserForCreate user = new UserForCreate().with {
-            it.id = "2"
-            it.phonePin = "123654"
-            return it
-        }
 
-        // The "existing" user
-        User existingUser = entityFactory.createUser()
-        existingUser.id = user.id
-        existingUser.enabled = true
-        existingUser.phonePinAuthenticationFailureCount = 3
-        existingUser.phonePin ="987123"
-
-        User convertedUserForUpdate = entityFactory.createUser()
-        convertedUserForUpdate.id = user.id
-        convertedUserForUpdate.enabled = true
-        convertedUserForUpdate.phonePin = user.phonePin
-
-        identityUserService.getEndUserById(_) >> existingUser
-        requestContext.getAndVerifyEffectiveCallerIsEnabled() >> existingUser
-        service.userConverterCloudV20.fromUser(_) >> convertedUserForUpdate
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
-
-        when:
-        service.updateUser(headers, authToken, "2", user)
-
-        then:
-        1 * userService.updateUser(_) >> {args ->
-            User userStateForUpdate = args[0]
-            assert userStateForUpdate.phonePin == convertedUserForUpdate.phonePin
-            assert userStateForUpdate.phonePinAuthenticationFailureCountNullSafe == 0
-        }
-    }
 
     def "addUserCredential validates that user to update matches credentials for passwordCredentials"() {
         given:

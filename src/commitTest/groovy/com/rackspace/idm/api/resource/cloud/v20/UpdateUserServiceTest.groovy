@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.EndUser
+import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.ForbiddenException
@@ -253,6 +255,159 @@ class UpdateUserServiceTest  extends RootServiceTest {
         response.status == HttpStatus.SC_OK
     }
 
+    def "updateUser: Provisioned user updating own phone pin resets failure count"(){
+        given:
+        UserForCreate userToUpdate = createUserForUpdateApi("2")
+        EndUser existingUser = entityFactory.createUser().with {
+            it.id = userToUpdate.id
+            it.domainId = "sameDomain"
+            it.phonePinAuthenticationFailureCount = GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD - 1
+            it.phonePin = "654987"
+            it
+        }
+        EndUser caller = entityFactory.createUser().with {
+            it.id = userToUpdate.id
+            it.domainId = existingUser.domainId
+            it
+        }
+
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        identityUserService.getEndUserById(userToUpdate.id) >> existingUser
+        authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> false
+
+        when:
+        service.updateUser(headers, authToken, userToUpdate.id, userToUpdate)
+
+        then:
+        1 * userConverter.fromUser(userToUpdate) >> { args ->
+            UserForCreate fromUser = args[0]
+            assert fromUser.phonePin == userToUpdate.phonePin
+
+            // Create the new user and copy over details (like converter would do)
+            new User().with {
+                it.phonePin = fromUser.phonePin
+                it
+            }
+        }
+
+        1 * userService.updateUser(_) >> {args ->
+            User userStateForUpdate = args[0]
+            assert userStateForUpdate.phonePin == userToUpdate.phonePin
+            assert userStateForUpdate.phonePinAuthenticationFailureCount == 0
+        }
+    }
+
+    def "updateUser: Federated user updating own phone pin resets failure count"(){
+        given:
+        UserForCreate userToUpdate = createUserForUpdateApi("2")
+        EndUser existingUser = entityFactory.createFederatedUser().with {
+            it.id = userToUpdate.id
+            it.domainId = "sameDomain"
+            it.phonePinAuthenticationFailureCount = GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD - 1
+            it.phonePin = "654987"
+            it
+        }
+        EndUser caller = entityFactory.createUser().with {
+            it.id = userToUpdate.id
+            it.domainId = existingUser.domainId
+            it
+        }
+
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        identityUserService.getEndUserById(userToUpdate.id) >> existingUser
+        authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> false
+
+        when:
+        service.updateUser(headers, authToken, userToUpdate.id, userToUpdate)
+
+        then:
+        1 * identityUserService.updateFederatedUser(_) >> {args ->
+            FederatedUser userStateForUpdate = args[0]
+            assert userStateForUpdate.phonePin == userToUpdate.phonePin
+            assert userStateForUpdate.phonePinAuthenticationFailureCount == 0
+        }
+    }
+
+    @Unroll
+    def "updateUser: Self is not allowed to update phone pin if locked. type: #existingUser.class.name"(){
+        given:
+        UserForCreate userToUpdate = createUserForUpdateApi("2")
+        existingUser.with {
+            it.id = userToUpdate.id
+            it.domainId = "sameDomain"
+            it.phonePin = "654987"
+            it.phonePinAuthenticationFailureCount = GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD
+            it
+        }
+
+        // Caller is "self"
+        EndUser caller = existingUser
+
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        identityUserService.getEndUserById(userToUpdate.id) >> existingUser
+        authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> false
+
+        when:
+        service.updateUser(headers, authToken, userToUpdate.id, userToUpdate)
+
+        then:
+        1 * exceptionHandler.exceptionResponse(_) >> {args ->
+            Exception exception = args[0]
+            IdmExceptionAssert.assertException(exception, ForbiddenException, "PP-004", "User's PIN is locked.")
+        }
+        0 * userService.updateUser(_)
+        0 * identityUserService.updateFederatedUser(_)
+
+        where:
+        existingUser << [new User(), new FederatedUser()]
+    }
+
+    @Unroll
+    def "updateUser: Phone pin can not be updated by other users. Admin: #admin"(){
+        given:
+        UserForCreate userToUpdate = createUserForUpdateApi("2")
+        User existingUser = entityFactory.createUser().with {
+            it.id = userToUpdate.id
+            it.domainId = "sameDomain"
+            it.phonePin = "654987"
+            it.phonePinAuthenticationFailureCount = GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD - 1
+            it
+        }
+
+        EndUser caller = entityFactory.createUser().with {
+            it.id = "4" // different than the user being updated
+            it.domainId = existingUser.domainId
+            it
+        }
+
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        identityUserService.getEndUserById(userToUpdate.id) >> existingUser
+        authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> admin
+
+        when:
+        service.updateUser(headers, authToken, userToUpdate.id, userToUpdate)
+
+        then:
+        1 * userConverter.fromUser(userToUpdate) >> { args ->
+            UserForCreate fromUser = args[0]
+            assert fromUser.phonePin == null
+
+            // Create the new user and copy over details (like converter would do)
+            new User().with {
+                it.phonePin = fromUser.phonePin
+                it
+            }
+        }
+
+        1 * userService.updateUser(_) >> {args ->
+            User userStateForUpdate = args[0]
+            assert userStateForUpdate.phonePin == null // Phone pin is not updated
+            assert userStateForUpdate.phonePinAuthenticationFailureCount == null // Failure count is not updated
+        }
+
+        where:
+        admin << [true, false]
+    }
 
     EndUser createFedCaller(String id, String domainId) {
         entityFactory.createFederatedUser().with {

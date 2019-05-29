@@ -1137,6 +1137,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (user.getPhonePin() == null || !isSelf || impersonationToken || isUnverifiedUser || isPhonePinUnchanged) {
                 // Blank out the phone pin like user never provided it
                 user.setPhonePin(null);
+                isPhonePinUnchanged = true;
             } else {
                 // User is trying to update phone pin. Validate phone pin state on backend user to ensure pin is not
                 // locked on user and provided pin meets composition requirements.
