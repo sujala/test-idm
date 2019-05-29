@@ -92,13 +92,7 @@ class TestBaseDelegation(base.TestBaseV2):
 
     @classmethod
     def get_role_id_by_name(cls, role_name):
-
-        option = {
-            const.PARAM_ROLE_NAME: role_name
-        }
-        get_role_resp = cls.user_admin_client.list_roles(option=option)
-        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
-        return role_id
+        return super().get_role_id_by_name(cls.user_admin_client, role_name)
 
     def setUp(self):
         super(TestBaseDelegation, self).setUp()

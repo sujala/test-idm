@@ -88,7 +88,7 @@ test_pytest_no_build:
 	# create virtualenv and initialize cafe
 	$(VENV_ACTIVATE) && cafe-config init && cafe-config plugins install http && $(VENV_DEACTIVATE)
 	# create virtualenv and run pytest (optionally pass in module)
-	$(VENV_ACTIVATE) && pytest $(API)
+	$(VENV_ACTIVATE) && $(CAFE_CONFIG_ALL) pytest $(API)
 
 testenv:
 	@docker-compose exec testenv bash

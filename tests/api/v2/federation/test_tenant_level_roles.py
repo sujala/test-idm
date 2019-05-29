@@ -31,16 +31,6 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         cls.hierarchical_billing_observer_role_id = cls.get_role_id_by_name(
             role_name=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME)
 
-    @classmethod
-    def get_role_id_by_name(cls, role_name):
-
-        option = {
-            const.PARAM_ROLE_NAME: role_name
-        }
-        get_role_resp = cls.identity_admin_client.list_roles(option=option)
-        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
-        return role_id
-
     @unless_coverage
     def setUp(self):
         super(TestTenantLevelRolesForFederation, self).setUp()

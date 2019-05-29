@@ -648,6 +648,8 @@ IDENTITY_PROPERTY_ADMIN_ROLE_NAME = 'identity:property-admin'
 USER_ADMIN_ROLE_NAME = 'identity:user-admin'
 RCN_ADMIN_ROLE_NAME = 'rcn:admin'
 RCN_SWITCH_ROLE_NAME = 'identity:domain-rcn-switch'
+PHONE_PIN_ADMIN_ROLE_NAME = 'identity:phone-pin-admin'
+
 
 GLOBAL_USER_ROLES_ROLE_NAME = 'identity:get-user-roles-global'
 GLOBAL_USER_ROLES_ROLE_ID = '14'
