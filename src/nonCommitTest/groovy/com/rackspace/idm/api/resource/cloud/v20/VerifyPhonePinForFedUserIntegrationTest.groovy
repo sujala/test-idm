@@ -83,7 +83,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "SAML assertion 2.0 - Verify phone pin for a federated user; media = #accept"() {
         given:
-        def fedRequest = utils.createFedRequest(sharedUserAdmin, sharedBrokerIdp, sharedOriginIdp)
+        def fedRequest = utils.createFedRequest(sharedUserAdmin, sharedBrokerIdp.issuer, sharedOriginIdp.issuer)
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when:

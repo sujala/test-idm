@@ -74,7 +74,7 @@ class UnlockPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
 
     def "SAML assertion 2.0 - verify that only phone pin admin or user him self can unlock the phone pin"() {
         given:
-        def fedRequest = utils.createFedRequest(sharedUserAdmin, sharedBrokerIdp, sharedOriginIdp)
+        def fedRequest = utils.createFedRequest(sharedUserAdmin, sharedBrokerIdp.issuer, sharedOriginIdp.issuer)
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when:
@@ -102,7 +102,7 @@ class UnlockPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         when: "unlock phone pin with some other user who does not have the identity:phone-pin-admin role"
         utils.lockPhonepin(fedUserId)
         def userAdmin = cloud20.createCloudAccount(sharedIdentityAdminToken)
-        response = cloud20.unlockPhonePin(utils.getToken(userAdmin.username), fedUserId, accept)
+        response = cloud20.unlockPhonePin(utils.getToken(userAdmin.username), fedUserId)
 
         then: "expect 403"
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
@@ -114,7 +114,7 @@ class UnlockPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
 
     def "Verify that phone pin can be unlocked only for federated users whose phone pin is in locked state"() {
         given:
-        def fedRequest = utils.createFedRequest(sharedUserAdmin, sharedBrokerIdp, sharedOriginIdp)
+        def fedRequest = utils.createFedRequest(sharedUserAdmin, sharedBrokerIdp.issuer, sharedOriginIdp.issuer)
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when:
