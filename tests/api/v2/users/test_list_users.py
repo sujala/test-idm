@@ -109,7 +109,6 @@ class TestListUsers(base.TestBaseV2):
         # no users returned that were added to user-admin's domain
         found_user = next((user for user in resp.json()[
             const.USERS] if user['id'] in self.sub_user_ids), None)
-
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(found_user, None)
 
@@ -127,6 +126,10 @@ class TestListUsers(base.TestBaseV2):
         self.assertSchema(response=resp,
                           json_schema=users_json.list_users)
         self.assertEqual(len(resp.json()[const.USERS]), 2)
+        # [CID-2057] Phone pin state attribute is returned for
+        # list users by email
+        self.assertIn(
+            const.RAX_AUTH_PHONE_PIN_STATE, str(resp.json()[const.USERS]))
         for user in resp.json()[const.USERS]:
             self.assertEqual(user[const.EMAIL], self.EMAIL_TEST)
 

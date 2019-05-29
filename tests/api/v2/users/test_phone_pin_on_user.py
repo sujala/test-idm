@@ -38,8 +38,10 @@ class TestPhonePinOnUser(base.TestBaseV2):
     def test_user_admin_phone_pin(self):
         """
         Test to verify,
-        1. add user admin call generates phone pin for user
-        2. phone pin can/cannot be reset based on caller
+        1. [CID-2057] add user admin call generates phone pin and phone
+           pin state for user
+        2. [CID-2057] authentication call returns Phone Pin state
+        3. phone pin can/cannot be reset based on caller
         """
         user_name = self.generate_random_string()
         password = self.generate_random_string(pattern=const.PASSWORD_PATTERN)
@@ -50,6 +52,9 @@ class TestPhonePinOnUser(base.TestBaseV2):
         resp = self.identity_admin_client.add_user(request_object)
         self.assertEqual(resp.status_code, 201)
         user_id = resp.json()[const.USER][const.ID]
+        # [CID-2057] add user returns phone pin state
+        self.assertEqual(
+            resp.json()['user'][const.RAX_AUTH_PHONE_PIN_STATE], const.ACTIVE)
 
         auth_req_obj = requests.AuthenticateWithPassword(
             user_name=user_name, password=password
@@ -59,6 +64,21 @@ class TestPhonePinOnUser(base.TestBaseV2):
         phone_pin = resp.json()[
             const.ACCESS][const.USER][const.RAX_AUTH_PHONE_PIN]
         user_admin_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+
+        # [CID-2057] Authentication returns phone pin state
+        self.assertEqual(
+            resp.json()[const.ACCESS][const.USER]
+            [const.RAX_AUTH_PHONE_PIN_STATE],
+            const.ACTIVE)
+
+        # [CID-2057] Validate token returns phone pin state
+        resp = self.identity_admin_client.validate_token(
+            token_id=user_admin_token)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.json()[const.ACCESS][const.USER]
+            [const.RAX_AUTH_PHONE_PIN_STATE],
+            const.ACTIVE)
 
         user_admin_client = self.generate_client(token=user_admin_token)
         self.user_admin_clients.append(user_admin_client)
@@ -78,16 +98,19 @@ class TestPhonePinOnUser(base.TestBaseV2):
         self.assertNotIn(const.RAX_AUTH_PHONE_PIN, get_user_admin_resp.json()[
             const.USER])
 
-        # verify if phone pin is not returned for list users
+        # [CID-2057] verify if phone pin is not returned and phone pin state
+        # is returned  for list users
         list_users_resp = self.identity_admin_client.list_users()
         self.assertNotIn(const.RAX_AUTH_PHONE_PIN, list_users_resp.json()[
             const.USERS])
+        self.assertIn(const.RAX_AUTH_PHONE_PIN_STATE,
+                      str(list_users_resp.json()[const.USERS]))
 
         # verify if phone pin is not returned
         resp = self.identity_admin_client.list_users(
             option={'domain_id': input_data['domain_id']})
         self.assertNotIn(const.RAX_AUTH_PHONE_PIN, resp.json()[
-            const.USERS])
+                const.USERS])
 
         # verify if phone pin is not returned for list users in domain
         resp = self.identity_admin_client.list_users_in_domain(
