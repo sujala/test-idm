@@ -8,6 +8,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
@@ -1802,8 +1803,8 @@ class Cloud20Utils {
         new FederatedDomainAuthGenerationRequest().with {
             it.domainId = userAdmin.domainId
             it.validitySeconds = 100
-            it.brokerIssuer = sharedBrokerIdp.issuer
-            it.originIssuer = sharedOriginIdp.issuer
+            it.brokerIssuer = brokerIssuer
+            it.originIssuer = originIssuer
             it.email = Constants.DEFAULT_FED_EMAIL
             it.responseIssueInstant = new DateTime()
             it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
