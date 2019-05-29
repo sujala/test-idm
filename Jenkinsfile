@@ -71,7 +71,7 @@ try {
         jenkinsBuildSteps.deploySandboxEnvironment(releaseName)
 
         // Run Johnny tests
-        jenkinsBuildSteps.runJohnnyTests(scm)
+        jenkinsBuildSteps.runJohnnyTests(scm, 'py35')
     } finally {
         jenkinsBuildSteps.destroySandboxEnv(releaseName)
     }
