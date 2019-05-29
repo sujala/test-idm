@@ -522,6 +522,12 @@ class TestUpdateUser(base.TestBaseV2):
                 const.FAILURE_MESSAGE]
             self.assertEqual(verify_msg, const.INCORRECT_PIN_MSG)
 
+        # [CID-2057] Verify that phone pin state attribute is returned
+        resp = self.identity_admin_client.get_user(
+            user_id=user_manager_id)
+        self.assertEqual(
+            resp.json()['user'][const.RAX_AUTH_PHONE_PIN_STATE], const.LOCKED)
+
         # Verify failure message reflects locked PIN
         resp = self.identity_admin_client.verify_phone_pin_for_user(
             user_id=user_manager_id, request_object=verify_req_obj)
