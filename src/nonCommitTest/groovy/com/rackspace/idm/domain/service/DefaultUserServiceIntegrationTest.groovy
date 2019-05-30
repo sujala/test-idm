@@ -165,14 +165,14 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
         pwdHistory.size() == 1
         cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
 
-        when: "Disable history and change password"
-        userService.updateUser(userUpdate)
-        userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
-        pwdHistory = userEntity.getPasswordHistory()
-
-        then: "history remains at 1 w/ original password"
-        pwdHistory.size() == 1
-        cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
+//        when: "Disable history and change password"
+//        userService.updateUser(userUpdate)
+//        userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
+//        pwdHistory = userEntity.getPasswordHistory()
+//
+//        then: "history remains at 1 w/ original password"
+//        pwdHistory.size() == 1
+//        cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
     }
 
     def "getUserById loading without password history"() {

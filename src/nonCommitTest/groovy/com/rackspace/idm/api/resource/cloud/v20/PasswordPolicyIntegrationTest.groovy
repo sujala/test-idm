@@ -527,7 +527,7 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
 
 
         when: "reset the password with new password when rotation enforced"
-        response = cloud20.changeUserPassword(user.username, passwordOriginal, passworda)
+        response = cloud20.changeUserPassword(user.username, passworda, passwordOriginal)
 
         then: "can reset to new pwd"
         response.status == SC_NO_CONTENT
