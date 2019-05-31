@@ -128,6 +128,7 @@ PASSWORD_POLICY_URL = '/RAX-AUTH/domains/{domain_id}/password-policy'
 VALIDATE_PASSWORD_URL = '/users/RAX-AUTH/validate-pwd'
 ADMIN_CHANGE_URL = '/RAX-AUTH/domains/{domain_id}/domainAdministratorChange'
 RESET_PHONE_PIN_URL = '/users/{user_id}/RAX-AUTH/phone-pin/reset'
+UNLOCK_PHONE_PIN_URL = '/users/{user_id}/RAX-AUTH/phone-pin/unlock'
 RESET_USER_API_KEY_URL = ('/users/{user_id}/OS-KSADM/credentials/'
                           'RAX-KSKEY:apiKeyCredentials/RAX-AUTH/reset')
 RD_USER_GROUP_TO_DOMAIN_URL = ADD_USER_GROUP_TO_DOMAIN_URL + '/{group_id}'

@@ -526,7 +526,52 @@ class TestUpdateUser(base.TestBaseV2):
         resp = self.identity_admin_client.get_user(
             user_id=user_manager_id)
         self.assertEqual(
-            resp.json()['user'][const.RAX_AUTH_PHONE_PIN_STATE], const.LOCKED)
+            resp.json()['user'][const.RAX_AUTH_PHONE_PIN_STATE],
+            const.LOCKED)
+
+        # [CID-2058] A user updating their own phone pin
+        # while in locked state
+        update_req = requests.UserUpdate(phone_pin='000000')
+        invalid_resp = user_manager_client.update_user(
+            user_id=user_manager_id,
+            request_object=update_req)
+        self.assertEqual(
+            invalid_resp.json()[const.FORBIDDEN][const.MESSAGE],
+            "Error code: 'PP-004'; User's PIN is locked.")
+
+        # [CID-2058] An identity-admin with phone-pin-admin updating
+        # the user's phone pin while in locked state
+        update_req = requests.UserUpdate(phone_pin='000000')
+        resp = self.identity_admin_client.update_user(
+            user_id=user_manager_id,
+            request_object=update_req)
+        # we get a 200 with an identity-admin with phone-pin-admin,
+        # but when we fetch the user again the phone pin has not
+        # actually changed.
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.json()['user'][const.RAX_AUTH_PHONE_PIN_STATE],
+            const.LOCKED)
+        # Verify Phone Pin is not updated
+        resp = user_manager_client.get_user(
+            user_id=user_manager_id)
+        self.assertEqual(resp.json()[const.USER][
+            const.RAX_AUTH_PHONE_PIN], new_pin)
+
+        # [CID-2058] identity-admin with phone-pin-admin cannot
+        # reset another user's phone pin in locked state
+        resp = self.identity_admin_client.reset_phone_pin(
+            user_id=user_manager_id)
+        self.assertEqual(
+            resp.json()[const.FORBIDDEN][const.MESSAGE],
+            "Error code: 'PP-004'; User's PIN is locked.")
+
+        # Users are not allowed to "reset" their own Pin
+        resp = user_manager_client.reset_phone_pin(
+            user_id=user_manager_id)
+        self.assertEqual(
+            resp.json()[const.FORBIDDEN][const.MESSAGE],
+            "Error code: 'PP-002'; Not Authorized")
 
         # Verify failure message reflects locked PIN
         resp = self.identity_admin_client.verify_phone_pin_for_user(
@@ -542,6 +587,17 @@ class TestUpdateUser(base.TestBaseV2):
             user_id=user_manager_id, request_object=verify_req_obj)
         self.assertEqual(verify_pin_resp.status_code, 200)
         self.assertEqual(verify_msg, const.LOCKED_PIN_MSG)
+
+        # [CID-2056] Unlock Phone Pin
+        resp = user_manager_client.unlock_phone_pin(
+            user_id=user_manager_id)
+        self.assertEqual(resp.status_code, 204)
+        # Verify user's Phone Pin is unlocked
+        resp = user_manager_client.get_user(
+            user_id=user_manager_id)
+        self.assertEqual(
+            resp.json()['user'][const.RAX_AUTH_PHONE_PIN_STATE],
+            const.ACTIVE)
 
     @unless_coverage
     def tearDown(self):

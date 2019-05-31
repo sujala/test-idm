@@ -2055,3 +2055,13 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         return self.request('POST', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
+
+    def unlock_phone_pin(
+            self, user_id, requestslib_kwargs=None):
+        """
+        PUT /v2.0/users/{userId}/RAX-AUTH/phone-pin/unlock
+        """
+        url = self.url + const.UNLOCK_PHONE_PIN_URL.format(user_id=user_id)
+
+        return self.request('PUT', url,
+                            requestslib_kwargs=requestslib_kwargs)
