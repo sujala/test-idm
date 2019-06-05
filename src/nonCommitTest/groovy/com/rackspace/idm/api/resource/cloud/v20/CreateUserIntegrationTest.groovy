@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
@@ -25,16 +26,16 @@ import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
+import java.util.stream.Collectors
 
-import static org.apache.http.HttpStatus.*
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static org.apache.http.HttpStatus.*
 
 class CreateUserIntegrationTest extends RootIntegrationTest {
 
@@ -2116,6 +2117,125 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_CREATED
+    }
+
+    def "one user call assigns correct default endpoints - feature.enabled.use.domain.type.on.new.user.creation"() {
+        given:
+        // Enabled feature
+        IdentityProperty identityProperty = new IdentityProperty()
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        // Common attribute
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+
+        // User A
+        def domainIdA = utils.createDomain()
+        def usernameA = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreateA = v2Factory.createUser(usernameA, "displayName", "testemail@rackspace.com", true, "ORD", domainIdA, DEFAULT_PASSWORD)
+        userForCreateA.secretQA = secretQA
+
+        when: "create user-admin with feature enabled"
+        def response = cloud20.createUser(identityAdminToken, userForCreateA)
+        def userA = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "create user-admin with feature disabled"
+        // Disable feature
+        identityProperty.value = false
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        def domainIdB = utils.createDomain()
+        def usernameB = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreateB = v2Factory.createUser(usernameB, "displayName", "testemail@rackspace.com", true, "ORD", domainIdB, DEFAULT_PASSWORD)
+        userForCreateB.secretQA = secretQA
+
+        response = cloud20.createUser(identityAdminToken, userForCreateB)
+        def userB = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "authenticate both users"
+        def responseA = cloud20.authenticate(usernameA, DEFAULT_PASSWORD)
+        AuthenticateResponse authResponseA = responseA.getEntity(AuthenticateResponse).value
+        def responseB = cloud20.authenticate(usernameB, DEFAULT_PASSWORD)
+        AuthenticateResponse authResponseB = responseB.getEntity(AuthenticateResponse).value
+
+        then: "assert successful authentication"
+        responseA.status == SC_OK
+        responseB.status == SC_OK
+
+        and: "assert services"
+        def serviceListA = authResponseA.serviceCatalog.service
+        def serviceListB = authResponseB.serviceCatalog.service
+
+        def serviceNamesA = serviceListA.stream().map{service -> service.name }.collect(Collectors.toList())
+        def serviceNamesB = serviceListB.stream().map{service -> service.name }.collect(Collectors.toList())
+        serviceNamesA.sort() == serviceNamesB.sort()
+
+        and: "assert endpoints"
+        for (String serviceName : serviceNamesA) {
+            def endpointsA = serviceListA.find{it.name == serviceName}.endpoint
+            def endpointsB = serviceListB.find{it.name == serviceName}.endpoint
+
+            def publicUrlsA = endpointsA.stream().map{endpoint -> endpoint.publicURL.replaceAll("/[^/]*\$","")}.collect(Collectors.toList())
+            def publicUrlsB = endpointsB.stream().map{endpoint -> endpoint.publicURL.replaceAll("/[^/]*\$","")}.collect(Collectors.toList())
+            assert publicUrlsA.sort() == publicUrlsB.sort()
+        }
+
+        cleanup:
+        utils.deleteUserQuietly(userA)
+        utils.deleteUserQuietly(userB)
+        utils.deleteTestDomainQuietly(domainIdA)
+        utils.deleteTestDomainQuietly(domainIdB)
+        // reset identity property
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+    }
+
+    def "one user call with non cloud domain does not assign endpoints - feature.enabled.use.domain.type.on.new.user.creation = true"() {
+        given:
+        // Enabled feature
+        IdentityProperty identityProperty = new IdentityProperty()
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        // Common attributes
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+
+        // dp domain
+        def domainId = "dp:" + utils.createDomain()
+        // Test user
+        def username = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreate = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, DEFAULT_PASSWORD)
+        userForCreate.secretQA = secretQA
+
+        when: "create user-admin with feature enabled"
+        def response = cloud20.createUser(identityAdminToken, userForCreate)
+        def user = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "authenticate"
+        response = cloud20.authenticate(username, DEFAULT_PASSWORD)
+        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
+
+        then: "assert successful authentication"
+        response.status == SC_OK
+
+        and: "assert service catalog is emtpy"
+        authResponse.serviceCatalog.service.isEmpty()
+
+        cleanup:
+        utils.deleteUserQuietly(user)
+        utils.deleteTestDomainQuietly(domainId)
+        // reset identity property
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
     }
 
 }

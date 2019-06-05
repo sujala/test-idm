@@ -205,6 +205,7 @@ class Constants {
      ******************************* */
     public static final String REPO_PROP_FEATURE_AUTHORIZATION_DOMAIN_DEFAULT_ID = "aswerfbmwersdf"
     public static final String REPO_PROP_FEATURE_AUTHORIZATION_DOMAIN_VERIFICATION_ID = "kjajkhweroiudfnwer"
+    public static final String REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID = "9931a88060ea1d2r5c1ec5bc873de26a3"
 
     /**
      * Hierarchical roles for nested da
