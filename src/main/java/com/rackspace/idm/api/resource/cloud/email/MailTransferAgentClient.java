@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.email;
 
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import org.apache.commons.lang.StringUtils;
@@ -43,6 +45,10 @@ public class MailTransferAgentClient implements EmailClient {
     public static final String UNVERIFIED_USER_TEMPLATE_DIR_NAME = "unverified_user";
     public static final String UNVERIFIED_USER_EMAIL_BASE_DIR =  TEMPLATE_DIR + File.separator + UNVERIFIED_USER_TEMPLATE_DIR_NAME;
     public static final String INVITE_PREFIX = "invite";
+
+    public static final String PHONE_PIN_LOCKED_TEMPLATE_DIR_NAME = "phone_pin_locked";
+    public static final String PHONE_PIN_LOCKED_EMAIL_BASE_DIR =  TEMPLATE_DIR + File.separator + PHONE_PIN_LOCKED_TEMPLATE_DIR_NAME;
+    public static final String PHONE_PIN_PREFIX = "phone_pin_locked";
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -199,4 +205,46 @@ public class MailTransferAgentClient implements EmailClient {
             return false;
         }
     }
+
+    @Async
+    @Override
+    public void asyncSendPhonePinLockedEmail(EndUser user) {
+        sendPhonePinLockedEmail(user);
+    }
+
+    @Override
+    public boolean sendPhonePinLockedEmail(EndUser user) {
+        Validate.notNull(user);
+        Validate.notEmpty(user.getEmail());
+        Validate.notEmpty(user.getUsername());
+
+        // Populate the velocity model
+        Map<String, Object> model = new HashMap<>();
+        model.put(EmailTemplateConstants.PHONE_PINE_LOCKED_USERNAME_PROP, user.getUsername());
+        model.put(EmailTemplateConstants.INVITE_YEAR_PROP, Calendar.getInstance().get(Calendar.YEAR));
+
+        // Calc the config
+        EmailConfig emailConfig = emailConfigBuilder.buildEmailConfig(Collections.singletonList(user.getEmail()), PHONE_PIN_LOCKED_EMAIL_BASE_DIR, PHONE_PIN_PREFIX);
+
+        boolean success = sendEmail(emailConfig, model);
+
+        if (success) {
+            Audit.logSendingPhonePinLockedEmailSuccess(user);
+        } else {
+            Audit.logSendingPhonePinLockedEmailFailure(user);
+        }
+
+        return success;
+    }
+
+    private boolean sendEmail(EmailConfig emailConfig, Map<String, Object> model) {
+        try {
+            emailService.sendTemplatedMultiPartMimeEmail(emailConfig, model);
+            return true;
+        } catch (Exception e) {
+            logger.error("Unable to send email due to exception: {}", e);
+            return false;
+        }
+    }
+
 }

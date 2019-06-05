@@ -1,0 +1,4 @@
+Hello ${username},
+
+This text is here for testing purposes only. See the email templates repository for
+the actual content of production phone pin locked emails.

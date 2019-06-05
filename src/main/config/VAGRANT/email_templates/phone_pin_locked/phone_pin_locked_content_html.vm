@@ -1,0 +1,66 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title></title>
+        <style>
+            table, td { border-collapse: collapse;}
+            td { padding-left: 20px; padding-right: 20px;
+                 font-family: 'Roboto', sans-serif;
+                 font-weight: 400; font-size: 16px;
+                 color: #424242; line-height: 24px;}
+            a { color: #0d74d1; text-decoration: none; cursor: pointer; }
+            a:hover, a.hover { color: #3391ff;}
+        </style>
+        <link href='https://fonts.googleapis.com/css?family=Roboto:400,300,700,500,100' rel='stylesheet' type='text/css'>
+    </head>
+    <body>
+        <table cellspacing="0" cellpadding="0" border="0" style="width:800px;" width="800">
+            <tr>
+                <td>
+                    <table style="border-bottom:1px solid #D8D8D8;" width="100%">
+                        <tr>
+                            <td style="padding-top:16px; padding-bottom:16px; padding-left:0px; min-width:500px;">
+                                <table>
+                                    <tr>
+                                        <td style="font-weight:100; font-size:48px; padding-left:0px; line-height:52px">
+                                            Your phone pin has been locked.
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td width="175" style="width:175px">
+                                <a href="https://www.rackspace.com/" target="_blank" style="text-decoration:none">
+                                    <img src="http://c1ee333499ed5f44e56a-fa12562cfe810d69bedcc36a0ac289ef.r55.cf1.rackcdn.com/img/layout/email-templates/RS-Logo.png" style="width:150px;height:32px;padding-bottom:6px" width="150" height="32"/>
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size:24px;padding-top:20px">
+                    The content in this email is for dev and testing purposes only. For the actual email content see the email templates repo.
+                </td>
+            </tr>
+            <tr bgcolor="#000000">
+                <td style="padding: 20px 0px;">
+                    <table align="left">
+                        <tr>
+                            <td style="font-size:14px; line-height: 14px;color:#E0E0E0;">
+                                &copy; ${year} Rackspace US. Inc.
+                            </td>
+                        </tr>
+                    </table>
+                    <table>
+                        <tr>
+                            <td style="font-size:14px; line-height: 14px; color:#E0E0E0; padding-left:10px">
+                                Support: <a href="tel:1-800-961-4454">1-800-961-4454</a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>
