@@ -155,7 +155,7 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         utils.deleteUsersQuietly(users)
     }
 
-    def "Change user password availability controlled by feature flag"() {
+    def "Change user password requires valid current password"() {
         given:
         User user = utils.createGenericUserAdmin()
         def passwordOriginal = Constants.DEFAULT_PASSWORD
@@ -268,14 +268,6 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         then: "auth denied"
         response.status == SC_UNAUTHORIZED
 
-
-
-        when: "re-enforce password policy"
-
-
-        then: "can no longer authenticate"
-        cloud20.authenticatePassword(user.username).status == SC_UNAUTHORIZED
-
         when: "null out password policy"
         utils.updateDomainPasswordPolicy(user.domainId, createPasswordPolicy("PT0M", 0))
         response = cloud20.authenticatePassword(user.username)
@@ -376,13 +368,6 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         and: "Can change password back to 2 passwords ago"
         cloud20.updateUser(identityAdminToken, user.id, userUpdateA, APPLICATION_JSON_TYPE, APPLICATION_JSON_TYPE).status == SC_OK
 
-
-
-        when: "re-enforce password history"
-
-        then: "can not change pwd to previous password 'A'"
-        cloud20.updateUser(identityAdminToken, user.id, userUpdateA, APPLICATION_JSON_TYPE, APPLICATION_JSON_TYPE).status == SC_BAD_REQUEST
-
         cleanup:
         utils.deleteUsers(user)
     }
@@ -480,7 +465,7 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(user)
     }
 
-    def "If rotation is enforced for domain, can't set password to same password as existing"() {
+    def "can't set password to same password as existing"() {
         given:
 
 
@@ -501,7 +486,7 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         }
 
         // Test Reset Password (starting password is passwordOriginal)
-        when: "reset the password with current password when rotation enforced"
+        when: "reset the password with current password"
         def emailToken = getPasswordResetToken(user)
         def response = cloud20.resetPassword(emailToken, v2Factory.createPasswordReset(passwordOriginal))
 
@@ -509,7 +494,7 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         response.status == SC_BAD_REQUEST
 
 
-        when: "reset the password with new password when rotation enforced"
+        when: "reset the password with new password"
         emailToken = getPasswordResetToken(user)
         response = cloud20.resetPassword(emailToken, v2Factory.createPasswordReset(passworda))
 
@@ -519,14 +504,14 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
 
 
         // Test Change Password (starting password is passwordOriginal)
-        when: "reset the password with current password when rotation enforced"
-        response = cloud20.changeUserPassword(user.username, passwordOriginal, passwordOriginal)
+        when: "reset the password with current password"
+        response = cloud20.changeUserPassword(user.username, passworda, passworda)
 
         then: "denied"
         response.status == SC_BAD_REQUEST
 
 
-        when: "reset the password with new password when rotation enforced"
+        when: "reset the password with new password"
         response = cloud20.changeUserPassword(user.username, passworda, passwordOriginal)
 
         then: "can reset to new pwd"
@@ -535,7 +520,7 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
 
 
         // Test Update User to updated Password (starting password is passwordOriginal)
-        when: "reset the password with current password when rotation enforced"
+        when: "reset the password with current password"
         response = cloud20.updateUser(identityAdminToken, user.id, userUpdateOriginal)
 
         then: "denied"
@@ -543,7 +528,7 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
 
 
 
-        when: "reset the password with new password when rotation enforced"
+        when: "reset the password with new password"
         response = cloud20.updateUser(identityAdminToken, user.id, userUpdateA)
 
         then: "can reset to new pwd"

@@ -46,68 +46,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
     }
 
-    def "Password history is stored when enabled; even when other password policy features are disabled"() {
 
-        User user = utils.createGenericUserAdmin()
-
-        def newPassword1 = "newPassword1"
-        com.rackspace.idm.domain.entity.User userUpdate1 = new com.rackspace.idm.domain.entity.User().with {
-            it.id = user.id
-            it.username = user.username
-            it.password = newPassword1
-            it
-        }
-
-        def newPassword2 = "newPassword1"
-        com.rackspace.idm.domain.entity.User userUpdate2 = new com.rackspace.idm.domain.entity.User().with {
-            it.id = user.id
-            it.username = user.username
-            it.password = newPassword2
-            it
-        }
-
-        when: "get password history for newly created user"
-        def userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
-        List<String> pwdHistory = userEntity.getPasswordHistory()
-
-        then: "history contains initial password"
-        pwdHistory.size() == 1
-        cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
-
-        when: "User changes password"
-        userService.updateUser(userUpdate1)
-        userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
-        pwdHistory = userEntity.getPasswordHistory()
-
-        then: "2 passwords in history with first being the oldest"
-        pwdHistory.size() == 2
-        cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
-        cryptHelper.verifyLegacySHA(newPassword1, pwdHistory.get(1))
-
-        when: "User changes password"
-        userService.updateUser(userUpdate2)
-        userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
-        pwdHistory = userEntity.getPasswordHistory()
-
-        then: "3 passwords in history with first being the oldest"
-        pwdHistory.size() == 3
-        cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
-        cryptHelper.verifyLegacySHA(newPassword1, pwdHistory.get(1))
-        cryptHelper.verifyLegacySHA(newPassword2, pwdHistory.get(2))
-
-        when: "User changes password to same thing"
-        userService.updateUser(userUpdate2)
-        userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
-        pwdHistory = userEntity.getPasswordHistory()
-
-        then: "4 passwords in history with last 2 being the same password, but with different hashes"
-        pwdHistory.size() == 4
-        cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
-        cryptHelper.verifyLegacySHA(newPassword1, pwdHistory.get(1))
-        cryptHelper.verifyLegacySHA(newPassword2, pwdHistory.get(2))
-        cryptHelper.verifyLegacySHA(newPassword2, pwdHistory.get(3))
-        pwdHistory.get(2) != pwdHistory.get(3)
-    }
 
     @Unroll
     def "The number of previous passwords stored in password history depends on config property: setting: #maxHistory"() {
@@ -146,26 +85,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
         5 | _
     }
 
-    def "History is not added to, but not nulled out, if maintain history property is disabled"() {
-        reloadableConfiguration.setProperty(IdentityConfig.PASSWORD_HISTORY_MAX_PROP, 5)
 
-        User user = utils.createGenericUserAdmin()
-        com.rackspace.idm.domain.entity.User userUpdate = new com.rackspace.idm.domain.entity.User().with {
-            it.id = user.id
-            it.username = user.username
-            it.password = "newPassword1"
-            it
-        }
-
-        when: "get password history for newly created user"
-        def userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
-        List<String> pwdHistory = userEntity.getPasswordHistory()
-
-        then: "history contains initial password"
-        pwdHistory.size() == 1
-        cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
-
-    }
 
     def "getUserById loading without password history"() {
 
