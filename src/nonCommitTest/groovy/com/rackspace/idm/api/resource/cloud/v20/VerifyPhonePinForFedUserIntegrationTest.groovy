@@ -4,8 +4,13 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerifyPhonePinResult
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.domain.service.IdentityUserService
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.opensaml.security.credential.Credential
@@ -20,8 +25,10 @@ import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
 import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
+import javax.mail.internet.MimeMessage
 import javax.ws.rs.core.MediaType
 
 import static org.apache.http.HttpStatus.SC_CREATED
@@ -33,6 +40,9 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     FederatedUserDao federatedUserRepository
+
+    @Autowired
+    IdentityUserService identityUserService
 
     @Shared
     String sharedServiceAdminToken
@@ -211,4 +221,55 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         where:
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
+
+    def "Locking a phone pin sends an email only when the phone pin becomes locked" () {
+        given:
+        def userAdmin = utils.createGenericUserAdmin()
+        def fedUserId = utils.createFederatedUser(userAdmin.domainId).id
+        def fedUserEntity = identityUserService.getFederatedUserById(fedUserId)
+        def pin = fedUserEntity.phonePin
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
+            it.pin = pin + "a"
+            it
+        }
+
+        when: "Verify the phone pin w/ an invalid pin"
+        def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserEntity.id, phonePin)
+
+        then: "Returns 200 response"
+        response.status == SC_OK
+        VerifyPhonePinResult result = response.getEntity(VerifyPhonePinResult)
+        !result.authenticated
+        CollectionUtils.isEmpty(wiserWrapper.wiserServer.getMessages())
+
+        when: "Verify the phone pin and lock the pin"
+        fedUserEntity = identityUserService.getFederatedUserById(fedUserId)
+        (GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD - 2).times {
+            fedUserEntity.recordFailedPinAuthentication()
+        }
+        identityUserService.updateEndUser(fedUserEntity)
+        response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserEntity.id, phonePin)
+
+        then: "The phone pin locked email was sent"
+        response.status == SC_OK
+        VerifyPhonePinResult result2 = response.getEntity(VerifyPhonePinResult)
+        !result2.authenticated
+        CollectionUtils.isNotEmpty(wiserWrapper.wiserServer.getMessages())
+        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
+        message.getFrom().length == 1
+        message.getFrom()[0].toString() == Constants.PHONE_PIN_LOCKED_EMAIL_FROM
+        message.getSubject() == Constants.PHONE_PIN_LOCKED_EMAIL_SUBJECT
+
+        when: "Verify the phone pin again now that it is locked"
+        wiserWrapper.getWiser().getMessages().clear()
+        response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserEntity.id, phonePin)
+
+        then: "No emails were sent"
+        response.status == SC_OK
+        CollectionUtils.isEmpty(wiserWrapper.wiserServer.getMessages())
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+    }
+
 }

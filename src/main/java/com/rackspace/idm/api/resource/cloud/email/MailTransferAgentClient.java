@@ -7,8 +7,6 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
-import org.joda.time.DateTime;
-import org.joda.time.Minutes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -220,7 +218,7 @@ public class MailTransferAgentClient implements EmailClient {
 
         // Populate the velocity model
         Map<String, Object> model = new HashMap<>();
-        model.put(EmailTemplateConstants.PHONE_PINE_LOCKED_USERNAME_PROP, user.getUsername());
+        model.put(EmailTemplateConstants.PHONE_PIN_LOCKED_USER_PROP, user);
         model.put(EmailTemplateConstants.INVITE_YEAR_PROP, Calendar.getInstance().get(Calendar.YEAR));
 
         // Calc the config

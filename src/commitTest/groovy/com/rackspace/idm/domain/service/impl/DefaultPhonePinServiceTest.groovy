@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.NoPinSetException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.PhonePinLockedException
+import org.apache.commons.lang3.RandomStringUtils
 import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -28,6 +29,7 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
 
     def setup() {
         mockServices()
+        mockEmailClient(service)
     }
 
     def pin = "343223"
@@ -249,6 +251,42 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         and: "Exception is thrown"
         Exception exception = thrown()
         IdmExceptionAssert.assertException(exception, ForbiddenException, "PP-005", "The Phone PIN is not locked.")
+    }
+
+    def "verifyPhonePinOnUser: sends phone pin locked email once and only when the phone pin becomes locked"() {
+        given:
+        User user = new User().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.phonePin = "11111"
+            it.phonePinAuthenticationFailureCount = 4
+            it
+        }
+
+        when: "validate but not lock the phone pin"
+        boolean result = service.verifyPhonePinOnUser(user.id, "invalid")
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        1 * identityUserService.updateEndUser(user)
+        0 * emailClient.asyncSendPhonePinLockedEmail(user)
+        !result
+
+        when: "validate and lock the phone pin"
+        result = service.verifyPhonePinOnUser(user.id, "invalid")
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        1 * identityUserService.updateEndUser(user)
+        1 * emailClient.asyncSendPhonePinLockedEmail(user)
+        !result
+
+        when: "validate the locked phone pin"
+        service.verifyPhonePinOnUser(user.id, "invalid")
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        0 * emailClient.asyncSendPhonePinLockedEmail(user)
+        thrown PhonePinLockedException
     }
 
     def mockServices() {

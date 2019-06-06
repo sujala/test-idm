@@ -29,6 +29,6 @@ public final class EmailTemplateConstants {
     /*
         Dynamic properties made available to phone pin locked templates
      */
-    public static final String PHONE_PINE_LOCKED_USERNAME_PROP = "username";
+    public static final String PHONE_PIN_LOCKED_USER_PROP = "user";
 
 }
