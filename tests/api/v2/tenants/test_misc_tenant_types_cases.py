@@ -1,4 +1,4 @@
-from nose.plugins.attrib import attr
+import pytest
 import copy
 import ddt
 
@@ -183,7 +183,7 @@ class TestTenantTypes(base.TestBaseV2):
             sorted(resp.json()[const.TENANT][const.NS_TYPES]))
 
     @tags('positive', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_duplicate_tenant_types_update(self):
         tenant_id = tenant_name = self.create_tenant_with_types()
         request_object = requests.Tenant(

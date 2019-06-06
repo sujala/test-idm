@@ -2,10 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.SAMLConstants
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.FederatedUser
 import org.apache.log4j.Logger
@@ -15,7 +15,6 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
-import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
@@ -86,7 +85,7 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when:
-        def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+        def authClientResponse = cloud20.authenticateV2FederatedUser(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
 
         then:
         assert authClientResponse.status == HttpServletResponse.SC_OK
@@ -96,15 +95,21 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
 
         then:
-        assert fedUser.id == authResponse.user.id
-        assert fedUser.username == fedRequest.username
-        assert fedUser.domainId == fedRequest.domainId
+        fedUser.id == authResponse.user.id
+        fedUser.username == fedRequest.username
+        fedUser.domainId == fedRequest.domainId
 
-        assert fedUser.phonePin != null
-        assert fedUser.encryptedPhonePin != null
-        assert fedUser.salt != null
-        assert fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
-        assert fedUser.phonePin.isNumber()
+        fedUser.phonePin != null
+        fedUser.encryptedPhonePin != null
+        fedUser.salt != null
+        fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
+        fedUser.phonePin.isNumber()
+        fedUser.phonePinState == PhonePinStateEnum.ACTIVE
+
+        and: "related attributes defaulted appropriately"
+        fedUser.getPhonePinState() == PhonePinStateEnum.ACTIVE
+        fedUser.getPhonePinAuthenticationFailureCountNullSafe() == 0
+        fedUser.getPhonePinAuthenticationLastFailureDate() == null
 
         cleanup:
         try {

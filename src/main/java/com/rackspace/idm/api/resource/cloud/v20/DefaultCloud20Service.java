@@ -891,7 +891,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User unverifiedUser = this.userConverterCloudV20.fromUser(user);
 
             // Generate a phone pin for unverified user
-            unverifiedUser.setPhonePin(phonePinService.generatePhonePin());
+            unverifiedUser.updatePhonePin(phonePinService.generatePhonePin());
 
             userService.addUnverifiedUser(unverifiedUser);
 
@@ -999,6 +999,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // Validate optional phone pin attribute
             if (StringUtils.isNotBlank(user.getPhonePin())) {
+                if (retrievedUnverifiedUser.getPhonePinState() == PhonePinStateEnum.LOCKED) {
+                    throw new ForbiddenException(ErrorCodes.ERROR_MESSAGE_PHONE_PIN_LOCKED, ErrorCodes.ERROR_CODE_PHONE_PIN_LOCKED);
+                }
                 validator20.validatePhonePin(user.getPhonePin());
             }
 
@@ -1025,7 +1028,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // Set optional attributes
             if (StringUtils.isNotBlank(user.getPhonePin())) {
-                retrievedUnverifiedUser.setPhonePin(user.getPhonePin());
+                retrievedUnverifiedUser.updatePhonePin(user.getPhonePin());
             }
 
             userService.updateUser(retrievedUnverifiedUser);
@@ -1076,6 +1079,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             EndUser retrievedUser = identityUserService.getEndUserById(userId);
 
+            if (retrievedUser == null) {
+                String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+
             boolean isUnverifiedUser = retrievedUser instanceof User && ((User) retrievedUser).isUnverified();
             boolean isFederatedUser = retrievedUser instanceof FederatedUser;
             boolean isSelf = caller.getId().equals(userId);
@@ -1083,20 +1092,30 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean sendUserEvent = false;
 
 
+            /*
+            This method supports updating 3 "types" of users:
+            - Provisioned users
+            - Unverified users
+            - Federated users
+             */
             if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
-                // setting contact id to null if caller is not IDENTITY_ADMIN or above
-                user.setContactId(null);
-
-                // Only service and identity admins can update an unverified user.
-                if (retrievedUser != null && isUnverifiedUser) {
+                // Only service and identity admins can update an unverified user. Can be self updated.
+                if (isUnverifiedUser) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
-            }
 
-            if (retrievedUser == null) {
-                String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
-                logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
+                if (!isSelf) {
+                    // Federated users can only be updated by identity:admin+ (contactId) and the fed user themself (phone pin)
+                    if (isFederatedUser) {
+                        throw new ForbiddenException(NOT_AUTHORIZED);
+                    } else {
+                        // For provisioned users, must verify precedence of user
+                        precedenceValidator.verifyEffectiveCallerPrecedenceOverUser(retrievedUser);
+                    }
+                }
+
+                // setting contact id to null if caller is not IDENTITY_ADMIN or above
+                user.setContactId(null);
             }
 
             if (!userId.equals(user.getId()) && user.getId() != null) {
@@ -1114,10 +1133,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 isPhonePinUnchanged = user.getPhonePin().equalsIgnoreCase(retrievedUser.getPhonePin());
             }
 
+            // After this code is run, the user objects phone pin will _ONLY_ be set if it's supposed to be updated
             if (user.getPhonePin() == null || !isSelf || impersonationToken || isUnverifiedUser || isPhonePinUnchanged) {
+                // Blank out the phone pin like user never provided it
                 user.setPhonePin(null);
+                isPhonePinUnchanged = true;
             } else {
-                // Validate phone pin to ensure all acceptance criteria satisfies
+                // User is trying to update phone pin. Validate phone pin state on backend user to ensure pin is not
+                // locked on user and provided pin meets composition requirements.
+                if (retrievedUser.getPhonePinState() == PhonePinStateEnum.LOCKED) {
+                    throw new ForbiddenException(ErrorCodes.ERROR_MESSAGE_PHONE_PIN_LOCKED, ErrorCodes.ERROR_CODE_PHONE_PIN_LOCKED);
+                }
                 validator20.validatePhonePin(user.getPhonePin());
             }
 
@@ -1138,7 +1164,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
 
                 if (StringUtils.isNotBlank(user.getPhonePin())){
-                    fedUser.setPhonePin(user.getPhonePin());
+                    // Must call update call to ensure counter is appropriately reset.
+                    fedUser.updatePhonePin(user.getPhonePin());
                     phonePinUpdated = true;
                 }
 
@@ -1199,6 +1226,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
 
                 User userDO = this.userConverterCloudV20.fromUser(user);
+
+                /*
+                 * This hack is required because the code uses the provided User in request body directly update
+                 * the user rather than copying over those fields that are allowed to be updated (like for fed/unverified user above)
+                 * Since there is logic in place based on updating the phone pin, need to duplicate the logic when a
+                 * PIN is changed.
+                  */
+                if (!isPhonePinUnchanged) {
+                    userDO.setPhonePinAuthenticationFailureCount(0);
+                }
+
                 if (user.isEnabled() == null) {
                     userDO.setEnabled(((User) retrievedUser).getEnabled());
                 }
@@ -2201,7 +2239,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             IdentityProviders providers = identityProviderConverterCloudV20.toIdentityProviderList(providerEntities);
 
             // If enabled, ensure an approvedDomainIds object exists for every provider
-            if (providers != null && CollectionUtils.isNotEmpty(providers.getIdentityProvider()) && identityConfig.getReloadableConfig().listIdpsAlwaysReturnsApprovedDomainIds()) {
+            if (providers != null && CollectionUtils.isNotEmpty(providers.getIdentityProvider())) {
                 for (IdentityProvider identityProvider : providers.getIdentityProvider()) {
                     if (identityProvider.getApprovedDomainIds() == null) {
                         identityProvider.setApprovedDomainIds(new ApprovedDomainIds());
@@ -2966,17 +3004,23 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Must supply a Phone PIN.", ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
             }
 
+            VerifyPhonePinResult result = new VerifyPhonePinResult();
             try {
                 if (!phonePinService.verifyPhonePinOnUser(userId, phonePin.getPin())) {
-                    throw new BadRequestException(String.format("Incorrect Phone PIN."),
-                            ErrorCodes.ERROR_CODE_PHONE_PIN_BAD_REQUEST);
+                    result.setAuthenticated(false);
+                    result.setFailureCode(ErrorCodes.ERROR_CODE_PHONE_PIN_INCORRECT);
+                    result.setFailureMessage(ErrorCodes.ERROR_MESSAGE_PHONE_PIN_INCORRECT);
+                } else {
+                    result.setAuthenticated(true);
                 }
-            } catch (NoPinSetException ex) {
+            } catch (NoPinSetException | PhonePinLockedException ex) {
                 // Convert to standard BadRequest to indicate verification failure, but provide reason.
-                throw new BadRequestException(ex.getRawMessage(), ex.getErrorCode());
+                result.setAuthenticated(false);
+                result.setFailureCode( ex.getErrorCode());
+                result.setFailureMessage(ex.getRawMessage());
             }
 
-            return Response.noContent();
+            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createVerifyPhonePinResult(result).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -3018,15 +3062,48 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (onlyIfMissing) {
                 if (StringUtils.isEmpty(user.getPhonePin())) {
-                    phonePinService.resetPhonePin((PhonePinProtectedUser) user);
+                    phonePinService.resetPhonePin(user);
                 } else {
-                    return exceptionHandler.conflictExceptionResponse(ErrorCodes.ERROR_CODE_USER_ALREADY_HAS_A_PHONE_PIN);
+                    return exceptionHandler.conflictExceptionResponse(ErrorCodes.ERROR_MESSAGE_USER_ALREADY_HAS_A_PHONE_PIN);
                 }
             } else {
-                phonePinService.resetPhonePin((PhonePinProtectedUser) user);
+                if (user.getPhonePinState() == PhonePinStateEnum.LOCKED) {
+                    throw new ForbiddenException(ErrorCodes.ERROR_MESSAGE_PHONE_PIN_LOCKED, ErrorCodes.ERROR_CODE_PHONE_PIN_LOCKED);
+                }
+                phonePinService.resetPhonePin(user);
             }
 
             return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder unlockPhonePin(String authToken, String userId) {
+        try {
+            // VALIDATION 1: Token exists and is valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerTokenAsBaseToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // VALIDATION 2:  request is not impersonated
+            if (requestContextHolder.getRequestContext().getSecurityContext().isImpersonatedRequest()) {
+                throw new ForbiddenException(NOT_AUTHORIZED, ErrorCodes.ERROR_CODE_PHONE_PIN_FORBIDDEN_ACTION);
+            }
+
+            boolean isSelf = caller.getId().equals(userId);
+            boolean isPhonePinAdmin = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PHONE_PIN_ADMIN.getRoleName());
+
+            // VALIDATION 3: Caller is self or has the role identity:phone-pin-admin
+            if (isSelf || isPhonePinAdmin) {
+                phonePinService.unlockPhonePin(userId);
+            } else {
+                String errMsg = NOT_AUTHORIZED_MSG;
+                logger.warn(errMsg);
+                throw new ForbiddenException(errMsg);
+            }
+            return Response.noContent();
+
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -3037,7 +3114,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if(!(endUser instanceof User || endUser instanceof FederatedUser)) {
             throw new IllegalStateException(String.format("Unknown user type '%s'", endUser.getClass().getName()));
         }
-        return (PhonePinProtectedUser) endUser;
+        return endUser;
     }
 
     @Override

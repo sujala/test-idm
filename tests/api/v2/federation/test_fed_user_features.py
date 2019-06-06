@@ -1,4 +1,4 @@
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -48,7 +48,7 @@ class TestFedUserFeatures(federation.TestBaseFederation):
         self.users = []
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_fed_user_contact_id_phone_pin(self):
         """
         Test to Add Contact Id on a fed user.

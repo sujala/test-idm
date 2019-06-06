@@ -6,7 +6,6 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.GetItemResult
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordCheckResultTypeEnum
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.entity.ValidatePasswordResult
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -22,6 +21,39 @@ class DefaultPasswordBlacklistServiceTest extends RootServiceTest {
         mockDynamoDB(service)
     }
 
+    def "Test when feature flag is turned off then result with DISABLE value is returned"() {
+        given:
+        identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled() >> false
+
+        when:
+        def status = service.checkPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+
+        then:
+        status == PasswordCheckResultTypeEnum.DISABLED
+
+        when:
+        def result = service.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+
+        then:
+        result == false
+    }
+
+    def "Verify blacklisted check returns PASS if item is not found in Dynamodb"() {
+        given:
+        identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled() >> true
+
+        1 * dynamoDB.getItem(_) >> new GetItemResult().with {
+            it.item = null
+            it
+        }
+
+        when:
+        def result = service.checkPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+
+        then:
+        result == PasswordCheckResultTypeEnum.PASSED
+    }
+
     def "Test default behavior is to handle exceptions and return INDETERMINATE_ERROR instead of propagating exception"() {
         given:
         identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled() >> true
@@ -32,14 +64,15 @@ class DefaultPasswordBlacklistServiceTest extends RootServiceTest {
         then: "by default it handles all exceptions and logs them"
         noExceptionThrown()
 
-        and: "returns that password is not black listed"
+        and: "returns INDETERMINATE_ERROR status"
         isPasswordInBlacklisted == PasswordCheckResultTypeEnum.INDETERMINATE_ERROR
     }
 
     @Unroll
-    def "Test scenarios where in a blacklisted password has different publicly compromised count #countNumber"() {
+    def "Test blacklisted check returns other status based on threshold count:#countNumber, :#expectedStatus"() {
         given:
         identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled() >> true
+        identityConfig.getReloadableConfig().getDynamoDBPasswordBlacklistCountMaxAllowed() >> 10
 
         Map<String, AttributeValue> returnedItem = new HashMap<String, AttributeValue>() {}
         returnedItem.put("pwd_hash", "F367EA9046AA8EBB1D8BEAF6DEF43C701B6381BE")
@@ -48,58 +81,50 @@ class DefaultPasswordBlacklistServiceTest extends RootServiceTest {
             it
         })
 
-        1 * dynamoDB.getItem(_) >> new GetItemResult().with {
+        2 * dynamoDB.getItem(_) >> new GetItemResult().with {
             it.item = returnedItem
             it
         }
 
-        when: "Black listed password with compromised count more then threshold limit is passed"
+        when: "checkPasswordInBlacklist is called"
         def blackListedPasswordIsBlocked = service.checkPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
 
-        then: "password is considered black listed"
-        blackListedPasswordIsBlocked == expectation
+        then: "expected status is returned"
+        blackListedPasswordIsBlocked == expectedStatus
 
-        1 * identityConfig.getReloadableConfig().getDynamoDBPasswordBlacklistCountMaxAllowed() >> 10
+        when: "isPasswordInBlacklist is called"
+        def result = service.isPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
+
+        then: "expected boolean value is returned"
+        result == expectedResult
 
         where:
-        countNumber | expectation
-        -2000       | PasswordCheckResultTypeEnum.PASSED
-        -2          | PasswordCheckResultTypeEnum.PASSED
-        0           | PasswordCheckResultTypeEnum.PASSED
-        1           | PasswordCheckResultTypeEnum.PASSED
-        10          | PasswordCheckResultTypeEnum.PASSED
-        1000        | PasswordCheckResultTypeEnum.FAILED
-        null        | PasswordCheckResultTypeEnum.INDETERMINATE_ERROR
+        countNumber | expectedStatus                                  | expectedResult
+        -7          | PasswordCheckResultTypeEnum.PASSED              | false
+        0           | PasswordCheckResultTypeEnum.PASSED              | false
+        7           | PasswordCheckResultTypeEnum.PASSED              | false
+        1000        | PasswordCheckResultTypeEnum.FAILED              | true
+        null        | PasswordCheckResultTypeEnum.INDETERMINATE_ERROR | false
     }
 
+
     @Unroll
-    def "Test cases when dynamoDb throws exception = #exception"() {
+    def "Test cases when dynamoDb throws different exceptions: #exception"() {
         given:
         identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled() >> true
 
+        1 * dynamoDB.getItem(_) >> { throw inputException }
+
         when:
-        1 * dynamoDB.getItem(_) >> exception
         def result = service.checkPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
 
         then:
-        result == PasswordCheckResultTypeEnum.INDETERMINATE_ERROR
-        1 * identityConfig.getReloadableConfig().getDynamoDBPasswordBlacklistCountMaxAllowed() >> 10
+        result == expectedResult
 
         where:
-        exception << [new AmazonServiceException("test service exception"),
-                      new AmazonClientException("test client exception"),
-                      new Exception("test exception")]
-    }
-
-    def "Test when feature flag is turned off then result with DISABLE value is returned"() {
-        given:
-        identityConfig.getReloadableConfig().isPasswordBlacklistValidationEnabled() >> false
-
-        when:
-        def result = service.checkPasswordInBlacklist(Constants.BLACKLISTED_PASSWORD)
-
-        then:
-        result == PasswordCheckResultTypeEnum.DISABLED
+        inputException                               | expectedResult
+        new AmazonServiceException("test exception") | PasswordCheckResultTypeEnum.INDETERMINATE_ERROR
+        new AmazonClientException("test exception")  | PasswordCheckResultTypeEnum.INDETERMINATE_RETRY
+        new RuntimeException("test exception")       | PasswordCheckResultTypeEnum.INDETERMINATE_ERROR
     }
 }
-

@@ -1,7 +1,7 @@
 """Identity API Base Client."""
 
 import types
-from urlparse import urlparse
+from urllib.parse import urlparse
 from lxml import objectify
 
 from cafe.engine.http import client
@@ -64,7 +64,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 resp_json[const.ACCESS][const.USER] = {}
                 resp_json[const.ACCESS][const.USER][const.RAX_AUTH_DEFAULT_REGION] = 1 # noqa
                 resp_json[const.ACCESS][const.USER][const.ID] = \
-                    unicode(user.attrib[const.ID])
+                    str(user.attrib[const.ID])
                 resp_json[const.ACCESS][const.USER][const.ROLES] = []
                 resp_json[const.ACCESS][const.USER][const.NAME] = \
                     user.attrib[const.NAME]
@@ -1665,11 +1665,21 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return self.request('POST', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
 
+    def validate_password(self, request_object, requestslib_kwargs=None):
+        """Return response object from the validate password api call
+        POST
+         /users/RAX-AUTH/validate-pwd
+        """
+        url = self.url + const.VALIDATE_PASSWORD_URL
+        return self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
     def change_administrators(self, domain_id, request_object,
                               requestslib_kwargs=None):
         """Return response object from list users in domain
         PUT
-        {{AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}/domainAdministratorChange
+        {{AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}/
+        domainAdministratorChange
         """
         url = self.url + const.ADMIN_CHANGE_URL.format(domain_id=domain_id)
         return self.request('PUT', url, request_entity=request_object,
@@ -2044,4 +2054,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + const.RESET_PHONE_PIN_URL.format(user_id=user_id)
 
         return self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def unlock_phone_pin(
+            self, user_id, requestslib_kwargs=None):
+        """
+        PUT /v2.0/users/{userId}/RAX-AUTH/phone-pin/unlock
+        """
+        url = self.url + const.UNLOCK_PHONE_PIN_URL.format(user_id=user_id)
+
+        return self.request('PUT', url,
                             requestslib_kwargs=requestslib_kwargs)

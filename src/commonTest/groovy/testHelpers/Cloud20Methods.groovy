@@ -58,12 +58,14 @@ class Cloud20Methods {
     static def SERVICE_PATH_VERIFY = "verify"
     static def SERVICE_PATH_RESET = "reset"
     static def SERVICE_PATH_VERIFICATION_CODE = "verificationcode"
+    static def SERVICE_PATH_UNLOCK = "unlock"
     static def SERVICE_PATH_BYPASS_CODES = "bypass-codes"
     static def SERVICE_PATH_OTP_DEVICES = "otp-devices"
     static def SERVICE_PATH_MULTI_FACTOR_DEVICES = "devices"
     static def SERVICE_PATH_IDENTITY_PROVIDERS = "identity-providers"
     static def SERVICE_PATH_FORGOT_PASSWORD = "forgot-pwd"
     static def SERVICE_PATH_PASSWORD_RESET = "pwd-reset"
+    static def SERVICE_PATH_VALIDATE_PASSWORD = "validate-pwd"
     static def SERVICE_PATH_RULES = "rules"
     static def SERVICE_PATH_MAPPING = "mapping"
     static def SERVICE_PATH_METADATA = "metadata"
@@ -1245,7 +1247,7 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(RAX_KSKEY_API_KEY_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credential).post ClientResponse
     }
 
-    def impersonate(String token, User user, Integer expireTime = 10800, MediaType requestType=MediaType.APPLICATION_XML_TYPE, MediaType accept=MediaType.APPLICATION_XML_TYPE) {
+    def impersonate(String token, User user, Integer expireTime = 10800, MediaType requestType=APPLICATION_XML_TYPE, MediaType accept=APPLICATION_XML_TYPE) {
         initOnUse()
         def request = new ImpersonationRequest().with {
             it.user = new User().with {
@@ -1355,6 +1357,15 @@ class Cloud20Methods {
     def forgotPassword(ForgotPasswordCredentials forgotPasswordCredentials, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_FORGOT_PASSWORD).type(requestContentMediaType).entity(forgotPasswordCredentials).post(ClientResponse)
+    }
+
+    /**
+     * Integration test for service endpoint
+     * POST /v2.0/users/RAX-AUTH/validate-pwd
+     */
+    def validatePassword(String token, def validatePasswordRequest, MediaType requestContentMediaType = MediaType.APPLICATION_JSON_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_VALIDATE_PASSWORD).type(requestContentMediaType).entity(validatePasswordRequest).header(X_AUTH_TOKEN, token).post(ClientResponse)
     }
 
     def resetPassword(def token, def passwordReset, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
@@ -1635,5 +1646,10 @@ class Cloud20Methods {
         def response = createDomainIdIdentityProviderWithCred(token, domainIds, cred)
         assert (response.status == SC_CREATED)
         return response.getEntity(IdentityProvider)
+    }
+
+    def unlockPhonePin(String token, String userId, MediaType accept = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(PHONE_PIN_URL).path(SERVICE_PATH_UNLOCK).header(X_AUTH_TOKEN, token).accept(accept).put(ClientResponse)
     }
 }

@@ -359,6 +359,8 @@ class JSONReaderWriterTest extends RootServiceTest {
         def displayName = "displayName"
         def multiFactorEnabled = true
         def delegationAgreementId = "delegationAgreementId "
+        def phonePin = "123456"
+        def phonePinState = PhonePinStateEnum.ACTIVE
 
         User userObject = v2Factory.createUser().with {
             it.displayName = displayName
@@ -368,6 +370,8 @@ class JSONReaderWriterTest extends RootServiceTest {
             it.enabled = enabled
             it.multiFactorEnabled = multiFactorEnabled
             it.delegationAgreementId = delegationAgreementId
+            it.phonePin = phonePin
+            it.phonePinState = phonePinState
             it
         }
 
@@ -378,7 +382,6 @@ class JSONReaderWriterTest extends RootServiceTest {
         ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
         def user = readerForUser.readFrom(User.class, null, null, null, null, arrayInputStream)
 
-
         then:
         user.id == id
         user.username == username
@@ -386,6 +389,8 @@ class JSONReaderWriterTest extends RootServiceTest {
         user.enabled == enabled
         user.displayName == displayName
         user.multiFactorEnabled == multiFactorEnabled
+        user.phonePin == phonePin
+        user.phonePinState == phonePinState
     }
 
     def "can read/write apiKeyCreds as json" () {

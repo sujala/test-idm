@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from qe_coverage.opencafe_decorators import tags, unless_coverage
-from nose.plugins.attrib import attr
+import pytest
 from tests.api.utils import func_helper
 from tests.api.v2 import base
 
@@ -31,7 +31,7 @@ class TestLockDownAbilityToCreateDomains(base.TestBaseV2):
         self.user_ids = []
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_identity_admin_can_create_admin_user_with_role(self):
         user_name = self.generate_random_string()
         request_input = requests.UserAdd(user_name=user_name,
@@ -42,7 +42,7 @@ class TestLockDownAbilityToCreateDomains(base.TestBaseV2):
         self.user_ids.append(resp.json()[const.USER][const.ID])
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_identity_admin_can_create_user_with_role_for_one_user_call(self):
         user_name = self.generate_random_string()
         req_obj = factory.get_add_user_one_call_request_object(
@@ -53,7 +53,7 @@ class TestLockDownAbilityToCreateDomains(base.TestBaseV2):
         self.user_ids.append(user_id)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_ia_can_add_user_with_one_user_call_for_nonexist_domain(self):
         # verify identity admin with role can create user
         # with one user call for non existing domain

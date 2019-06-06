@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper, saml_helper
@@ -30,16 +30,6 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         cls.test_email = 'random@rackspace.com'
         cls.hierarchical_billing_observer_role_id = cls.get_role_id_by_name(
             role_name=const.HIERARCHICAL_BILLING_OBSERVER_ROLE_NAME)
-
-    @classmethod
-    def get_role_id_by_name(cls, role_name):
-
-        option = {
-            const.PARAM_ROLE_NAME: role_name
-        }
-        get_role_resp = cls.identity_admin_client.list_roles(option=option)
-        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
-        return role_id
 
     @unless_coverage
     def setUp(self):
@@ -103,7 +93,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
                 federation_type='DOMAIN', approved_domain_ids=[domain_id],
                 issuer=issuer, public_certificates=[pem_encoded_cert])
             resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
 
@@ -119,7 +109,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         self.assertEqual(role_present, positive)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('data_tenant_level_roles.json')
     def test_tenant_level_roles_in_fed_auth(self, test_data):
         ''' Verify appropriate roles are on the federated users.'''
@@ -222,7 +212,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
         return role_1, tenant_1
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_whitelist_roles_for_fed_user_on_tenant(self):
 
         test_data = {"fed_input": {
@@ -290,7 +280,7 @@ class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
             self.assertEqual(role_count, 1)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_wl_role_for_fed_user_on_tenant(self):
 
         test_data = {"fed_input": {

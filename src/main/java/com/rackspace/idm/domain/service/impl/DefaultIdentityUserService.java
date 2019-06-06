@@ -396,6 +396,11 @@ public class DefaultIdentityUserService implements IdentityUserService {
         identityUserRepository.updateIdentityUser(user);
     }
 
+    @Override
+    public void updateEndUser(EndUser user) {
+        identityUserRepository.updateIdentityUser(user);
+    }
+
     private ServiceCatalogInfo getServiceCatalogInfoInternal(BaseUser baseUser, boolean applyRcnRoles) {
         if (baseUser == null || !(baseUser instanceof EndUser)) {
             /*

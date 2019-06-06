@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import copy
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -28,7 +28,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.sub_users = []
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_crud_nested_da(self):
 
         parent_nest_level = 2
@@ -145,7 +145,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
         self.assertSchema(nested_da_resp, modified_schema)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_auth_under_nested_da(self):
 
         parent_nest_level = 2
@@ -193,7 +193,7 @@ class NestedDelegationAgreementsTests(delegation.TestBaseDelegation):
             self.domain_id)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_nested_da_when_principal_is_user_group(self):
 
         # create user groups for domain

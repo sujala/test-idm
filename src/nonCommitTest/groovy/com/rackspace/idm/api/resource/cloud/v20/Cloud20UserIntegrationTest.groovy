@@ -484,18 +484,18 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         def userByUsername = utils.getUserByName(defaultUser.username, identityAdminToken, acceptType)
         def usersByEmail = utils.getUsersByEmail(defaultUser.email, identityAdminToken, acceptType)
         def usersByDomain = utils.getUsersByDomainId(domainId, identityAdminToken, acceptType)
-        def usersByEmailSource = usersByEmail["users"].find {it['id'] == defaultUser.id}
+        def usersByEmailSource = usersByEmail.find {it['id'] == defaultUser.id}
         def usersByDomainSource = usersByDomain["users"].find {it['id'] == defaultUser.id}
 
         then: "enabled is always shown"
         verifyMFAAttributesPresence(userById, multiFactorEnabled)
         verifyMFAAttributesPresence(userByUsername, multiFactorEnabled)
         verifyMFAAttributesPresence(new User().with {
-            it.multiFactorEnabled = usersByEmailSource['RAX-AUTH:multiFactorEnabled']
-            it.multiFactorState = usersByEmailSource['RAX-AUTH:multiFactorState']
-            it.factorType = usersByEmailSource['RAX-AUTH:factorType']
+            it.multiFactorEnabled = usersByEmailSource.multiFactorEnabled
+            it.multiFactorState = usersByEmailSource.multiFactorState
+            it.factorType = usersByEmailSource.factorType
             it
-        }, multiFactorEnabled);
+        }, multiFactorEnabled)
         verifyMFAAttributesPresence(new User().with {
             it.multiFactorEnabled = usersByDomainSource['RAX-AUTH:multiFactorEnabled']
             it.multiFactorState = usersByDomainSource['RAX-AUTH:multiFactorState']

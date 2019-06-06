@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper, saml_helper
@@ -61,14 +61,14 @@ class TestUpdateIDP(federation.TestBaseFederation):
     def add_idp_user(self):
         request_object = factory.get_add_idp_request_object()
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
         provider_name = resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME]
         return provider_id, provider_name
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_idp_valid_name(self):
         """Test update with valid name randomly generate name with
         alphanumeric, '.', and '-' characters in range from 1 to 255
@@ -84,7 +84,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
                          idp_name)
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_idp_name_with_empty_string(self):
         """Update with empty string"""
         provider_id, _ = self.add_idp_user()
@@ -107,7 +107,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 200)
 
     @unless_coverage
-    @attr(type='skip_at_gate')
+    @pytest.mark.skip_at_gate
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_approved_domain_ids_with_spaces(self, test_data):
 
@@ -141,7 +141,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_enable_disable_idp(self, test_data):
 
@@ -216,7 +216,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertSchema(fed_auth, self.updated_fed_auth_schema)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_domain_and_re_auth(self, test_data):
 
@@ -251,7 +251,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             issuer=issuer, domain_1=domain_id, domain_2=domain_id_2)
 
     @tags('positive', 'p1', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_idp_approved_domain_ids_with_duplicates(self):
         domain_id = func_helper.generate_randomized_domain_id(
             client=self.identity_admin_client)
@@ -263,7 +263,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         request_object = factory.get_add_idp_request_object(
             federation_type='DOMAIN', approved_domain_ids=[domain_id])
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
 
@@ -276,7 +276,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             [domain_id])
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_idp_by_rcn_admin(self):
 
         request_object = factory.get_domain_request_object({})
@@ -286,7 +286,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         request_object = factory.get_add_idp_request_object(
             federation_type='DOMAIN', approved_domain_ids=[domain_id])
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
 
@@ -335,7 +335,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 200)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_update_idp_by_user_clients(self):
         domain_id = func_helper.generate_randomized_domain_id(
             client=self.identity_admin_client)
@@ -349,7 +349,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         request_object = factory.get_add_idp_request_object(
             federation_type='DOMAIN', approved_domain_ids=[domain_id])
         resp = self.identity_admin_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
 
@@ -362,7 +362,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         self.assert_update_idp(provider_id, user_client)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.data("user:admin", "user:manage")
     def test_update_idp_by_user_clients_metadata(self, client_key):
         (pem_encoded_cert, cert_path, _, key_path,
@@ -401,7 +401,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         return role
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.file_data('modified_saml_fed_auth.json')
     def test_fed_auth_with_modified_saml(self, test_data):
 
@@ -434,9 +434,9 @@ class TestUpdateIDP(federation.TestBaseFederation):
                 email=self.test_email, private_key_path=key_path,
                 public_key_path=cert_path, response_flavor='v2DomainOrigin',
                 output_format='xml', roles=roles)
-        first_part = role.name[:len(role.name)/2]
-        second_part = role.name[len(role.name)/2:]
-        cert = cert.replace(
+        first_part = role.name[:len(role.name)//2]
+        second_part = role.name[len(role.name)//2:]
+        cert = cert.decode().replace(
             roles[0], first_part + '<!-- -->' + second_part)
 
         # Get fed auth token
@@ -465,7 +465,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
             const.NS_IDENTITY_PROVIDER][const.ID])
         get_name = get_name_resp.json()[const.NS_IDENTITY_PROVIDER][
             const.NAME]
-        self.assertEquals(get_name, new_idp_name)
+        self.assertEqual(get_name, new_idp_name)
 
         client_instance.default_headers[
             const.CONTENT_TYPE] = 'application/xml'

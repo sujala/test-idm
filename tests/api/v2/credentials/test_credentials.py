@@ -1,5 +1,5 @@
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -47,7 +47,7 @@ class TestCredentials(base.TestBaseV2):
         return user_id, username, password
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_credentials(self):
         resp = self.identity_admin_client.list_credentials(self.user_id)
         self.assertEqual(resp.status_code, 200)
@@ -59,7 +59,7 @@ class TestCredentials(base.TestBaseV2):
                              [const.NS_API_KEY_CREDENTIALS][const.API_KEY])
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_add_password_credentials(self):
         password = self.generate_random_string(
                         pattern=const.PASSWORD_PATTERN)
@@ -86,7 +86,7 @@ class TestCredentials(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_get_apikey(self):
         resp = self.identity_admin_client.get_api_key(self.user_id)
         self.assertEqual(resp.status_code, 200)
@@ -98,7 +98,7 @@ class TestCredentials(base.TestBaseV2):
                          [const.USERNAME], self.testusername)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_reset_apikey_by_identity_admin(self):
         resp = self.identity_admin_client.get_api_key(self.user_id)
         self.assertEqual(resp.status_code, 200)
@@ -113,7 +113,7 @@ class TestCredentials(base.TestBaseV2):
                          msg="The API key should be different after reset!")
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_reset_own_apikey_by_user_admin(self):
         resp = self.identity_admin_client.get_api_key(self.user_id)
         self.assertEqual(resp.status_code, 200)
@@ -135,7 +135,7 @@ class TestCredentials(base.TestBaseV2):
                          msg="The API key should be different after reset!")
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_delete_apikey(self):
         resp = self.identity_admin_client.delete_api_key(self.user_id)
         self.assertEqual(resp.status_code, 204)
@@ -146,7 +146,7 @@ class TestCredentials(base.TestBaseV2):
         self.assertEqual(resp.status_code, 404)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_update_apikey(self):
         apikey = self.generate_random_string(pattern=const.API_KEY_PATTERN)
         request_object = requests.ApiKeyCredentialsUpdate(self.testusername,

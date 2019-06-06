@@ -234,7 +234,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         then: "should be AE token"
         nullToken.token.id.length() > 32
         retrievedUser.tokenFormat == null
-        userList.users[0]['RAX-AUTH:tokenFormat'] == null
+        userList[0].tokenFormat == null
 
         when: "retrieving an 'AE' tokenFormat"
         utils.updateUser('{"user":{"RAX-AUTH:tokenFormat": "AE"}}', userAdmin.id, MediaType.APPLICATION_JSON_TYPE)
@@ -245,7 +245,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         then: "should be bigger then 32 characters"
         aeToken.token.id.length() > 32
         retrievedUser.tokenFormat == TokenFormatEnum.AE
-        userList.users[0]['RAX-AUTH:tokenFormat'] == 'AE'
+        userList[0].tokenFormat == TokenFormatEnum.AE
 
         when: "retrieving an 'DEFAULT' tokenFormat"
         utils.updateUser('{"user":{"RAX-AUTH:tokenFormat": "DEFAULT"}}', userAdmin.id, MediaType.APPLICATION_JSON_TYPE)
@@ -256,7 +256,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         then: "should return the same as the 'AE' token"
         defaultToken.token.id.length() > 32
         retrievedUser.tokenFormat == TokenFormatEnum.DEFAULT
-        userList.users[0]['RAX-AUTH:tokenFormat'] == 'DEFAULT'
+        userList[0].tokenFormat == TokenFormatEnum.DEFAULT
 
         when: "validating an 'AE' token"
         def aeTokenValidate = utils.validateToken(aeToken.token.id)

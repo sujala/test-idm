@@ -15,7 +15,8 @@ def data_file_provider(data):
                     os.path.dirname(fn_path), file_path)
                 try:
                     with open(data_file_path, "r") as f:
-                        fn(self, f.read())
+                        contents = f.read()
+                    fn(self, contents)
                 except AssertionError as e:
                     raise AssertionError(
                         "{} (data set used: {} in test {})".format(

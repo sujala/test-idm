@@ -233,6 +233,10 @@ public final class JSONConstants {
     public static final String PHONE_PIN = "phonePin";
     public static final String RAX_AUTH_PHONE_PIN = "RAX-AUTH:" + PHONE_PIN;
 
+    public static final String PHONE_PIN_STATE = "phonePinState";
+    public static final String RAX_AUTH_PHONE_PIN_STATE = "RAX-AUTH:" + PHONE_PIN_STATE;
+
+
     public static final String OTP_DEVICES = "otpDevices";
     public static final String RAX_AUTH_OTP_DEVICES = "RAX-AUTH:otpDevices";
 
@@ -268,6 +272,9 @@ public final class JSONConstants {
     public static final String DELEGATION_CREDENTIALS = "delegationCredentials";
     public static final String RAX_AUTH_DELEGATION_CREDENTIALS = "RAX-AUTH:" + DELEGATION_CREDENTIALS;
 
+    public static final String VERIFY_PHONE_PIN_RESULT = "verifyPhonePinResult";
+    public static final String RAX_AUTH_VERIFY_PHONE_PIN_RESULT = "RAX-AUTH:" + VERIFY_PHONE_PIN_RESULT;
+
     //faults
     public static final String OPENSTACK_BAD_REQUEST = "badRequest";
     public static final String OPENSTACK_FORBIDDEN_REQUEST = "forbidden";
@@ -288,6 +295,7 @@ public final class JSONConstants {
     public static final String RAX_AUTH_CHANGE_PWD_CREDENTIALS = "RAX-AUTH:changePasswordCredentials";
     public static final String RAX_AUTH_PASSWORD_RESET = "RAX-AUTH:passwordReset";
     public static final String RAX_AUTH_VALIDATE_PWD = "RAX-AUTH:validatePassword";
+    public static final String RAX_AUTH_VALIDATE_PWD_REQUEST = "RAX-AUTH:validatePasswordRequest";
     public static final String AUTH_DOMAIN_PATH = "auth.domain";
     public static final String AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH = "auth.RAX-KSKEY:apiKeyCredentials";
     public static final String AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH = "auth.RAX-AUTH:rsaCredentials";
@@ -335,6 +343,8 @@ public final class JSONConstants {
     public static final String USER_RAX_AUTH_MULTI_FACTOR_ENFORCEMENT_LEVEL_PATH = "user.RAX-AUTH:userMultiFactorEnforcementLevel";
     public static final String USER_PHONE_PIN_PATH = "user.phonePin";
     public static final String USER_RAX_AUTH_PHONE_PIN_PATH = "user.RAX-AUTH:phonePin";
+    public static final String USER_RAX_AUTH_PHONE_PIN_STATE_PATH = "user.RAX-AUTH:phonePinState";
+    public static final String USER_PHONE_PIN_STATE_PATH = "user.phonePinState";
 
     public static final String TENANT_DOMAIN_ID_PATH = "tenant.domainId";
     public static final String TENANT_RAX_AUTH_DOMAIN_ID_PATH = "tenant.RAX-AUTH:domainId";
@@ -398,5 +408,6 @@ public final class JSONConstants {
 
     // Constants for Validate password
     public static final String VALIDATE_PWD = "validatePassword";
+    public static final String VALIDATE_PWD_REQUEST = "validatePasswordRequest";
 
 }

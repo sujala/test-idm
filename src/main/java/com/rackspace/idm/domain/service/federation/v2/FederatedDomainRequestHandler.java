@@ -538,7 +538,7 @@ public class FederatedDomainRequestHandler {
         }
 
         // Generate a phone pin
-        federatedUser.setPhonePin(phonePinService.generatePhonePin());
+        federatedUser.updatePhonePin(phonePinService.generatePhonePin());
 
         federatedUserDao.addUser(originIdp, federatedUser);
 

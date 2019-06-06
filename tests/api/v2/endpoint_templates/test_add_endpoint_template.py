@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*
 from hypothesis import given, strategies
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 import ast
 import copy
 import ddt
-import urlparse
+import urllib.parse
 
 from tests.api.v2 import base
 from tests.api.v2.schema import endpoint_templates
@@ -365,7 +365,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                     expected_endpoint_in_catalog=expected_endpoint_in_catalog)
 
     @unless_coverage
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     @ddt.file_data('data_add_endpoint_template_negative_cases.json')
     def test_add_endpoint_template_negative(self, test_data):
         """
@@ -491,7 +491,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
             self.identity_admin_client.add_endpoint_to_tenant(
                 tenant_id=tenant_id, endpoint_template_id=template_id)
 
-        expected_url = urlparse.urljoin(public_url, tenant_id)
+        expected_url = urllib.parse.urljoin(public_url, tenant_id)
         req_obj = requests.AuthenticateWithPassword(
             user_name=user_name, password=password
         )

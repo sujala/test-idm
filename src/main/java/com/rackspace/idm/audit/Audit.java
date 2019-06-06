@@ -12,7 +12,6 @@ import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 public class Audit {
@@ -37,10 +36,11 @@ public class Audit {
 		PASSWORD_RESET,
 		DELEGATEAUTH,
 		PHONEPIN_VERIFY,
+		PHONEPIN_UNLOCK,
 	}
 
 	private enum RESULT {
-		SUCCEED, FAIL;
+		SUCCEED, FAIL
 	}
 
 	private final class Event {
@@ -104,6 +104,9 @@ public class Audit {
 		return new Audit(o.getAuditContext()).addEvent(ACTION.PHONEPIN_VERIFY);
 	}
 
+	public static Audit unlockPhonePin(EndUser o) {
+		return new Audit(o.getAuditContext()).addEvent(ACTION.PHONEPIN_UNLOCK);
+	}
 
 	public static Audit authFederated(FederatedBaseUser o) {
 		return new Audit(o.getAuditContext()).addEvent(ACTION.FEDERATEDAUTH);

@@ -85,8 +85,6 @@ public class Cloud20VersionResource {
     @Autowired
     private CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
-    public static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
-
     @Autowired
     private DefaultCloud20Service cloud20Service;
 
@@ -114,6 +112,7 @@ public class Cloud20VersionResource {
     @Autowired
     private IdentityProviderConverterCloudV20 identityProviderConverterCloudV20;
 
+    public static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
     private static final String JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH = "org.openstack.docs.common.api.v1:org.w3._2005.atom";
     private static final String SERVICE_NOT_FOUND_ERROR_MESSAGE = "Service Not Found";
     private static final JAXBContext JAXBCONTEXT_VERSION_CHOICE;
@@ -1444,7 +1443,7 @@ public class Cloud20VersionResource {
     public Response getSecretQA(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) {
+            @PathParam(USER_ID_PATH_PARAM_NAME) String userId) {
         return cloud20Service.getSecretQA(httpHeaders, authToken, userId).build();
     }
 
@@ -1454,7 +1453,7 @@ public class Cloud20VersionResource {
     public Response updateSecretQA(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId, SecretQA secrets) {
+            @PathParam(USER_ID_PATH_PARAM_NAME) String userId, SecretQA secrets) {
         return cloud20Service.updateSecretQA(httpHeaders, authToken, userId, secrets).build();
     }
 
@@ -1463,7 +1462,7 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/RAX-AUTH/secretqas")
     public Response getSecretQAs(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId){
+            @PathParam(USER_ID_PATH_PARAM_NAME) String userId){
         return cloud20Service.getSecretQAs(authToken, userId).build();
     }
 
@@ -1472,7 +1471,7 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/RAX-AUTH/secretqas")
     public Response createSecretQA(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
+            @PathParam(USER_ID_PATH_PARAM_NAME) String userId,
             com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA){
         return cloud20Service.createSecretQA(authToken, userId, secretQA).build();
     }
@@ -1482,7 +1481,7 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/RAX-AUTH/phone-pin/verify")
     public Response verifyPhonePin(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
+            @PathParam(USER_ID_PATH_PARAM_NAME) String userId,
             PhonePin phonePin){
         return cloud20Service.verifyPhonePin(authToken, userId, phonePin).build();
     }
@@ -1492,9 +1491,18 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/RAX-AUTH/phone-pin/reset")
     public Response resetPhonePin(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
+            @PathParam(USER_ID_PATH_PARAM_NAME) String userId,
             @QueryParam("only_if_missing") boolean onlyIfMissing) {
         return cloud20Service.resetPhonePin(authToken, userId, onlyIfMissing).build();
+    }
+
+    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v2.0 Unlock user phone pin")
+    @PUT
+    @Path("users/{userId}/RAX-AUTH/phone-pin/unlock")
+    public Response unlockPhonePin(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam(USER_ID_PATH_PARAM_NAME) String userId) {
+        return cloud20Service.unlockPhonePin(authToken, userId).build();
     }
 
     // ******************************************************* //

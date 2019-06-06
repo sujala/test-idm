@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 
@@ -57,7 +57,7 @@ class TestRevokeToken(base.TestBaseV2):
         self.domain_ids.append(domain_id)
         return username, password
 
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     @tags('positive', 'p0', 'smoke')
     def test_revoke_own_token(self):
         """A user can revoke their own authentication token by submitting the
@@ -104,7 +104,7 @@ class TestRevokeToken(base.TestBaseV2):
         self.assertSchema(response=analyze_token_resp,
                           json_schema=tokens_json.analyze_token_revoked)
 
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     @tags('positive', 'p0', 'smoke')
     def test_revoke_user_token(self):
         """

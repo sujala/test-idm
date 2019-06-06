@@ -24,11 +24,7 @@ public class JSONWriterForRaxAuthIdentityProviders extends JSONWriterForArrayEnt
 
     @Override
     public void writeTo(IdentityProviders identityProviders, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        if (IdentityConfigHolder.IDENTITY_CONFIG.getReloadableConfig().listIdpsAlwaysReturnsApprovedDomainIds()) {
-            write(identityProviders, JSONConstants.IDENTITY_PROVIDERS, JSONConstants.RAX_AUTH_IDENTITY_PROVIDERS, entityStream, new AlwaysPluralizeJsonArrayTransformerHandler(), new EntryTransformer());
-        } else {
-            write(identityProviders, JSONConstants.IDENTITY_PROVIDERS, JSONConstants.RAX_AUTH_IDENTITY_PROVIDERS, entityStream, new AlwaysPluralizeJsonArrayTransformerHandler());
-        }
+        write(identityProviders, JSONConstants.IDENTITY_PROVIDERS, JSONConstants.RAX_AUTH_IDENTITY_PROVIDERS, entityStream, new AlwaysPluralizeJsonArrayTransformerHandler(), new EntryTransformer());
     }
 
     private class EntryTransformer implements JsonArrayEntryTransformer {

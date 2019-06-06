@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.readers;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.lang.StringUtils;
@@ -44,6 +45,7 @@ public class JSONReaderForCloudAuthenticationResponseUser {
                     Object sessionInactivityTimeout = userJson.get(JSONConstants.RAX_AUTH_SESSION_INACTIVITY_TIMEOUT);
                     Object delegationAgreementId = userJson.get(JSONConstants.RAX_AUTH_DELEGATION_AGREEMENT_ID);
                     Object phonePin = userJson.get(JSONConstants.RAX_AUTH_PHONE_PIN);
+                    Object phonePinState = userJson.get(JSONConstants.RAX_AUTH_PHONE_PIN_STATE);
 
                     JSONArray userRolesArray = (JSONArray) userJson.get(JSONConstants.ROLES);
 
@@ -73,6 +75,10 @@ public class JSONReaderForCloudAuthenticationResponseUser {
 
                     if (phonePin != null) {
                         user.setPhonePin(phonePin.toString());
+                    }
+
+                    if (phonePinState != null) {
+                        user.setPhonePinState(PhonePinStateEnum.fromValue(phonePinState.toString()));
                     }
 
                     if (sessionInactivityTimeout != null && StringUtils.isNotBlank(sessionInactivityTimeout.toString())) {

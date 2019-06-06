@@ -4,7 +4,7 @@
   from roles list on validate call
 """
 
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -64,7 +64,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
         return responses.Tenant(add_tenant_resp.json())
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_useradmin_token(self):
         resp = self.identity_admin_client.validate_token(
             self.user_admin_client.default_headers[const.X_AUTH_TOKEN]
@@ -82,7 +82,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
         self.assertIsNotNone(faws_tenant_access_role)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_auth_usermanage_token(self):
         resp = self.identity_admin_client.validate_token(
             self.user_manage_client.default_headers[const.X_AUTH_TOKEN]

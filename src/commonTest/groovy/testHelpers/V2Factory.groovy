@@ -746,6 +746,13 @@ class V2Factory {
         }
     }
 
+    def createValidatePassword(String password) {
+        new ValidatePasswordRequest().with {
+            it.password = password
+            it
+        }
+    }
+
     def createTenantTypeEndpointRule(String tenantType = "tenantType", List<String> endpointTemplateIds = [], String description = "description") {
         new TenantTypeEndpointRule().with {
             it.tenantType = tenantType

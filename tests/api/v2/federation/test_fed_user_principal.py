@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 from munch import Munch
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.utils import func_helper
@@ -68,7 +68,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         return domain_id
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.data(['xml', False, False], ['formEncode', True, False],
               ['xml', False, True], ['formEncode', True, True])
     @ddt.unpack
@@ -112,7 +112,7 @@ class TestDelegationWithFederation(federation.TestBaseFederation):
         self.validate_da_crd(client=fed_client, da_req=da_req)
 
     @unless_coverage
-    @attr(type='regression')
+    @pytest.mark.regression
     @ddt.data(['xml', False, False], ['formEncode', True, False],
               ['xml', False, True], ['formEncode', True, True])
     @ddt.unpack

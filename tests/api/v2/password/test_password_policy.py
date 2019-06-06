@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -50,7 +50,7 @@ class TestPasswordPolicy(base.TestBaseV2):
                                const.RAX_AUTH_PASSWORD_EXPIRATION])
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_create_password_policy(self):
         self.assertEqual(self.resp.status_code, 200)
         self.assertSchema(self.resp, password_json.password_policy)
@@ -92,7 +92,7 @@ class TestPasswordPolicy(base.TestBaseV2):
         self.verify_get_user_response(get_user_resp=get_user_by_name_resp)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_update_password_policy(self):
         self.assertEqual(self.resp.status_code, 200)
 
@@ -119,7 +119,7 @@ class TestPasswordPolicy(base.TestBaseV2):
             new_duration)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_delete_password_policy(self):
         resp = self.identity_admin_client.delete_password_policy(
             domain_id=self.domain_id)

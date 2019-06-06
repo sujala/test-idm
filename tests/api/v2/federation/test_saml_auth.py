@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 import ddt
 
@@ -35,7 +35,7 @@ class TestSAMLAuth(federation.TestBaseFederation):
         self.idp = self.add_and_check_broker_idp(certs=[self.pem_encoded_cert])
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_cant_auth_with_broker_idp(self):
         """ Note: will fail once broker auth is enabled. """
         test_data = {"fed_input": {
@@ -59,10 +59,10 @@ class TestSAMLAuth(federation.TestBaseFederation):
         resp = self.identity_admin_client.auth_with_saml(
             saml=assertion, content_type=content_type,
             base64_url_encode=base64_url_encode, new_url=new_url)
-        self.assertEquals(
+        self.assertEqual(
             resp.json()[const.FORBIDDEN][const.MESSAGE],
             "Error code: 'FED2-004'; The Origin IDP is not valid")
-        self.assertEquals(403, resp.status_code)
+        self.assertEqual(403, resp.status_code)
 
     @unless_coverage
     def tearDown(self):

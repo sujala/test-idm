@@ -2,7 +2,7 @@ import copy
 from random import randrange
 
 import ddt
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
@@ -173,7 +173,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_info.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_identity_admin_with_its_token(self, test_data):
         """
         Test update user admin with its own token
@@ -220,7 +220,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_info.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_sub_user_with_its_token(self, test_data):
         """
         Test update sub user with its own token
@@ -244,7 +244,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_multi_attrs.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_identity_admin_user_multi_info_mfa_attrs(self, test_data):
         """Update identity admin user
 
@@ -324,7 +324,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_multi_attrs.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_default_user_multi_info_n_mfa_attrs(self, test_data):
         """Update identity admin user
 
@@ -357,7 +357,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_info_neg.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_identity_admin_user_neg(self, test_data):
         """
         Test with invalid data form json data file
@@ -390,7 +390,7 @@ class TestUpdateUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_update_user_info_neg.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_update_default_user_neg(self, test_data):
         """
         Test with invalid data form json data file
@@ -468,7 +468,7 @@ class TestUpdateUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 403)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke')
+    @pytest.mark.smoke
     def test_update_phone_pin_on_user_manager(self):
         """
         User manager updating self pin via update user call
@@ -496,21 +496,108 @@ class TestUpdateUser(base.TestBaseV2):
             request_object=update_req)
         self.assertEqual(update_resp.status_code, 200)
         self.assertEqual(update_resp.json()[const.USER][
-                             const.RAX_AUTH_PHONE_PIN], new_pin)
+            const.RAX_AUTH_PHONE_PIN], new_pin)
 
         # verify new pin
         verify_req_obj = requests.PhonePin(new_pin)
         verify_pin_resp = self.identity_admin_client.verify_phone_pin_for_user(
             user_id=user_manager_id, request_object=verify_req_obj)
-        self.assertEqual(verify_pin_resp.status_code, 204)
+        self.assertEqual(verify_pin_resp.status_code, 200)
 
         # Negative case not covered in Groovy tests: Spaces in pin
-        new_pin = ' 2211 '
-        update_req = requests.UserUpdate(phone_pin=new_pin)
-        update_resp = user_manager_client.update_user(
+        invalid_pin = ' 2211 '
+        update_req = requests.UserUpdate(phone_pin=invalid_pin)
+        invalid_resp = user_manager_client.update_user(
             user_id=user_manager_id,
             request_object=update_req)
-        self.assertEqual(update_resp.status_code, 400)
+        self.assertEqual(invalid_resp.status_code, 400)
+
+        # Lock the pin by sending invalid pin 6 times
+        verify_req_obj = requests.PhonePin('111111')
+        for _ in range(6):
+            resp = self.identity_admin_client.verify_phone_pin_for_user(
+                user_id=user_manager_id, request_object=verify_req_obj)
+            self.assertEqual(resp.status_code, 200)
+            verify_msg = resp.json()[const.RAX_AUTH_VERIFY_PIN_RESULT][
+                const.FAILURE_MESSAGE]
+            self.assertEqual(verify_msg, const.INCORRECT_PIN_MSG)
+
+        # [CID-2057] Verify that phone pin state attribute is returned
+        resp = self.identity_admin_client.get_user(
+            user_id=user_manager_id)
+        self.assertEqual(
+            resp.json()['user'][const.RAX_AUTH_PHONE_PIN_STATE],
+            const.LOCKED)
+
+        # [CID-2058] A user updating their own phone pin
+        # while in locked state
+        update_req = requests.UserUpdate(phone_pin='000000')
+        invalid_resp = user_manager_client.update_user(
+            user_id=user_manager_id,
+            request_object=update_req)
+        self.assertEqual(
+            invalid_resp.json()[const.FORBIDDEN][const.MESSAGE],
+            "Error code: 'PP-004'; User's PIN is locked.")
+
+        # [CID-2058] An identity-admin with phone-pin-admin updating
+        # the user's phone pin while in locked state
+        update_req = requests.UserUpdate(phone_pin='000000')
+        resp = self.identity_admin_client.update_user(
+            user_id=user_manager_id,
+            request_object=update_req)
+        # we get a 200 with an identity-admin with phone-pin-admin,
+        # but when we fetch the user again the phone pin has not
+        # actually changed.
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.json()['user'][const.RAX_AUTH_PHONE_PIN_STATE],
+            const.LOCKED)
+        # Verify Phone Pin is not updated
+        resp = user_manager_client.get_user(
+            user_id=user_manager_id)
+        self.assertEqual(resp.json()[const.USER][
+            const.RAX_AUTH_PHONE_PIN], new_pin)
+
+        # [CID-2058] identity-admin with phone-pin-admin cannot
+        # reset another user's phone pin in locked state
+        resp = self.identity_admin_client.reset_phone_pin(
+            user_id=user_manager_id)
+        self.assertEqual(
+            resp.json()[const.FORBIDDEN][const.MESSAGE],
+            "Error code: 'PP-004'; User's PIN is locked.")
+
+        # Users are not allowed to "reset" their own Pin
+        resp = user_manager_client.reset_phone_pin(
+            user_id=user_manager_id)
+        self.assertEqual(
+            resp.json()[const.FORBIDDEN][const.MESSAGE],
+            "Error code: 'PP-002'; Not Authorized")
+
+        # Verify failure message reflects locked PIN
+        resp = self.identity_admin_client.verify_phone_pin_for_user(
+            user_id=user_manager_id, request_object=verify_req_obj)
+        self.assertEqual(resp.status_code, 200)
+        verify_msg = resp.json()[const.RAX_AUTH_VERIFY_PIN_RESULT][
+            const.FAILURE_MESSAGE]
+        self.assertEqual(verify_msg, const.LOCKED_PIN_MSG)
+
+        # Verify correct pin also reflects locked PIN.
+        verify_req_obj = requests.PhonePin(new_pin)
+        verify_pin_resp = self.identity_admin_client.verify_phone_pin_for_user(
+            user_id=user_manager_id, request_object=verify_req_obj)
+        self.assertEqual(verify_pin_resp.status_code, 200)
+        self.assertEqual(verify_msg, const.LOCKED_PIN_MSG)
+
+        # [CID-2056] Unlock Phone Pin
+        resp = user_manager_client.unlock_phone_pin(
+            user_id=user_manager_id)
+        self.assertEqual(resp.status_code, 204)
+        # Verify user's Phone Pin is unlocked
+        resp = user_manager_client.get_user(
+            user_id=user_manager_id)
+        self.assertEqual(
+            resp.json()['user'][const.RAX_AUTH_PHONE_PIN_STATE],
+            const.ACTIVE)
 
     @unless_coverage
     def tearDown(self):

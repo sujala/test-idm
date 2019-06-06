@@ -133,6 +133,11 @@ public final class GlobalConstants {
     public static final Integer PHONE_PIN_SIZE = 6;
 
     /**
+     * The number of phone pin authentication failures allowed before the pin becomes locked for future failures.
+     */
+    public static final int PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD = 6;
+
+    /**
      * This prefix is used in front of IAM groups when defining the implicit roles for that group. For example,
      * if the IAM group is <i>group</i>, then the property defining the implicit roles would be <i>implicit.roles.iam\:group</i>.
      * The <b>\</b> before the colon is required.

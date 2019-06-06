@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -53,7 +53,7 @@ class TestListVerifiedUnverifedUsersInDomain(base.TestBaseV2):
         self.new_user_ids = []
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_all_enabled_users_in_domain_by_identity_admin(self):
         """List by identity admin user and verfiy unverified users are
            not listed"
@@ -71,7 +71,7 @@ class TestListVerifiedUnverifedUsersInDomain(base.TestBaseV2):
             self.assertNotIn(user[const.ID], self.unverified_user_ids)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_unverified_disabled_users_in_domain(self):
         """List by identity admin user and verfiy unverified users
            listed
@@ -89,7 +89,7 @@ class TestListVerifiedUnverifedUsersInDomain(base.TestBaseV2):
             self.assertIn(user[const.ID], self.unverified_user_ids)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_unverified_enabled_users_in_domain(self):
         """Verify that list of unverified enabled users is empty
         """
@@ -102,7 +102,7 @@ class TestListVerifiedUnverifedUsersInDomain(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_unverified_users_in_domain_by_identity_admin(self):
         """List by identity admin user
         """
@@ -119,7 +119,7 @@ class TestListVerifiedUnverifedUsersInDomain(base.TestBaseV2):
             self.assertEqual(user[const.ENABLED], False)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_verified_users_in_domain_by_identity_admin(self):
         """List by identity admin user and verify users on different
         domain are not listed
@@ -171,7 +171,7 @@ class TestListVerifiedUnverifedUsersInDomain(base.TestBaseV2):
         self.assertEqual(resp.status_code, 403)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_all_users_in_domain_by_user_admin(self):
         """List by user-admin
         """

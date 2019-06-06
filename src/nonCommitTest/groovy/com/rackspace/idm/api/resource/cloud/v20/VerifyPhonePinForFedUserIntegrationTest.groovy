@@ -2,33 +2,30 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerifyPhonePinResult
 import com.rackspace.idm.Constants
-import com.rackspace.idm.SAMLConstants
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.FederatedUser
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
-import org.joda.time.DateTime
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
-import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
 import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.ws.rs.core.MediaType
 
-import static org.apache.http.HttpStatus.*
+import static org.apache.http.HttpStatus.SC_CREATED
+import static org.apache.http.HttpStatus.SC_OK
 
 class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
 
@@ -86,7 +83,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "SAML assertion 2.0 - Verify phone pin for a federated user; media = #accept"() {
         given:
-        def fedRequest = createFedRequest()
+        def fedRequest = utils.createFedRequest(sharedUserAdmin, sharedBrokerIdp.issuer, sharedOriginIdp.issuer)
         def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when:
@@ -106,7 +103,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, phonePin)
 
         then:
-        assert response.status == SC_NO_CONTENT
+        assert response.status == SC_OK
 
         when: "verify phone pin with SAML auth token"
         response = cloud20.verifyPhonePin(authResponse.token.id, fedUserId, phonePin)
@@ -126,7 +123,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.verifyPhonePin(utils.getToken(userAdmin.username), fedUserId, phonePin)
 
         then:
-        assert response.status == SC_NO_CONTENT
+        assert response.status == SC_OK
 
         when: "verify phone pin with empty phone pin"
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin emptyPhonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
@@ -145,16 +142,17 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         }
         response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, incorrectPhonePin)
 
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect Phone PIN.")
+        then: "Returns 200 response"
+        response.status == SC_OK
+
+        and: "Response is appropriate"
+        VerifyPhonePinResult result = response.getEntity(VerifyPhonePinResult)
+        !result.authenticated
+        result.failureCode == "PP-003"
+        result.failureMessage == "Incorrect Phone PIN."
 
         cleanup:
-        try {
-            deleteFederatedUserQuietly(fedRequest.username)
-            utils.deleteUser(userAdmin)
-        } catch (Exception ex) {
-            // Eat
-        }
+        utils.deleteFederatedUserQuietly(fedRequest.username)
 
         where:
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -183,7 +181,7 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, phonePin)
 
         then:
-        assert response.status == SC_NO_CONTENT
+        assert response.status == SC_OK
 
         when: "verify phone pin with SAML auth token"
         response = cloud20.verifyPhonePin(authResponse.token.id, fedUserId, phonePin)
@@ -198,44 +196,19 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         }
         response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, incorrectPhonePin)
 
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Error code: 'PP-001'; Incorrect Phone PIN.")
+        then: "Returns 200 response"
+        response.status == SC_OK
+
+        and: "Response is appropriate"
+        VerifyPhonePinResult result = response.getEntity(VerifyPhonePinResult)
+        !result.authenticated
+        result.failureCode == "PP-003"
+        result.failureMessage == "Incorrect Phone PIN."
 
         cleanup:
-        try {
-            deleteFederatedUserQuietly(username)
-        } catch (Exception ex) {
-            // Eat
-        }
+        utils.deleteFederatedUserQuietly(username)
 
         where:
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
-    }
-
-    def deleteFederatedUserQuietly(username) {
-        try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
-            if (federatedUser != null) {
-                federatedUserRepository.deleteObject(federatedUser)
-            }
-        } catch (Exception e) {
-            // Eat but log
-            LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", username), e)
-        }
-    }
-
-    def createFedRequest(userAdmin = sharedUserAdmin) {
-        new FederatedDomainAuthGenerationRequest().with {
-            it.domainId = userAdmin.domainId
-            it.validitySeconds = 100
-            it.brokerIssuer = sharedBrokerIdp.issuer
-            it.originIssuer = sharedOriginIdp.issuer
-            it.email = Constants.DEFAULT_FED_EMAIL
-            it.responseIssueInstant = new DateTime()
-            it.authContextRefClass =  SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
-            it.username = UUID.randomUUID().toString()
-            it.roleNames = [] as Set
-            it
-        }
     }
 }
