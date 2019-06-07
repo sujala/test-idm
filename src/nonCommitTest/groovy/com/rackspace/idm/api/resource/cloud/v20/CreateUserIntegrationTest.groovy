@@ -2119,8 +2119,16 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         response.status == SC_CREATED
     }
 
-    def "one user call assigns correct default endpoints - feature.enabled.use.domain.type.on.new.user.creation"() {
+    @Unroll
+    def "one user call assigns correct default endpoints - feature.enabled.use.domain.type.on.new.user.creation, region = #region"() {
         given:
+        // Setup region
+        def defaultRegion = "ORD"
+        if (region.equalsIgnoreCase(GlobalConstants.CLOUD_REGION_UK)) {
+            staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+            defaultRegion = "LON"
+        }
+
         // Enabled feature
         IdentityProperty identityProperty = new IdentityProperty()
         identityProperty.value = true
@@ -2132,7 +2140,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         // User A
         def domainIdA = utils.createDomain()
         def usernameA = "userAdmin" + testUtils.getRandomUUID()
-        def userForCreateA = v2Factory.createUser(usernameA, "displayName", "testemail@rackspace.com", true, "ORD", domainIdA, DEFAULT_PASSWORD)
+        def userForCreateA = v2Factory.createUser(usernameA, "displayName", "testemail@rackspace.com", true, defaultRegion, domainIdA, DEFAULT_PASSWORD)
         userForCreateA.secretQA = secretQA
 
         when: "create user-admin with feature enabled"
@@ -2149,7 +2157,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         def domainIdB = utils.createDomain()
         def usernameB = "userAdmin" + testUtils.getRandomUUID()
-        def userForCreateB = v2Factory.createUser(usernameB, "displayName", "testemail@rackspace.com", true, "ORD", domainIdB, DEFAULT_PASSWORD)
+        def userForCreateB = v2Factory.createUser(usernameB, "displayName", "testemail@rackspace.com", true, defaultRegion, domainIdB, DEFAULT_PASSWORD)
         userForCreateB.secretQA = secretQA
 
         response = cloud20.createUser(identityAdminToken, userForCreateB)
@@ -2187,6 +2195,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         }
 
         cleanup:
+        staticIdmConfiguration.reset()
         utils.deleteUserQuietly(userA)
         utils.deleteUserQuietly(userB)
         utils.deleteTestDomainQuietly(domainIdA)
@@ -2194,9 +2203,13 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         // reset identity property
         identityProperty.value = true
         devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        where:
+        region << [GlobalConstants.CLOUD_REGION_UK, GlobalConstants.CLOUD_REGION_US]
     }
 
-    def "one user call with non cloud domain does not assign endpoints - feature.enabled.use.domain.type.on.new.user.creation = true"() {
+    @Unroll
+    def "one user call with non cloud domain does not assign endpoints - feature.enabled.use.domain.type.on.new.user.creation = true, domain prefix = #prefix"() {
         given:
         // Enabled feature
         IdentityProperty identityProperty = new IdentityProperty()
@@ -2207,7 +2220,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def secretQA = v2Factory.createSecretQA("question", "answer")
 
         // dp domain
-        def domainId = "dp:" + utils.createDomain()
+        def domainId = prefix + ":" + utils.createDomain()
         // Test user
         def username = "userAdmin" + testUtils.getRandomUUID()
         def userForCreate = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, DEFAULT_PASSWORD)
@@ -2236,6 +2249,9 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         // reset identity property
         identityProperty.value = true
         devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        where:
+        prefix << ["dp", "dedicated", "product"]
     }
 
 }
