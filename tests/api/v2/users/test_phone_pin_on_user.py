@@ -358,7 +358,7 @@ class TestPhonePinOnUser(base.TestBaseV2):
         )
 
         # Verify the phone pin
-        verify_resp = self.service_admin_client.verify_phone_pin_for_user(
+        verify_resp = self.identity_admin_client.verify_phone_pin_for_user(
             user_id=create_resp.json()[const.USER][const.ID],
             request_object=requests.PhonePin(
                 phone_pin=request_object.phone_pin
