@@ -21,7 +21,7 @@ import org.springframework.util.Assert;
 
 import java.util.*;
 
-import static com.rackspace.idm.GlobalConstants.TENANT_ALIAS_PATTERN;
+import static com.rackspace.idm.GlobalConstants.*;
 
 @Component
 public class DefaultEndpointService implements EndpointService {
@@ -402,18 +402,51 @@ public class DefaultEndpointService implements EndpointService {
      */
     @Override
     public boolean doesBaseUrlBelongToCloudRegion(CloudBaseUrl baseUrl) {
+        return doesBaseUrlBelongToCloudRegion(baseUrl, isUkCloudRegion());
+    }
+
+    /**
+     * The cloud region is determined by the domain type. If the domain type is null or not equal to
+     * 'RACKSPACE_CLOUD_UK' or 'RACKSPACE_CLOUD_US', then no endpoints are added.
+     *
+     * @param baseUrl
+     * @return
+     */
+    @Override
+    public boolean doesBaseUrlBelongToCloudRegion(CloudBaseUrl baseUrl, Domain domain) {
+        if (domain == null
+                || domain.getType() == null
+                || !(domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK)
+                || domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_US))) {
+            return false;
+        }
+
+        boolean isUKCloudRegion = domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK);
+
+        return doesBaseUrlBelongToCloudRegion(baseUrl, isUKCloudRegion);
+    }
+
+    /**
+     * When "UK" then the cloud region is UK, otherwise it's US.
+     *
+     * The permissible strategies are determined by BaseUrlToRegionMappingStrategy, defaulting to the
+     * BaseUrlToRegionMappingStrategy.RSREGION strategy.
+     *
+     * @param baseUrl
+     * @return
+     */
+    private boolean doesBaseUrlBelongToCloudRegion(CloudBaseUrl baseUrl, boolean isUKCloudRegion) {
         BaseUrlToRegionMappingStrategy strategy = getBaseUrlToRegionMappingStrategy();
-        boolean ukCloudRegion = isUkCloudRegion();
         if (baseUrl.getBaseUrlId() == null){
             return false;
         }
 
        if (BaseUrlToRegionMappingStrategy.RSREGION == strategy) {
             //this is the newly added version that requires UK urls to have a region
-            if(ukCloudRegion && UK_CLOUD_LON_REGION.equals(baseUrl.getRegion())){
+            if(isUKCloudRegion && UK_CLOUD_LON_REGION.equals(baseUrl.getRegion())){
                 return true;
             }
-            if(!ukCloudRegion && !UK_CLOUD_LON_REGION.equals(baseUrl.getRegion())){
+            if(!isUKCloudRegion && !UK_CLOUD_LON_REGION.equals(baseUrl.getRegion())){
                 return true;
             }
         }
@@ -425,7 +458,7 @@ public class DefaultEndpointService implements EndpointService {
              */
             String baseUrlRegion = baseUrl.getRegion();
             int baseUrlId = Integer.parseInt(baseUrl.getBaseUrlId());
-            if(ukCloudRegion
+            if(isUKCloudRegion
                     && (baseUrlId >= UK_CLOUD_BASEURL_ID_THRESHOLD && (isDefaultRegion(baseUrlRegion) || UK_CLOUD_LON_REGION.equals(baseUrlRegion))
                         ||
                        (baseUrlId < UK_CLOUD_BASEURL_ID_THRESHOLD && !isDefaultRegion(baseUrlRegion) && UK_CLOUD_LON_REGION.equals(baseUrlRegion)))
@@ -433,7 +466,7 @@ public class DefaultEndpointService implements EndpointService {
                 //only uk region if id is (>= 1000 AND the region is either blank or LON) OR <1000 and region is LON
                 return true;
             }
-            if(!ukCloudRegion
+            if(!isUKCloudRegion
                     && (baseUrlId < UK_CLOUD_BASEURL_ID_THRESHOLD && (isDefaultRegion(baseUrlRegion) || !UK_CLOUD_LON_REGION.equals(baseUrlRegion))
                     ||
                     (baseUrlId >= UK_CLOUD_BASEURL_ID_THRESHOLD && !isDefaultRegion(baseUrlRegion) && !UK_CLOUD_LON_REGION.equals(baseUrlRegion)))

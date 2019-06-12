@@ -1794,6 +1794,41 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * tenantService.getTenant(nastTenantid) >> null
     }
 
+    @Unroll
+    def "attachEndpointsToTenant: test repository feature flag 'feature.enabled.use.domain.type.on.new.user.creation' - enabled = #enabled"() {
+        given:
+        def domain = entityFactory.createDomain()
+        def tenant = entityFactory.createTenant().with {
+            it.domainId = domain.domainId
+            it
+        }
+        def baseUrl = entityFactory.createCloudBaseUrl().with {
+            it.baseUrlId = "baseUrlId"
+            it.baseUrlType = "MOSSO"
+            it.def = true
+            it
+        }
+        def baseUrls = [baseUrl]
+
+        when:
+        service.attachEndpointsToTenant(tenant, baseUrls)
+
+        then:
+        1 * identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> enabled
+        1 * config.getList("v1defaultMosso") >> [baseUrl.baseUrlId]
+
+        if (enabled) {
+            1 * domainService.getDomain(tenant.getDomainId()) >> domain
+            1 * endpointService.doesBaseUrlBelongToCloudRegion(baseUrl, domain) >> true
+        } else {
+            0 * domainService.getDomain(tenant.getDomainId())
+            1 * endpointService.doesBaseUrlBelongToCloudRegion(baseUrl) >> true
+        }
+
+        where:
+        enabled << [true, false]
+    }
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25
