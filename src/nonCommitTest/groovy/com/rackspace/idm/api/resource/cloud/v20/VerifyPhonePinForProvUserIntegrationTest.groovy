@@ -2,8 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerifyPhonePinResult
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.UserService
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
@@ -12,6 +14,7 @@ import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
+import javax.mail.internet.MimeMessage
 import javax.ws.rs.core.MediaType
 
 import static org.apache.http.HttpStatus.SC_OK
@@ -23,6 +26,7 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
 
     def setup() {
         reloadableConfiguration.reset()
+        wiserWrapper.getWiser().getMessages().clear()
     }
 
     @Unroll
@@ -210,4 +214,54 @@ class VerifyPhonePinForProvUserIntegrationTest extends RootIntegrationTest {
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
+
+    def "Locking a phone pin sends an email only when the phone pin becomes locked" () {
+        given:
+        def userAdmin = utils.createGenericUserAdmin()
+        def userEntity = userService.checkAndGetUserById(userAdmin.id)
+        def pin = userEntity.phonePin
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
+            it.pin = pin + "a"
+            it
+        }
+
+        when: "Verify the phone pin w/ an invalid pin"
+        def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), userAdmin.id, phonePin)
+
+        then: "Returns 200 response"
+        response.status == SC_OK
+        VerifyPhonePinResult result = response.getEntity(VerifyPhonePinResult)
+        !result.authenticated
+        CollectionUtils.isEmpty(wiserWrapper.wiserServer.getMessages())
+
+        when: "Verify the phone pin and lock the pin"
+        userEntity = userService.checkAndGetUserById(userAdmin.id)
+        (GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD - 2).times {
+            userEntity.recordFailedPinAuthentication()
+        }
+        userService.updateUser(userEntity)
+        response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), userAdmin.id, phonePin)
+
+        then: "The phone pin locked email was sent"
+        response.status == SC_OK
+        VerifyPhonePinResult result2 = response.getEntity(VerifyPhonePinResult)
+        !result2.authenticated
+        CollectionUtils.isNotEmpty(wiserWrapper.wiserServer.getMessages())
+        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
+        message.getFrom().length == 1
+        message.getFrom()[0].toString() == Constants.PHONE_PIN_LOCKED_EMAIL_FROM
+        message.getSubject() == Constants.PHONE_PIN_LOCKED_EMAIL_SUBJECT
+
+        when: "Verify the phone pin again now that it is locked"
+        wiserWrapper.getWiser().getMessages().clear()
+        response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), userAdmin.id, phonePin)
+
+        then: "No emails were sent"
+        response.status == SC_OK
+        CollectionUtils.isEmpty(wiserWrapper.wiserServer.getMessages())
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+    }
+
 }

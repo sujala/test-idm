@@ -37,6 +37,7 @@ public class Audit {
 		DELEGATEAUTH,
 		PHONEPIN_VERIFY,
 		PHONEPIN_UNLOCK,
+		PHONEPIN_LOCK_EMAIL,
 	}
 
 	private enum RESULT {
@@ -179,6 +180,16 @@ public class Audit {
 	public static void logSuccessfulPasswordResetRequest(User user) {
 		Audit audit = new Audit(user.getAuditContext()).addEvent(ACTION.PASSWORD_RESET, String.format("userId='%s', pwdResetTokenUsed=%s", user.getId(), Boolean.TRUE));
 		audit.succeed();
+	}
+
+	public static void logSendingPhonePinLockedEmailSuccess(EndUser user) {
+		Audit audit = new Audit(user.getAuditContext()).addEvent(ACTION.PHONEPIN_LOCK_EMAIL, String.format("User(userRsId=%s) Successfully sent email notification.", user.getId()));
+		audit.succeed();
+	}
+
+	public static void logSendingPhonePinLockedEmailFailure(EndUser user) {
+		Audit audit = new Audit(user.getAuditContext()).addEvent(ACTION.PHONEPIN_LOCK_EMAIL, String.format("User(userRsId=%s) Failed to send email notification.", user.getId()));
+		audit.fail();
 	}
 
 	public static Audit deleteOTP(String container) {
