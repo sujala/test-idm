@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
-import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
@@ -58,7 +57,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def setupSpec(){
         service = new DefaultUserService()
-        identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
+        mockIdentityConfig(service)
         sharedRandom = ("$sharedRandomness").replace('-',"")
         userList = new ArrayList<User>()
         userIdList = new ArrayList<String>()
@@ -245,8 +244,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("DFW", "cloud", true)
         propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
         config.getInt("maxNumberOfUsersInDomain") >> 100
-        config.getList("v1defaultMosso") >> Constants.MOSSO_V1_DEF
-        config.getList("v1defaultNast") >> Constants.NAST_V1_DEF
+        config.getList("v1defaultMosso") >> Constants.MOSSO_V1_DEF_US
+        config.getList("v1defaultNast") >> Constants.NAST_V1_DEF_US
         userDao.getUsersByDomain(domainId) >> [].asList()
         userDao.nextUserId >> "nextId"
         mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
@@ -1797,7 +1796,10 @@ class DefaultUserServiceTest extends RootServiceTest {
     @Unroll
     def "attachEndpointsToTenant: test repository feature flag 'feature.enabled.use.domain.type.on.new.user.creation' - enabled = #enabled"() {
         given:
-        def domain = entityFactory.createDomain()
+        def domain = entityFactory.createDomain().with {
+            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+            it
+        }
         def tenant = entityFactory.createTenant().with {
             it.domainId = domain.domainId
             it
@@ -1815,14 +1817,17 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> enabled
-        1 * config.getList("v1defaultMosso") >> [baseUrl.baseUrlId]
 
         if (enabled) {
             1 * domainService.getDomain(tenant.getDomainId()) >> domain
             1 * endpointService.doesBaseUrlBelongToCloudRegion(baseUrl, domain) >> true
+            1 * identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUs() >> [baseUrl.baseUrlId]
+            0 * config.getList("v1defaultMosso")
         } else {
             0 * domainService.getDomain(tenant.getDomainId())
             1 * endpointService.doesBaseUrlBelongToCloudRegion(baseUrl) >> true
+            0 * identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUs()
+            1 * config.getList("v1defaultMosso") >> [baseUrl.baseUrlId]
         }
 
         where:
