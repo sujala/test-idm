@@ -35,9 +35,6 @@ import java.util.regex.Pattern;
 public class Validator {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final String FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME="feature.validate.subuser.defaultregion.enabled";
-    private static final boolean FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_DEFAULT_VALUE=true;
-
     @Autowired
     PatternDao ldapPatternRepository;
 
@@ -120,17 +117,13 @@ public class Validator {
         Keeping this logic here rather than moving logic higher to prevent changing the order of validation checks (e.g. an invalid username will
         be thrown before an invalid region).
          */
-        if (validateSubUserDefaultRegion() || !isUserASubUser(user)) {
-            //if we're validating subusers, then we're validating ALL users so can short circuit the check whether the user
-            //is a subuser if we need to validate the region anyways.
+
+        // If user is not a sub user (default user) then only validate the region
+        if (!isUserASubUser(user)) {
             validateDefaultRegion(user.getRegion());
         }
         validateRoles(user.getRoles());
         validateGroups(user.getRsGroupId());
-    }
-
-    private boolean validateSubUserDefaultRegion() {
-        return config.getBoolean(FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_DEFAULT_VALUE);
     }
 
     private boolean isUserASubUser(com.rackspace.idm.domain.entity.User user) {
