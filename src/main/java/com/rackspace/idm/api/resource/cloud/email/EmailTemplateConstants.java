@@ -25,4 +25,10 @@ public final class EmailTemplateConstants {
     public static final String INVITE_USER_REGISTRATION_URL = "registration_url"; // string
     public static final String INVITE_TTL_HOURS_PROP = "ttl_hours"; // string
     public static final String INVITE_YEAR_PROP = "year"; // string
+
+    /*
+        Dynamic properties made available to phone pin locked templates
+     */
+    public static final String PHONE_PIN_LOCKED_USER_PROP = "user";
+
 }

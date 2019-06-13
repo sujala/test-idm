@@ -1798,10 +1798,23 @@ public class DefaultUserService implements UserService {
     }
 
     private void attachEndpointsToTenant(Tenant tenant, List<CloudBaseUrl> baseUrls) {
-        for (CloudBaseUrl baseUrl : baseUrls) {
-            if(endpointService.doesBaseUrlBelongToCloudRegion(baseUrl) && baseUrl.getDef() != null && baseUrl.getDef()){
-                tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId().toString());
-                addV1DefaultToTenant(tenant, baseUrl);
+        if (identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() && tenant.getDomainId() != null) {
+            // TODO: Refactor addUserV20 to avoid retrieving domain again here once this feature flag is removed.
+            Domain domain = domainService.getDomain(tenant.getDomainId());
+
+            for (CloudBaseUrl baseUrl : baseUrls) {
+                if (endpointService.doesBaseUrlBelongToCloudRegion(baseUrl, domain) && baseUrl.getDef() != null && baseUrl.getDef()) {
+                    tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId());
+                    addV1DefaultToTenant(tenant, baseUrl);
+                }
+            }
+        } else {
+            // Legacy logic
+            for (CloudBaseUrl baseUrl : baseUrls) {
+                if(endpointService.doesBaseUrlBelongToCloudRegion(baseUrl) && baseUrl.getDef() != null && baseUrl.getDef()){
+                    tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId());
+                    addV1DefaultToTenant(tenant, baseUrl);
+                }
             }
         }
     }

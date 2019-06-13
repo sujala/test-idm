@@ -6090,6 +6090,18 @@ rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE
 
+dn: rsId=9931a88060ea1d2r5c1ec5bc873de26a3,ou=properties,ou=cloud,o=configura
+ tion,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: feature.enabled.use.domain.type.on.new.user.creation
+description: Whether or not identity should use the domain type on
+ new user creation to determine which endpoints are added.
+rsIdmVersion: 3.33.0
+rsPropertyValue: TRUE
+rsPropertyValueType: Boolean
+rsReloadable: TRUE
+rsSearchable: TRUE
+
 dn: rsId=b59a7a0ac6e2433ca45c3af059c75325,ou=users,o=rackspace,dc=rackspace,dc=com
 rsId: b59a7a0ac6e2433ca45c3af059c75325
 objectClass: rsPerson

@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -30,6 +31,9 @@ public class DefaultPhonePinService implements PhonePinService {
 
     @Autowired
     private IdentityUserDao identityUserDao;
+
+    @Autowired
+    private EmailClient emailClient;
 
     @Override
     public PhonePin resetPhonePin(PhonePinProtectedUser user) {
@@ -77,6 +81,12 @@ public class DefaultPhonePinService implements PhonePinService {
 
         // Update the user
         identityUserService.updateEndUser(user);
+
+        // Send email after user is updated to ensure only users
+        // who are successfully updated get an email.
+        if (user.getPhonePinState() == PhonePinStateEnum.LOCKED) {
+            emailClient.asyncSendPhonePinLockedEmail(user);
+        }
 
         return false;
     }

@@ -205,6 +205,7 @@ class Constants {
      ******************************* */
     public static final String REPO_PROP_FEATURE_AUTHORIZATION_DOMAIN_DEFAULT_ID = "aswerfbmwersdf"
     public static final String REPO_PROP_FEATURE_AUTHORIZATION_DOMAIN_VERIFICATION_ID = "kjajkhweroiudfnwer"
+    public static final String REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID = "9931a88060ea1d2r5c1ec5bc873de26a3"
 
     /**
      * Hierarchical roles for nested da
@@ -225,4 +226,7 @@ class Constants {
     public static String ERROR_MSG_401_INVALID_TOKEN = "No valid token provided. Please use the 'X-Auth-Token' header with a valid token."
     public static String ERROR_MSG_403_FORBIDDEN = "Not Authorized"
     public static String ERROR_MSG_503_SERVICE_UNAVAILABE = "Service Not Found"
+
+    public static final String PHONE_PIN_LOCKED_EMAIL_SUBJECT = "Rackspace Phone Pin Locked"
+    public static final String PHONE_PIN_LOCKED_EMAIL_FROM = "no-reply@rackspace.com"
 }

@@ -633,6 +633,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP = "feature.enable.authorization.domain.default";
     public static final boolean FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP = "feature.enabled.use.domain.type.on.new.user.creation";
+    public static final boolean FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_DEFAULT = false;
+
     /**
      * Opentracing properties
      */
@@ -998,6 +1001,7 @@ public class IdentityConfig {
         defaults.put(TOKEN_LIFETIME_ENTROPY_PROP, TOKEN_LIFETIME_ENTROPY_DEFAULT);
         defaults.put(FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, FEATURE_ENABLE_SETTING_DOMAIN_TYPE_DEFAULT);
         defaults.put(FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, FEATURE_ENABLE_INFER_DOMAIN_TYPE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP, FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -2960,6 +2964,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP, versionAdded = "3.31.0", description = "Whether or not identity should verify a user is authorized to access the specified (or defaulted) authorization domain on authentication.")
         public boolean shouldVerifyAuthorizationDomains() {
             return getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP, versionAdded = "3.33.0", description = "Whether or not identity should use the domain type on new user creation to determine which endpoints are added.")
+        public boolean shouldUseDomainTypeOnNewUserCreation() {
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP);
         }
     }
 
