@@ -253,7 +253,10 @@ public class DefaultEndpointService implements EndpointService {
 
           TODO: Improve efficiency of this mass lookup of baseUrls by Id
          */
-        Iterable<CloudBaseUrl> preProcessedBaseUrls = endpointDao.getBaseUrlsById(new ArrayList<>(tenantBaseUrlIds));
+        Iterable<CloudBaseUrl> preProcessedBaseUrls = Collections.EMPTY_LIST;
+        if (CollectionUtils.isNotEmpty(tenantBaseUrlIds)) {
+            preProcessedBaseUrls = endpointDao.getBaseUrlsById(new ArrayList<>(tenantBaseUrlIds));
+        }
 
         // Step 2: Process each baseUrl by applying tenantAliases and setting v1Defaults as appropriate
         List<CloudBaseUrl> processedBaseUrls = new ArrayList<>();
