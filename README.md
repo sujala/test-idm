@@ -107,7 +107,8 @@ helm install  app/customer-identity-cicd \
     passwordsafe.password=<CID-RSI-DEV-SVC-PASSWORD>,\
     docker-secret.password=<CID-RSI-DEV-SVC-PASSWORD>,\
     jenkins-base.checkmarxUsername=ci-compliance,\
-    jenkins-base.checkmarxPassword=<CI-COMPLIANCE-PASSWORD>
+    jenkins-base.checkmarxPassword=<CI-COMPLIANCE-PASSWORD>,\
+    slack-secret.token=<SLACK-TOKEN>
 ```
 
 Next, in this repo, add the [webhook](https://github.rackspace.com/cloud-identity-dev/cloud-identity/settings/hooks). In payload URL, add https://jenkins-identity-test.devapps.rsi.rackspace.net/ghprbhook/, select `issue comments` and `pull requests` individual events.
@@ -123,7 +124,8 @@ helm upgrade <CHART_NAME>  app/customer-identity-cicd \
     passwordsafe.password=<CID-RSI-DEV-SVC-PASSWORD>,\
     docker-secret.password=<CID-RSI-DEV-SVC-PASSWORD>,\
     jenkins-base.checkmarxUsername=ci-compliance,\
-    jenkins-base.checkmarxPassword=<CI-COMPLIANCE-PASSWORD>
+    jenkins-base.checkmarxPassword=<CI-COMPLIANCE-PASSWORD>,\
+    slack-secret.token=<SLACK-TOKEN>
 ```
 
 Customer Identity PR Chart

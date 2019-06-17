@@ -410,10 +410,8 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "Validate user validates region for non-subusers when subuser region validation enabled"(){
+    def "Validate user validates region for non-subusers"() {
         given:
-        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> true
-
         def userEntity = createUser()
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
@@ -426,26 +424,9 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "Validate user validates region for non-subusers when subuser region validation disabled"(){
-        given:
-        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> false
-
-        def userEntity = createUser()
-        ldapPatternRepository.getPattern(_) >> usernamePattern
-        userService.isUsernameUnique(userEntity.username) >> true
-        defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
-
-        when:
-        validator.validateUser(userEntity)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "Validate user does not validate region for subuser when flag disabled"(){
+    def "Validate user does not validate region for subuser"() {
         given:
         def subUserRoleName = IdentityUserTypeEnum.DEFAULT_USER.getRoleName()
-        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> false
 
         def userEntity = createUser()
         TenantRole subUserRole = new TenantRole().with {
@@ -464,30 +445,6 @@ class ValidatorTest extends Specification {
 
         then:
         notThrown(BadRequestException)
-    }
-
-    def "Validate user does validate region for subuser when flag enabled"(){
-        given:
-        def subUserRoleName = IdentityUserTypeEnum.DEFAULT_USER.getRoleName()
-        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> true
-
-        def userEntity = createUser()
-        TenantRole subUserRole = new TenantRole().with {
-            it.name = subUserRoleName
-            return it
-        }
-        userEntity.getRoles().add(subUserRole)
-        ldapPatternRepository.getPattern(_) >> usernamePattern
-        userService.isUsernameUnique(userEntity.username) >> true
-        roleService.getRoleByName(_) >> new ClientRole()
-        groupService.getGroupById(_) >> new Group()
-        defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
-
-        when:
-        validator.validateUser(userEntity)
-
-        then:
-        thrown(BadRequestException)
     }
 
     def "Validate user when role is invalid"(){
