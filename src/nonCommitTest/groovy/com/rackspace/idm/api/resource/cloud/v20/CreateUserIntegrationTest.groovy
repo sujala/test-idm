@@ -2139,13 +2139,13 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         // User A
         def domainIdA = utils.createDomain()
-        def usernameA = "userAdmin" + testUtils.getRandomUUID()
+        def usernameA = testUtils.getRandomUUID("userAdminA")
         def userForCreateA = v2Factory.createUser(usernameA, "displayName", "testemail@rackspace.com", true, defaultRegion, domainIdA, DEFAULT_PASSWORD)
         userForCreateA.secretQA = secretQA
 
         when: "create user-admin with feature enabled"
         def response = cloud20.createUser(identityAdminToken, userForCreateA)
-        def userA = response.getEntity(User).value
+        User userA = response.getEntity(User).value
 
         then:
         response.status == SC_CREATED
@@ -2156,12 +2156,12 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
 
         def domainIdB = utils.createDomain()
-        def usernameB = "userAdmin" + testUtils.getRandomUUID()
+        def usernameB =  testUtils.getRandomUUID("userAdminB")
         def userForCreateB = v2Factory.createUser(usernameB, "displayName", "testemail@rackspace.com", true, defaultRegion, domainIdB, DEFAULT_PASSWORD)
         userForCreateB.secretQA = secretQA
 
         response = cloud20.createUser(identityAdminToken, userForCreateB)
-        def userB = response.getEntity(User).value
+        User userB = response.getEntity(User).value
 
         then:
         response.status == SC_CREATED
@@ -2192,6 +2192,24 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             def publicUrlsA = endpointsA.stream().map{endpoint -> endpoint.publicURL.replaceAll("/[^/]*\$","")}.collect(Collectors.toList())
             def publicUrlsB = endpointsB.stream().map{endpoint -> endpoint.publicURL.replaceAll("/[^/]*\$","")}.collect(Collectors.toList())
             assert publicUrlsA.sort() == publicUrlsB.sort()
+        }
+
+        when: "auth users in v1"
+        def v1UserA = utils11.getUserByName(userA.username)
+        def v1UserB = utils11.getUserByName(userB.username)
+
+        then: "assert endpoint v1 defaults on user A (this user should have v1 defaults set for both US and UK"
+        if (region == GlobalConstants.CLOUD_REGION_US) {
+            utils11.validateV1Default(v1UserA.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_US, Constants.NAST_V1_DEF_US)
+        } else {
+            utils11.validateV1Default(v1UserA.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_UK, Constants.NAST_V1_DEF_UK)
+        }
+
+        and: "assert that user B only has v1 defaults set when using the US region. Legacy logic does not have UK v1 default configs."
+        if (region == GlobalConstants.CLOUD_REGION_US) {
+            utils11.validateV1Default(v1UserB.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_US, Constants.NAST_V1_DEF_US)
+        } else {
+            !v1UserB.baseURLRefs.baseURLRef.v1Default.contains(true)
         }
 
         cleanup:
