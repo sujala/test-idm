@@ -5,6 +5,7 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.PatternDao;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -59,6 +60,9 @@ public class Validator {
     @Autowired
     PasswordBlacklistService passwordBlacklistService;
 
+    @Autowired
+    DomainService domainService;
+
     static final String USERNAME="username";
     static final String ALPHANUMERIC="alphanumeric";
     static final String PASSWORD="password";
@@ -99,11 +103,6 @@ public class Validator {
         validateUserForCreateOrUpgrade(user);
     }
 
-
-    public void validateUserForCloudUpgrade(com.rackspace.idm.domain.entity.User user) {
-        validateUserForCreateOrUpgrade(user);
-    }
-
     private void validateUserForCreateOrUpgrade(com.rackspace.idm.domain.entity.User user) {
         /*
         don't validate the user's default region for subusers. This is required due to D-18002 https://www15.v1host.com/RACKSPCE/defect.mvc/Summary?oidToken=Defect:1066346
@@ -118,9 +117,23 @@ public class Validator {
         be thrown before an invalid region).
          */
 
-        // If user is not a sub user (default user) then only validate the region
-        if (!isUserASubUser(user)) {
-            validateDefaultRegion(user.getRegion());
+        // Validate region only when user is not a sub user (default user) and region is not empty
+        if (!StringUtils.isEmpty(user.getRegion()) && !isUserASubUser(user)) {
+            if (identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation()) {
+                String cloudRegion;
+                // fetch domain if exist check and get domain type
+                Domain domain = domainService.getDomain(user.getDomainId());
+                if(domain != null ){
+                    cloudRegion = userService.inferCloudBasedOnDomainType(domain.getType());
+                } else {
+                    cloudRegion = identityConfig.getStaticConfig().getCloudRegion();
+                }
+                // Validates that the user's compute region is valid for the user's cloud
+                defaultRegionService.validateComputeRegionForCloud(user.getRegion(), cloudRegion);
+            } else{
+                // Use legacy logic
+                validateDefaultRegion(user.getRegion());
+            }
         }
         validateRoles(user.getRoles());
         validateGroups(user.getRsGroupId());
@@ -216,6 +229,15 @@ public class Validator {
         }
     }
 
+    /**
+     * Validates that the specified compute region is a valid compute region for the server on which this call was made.
+     *
+     * This shouldn't be used anymore as it's server specific (based on property defining whether server is a US or UK
+     * server rather than based on the actual user the region is associated with
+     *
+     * @param defaultRegion
+     */
+    @Deprecated
     private void validateDefaultRegion(String defaultRegion) {
         if (!isEmpty(defaultRegion)) {
             defaultRegionService.validateDefaultRegion(defaultRegion);

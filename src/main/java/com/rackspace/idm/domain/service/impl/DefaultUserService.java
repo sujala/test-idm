@@ -172,7 +172,7 @@ public class DefaultUserService implements UserService {
 
         setPasswordIfNotProvided(user);
         setApiKeyIfNotProvided(user);
-        setRegionIfNotProvided(user);
+        setRegionIfNotProvided(user, domain);
 
         //hack alert!! code requires the user object to have the nastid attribute set. this attribute
         //should no longer be required as users have roles on a tenant instead. once this happens, remove
@@ -246,7 +246,7 @@ public class DefaultUserService implements UserService {
 
         setPasswordIfNotProvided(user);
         setApiKeyIfNotProvided(user);
-        setRegionIfNotProvided(user);
+        setRegionIfNotProvided(user, domain);
 
         // Generate phone pin if not provided
         if (StringUtils.isBlank(user.getPhonePin())) {
@@ -1630,15 +1630,36 @@ public class DefaultUserService implements UserService {
         }
     }
 
-    private void setRegionIfNotProvided(User user) {
+    private void setRegionIfNotProvided(User user, Domain domain) {
+        String cloudRegion;
         if (StringUtils.isBlank(user.getRegion())) {
-            Region region = cloudRegionService.getDefaultRegion(identityConfig.getStaticConfig().getCloudRegion());
-            if (region == null) {
-                throw new IllegalStateException("default cloud region not found for: " + identityConfig.getStaticConfig().getCloudRegion());
+            if (identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation()) {
+                cloudRegion = inferCloudBasedOnDomainType(domain.getType());
+            } else {
+                cloudRegion = identityConfig.getStaticConfig().getCloudRegion();
             }
 
+            Region region = cloudRegionService.getDefaultRegion(cloudRegion);
+            if (region == null) {
+                throw new IllegalStateException("default cloud region not found for: " + cloudRegion);
+            }
             user.setRegion(region.getName());
         }
+    }
+
+    /**
+     * If the domain type is RACKSPACE_CLOUD_US, the cloud region is US.
+     * If the domain type is RACKSPACE_CLOUD_UK, the cloud region is UK.
+     * If the domain type is something else (including null), the cloud region is US.
+     */
+    public String inferCloudBasedOnDomainType(String domainType) {
+        if (GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US.equalsIgnoreCase(domainType)) {
+            return CLOUD_REGION.US.toString();
+        }
+        if (GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK.equalsIgnoreCase(domainType)) {
+            return CLOUD_REGION.UK.toString();
+        }
+        return CLOUD_REGION.US.toString();
     }
 
     private Domain createDomainIfItDoesNotExist(String domainId) {

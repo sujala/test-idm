@@ -1837,6 +1837,89 @@ class DefaultUserServiceTest extends RootServiceTest {
         enabled << [true, false]
     }
 
+    @Unroll
+    def "addUserV20: test default region when it is not provided with isCreateUserOneCall = #isCreateUserOneCall"() {
+        given:
+        def domain = entityFactory.createDomain()
+        TenantRole userAdminRole = entityFactory.createTenantRole().with {
+            it.name = Constants.IDENTITY_USER_ADMIN_ROLE
+            it.roleRsId = Constants.USER_ADMIN_ROLE_ID
+            it
+        }
+        ClientRole userAdminClientRole = entityFactory.createClientRole(Constants.IDENTITY_USER_ADMIN_ROLE)
+        def user = entityFactory.createUser().with {
+            it.domainId = domain.domainId
+            it.region = null
+            it.roles.add(userAdminRole)
+            it
+        }
+
+        def cloudRegion = "US"
+        def region = new Region().with{
+            it.name = "ORD"
+            it
+        }
+        when:
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> false
+        service.addUserAdminV20(user, isCreateUserOneCall)
+
+        then:
+        1 * domainService.getDomainAdmins(domain.domainId) >> []
+        1 * userDao.getUsersByDomain(domain.domainId) >> []
+        1 * userDao.addUser(user)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, _);
+        1 * domainService.updateDomainUserAdminDN(user)
+        1 * identityConfig.getStaticConfig().getCloudRegion() >> cloudRegion
+        1 * cloudRegionService.getDefaultRegion(cloudRegion) >> region
+        if (isCreateUserOneCall) {
+            2 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            2 * domainService.getDomain(domain.domainId) >> domain
+        } else {
+            1 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            1 * domainService.getDomain(domain.domainId) >> domain
+        }
+
+        when:
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> true
+        user.setRegion(null)
+        service.addUserAdminV20(user, isCreateUserOneCall)
+
+        then:
+        1 * domainService.getDomainAdmins(domain.domainId) >> []
+        1 * userDao.getUsersByDomain(domain.domainId) >> []
+        1 * userDao.addUser(user)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, _)
+        1 * domainService.updateDomainUserAdminDN(user)
+        0 * identityConfig.getStaticConfig().getCloudRegion() >> cloudRegion
+        1 * cloudRegionService.getDefaultRegion(cloudRegion) >> region
+        if (isCreateUserOneCall) {
+            2 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            2 * domainService.getDomain(domain.domainId) >> domain
+        } else {
+            1 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            1 * domainService.getDomain(domain.domainId) >> domain
+        }
+
+        where:
+        isCreateUserOneCall << [true , false]
+    }
+
+    @Unroll
+    def "inferCloudBasedOnDomainType(): validate expected cloud region is returned "() {
+        when:
+        def cloudRegion = service.inferCloudBasedOnDomainType(domainType)
+
+        then:
+        cloudRegion.equalsIgnoreCase(expectedRegion)
+
+        where:
+        expectedRegion | domainType
+        GlobalConstants.CLOUD_REGION.UK.toString() | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
+        GlobalConstants.CLOUD_REGION.US.toString() | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        GlobalConstants.CLOUD_REGION.US.toString() | null
+    }
+
+
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {
             it.limit = 25

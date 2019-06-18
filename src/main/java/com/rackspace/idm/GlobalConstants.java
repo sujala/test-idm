@@ -144,7 +144,8 @@ public final class GlobalConstants {
      *
      */
     public static final String IAM_IMPLICIT_ROLE_PREFIX = "iam:";
-
+    // Note: prefer enum over constants for cloud region
+    public enum CLOUD_REGION {US, UK}
     public static final String CLOUD_REGION_UK = "UK";
     public static final String CLOUD_REGION_US = "US";
 

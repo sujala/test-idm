@@ -16,11 +16,9 @@ public interface DomainService {
     PaginatorContext<Domain> getDomainsByRCN(String rcn, Integer marker, Integer limit);
 
     /** Creates and returns a new domain with infer values based on provided domainId.
-     * Fetches and returns the existing domain as fallback (in case domain pre exists with
-     * provided domianId)
-     * Before creating the domain this method checks if domain with provided domianId pre exists.
+     * If a DuplicateException is thrown, fallback to retrieving and returning the existing domain.
      *
-     * @Exception If an error occurred when creating new domain.
+     * @BadRequestException If an error occurred when creating new domain.
      * @return Domain
      */
     Domain createDomainWithFallbackGet(String domainId);
