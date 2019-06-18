@@ -607,6 +607,11 @@ public class IdentityConfig {
     public static final String UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP = "unverified.user.registration.url.format";
     public static final String UNVERIFIED_USER_REGISTRATION_URL_FORMAT_DEFAULT = "https://account.rackspace.com/users/%s/registration/%s";
 
+    public static final String V1_DEFAULT_CLOUD_ENDPOINTS_US_PROP = "v1.default.cloud.endpoints.us";
+    public static final String V1_DEFAULT_FILES_ENDPOINTS_US_PROP = "v1.default.files.endpoints.us";
+    public static final String V1_DEFAULT_CLOUD_ENDPOINTS_UK_PROP = "v1.default.cloud.endpoints.uk";
+    public static final String V1_DEFAULT_FILES_ENDPOINTS_UK_PROP = "v1.default.files.endpoints.uk";
+
     /**
      * Identity Repository Properties
      */
@@ -2754,6 +2759,26 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, versionAdded = "3.31.0", description = "Whether or not to infer the type on a domain when the domain is created and a type is not set.")
         public boolean isFeatureInferDomainTypeEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP);
+        }
+
+        @IdmProp(key = V1_DEFAULT_CLOUD_ENDPOINTS_US_PROP, versionAdded = "3.33.0", description = "The v1 defaults for US cloud endpoints.")
+        public Set<String> getV1DefaultCloudEndpointsUs() {
+            return getSetSafely(reloadableConfiguration, V1_DEFAULT_CLOUD_ENDPOINTS_US_PROP);
+        }
+
+        @IdmProp(key = V1_DEFAULT_FILES_ENDPOINTS_US_PROP, versionAdded = "3.33.0", description = "The v1 defaults for US files endpoints.")
+        public Set<String> getV1DefaultFilesEndpointsUs() {
+            return getSetSafely(reloadableConfiguration, V1_DEFAULT_FILES_ENDPOINTS_US_PROP);
+        }
+
+        @IdmProp(key = V1_DEFAULT_CLOUD_ENDPOINTS_UK_PROP, versionAdded = "3.33.0", description = "The v1 defaults for UK cloud endpoints.")
+        public Set<String> getV1DefaultCloudEndpointsUk() {
+            return getSetSafely(reloadableConfiguration, V1_DEFAULT_CLOUD_ENDPOINTS_UK_PROP);
+        }
+
+        @IdmProp(key = V1_DEFAULT_FILES_ENDPOINTS_UK_PROP, versionAdded = "3.33.0", description = "The v1 defaults for UK files endpoints.")
+        public Set<String> getV1DefaultFilesEndpointsUk() {
+            return getSetSafely(reloadableConfiguration, V1_DEFAULT_FILES_ENDPOINTS_UK_PROP);
         }
 
     }

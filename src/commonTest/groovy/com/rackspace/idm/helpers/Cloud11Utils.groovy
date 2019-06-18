@@ -114,14 +114,12 @@ class Cloud11Utils {
         response.getEntity(BaseURL)
     }
 
-    void validateV1Default(List<BaseURLRef> baseURLRefList){
-        def mossoV1Def = MOSSO_V1_DEF
-        def nastV1Def = NAST_V1_DEF
-        for(BaseURLRef baseURLRef : baseURLRefList){
+    void validateV1Default(List<BaseURLRef> baseURLRefList, mossoV1Def = MOSSO_V1_DEF_US, nastV1Def = NAST_V1_DEF_US) {
+        for(BaseURLRef baseURLRef : baseURLRefList) {
             String baseUrlRefId = baseURLRef.id
-            if(mossoV1Def.contains(baseUrlRefId)){
+            if(mossoV1Def.contains(baseUrlRefId)) {
                 assert (baseURLRef.v1Default == true)
-            } else if(nastV1Def.contains(baseUrlRefId)){
+            } else if(nastV1Def.contains(baseUrlRefId)) {
                 assert (baseURLRef.v1Default == true)
             } else {
                 assert (baseURLRef.v1Default == false)

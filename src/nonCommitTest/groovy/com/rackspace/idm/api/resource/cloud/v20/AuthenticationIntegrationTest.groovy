@@ -87,7 +87,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         and: "expired token not deleted"
         scopeAccessDao.getScopeAccessByAccessToken(expiredTokenId) != null
-        verifyTenantContainedInServiceCatalog(responesData, userAdminEntity.mossoId, Constants.MOSSO_V1_DEF)
+        verifyTenantContainedInServiceCatalog(responesData, userAdminEntity.mossoId, Constants.MOSSO_V1_DEF_US)
 
         when: "authenticate as federated user using valid token and NAST tenant"
         authRequest = v2Factory.createTokenAuthenticationRequest(validTokenId, userAdminEntity.nastId, null)
@@ -96,7 +96,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         then: "success and service catalog contains NAST tenant"
         response.status == 200
-        verifyTenantContainedInServiceCatalog(responesData, userAdminEntity.nastId, Constants.NAST_V1_DEF)
+        verifyTenantContainedInServiceCatalog(responesData, userAdminEntity.nastId, Constants.NAST_V1_DEF_US)
 
         and: "expired token not deleted"
         scopeAccessDao.getScopeAccessByAccessToken(expiredTokenId) != null

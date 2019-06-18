@@ -1805,7 +1805,7 @@ public class DefaultUserService implements UserService {
             for (CloudBaseUrl baseUrl : baseUrls) {
                 if (endpointService.doesBaseUrlBelongToCloudRegion(baseUrl, domain) && baseUrl.getDef() != null && baseUrl.getDef()) {
                     tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId());
-                    addV1DefaultToTenant(tenant, baseUrl);
+                    addV1DefaultToTenant(tenant, baseUrl, domain);
                 }
             }
         } else {
@@ -1828,6 +1828,32 @@ public class DefaultUserService implements UserService {
             v1defaultList = config.getList("v1defaultMosso");
         } else if(baseUrlType.equals(NAST)) {
             v1defaultList = config.getList("v1defaultNast");
+        }
+
+        for (Object v1defaultItem : v1defaultList) {
+            if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
+                baseUrl.setV1Default(true);
+                tenant.getV1Defaults().add(baseUrlId);
+            }
+        }
+    }
+
+    /**
+     * Sets the v1 defaults on the tenant based on the domain's region.
+     */
+    private void addV1DefaultToTenant(Tenant tenant, CloudBaseUrl baseUrl, Domain domain) {
+        List<Object> v1defaultList = new ArrayList<Object>();
+        String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
+        String baseUrlType = baseUrl.getBaseUrlType();
+
+        if(baseUrlType.equals(MOSSO) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_US)) {
+            v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUs());
+        } else if(baseUrlType.equals(NAST) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_US)) {
+            v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultFilesEndpointsUs());
+        } else if(baseUrlType.equals(MOSSO) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK)) {
+            v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUk());
+        } else if(baseUrlType.equals(NAST) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK)) {
+            v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultFilesEndpointsUk());
         }
 
         for (Object v1defaultItem : v1defaultList) {
