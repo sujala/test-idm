@@ -99,8 +99,11 @@ class Constants {
     static def CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221"
     static def CLIENT_SECRET = "Password1"
 
-    static def MOSSO_V1_DEF = ["15","120"]
-    static def NAST_V1_DEF = ["103","111"]
+    static def MOSSO_V1_DEF_US = ["15", "120"]
+    static def NAST_V1_DEF_US = ["103", "111"]
+
+    static def MOSSO_V1_DEF_UK = ["1015"]
+    static def NAST_V1_DEF_UK = ["1008"]
 
     static def MOSSO_ENDPOINT_TEMPLATE_ID = "1026"
     static def MOSSO_ENDPOINT_TEMPLATE_PUBLIC_URL = "https://dfw.servers.api.rackspacecloud.com/v2"

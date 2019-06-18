@@ -182,9 +182,6 @@ public class Cloud20VersionResource {
     public Response changeUserPassword(
             @Context HttpHeaders httpHeaders,
             ChangePasswordCredentials changePasswordCredentials) {
-        if (!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()) {
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.changeUserPassword(httpHeaders, changePasswordCredentials).build();
     }
 
@@ -657,9 +654,6 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("domainId") String domainId,
             String policy) {
-        if (!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()) {
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.updateDomainPasswordPolicy(httpHeaders, authToken, domainId, policy).build();
     }
 
@@ -671,9 +665,6 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("domainId") String domainId)  {
-        if(!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.getDomainPasswordPolicy(httpHeaders, authToken, domainId).build();
     }
 
@@ -685,9 +676,6 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("domainId") String domainId)  {
-        if(!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
         return cloud20Service.deleteDomainPasswordPolicy(httpHeaders, authToken, domainId).build();
     }
 
