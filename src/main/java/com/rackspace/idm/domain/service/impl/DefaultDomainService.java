@@ -260,24 +260,25 @@ public class DefaultDomainService implements DomainService {
     }
 
     @Override
-    public String createNewDomain(String domainId) {
+    public Domain createDomainWithFallbackGet(String domainId) {
+        Domain domain;
         try {
-            Domain domain = new Domain();
+            domain = new Domain();
             domain.setDomainId(domainId);
             domain.setEnabled(true);
             domain.setName(domainId);
             domain.setDescription("Default Domain");
             domain.setType(inferDomainTypeForDomainId(domainId));
             addDomain(domain);
-            return domain.getDomainId();
-        }
-        catch(DuplicateException ex){
-            logger.error("Domain already exists.");
-            return domainId;
-        }
-        catch(Exception ex){
+        }catch (DuplicateException ex) {
+            domain = getDomain(domainId);
+            if(domain == null) {
+                throw new BadRequestException("Unable to retrieve existing domain.");
+            }
+        } catch (Exception ex) {
             throw new BadRequestException("Domain could not be created.");
         }
+        return domain;
     }
 
     @Override

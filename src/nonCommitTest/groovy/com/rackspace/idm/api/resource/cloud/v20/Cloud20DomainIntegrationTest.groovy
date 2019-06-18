@@ -8,7 +8,6 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
-import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.DomainService
@@ -17,13 +16,11 @@ import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import com.rackspace.idm.validation.Validator20
-import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
@@ -553,7 +550,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         given:
         def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def tenant = utils.createTenant() //will associate tenant to default domain
         def tenantEntity = tenantService.getTenantByName(tenant.name)
 
@@ -586,7 +583,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         //if not using default domain, create a test domain and associate tenant with that domain
         if (!testWithDefaultDomain) {
             domainToUse = utils.createDomain()
-            domainService.createNewDomain(domainToUse)
+            domainService.createDomainWithFallbackGet(domainToUse)
             domainService.addTenantToDomain(tenant.id, domainToUse)
         }
 
@@ -616,7 +613,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         given:
         def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def tenant = utils.createTenant() //will associate tenant to default domain
 
         //add tenant to specified domain
@@ -658,7 +655,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
 
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
 
         //add tenant to specified domain using backend so default domain still points to tenant, and new domain does not (invalid state)
         def tenantEntity = tenantService.getTenantByName(tenant.name)
@@ -732,7 +729,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         given:
         def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def tenant = utils.createTenant() //will associate tenant to default domain
         def tenantEntity = tenantService.getTenantByName(tenant.name)
 
@@ -2060,7 +2057,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, useRoleForTenantManagement)
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def serviceAdminToken = utils.getServiceAdminToken()
         def tenantId = testUtils.getRandomUUID("tenant")
         def tenantToCreate = v2Factory.createTenant(tenantId, tenantId)
@@ -2096,7 +2093,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, useRoleForTenantManagement)
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def tenantId = testUtils.getRandomUUID("tenant")
         def userAdmin
         (userAdmin) = utils.createUserAdmin(domainId)
@@ -2133,7 +2130,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, false)
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def identityAdminToken = utils.getIdentityAdminToken()
         def tenantId = testUtils.getRandomUUID("tenant")
         def tenantToCreate = v2Factory.createTenant(tenantId, tenantId)
@@ -2165,7 +2162,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def identityAdmin = utils.createIdentityAdmin()
         def identityAdminToken = utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
         def tenantId = testUtils.getRandomUUID("tenant")
@@ -2197,7 +2194,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
         def identityAdminToken = utils.getToken(identityAdmin.username)
@@ -2232,7 +2229,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USE_ROLE_FOR_TENANT_MANAGEMENT_PROP, true)
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def userAdmin
         (userAdmin) = utils.createUserAdmin(domainId)
         utils.addRoleToUser(userAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
@@ -2742,7 +2739,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def token = utils.authenticate(identityAdmin.username).token.id
 
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def tenant = utils.createTenant()
 
         utils.addTenantToDomain(domainId, tenant.id)
@@ -2770,7 +2767,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def token = utils.authenticate(identityAdmin.username).token.id
 
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def tenant = utils.createTenant()
 
         utils.addTenantToDomain(domainId, tenant.id)
@@ -2795,7 +2792,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def token = utils.authenticate(identityAdmin.username).token.id
 
         def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        domainService.createDomainWithFallbackGet(domainId)
         def tenant = utils.createTenant()
 
         utils.addTenantToDomain(domainId, tenant.id)

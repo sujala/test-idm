@@ -14,8 +14,19 @@ public interface DomainService {
     PaginatorContext<Domain> getDomains(int offset, int limit);
     Iterable<Domain> getDomainsByRCN(String rcn);
     PaginatorContext<Domain> getDomainsByRCN(String rcn, Integer marker, Integer limit);
+
+    /** Creates and returns a new domain with infer values based on provided domainId.
+     * Fetches and returns the existing domain as fallback (in case domain pre exists with
+     * provided domianId)
+     * Before creating the domain this method checks if domain with provided domianId pre exists.
+     *
+     * @Exception If an error occurred when creating new domain.
+     * @return Domain
+     */
+    Domain createDomainWithFallbackGet(String domainId);
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);
+    Domain checkAndGetDomain(String domainId);
     void addTenantToDomain(String tenantId, String domainId);
     void addTenantToDomain(Tenant tenant, Domain domain);
     void removeTenantFromDomain(String tenantId, String domainId);
@@ -24,8 +35,6 @@ public interface DomainService {
     List<User> getDomainAdmins(String domainId);
     List<User> getDomainSuperAdmins(String domainId);
     List<User> getEnabledDomainAdmins(String domainId);
-    Domain checkAndGetDomain(String domainId);
-    String createNewDomain(String domainId);
     Iterable<Domain> getDomainsForTenants(List<Tenant> tenants);
     void expireAllTokenInDomain(String domainId);
     void deleteDomainPasswordPolicy(String domainId);
