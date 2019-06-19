@@ -641,6 +641,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP = "feature.enabled.use.domain.type.on.new.user.creation";
     public static final boolean FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_DEFAULT = false;
 
+    public static final String FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_PROP = "feature.enabled.use.domain.type.for.update.user";
+    public static final boolean FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_DEFAULT = false;
+
     /**
      * Opentracing properties
      */
@@ -1007,6 +1010,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, FEATURE_ENABLE_SETTING_DOMAIN_TYPE_DEFAULT);
         defaults.put(FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, FEATURE_ENABLE_INFER_DOMAIN_TYPE_DEFAULT);
         defaults.put(FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP, FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_DEFAULT);
+        defaults.put(FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_PROP, FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -2994,6 +2998,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP, versionAdded = "3.33.0", description = "Whether or not identity should use the domain type on new user creation to determine which endpoints are added.")
         public boolean shouldUseDomainTypeOnNewUserCreation() {
             return getRepositoryBooleanSafely(FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_PROP, versionAdded = "3.34.0", description = "Whether or not identity should use the domain type when updating user to determine the valid regions for a user.")
+        public boolean shouldUseDomainTypeForUpdateUser() {
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_PROP);
         }
     }
 

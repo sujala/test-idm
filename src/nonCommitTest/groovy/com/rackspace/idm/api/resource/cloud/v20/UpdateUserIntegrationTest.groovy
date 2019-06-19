@@ -2,8 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
@@ -18,14 +20,17 @@ import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.validation.Validator20
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
+import jdk.nashorn.internal.objects.Global
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.User
@@ -1235,6 +1240,189 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
         where:
         mediaType << [APPLICATION_XML_TYPE, APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "update user's region - feature.enabled.use.domain.type.for.update.user = #flag"() {
+        given:
+        def identityAdminToken = utils.identityAdminToken
+        // Enabled feature
+        IdentityProperty identityProperty = new IdentityProperty()
+        identityProperty.value = flag
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_ID, identityProperty)
+
+        def userAdmin = utils.createCloudAccount()
+        assert userAdmin.defaultRegion == "ORD"
+
+        def regionToUpdate = "DFW"
+        def userForUpdate = new UserForCreate().with {
+            it.defaultRegion = regionToUpdate
+            it
+        }
+
+        when: "update user's region"
+        def response = cloud20.updateUser(identityAdminToken, userAdmin.id, userForUpdate)
+        User user = response.getEntity(User).value
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        and: "assert region is updated"
+        user.defaultRegion == regionToUpdate
+
+        when: "get domain"
+        def domain = utils.getDomain(userAdmin.domainId)
+
+        then:
+        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+
+        when: "update user's region - invalid"
+        userForUpdate.defaultRegion = "LON"
+        response = cloud20.updateUser(identityAdminToken, userAdmin.id, userForUpdate)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Invalid defaultRegion value, accepted values are: ORD, DFW.")
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+        // reset identity property
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        where:
+        flag << [true, false]
+    }
+
+    @Unroll
+    def "update user's region in UK cloud - feature.enabled.use.domain.type.for.update.user = #flag"() {
+        given:
+        def identityAdminToken = utils.identityAdminToken
+
+        // Set cloud region
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+        // Update feature
+        IdentityProperty identityProperty = new IdentityProperty()
+        identityProperty.value = flag
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_ID, identityProperty)
+
+        def userAdmin = utils.createCloudAccount()
+        assert userAdmin.defaultRegion == "LON"
+
+        // Create second UK region
+        Region region = new Region().with {
+            it.name = "LON2"
+            it.enabled = true
+            it.cloud = GlobalConstants.CLOUD_REGION_UK
+            it.isDefault = false
+            it
+        }
+        cloud20.createRegion(utils.serviceAdminToken, region)
+        // Create Compute endpoint for UK region
+        def endpointTemplate = utils.createEndpointTemplate(false, null, true, "compute", region.name, testUtils.getRandomIntegerString(), testUtils.getRandomUUID("http://"), "cloudServersOpenStack")
+
+        // Setup user for update
+        def userForUpdate = new UserForCreate().with {
+            it.defaultRegion = region.name
+            it
+        }
+
+        when: "update user's region"
+        def response = cloud20.updateUser(identityAdminToken, userAdmin.id, userForUpdate)
+        User user = response.getEntity(User).value
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        and: "assert region is updated"
+        user.defaultRegion == region.name
+
+        when: "get domain"
+        def domain = utils.getDomain(userAdmin.domainId)
+
+        then:
+        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
+
+        when: "update user's region - invalid"
+        userForUpdate.defaultRegion = "ORD"
+        response = cloud20.updateUser(identityAdminToken, userAdmin.id, userForUpdate)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Invalid defaultRegion value, accepted values are: LON2, LON.")
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+        cloud20.deleteRegion(utils.serviceAdminToken, region.name)
+        cloud20.deleteEndpointTemplate(utils.serviceAdminToken, endpointTemplate.id.toString())
+        staticIdmConfiguration.reset()
+        // reset identity property
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        where:
+        flag << [true, false]
+    }
+
+    @Unroll
+    def "update user's region where user has access to only one compute region - feature.enabled.use.domain.type.for.update.user = #flag"() {
+        given:
+        def identityAdminToken = utils.identityAdminToken
+
+        // Update feature
+        IdentityProperty identityProperty = new IdentityProperty()
+        identityProperty.value = flag
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_ID, identityProperty)
+
+        def userAdmin = utils.createCloudAccount()
+        assert userAdmin.defaultRegion == "ORD"
+
+        // Create Compute endpoint for US region for DFW compute region
+        def endpointTemplate = utils.createEndpointTemplate(false, null, true, "compute", "DFW", testUtils.getRandomIntegerString(), testUtils.getRandomUUID("http://"), "cloudServersOpenStack")
+
+        // Add endpoint to tenant on user
+        utils.addEndpointTemplateToTenant(userAdmin.domainId, endpointTemplate.id)
+
+        // Setup user for update
+        def userForUpdate = new UserForCreate().with {
+            it.defaultRegion = "DFW"
+            it
+        }
+
+        when: "update user's region"
+        def response = cloud20.updateUser(identityAdminToken, userAdmin.id, userForUpdate)
+        User user = response.getEntity(User).value
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        and: "assert region is updated"
+        user.defaultRegion == "DFW"
+
+        when: "get domain"
+        def domain = utils.getDomain(userAdmin.domainId)
+
+        then:
+        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+
+        when: "update user's region back to ORD"
+        userForUpdate.defaultRegion = "ORD"
+        response = cloud20.updateUser(identityAdminToken, userAdmin.id, userForUpdate)
+
+        then: "assert user's default regions are limited to the user's accessible compute regions"
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Invalid defaultRegion value, accepted values are: DFW.")
+
+        cleanup:
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
+        cloud20.deleteEndpointTemplate(utils.serviceAdminToken, endpointTemplate.id.toString())
+        staticIdmConfiguration.reset()
+        // reset identity property
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        where:
+        flag << [true, false]
     }
 
     /**

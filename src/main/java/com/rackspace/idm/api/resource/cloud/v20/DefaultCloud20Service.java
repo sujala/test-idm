@@ -1252,12 +1252,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                         updateRegion = false;
                     }
                 }
+
                 userDO.setId(retrievedUser.getId());
                 if (StringUtils.isBlank(user.getUsername())) {
                     userDO.setUsername(retrievedUser.getUsername());
                 }
+
                 if (userDO.getRegion() != null && updateRegion) {
-                    defaultRegionService.validateDefaultRegion(userDO.getRegion(), (User) retrievedUser);
+                    if (identityConfig.getRepositoryConfig().shouldUseDomainTypeForUpdateUser()) {
+                        defaultRegionService.validateComputeRegionForUser(userDO.getRegion(), (User) retrievedUser);
+                    } else{
+                        // Use legacy logic
+                        defaultRegionService.validateDefaultRegion(userDO.getRegion(), (User) retrievedUser);
+                    }
                 }
                 userService.updateUser(userDO);
                 sendUserEvent = true;
