@@ -2415,7 +2415,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteTestDomainQuietly(domainIdA)
         utils.deleteUserQuietly(userB)
         utils.deleteTestDomainQuietly(domainIdB)
-        utils.deleteTestDomainQuietly(domainIdC)
         // reset identity property
         identityProperty.value = true
         devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
