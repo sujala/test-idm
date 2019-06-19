@@ -25,11 +25,7 @@ class TestDomainTypeAttribute(base.TestBaseV2):
             rcn=cls.generate_random_string(const.RCN_PATTERN),
             domain_type=const.RACKSPACE_CLOUD_US,
         )
-        cls.role_id = cls.get_role_id_by_name(
-            role_name=const.IDENTITY_RS_DOMAIN_ADMIN_ROLE_NAME)
-        user_id = cls.identity_admin_client.default_headers[const.X_USER_ID]
-        cls.service_admin_client.add_role_to_user(
-            user_id=user_id, role_id=cls.role_id)
+
         resp = cls.identity_admin_client.add_domain(req_obj)
         assert resp.status_code == 201
         assert resp.json()[const.RAX_AUTH_DOMAIN][const.TYPE] \
@@ -126,11 +122,4 @@ class TestDomainTypeAttribute(base.TestBaseV2):
         assert resp.status_code == 204, (
                 'Domain with ID {0} failed to delete'.format(
                     cls.domain_id))
-        resp = cls.service_admin_client.delete_role_from_user(
-                    role_id=cls.role_id,
-                    user_id=cls.identity_admin_client.default_headers[
-                        const.X_USER_ID])
-        assert resp.status_code == 204, (
-                'Role with ID {0} failed to delete'.format(
-                    cls.role_id))
         super(TestDomainTypeAttribute, cls).tearDownClass()
