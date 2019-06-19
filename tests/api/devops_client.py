@@ -50,6 +50,7 @@ class IdentityDevopsClient(client.AutoMarshallingHTTPClient):
 
     def get_prop_value(self, prop_name):
         resp = self.get_devops_properties(prop_name=prop_name)
+        assert(resp.status_code == 200)
         try:
             return resp.json()[const.PROPERTIES][0][const.VALUE]
         except LookupError:
