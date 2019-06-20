@@ -18,11 +18,10 @@ class DefaultRegionServiceTest extends RootServiceTest {
     def setup() {
         service = new DefaultRegionService()
 
-        mockApplicationService(service)
         mockCloudRegionService(service)
-        mockConfiguration(service)
         mockDomainService(service)
         mockEndpointService(service)
+        mockIdentityConfig(service)
         mockScopeAccessService(service)
         mockUserService(service)
     }
@@ -46,23 +45,31 @@ class DefaultRegionServiceTest extends RootServiceTest {
                 createRegion("US", "DFW")
         ].asList()
 
-        endpointService.getBaseUrlsByServiceName(_) >>> [
-                baseUrlListOne,
-                baseUrlListTwo
-        ]
-
-        config.getString("cloud.region") >> "US"
+        identityConfig.staticConfig.getCloudRegion() >> "US"
         cloudRegionService.getRegions(_) >> regionsInCloud
 
-        when:
+        when: "different cloud regions endpoints"
         def regionListOne = service.getDefaultRegionsForCloudServersOpenStack()
+
+        then: "assert LON endpoint is not returned"
+        regionListOne.size() == 2
+
+        assert(!regionListOne.contains("LON"))
+        assert(regionListOne.contains("ORD"))
+        assert(regionListOne.contains("DFW"))
+
+        1 * endpointService.getBaseUrlsByServiceName(_) >> baseUrlListOne
+
+        when: "get US region endpoints"
         def regionListTwo = service.getDefaultRegionsForCloudServersOpenStack()
 
-        then:
-        regionListOne.size() == 2
-        assert(!regionListOne.contains("LON"))
+        then: "assert only US region is returned"
         regionListTwo.size() == 1
-        regionListTwo.toArray()[0].equals("ORD")
+        assert(regionListTwo.contains("ORD"))
+        assert(!regionListTwo.contains("LON"))
+        assert(!regionListTwo.contains("DFW"))
+
+        1 * endpointService.getBaseUrlsByServiceName(_) >>  baseUrlListTwo
     }
 
     def "getRegionsWithinCloud returns only regions within cloud"() {
@@ -75,7 +82,7 @@ class DefaultRegionServiceTest extends RootServiceTest {
         def regions = [ "ORD", "DFW", "LON" ].asList()
         Set<String> regionNameList = new HashSet<String>(regions)
 
-        config.getString("cloud.region") >> "US"
+        identityConfig.staticConfig.getCloudRegion() >> "US"
         cloudRegionService.getRegions(_) >> regionsInCloud
 
         when:
@@ -99,6 +106,7 @@ class DefaultRegionServiceTest extends RootServiceTest {
 
         then:
         returnedList.size() == 1
+        assert(returnedList.contains("AHH"))
         assert(!returnedList.contains("HHA"))
         assert(!returnedList.contains("HAH"))
     }

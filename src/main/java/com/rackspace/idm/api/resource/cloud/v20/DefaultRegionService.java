@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService;
 import com.rackspace.idm.exception.BadRequestException;
-import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -29,16 +28,13 @@ public class DefaultRegionService {
     private ScopeAccessService scopeAccessService;
 
     @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
     private DomainService domainService;
 
     @Autowired
     private UserService userService;
 
     @Autowired
-    private Configuration config;
+    private IdentityConfig identityConfig;
 
     public void validateDefaultRegion(String defaultRegion) {
         Set<String> regions = this.getDefaultRegionsForCloudServersOpenStack();
@@ -90,7 +86,7 @@ public class DefaultRegionService {
     private Set<String> getRegionsWithinCloud(Set<String> regionNames) {
         List<String> regionsInCloudRegion = new ArrayList<String>();
 
-        for (Region region : cloudRegionService.getRegions(config.getString("cloud.region"))) {
+        for (Region region : cloudRegionService.getRegions(identityConfig.getStaticConfig().getCloudRegion())) {
             regionsInCloudRegion.add(region.getName());
         }
 
@@ -183,17 +179,5 @@ public class DefaultRegionService {
         }
 
         return getCloudServersOpenStackRegions(userBaseUrls);
-    }
-
-    public void setApplicationService(ApplicationService applicationService) {
-        this.applicationService = applicationService;
-    }
-
-    public void setEndpointService(EndpointService endpointService) {
-        this.endpointService = endpointService;
-    }
-
-    public void setConfig(Configuration config) {
-        this.config = config;
     }
 }

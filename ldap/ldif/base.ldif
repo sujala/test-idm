@@ -6105,7 +6105,7 @@ rsSearchable: TRUE
 dn: rsId=4331a77060ea1d2r5a1ec5bc873de37b4,ou=properties,ou=cloud,o=configura
  tion,dc=rackspace,dc=com
 objectClass: rsIdentityProperty
-cn: feature.enabled.use.domain.type.for.update.user
+cn: feature.enable.use.domain.type.for.update.user
 description: Whether or not identity should use the domain type
  when updating user to determine the valid regions for a user.
 rsIdmVersion: 3.34.0

@@ -641,7 +641,7 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP = "feature.enabled.use.domain.type.on.new.user.creation";
     public static final boolean FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_DEFAULT = false;
 
-    public static final String FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_PROP = "feature.enabled.use.domain.type.for.update.user";
+    public static final String FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_PROP = "feature.enable.use.domain.type.for.update.user";
     public static final boolean FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_DEFAULT = false;
 
     /**

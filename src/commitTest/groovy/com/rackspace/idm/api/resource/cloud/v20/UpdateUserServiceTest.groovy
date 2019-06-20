@@ -439,7 +439,6 @@ class UpdateUserServiceTest  extends RootServiceTest {
         identityUserService.getEndUserById(userToUpdate.id) >> existingUser
         authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
 
-
         when:
         service.updateUser(headers, authToken, userToUpdate.id, userToUpdate)
 
