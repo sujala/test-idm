@@ -215,6 +215,14 @@ USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
 USER_MANAGER_NAME_PATTERN = 'user[\-]manager[\d\w]{12}'
 USER_GROUP_NAME_PATTERN = 'user[\-]group[\-][\d\w]{10}'
 
+'''Domain types'''
+RACKSPACE_CLOUD_US = "RACKSPACE_CLOUD_US"
+RACKSPACE_CLOUD_UK = "RACKSPACE_CLOUD_UK"
+DEDICATED = 'DEDICATED'
+RACKSPACE = 'RACKSPACE'
+DATAPIPE = 'DATAPIPE'
+UNKOWN = 'UNKNOWN'
+
 '''Headers'''
 ACCESS_CONTROL_REQUEST_HEADERS = 'Access-Control-Request-Headers'
 ACCESS_CONTROL_REQUEST_METHOD = 'Access-Control-Request-Method'
