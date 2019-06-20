@@ -415,7 +415,7 @@ class UpdateUserServiceTest  extends RootServiceTest {
     }
 
     @Unroll
-    def "updateUser: updating user's region calls correct services - feature.enabled.use.domain.type.for.update.user = #flag"(){
+    def "updateUser: updating user's region calls correct services - feature.enable.use.domain.type.for.update.user = #flag"(){
         given:
         Domain domain = entityFactory.createDomain().with {
             it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
@@ -465,7 +465,7 @@ class UpdateUserServiceTest  extends RootServiceTest {
         flag << [true, false]
     }
 
-    def "updateUser: error check - feature.enabled.use.domain.type.for.update.user = true"(){
+    def "updateUser: error check - feature.enable.use.domain.type.for.update.user = true"(){
         given:
         Domain domain = entityFactory.createDomain().with {
             it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US

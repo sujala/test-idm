@@ -1243,7 +1243,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "update user's region - feature.enabled.use.domain.type.for.update.user = #flag"() {
+    def "update user's region - feature.enable.use.domain.type.for.update.user = #flag"() {
         given:
         def identityAdminToken = utils.identityAdminToken
         // Enabled feature
@@ -1295,7 +1295,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "update user's region in UK cloud - feature.enabled.use.domain.type.for.update.user = #flag"() {
+    def "update user's region in UK cloud - feature.enable.use.domain.type.for.update.user = #flag"() {
         given:
         def identityAdminToken = utils.identityAdminToken
 
@@ -1365,7 +1365,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "update user's region where user has access to only one compute region - feature.enabled.use.domain.type.for.update.user = #flag"() {
+    def "update user's region where user has access to only one compute region - feature.enable.use.domain.type.for.update.user = #flag"() {
         given:
         def identityAdminToken = utils.identityAdminToken
 
