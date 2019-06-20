@@ -431,10 +431,6 @@ public class AtomHopperClient {
     private Writer marshalEntry(UsageEntry entry) throws JAXBException {
         final Writer writer = new StringWriter();
         JAXBContext context = JAXB_CONTEXT_FEED_ENTRY;
-        if (!identityConfig.getReloadableConfig().reuseJaxbContext()) {
-            //TODO causes memory leak...only left for backwards compatibility. Must be removed in future version.
-            context = JAXBContext.newInstance(JAXB_CONTEXT_FEED_ENTRY_CONTEXT_PATH);
-        }
 
         final Marshaller marshaller = context.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);

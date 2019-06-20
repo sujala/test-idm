@@ -174,10 +174,6 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
         JAXBContext context = JAXBCONTEXT_VERSION_CHOICE;
-        if (!identityConfig.getReloadableConfig().reuseJaxbContext()) {
-            //TODO causes memory leak...only left for backwards compatibility. Must be removed in future version.
-            context = JAXBContext.newInstance(JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH);
-        }
 
         final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page();
         Unmarshaller unmarshaller = context.createUnmarshaller();

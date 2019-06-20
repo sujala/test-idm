@@ -67,10 +67,7 @@ public class CloudVersionsResource {
     @GET
     public Response getInternalCloudVersionsInfo() throws JAXBException {
         JAXBContext context = JAXBCONTEXT_VERSION_CHOICE_LIST;
-        if (!identityConfig.getReloadableConfig().reuseJaxbContext()) {
-            //TODO causes memory leak...only left for backwards compatibility. Must be removed in future version.
-            context = JAXBContext.newInstance(JAXBCONTEXT_VERSION_CHOICE_LIST_CONTEXT_PATH);
-        }
+
 
         Unmarshaller unmarshaller = context.createUnmarshaller();
         final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage();
