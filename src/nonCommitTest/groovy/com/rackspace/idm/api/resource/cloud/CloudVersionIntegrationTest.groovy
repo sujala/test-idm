@@ -63,5 +63,43 @@ class CloudVersionIntegrationTest extends RootIntegrationTest {
         false | _
     }
 
+    @Unroll
+    def "Returning Versions.xml returns when feature.reuse.jaxb.context set to #value"() {
+        when: "get xml with feature"
+        def response = cloud.getVersions(MediaType.APPLICATION_XML_TYPE)
 
+        then: "get xml specific version"
+        response.status == HttpStatus.SC_OK
+        response.getHeaders().getFirst("content-type") == "application/xml"
+
+        //for this test just verify the content does not contain the v3 data (which is not part of the versions.xml)
+        String val = response.getEntity(String)
+        !val.contains("https://identity.api.rackspacecloud.com/v3")
+        val.contains("<atom:link")
+
+    }
+
+    def "Returning Versions20.xml returns same value regardless of feature.reuse.jaxb.context"() {
+        when: "get xml with feat"
+        def responseTrue = cloud20.getVersion(MediaType.APPLICATION_XML_TYPE)
+
+        def responseFalse = cloud20.getVersion(MediaType.APPLICATION_XML_TYPE)
+
+        then: "get json specific version"
+        responseTrue.status == HttpStatus.SC_OK
+        responseFalse.status == HttpStatus.SC_OK
+        responseTrue.getEntity(String) == responseFalse.getEntity(String)
+    }
+
+    def "Returning Versions11.xml returns same value regardless of feature.reuse.jaxb.context"() {
+        when: "get xml with feat"
+        def responseTrue = cloud11.getVersion()
+
+        def responseFalse = cloud11.getVersion()
+
+        then: "get json specific version"
+        responseTrue.status == HttpStatus.SC_OK
+        responseFalse.status == HttpStatus.SC_OK
+        responseTrue.getEntity(String) == responseFalse.getEntity(String)
+    }
 }
