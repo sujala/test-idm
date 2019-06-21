@@ -46,10 +46,14 @@ class IdentityDevopsClient(client.AutoMarshallingHTTPClient):
         Returns the value of the flag which should be boolean indicating
         if it's on or off
         """
-        resp = self.get_devops_properties(
-            prop_name=flag_name)
-        assert(resp.status_code == 200)
-        return resp.json()[const.PROPERTIES][0][const.VALUE]
+        return self.get_prop_value(flag_name)
+
+    def get_prop_value(self, prop_name):
+        resp = self.get_devops_properties(prop_name=prop_name)
+        try:
+            return resp.json()[const.PROPERTIES][0][const.VALUE]
+        except LookupError:
+            return None
 
     def create_devops_prop(self, request_object, requestslib_kwargs=None):
         url = "{0}{1}".format(self.devops_url,
