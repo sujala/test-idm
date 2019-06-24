@@ -9,7 +9,7 @@ import socket
 import struct
 
 
-def get_users(directory):
+def get_users(directory, debug=False):
     users = []
     files = glob.glob(os.path.join(directory, "*.csv"))
     for afile_name in files:
@@ -18,7 +18,8 @@ def get_users(directory):
             reader = csv.DictReader(afile)
             for row in reader:
                 users.append(row)
-    print ("{0} users loaded".format(len(users)))
+    if debug:
+        print("{0} users loaded".format(len(users)))
     return users
 
 
@@ -41,27 +42,30 @@ def get_col_mapping(config_file):
 
 
 def generate_files(users_dir, user_config_file, output_dir,
-                   include_all=False):
+                   include_all=False, debug=False):
     output_file_marker = 0
     user_marker = 0
 
     ips = load_ip_addresses(400000)
-    print ("# ips: {0}".format(len(ips)))
-    print(user_config_file)
+    if debug:
+        print("# ips: {0}".format(len(ips)))
+        print(user_config_file)
     with open(user_config_file, "r") as config_file_handle:
         config_file = json.load(config_file_handle)
         # Need a try/except
-        print ("Starting with {0}".format(
-            config_file[output_file_marker]["name"]))
+        if debug:
+            print("Starting with {0}".format(
+                config_file[output_file_marker]["name"]))
         output_file = open(
             os.path.join(output_dir,
                          config_file[output_file_marker]["name"]), "w")
         mappings = get_col_mapping(config_file[output_file_marker])
-        print ("mappings:{0}".format(mappings))
-        print ("keys: {0}".format([key for key in config_file[output_file_marker]["columns"]]))
+        if debug:
+            print("mappings:{0}".format(mappings))
+            print("keys: {0}".format([key for key in config_file[output_file_marker]["columns"]]))
         fieldnames = [mappings[key] for key in config_file[output_file_marker]["columns"]]
 
-        users = get_users(users_dir)
+        users = get_users(users_dir, debug=debug)
         user_iterator = iter(users)
 
         writer = csv.DictWriter(
@@ -76,10 +80,12 @@ def generate_files(users_dir, user_config_file, output_dir,
                     output_file.close()
                     user_marker = 0
                     if output_file_marker >= len(config_file):
-                        print ("No more output files")
+                        if debug:
+                            print("No more output files")
                         exit(0)
-                    print("switching output files: {0}"
-                          "".format(config_file[output_file_marker]["name"]))
+                    if debug:
+                        print("switching output files: {0}"
+                              "".format(config_file[output_file_marker]["name"]))
 
                     output_file = open(
                         os.path.join(output_dir,
@@ -87,7 +93,8 @@ def generate_files(users_dir, user_config_file, output_dir,
                         "w")
                     mappings = get_col_mapping(config_file[output_file_marker])
                     fieldnames = [mappings[key] for key in config_file[output_file_marker]["columns"]]
-                    print ("mappings:{0}".format(mappings))
+                    if debug:
+                        print("mappings:{0}".format(mappings))
                     writer = csv.DictWriter(
                         output_file,
                         fieldnames=fieldnames)
@@ -123,6 +130,8 @@ if __name__ == '__main__':
                         help="Directory that will contain the result files.")
     parser.add_argument("-i", "--include_all", default="false",
                         help="Flag to indicate if to use randomness or not.")
+    parser.add_argument('--debug', action='store_true',
+                        help='Print out diagnostic information.')
 
     args = parser.parse_args()
     users_dir = args.users_dir
@@ -133,6 +142,7 @@ if __name__ == '__main__':
         include_all = False
     else:
         include_all = True
-    print("generate_files({0},{1},{2})".format(users_dir,
-                                               config_file, output_dir))
-    generate_files(users_dir, config_file, output_dir, include_all)
+    if args.debug:
+        print("generate_files({0},{1},{2})".format(users_dir,
+                                                   config_file, output_dir))
+    generate_files(users_dir, config_file, output_dir, include_all, debug=args.debug)

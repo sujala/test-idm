@@ -4,7 +4,7 @@ library "customer-identity@0.4.0"
 def gitRepo = 'github.rackspace.com/cloud-identity-dev/cloud-identity'
 def githubUrl = "https://${gitRepo}"
 def namespace = 'customer-identity-cicd'
-def slackChannel = "G6ZU193N2"
+def slackChannel = "identity-jenkins"
 
 properties([
     pipelineTriggers([cron('@daily')]),
