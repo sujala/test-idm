@@ -32,6 +32,7 @@
     <attribute name="tenantAlias" type="xsd:string" />
     <attribute name="multiFactorEnabled" type="xsd:boolean"/>
     <attribute name="multiFactorState" type="RAX-AUTH:MultiFactorStateEnum" />
+    <attribute name="phonePinState" type="RAX-AUTH:PhonePinStateEnum" />
     <attribute name="userMultiFactorEnforcementLevel" type="RAX-AUTH:UserMultiFactorEnforcementLevelEnum" />
     <attribute name="scope" type="RAX-AUTH:ScopeEnum" />
     <attribute name="federationType" type="RAX-AUTH:IdentityProviderFederationTypeEnum" />
@@ -120,6 +121,7 @@
             </xsd:documentation>
         </annotation>
     </element>
+    <element name="verifyPhonePinResult" type="RAX-AUTH:VerifyPhonePinResult" />
 
     <element name="rsaCredentials" type="RAX-AUTH:RsaCredentials" substitutionGroup="identity:credential" />
     <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
@@ -260,6 +262,14 @@
 
     <simpleType name="MultiFactorStateEnum">
         <restriction base="xsd:string">
+            <enumeration value="ACTIVE"/>
+            <enumeration value="LOCKED"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="PhonePinStateEnum">
+        <restriction base="xsd:string">
+            <enumeration value="INACTIVE"/>
             <enumeration value="ACTIVE"/>
             <enumeration value="LOCKED"/>
         </restriction>
@@ -1501,6 +1511,36 @@
         <sequence>
             <element ref="RAX-AUTH:userGroup" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
+    </complexType>
+
+    <complexType name="VerifyPhonePinResult">
+        <attribute name="authenticated" type="xsd:boolean" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Whether or not the PIN was correct and the user should be considered authenticated.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="failureCode" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        If the user is not authenticated, the failure code for the reason.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="failureMessage" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        If the user is not authenticated, this provides a human readable description of the reason.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
     <complexType name="RoleAssignment" abstract="true">

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.delegation import delegation
@@ -24,7 +24,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
         super(DelegationAgreementsCrudTests, self).setUp()
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_delegation_agreement_crud(self):
         # assert that the subAgreements attribute is false
         self.validate_delegation_agreements_crud(
@@ -32,7 +32,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
             client=self.user_admin_client)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_delegation_agreement_crud_with_sub_agreements(self):
         # assert that the subAgreements attribute is true
         self.validate_delegation_agreements_crud(
@@ -40,7 +40,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
             client=self.user_admin_client)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_delegation_agreement_crud_rcn_admin(self):
         # assert that the subAgreements attribute is false
         self.validate_delegation_agreements_crud(
@@ -48,7 +48,7 @@ class DelegationAgreementsCrudTests(delegation.TestBaseDelegation):
             sub_agreement_nest_level=0)
 
     @tags('positive', 'p0', 'regression')
-    @attr(type='regression')
+    @pytest.mark.regression
     def test_list_delegation_agreements(self):
 
         da_1_id, da_2_id = self.create_multiple_das_for_principal()

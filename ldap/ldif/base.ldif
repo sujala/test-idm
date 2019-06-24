@@ -1556,6 +1556,26 @@ rsType: STANDARD
 rsAssignment: GLOBAL
 rsWeight: 50
 
+dn: rsId=7df5c7d3fc554961a87d1c664186d3aa,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: monitoring:admin
+description: Monitoring Admin Role for Account User
+rsType: STANDARD
+rsAssignment: BOTH
+rsWeight: 2000
+
+dn: rsId=d7efae2f03a44c5eaca92d1c9086fb9e,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: dedicated:default
+description: a role that allows a user access to dedicated service methods
+rsType: PROPAGATE
+rsAssignment: BOTH
+rsWeight: 750
+
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer
@@ -6067,6 +6087,18 @@ description: A comma delimited list of valid domain types
 rsIdmVersion: 3.29.0
 rsPropertyValue: RACKSPACE_CLOUD_US,RACKSPACE_CLOUD_UK,DEDICATED,RACKSPACE,DATAPIPE,UNKNOWN
 rsPropertyValueType: String
+rsReloadable: TRUE
+rsSearchable: TRUE
+
+dn: rsId=9931a88060ea1d2r5c1ec5bc873de26a3,ou=properties,ou=cloud,o=configura
+ tion,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: feature.enabled.use.domain.type.on.new.user.creation
+description: Whether or not identity should use the domain type on
+ new user creation to determine which endpoints are added.
+rsIdmVersion: 3.33.0
+rsPropertyValue: TRUE
+rsPropertyValueType: Boolean
 rsReloadable: TRUE
 rsSearchable: TRUE
 

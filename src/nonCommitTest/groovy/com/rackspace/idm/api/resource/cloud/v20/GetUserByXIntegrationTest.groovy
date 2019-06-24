@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.idm.Constants
-import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
-import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import groovy.json.JsonSlurper
@@ -110,6 +109,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         retrievedFedUser.secretQA == null
         retrievedFedUser.federatedIdp == Constants.DEFAULT_IDP_URI
         retrievedFedUser.created != null
+        retrievedFedUser.phonePinState == PhonePinStateEnum.ACTIVE
 
         cleanup:
             deleteFederatedUserQuietly(samlUser)
@@ -126,21 +126,22 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
     @Unroll
     def "Retrieve provisioned user by id response accept type: #mediaType"() {
         when: "Retrieve provisioned user"
-        User retrievedFedUser = getUserById(userAdmin.id, mediaType)
+        User user = getUserById(userAdmin.id, mediaType)
 
         then: "the user is returned"
-        retrievedFedUser != null
-        retrievedFedUser.domainId == domainId
-        retrievedFedUser.defaultRegion == userAdmin.defaultRegion
-        retrievedFedUser.email == userAdminEmail
-        retrievedFedUser.username == userAdmin.username
-        BooleanUtils.isTrue(retrievedFedUser.isEnabled())
-        BooleanUtils.isNotTrue(retrievedFedUser.isMultiFactorEnabled())
-        retrievedFedUser.roles == null
-        retrievedFedUser.groups == null
-        retrievedFedUser.secretQA == null
-        retrievedFedUser.federatedIdp == null
-        retrievedFedUser.created != null
+        user != null
+        user.domainId == domainId
+        user.defaultRegion == userAdmin.defaultRegion
+        user.email == userAdminEmail
+        user.username == userAdmin.username
+        BooleanUtils.isTrue(user.isEnabled())
+        BooleanUtils.isNotTrue(user.isMultiFactorEnabled())
+        user.roles == null
+        user.groups == null
+        user.secretQA == null
+        user.federatedIdp == null
+        user.created != null
+        user.phonePinState == PhonePinStateEnum.ACTIVE
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]

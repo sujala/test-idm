@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2.user_groups import usergroups
@@ -30,7 +30,7 @@ class TestListUsersForTenantWithUserGroup(usergroups.TestUserGroups):
             })
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_list_users_for_tenant(self):
         """
         Test adds a user to user group & then adds a role to the user-group.

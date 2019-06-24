@@ -2,6 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
@@ -24,16 +26,16 @@ import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
+import java.util.stream.Collectors
 
-import static org.apache.http.HttpStatus.*
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static org.apache.http.HttpStatus.*
 
 class CreateUserIntegrationTest extends RootIntegrationTest {
 
@@ -1190,23 +1192,26 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsersQuietly([defaultUser, userAdmin, idmAdmin] as List<User>)
     }
 
-    def "users cannot be created with factorType"() {
+    def "users cannot be created with factorType or phone pin state"() {
         given:
         def domainId = utils.createDomain()
         def identityAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("idmAdmin"), "display", "email@email.com", true, null, null, DEFAULT_PASSWORD).with {
             it.factorType = FactorTypeEnum.OTP
+            it.phonePinState == PhonePinStateEnum.LOCKED
             it
         }
         def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.factorType = FactorTypeEnum.OTP
+            it.phonePinState == PhonePinStateEnum.LOCKED
             it
         }
         def defaultUserToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("defaultUser"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.factorType = FactorTypeEnum.OTP
+            it.phonePinState == PhonePinStateEnum.LOCKED
             it
         }
 
-        when: "try to create the identity admin with factor type"
+        when: "try to create the identity admin with factor type and phone pin state"
         def response = cloud20.createUser(utils.getServiceAdminToken(), identityAdminToCreate)
 
         then: "identity admin created but mfa enforcement level not set"
@@ -1214,13 +1219,16 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def idmAdmin = response.getEntity(User).value
         idmAdmin.factorType == null
 
+        and: "pin state in creation request is ignored, returned appropriately"
+        idmAdmin.phonePinState == PhonePinStateEnum.ACTIVE
+
         when:
         def authResponse = cloud20.authenticate(idmAdmin.username, DEFAULT_PASSWORD)
 
         then: "success"
         authResponse.status == 200
 
-        when: "try to create the user admin with mfa factor type"
+        when: "try to create the user admin with mfa factor type and phone pin state"
         response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
 
         then: "user admin created but mfa enforcement level not set"
@@ -1228,19 +1236,25 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def userAdmin = response.getEntity(User).value
         userAdmin.factorType == null
 
+        and: "pin state in creation request is ignored, returned appropriately"
+        userAdmin.phonePinState == PhonePinStateEnum.ACTIVE
+
         when:
         authResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
 
         then: "success"
         authResponse.status == 200
 
-        when: "try to create the defualt user with mfa factor type"
+        when: "try to create the defualt user with mfa factor type and phone pin state"
         response = cloud20.createUser(utils.getToken(userAdmin.username), defaultUserToCreate)
 
         then: "default user created but mfa enforcement level not set"
         response.status == 201
         def defaultUser = response.getEntity(User).value
         defaultUser.factorType == null
+
+        and: "pin state in creation request is ignored, returned appropriately"
+        defaultUser.phonePinState == PhonePinStateEnum.ACTIVE
 
         when:
         authResponse = cloud20.authenticate(defaultUser.username, DEFAULT_PASSWORD)
@@ -2105,4 +2119,304 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         response.status == SC_CREATED
     }
 
+    @Unroll
+    def "one user call assigns correct default endpoints - feature.enabled.use.domain.type.on.new.user.creation, region = #region"() {
+        given:
+        // Setup region
+        def defaultRegion = "ORD"
+        if (region.equalsIgnoreCase(GlobalConstants.CLOUD_REGION_UK)) {
+            staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+            defaultRegion = "LON"
+        }
+
+        // Enabled feature
+        IdentityProperty identityProperty = new IdentityProperty()
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        // Common attribute
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+
+        // User A
+        def domainIdA = utils.createDomain()
+        def usernameA = testUtils.getRandomUUID("userAdminA")
+        def userForCreateA = v2Factory.createUser(usernameA, "displayName", "testemail@rackspace.com", true, defaultRegion, domainIdA, DEFAULT_PASSWORD)
+        userForCreateA.secretQA = secretQA
+
+        when: "create user-admin with feature enabled"
+        def response = cloud20.createUser(identityAdminToken, userForCreateA)
+        User userA = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "create user-admin with feature disabled"
+        // Disable feature
+        identityProperty.value = false
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        def domainIdB = utils.createDomain()
+        def usernameB =  testUtils.getRandomUUID("userAdminB")
+        def userForCreateB = v2Factory.createUser(usernameB, "displayName", "testemail@rackspace.com", true, defaultRegion, domainIdB, DEFAULT_PASSWORD)
+        userForCreateB.secretQA = secretQA
+
+        response = cloud20.createUser(identityAdminToken, userForCreateB)
+        User userB = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "authenticate both users"
+        def responseA = cloud20.authenticate(usernameA, DEFAULT_PASSWORD)
+        AuthenticateResponse authResponseA = responseA.getEntity(AuthenticateResponse).value
+        def responseB = cloud20.authenticate(usernameB, DEFAULT_PASSWORD)
+        AuthenticateResponse authResponseB = responseB.getEntity(AuthenticateResponse).value
+
+        then: "assert successful authentication"
+        responseA.status == SC_OK
+        responseB.status == SC_OK
+
+        and: "assert services"
+        def serviceListA = authResponseA.serviceCatalog.service
+        def serviceListB = authResponseB.serviceCatalog.service
+
+        def serviceNamesA = serviceListA.stream().map{service -> service.name }.collect(Collectors.toList())
+        def serviceNamesB = serviceListB.stream().map{service -> service.name }.collect(Collectors.toList())
+        serviceNamesA.sort() == serviceNamesB.sort()
+
+        and: "assert endpoints"
+        for (String serviceName : serviceNamesA) {
+            def endpointsA = serviceListA.find{it.name == serviceName}.endpoint
+            def endpointsB = serviceListB.find{it.name == serviceName}.endpoint
+
+            def publicUrlsA = endpointsA.stream().map{endpoint -> endpoint.publicURL.replaceAll("/[^/]*\$","")}.collect(Collectors.toList())
+            def publicUrlsB = endpointsB.stream().map{endpoint -> endpoint.publicURL.replaceAll("/[^/]*\$","")}.collect(Collectors.toList())
+            assert publicUrlsA.sort() == publicUrlsB.sort()
+        }
+
+        when: "auth users in v1"
+        def v1UserA = utils11.getUserByName(userA.username)
+        def v1UserB = utils11.getUserByName(userB.username)
+
+        then: "assert endpoint v1 defaults on user A (this user should have v1 defaults set for both US and UK"
+        if (region == GlobalConstants.CLOUD_REGION_US) {
+            utils11.validateV1Default(v1UserA.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_US, Constants.NAST_V1_DEF_US)
+        } else {
+            utils11.validateV1Default(v1UserA.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_UK, Constants.NAST_V1_DEF_UK)
+        }
+
+        and: "assert that user B only has v1 defaults set when using the US region. Legacy logic does not have UK v1 default configs."
+        if (region == GlobalConstants.CLOUD_REGION_US) {
+            utils11.validateV1Default(v1UserB.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_US, Constants.NAST_V1_DEF_US)
+        } else {
+            !v1UserB.baseURLRefs.baseURLRef.v1Default.contains(true)
+        }
+
+        cleanup:
+        staticIdmConfiguration.reset()
+        utils.deleteUserQuietly(userA)
+        utils.deleteUserQuietly(userB)
+        utils.deleteTestDomainQuietly(domainIdA)
+        utils.deleteTestDomainQuietly(domainIdB)
+        // reset identity property
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        where:
+        region << [GlobalConstants.CLOUD_REGION_UK, GlobalConstants.CLOUD_REGION_US]
+    }
+
+    @Unroll
+    def "one user call with non cloud domain does not assign endpoints - feature.enabled.use.domain.type.on.new.user.creation = true, domain prefix = #prefix"() {
+        given:
+        // Enabled feature
+        IdentityProperty identityProperty = new IdentityProperty()
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        // Common attributes
+        def secretQA = v2Factory.createSecretQA("question", "answer")
+
+        // dp domain
+        def domainId = prefix + ":" + utils.createDomain()
+        // Test user
+        def username = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreate = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, DEFAULT_PASSWORD)
+        userForCreate.secretQA = secretQA
+
+        when: "create user-admin with feature enabled"
+        def response = cloud20.createUser(identityAdminToken, userForCreate)
+        def user = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        when: "authenticate"
+        response = cloud20.authenticate(username, DEFAULT_PASSWORD)
+        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
+
+        then: "assert successful authentication"
+        response.status == SC_OK
+
+        and: "assert service catalog is emtpy"
+        authResponse.serviceCatalog.service.isEmpty()
+
+        cleanup:
+        utils.deleteUserQuietly(user)
+        utils.deleteTestDomainQuietly(domainId)
+        // reset identity property
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        where:
+        prefix << ["dp", "dedicated", "product"]
+    }
+
+    def "test that v2 add user set default region based on flag feature.enabled.use.domain.type.on.new.user.creation"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_US)
+
+        // Enabled feature
+        IdentityProperty identityProperty = new IdentityProperty()
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        def domainIdA = utils.createDomain()
+        def usernameA = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreateA = v2Factory.createUser(usernameA, "displayName", "testemail@rackspace.com", true, null, domainIdA, DEFAULT_PASSWORD)
+
+        when: "create user-admin without default region and feature enabled "
+        def response = cloud20.createUser(identityAdminToken, userForCreateA)
+        User userA = response.getEntity(User).value
+
+        then: "user gets created"
+        response.status == SC_CREATED
+
+        and:
+        userA.defaultRegion == "ORD"
+
+
+        when: "create user-admin without default region and feature disabled "
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+
+        identityProperty.value = false
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        def domainIdB = utils.createDomain()
+        def usernameB = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreateB = v2Factory.createUser(usernameB, "displayName", "testemail@rackspace.com", true, null, domainIdB, DEFAULT_PASSWORD)
+
+        response = cloud20.createUser(identityAdminToken, userForCreateB)
+        def userB = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        and:
+        userB.defaultRegion == "LON"
+
+
+        when: "create user-admin with default region and feature enabled"
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        def domainIdC = utils.createDomain()
+        def usernameC = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreateC = v2Factory.createUser(usernameC, "displayName", "testemail@rackspace.com", true, "LON", domainIdC, DEFAULT_PASSWORD)
+
+        response = cloud20.createUser(identityAdminToken, userForCreateC)
+        def userC = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        and:
+        userC.defaultRegion == "LON"
+
+        cleanup:
+        staticIdmConfiguration.reset()
+        utils.deleteUserQuietly(userA)
+        utils.deleteTestDomainQuietly(domainIdA)
+        utils.deleteUserQuietly(userB)
+        utils.deleteTestDomainQuietly(domainIdB)
+        utils.deleteUserQuietly(userC)
+        utils.deleteTestDomainQuietly(domainIdC)
+        // reset identity property
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+    }
+
+    def "test v2 add user region validation based on flag feature.enabled.use.domain.type.on.new.user.creation"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_US)
+
+        // Enabled feature
+        IdentityProperty identityProperty = new IdentityProperty()
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        def domainIdA = utils.createDomain()
+        def usernameA = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreateA = v2Factory.createUser(usernameA, "displayName", "testemail@rackspace.com", true, "ORD", domainIdA, DEFAULT_PASSWORD)
+
+        when: "create user-admin with default region and feature enabled "
+        def response = cloud20.createUser(identityAdminToken, userForCreateA)
+        User userA = response.getEntity(User).value
+
+        then: "user gets created"
+        response.status == SC_CREATED
+
+        and:
+        userA.defaultRegion == "ORD"
+
+        when: "create user-admin with default region feature disabled"
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+
+        // Disable feature
+        identityProperty.value = false
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        def domainIdB = utils.createDomain()
+        def usernameB = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreateB = v2Factory.createUser(usernameB, "displayName", "testemail@rackspace.com", true, "LON", domainIdB, DEFAULT_PASSWORD)
+
+        response = cloud20.createUser(identityAdminToken, userForCreateB)
+        def userB = response.getEntity(User).value
+
+        then:
+        response.status == SC_CREATED
+
+        and:
+        userB.defaultRegion == "LON"
+
+
+        when: "create user-admin with invalid region and feature enabled"
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+
+        // Enabled feature
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+
+        def domainIdC = utils.createDomain()
+        def usernameC = "userAdmin" + testUtils.getRandomUUID()
+        def userForCreateC = v2Factory.createUser(usernameC, "displayName", "testemail@rackspace.com", true, "SAT", domainIdC, DEFAULT_PASSWORD)
+
+        response = cloud20.createUser(identityAdminToken, userForCreateC)
+
+        then:
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "Invalid defaultRegion value, accepted values are: LON.")
+
+        cleanup:
+        staticIdmConfiguration.reset()
+        utils.deleteUserQuietly(userA)
+        utils.deleteTestDomainQuietly(domainIdA)
+        utils.deleteUserQuietly(userB)
+        utils.deleteTestDomainQuietly(domainIdB)
+        // reset identity property
+        identityProperty.value = true
+        devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
+    }
 }

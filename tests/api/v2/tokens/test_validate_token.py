@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 
@@ -44,13 +44,8 @@ class TestValidateToken(base.TestBaseV2):
 
     @classmethod
     def get_role_id_by_name(cls, role_name):
-
-        option = {
-            const.PARAM_ROLE_NAME: role_name
-        }
-        get_role_resp = cls.identity_admin_client.list_roles(option=option)
-        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
-        return role_id
+        return super().get_role_id_by_name(
+            cls.identity_admin_client, role_name)
 
     def create_role(self):
 
@@ -93,7 +88,7 @@ class TestValidateToken(base.TestBaseV2):
             tenant_types=[self.test_config.mpc_whitelist_tenant_type])
         return role_1, tenant_1
 
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     @tags('positive', 'p0', 'smoke')
     def test_validate_token_reports_contact_id(self):
         """Check for contact id in validate token response

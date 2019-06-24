@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 from random import randrange
 
@@ -50,7 +50,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         self.tenant_ids = []
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_effective_roles_for_default_user(self):
         # create and add role to user
         role_name = self.create_role_and_add_to_user(
@@ -300,7 +300,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         )
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_effective_roles_for_manage_user(self):
         # create and add role to user
         role_name = self.create_role_and_add_to_user(
@@ -497,7 +497,7 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
         )
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_effective_roles_mpc_whitelist_filter(self):
 
         self.sub_user_client = self.generate_client(
@@ -545,16 +545,11 @@ class TestListEffectiveRolesForUser(base.TestBaseV2):
 
     @classmethod
     def get_role_id_by_name(cls, role_name):
-
-        option = {
-            const.PARAM_ROLE_NAME: role_name
-        }
-        get_role_resp = cls.identity_admin_client.list_roles(option=option)
-        role_id = get_role_resp.json()[const.ROLES][0][const.ID]
-        return role_id
+        return super().get_role_id_by_name(
+            cls.identity_admin_client, role_name)
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_effective_roles_for_admin_user(self):
         # create and add role to user
         role_name = self.create_role_and_add_to_user(

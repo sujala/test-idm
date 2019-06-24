@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 import ddt
 import time
 from qe_coverage.opencafe_decorators import tags, unless_coverage
@@ -156,7 +156,7 @@ class TestAdminsOfUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_admins_of_fed_user_using_another_fed_user(self, test_data):
 
         user_name = self.generate_random_string()
@@ -225,7 +225,7 @@ class TestAdminsOfUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
-    @attr(type='skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_disabled_admin_of_fed_user(self, test_data):
 
         user_name = self.generate_random_string()
@@ -365,7 +365,7 @@ class TestAdminsOfUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
-    @attr(type='skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_admin_of_fed_user_using_user_manager(self, test_data):
 
         user_name = self.generate_random_string()
@@ -530,7 +530,7 @@ class TestAdminsOfUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
-    @attr(type='skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_deleted_admin_of_fed_user(self, test_data):
 
         user_name = self.generate_random_string()
@@ -587,7 +587,7 @@ class TestAdminsOfUser(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_get_admins_for_fed_user.json')
-    @attr(type='skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_admin_of_fed_user_with_disabled_domain(self, test_data):
 
         user_name = self.generate_random_string()

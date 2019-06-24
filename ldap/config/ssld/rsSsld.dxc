@@ -1,0 +1,33 @@
+# CA Directory - DXserver/config/ssld
+
+# This is a read-only default configuration file. If you need to make changes, 
+# copy this file and reference the new file from servers/<dsa>.dxi
+#
+
+# default CA Directory ssl configuration
+# - 'dxcertgen certs' can be used to create a basic set of certificates
+
+set ssl = {
+   # folder containing DSA personality certs
+   cert-dir = "config/ssld/personalities"
+
+   # trusted root CA that signed DSA certificates
+   ca-file = "config/ssld/trusted.pem"    
+
+   # SSL options
+#  cipher = "ALL:!EXPORT40:!ADH:!SSLv2:!EXP:!LOW" # default ciphers - syntax on OpenSSL website
+# Recommended ciphers by PCI auditors RMR 20170525  
+cipher = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!EXPORT40:!ADH:!SSLv2:!EXP:!LOW:!NULL:!eNULL:!aNULL:!EXPORT:!DES:!RC4:!RC2:!3DES:!MD5:!PSK:!SSLv3:!TLSv1"
+#
+# As of CA Directory R12-SP14 TLS is default protocol
+#protocol = tls                # enable TLS only (default of fips set)
+protocol = tlsv12                # Lock down to TLS 1.2 PCI compliance RMR 20170525
+#protocol = ssl                 # enable SSL iuntil plan finalized for TLS. Needs to be done before June 1, 2018 [RMR] 20160613
+#  fips = true                   # enables FIPS 140-2 compliant encryption
+
+   # HSM options
+#  pin = "<str>"                 # HSM pin
+#  lib = "<str>"                 # path to PKCS11 library supplied by HSM vendor
+#  slot = <num>                  # slot to use for HSM based encryption
+};
+

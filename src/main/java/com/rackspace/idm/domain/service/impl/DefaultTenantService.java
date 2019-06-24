@@ -353,13 +353,8 @@ public class DefaultTenantService implements TenantService {
                 }
             }
 
-            List<TenantRole> tempTenantRoles = new ArrayList<>();
-            tempTenantRoles.addAll(tenantRoles);
-            tempTenantRoles.addAll(rolesToMerge);
-            IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(tempTenantRoles);
-
             // Create the identity:tenant-access role if required
-            TenantRole implicitRole = createTenantRoleForAutoAssignment(user, userType);
+            TenantRole implicitRole = createTenantRoleForAutoAssignment(user);
             if (implicitRole != null) {
                 rolesToMerge.add(implicitRole);
             }
@@ -499,7 +494,7 @@ public class DefaultTenantService implements TenantService {
      * @param user
      * @return
      */
-    private TenantRole createTenantRoleForAutoAssignment(BaseUser user, IdentityUserTypeEnum userType) {
+    private TenantRole createTenantRoleForAutoAssignment(BaseUser user) {
         TenantRole implicitRole = null;
 
         // If enabled, auto-assign access role to all tenants within user's domain
@@ -1769,7 +1764,7 @@ public class DefaultTenantService implements TenantService {
                 Map<String, List<TenantRole>> systemRoleMap = new HashMap<>();
 
                 // Assign the identity:tenant-access role if required
-                TenantRole systemAssignedRole = createTenantRoleForAutoAssignment(user, authorizationService.getIdentityTypeRoleAsEnum(user));
+                TenantRole systemAssignedRole = createTenantRoleForAutoAssignment(user);
                 if (systemAssignedRole != null) {
                     systemRoleMap.put(SYSTEM_SOURCE_IDENTITY, Arrays.asList(systemAssignedRole));
                 }
@@ -1887,7 +1882,7 @@ public class DefaultTenantService implements TenantService {
                 Map<String, List<TenantRole>> systemRoleMap = new HashMap<>();
 
                 // Assign the identity:tenant-access role if required
-                TenantRole systemAssignedRole = createTenantRoleForAutoAssignment(provisionedUserDelegate, authorizationService.getIdentityTypeRoleAsEnum(provisionedUserDelegate));
+                TenantRole systemAssignedRole = createTenantRoleForAutoAssignment(provisionedUserDelegate);
                 if (systemAssignedRole != null) {
                     systemRoleMap.put(SYSTEM_SOURCE_IDENTITY, Arrays.asList(systemAssignedRole));
                 }

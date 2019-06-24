@@ -12,7 +12,6 @@ import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 public class Audit {
@@ -37,10 +36,12 @@ public class Audit {
 		PASSWORD_RESET,
 		DELEGATEAUTH,
 		PHONEPIN_VERIFY,
+		PHONEPIN_UNLOCK,
+		PHONEPIN_LOCK_EMAIL,
 	}
 
 	private enum RESULT {
-		SUCCEED, FAIL;
+		SUCCEED, FAIL
 	}
 
 	private final class Event {
@@ -104,6 +105,9 @@ public class Audit {
 		return new Audit(o.getAuditContext()).addEvent(ACTION.PHONEPIN_VERIFY);
 	}
 
+	public static Audit unlockPhonePin(EndUser o) {
+		return new Audit(o.getAuditContext()).addEvent(ACTION.PHONEPIN_UNLOCK);
+	}
 
 	public static Audit authFederated(FederatedBaseUser o) {
 		return new Audit(o.getAuditContext()).addEvent(ACTION.FEDERATEDAUTH);
@@ -176,6 +180,16 @@ public class Audit {
 	public static void logSuccessfulPasswordResetRequest(User user) {
 		Audit audit = new Audit(user.getAuditContext()).addEvent(ACTION.PASSWORD_RESET, String.format("userId='%s', pwdResetTokenUsed=%s", user.getId(), Boolean.TRUE));
 		audit.succeed();
+	}
+
+	public static void logSendingPhonePinLockedEmailSuccess(EndUser user) {
+		Audit audit = new Audit(user.getAuditContext()).addEvent(ACTION.PHONEPIN_LOCK_EMAIL, String.format("User(userRsId=%s) Successfully sent email notification.", user.getId()));
+		audit.succeed();
+	}
+
+	public static void logSendingPhonePinLockedEmailFailure(EndUser user) {
+		Audit audit = new Audit(user.getAuditContext()).addEvent(ACTION.PHONEPIN_LOCK_EMAIL, String.format("User(userRsId=%s) Failed to send email notification.", user.getId()));
+		audit.fail();
 	}
 
 	public static Audit deleteOTP(String container) {

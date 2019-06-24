@@ -195,6 +195,16 @@ class TestBaseV2(base.TestBase):
 
         return racker_client
 
+    @classmethod
+    def get_role_id_by_name(cls, client, role_name):
+        option = {const.PARAM_ROLE_NAME: role_name}
+        get_role_resp = client.list_roles(option=option)
+        assert get_role_resp.status_code == 200, (
+            "[%s] Failed to get role id for role name %r"
+            % (get_role_resp.status_code, role_name)
+        )
+        return get_role_resp.json()[const.ROLES][0][const.ID]
+
     def generate_client_with_x_auth_token(cls, x_auth_token=None):
         """
         Return a client object using x-auth-token. So the call being made

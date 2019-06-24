@@ -27,7 +27,7 @@
     disabled, the default, users are NOT implicitly granted the
     identity:tenant-access roles on all tenants within the user's domain
 """
-from nose.plugins.attrib import attr
+import pytest
 import collections
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -894,7 +894,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             user_name=user_name, password=password, tenant=tenant_id)
 
     @tags('positive', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_implicit_tenant_access_role_on_user_when_user_or_tenant_disabled(
             self):
         """

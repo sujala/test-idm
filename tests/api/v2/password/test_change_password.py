@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.utils import func_helper
@@ -25,7 +25,7 @@ class TestChangePassword(base.TestBaseV2):
         self.domain_ids = []
 
     @tags('positive', 'p0', 'smoke')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_change_password(self):
 
         domain_id = func_helper.generate_randomized_domain_id(
@@ -62,7 +62,7 @@ class TestChangePassword(base.TestBaseV2):
         resp = user_admin_client.get_auth_token(request_object=auth_req_obj)
         self.assertEqual(resp.status_code, 200)
 
-    @attr(type='regression')
+    @pytest.mark.regression
     @tags('negative', 'p0')
     def test_change_to_blacklisted_password(self):
 

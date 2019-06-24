@@ -1,4 +1,4 @@
-from nose.plugins.attrib import attr
+import pytest
 import ddt
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
@@ -82,7 +82,7 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
         return user_id, tenant_id
 
     @tags('negative', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_fail_to_create_role_with_invalid_assingment_type(self):
         assignment = self.generate_random_string(
             pattern=const.UPPER_CASE_LETTERS)

@@ -166,13 +166,13 @@ public class DefaultUserService implements UserService {
 
         validator.validateUser(user);
 
-        createDomainIfItDoesNotExist(user.getDomainId());
-        createDefaultDomainTenantsIfNecessary(user.getDomainId());
+        Domain domain = createDomainIfItDoesNotExist(user.getDomainId());
+        createDefaultDomainTenantsIfNecessary(domain);
         checkMaxNumberOfUsersInDomain(user.getDomainId());
 
         setPasswordIfNotProvided(user);
         setApiKeyIfNotProvided(user);
-        setRegionIfNotProvided(user);
+        setRegionIfNotProvided(user, domain);
 
         //hack alert!! code requires the user object to have the nastid attribute set. this attribute
         //should no longer be required as users have roles on a tenant instead. once this happens, remove
@@ -216,11 +216,13 @@ public class DefaultUserService implements UserService {
 
         verifyCallerCanCreateTenants(user, provisionMossoAndNast);
 
+        Domain domain;
+
         if (isUserAdmin || isCreateUserInOneCall) {
-            createDomainUserInCreateOneCall(user.getDomainId(), isUserAdmin);
+            domain = createDomainUserInCreateOneCall(user.getDomainId(), isUserAdmin);
         } else {
             // NOTE: This allows creating an identity:admin user in the default domain.
-            createDomainIfItDoesNotExist(user.getDomainId());
+            domain = createDomainIfItDoesNotExist(user.getDomainId());
         }
 
         if (isCreateUserInOneCall) {
@@ -236,7 +238,7 @@ public class DefaultUserService implements UserService {
             }
 
             if(provisionMossoAndNast) {
-                createDefaultDomainTenantsInCreateOneCall(user.getDomainId());
+                createDefaultDomainTenantsInCreateOneCall(domain);
             }
             createTenantsIfNecessary(user);
         }
@@ -244,11 +246,11 @@ public class DefaultUserService implements UserService {
 
         setPasswordIfNotProvided(user);
         setApiKeyIfNotProvided(user);
-        setRegionIfNotProvided(user);
+        setRegionIfNotProvided(user, domain);
 
         // Generate phone pin if not provided
         if (StringUtils.isBlank(user.getPhonePin())) {
-            user.setPhonePin(phonePinService.generatePhonePin());
+            user.updatePhonePin(phonePinService.generatePhonePin());
         }
 
         if (provisionMossoAndNast) {
@@ -1628,36 +1630,61 @@ public class DefaultUserService implements UserService {
         }
     }
 
-    private void setRegionIfNotProvided(User user) {
+    private void setRegionIfNotProvided(User user, Domain domain) {
+        String cloudRegion;
         if (StringUtils.isBlank(user.getRegion())) {
-            Region region = cloudRegionService.getDefaultRegion(identityConfig.getStaticConfig().getCloudRegion());
-            if (region == null) {
-                throw new IllegalStateException("default cloud region not found for: " + identityConfig.getStaticConfig().getCloudRegion());
+            if (identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation()) {
+                cloudRegion = inferCloudBasedOnDomainType(domain.getType());
+            } else {
+                cloudRegion = identityConfig.getStaticConfig().getCloudRegion();
             }
 
+            Region region = cloudRegionService.getDefaultRegion(cloudRegion);
+            if (region == null) {
+                throw new IllegalStateException("default cloud region not found for: " + cloudRegion);
+            }
             user.setRegion(region.getName());
         }
     }
 
-    private void createDomainIfItDoesNotExist(String domainId) {
+    /**
+     * If the domain type is RACKSPACE_CLOUD_US, the cloud region is US.
+     * If the domain type is RACKSPACE_CLOUD_UK, the cloud region is UK.
+     * If the domain type is something else (including null), the cloud region is US.
+     */
+    public String inferCloudBasedOnDomainType(String domainType) {
+        if (GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US.equalsIgnoreCase(domainType)) {
+            return CLOUD_REGION.US.toString();
+        }
+        if (GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK.equalsIgnoreCase(domainType)) {
+            return CLOUD_REGION.UK.toString();
+        }
+        return CLOUD_REGION.US.toString();
+    }
+
+    private Domain createDomainIfItDoesNotExist(String domainId) {
+        Domain domain = null;
         if (StringUtils.isNotBlank(domainId)) {
-            if (domainService.getDomain(domainId) == null) {
+            domain = domainService.getDomain(domainId);
+            if (domain == null) {
                 if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
                             IdentityUserTypeEnum.SERVICE_ADMIN.getRoleName(),
                             IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
                     throw new ForbiddenException(NOT_AUTHORIZED_MSG);
                 }
-                domainService.createNewDomain(domainId);
+                domain = domainService.createDomainWithFallbackGet(domainId);
             }
         }
+        return domain;
     }
 
-    private void createDomainUserInCreateOneCall(String domainId, boolean isUserAdminCreateInOneCall) {
+    private Domain createDomainUserInCreateOneCall(String domainId, boolean isUserAdminCreateInOneCall) {
+        Domain domain = null;
         if (StringUtils.isNotBlank(domainId)) {
             if (domainId.equals(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
                 throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DEFAULT_DOMAIN );
             }
-            Domain domain = domainService.getDomain(domainId);
+            domain = domainService.getDomain(domainId);
             if (domain != null) {
                 if (!domain.getEnabled()) {
                     throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DISABLED_DOMAIN);
@@ -1676,9 +1703,10 @@ public class DefaultUserService implements UserService {
                 if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName())) {
                     throw new ForbiddenException(NOT_AUTHORIZED_MSG);
                 }
-                domainService.createNewDomain(domainId);
+                domain = domainService.createDomainWithFallbackGet(domainId);
             }
         }
+        return domain;
     }
 
     private void verifyCallerCanCreateTenants(User user, boolean provisionMossoAndNast) {
@@ -1734,49 +1762,49 @@ public class DefaultUserService implements UserService {
     /**
      * creates default tenants in the new domain
      *
-     * @param domainId
+     * @param domain
      */
-    private void createDefaultDomainTenantsIfNecessary(String domainId) {
-        if (domainService.getDomain(domainId) != null && domainService.getDomainAdmins(domainId).size() == 0) {
+    private void createDefaultDomainTenantsIfNecessary(Domain domain) {
+        if (domain != null && domainService.getDomainAdmins(domain.getDomainId()).size() == 0) {
             //for now the default mosso tenant id will be the domain id
             //for now we will create a nast tenant as well. This can be removed once tenant aliases is in place
             //no longer need to call nast xml rpc service, as cloud files will lazy provision the cloud containers.
-            String mossoId = domainId;
-            String nastId = getNastTenantId(domainId);
+            String mossoId = domain.getDomainId();
+            String nastId = getNastTenantId(domain.getDomainId());
 
-            Tenant mossoTenant = createTenant(mossoId, domainId, MOSSO_BASE_URL_TYPE);
-            Tenant nastTenant = createTenant(nastId, domainId, NAST_BASE_URL_TYPE);
+            Tenant mossoTenant = createTenant(mossoId, domain, MOSSO_BASE_URL_TYPE);
+            Tenant nastTenant = createTenant(nastId, domain, NAST_BASE_URL_TYPE);
 
             createTenantForDomain(mossoTenant);
             createTenantForDomain(nastTenant);
         }
     }
 
-    private void createDefaultDomainTenantsInCreateOneCall(String domainId) {
-        String mossoId = domainId;
-        String nastId = getNastTenantId(domainId);
+    private void createDefaultDomainTenantsInCreateOneCall(Domain domain) {
+        String mossoId = domain.getDomainId();
+        String nastId = getNastTenantId(domain.getDomainId());
 
         try {
-            Tenant mossoTenant = createTenant(mossoId, domainId, MOSSO_BASE_URL_TYPE);
+            Tenant mossoTenant = createTenant(mossoId, domain, MOSSO_BASE_URL_TYPE);
             if (identityConfig.getReloadableConfig().shouldSetDefaultTenantTypeOnCreation()) {
                 mossoTenant.getTypes().add(GlobalConstants.TENANT_TYPE_CLOUD);
             }
             createTenantForDomain(mossoTenant);
         } catch (DuplicateException e) {
             Tenant storedMossoTenant = tenantService.getTenant(mossoId);
-            attachEndpointsToTenant(storedMossoTenant, endpointService.getBaseUrlsByBaseUrlType(MOSSO_BASE_URL_TYPE));
+            attachEndpointsToTenant(storedMossoTenant, endpointService.getBaseUrlsByBaseUrlType(MOSSO_BASE_URL_TYPE), domain);
             tenantService.updateTenant(storedMossoTenant);
         }
 
         try {
-            Tenant nastTenant = createTenant(nastId, domainId, NAST_BASE_URL_TYPE);
+            Tenant nastTenant = createTenant(nastId, domain, NAST_BASE_URL_TYPE);
             if (identityConfig.getReloadableConfig().shouldSetDefaultTenantTypeOnCreation()) {
                 nastTenant.getTypes().add(GlobalConstants.TENANT_TYPE_FILES);
             }
             createTenantForDomain(nastTenant);
         } catch (DuplicateException e) {
             Tenant storedNastTenant = tenantService.getTenant(nastId);
-            attachEndpointsToTenant(storedNastTenant, endpointService.getBaseUrlsByBaseUrlType(NAST_BASE_URL_TYPE));
+            attachEndpointsToTenant(storedNastTenant, endpointService.getBaseUrlsByBaseUrlType(NAST_BASE_URL_TYPE), domain);
             tenantService.updateTenant(storedNastTenant);
         }
     }
@@ -1786,22 +1814,32 @@ public class DefaultUserService implements UserService {
         domainService.addTenantToDomain(tenant.getTenantId(), tenant.getDomainId());
     }
 
-    private Tenant createTenant(String tenantId, String domainId, String baseUrlType) {
+    private Tenant createTenant(String tenantId, Domain domain, String baseUrlType) {
         Tenant tenant = new Tenant();
         tenant.setTenantId(tenantId);
         tenant.setName(tenantId);
         tenant.setDisplayName(tenantId);
         tenant.setEnabled(true);
-        tenant.setDomainId(domainId);
-        attachEndpointsToTenant(tenant, endpointService.getBaseUrlsByBaseUrlType(baseUrlType));
+        tenant.setDomainId(domain.getDomainId());
+        attachEndpointsToTenant(tenant, endpointService.getBaseUrlsByBaseUrlType(baseUrlType), domain);
         return tenant;
     }
 
-    private void attachEndpointsToTenant(Tenant tenant, List<CloudBaseUrl> baseUrls) {
-        for (CloudBaseUrl baseUrl : baseUrls) {
-            if(endpointService.doesBaseUrlBelongToCloudRegion(baseUrl) && baseUrl.getDef() != null && baseUrl.getDef()){
-                tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId().toString());
-                addV1DefaultToTenant(tenant, baseUrl);
+    private void attachEndpointsToTenant(Tenant tenant, List<CloudBaseUrl> baseUrls, Domain domain) {
+        if (identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() && tenant.getDomainId() != null) {
+            for (CloudBaseUrl baseUrl : baseUrls) {
+                if (endpointService.doesBaseUrlBelongToCloudRegion(baseUrl, domain) && baseUrl.getDef() != null && baseUrl.getDef()) {
+                    tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId());
+                    addV1DefaultToTenant(tenant, baseUrl, domain);
+                }
+            }
+        } else {
+            // Legacy logic
+            for (CloudBaseUrl baseUrl : baseUrls) {
+                if(endpointService.doesBaseUrlBelongToCloudRegion(baseUrl) && baseUrl.getDef() != null && baseUrl.getDef()){
+                    tenant.getBaseUrlIds().add(baseUrl.getBaseUrlId());
+                    addV1DefaultToTenant(tenant, baseUrl);
+                }
             }
         }
     }
@@ -1815,6 +1853,32 @@ public class DefaultUserService implements UserService {
             v1defaultList = config.getList("v1defaultMosso");
         } else if(baseUrlType.equals(NAST)) {
             v1defaultList = config.getList("v1defaultNast");
+        }
+
+        for (Object v1defaultItem : v1defaultList) {
+            if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
+                baseUrl.setV1Default(true);
+                tenant.getV1Defaults().add(baseUrlId);
+            }
+        }
+    }
+
+    /**
+     * Sets the v1 defaults on the tenant based on the domain's region.
+     */
+    private void addV1DefaultToTenant(Tenant tenant, CloudBaseUrl baseUrl, Domain domain) {
+        List<Object> v1defaultList = new ArrayList<Object>();
+        String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
+        String baseUrlType = baseUrl.getBaseUrlType();
+
+        if(baseUrlType.equals(MOSSO) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_US)) {
+            v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUs());
+        } else if(baseUrlType.equals(NAST) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_US)) {
+            v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultFilesEndpointsUs());
+        } else if(baseUrlType.equals(MOSSO) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK)) {
+            v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUk());
+        } else if(baseUrlType.equals(NAST) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK)) {
+            v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultFilesEndpointsUk());
         }
 
         for (Object v1defaultItem : v1defaultList) {

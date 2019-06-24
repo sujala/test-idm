@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from tests.api.v2 import base
@@ -137,7 +137,7 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         self.assertIn(const.PASSWORD.upper(), auth_by_list)
 
     @tags('positive', 'p1', 'regression')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_analyze_fed_user_tokens(self):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()

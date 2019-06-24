@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.email;
 
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 
@@ -43,4 +44,19 @@ public interface EmailClient {
      * @throws IllegalArgumentException If unverified user's id, email, or registration code are null
      */
     void asyncSendUnverifiedUserInviteMessage(User user);
+
+    /**
+     * Send the phone pin locked email asynchronously.
+     * @param user
+     * @throws IllegalArgumentException If user's email, or username are null
+     */
+    void asyncSendPhonePinLockedEmail(EndUser user);
+
+    /**
+     * Send the phone pin locked email synchronously.
+     * @param user
+     * @throws IllegalArgumentException If user's email, or username are null
+     */
+    boolean sendPhonePinLockedEmail(EndUser user);
+
 }

@@ -1,12 +1,15 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NoPinSetException
 import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.exception.PhonePinLockedException
+import org.apache.commons.lang3.RandomStringUtils
 import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -22,11 +25,11 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
     def setupSpec() {
         InitializationService.initialize()
         service = new DefaultPhonePinService()
-        service.identityConfig = identityConfig
     }
 
     def setup() {
         mockServices()
+        mockEmailClient(service)
     }
 
     def pin = "343223"
@@ -70,29 +73,29 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         thrown(NotFoundException)
     }
 
-    def "verifyPhonePinOnUser: Verify correct phone pin return true"() {
+    def "verifyPhonePinOnUser: Verify correct phone pin return true and records success"() {
         given:
-        User user = new User().with {
-            it.id = "id"
-            it.phonePin = "123231"
-            it
-        }
+        User user = Mock()
+        user.id = "id"
+        user.phonePin >> "123231"
+        user.phonePinAuthenticationFailureCount = 2
 
         when:
         boolean result = service.verifyPhonePinOnUser(user.id, "123231")
 
         then:
         1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        1 * user.recordSuccessfulPinAuthentication()
+        0 * user.recordFailedPinAuthentication()
+        1 * identityUserService.updateEndUser(user)
         result
     }
 
     def "verifyPhonePinOnUser: Throws com.rackspace.idm.exception.NoPinSetException when user does not have a pin"() {
         given:
-        User user = new User().with {
-            it.id = "id"
-            it.phonePin = null
-            it
-        }
+        User user = Mock()
+        user.id = "id"
+        user.phonePinState >> PhonePinStateEnum.INACTIVE
 
         when:
         service.verifyPhonePinOnUser(user.id, "123231")
@@ -101,22 +104,51 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         1 * identityUserService.checkAndGetEndUserById(user.id) >> user
         Exception ex = thrown()
         IdmExceptionAssert.assertException(ex, NoPinSetException, ErrorCodes.ERROR_CODE_PHONE_PIN_NOT_FOUND, "The user has not set a Phone PIN.")
+
+        and: "Pin failure count remains the same"
+        0 * user.recordSuccessfulPinAuthentication()
+        0 * user.recordFailedPinAuthentication()
+        0 * identityUserService.updateEndUser(user)
+    }
+
+    def "verifyPhonePinOnUser: Throws appropriate com.rackspace.idm.exception.PhonePinLockedException when user's PIN is considered locked"() {
+        given:
+        User user = Mock()
+        user.id = "id"
+        user.phonePinState >> PhonePinStateEnum.LOCKED
+
+        when:
+        service.verifyPhonePinOnUser(user.id, "123231")
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        Exception ex = thrown()
+        IdmExceptionAssert.assertException(ex, PhonePinLockedException, "PP-004", "User's PIN is locked.")
+
+        and: "Pin failure count remains the same"
+        0 * user.recordSuccessfulPinAuthentication()
+        0 * user.recordFailedPinAuthentication()
+        0 * identityUserService.updateEndUser(user)
     }
 
     def "verifyPhonePinOnUser: Verify incorrect phone pin return false"() {
         given:
-        User user = new User().with {
-            it.id = "id"
-            it.phonePin = "1232456"
-            it
-        }
+        User user = Mock()
+        user.id = "id"
+        user.phonePin >> "123123"
+        user.phonePinState >> PhonePinStateEnum.ACTIVE
 
         when:
-        boolean result = service.verifyPhonePinOnUser(user.id, "123231")
+        boolean result = service.verifyPhonePinOnUser(user.id, "999999")
 
         then:
         1 * identityUserService.checkAndGetEndUserById(user.id) >> user
         !result
+
+        and: "Pin failure is recorded"
+        0 * user.recordSuccessfulPinAuthentication()
+        1 * user.recordFailedPinAuthentication()
+        1 * identityUserService.updateEndUser(user)
     }
 
     @Unroll
@@ -173,24 +205,92 @@ class DefaultPhonePinServiceTest extends RootServiceTest {
         pp.getPin().isNumber()
     }
 
-    @Unroll("pin generation test repeated #i time")
-    def "test that generated phone pin is 6 digit, non sequential and non repeating numbers"(){
+    def "test that generated phone pin is 6 digit, non sequential and non repeating numbers. 10000 iterations."(){
+        expect:
+        100000.times {
+            def pp = service.generatePhonePin()
+            assert pp.size() == GlobalConstants.PHONE_PIN_SIZE
+            assert pp.isNumber()
+            assert IdmAssert.isPhonePinNonRepeating(pp)
+            assert IdmAssert.isPhonePinNonSequential(pp)
+        }
+    }
+
+    def "unlock phone pin: Verify only locked phone pin can be unlocked"() {
+        given:
+        User user = Mock()
+        user.id >> "id"
+        user.phonePin >> "123123"
+        user.phonePinState >> PhonePinStateEnum.LOCKED
+
         when:
-        def pp = service.generatePhonePin()
+        service.unlockPhonePin(user.id)
 
         then:
-        pp.size() == GlobalConstants.PHONE_PIN_SIZE
-        pp.isNumber()
-        IdmAssert.isPhonePinNonRepeating(pp)
-        IdmAssert.isPhonePinNonSequential(pp)
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
 
-        where:
-        i << (1..10000)
+        and: "Pin get unlocked"
+        1 * user.unlockPhonePin()
+        1 * identityUserService.updateEndUser(user)
+    }
+
+    def "unlock phone pin: Verify exception when user try to unlock phone PIN with active state "() {
+        given:
+        User user = Mock()
+        user.id = "id"
+        user.phonePinState >> PhonePinStateEnum.ACTIVE
+
+        when:
+        service.unlockPhonePin(user.id)
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        0 * user.unlockPhonePin()
+        0 * identityUserService.updateEndUser(user)
+
+        and: "Exception is thrown"
+        Exception exception = thrown()
+        IdmExceptionAssert.assertException(exception, ForbiddenException, "PP-005", "The Phone PIN is not locked.")
+    }
+
+    def "verifyPhonePinOnUser: sends phone pin locked email once and only when the phone pin becomes locked"() {
+        given:
+        User user = new User().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.phonePin = "11111"
+            it.phonePinAuthenticationFailureCount = 4
+            it
+        }
+
+        when: "validate but not lock the phone pin"
+        boolean result = service.verifyPhonePinOnUser(user.id, "invalid")
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        1 * identityUserService.updateEndUser(user)
+        0 * emailClient.asyncSendPhonePinLockedEmail(user)
+        !result
+
+        when: "validate and lock the phone pin"
+        result = service.verifyPhonePinOnUser(user.id, "invalid")
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        1 * identityUserService.updateEndUser(user)
+        1 * emailClient.asyncSendPhonePinLockedEmail(user)
+        !result
+
+        when: "validate the locked phone pin"
+        service.verifyPhonePinOnUser(user.id, "invalid")
+
+        then:
+        1 * identityUserService.checkAndGetEndUserById(user.id) >> user
+        0 * emailClient.asyncSendPhonePinLockedEmail(user)
+        thrown PhonePinLockedException
     }
 
     def mockServices() {
         mockIdentityUserDao(service)
-        mockIdentityConfig(service)
         mockIdentityUserService(service)
     }
 }

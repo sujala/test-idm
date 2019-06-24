@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
@@ -55,5 +56,14 @@ public interface EndpointService {
      * @param baseUrl
      * @return
      */
+    @Deprecated
     boolean doesBaseUrlBelongToCloudRegion(CloudBaseUrl baseUrl);
+
+    /**
+     * Whether or not the specified baseUrl belongs to cloud region. The domain type is used to determine the region.
+     *
+     * @param baseUrl
+     * @return
+     */
+    boolean doesBaseUrlBelongToCloudRegion(CloudBaseUrl baseUrl, Domain domain);
 }

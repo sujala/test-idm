@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
 import copy
-from nose.plugins.attrib import attr
+import pytest
 from qe_coverage.opencafe_decorators import unless_coverage
 
 from tests.api.v2 import base
@@ -63,7 +63,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_add_role_with_type.json')
-    @attr(type='smoke_alpha')
+    @pytest.mark.smoke_alpha
     def test_add_role_w_type(self, test_data):
         # create role with type and tenant_types
         add_input = test_data['additional_input']
@@ -103,7 +103,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
 
     @unless_coverage
     @ddt.file_data('data_add_role_with_type_neg.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_add_role_w_type_neg_cases(self, test_data):
         add_input = test_data['additional_input']
         add_role_obj = factory.get_add_role_request_object(**add_input)

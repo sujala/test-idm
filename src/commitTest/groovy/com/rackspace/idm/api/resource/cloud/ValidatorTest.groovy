@@ -6,9 +6,11 @@ import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.Pattern
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.GroupService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.PasswordBlacklistService
@@ -36,6 +38,7 @@ class ValidatorTest extends Specification {
     @Shared Validator validator
     @Shared LdapPatternRepository ldapPatternRepository
     @Shared UserService userService
+    @Shared DomainService domainService
     @Shared DefaultRegionService defaultRegionService
     @Shared RoleService roleService
     @Shared GroupService groupService
@@ -294,6 +297,7 @@ class ValidatorTest extends Specification {
         userService.isUsernameUnique(userEntity.username) >> true
         roleService.getRoleByName(_) >> new ClientRole()
         groupService.getGroupById(_) >> new Group()
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> false
 
         when:
         validator.validateUser(userEntity)
@@ -410,13 +414,12 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "Validate user validates region for non-subusers when subuser region validation enabled"(){
+    def "Validate user validates region for non-subusers"() {
         given:
-        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> true
-
         def userEntity = createUser()
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> false
         defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
 
         when:
@@ -426,26 +429,9 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "Validate user validates region for non-subusers when subuser region validation disabled"(){
-        given:
-        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> false
-
-        def userEntity = createUser()
-        ldapPatternRepository.getPattern(_) >> usernamePattern
-        userService.isUsernameUnique(userEntity.username) >> true
-        defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
-
-        when:
-        validator.validateUser(userEntity)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "Validate user does not validate region for subuser when flag disabled"(){
+    def "Validate user does not validate region for subuser"() {
         given:
         def subUserRoleName = IdentityUserTypeEnum.DEFAULT_USER.getRoleName()
-        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> false
 
         def userEntity = createUser()
         TenantRole subUserRole = new TenantRole().with {
@@ -466,30 +452,6 @@ class ValidatorTest extends Specification {
         notThrown(BadRequestException)
     }
 
-    def "Validate user does validate region for subuser when flag enabled"(){
-        given:
-        def subUserRoleName = IdentityUserTypeEnum.DEFAULT_USER.getRoleName()
-        config.getBoolean(Validator.FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, _) >> true
-
-        def userEntity = createUser()
-        TenantRole subUserRole = new TenantRole().with {
-            it.name = subUserRoleName
-            return it
-        }
-        userEntity.getRoles().add(subUserRole)
-        ldapPatternRepository.getPattern(_) >> usernamePattern
-        userService.isUsernameUnique(userEntity.username) >> true
-        roleService.getRoleByName(_) >> new ClientRole()
-        groupService.getGroupById(_) >> new Group()
-        defaultRegionService.validateDefaultRegion(userEntity.region) >> { throw new BadRequestException("invalid") }
-
-        when:
-        validator.validateUser(userEntity)
-
-        then:
-        thrown(BadRequestException)
-    }
-
     def "Validate user when role is invalid"(){
         given:
 
@@ -497,6 +459,7 @@ class ValidatorTest extends Specification {
         ldapPatternRepository.getPattern(_) >> usernamePattern
         userService.isUsernameUnique(userEntity.username) >> true
         roleService.getRoleByName(_) >> null
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> false
 
         when:
         validator.validateUser(userEntity)
@@ -513,6 +476,7 @@ class ValidatorTest extends Specification {
         userService.isUsernameUnique(userEntity.username) >> true
         roleService.getRoleByName(_) >> new ClientRole()
         groupService.getGroupById(_) >> null
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> false
 
         when:
         validator.validateUser(userEntity)
@@ -546,16 +510,52 @@ class ValidatorTest extends Specification {
         IdmExceptionAssert.assertException(ex, BadRequestException, ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD, ErrorCodes.ERROR_CODE_BLACKLISTED_PASSWORD_MSG)
     }
 
+    def "test appropriate methods gets called for region validation based on flag shouldUseDomainTypeOnNewUserCreation()"(){
+        given:
+        def userEntity = createUser()
+        ldapPatternRepository.getPattern(_) >> usernamePattern
+        userService.isUsernameUnique(userEntity.username) >> true
+        roleService.getRoleByName(_) >> new ClientRole()
+        groupService.getGroupById(_) >> new Group()
+
+        when: "Feature is enabled"
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> true
+        validator.validateUser(userEntity)
+
+        then: "New region validation logic methods must get invoked"
+        1 * domainService.getDomain(_) >> new Domain()
+        1 * userService.inferCloudBasedOnDomainType(_)
+        1 * defaultRegionService.validateComputeRegionForCloud(_,_)
+
+        and: "Legacy region validation should not be invoked"
+        0 * defaultRegionService.validateDefaultRegion(userEntity.region)
+
+        when: "Feature is disabled"
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> false
+        validator.validateUser(userEntity)
+
+        then: "Legacy region validation should be invoked"
+        1 * defaultRegionService.validateDefaultRegion(userEntity.region)
+
+        and: "New region validation related methods must not be invoked"
+        0 * domainService.getDomain(_) >> new Domain()
+        0 * userService.inferCloudBasedOnDomainType(_)
+        0 * defaultRegionService.validateComputeRegionForCloud(_,_)
+    }
+
     def setupMock(){
         ldapPatternRepository = Mock()
         userService = Mock()
+        domainService = Mock()
         defaultRegionService = Mock()
         roleService = Mock()
         groupService = Mock()
         config = Mock()
         identityConfig = Mock()
         IdentityConfig.ReloadableConfig reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
+        IdentityConfig.RepositoryConfig repositoryConfig = Mock(IdentityConfig.RepositoryConfig)
         identityConfig.getReloadableConfig() >> reloadableConfig
+        identityConfig.getRepositoryConfig() >> repositoryConfig
         passwordBlacklistService = Mock()
 
 
@@ -567,6 +567,7 @@ class ValidatorTest extends Specification {
         validator.config = config
         validator.identityConfig = identityConfig
         validator.passwordBlacklistService = passwordBlacklistService
+        validator.domainService = domainService
     }
 
     def pattern (String name, String regex, String errMsg, String description){
@@ -587,6 +588,7 @@ class ValidatorTest extends Specification {
             it.region = "DFW"
             it.roles = [ new TenantRole().with{it.name = "observer"; return it} ].asList()
             it.rsGroupId = ["groupId"].asList()
+            it.domainId = "domainId"
             return it
         }
     }

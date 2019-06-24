@@ -1,7 +1,9 @@
 package com.rackspace.idm.domain.entity;
 
 import com.google.common.collect.ImmutableSet;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PrincipalType;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.api.resource.cloud.v20.DelegateReference;
 import com.rackspace.idm.api.resource.cloud.v20.EndUserDelegateReference;
@@ -91,6 +93,16 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private byte[] encryptedPhonePin;
     private String phonePin;
+
+    @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_FAILURE_COUNT,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED, defaultDecodeValue = "0")
+    private Integer phonePinAuthenticationFailureCount;
+
+    @LDAPField(attribute=LdapRepository.ATTR_PHONE_PIN_AUTH_LAST_FAILURE_DATE,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
+            filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    private Date phonePinAuthenticationLastFailureDate;
 
     @LDAPField(attribute=LdapRepository.ATTR_ENCRYPTION_VERSION_ID,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
@@ -214,5 +226,53 @@ public class FederatedUser implements EndUser, FederatedBaseUser, DelegationPrin
     @Override
     public DelegateReference getDelegateReference() {
         return new EndUserDelegateReference(id);
+    }
+
+    public PhonePinStateEnum getPhonePinState() {
+        if (StringUtils.isEmpty(phonePin)) {
+            return PhonePinStateEnum.INACTIVE;
+        }
+        if (phonePinAuthenticationFailureCount != null && phonePinAuthenticationFailureCount >= GlobalConstants.PHONE_PIN_AUTHENTICATION_FAILURE_LOCKING_THRESHOLD) {
+            return PhonePinStateEnum.LOCKED;
+        }
+        return PhonePinStateEnum.ACTIVE;
+    }
+
+    public int getPhonePinAuthenticationFailureCountNullSafe() {
+        return phonePinAuthenticationFailureCount == null ? 0 : phonePinAuthenticationFailureCount.intValue();
+    }
+
+    /**
+     * Increment the counter and record the timestamp.
+     */
+    @Override
+    public void recordFailedPinAuthentication() {
+        phonePinAuthenticationFailureCount = getPhonePinAuthenticationFailureCountNullSafe() + 1;
+        phonePinAuthenticationLastFailureDate = new Date();
+    }
+
+    /**
+     * Set the failure count to zero, but do not clear out the last failure timestamp.
+     */
+    @Override
+    public void recordSuccessfulPinAuthentication() {
+        phonePinAuthenticationFailureCount = 0;
+    }
+
+    @Override
+    public void updatePhonePin(String phonePin) {
+        // Only update the counter if the phone pin is changing from a non-null value to a new value
+        if (StringUtils.isNotBlank(this.phonePin) && !this.phonePin.equals(phonePin)) {
+            phonePinAuthenticationFailureCount = 0;
+        }
+        setPhonePin(phonePin);
+    }
+
+    /**
+     * Set the failure count to zero to unlock the phone pin
+     */
+    @Override
+    public void unlockPhonePin() {
+        phonePinAuthenticationFailureCount = 0;
     }
 }

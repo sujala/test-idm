@@ -5,6 +5,7 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.PatternDao;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -35,9 +36,6 @@ import java.util.regex.Pattern;
 public class Validator {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final String FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME="feature.validate.subuser.defaultregion.enabled";
-    private static final boolean FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_DEFAULT_VALUE=true;
-
     @Autowired
     PatternDao ldapPatternRepository;
 
@@ -61,6 +59,9 @@ public class Validator {
 
     @Autowired
     PasswordBlacklistService passwordBlacklistService;
+
+    @Autowired
+    DomainService domainService;
 
     static final String USERNAME="username";
     static final String ALPHANUMERIC="alphanumeric";
@@ -102,11 +103,6 @@ public class Validator {
         validateUserForCreateOrUpgrade(user);
     }
 
-
-    public void validateUserForCloudUpgrade(com.rackspace.idm.domain.entity.User user) {
-        validateUserForCreateOrUpgrade(user);
-    }
-
     private void validateUserForCreateOrUpgrade(com.rackspace.idm.domain.entity.User user) {
         /*
         don't validate the user's default region for subusers. This is required due to D-18002 https://www15.v1host.com/RACKSPCE/defect.mvc/Summary?oidToken=Defect:1066346
@@ -120,17 +116,27 @@ public class Validator {
         Keeping this logic here rather than moving logic higher to prevent changing the order of validation checks (e.g. an invalid username will
         be thrown before an invalid region).
          */
-        if (validateSubUserDefaultRegion() || !isUserASubUser(user)) {
-            //if we're validating subusers, then we're validating ALL users so can short circuit the check whether the user
-            //is a subuser if we need to validate the region anyways.
-            validateDefaultRegion(user.getRegion());
+
+        // Validate region only when user is not a sub user (default user) and region is not empty
+        if (!StringUtils.isEmpty(user.getRegion()) && !isUserASubUser(user)) {
+            if (identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation()) {
+                String cloudRegion;
+                // fetch domain if exist check and get domain type
+                Domain domain = domainService.getDomain(user.getDomainId());
+                if(domain != null ){
+                    cloudRegion = userService.inferCloudBasedOnDomainType(domain.getType());
+                } else {
+                    cloudRegion = identityConfig.getStaticConfig().getCloudRegion();
+                }
+                // Validates that the user's compute region is valid for the user's cloud
+                defaultRegionService.validateComputeRegionForCloud(user.getRegion(), cloudRegion);
+            } else{
+                // Use legacy logic
+                validateDefaultRegion(user.getRegion());
+            }
         }
         validateRoles(user.getRoles());
         validateGroups(user.getRsGroupId());
-    }
-
-    private boolean validateSubUserDefaultRegion() {
-        return config.getBoolean(FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_PROP_NAME, FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_DEFAULT_VALUE);
     }
 
     private boolean isUserASubUser(com.rackspace.idm.domain.entity.User user) {
@@ -223,6 +229,15 @@ public class Validator {
         }
     }
 
+    /**
+     * Validates that the specified compute region is a valid compute region for the server on which this call was made.
+     *
+     * This shouldn't be used anymore as it's server specific (based on property defining whether server is a US or UK
+     * server rather than based on the actual user the region is associated with
+     *
+     * @param defaultRegion
+     */
+    @Deprecated
     private void validateDefaultRegion(String defaultRegion) {
         if (!isEmpty(defaultRegion)) {
             defaultRegionService.validateDefaultRegion(defaultRegion);

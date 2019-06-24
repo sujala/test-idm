@@ -209,4 +209,89 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         CLOUD_REGION_UK  |  1000      |   "DEFAULT"     | true
     }
 
+    @Unroll
+    def "doesBaseUrlBelongToCloudRegion: baseUrl and domain - region = #region, domainType = #domainType"() {
+        given:
+        def domain = entityFactory.createDomain().with {
+            it.type = domainType
+            it
+        }
+        def baseUrl = entityFactory.createCloudBaseUrl().with {
+            it.baseUrlId = "baseUrlId"
+            it.region = region
+            it
+        }
+
+        when:
+        def doesBelong = service.doesBaseUrlBelongToCloudRegion(baseUrl, domain)
+
+        then:
+        doesBelong == result
+
+        1 * config.getString(DefaultEndpointService.FEATURE_BASEURL_TO_REGION_MAPPING_STRATEGY) >> "rsregion"
+
+        where:
+        region | domainType          | result
+        "US"   | "RACKSPACE_CLOUD_US"| true
+        "LON"  | "RACKSPACE_CLOUD_UK"| true
+        "US"   | "RACKSPACE_CLOUD_UK"| false
+        "LON"  | "RACKSPACE_CLOUD_US"| false
+    }
+
+    def "doesBaseUrlBelongToCloudRegion: test invalid domain scenarios"() {
+        given:
+        def domain = entityFactory.createDomain()
+        def baseUrl = entityFactory.createCloudBaseUrl().with {
+            it.baseUrlId = "baseUrlId"
+            it.region = "US"
+            it
+        }
+
+        when: "domain is null"
+        def result = service.doesBaseUrlBelongToCloudRegion(baseUrl, null)
+
+        then:
+        !result
+
+        when: "domain's type is null"
+        domain.type = null
+        result = service.doesBaseUrlBelongToCloudRegion(baseUrl, domain)
+
+        then:
+        !result
+
+        when: "domain's type is not 'RACKSPACE_CLOUD_US' or 'RACKSPACE_CLOUD_UK'"
+        domain.type = "otherType"
+        result = service.doesBaseUrlBelongToCloudRegion(baseUrl, domain)
+
+        then:
+        !result
+    }
+
+    @Unroll
+    def "doesBaseUrlBelongToCloudRegion: only baseUrl - region = #region, cloudRegion = #cloudRegion"() {
+        given:
+        def baseUrl = entityFactory.createCloudBaseUrl().with {
+            it.baseUrlId = "baseUrlId"
+            it.region = region
+            it
+        }
+
+        when:
+        def doesBelong = service.doesBaseUrlBelongToCloudRegion(baseUrl)
+
+        then:
+        doesBelong == result
+
+        1 * identityConfig.getStaticConfig().getCloudRegion() >> cloudRegion
+        1 * config.getString(DefaultEndpointService.FEATURE_BASEURL_TO_REGION_MAPPING_STRATEGY) >> "rsregion"
+
+        where:
+        region | cloudRegion     | result
+        "US"   | CLOUD_REGION_US | true
+        "LON"  | CLOUD_REGION_UK | true
+        "US"   | CLOUD_REGION_UK | false
+        "LON"  | CLOUD_REGION_US | false
+    }
+
 }

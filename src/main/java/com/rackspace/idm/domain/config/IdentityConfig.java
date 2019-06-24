@@ -134,8 +134,6 @@ public class IdentityConfig {
     public static final String FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP = "feature.multifactor.locking.attempts.maximumNumber";
     public static final int FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_DEFAULT = 3;
 
-    public static final String FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP = "feature.enable.always.return.approved.domainids.for.list.idps";
-    public static final boolean FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_DEFAULT = true;
 
     public static final String FEATURE_DELETE_UNUSED_DUO_PHONES_PROP = "feature.delete.unused.duo.phones";
     public static final boolean FEATURE_DELETE_UNUSED_DUO_PHONES_DEFAULT = true;
@@ -607,6 +605,11 @@ public class IdentityConfig {
     public static final String UNVERIFIED_USER_REGISTRATION_URL_FORMAT_PROP = "unverified.user.registration.url.format";
     public static final String UNVERIFIED_USER_REGISTRATION_URL_FORMAT_DEFAULT = "https://account.rackspace.com/users/%s/registration/%s";
 
+    public static final String V1_DEFAULT_CLOUD_ENDPOINTS_US_PROP = "v1.default.cloud.endpoints.us";
+    public static final String V1_DEFAULT_FILES_ENDPOINTS_US_PROP = "v1.default.files.endpoints.us";
+    public static final String V1_DEFAULT_CLOUD_ENDPOINTS_UK_PROP = "v1.default.cloud.endpoints.uk";
+    public static final String V1_DEFAULT_FILES_ENDPOINTS_UK_PROP = "v1.default.files.endpoints.uk";
+
     /**
      * Identity Repository Properties
      */
@@ -632,6 +635,9 @@ public class IdentityConfig {
 
     public static final String FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_PROP = "feature.enable.authorization.domain.default";
     public static final boolean FEATURE_ENABLE_AUTHORIZATION_DOMAIN_DEFAULT_DEFAULT = false;
+
+    public static final String FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP = "feature.enabled.use.domain.type.on.new.user.creation";
+    public static final boolean FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_DEFAULT = false;
 
     /**
      * Opentracing properties
@@ -875,7 +881,6 @@ public class IdentityConfig {
         defaults.put(IDP_POLICY_MAX_KILOBYTE_SIZE_PROP, IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT);
         defaults.put(FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_DEFAULT);
 
-        defaults.put(FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_DEFAULT);
 
         defaults.put(FEEDS_DEAMON_EVICTION_ENABLED_PROP, FEEDS_DEAMON_ENABLED_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT);
@@ -998,6 +1003,7 @@ public class IdentityConfig {
         defaults.put(TOKEN_LIFETIME_ENTROPY_PROP, TOKEN_LIFETIME_ENTROPY_DEFAULT);
         defaults.put(FEATURE_ENABLE_SETTING_DOMAIN_TYPE_PROP, FEATURE_ENABLE_SETTING_DOMAIN_TYPE_DEFAULT);
         defaults.put(FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP, FEATURE_ENABLE_INFER_DOMAIN_TYPE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP, FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_DEFAULT);
 
         /**
          * OpenTracing defaults
@@ -2146,10 +2152,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_CACHE_REPOSITORY_PROPERTIES_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP, versionAdded = "3.20.1", description = "Whether or not list idps should always return an approvedDomainId attribute for all idps.")
-        public boolean listIdpsAlwaysReturnsApprovedDomainIds() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_ALWAYS_RETURN_APPROVED_DOMAINIDS_FOR_LIST_IDPS_PROP);
-        }
 
         @IdmProp(key = FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME, versionAdded = "3.1.0", description = "The max token lifetime for a provisioned federated user token")
         public int getFederatedDomainTokenLifetimeMax() {
@@ -2752,6 +2754,26 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_INFER_DOMAIN_TYPE_PROP);
         }
 
+        @IdmProp(key = V1_DEFAULT_CLOUD_ENDPOINTS_US_PROP, versionAdded = "3.33.0", description = "The v1 defaults for US cloud endpoints.")
+        public Set<String> getV1DefaultCloudEndpointsUs() {
+            return getSetSafely(reloadableConfiguration, V1_DEFAULT_CLOUD_ENDPOINTS_US_PROP);
+        }
+
+        @IdmProp(key = V1_DEFAULT_FILES_ENDPOINTS_US_PROP, versionAdded = "3.33.0", description = "The v1 defaults for US files endpoints.")
+        public Set<String> getV1DefaultFilesEndpointsUs() {
+            return getSetSafely(reloadableConfiguration, V1_DEFAULT_FILES_ENDPOINTS_US_PROP);
+        }
+
+        @IdmProp(key = V1_DEFAULT_CLOUD_ENDPOINTS_UK_PROP, versionAdded = "3.33.0", description = "The v1 defaults for UK cloud endpoints.")
+        public Set<String> getV1DefaultCloudEndpointsUk() {
+            return getSetSafely(reloadableConfiguration, V1_DEFAULT_CLOUD_ENDPOINTS_UK_PROP);
+        }
+
+        @IdmProp(key = V1_DEFAULT_FILES_ENDPOINTS_UK_PROP, versionAdded = "3.33.0", description = "The v1 defaults for UK files endpoints.")
+        public Set<String> getV1DefaultFilesEndpointsUk() {
+            return getSetSafely(reloadableConfiguration, V1_DEFAULT_FILES_ENDPOINTS_UK_PROP);
+        }
+
     }
 
     public class RepositoryConfig extends ConfigMetaLookup {
@@ -2960,6 +2982,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP, versionAdded = "3.31.0", description = "Whether or not identity should verify a user is authorized to access the specified (or defaulted) authorization domain on authentication.")
         public boolean shouldVerifyAuthorizationDomains() {
             return getRepositoryBooleanSafely(FEATURE_ENABLE_AUTHORIZATION_DOMAIN_VERIFICATION_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP, versionAdded = "3.33.0", description = "Whether or not identity should use the domain type on new user creation to determine which endpoints are added.")
+        public boolean shouldUseDomainTypeOnNewUserCreation() {
+            return getRepositoryBooleanSafely(FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_PROP);
         }
     }
 

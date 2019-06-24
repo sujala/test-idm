@@ -113,7 +113,26 @@ public class DefaultRegionService {
         return getRegionsWithinCloud(getCloudServersOpenStackRegions(baseUrls));
     }
 
+    public void validateComputeRegionForCloud(String selectedRegion, String cloud) {
+        Set<String> validRegions = new HashSet<>();
 
+        // 1. Finding all the regions in which a cloud servers openstack endpoint template exists.
+        Iterable<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByServiceName(CLOUD_SERVERS_OPENSTACK);
+        Set<String> cloudServersOpenStackRegions = getCloudServersOpenStackRegions(baseUrls);
+
+        // 2. Retrieving all regions for the server's cloud region stored in the directory. (cause endpoints could point to regions that don't really exist)
+        Iterable<Region> cloudRegionsBasedonDomain = defaultCloudRegionService.getRegions(cloud);
+
+        for (Region cloudRegion : cloudRegionsBasedonDomain) {
+            validRegions.add(cloudRegion.getName());
+        }
+
+        //3. Taking the intersection of (1) and (2)
+        validRegions.retainAll(cloudServersOpenStackRegions);
+
+        //4. Validate that selected Region is in valid region set
+        checkDefaultRegion(selectedRegion, validRegions);
+    }
 
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;

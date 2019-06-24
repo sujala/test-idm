@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from nose.plugins.attrib import attr
+import pytest
 import copy
 import ddt
 
@@ -372,7 +372,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
     @unless_coverage
     @ddt.file_data(
         'data_create_mapping_rule_with_different_descriptions.json')
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def test_create_mapping_rules_with_different_descriptions(
             self, test_data):
         """
@@ -627,7 +627,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         actually exist or not. So, any list of endpoint ids with more than
         the limit would be sufficient to test it.
         """
-        endpoint_ids = range(1, ENDPOINTS_LIMIT + 2)
+        endpoint_ids = list(range(1, ENDPOINTS_LIMIT + 2))
         tenant_type = const.TENANT_TYPE_CLOUD
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,
@@ -642,7 +642,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             resp, *self.header_validation_functions_HTTP_400)
 
     @unless_coverage
-    @attr('skip_at_gate')
+    @pytest.mark.skip_at_gate
     def verify_get_and_delete_given_rule(self, rule_id):
         """
         Make a GET mapping rule call and then make a DELETE mapping rule call

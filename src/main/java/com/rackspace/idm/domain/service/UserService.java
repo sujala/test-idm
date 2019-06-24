@@ -317,4 +317,6 @@ public interface UserService {
      * @return
      */
     User getUserAdminByTenantId(String tenantId);
+
+    String inferCloudBasedOnDomainType(String domainType);
 }

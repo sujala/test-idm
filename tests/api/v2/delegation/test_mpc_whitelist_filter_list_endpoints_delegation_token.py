@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from qe_coverage.opencafe_decorators import tags, unless_coverage
-import urlparse
+import urllib.parse
 
 from tests.api.v2.delegation import delegation
 from tests.api.v2.models import factory
@@ -178,7 +178,7 @@ class TestMPCWhiteListFilterListEndpointsForDelegationToken(
         list_endpoints_resp = client.list_endpoints_for_token(token=token)
         self.assertEqual(list_endpoints_resp.status_code, 200)
         self.assertNotEqual(list_endpoints_resp.json()[const.ENDPOINTS], [])
-        expected_url = urlparse.urljoin(self.public_url, self.tenant_1.id)
+        expected_url = urllib.parse.urljoin(self.public_url, self.tenant_1.id)
         endpoint = list_endpoints_resp.json()[const.ENDPOINTS]
         self.assertEqual(endpoint[0][const.ID], self.template_id)
         self.assertEqual(endpoint[0][const.TENANT_ID], self.tenant_1.id)

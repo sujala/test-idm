@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
-import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
@@ -58,7 +57,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def setupSpec(){
         service = new DefaultUserService()
-        identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
+        mockIdentityConfig(service)
         sharedRandom = ("$sharedRandomness").replace('-',"")
         userList = new ArrayList<User>()
         userIdList = new ArrayList<String>()
@@ -237,16 +236,21 @@ class DefaultUserServiceTest extends RootServiceTest {
         nastBaseUrl.baseUrlType = "NAST"
         def encryptionVersion = "1"
         def salt = "a1 b2"
+        def domain = entityFactory.createDomain().with{
+            it.domainId = domainId
+            it
+        }
 
-        domainService.getDomain(domainId) >>> [ null, entityFactory.createDomain() ]
+        domainService.createDomainWithFallbackGet(domainId) >> domain
+        domainService.getDomain(domainId) >>> [ null, domain ]
         domainService.getDomainAdmins(domainId) >> [].asList()
         endpointService.getBaseUrlsByBaseUrlType(DefaultUserService.MOSSO_BASE_URL_TYPE) >> [ mossoBaseUrl ].asList()
         endpointService.getBaseUrlsByBaseUrlType(DefaultUserService.NAST_BASE_URL_TYPE) >> [ nastBaseUrl ].asList()
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("DFW", "cloud", true)
         propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
         config.getInt("maxNumberOfUsersInDomain") >> 100
-        config.getList("v1defaultMosso") >> Constants.MOSSO_V1_DEF
-        config.getList("v1defaultNast") >> Constants.NAST_V1_DEF
+        config.getList("v1defaultMosso") >> Constants.MOSSO_V1_DEF_US
+        config.getList("v1defaultNast") >> Constants.NAST_V1_DEF_US
         userDao.getUsersByDomain(domainId) >> [].asList()
         userDao.nextUserId >> "nextId"
         mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
@@ -257,9 +261,9 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * mockValidator.validateUser(user)
-        1 * domainService.createNewDomain(domainId)
+        1 * domainService.createDomainWithFallbackGet(domainId) >> domain
         1 * tenantService.addTenant({ it.tenantId == domainId; it.baseUrlIds.contains("mossoBaseUrlId")  })
-        1 * tenantService.addTenant({ it.tenantId == expectedNastTenantId; it.baseUrlIds.contains("nastBaseUrlId")  })
+        1 * tenantService.addTenant({ it.tenantId == expectedNastTenantId; it.baseUrlIds.contains("nastBaseUrlId") })
         1 * domainService.addTenantToDomain(domainId,domainId)
         1 * domainService.addTenantToDomain(expectedNastTenantId, domainId)
         1 * userDao.addUser(user)
@@ -303,7 +307,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * mockValidator.validateUser(user)
-        1 * domainService.createNewDomain(domainId)
+        1 * domainService.createDomainWithFallbackGet(domainId)
         1 * userDao.addUser(user)
         1 * tenantService.addTenantRoleToUser(user, _, false);
         1 * domainService.updateDomainUserAdminDN(user)
@@ -426,7 +430,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         service.addUserv11(user)
 
         then:
-        0 * domainService.createNewDomain(domainId)
+        0 * domainService.createDomainWithFallbackGet(domainId)
     }
 
     def "Add User does not create default domain tenants if domain already exists with admins"() {
@@ -1376,7 +1380,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * mockValidator.validateUser(user)
-        1 * domainService.createNewDomain(domainId)
+        1 * domainService.createDomainWithFallbackGet(domainId)
         1 * userDao.addUser(user)
         1 * tenantService.addTenantRoleToUser(user, _, false)
 
@@ -1617,7 +1621,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * domainService.getDomain(domainId) >> null
-        1 * domainService.createNewDomain(domainId)
+        1 * domainService.createDomainWithFallbackGet(domainId)
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_, ) >> true
     }
 
@@ -1630,7 +1634,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * domainService.getDomain(domainId) >> null
-        1 * domainService.createNewDomain(domainId)
+        1 * domainService.createDomainWithFallbackGet(domainId)
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
                 IdentityUserTypeEnum.SERVICE_ADMIN.roleName,
                 IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
@@ -1648,7 +1652,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         IdmExceptionAssert.assertException(ex, ForbiddenException, null, "Not Authorized")
 
         1 * domainService.getDomain(domainId) >> null
-        0 * domainService.createNewDomain(domainId)
+        0 * domainService.createDomainWithFallbackGet(domainId)
     }
 
     def "createDomainUserInCreateOneCall - calls correct services when domain does not exist"() {
@@ -1661,7 +1665,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         then:
         1 * reloadableConfig.getTenantDefaultDomainId() >> "defaultDomainId"
         1 * domainService.getDomain(domainId) >> null
-        1 * domainService.createNewDomain(domainId)
+        1 * domainService.createDomainWithFallbackGet(domainId)
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_RS_DOMAIN_ADMIN.getRoleName()) >> true
     }
 
@@ -1678,7 +1682,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         1 * reloadableConfig.getTenantDefaultDomainId() >> "defaultDomainId"
         1 * domainService.getDomain(domainId) >> null
-        0 * domainService.createNewDomain(domainId)
+        0 * domainService.createDomainWithFallbackGet(domainId)
     }
 
     def "verifyCallerCanCreateTenants does not verify role when flag is diabled"() {
@@ -1793,6 +1797,128 @@ class DefaultUserServiceTest extends RootServiceTest {
         1 * tenantService.getTenant(mossoTenantId) >> mossoTenant
         1 * tenantService.getTenant(nastTenantid) >> null
     }
+
+    @Unroll
+    def "attachEndpointsToTenant: test repository feature flag 'feature.enabled.use.domain.type.on.new.user.creation' - enabled = #enabled"() {
+        given:
+        def domain = entityFactory.createDomain().with {
+            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+            it
+        }
+        def tenant = entityFactory.createTenant().with {
+            it.domainId = domain.domainId
+            it
+        }
+        def baseUrl = entityFactory.createCloudBaseUrl().with {
+            it.baseUrlId = "baseUrlId"
+            it.baseUrlType = "MOSSO"
+            it.def = true
+            it
+        }
+        def baseUrls = [baseUrl]
+
+        when:
+        service.attachEndpointsToTenant(tenant, baseUrls, domain)
+
+        then:
+        1 * identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> enabled
+
+        if (enabled) {
+            1 * endpointService.doesBaseUrlBelongToCloudRegion(baseUrl, domain) >> true
+            1 * identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUs() >> [baseUrl.baseUrlId]
+            0 * config.getList("v1defaultMosso")
+        } else {
+            1 * endpointService.doesBaseUrlBelongToCloudRegion(baseUrl) >> true
+            0 * identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUs()
+            1 * config.getList("v1defaultMosso") >> [baseUrl.baseUrlId]
+        }
+
+        where:
+        enabled << [true, false]
+    }
+
+    @Unroll
+    def "addUserV20: test default region when it is not provided with isCreateUserOneCall = #isCreateUserOneCall"() {
+        given:
+        def domain = entityFactory.createDomain()
+        TenantRole userAdminRole = entityFactory.createTenantRole().with {
+            it.name = Constants.IDENTITY_USER_ADMIN_ROLE
+            it.roleRsId = Constants.USER_ADMIN_ROLE_ID
+            it
+        }
+        ClientRole userAdminClientRole = entityFactory.createClientRole(Constants.IDENTITY_USER_ADMIN_ROLE)
+        def user = entityFactory.createUser().with {
+            it.domainId = domain.domainId
+            it.region = null
+            it.roles.add(userAdminRole)
+            it
+        }
+
+        def cloudRegion = "US"
+        def region = new Region().with{
+            it.name = "ORD"
+            it
+        }
+        when:
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> false
+        service.addUserAdminV20(user, isCreateUserOneCall)
+
+        then:
+        1 * domainService.getDomainAdmins(domain.domainId) >> []
+        1 * userDao.getUsersByDomain(domain.domainId) >> []
+        1 * userDao.addUser(user)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, _);
+        1 * domainService.updateDomainUserAdminDN(user)
+        1 * identityConfig.getStaticConfig().getCloudRegion() >> cloudRegion
+        1 * cloudRegionService.getDefaultRegion(cloudRegion) >> region
+        if (isCreateUserOneCall) {
+            2 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            2 * domainService.getDomain(domain.domainId) >> domain
+        } else {
+            1 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            1 * domainService.getDomain(domain.domainId) >> domain
+        }
+
+        when:
+        identityConfig.getRepositoryConfig().shouldUseDomainTypeOnNewUserCreation() >> true
+        user.setRegion(null)
+        service.addUserAdminV20(user, isCreateUserOneCall)
+
+        then:
+        1 * domainService.getDomainAdmins(domain.domainId) >> []
+        1 * userDao.getUsersByDomain(domain.domainId) >> []
+        1 * userDao.addUser(user)
+        1 * atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, _)
+        1 * domainService.updateDomainUserAdminDN(user)
+        0 * identityConfig.getStaticConfig().getCloudRegion() >> cloudRegion
+        1 * cloudRegionService.getDefaultRegion(cloudRegion) >> region
+        if (isCreateUserOneCall) {
+            2 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            2 * domainService.getDomain(domain.domainId) >> domain
+        } else {
+            1 * mockRoleService.getRoleByName(userAdminRole.name) >> userAdminClientRole
+            1 * domainService.getDomain(domain.domainId) >> domain
+        }
+
+        where:
+        isCreateUserOneCall << [true , false]
+    }
+
+    @Unroll
+    def "inferCloudBasedOnDomainType(): validate expected cloud region is returned "() {
+        when:
+        def cloudRegion = service.inferCloudBasedOnDomainType(domainType)
+
+        then:
+        cloudRegion.equalsIgnoreCase(expectedRegion)
+
+        where:
+        expectedRegion | domainType
+        GlobalConstants.CLOUD_REGION.UK.toString() | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
+        GlobalConstants.CLOUD_REGION.US.toString() | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        GlobalConstants.CLOUD_REGION.US.toString() | null
+    }
+
 
     def createStringPaginatorContext() {
         return new PaginatorContext<String>().with {

@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.User
@@ -102,21 +103,34 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(String.valueOf(user.mossoId))
     }
 
-    def "Verify v1Defaults on user creation" () {
+    @Unroll
+    def "Verify v1Defaults on user creation - region = #region"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, region)
+
         when:
         User user = utils11.createUser(testUtils.getRandomUUID('testV1Default'))
         User getUser = utils11.getUserByName(user.id)
         org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
 
         then:
-        utils11.validateV1Default(user.baseURLRefs.baseURLRef)
-        utils11.validateV1Default(getUser.baseURLRefs.baseURLRef)
+        if (region == GlobalConstants.CLOUD_REGION_US) {
+            utils11.validateV1Default(user.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_US, Constants.NAST_V1_DEF_US)
+            utils11.validateV1Default(getUser.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_US, Constants.NAST_V1_DEF_US)
+        } else {
+            utils11.validateV1Default(user.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_UK, Constants.NAST_V1_DEF_UK)
+            utils11.validateV1Default(getUser.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_UK, Constants.NAST_V1_DEF_UK)
+        }
 
         cleanup:
+        staticIdmConfiguration.reset()
         utils.deleteUser(user20)
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
         utils.deleteDomain(String.valueOf(user.mossoId))
+
+        where:
+        region << [GlobalConstants.CLOUD_REGION_US, GlobalConstants.CLOUD_REGION_UK]
     }
 
     def "Replacing v1Default on existing service on user" () {

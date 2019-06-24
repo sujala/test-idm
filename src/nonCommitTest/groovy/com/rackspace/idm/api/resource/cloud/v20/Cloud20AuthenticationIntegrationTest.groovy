@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.api.common.fault.v1.BadRequestFault
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePinStateEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.UserDao
@@ -497,7 +498,7 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def "v2.0 Authenticate returns user's domain" () {
+    def "v2.0 Authenticate returns appropriate information" () {
         given:
         def domainId = utils.createDomain()
         def userAdmin, users
@@ -511,11 +512,17 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
         then: "domainId is returned"
         response.user.domainId == domainId
 
+        and: "phone pin state is returned"
+        response.user.phonePinState == PhonePinStateEnum.ACTIVE
+
         when: "auth with pwd"
         response = utils.authenticate(userAdmin)
 
         then: "domainId is returned"
         response.user.domainId == domainId
+
+        and: "phone pin state is returned"
+        response.user.phonePinState == PhonePinStateEnum.ACTIVE
 
         cleanup:
         utils.deleteUsers(users)

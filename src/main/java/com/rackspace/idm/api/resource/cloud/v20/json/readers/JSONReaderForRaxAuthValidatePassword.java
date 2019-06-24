@@ -12,8 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -21,7 +21,7 @@ public class JSONReaderForRaxAuthValidatePassword extends JSONReaderForEntity<Va
 
     @Override
     public ValidatePassword readFrom(Class<ValidatePassword> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        Map<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(JSONConstants.RAX_AUTH_VALIDATE_PWD, JSONConstants.VALIDATE_PWD);
         return read(entityStream, JSONConstants.RAX_AUTH_VALIDATE_PWD, prefixValues);
     }

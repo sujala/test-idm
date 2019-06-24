@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Some helper functions can be used cross tests"""
 from strgen import StringGenerator
-import urlparse
+import urllib.parse
 
 from tests.api.utils import config, hotpie
 from tests.package.johny import constants as const
@@ -13,8 +13,8 @@ def parse_secret_from_otp_device(otp_response):
         Used in authenticate with otp device
     """
     key_uri = otp_response.json()["RAX-AUTH:otpDevice"]["keyUri"]
-    o = urlparse.urlparse(key_uri)
-    return urlparse.parse_qs(o.query)["secret"][0]
+    o = urllib.parse.urlparse(key_uri)
+    return urllib.parse.parse_qs(o.query)["secret"][0]
 
 
 def get_oath_from_secret(secret):
