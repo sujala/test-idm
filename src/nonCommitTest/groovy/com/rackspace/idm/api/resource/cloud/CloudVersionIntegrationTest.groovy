@@ -79,27 +79,4 @@ class CloudVersionIntegrationTest extends RootIntegrationTest {
 
     }
 
-    def "Returning Versions20.xml returns same value regardless of feature.reuse.jaxb.context"() {
-        when: "get xml with feat"
-        def responseTrue = cloud20.getVersion(MediaType.APPLICATION_XML_TYPE)
-
-        def responseFalse = cloud20.getVersion(MediaType.APPLICATION_XML_TYPE)
-
-        then: "get json specific version"
-        responseTrue.status == HttpStatus.SC_OK
-        responseFalse.status == HttpStatus.SC_OK
-        responseTrue.getEntity(String) == responseFalse.getEntity(String)
-    }
-
-    def "Returning Versions11.xml returns same value regardless of feature.reuse.jaxb.context"() {
-        when: "get xml with feat"
-        def responseTrue = cloud11.getVersion()
-
-        def responseFalse = cloud11.getVersion()
-
-        then: "get json specific version"
-        responseTrue.status == HttpStatus.SC_OK
-        responseFalse.status == HttpStatus.SC_OK
-        responseTrue.getEntity(String) == responseFalse.getEntity(String)
-    }
 }
