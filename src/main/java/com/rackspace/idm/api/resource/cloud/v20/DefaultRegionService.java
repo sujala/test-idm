@@ -1,12 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
-import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,13 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Hector
- * Date: 8/1/12
- * Time: 3:30 PM
- * To change this template use File | Settings | File Templates.
- */
 @Component
 public class DefaultRegionService {
 
@@ -31,16 +22,19 @@ public class DefaultRegionService {
     private EndpointService endpointService;
 
     @Autowired
-    private DefaultCloudRegionService defaultCloudRegionService;
+    private CloudRegionService cloudRegionService;
 
     @Autowired
     private ScopeAccessService scopeAccessService;
 
     @Autowired
-    private ApplicationService applicationService;
+    private DomainService domainService;
 
     @Autowired
-    private Configuration config;
+    private UserService userService;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     public void validateDefaultRegion(String defaultRegion) {
         Set<String> regions = this.getDefaultRegionsForCloudServersOpenStack();
@@ -70,13 +64,7 @@ public class DefaultRegionService {
     }
 
     public Set<String> getDefaultRegionsForUser(User user) {
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
-        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
-        for (OpenstackEndpoint endpoint : endpoints) {
-            baseUrls.addAll(endpoint.getBaseUrls());
-        }
-
-        Set<String> defaultRegions = getCloudServersOpenStackRegions(baseUrls);
+        Set<String> defaultRegions = getCloudServersOpenStackRegionsForUser(user);
 
         if(defaultRegions.size() == 0){
             defaultRegions.addAll(getDefaultRegionsForCloudServersOpenStack());
@@ -98,7 +86,7 @@ public class DefaultRegionService {
     private Set<String> getRegionsWithinCloud(Set<String> regionNames) {
         List<String> regionsInCloudRegion = new ArrayList<String>();
 
-        for (Region region : defaultCloudRegionService.getRegions(config.getString("cloud.region"))) {
+        for (Region region : cloudRegionService.getRegions(identityConfig.getStaticConfig().getCloudRegion())) {
             regionsInCloudRegion.add(region.getName());
         }
 
@@ -113,7 +101,51 @@ public class DefaultRegionService {
         return getRegionsWithinCloud(getCloudServersOpenStackRegions(baseUrls));
     }
 
+    /**
+     * Validates if a compute region is allowed in a cloud region.
+     *
+     * @param selectedRegion
+     * @param cloud
+     */
     public void validateComputeRegionForCloud(String selectedRegion, String cloud) {
+        Set<String> validRegions = getComputeRegionsForCloud(cloud);
+        checkDefaultRegion(selectedRegion, validRegions);
+    }
+
+    /**
+     * Validates if a compute region is allowed for user. Base on legacy logic, the following steps are taken to
+     * determine if a user has access to a compute region.
+     *
+     * 1. A valid compute region is based on the regions of the endpoints to which the user have access to.
+     * 2. If user does not have access to any compute regions, fallback to compute regions based on the user's domain
+     *    type.
+     *  @param selectedRegion
+     * @param user
+     */
+    public void validateComputeRegionForUser(String selectedRegion, User user) {
+        Set<String> validRegions = getCloudServersOpenStackRegionsForUser(user);
+
+        if(validRegions.size() == 0){
+            Domain domain = domainService.getDomain(user.getDomainId());
+            // Sanity check, all user should belong to an existing domain.
+            if (domain == null) {
+                throw new BadRequestException("Unable to update user's region. User's domain was not found.", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
+            }
+            String cloudRegion = userService.inferCloudBasedOnDomainType(domain.getType());
+
+            validRegions = getComputeRegionsForCloud(cloudRegion);
+        }
+
+        checkDefaultRegion(selectedRegion, validRegions);
+    }
+
+    /**
+     * Retrieves the compute regions allowed for cloud region.
+     *
+     * @param cloud
+     * @return
+     */
+    private Set<String> getComputeRegionsForCloud(String cloud) {
         Set<String> validRegions = new HashSet<>();
 
         // 1. Finding all the regions in which a cloud servers openstack endpoint template exists.
@@ -121,7 +153,7 @@ public class DefaultRegionService {
         Set<String> cloudServersOpenStackRegions = getCloudServersOpenStackRegions(baseUrls);
 
         // 2. Retrieving all regions for the server's cloud region stored in the directory. (cause endpoints could point to regions that don't really exist)
-        Iterable<Region> cloudRegionsBasedonDomain = defaultCloudRegionService.getRegions(cloud);
+        Iterable<Region> cloudRegionsBasedonDomain = cloudRegionService.getRegions(cloud);
 
         for (Region cloudRegion : cloudRegionsBasedonDomain) {
             validRegions.add(cloudRegion.getName());
@@ -130,23 +162,22 @@ public class DefaultRegionService {
         //3. Taking the intersection of (1) and (2)
         validRegions.retainAll(cloudServersOpenStackRegions);
 
-        //4. Validate that selected Region is in valid region set
-        checkDefaultRegion(selectedRegion, validRegions);
+        return validRegions;
     }
 
-    public void setApplicationService(ApplicationService applicationService) {
-        this.applicationService = applicationService;
-    }
+    /**
+     * Determines the cloud servers OpenStack regions accessible to user based on its tenant roles.
+     *
+     * @param user
+     * @return
+     */
+    private Set<String> getCloudServersOpenStackRegionsForUser(User user) {
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(user);
+        List<CloudBaseUrl> userBaseUrls = new ArrayList<>();
+        for (OpenstackEndpoint endpoint : endpoints) {
+            userBaseUrls.addAll(endpoint.getBaseUrls());
+        }
 
-    public void setEndpointService(EndpointService endpointService) {
-        this.endpointService = endpointService;
-    }
-
-    public void setDefaultCloudRegionService(DefaultCloudRegionService defaultCloudRegionService) {
-        this.defaultCloudRegionService = defaultCloudRegionService;
-    }
-
-    public void setConfig(Configuration config) {
-        this.config = config;
+        return getCloudServersOpenStackRegions(userBaseUrls);
     }
 }
