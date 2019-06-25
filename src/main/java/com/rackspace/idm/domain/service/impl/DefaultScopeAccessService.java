@@ -88,7 +88,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         // Second get the tenants from each of those roles
         Map<Tenant, HashSet<OpenstackType>> tenants = getTenantsAndOpenstackTypesForRoles(roles);
 
-        // Third get the endppoints for each tenant
+        // Third get the endpoints for each tenant
         for (Tenant tenant : tenants.keySet()) {
             OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenants.get(tenant), user.getRegion(), null);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {

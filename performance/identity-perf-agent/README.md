@@ -1,10 +1,10 @@
 gatling-rax
 ===========
 
-Gatling Simulations for Rackspace OpenStack Cloud
+Gatling Simulations for Rackspace Customer Identity
 
 ## Dependecies
-Maven
+sbt or Maven
 
 ## Running in intelliJ
 
