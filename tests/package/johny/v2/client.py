@@ -872,6 +872,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def list_endpoints_for_tenant(self, tenant_id, requestslib_kwargs=None):
+        """
+        GET /v2.0/tenants/{tenantId}/OS-KSCATALOG/endpoints
+        """
+        url = self.url + const.LIST_ENDPOINTS_FOR_TENANT_URL.format(
+            tenant_id=tenant_id)
+        return self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+
     def add_endpoint_to_tenant(self, tenant_id, endpoint_template_id,
                                requestslib_kwargs=None):
         """
