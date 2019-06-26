@@ -6102,6 +6102,18 @@ rsPropertyValueType: Boolean
 rsReloadable: TRUE
 rsSearchable: TRUE
 
+dn: rsId=4331a77060ea1d2r5a1ec5bc873de37b4,ou=properties,ou=cloud,o=configura
+ tion,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: feature.enable.use.domain.type.for.update.user
+description: Whether or not identity should use the domain type
+ when updating user to determine the valid regions for a user.
+rsIdmVersion: 3.34.0
+rsPropertyValue: TRUE
+rsPropertyValueType: Boolean
+rsReloadable: TRUE
+rsSearchable: TRUE
+
 dn: rsId=b59a7a0ac6e2433ca45c3af059c75325,ou=users,o=rackspace,dc=rackspace,dc=com
 rsId: b59a7a0ac6e2433ca45c3af059c75325
 objectClass: rsPerson

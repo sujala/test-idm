@@ -36,11 +36,12 @@ def name_generator(size=18, start_char=string.ascii_lowercase,
     return start + end
 
 
-def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
+def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None, debug=False):
     if alt_url:
         baseurl = alt_url
     # auth to check
-    print ("Authing as user")
+    if debug:
+        print("Authing as user")
     authdata = {"auth":
                 {"passwordCredentials":
                  {"username": user_name,
@@ -50,14 +51,17 @@ def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     headers_auth = {'Accept': 'application/json',
                     'Content-Type': 'application/json'}
     t_url = "{0}/v2.0/tokens".format(baseurl)
-    print ("authdata: {0}".format(authdata))
     r = requests.post(url=t_url, json=authdata,
                       headers=headers_auth, verify=False)
-    print (r.json())
+    if r.status_code < 200 or r.status_code >= 300 or debug:
+        print("authdata: {0}".format(authdata))
+        print(r.json())
+    if r.status_code < 200 or r.status_code >= 300:
+        raise Exception("Non-success: {}".format(r))
     return r.json()["access"]["token"]["id"]
 
 
-def add_default_user(number):
+def add_default_user(number, debug=False):
     try:
         user_name = name_generator()
         create_user_data = {"user": {
@@ -67,7 +71,8 @@ def add_default_user(number):
         u_url = "{0}/v2.0/users".format(baseurl)
         r = requests.post(url=u_url,
                           json=create_user_data, headers=ua_headers, verify=False)
-        print (r.json())
+        if r.status_code != 201 or debug:
+            print(r.json())
         assert r.status_code == 201
         result_data = r.json()
         user_data = dict()
@@ -77,12 +82,8 @@ def add_default_user(number):
         user_data["domainId"] = domain_id
         time.sleep(0.1)
         return user_data
-    except Exception as excp:
-        print(excp)
-        e = sys.exc_info()
-        print("user error: {0},{1},{2}".format(e[0], e[1], e[2]))
-        traceback.print_tb(e[2], limit=1, file=sys.stdout)
-        return ""
+    finally:
+        pass
 
 
 if __name__ == '__main__':
@@ -101,6 +102,8 @@ if __name__ == '__main__':
     parser.add_argument(
         "-s", "--server_url", default="http://localhost:8082/idm/cloud",
         help="Server URL")
+    parser.add_argument('--debug', action='store_true',
+                        help='Print out diagnostic information.')
 
     args = parser.parse_args()
     proc_count = args.num_processes
@@ -124,15 +127,18 @@ if __name__ == '__main__':
                     if count < int(num_of_dom):
                         user_admin_token = get_token(
                             user_name=row['username'],
-                            password=row['password'], alt_url=baseurl)
+                            password=row['password'], alt_url=baseurl, debug=args.debug)
 
                         ua_headers = {'Accept': 'application/json',
                                       'Content-Type': 'application/json',
                                       'X-Auth-Token': user_admin_token}
                         domain_id = row['domainid']
 
+                        def add_default_user_with_debug(number):
+                            add_default_user(number, debug=args.debug)
+
                         with terminating(Pool(processes=proc_count)) as p:
-                            result_rows = p.map(add_default_user, range(
+                            result_rows = p.map(add_default_user_with_debug, range(
                                 int(num_of_default_users)))
 
                         for user_data in result_rows:

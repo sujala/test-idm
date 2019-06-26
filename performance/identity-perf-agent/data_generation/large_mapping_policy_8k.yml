@@ -1,0 +1,72 @@
+---
+# NOTE: This example policy MUST be replaced BEFORE federated users can log in.
+# Refer to the Identity Federation documentation for more information.
+ #if (mapping:get-attributes('groups')='RAX_TEST.Global.Implementation') then ('billing:admin', 'ticketing:admin','admin') else (),
+mapping:
+  rules:
+  - local:
+      faws:
+        groups:
+          multiValue: true
+          value:
+            - "{Ats(groups)}"
+      user:
+        domain: "{D}"
+        name: "{D}"
+        email: "{Pt(/saml2p:Response/saml2:Assertion/saml2:Subject/saml2:NameID)}"
+        expire: PT12H
+        roles:
+          - "{0}"
+        groups:
+          - "{1}"
+
+    remote:
+      -
+        multiValue: true
+        path: |
+            (
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.Implementation') then ('billing:admin', 'ticketing:admin','admin') else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.Operations') then 'ticketing:admin' else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.NetOps') then 'ticketing:admin' else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.Billing') then 'billing:admin' else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.DTEC.')) then ('ticketing:admin/faws:987543210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.Expand_Research.')) then ('ticketing:admin/faws:987653210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PLA_WESA.')) then ('ticketing:admin/faws:98754310') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PLA_WESA_SANDBOX.')) then ('ticketing:admin/faws:0123456789') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.Comprehend_Sandbox.')) then ('ticketing:admin/faws:0123456789') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.Gamma.')) then ('ticketing:admin/faws:0123456789', 'ticketing:admin/faws:987654210', 'ticketing:admin/faws:987543210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.CSIRT-Services.')) then ('ticketing:admin/faws:987653210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PBU_Catalyst.')) then ('ticketing:admin/faws:01456789', 'ticketing:admin/faws:01234568', 'ticketing:admin/faws:987654210', 'ticketing:admin/faws:976543210123', 'ticketing:admin/faws:0129876543210', 'ticketing:admin/faws:12349876543210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PBU_ALL.')) then ('ticketing:admin/faws:012346789', 'ticketing:admin/faws:0123456791', 'ticketing:admin/faws:012345679012', 'ticketing:admin/faws:876543210', 'ticketing:admin/faws:98765432101', 'ticketing:admin/faws:987654321012', 'ticketing:admin/faws:9876543210123', 'ticketing:admin/faws:98765432101234', 'ticketing:admin/faws:987654321012345', 'ticketing:admin/faws:98765432101111', 'ticketing:admin/faws:980123456789', 'ticketing:admin/faws:9870123456789', 'ticketing:admin/faws:98760123456789', 'ticketing:admin/faws:987650123456789', 'ticketing:admin/faws:220123456789', 'ticketing:admin/faws:3330123456789', 'ticketing:admin/faws:44440123456789', 'ticketing:admin/faws:50123456789', 'ticketing:admin/faws:6660123456789') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.SOC_Sandbox.')) then ('ticketing:admin/faws:9876532107') else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.Implementation') then ('billing:admin', 'ticketing:admin','admin') else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.Operations') then 'ticketing:admin' else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.NetOps') then 'ticketing:admin' else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.Billing') then 'billing:admin' else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.DTEC.')) then ('ticketing:admin/faws:9876543210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.Expand_Research.')) then ('ticketing:admin/faws:9876543210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PLA_WESA.')) then ('ticketing:admin/faws:987643210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PLA_WESA_SANDBOX.')) then ('ticketing:admin/faws:012356789') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.Comprehend_Sandbox.')) then ('ticketing:admin/faws:012456789') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.Gamma.')) then ('ticketing:admin/faws:0123456789') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.CSIRT-Services.')) then ('ticketing:admin/faws:9876543210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PBU_Catalyst.')) then ('ticketing:admin/faws:0123456789', 'ticketing:admin/faws:012976543210', 'ticketing:admin/faws:1234987654310') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PBU_ALL.')) then ('ticketing:admin/faws:0123456789', 'ticketing:admin/faws:1234567891', 'ticketing:admin/faws:012345679012', 'ticketing:admin/faws:9876543210', 'ticketing:admin/faws:98765432101', 'ticketing:admin/faws:987654321012', 'ticketing:admin/faws:9876543210123', 'ticketing:admin/faws:98765432101234', 'ticketing:admin/faws:987654321012345', 'ticketing:admin/faws:98765432101111', 'ticketing:admin/faws:980123456789', 'ticketing:admin/faws:9870123456789', 'ticketing:admin/faws:98760123456789', 'ticketing:admin/faws:987650123456789', 'ticketing:admin/faws:220123456789', 'ticketing:admin/faws:3330123456789', 'ticketing:admin/faws:44440123456789', 'ticketing:admin/faws:50123456789', 'ticketing:admin/faws:6660123456789') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.SOC_Sandbox.')) then ('ticketing:admin/faws:98765432107') else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.Implementation') then ('billing:admin', 'ticketing:admin','admin') else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.Operations') then 'ticketing:admin' else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.NetOps') then 'ticketing:admin' else (),
+              if (mapping:get-attributes('groups')='RAX_TEST.Global.Billing') then 'billing:admin' else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.DTEC.')) then ('ticketing:admin/faws:9876543210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.Expand_Research.')) then ('ticketing:admin/faws:98654210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PLA_WESA.')) then ('ticketing:admin/faws:9876543210') else (),
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PLA_WESA_SANDBOX.')) then ('ticketing:admin/faws:01236789') else ()
+            )
+      -
+        multiValue: true
+        path: |
+            (
+              if (some $group in mapping:get-attributes('groups') satisfies starts-with($group, 'RAX_TEST.PBU_ALL.')) then ('RAX_TEST.PBU_All') else ()
+            )
+
+  version: RAX-1

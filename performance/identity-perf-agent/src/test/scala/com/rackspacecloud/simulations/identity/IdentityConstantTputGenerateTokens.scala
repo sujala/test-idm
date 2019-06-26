@@ -1,13 +1,11 @@
 package com.rackspacecloud.simulations.identity
 
 import com.rackspacecloud.Options
-import com.rackspacecloud.scenarios.IdentityAdminGeneration
-import com.rackspacecloud.scenarios.IdentityUserTokenGeneration
-import com.rackspacecloud.scenarios.IdentityDefaultUserTokenGeneration
-
+import com.rackspacecloud.scenarios.{Identity, IdentityAdminGeneration, IdentityDefaultUserTokenGeneration, IdentityUserTokenGeneration}
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import java.io._
+
 import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.duration._
@@ -44,5 +42,12 @@ class IdentityConstantTputGenerateTokens extends Simulation {
 
     IdentityAdminGeneration.admin_results.flush()
     IdentityAdminGeneration.admin_results.close()
+      IdentityUserTokenGeneration.results.flush()
+      IdentityUserTokenGeneration.results.close()
+      IdentityDefaultUserTokenGeneration.results.flush()
+      IdentityDefaultUserTokenGeneration.results.close()
+      Identity.created_users_writer.flush()
+      Identity.created_users_writer.close()
+
 }
 }

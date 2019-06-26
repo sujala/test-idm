@@ -17,13 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Created with IntelliJ IDEA.
- * User: wmendiza
- * Date: 10/22/12
- * Time: 3:21 PM
- * To change this template use File | Settings | File Templates.
- */
 @Component
 public class DefaultCloudRegionService implements CloudRegionService {
 
@@ -39,8 +32,6 @@ public class DefaultCloudRegionService implements CloudRegionService {
     public static final String REGION_NAME_CANNOT_BE_NULL = "Region Name cannot be null";
     public static final String REGION_CLOUD_CANNOT_BE_NULL = "Region Cloud cannot be null";
     public static final String REGION_CLOUD_CAN_ONLY_BE_US_UK = "Region Cloud can only be US or UK";
-    public static final String REGION_ISDEFAULT_CANNOT_BE_NULL = "Region isDefault cannot be null";
-    public static final String REGION_ISENABLED_CANNOT_BE_NULL = "Region getEnabled cannot be null";
     public static final String REGION_NAME_CANNOT_BE_UPDATED = "Region Name cannot be updated";
     public static final String REGION_NAME_ALREADY_EXISTS = "Region Name already exists";
     public static final String DEFAULT_REGION_CANNOT_BE_SET_NONDEFAULT = "Default region cannot be set to non default";

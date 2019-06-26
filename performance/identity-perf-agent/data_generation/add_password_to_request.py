@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+
+"""
+This scripts modifies two json files in
+../src/test/resources/request-bodies/identity/v2, create_user_body_v2.json
+and tokens_body_password_v2.json. The script adds the password to use when
+sending the contents of those files as JSON payloads.
+"""
+
 import json
 import os
 

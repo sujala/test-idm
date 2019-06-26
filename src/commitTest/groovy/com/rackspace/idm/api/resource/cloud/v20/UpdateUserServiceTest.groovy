@@ -1,12 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.ForbiddenException
 import org.apache.http.HttpStatus
 import org.opensaml.core.config.InitializationService
@@ -39,6 +41,9 @@ class UpdateUserServiceTest  extends RootServiceTest {
         mockUserConverter(service)
         mockPrecedenceValidator(service)
         mockUserService(service)
+        mockDomainService(service)
+        mockDefaultRegionService(service)
+        mockIdentityConfig(service)
 
         // Since these are generated, just use real ones
         service.jaxbObjectFactories = new JAXBObjectFactories()
@@ -407,6 +412,96 @@ class UpdateUserServiceTest  extends RootServiceTest {
 
         where:
         admin << [true, false]
+    }
+
+    @Unroll
+    def "updateUser: updating user's region calls correct services - feature.enable.use.domain.type.for.update.user = #flag"(){
+        given:
+        Domain domain = entityFactory.createDomain().with {
+            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+            it
+        }
+        UserForCreate userToUpdate = createUserForUpdateApi("1").with {
+            it.defaultRegion = "DFW"
+            it
+        }
+        User existingUser = entityFactory.createUser().with {
+            it.id = userToUpdate.id
+            it.domainId = domain.domainId
+            it.region = "ORD"
+            it
+        }
+
+        EndUser caller = entityFactory.createUser()
+
+        // Setup mocks
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        identityUserService.getEndUserById(userToUpdate.id) >> existingUser
+        authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+
+        when:
+        service.updateUser(headers, authToken, userToUpdate.id, userToUpdate)
+
+        then:
+        1 * userConverter.fromUser(userToUpdate) >> new User().with {
+            it.id = userToUpdate.id
+            it.domainId = domain.domainId
+            it.region = userToUpdate.defaultRegion
+            it
+        }
+        1 * identityConfig.repositoryConfig.shouldUseDomainTypeForUpdateUser() >> flag
+        1 * userService.updateUser(_) >> { args ->
+            User userStateForUpdate = args[0]
+            assert userStateForUpdate.region == "DFW"
+        }
+
+        if (flag) {
+            1 * defaultRegionService.validateComputeRegionForUser(userToUpdate.defaultRegion, existingUser)
+        } else {
+            1 * defaultRegionService.validateDefaultRegion(userToUpdate.defaultRegion, existingUser)
+        }
+
+        where:
+        flag << [true, false]
+    }
+
+    def "updateUser: error check - feature.enable.use.domain.type.for.update.user = true"(){
+        given:
+        Domain domain = entityFactory.createDomain().with {
+            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+            it
+        }
+        UserForCreate userToUpdate = createUserForUpdateApi("1").with {
+            it.defaultRegion = "DFW"
+            it
+        }
+        User existingUser = entityFactory.createUser().with {
+            it.id = userToUpdate.id
+            it.domainId = domain.domainId
+            it.region = "ORD"
+            it
+        }
+
+        EndUser caller = entityFactory.createUser()
+
+        // Setup mocks
+        identityConfig.repositoryConfig.shouldUseDomainTypeForUpdateUser() >> true
+        requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled() >> caller
+        identityUserService.getEndUserById(userToUpdate.id) >> existingUser
+        authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null) >> true
+
+        when: "invalid region for user"
+        service.updateUser(headers, authToken, userToUpdate.id, userToUpdate)
+
+        then:
+        1 * userConverter.fromUser(userToUpdate) >> new User().with {
+            it.id = userToUpdate.id
+            it.domainId = domain.domainId
+            it.region = userToUpdate.defaultRegion
+            it
+        }
+        1 * defaultRegionService.validateComputeRegionForUser(userToUpdate.defaultRegion, existingUser) >> {throw new BadRequestException()}
+        1 * exceptionHandler.exceptionResponse(_)
     }
 
     EndUser createFedCaller(String id, String domainId) {

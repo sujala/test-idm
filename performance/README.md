@@ -48,7 +48,8 @@ In order for us to validate any performance characteristics of the target identi
 
    4.9. Generate users in domain data: `pushd data_generation && ./generate_files.py -u users_in_dom -c users_in_domain.json -o ../localhost/data/identity -i true && popd`
 
-   4.10. If you need to do federation tests. You need to run this before running Engine.scala : `pushd data_generation && python create_idp_data.py -s http://localhost:8082/idm/cloud -f ../localhost/data/identity/dom_users_for_fed.dat && popd`
+   4.10. If you need to do federation tests. You need to run this before running Engine.scala : `pushd data_generation && python create_idp_data.py -s http://localhost:8082/idm/cloud -f ../localhost/data/identity/dom_users_for_fed.dat && popd`.
+         If one wants to update attribute mapping policy for the idps for any testing, s/he can pass another optional argument `-l <path to mapping policy file>` to `create_idp_data.py`
 
    4.11 If you want to run delegation tests, you need to run 'python data_generation/add_rcn_to_domain.py -i data_generation/users/<file_name>'. This will add RCN attribute to each domain in that file.
 
@@ -103,3 +104,16 @@ In order for us to validate any performance characteristics of the target identi
 8. Run `Engine` class.  The results will appear in `results` directory.
 
 9. (Optional) clean up identity: `pushd data_generation && ./delete_users.sh http://$docker_ip:8082/idm/cloud && popd`.  This will remove all files and back up the data to a .bak file.  If you'd like, you can then manually wipe those files out after validating that all data has been properly removed.
+
+## Running in Ollie
+
+Running the perf tests in Ollie is about the same process as you would use for Ollie in general, with a few caveats due to the particular layout of this repo.
+To run the perf tests in Ollie, you'll need an available Ollie instance. Setting up such an instance and interacting with it are beyond the scope of this README, but there is one that usually available at `https://scheduler-identity-perf.devapps.rsi.rackspace.net/`
+
+To run the tests, do the following:
+1. Create a Test (See [`example-ollie-test.json`](./example-ollie-test.json))
+   1. Set the `context_dir` to `performance/identity-perf-agent`.
+   2. Set the `run_test_command` to `sh start_gatling.sh <admin user name>`.
+   3. If you want to specify a mapping policy file, add it to the end of the `run_test_command`, like so: `sh start_gatling.sh <admin user name> <path to mapping policy>`. If the path is not absolute (which, in general, it shouldn't be), it will be interpreted as relative to the `performance/identity-perf-agent/data_generation` folder.
+   4. Set everything else in the usual fashion.
+2. Create an Execution with a `test_id` of the test you just created. (See [`example-ollie-execution.json`](./example-ollie-execution.json)).

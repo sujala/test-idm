@@ -1,0 +1,5 @@
+{
+  "execution_name": "perf tests attempt 1",
+  "test_id": "<id of the test you created>",
+  "image_name": "docker.artifacts.rackspace.net/ollie-agent:latest"
+}

@@ -271,6 +271,28 @@ class TestBaseV2(base.TestBase):
                 'Domain with ID {0} failed to delete'.format(
                     domain_id))
 
+    def cleanupUser(self, user_id, client):
+        resp = client.delete_user(user_id=user_id)
+        self.assertEqual(
+            resp.status_code, 204,
+            'User with ID {0} failed to delete'.format(user_id)
+        )
+
+    def cleanupDomain(self, domain_id, client):
+        resp = client.update_domain(
+            domain_id=domain_id,
+            request_object=requests.Domain(enabled=False),
+        )
+        self.assertEqual(
+            resp.status_code, 200,
+            'Failed to disable domain with ID {}'.format(domain_id),
+        )
+        resp = client.delete_domain(domain_id=domain_id)
+        self.assertEqual(
+            resp.status_code, 204,
+            'Domain with ID {0} failed to delete'.format(domain_id)
+        )
+
     @classmethod
     def tearDownClass(cls):
         """Deletes the added resources."""

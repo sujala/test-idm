@@ -5,11 +5,13 @@ import perf_constants as const
 import requests
 
 
-def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
+def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None,
+              debug=False):
     if alt_url:
         baseurl = alt_url
     # auth to check
-    print("Authing as user")
+    if debug:
+        print("Authing as user")
     authdata = {"auth":
                 {"passwordCredentials":
                  {"username": user_name,
@@ -19,12 +21,17 @@ def get_token(user_name, password=const.TEST_PASSWORD, alt_url=None):
     headers_auth = {'Accept': 'application/json',
                     'Content-Type': 'application/json'}
     t_url = "{0}/v2.0/tokens".format(baseurl)
-    print("authdata: {0}".format(authdata))
+    if debug:
+        print("authdata: {0}".format(authdata))
     r = requests.post(url=t_url, json=authdata,
                       headers=headers_auth, verify=False)
-    print(t_url)
-    print(r)
-    print(r.json())
+    if r.status_code < 200 or r.status_code >= 300 or debug:
+        print("authdata: {0}".format(authdata))
+        print(t_url)
+        print(r)
+        print(r.json())
+    if r.status_code < 200 or r.status_code >= 300:
+        raise Exception("Non-success: {}".format(r))
     return r.json()["access"]["token"]["id"]
 
 
@@ -51,13 +58,16 @@ if __name__ == '__main__':
         "-i", "--input_file",
         default="/users/test.csv"
     )
+    parser.add_argument('--debug', action='store_true',
+                        help='Print out diagnostic information.')
 
     args = parser.parse_args()
     baseurl = args.server_url
     input_file_name = args.input_file
 
     sa_token = get_token(user_name="keystone_service_admin",
-                         password="Auth1234", alt_url=baseurl)
+                         password="Auth1234", alt_url=baseurl,
+                         debug=args.debug)
 
     sa_headers = {'Accept': 'application/json', 'Content-Type': 'application/json',
                   'X-Auth-Token': sa_token}
@@ -84,5 +94,6 @@ if __name__ == '__main__':
         reader = csv.DictReader(user_data_file)
 
         for line in reader:
-            print line['domainid']
+            if args.debug:
+                print line['domainid']
             move_domain_to_rcn(line['domainid'])
