@@ -298,7 +298,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
         utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
         def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
-        def federatedUserAuthResponse = utils.createFederatedUserForAuthResponse(otherUserAdmin.domainId)
+        def federatedUserAuthResponse = utils.authenticateFederatedUser(otherUserAdmin.domainId)
         utils.addUserDelegate(userAdminToken, da.id, federatedUserAuthResponse.user.id)
         def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
 
@@ -371,7 +371,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
         utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
         def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
-        def federatedUserAuthResponse = utils.createFederatedUserForAuthResponse(otherUserAdmin.domainId)
+        def federatedUserAuthResponse = utils.authenticateFederatedUser(otherUserAdmin.domainId)
         utils.addUserDelegate(userAdminToken, da.id, federatedUserAuthResponse.user.id)
         def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
 
@@ -424,7 +424,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
         utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
         def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
-        def federatedUserAuthResponse = utils.createFederatedUserForAuthResponse(otherUserAdmin.domainId)
+        def federatedUserAuthResponse = utils.authenticateFederatedUser(otherUserAdmin.domainId)
         utils.addUserDelegate(userAdminToken, da.id, federatedUserAuthResponse.user.id)
         def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
 
@@ -478,7 +478,7 @@ class ValidateDelegateTokenRestIntegrationTest extends RootIntegrationTest {
         def da = utils.createDelegationAgreementInDomain(userAdminToken, userAdmin.domainId)
         utils.addUserDelegate(userAdminToken, da.id, otherUserAdmin.id)
         def provisionedUserDaToken = utils.getDelegationAgreementToken(otherUserAdmin.username, da.id)
-        def federatedUserAuthResponse = utils.createFederatedUserForAuthResponse(otherUserAdmin.domainId)
+        def federatedUserAuthResponse = utils.authenticateFederatedUser(otherUserAdmin.domainId)
         utils.addUserDelegate(userAdminToken, da.id, federatedUserAuthResponse.user.id)
         def federatedUserDaToken = utils.authenticateTokenAndDelegationAgreement(federatedUserAuthResponse.token.id, da.id).token.id
 

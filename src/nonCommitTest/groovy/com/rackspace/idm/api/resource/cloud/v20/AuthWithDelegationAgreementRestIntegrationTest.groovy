@@ -535,66 +535,6 @@ class AuthWithDelegationAgreementRestIntegrationTest extends RootIntegrationTest
         reloadableConfiguration.reset()
     }
 
-    def "Valid fed user created via v1.0 Fed API can auth under DA when explicitly listed as delegate "() {
-        // Create a fed user under common global IDP
-        def attributes = SamlAttributeFactory.createAttributes(sharedUserAdmin2.domainId, [], Constants.DEFAULT_FED_EMAIL, [])
-        AuthenticateResponse fedUserAuthResponse = utils.authenticateV1FederatedUser(attributes, true)
-
-        // Create a DA w/ fed user as delegate
-        def daToCreate = new DelegationAgreement().with {
-            it.name = "a name"
-            it.domainId = sharedUserAdmin.domainId
-            it
-        }
-        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
-        assert cloud20.addUserDelegate(sharedUserAdminToken, da.id, fedUserAuthResponse.user.id).status == SC_NO_CONTENT
-
-        // Auth as regular subuser under the domain1 w/ applyrcnrole logic
-        AuthenticateResponse realSubUserAuthResponse = utils.authenticate(sharedSubUser.username, Constants.DEFAULT_PASSWORD, "true")
-
-        when: "Auth as fed delegate from domain2 under domain1 DA"
-        AuthenticateResponse delegateAuthResponse = utils.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id)
-
-        then: "resultant info is appropriate"
-        assertDelegateAuthSameAsSubuser(delegateAuthResponse, realSubUserAuthResponse, fedUserAuthResponse.user, da)
-
-        cleanup:
-        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
-        reloadableConfiguration.reset()
-    }
-
-    /**
-     * Fed 1.0 API does NOT support setting user groups. Because of this, fed users created under v1 API can not delegate
-     * under a DA for which they are an effective delegate only due to user group membership
-     * @return
-     */
-    def "Valid fed user created via v1.0 Fed API can not auth under DA when member of user group that is a delegate"() {
-        // Create a user group in domain 2
-        UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)
-
-        // Create a fed user under common global IDP and add to group
-        def attributes = SamlAttributeFactory.createAttributes(sharedUserAdmin2.domainId, [], Constants.DEFAULT_FED_EMAIL, [domain2UserGroup.getName()])
-        AuthenticateResponse fedUserAuthResponse = utils.authenticateV1FederatedUser(attributes, true)
-
-        // Create a DA w/ user group as delegate
-        def daToCreate = new DelegationAgreement().with {
-            it.name = "a name"
-            it.domainId = sharedUserAdmin.domainId
-            it
-        }
-        def da = utils.createDelegationAgreement(sharedUserAdminToken, daToCreate)
-        assert cloud20.addUserGroupDelegate(sharedUserAdminToken, da.id, domain2UserGroup.id).status == SC_NO_CONTENT
-
-        when: "Auth as fed delegate from domain2 under the domain1 DA"
-        def delegateAuthResponse = cloud20.authenticateTokenAndDelegationAgreement(fedUserAuthResponse.token.id, da.id)
-
-        then: "resultant info is appropriate"
-        IdmAssert.assertOpenStackV2FaultResponse(delegateAuthResponse, ItemNotFoundFault, SC_NOT_FOUND, null, AuthWithDelegationCredentials.ERROR_MSG_MISSING_AGREEMENT)
-
-        cleanup:
-        utils.deleteDelegationAgreement(sharedUserAdminToken, da)
-    }
-
     def "v2.0 API Fed user that is member of delegate user group can auth under DA"() {
         // Create a user group in domain 2
         UserGroup domain2UserGroup = utils.createUserGroup(sharedSubUser2.domainId)

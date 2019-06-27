@@ -1217,7 +1217,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
     def "list tenants using a federated user's token returns valid reponse"() {
         given:
         def userAdmin = utils.createCloudAccount()
-        AuthenticateResponse fedUserAuthResponse = utils.createFederatedUserForAuthResponse(userAdmin.domainId)
+        AuthenticateResponse fedUserAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId)
         def fedUserToken = fedUserAuthResponse.token.id
 
         when:

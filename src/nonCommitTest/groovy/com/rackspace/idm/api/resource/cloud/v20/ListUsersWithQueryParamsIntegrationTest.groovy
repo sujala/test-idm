@@ -34,7 +34,7 @@ class ListUsersWithQueryParamsIntegrationTest extends RootIntegrationTest {
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
         utils.domainRcnSwitch(domainId, Constants.RCN_ALLOWED_FOR_INVITE_USERS)
         unverifiedUser = utils.createUnverifiedUser(domainId)
-        federatedUser = utils.createFederatedUser(domainId)
+        federatedUser = utils.authenticateFederatedUser(domainId).user
 
         // Create and setup tenant
         tenant = utils.createTenant(testUtils.getRandomUUID("tenant"), true, testUtils.getRandomUUID("tenant"), userAdmin.domainId)

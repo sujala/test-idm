@@ -22,6 +22,8 @@ import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.Constants.DEFAULT_BROKER_IDP_URI
+import static com.rackspace.idm.Constants.IDP_V2_DOMAIN_URI
 
 class TerminatorIntegrationTest extends RootIntegrationTest {
 
@@ -345,41 +347,36 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
     def "test terminator for federated users when all tenants on user are disabled"() {
         given:
-        def domainId = utils.createDomain()
-        def mossoTenantId = domainId
-        def nastTenantId = utils.getNastTenant(domainId)
+        def userAdmin = utils.createCloudAccount()
+        def fedRequest = utils.createFedRequest(userAdmin, DEFAULT_BROKER_IDP_URI, IDP_V2_DOMAIN_URI)
+        def mossoTenantId = userAdmin.domainId
+        def nastTenantId = utils.getNastTenant(userAdmin.domainId)
         def username = testUtils.getRandomUUID("samlUser")
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, 500, domainId, [].asList());
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
         when: "disable tenants in domain and auth as federated user"
         utils.updateTenant(mossoTenantId, false)
         utils.updateTenant(nastTenantId, false)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlResponse = utils.authenticateV2FederatedUser(fedRequest)
 
         then: "successful auth and empty service catalog"
-        samlResponse.status == 200
-        def responseData = samlResponse.getEntity(AuthenticateResponse).value
-        def samlToken = responseData.token.id
+        def samlToken = samlResponse.token.id
         def listEndpointsData = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), samlToken).getEntity(EndpointList).value
-        assert responseData.serviceCatalog.service.endpoint.flatten().size() == 0
+        assert samlResponse.serviceCatalog.service.endpoint.flatten().size() == 0
         assert listEndpointsData.endpoint.size() == 0
 
         when: "enable one of the tenants and auth again"
         utils.updateTenant(mossoTenantId, true)
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        samlResponse = utils.authenticateV2FederatedUser(fedRequest)
 
         then: "successful and service catalog is popualted again"
-        def responseData2 = samlResponse.getEntity(AuthenticateResponse).value
-        def samlToken2 = responseData.token.id
+        def samlToken2 = samlResponse.token.id
         def listEndpointsData2 = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), samlToken2).getEntity(EndpointList).value
-        responseData2.serviceCatalog.service.endpoint.flatten().size() > 0
+        samlResponse.serviceCatalog.service.endpoint.flatten().size() > 0
         assert listEndpointsData2.endpoint.size() > 0
 
         cleanup:
-        utils.deleteUsers(users)
-        deleteFederatedUserQuietly(username)
+        utils.deleteFederatedUserQuietly(fedRequest.username)
+        utils.deleteUserQuietly(userAdmin)
     }
 
     def "trying to call v1.1 admin auth call for domain with user admin with all tenants disabled returns error"() {

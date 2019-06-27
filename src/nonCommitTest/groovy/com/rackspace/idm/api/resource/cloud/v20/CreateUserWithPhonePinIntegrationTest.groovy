@@ -51,7 +51,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
     def "When a user's token is validated - return Phone PIN" () {
         given:
         def user = utils.createCloudAccount()
-        AuthenticateResponse federatedAuthResponse = utils.createFederatedUserForAuthResponse(user.domainId)
+        AuthenticateResponse federatedAuthResponse = utils.authenticateFederatedUser(user.domainId)
 
         when: "authenticate"
         def response = cloud20.authenticate(user.username, Constants.DEFAULT_PASSWORD, contentType)
@@ -97,7 +97,7 @@ class CreateUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         given:
         def user = utils.createCloudAccount()
 
-        AuthenticateResponse federatedAuthResponse = utils.createFederatedUserForAuthResponse(user.domainId)
+        AuthenticateResponse federatedAuthResponse = utils.authenticateFederatedUser(user.domainId)
 
         def token = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD).token.id
         def impersonatedToken = utils.impersonateWithRacker(user).token.id

@@ -3,13 +3,9 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.apache.commons.lang3.StringUtils
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.CredentialListType
-import org.openstack.docs.identity.api.v2.EndpointList
-import org.openstack.docs.identity.api.v2.Tenant
-import org.openstack.docs.identity.api.v2.User
-import org.openstack.docs.identity.api.v2.UserList
+import org.openstack.docs.identity.api.v2.*
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
@@ -78,10 +74,9 @@ class UserManagerAccessibleResourcesIntegrationTest extends RootIntegrationTest 
         utils.addRoleToUser(userManage2, USER_MANAGE_ROLE_ID)
 
         // Create federated user with user-manage role
-        def username = testUtils.getRandomUUID("userForSaml")
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, DEFAULT_SAML_EXP_SECS, domainId, [Constants.USER_MANAGE_ROLE_NAME], "fedUser@mail.com");
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def fedRequest = utils.createFedRequest(userAdmin, DEFAULT_BROKER_IDP_URI, IDP_V2_DOMAIN_URI)
+        fedRequest.roleNames = [IdentityUserTypeEnum.USER_MANAGER.roleName]
+        def authResponse = utils.authenticateV2FederatedUser(fedRequest)
         fedUser = authResponse.user
         assert authResponse.user.roles.role.find {it.id == USER_MANAGE_ROLE_ID} != null
 
@@ -90,7 +85,7 @@ class UserManagerAccessibleResourcesIntegrationTest extends RootIntegrationTest 
 
     def cleanup() {
         utils.deleteUserQuietly(userManage2)
-        utils.deleteUserQuietly(fedUser)
+        utils.deleteFederatedUserQuietly(fedUser.name)
     }
 
     def "user-manage can add/delete role to another user-manage in the same domain"() {

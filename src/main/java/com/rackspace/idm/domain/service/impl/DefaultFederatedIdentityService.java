@@ -2,25 +2,27 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.entity.IdentityProperty;
+import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.entity.SamlAuthResponse;
+import com.rackspace.idm.domain.entity.SamlLogoutResponse;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.FederatedIdentityService;
+import com.rackspace.idm.domain.service.IdpPolicyFormatEnum;
 import com.rackspace.idm.domain.service.federation.v2.FederatedAuthHandlerV2;
 import com.rackspace.idm.domain.service.federation.v2.FederationUtils;
-import com.rackspace.idm.exception.*;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.SignatureValidationException;
+import com.rackspace.idm.exception.UnrecoverableIdmException;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import com.rackspace.idm.validation.Validator20;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.Predicate;
-import org.apache.commons.collections4.Transformer;
 import org.apache.commons.lang.BooleanUtils;
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.Seconds;
 import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.core.StatusCode;
@@ -35,12 +37,12 @@ import org.springframework.util.Assert;
 
 import javax.naming.ServiceUnavailableException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import static com.rackspace.idm.ErrorCodes.*;
+import static com.rackspace.idm.ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_ORIGIN_ISSUER;
+import static com.rackspace.idm.ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_ORIGIN_SIGNATURE;
 
 /**
  * This class is responsible for handling identity operations related
@@ -56,8 +58,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
     @Autowired
     private SamlSignatureValidator samlSignatureValidator;
-
-    @Autowired FederatedAuthHandlerV1 federatedAuthHandlerV1;
 
     @Autowired
     FederatedAuthHandlerV2 federatedAuthHandlerV2;
@@ -85,24 +85,10 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
     private SAMLSignatureProfileValidator samlSignatureProfileValidator = new SAMLSignatureProfileValidator();
 
-    public static final String ERROR_SERVICE_UNAVAILABLE = "Service Unavailable";
-
     public static final String IDENTITY_PROVIDER_NOT_FOUND_ERROR_MESSAGE = "Identity Provider with id/name: '%s' was not found.";
     public static final String FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE = "IDP creation is currently unavailable due to missing default for IDP policy.";
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE = "Unable to load and parse the default IDP policy.";
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE = "The default IDP policy is not properly configured.";
-
-    /**
-     * @deprecated v1.0 Fed API is deprecated and should no longer ever be used.
-     * @param response
-     * @return
-     * @throws ServiceUnavailableException
-     */
-    @Deprecated
-    @Override
-    public SamlAuthResponse processSamlResponse(Response response) throws ServiceUnavailableException {
-        return federatedAuthHandlerV1.authenticate(response);
-   }
 
     @Override
     public SamlAuthResponse processV2SamlResponse(Response response, boolean applyRcnRoles) throws ServiceUnavailableException {

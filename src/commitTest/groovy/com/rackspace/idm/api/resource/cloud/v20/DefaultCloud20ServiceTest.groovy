@@ -4222,27 +4222,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockAuthConverterCloudV20(service)
         def headers = Mock(HttpHeaders)
 
-        when: "Do not set API header"
-        service.authenticateFederated(headers, new byte[0], false)
-
-        then: "Sent to v1.0"
-        1 * federatedIdentityService.processSamlResponse(_)
-        0 * federatedIdentityService.processV2SamlResponse(_, _)
-
-        when: "Set 1.0 API header"
-        headers.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION) >> [GlobalConstants.FEDERATION_API_V1_0]
-        service.authenticateFederated(headers, new byte[0], false)
-
-        then: "Sent to v1.0"
-        1 * federatedIdentityService.processSamlResponse(_)
-        0 * federatedIdentityService.processV2SamlResponse(_, _)
-
         when: "Set 2.0 API header"
         headers.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION) >> [GlobalConstants.FEDERATION_API_V2_0]
         service.authenticateFederated(headers, new byte[0], false)
 
         then: "Sent to v2.0"
-        0 * federatedIdentityService.processSamlResponse(_)
         1 * federatedIdentityService.processV2SamlResponse(_, _)
     }
 

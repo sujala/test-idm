@@ -1686,16 +1686,14 @@ public class DefaultCloud20Service implements Cloud20Service {
         //determine API version
         List<String> identityVersionHeaderVals = httpHeaders.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION);
         if (CollectionUtils.isEmpty(identityVersionHeaderVals)) {
-            identityVersionHeaderVals = ImmutableList.of(GlobalConstants.FEDERATION_API_V1_0);
+            identityVersionHeaderVals = ImmutableList.of(GlobalConstants.FEDERATION_API_V2_0);
         }
 
         String apiVersion = identityVersionHeaderVals.get(0);
         SamlAuthResponse samlAuthResponse = null;
         try {
             org.opensaml.saml.saml2.core.Response samlResponse = samlUnmarshaller.unmarshallResponse(samlResponseBytes);
-            if (GlobalConstants.FEDERATION_API_V1_0.equalsIgnoreCase(apiVersion)) {
-                samlAuthResponse = federatedIdentityService.processSamlResponse(samlResponse);
-            } else if (GlobalConstants.FEDERATION_API_V2_0.equalsIgnoreCase(apiVersion)) {
+            if (GlobalConstants.FEDERATION_API_V2_0.equalsIgnoreCase(apiVersion)) {
                 samlAuthResponse = federatedIdentityService.processV2SamlResponse(samlResponse, applyRcnRoles);
             } else {
                 exceptionHandler.badRequestExceptionResponse("Unsupported API version");
@@ -1935,7 +1933,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                             suppliedProviderApprovedDomainIds, providerId);
                     for (FederatedUser federatedUser : federatedUsersForDeletion) {
                         // Delete federated user
-                        provisionedUserSourceFederationHandler.deleteFederatedUser(federatedUser);
+                        identityUserService.deleteUser(federatedUser);
+                        //send atom hopper feed showing deletion of this user
+                        atomHopperClient.asyncPost(federatedUser, FeedsUserStatusEnum.DELETED, MDC.get(Audit.GUUID));
                     }
                 }
             }

@@ -595,7 +595,7 @@ class Cloud20Methods {
         return builder.post(ClientResponse)
     }
 
-    def federatedAuthenticate(request, applyRcnRoles = false, String version = null, accept = APPLICATION_XML) {
+    def federatedAuthenticate(request, applyRcnRoles = false, String version = GlobalConstants.FEDERATION_API_V2_0, accept = APPLICATION_XML) {
         initOnUse()
         def queryParams = new MultivaluedMapImpl()
         queryParams.add("apply_rcn_roles", applyRcnRoles)
@@ -1534,7 +1534,7 @@ class Cloud20Methods {
         createIdentityProvider(token, idp)
     }
 
-    def createDomainIdIdentityProviderWithCred(String token, List<String> domainIds, Credential cred) {
+    def createDomainIdentityProviderWithCred(String token, List<String> domainIds, Credential cred) {
         def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cred.entityCertificate)
         def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
         def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
@@ -1643,7 +1643,7 @@ class Cloud20Methods {
      * @return
      */
     def generateDomainIdIdentityProviderWithCred(String token, List<String> domainIds, Credential cred) {
-        def response = createDomainIdIdentityProviderWithCred(token, domainIds, cred)
+        def response = createDomainIdentityProviderWithCred(token, domainIds, cred)
         assert (response.status == SC_CREATED)
         return response.getEntity(IdentityProvider)
     }

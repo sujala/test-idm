@@ -433,15 +433,8 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     @Unroll
     def "validate impersonation token for federated user contains user's IDP acceptContentType=#accept"() {
         given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def userAdmin = utils.createCloudAccount()
+        def authResponse = utils.authenticateFederatedUser(userAdmin.domainId)
         def federatedUser = utils.getUserById(authResponse.getUser().getId())
 
         when: "impersonate the user"
@@ -459,12 +452,12 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         } else {
             userIdp = new JsonSlurper().parseText(validateResponse.getEntity(String))['access'].'user'.'RAX-AUTH:federatedIdp'
         }
-        userIdp == Constants.DEFAULT_IDP_URI
+        userIdp == Constants.IDP_V2_DOMAIN_URI
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
+        utils.deleteFederatedUserQuietly(authResponse.user.name)
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteDomain(userAdmin.domainId)
         staticIdmConfiguration.reset()
 
         where:
@@ -782,18 +775,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
             return result.value
         } else {
             return result;
-        }
-    }
-
-    def deleteFederatedUserQuietly(username) {
-        try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
-            if (federatedUser != null) {
-                ldapFederatedUserRepository.deleteObject(federatedUser)
-            }
-        } catch (Exception e) {
-            //eat but log
-            LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", username), e)
         }
     }
 }

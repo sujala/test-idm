@@ -90,7 +90,7 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
         when: "add user to DAs with management access"
         def addResponses = []
         def userToAdd = utils.createUser(utils.getToken(userAdmin.username))
-        def federatedUserToAdd = utils.createFederatedUser(userAdmin.domainId)
+        def federatedUserToAdd = utils.authenticateFederatedUser(userAdmin.domainId).user
         def userGroupToAdd = utils.createUserGroup(userAdmin.domainId)
         dasRcnAdminsCanManage.each { daToManage ->
             addResponses << cloud20.addUserDelegate(rcnAdminToken, daToManage.id, userToAdd.id)
@@ -143,7 +143,7 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
         def addResponsesCanManage = []
         def addResponsesCannotManage = []
         def userToAdd = utils.createUser(utils.getToken(userAdmin.username))
-        def federatedUserToAdd = utils.createFederatedUser(userAdmin.domainId)
+        def federatedUserToAdd = utils.authenticateFederatedUser(userAdmin.domainId).user
         def userGroupToAdd = utils.createUserGroup(userAdmin.domainId)
         dasUserAdminsCanManage.each { daToManage ->
             addResponsesCanManage << cloud20.addUserDelegate(userAdminToken, daToManage.id, userToAdd.id)
@@ -219,7 +219,7 @@ class DelegationManagementAccessIntegrationTest extends RootIntegrationTest {
         def addResponsesCanManage = []
         def addResponsesCannotManage = []
         def userToAdd = utils.createUser(utils.getToken(userAdmin.username))
-        def federatedUserToAdd = utils.createFederatedUser(userAdmin.domainId)
+        def federatedUserToAdd = utils.authenticateFederatedUser(userAdmin.domainId).user
         def userGroupToAdd = utils.createUserGroup(userAdmin.domainId)
         dasUserAdminsCanManage.each { daToManage ->
             addResponsesCanManage << cloud20.addUserDelegate(userManagerToken, daToManage.id, userToAdd.id)

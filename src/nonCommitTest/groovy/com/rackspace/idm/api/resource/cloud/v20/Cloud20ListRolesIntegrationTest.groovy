@@ -800,7 +800,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
         utils.domainRcnSwitch(userAdmin.domainId, "RCN-123-123-123")
 
-        AuthenticateResponse fedUserAuthResponse = utils.createFederatedUserForAuthResponse(userAdmin.domainId)
+        AuthenticateResponse fedUserAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId)
 
         when: "admin list fed user's global roles"
         def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), fedUserAuthResponse.user.id, serviceId, applyRcnRoles)
@@ -824,14 +824,8 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
 
     def "Fed user can get own global roles" () {
         given: "A new user admin"
-        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
-
-        def expSecs = DEFAULT_SAML_EXP_SECS
-        def username = testUtils.getRandomUUID("samlUser")
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, userAdmin.domainId, [ROLE_RBAC1_NAME])
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        assert samlResponse.status == HttpStatus.SC_OK
-        def fedUserAuthResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def userAdmin = utils.createCloudAccount()
+        def fedUserAuthResponse = utils.authenticateFederatedUser(userAdmin.domainId, null, [ROLE_RBAC1_NAME] as Set<String>)
 
         when: "fed user lists own global roles"
         def userGlobalRolesResponse = cloud20.listUserGlobalRoles(fedUserAuthResponse.token.id, fedUserAuthResponse.user.id)
@@ -841,7 +835,6 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         globalRoles.role.size() == 2
         assert globalRoles.role.find({it.id == DEFAULT_USER_ROLE_ID}) != null
         assert globalRoles.role.find({it.id == ROLE_RBAC1_ID}) != null
-
     }
 
     def getRoleListEntity(response) {

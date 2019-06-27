@@ -199,7 +199,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
         def idpCredential = SamlCredentialUtils.generateX509Credential()
-        def samlProducer = new SamlProducer(idpCredential)
         def pubCertPemString = SamlCredentialUtils.getCertificateAsPEMString(idpCredential.entityCertificate)
         def issuer = UUID.randomUUID().toString()
         def idpUrl = UUID.randomUUID().toString()
@@ -217,14 +216,17 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
             }
             idp = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpData).getEntity(IdentityProvider)
         }
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, RandomStringUtils.randomAscii(25), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
-        def federationResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+
+        def brokerCred = SamlCredentialUtils.generateX509Credential()
+        def brokerIdp =  utils.createIdentityProviderWithCred(utils.serviceAdminToken, IdentityProviderFederationTypeEnum.BROKER, brokerCred)
+
+        def fedRequest = utils.createFedRequest(userAdmin, brokerIdp.issuer, idp.issuer)
+        def federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(brokerCred, idpCredential)
+        def samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def federationResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion)).getEntity(AuthenticateResponse).value
         def federatedUser = utils.getUserById(federationResponse.user.id)
         def federatedUserToken = federationResponse.token.id
         def idpEntity = identityProviderDao.getIdentityProviderByName(idp.name)
-        def brokerCredential = SamlCredentialUtils.generateX509Credential()
-        def brokerIdp = cloud20.createIdentityProviderWithCred(utils.getServiceAdminToken(), IdentityProviderFederationTypeEnum.BROKER, brokerCredential).getEntity(IdentityProvider)
-        def v2authRequestGenerator = new FederatedDomainAuthRequestGenerator(brokerCredential, idpCredential)
 
         when: "disable the IDP"
         resetCloudFeedsMock()
@@ -263,12 +265,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then:
         validateResponse.status == 404
 
-        when: "try to auth against the IDP using v1 fed auth"
-        response = cloud20.samlAuthenticate(samlAssertion)
-
-        then:
-        response.status == 403
-
         when: "try to auth against the IDP using v2 fed auth"
         def v2AuthRequest = new FederatedDomainAuthGenerationRequest().with {
             it.domainId = domainId
@@ -282,8 +278,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
             it.roleNames = [] as Set
             it
         }
-        def samlResponse = v2authRequestGenerator.createSignedSAMLResponse(v2AuthRequest)
-        response = cloud20.federatedAuthenticateV2(v2authRequestGenerator.convertResponseToString(samlResponse))
+        samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(v2AuthRequest)
+        response = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then:
         response.status == 403
@@ -294,7 +290,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
             it
         }
         cloud20.updateIdentityProvider(utils.getServiceAdminToken(), idp.id, idpRequest)
-        response = cloud20.samlAuthenticate(samlAssertion)
+        response = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then:
         response.status == 200
@@ -313,7 +309,10 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         validateResponse.status == 404
 
         cleanup:
+        utils.deleteFederatedUserQuietly(fedRequest.username)
         utils.deleteUserQuietly(userAdmin)
+        utils.deleteIdentityProviderQuietly(utils.serviceAdminToken, idp.issuer)
+        utils.deleteIdentityProviderQuietly(utils.serviceAdminToken, brokerIdp.issuer)
 
         where:
         creationType << IdpCreationType.values()
@@ -321,14 +320,19 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
     def "impersonating a federated user is allowed for disabled IDPs"() {
         given:
-        def domainId = utils.createDomain()
-        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
-        def idpCredential = SamlCredentialUtils.generateX509Credential()
-        def samlProducer = new SamlProducer(idpCredential)
-        IdentityProvider idp = cloud20.createIdentityProviderWithCred(utils.getServiceAdminToken(), IdentityProviderFederationTypeEnum.DOMAIN, idpCredential).getEntity(IdentityProvider)
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, RandomStringUtils.randomAlphanumeric(8), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
-        def response = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
-        def federatedUser = utils.getUserById(response.user.id)
+        def userAdmin = utils.createCloudAccount()
+        def cred = SamlCredentialUtils.generateX509Credential()
+        def originIdp = utils.createIdentityProviderWithCred(utils.serviceAdminToken, IdentityProviderFederationTypeEnum.DOMAIN, cred)
+        def cred2 = SamlCredentialUtils.generateX509Credential()
+        def brokerIdp = utils.createIdentityProviderWithCred(utils.serviceAdminToken, IdentityProviderFederationTypeEnum.BROKER, cred2)
+
+        def generator = new FederatedDomainAuthRequestGenerator(cred2, cred)
+        def fedRequest = utils.createFedRequest(userAdmin, brokerIdp.issuer, originIdp.issuer)
+        def samlAssertion = generator.createSignedSAMLResponse(fedRequest)
+        def response = cloud20.authenticateV2FederatedUser(generator.convertResponseToString(samlAssertion))
+        assert response.status == SC_OK
+        def authResponse = response.getEntity(AuthenticateResponse).value
+        def federatedUser = utils.getUserById(authResponse.user.id)
 
         when: "impersonate the federated user"
         def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
@@ -343,7 +347,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
             it.enabled = false
             it
         }
-        response = cloud20.updateIdentityProvider(utils.getServiceAdminToken(), idp.id, idpRequest)
+        response = cloud20.updateIdentityProvider(utils.getServiceAdminToken(), originIdp.id, idpRequest)
 
         then: "the IDP is disabled"
         response.status == 200
@@ -382,14 +386,17 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         validateResponse.status == 200
 
         when: "impersonate the federated user again, after IDP is deleted"
-        utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), idp.id)
+        utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), originIdp.id)
         def impersonationResponse3 = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
 
         then:
         impersonationResponse3.status == 404
 
         cleanup:
+        utils.deleteFederatedUserQuietly(fedRequest.username)
         utils.deleteUserQuietly(userAdmin)
+        utils.deleteIdentityProviderQuietly(utils.serviceAdminToken, originIdp.id)
+        utils.deleteIdentityProviderQuietly(utils.serviceAdminToken, brokerIdp.id)
     }
 
     @Unroll
@@ -439,9 +446,13 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
             it
         }
         identityProviderDao.addIdentityProvider(idpEntityData)
-        def samlProducer = new SamlProducer(cred)
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idpEntityData.uri, RandomStringUtils.randomAlphanumeric(8), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
 
+        def cred2 = SamlCredentialUtils.generateX509Credential()
+        def brokerIdp = utils.createIdentityProviderWithCred(utils.serviceAdminToken, IdentityProviderFederationTypeEnum.BROKER, cred2)
+
+        def fedRequest = utils.createFedRequest(userAdmin, brokerIdp.issuer, idpEntityData.uri)
+        def federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(cred2, cred)
+        def samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when: "get the IDP"
         def getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idpEntityData.providerId)
@@ -450,7 +461,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getIdp.enabled
 
         when: "try to authenticate to the IDP"
-        def federationResponse = cloud20.samlAuthenticate(samlAssertion)
+        def federationResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then:
         federationResponse.status == 200
@@ -497,6 +508,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), idpEntityData.providerId)
+        utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), brokerIdp.id)
         utils.deleteUserQuietly(userAdmin)
     }
 
@@ -1580,7 +1592,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "Assert forbidden"
         IdmAssert.assertRackspaceCommonFaultResponse(response, com.rackspace.api.common.fault.v1.ForbiddenFault, SC_FORBIDDEN, ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_INVALID_DOMAIN_FOR_USER,DefaultCloud20Service.NOT_AUTHORIZED))
 
-
         when: "Creating IDP using user admin user w/ 'rax_status_restricted' group"
         def raxStatusRestrictedGroup = v2Factory.createGroup(Constants.RAX_STATUS_RESTRICTED_GROUP_NAME).with {
             it.id = Constants.RAX_STATUS_RESTRICTED_GROUP_ID
@@ -2427,51 +2438,42 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
     def "Create a DOMAIN IDP with approvedDomains and single cert. Validate can immediately fed auth for user for approvedDomain"() {
         given:
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def domainId = utils.createDomain()
-        cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
         def idpManager = utils.createIdentityProviderManager()
         def idpManagerToken = utils.getToken(idpManager.username)
 
-        def keyPair1 = SamlCredentialUtils.generateKeyPair()
-        def cert1 = SamlCredentialUtils.generateCertificate(keyPair1)
-        def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cert1)
-        def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
-        def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
-        def samlProducer1 = new SamlProducer(SamlCredentialUtils.generateX509Credential(cert1, keyPair1))
+        def userAdmin = utils.createCloudAccount()
 
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def cred = SamlCredentialUtils.generateX509Credential()
+        def response = cloud20.createDomainIdentityProviderWithCred(utils.serviceAdminToken, [userAdmin.domainId], cred)
+        def originIdp = response.getEntity(IdentityProvider)
 
-        //create a DOMAIN IDP with single certs and approvedDomains
-        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
-            it.publicCertificates = publicCertificates
-            it
-        }
-        IdentityProvider creationResultIdp = utils.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
+        def cred2 = SamlCredentialUtils.generateX509Credential()
+        def brokerIdp = utils.createIdentityProviderWithCred(utils.serviceAdminToken, IdentityProviderFederationTypeEnum.BROKER, cred2)
+
+        def fedRequest = utils.createFedRequest(userAdmin, brokerIdp.issuer, originIdp.issuer)
+        def federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(cred2, cred)
+        def samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when: "auth user in domain with IDP"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(creationResultIdp.issuer, username, expSecs, domainId, null, email, samlProducer1);
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then: "success"
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "auth user in different domain for IDP"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(creationResultIdp.issuer, username, expSecs, "otherdomain", null, email, samlProducer1);
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        fedRequest = utils.createFedRequest(userAdmin, brokerIdp.issuer, originIdp.issuer)
+        fedRequest.domainId = "otherDomain"
+        samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then: "failure"
         samlResponse.status == HttpServletResponse.SC_FORBIDDEN
 
         cleanup:
-        if (creationResultIdp) {
-            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
-        }
-        utils.deleteUserQuietly(idpManager)
-        utils.deleteUsersQuietly(users)
+        utils.deleteFederatedUserQuietly(fedRequest.username, originIdp.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, originIdp.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, brokerIdp.id)
+        utils.deleteUsersQuietly([userAdmin, idpManager])
     }
 
     @Unroll
@@ -3549,37 +3551,27 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManager = utils.createIdentityProviderManager()
         def idpManagerToken = utils.getToken(idpManager.username)
 
-        // Create new admin users for domain
-        def domain = utils.createDomainEntity()
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdmin(domain.id)
-        def domain2 = utils.createDomainEntity()
-        def userAdmin2, users2
-        (userAdmin2, users2) = utils.createUserAdmin(domain2.id)
+        def userAdmin = utils.createCloudAccount()
+        def userAdmin2 = utils.createCloudAccount()
 
-        def issuer = getRandomUUID("issuer")
-        def keyPair1 = SamlCredentialUtils.generateKeyPair()
-        def cert1 = SamlCredentialUtils.generateCertificate(keyPair1)
-        def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cert1)
-        def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
-        def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
-        def samlProducerForSharedIdp = new SamlProducer(SamlCredentialUtils.generateX509Credential(cert1, keyPair1))
+        def cred = SamlCredentialUtils.generateX509Credential()
+        def response = cloud20.createDomainIdentityProviderWithCred(utils.serviceAdminToken, [userAdmin.domainId, userAdmin2.domainId], cred)
+        def originIdp = response.getEntity(IdentityProvider)
 
-        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider(getRandomUUID(), "description", issuer, IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id, domain2.id].asList()).with {
-            it.publicCertificates = publicCertificates
-            it
-        }
-        def approvedDomainsIdpEntity  = utils.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
+        def cred2 = SamlCredentialUtils.generateX509Credential()
+        def brokerIdp = utils.createIdentityProviderWithCred(utils.serviceAdminToken, IdentityProviderFederationTypeEnum.BROKER, cred2)
+
+        def fedRequest = utils.createFedRequest(userAdmin, brokerIdp.issuer, originIdp.issuer)
+        def federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(cred2, cred)
+        def samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+
+        def fedRequest2 = utils.createFedRequest(userAdmin2, brokerIdp.issuer, originIdp.issuer)
+        def federatedDomainAuthRequestGenerator2 = new FederatedDomainAuthRequestGenerator(cred2, cred)
+        def samlAssertion2 = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest2)
 
         when: "Create new federated users"
-        def username = testUtils.getRandomUUID("fedUser")
-        def username2 = testUtils.getRandomUUID("fedUser2")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(issuer, username, expSecs, domain.id, null, email, samlProducerForSharedIdp);
-        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(issuer, username2, expSecs, domain2.id, null, email, samlProducerForSharedIdp);
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
+        def samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
+        def samlResponse2 = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator2.convertResponseToString(samlAssertion2))
 
         then: "Verify successful authentication"
         samlResponse.status == HttpServletResponse.SC_OK
@@ -3602,18 +3594,18 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         then: "Verify users exist"
         fedUser.id == authResponse.user.id
-        fedUser.username == username
+        fedUser.username == fedRequest.username
         fedUser2.id == authResponse2.user.id
-        fedUser2.username == username2
+        fedUser2.username == fedRequest2.username
 
         when: "Updating approved domains on IDP"
         IdentityProvider updateIdentityProvider = new IdentityProvider().with {
             ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
-            approvedDomainIds.approvedDomainId.addAll([domain2.id].asList())
+            approvedDomainIds.approvedDomainId.addAll([userAdmin2.domainId].asList())
             it.approvedDomainIds = approvedDomainIds
             it
         }
-        def updateResponse = cloud20.updateIdentityProvider(idpManagerToken, approvedDomainsIdpEntity.id, updateIdentityProvider)
+        def updateResponse = cloud20.updateIdentityProvider(idpManagerToken, originIdp.id, updateIdentityProvider)
 
         then: "Assert update IDP response"
         updateResponse.status == SC_OK
@@ -3631,12 +3623,13 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         validate2Response.status == SC_OK
 
         cleanup:
-        utils.deleteIdentityProviderQuietly(idpManagerToken, approvedDomainsIdpEntity.id)
-        utils.deleteUserQuietly(idpManager)
-        utils.deleteUsers(users)
-        utils.deleteUsers(users2)
-        utils.deleteDomain(domain.id)
-        utils.deleteDomain(domain2.id)
+        utils.deleteFederatedUserQuietly(fedRequest.username, originIdp.id)
+        utils.deleteFederatedUserQuietly(fedRequest2.username, originIdp.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, brokerIdp.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, originIdp.id)
+        utils.deleteUsersQuietly([idpManager, userAdmin, userAdmin2])
+        utils.deleteDomain(userAdmin.domainId)
+        utils.deleteDomain(userAdmin2.domainId)
     }
 
     @Unroll
@@ -3772,39 +3765,25 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     def "Deleting IDP, deletes all its fed users"() {
         given:
         def idpManagerToken = utils.getServiceAdminToken()
-        def domainId = utils.createDomain()
 
-        def (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdmin = utils.createCloudAccount()
+        def cred = SamlCredentialUtils.generateX509Credential()
+        def originIdp = utils.createIdentityProviderWithCred(utils.serviceAdminToken, IdentityProviderFederationTypeEnum.DOMAIN, cred)
+        def cred2 = SamlCredentialUtils.generateX509Credential()
+        def brokerIdp = utils.createIdentityProviderWithCred(utils.serviceAdminToken, IdentityProviderFederationTypeEnum.BROKER, cred2)
 
-        def username = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-
-        //create a new IDP
-        def pem = IOUtils.toString(new ClassPathResource(Constants.DEFAULT_IDP_PUBLIC_KEY).getInputStream()).replace("-----BEGIN CERTIFICATE-----", "").replace("-----END CERTIFICATE-----", "").replace("\n", "")
-        def pubCerts1 = v2Factory.createPublicCertificate(pem)
-        def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
-        IdentityProvider idp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
-            it.publicCertificates = publicCertificates
-            it
-        }
-        def response = cloud20.createIdentityProvider(idpManagerToken, idp)
-        assert response.status == SC_CREATED
-        IdentityProvider identityProvider = response.getEntity(IdentityProvider)
-
-        //create a fed user for that IDP
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email);
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        assert samlResponse.status == SC_OK
-        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def fedUserId = authResponse.user.id
-        utils.getUserById(fedUserId, idpManagerToken)
+        def generator = new FederatedDomainAuthRequestGenerator(cred2, cred)
+        def fedRequest = utils.createFedRequest(userAdmin, brokerIdp.issuer, originIdp.issuer)
+        def samlAssertion = generator.createSignedSAMLResponse(fedRequest)
+        def response = cloud20.authenticateV2FederatedUser(generator.convertResponseToString(samlAssertion))
+        assert response.status == SC_OK
+        def authReponse = response.getEntity(AuthenticateResponse).value
 
         when: "delete the provider"
-        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, identityProvider.id)
+        cloud20.deleteIdentityProvider(idpManagerToken, originIdp.id)
 
         then: "All associated fed users are deleted"
-        assert cloud20.getUserById(idpManagerToken, fedUserId).status == SC_NOT_FOUND
+        assert cloud20.getUserById(idpManagerToken, authReponse.user.id).status == SC_NOT_FOUND
     }
 
     def "test get IDP access" () {
@@ -4016,60 +3995,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         where:
         requestContentType              | _
         MediaType.APPLICATION_XML_TYPE  | _
-        MediaType.APPLICATION_JSON_TYPE | _
-    }
-
-    @Unroll
-    def "When a v1 federation auth request is made w/ a SAML Response issued by a BROKER IDP, a 403 must be returned."() {
-        given:
-        def idpManager = utils.createIdentityProviderManager()
-        def idpManagerToken = utils.getToken(idpManager.username)
-
-        when: "Create IDP can set federationType of 'BROKER'"
-        def keyPair = SamlCredentialUtils.generateKeyPair()
-        def certificate = SamlCredentialUtils.generateCertificate(keyPair)
-        def pubCertPemString = SamlCredentialUtils.getCertificateAsPEMString(certificate)
-        def publicCertificate = v2Factory.createPublicCertificate(pubCertPemString)
-        def publicCertificates = v2Factory.createPublicCertificates(publicCertificate)
-        def samlProducerForSharedIdp = new SamlProducer(SamlCredentialUtils.generateX509Credential(certificate, keyPair))
-
-        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.BROKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null).with {
-            it.publicCertificates = publicCertificates
-            it
-        }
-
-        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
-        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
-
-        then: "created successfully"
-        response.status == SC_CREATED
-
-        when: "federate with BROKER IDP"
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def email = "fedIntTest@invalid.rackspace.com"
-        def assertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(domainGroupIdp.issuer, username, 5000, domainId, null, email, samlProducerForSharedIdp);
-        response = cloud20.federatedAuthenticate(assertion)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Error code: 'FED-000'; v1 Authentication is not supported for this IDP")
-
-        when: "delete the provider"
-        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
-
-        then: "idp deleted"
-        deleteIdpResponse.status == SC_NO_CONTENT
-        cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
-
-        cleanup:
-        if (creationResultIdp) {
-            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
-        }
-        utils.deleteUserQuietly(idpManager)
-
-        where:
-        requestContentType | _
-        MediaType.APPLICATION_XML_TYPE | _
         MediaType.APPLICATION_JSON_TYPE | _
     }
 

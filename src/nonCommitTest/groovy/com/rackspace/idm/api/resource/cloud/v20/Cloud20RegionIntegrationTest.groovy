@@ -84,10 +84,8 @@ class Cloud20RegionIntegrationTest extends RootIntegrationTest {
         assert userAdmin.defaultRegion == region.name
 
         //now auth a federated user in the region
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, 500, domainId, null, "fedIntTest@invalid.rackspace.com")
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        assert samlResponse.status == 200
+        def samlResponse = utils.authenticateFederatedUser(domainId)
+        assert samlResponse.user != null
 
         //now delete the user admin so the only user in the region is the federated user
         utils.deleteUser(userAdmin)
@@ -101,7 +99,7 @@ class Cloud20RegionIntegrationTest extends RootIntegrationTest {
         fault.message == DefaultCloudRegionService.ERROR_USERS_WITHIN_REGION_MESSAGE
 
         when: "now delete the user and try to delete the region"
-        utils.logoutFederatedUser(username)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
         response = cloud20.deleteRegion(utils.getServiceAdminToken(), region.name)
 
         then: "success"

@@ -30,7 +30,7 @@ class AutoAssignRoleIntegrationTest extends RootIntegrationTest {
         def userAdminAuthResponse = utils.authenticate(userAdmin.username)
         def userManagerAuthResponse = utils.authenticate(userManager.username)
         def defaultUserAuthResponse = utils.authenticate(defaultUser.username)
-        def fedUserAuthResponse = utils.createFederatedUserForAuthResponse(domainId)
+        def fedUserAuthResponse = utils.authenticateFederatedUser(domainId)
 
         then: "the auto-assigned tenant role is assigned to the users"
         assertAutoAssignRoleOnTenantInAuthResponse(userAdminAuthResponse, tenant)

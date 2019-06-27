@@ -77,45 +77,35 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
     @Unroll
     def "Retrieve federated user by id response accept type: #mediaType"() {
         //create a federated user
-        def fedUsername = testUtils.getRandomUUID("subUserForSaml")
-        def fedEmail = "fedIntTest@invalid.rackspace.com"
-
-        //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, fedUsername, 500, userAdmin.domainId, null, fedEmail);
-        AuthenticateResponse samlAuthResponse = null
-        for (int i=0; samlAuthResponse == null && i<10; i++) { // Workaround random failures in Jenkins
-            try {
-                samlAuthResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
-            } catch (GroovyCastException e) {
-                samlAuthResponse = null
-                sleep(500)
-            }
-        }
-        UserForAuthenticateResponse samlUser = samlAuthResponse.user
+        def userAdmin = utils.createCloudAccount()
+        def authResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        UserForAuthenticateResponse samlUser = authResponse.user
 
         when: "Retrieve federated user"
         User retrievedFedUser = getUserById(samlUser.id, mediaType)
 
         then: "the user is returned"
         retrievedFedUser != null
-        retrievedFedUser.domainId == domainId
+        retrievedFedUser.domainId == userAdmin.domainId
         retrievedFedUser.defaultRegion == userAdmin.defaultRegion
-        retrievedFedUser.email == fedEmail
+        retrievedFedUser.email == Constants.DEFAULT_FED_EMAIL
         retrievedFedUser.username == samlUser.name
         BooleanUtils.isTrue(retrievedFedUser.isEnabled())
         BooleanUtils.isNotTrue(retrievedFedUser.isMultiFactorEnabled())
         retrievedFedUser.roles == null
         retrievedFedUser.groups == null
         retrievedFedUser.secretQA == null
-        retrievedFedUser.federatedIdp == Constants.DEFAULT_IDP_URI
+        retrievedFedUser.federatedIdp == Constants.IDP_V2_DOMAIN_URI
         retrievedFedUser.created != null
         retrievedFedUser.phonePinState == PhonePinStateEnum.ACTIVE
 
         cleanup:
-            deleteFederatedUserQuietly(samlUser)
+        utils.deleteFederatedUserQuietly(samlUser.name)
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteDomain(userAdmin.domainId)
 
         where:
-            mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
     /**

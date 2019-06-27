@@ -177,20 +177,7 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
 
         // Create new federated user with roles and user group
         def tenantRole = String.format("%s/%s", ROLE_RBAC2_NAME, fawsTenant2.name)
-        def samlRequest = new FederatedDomainAuthGenerationRequest().with {
-            it.domainId = userAdmin.domainId
-            it.validitySeconds = 100
-            it.brokerIssuer = DEFAULT_BROKER_IDP_URI
-            it.originIssuer = IDP_V2_DOMAIN_URI
-            it.email = DEFAULT_FED_EMAIL
-            it.responseIssueInstant = new DateTime()
-            it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
-            it.username = UUID.randomUUID().toString()
-            it.roleNames = [ROLE_RBAC1_NAME, tenantRole] as Set
-            it.groupNames = [createdUserGroup.name] as Set
-            it
-        }
-        AuthenticateResponse authResponse = utils.authenticateV2FederatedUser(samlRequest)
+        AuthenticateResponse authResponse = utils.authenticateFederatedUser(userAdmin.domainId, [createdUserGroup.name] as Set, [ROLE_RBAC1_NAME, tenantRole] as Set)
         def fedUserToken = authResponse.token.id
 
         def principalId
@@ -468,20 +455,19 @@ class ManageDelegationAgreementRolesRestIntegrationTest extends RootIntegrationT
     @Unroll
     def "modify roles on DA with federated USER principal; mediaType = #mediaType"() {
         given:
-        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
-
-        def expSecs = DEFAULT_SAML_EXP_SECS
-        def username = testUtils.getRandomUUID("samlUser")
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, userAdmin.domainId, [ROLE_RBAC1_NAME, ROLE_RBAC2_NAME])
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def userAdmin = utils.createCloudAccount()
+        def fedRequest = utils.createFedRequest(userAdmin).with {
+            it.roleNames = [ROLE_RBAC1_NAME, ROLE_RBAC2_NAME]
+            it
+        }
+        def authResponse = utils.authenticateV2FederatedUser(fedRequest)
         def fedUserToken = authResponse.token.id
 
         def cloudTenantId = userAdmin.domainId
         def filesTenantId = utils.getNastTenant(cloudTenantId)
         def delegationAgreement = new DelegationAgreement().with {
             it.name = testUtils.getRandomUUIDOfLength("da", 32)
-            it.domainId = domainId
+            it.domainId = userAdmin.domainId
             it
         }
         def createdDA = utils.createDelegationAgreement(fedUserToken, delegationAgreement)

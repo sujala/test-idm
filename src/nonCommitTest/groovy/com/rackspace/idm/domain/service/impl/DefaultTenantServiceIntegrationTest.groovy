@@ -17,7 +17,7 @@ class DefaultTenantServiceIntegrationTest extends RootIntegrationTest {
 
     def "getEffectiveGlobalRolesForUser: Returns fed user's global roles"() {
         def userAdmin = utils.createCloudAccount()
-        def fedUser = utils.createFederatedUser(userAdmin.domainId)
+        def fedUser = utils.authenticateFederatedUser(userAdmin.domainId).user
 
         FederatedUser fedEntity = identityUserService.getFederatedUserById(fedUser.id)
         assert fedEntity != null
