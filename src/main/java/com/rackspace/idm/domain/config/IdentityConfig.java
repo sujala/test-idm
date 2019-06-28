@@ -238,8 +238,6 @@ public class IdentityConfig {
     public static final String FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP = "feature.return.json.specific.cloud.version";
     public static final boolean FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT = true;
 
-    public static final String FEATURE_REUSE_JAXB_CONTEXT = "feature.reuse.jaxb.context";
-    public static final boolean FEATURE_REUSE_JAXB_CONTEXT_DEFAULT = true;
 
     public static final String MAX_CA_DIRECTORY_PAGE_SIZE_PROP = "max.ca.directory.page.size";
     public static final int MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT = 1000;
@@ -846,7 +844,6 @@ public class IdentityConfig {
         defaults.put(PURGE_TRRS_OBSOLETE_AFTER_PROP, PURGE_TRRS_OBSOLETE_AFTER_DEFAULT);
 
         defaults.put(FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT);
-        defaults.put(FEATURE_REUSE_JAXB_CONTEXT, FEATURE_REUSE_JAXB_CONTEXT_DEFAULT);
 
         defaults.put(MAX_CA_DIRECTORY_PAGE_SIZE_PROP, MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT);
 
@@ -2318,10 +2315,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP);
         }
 
-        @IdmProp(key = FEATURE_REUSE_JAXB_CONTEXT, versionAdded = "3.3.3", description = "Whether or not to reuse JAXBContext across threads rather than creating new one for each use which causes a memory leak. This feature is only here to revert to existing functinality if required.")
-        public boolean reuseJaxbContext() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_REUSE_JAXB_CONTEXT);
-        }
 
         @IdmProp(key = MAX_CA_DIRECTORY_PAGE_SIZE_PROP, versionAdded = "3.5.0", description = "The maximum page size allowed to query the directory for. This property should be set to match the maximum query size as configured on " +
                 "the CA directory side. It should also be noted that this property will also impact other services through the API. For example, the API call used for deleting TRRs will limit how many TRRs can be deleted in a single request based upon this configuration.")

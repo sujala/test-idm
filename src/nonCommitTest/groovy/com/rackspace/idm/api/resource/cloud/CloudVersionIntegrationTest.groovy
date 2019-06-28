@@ -66,7 +66,6 @@ class CloudVersionIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Returning Versions.xml returns when feature.reuse.jaxb.context set to #value"() {
         when: "get xml with feature"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, value)
         def response = cloud.getVersions(MediaType.APPLICATION_XML_TYPE)
 
         then: "get xml specific version"
@@ -78,37 +77,6 @@ class CloudVersionIntegrationTest extends RootIntegrationTest {
         !val.contains("https://identity.api.rackspacecloud.com/v3")
         val.contains("<atom:link")
 
-        where:
-        value | _
-        true | _
-        false | _
     }
 
-    def "Returning Versions20.xml returns same value regardless of feature.reuse.jaxb.context"() {
-        when: "get xml with feat"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, true)
-        def responseTrue = cloud20.getVersion(MediaType.APPLICATION_XML_TYPE)
-
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, false)
-        def responseFalse = cloud20.getVersion(MediaType.APPLICATION_XML_TYPE)
-
-        then: "get json specific version"
-        responseTrue.status == HttpStatus.SC_OK
-        responseFalse.status == HttpStatus.SC_OK
-        responseTrue.getEntity(String) == responseFalse.getEntity(String)
-    }
-
-    def "Returning Versions11.xml returns same value regardless of feature.reuse.jaxb.context"() {
-        when: "get xml with feat"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, true)
-        def responseTrue = cloud11.getVersion()
-
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, false)
-        def responseFalse = cloud11.getVersion()
-
-        then: "get json specific version"
-        responseTrue.status == HttpStatus.SC_OK
-        responseFalse.status == HttpStatus.SC_OK
-        responseTrue.getEntity(String) == responseFalse.getEntity(String)
-    }
 }
