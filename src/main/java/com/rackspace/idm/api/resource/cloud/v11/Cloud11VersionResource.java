@@ -94,17 +94,6 @@ public class Cloud11VersionResource {
         return cloud11Service.validateToken(request, tokenId, belongsTo, type, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Revoke token")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11TokenValidationAbsolutePathPatternRegex)
-    @DELETE
-    @Path("token/{tokenId}")
-    public Response revokeToken(@Context HttpServletRequest request,
-                                @PathParam("tokenId") String tokenId,
-                                @Context HttpHeaders httpHeaders
-    ) throws IOException {
-        return cloud11Service.revokeToken(request, tokenId, httpHeaders).build();
-    }
-
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user-admin for tenant")
     @GET
     @Path("nast/{nastId}")
@@ -125,62 +114,6 @@ public class Cloud11VersionResource {
         return cloud11Service.getUserFromMossoId(request, mossoId, httpHeaders).build();
     }
 
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List endpoint templates")
-    @ReportableQueryParams(unsecuredQueryParams = {"serviceName"})
-    @GET
-    @Path("baseURLs")
-    public Response getBaseURLs(@Context HttpServletRequest request,
-                                @QueryParam("serviceName") String serviceName,
-                                @Context HttpHeaders httpHeaders
-    ) throws IOException {
-        return cloud11Service.getBaseURLs(request, serviceName, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Add endpoint template")
-    @POST
-    @Path("baseURLs")
-    public Response addBaseURL(@Context HttpServletRequest request, @Context HttpHeaders httpHeaders, BaseURL baseUrl)
-            throws IOException, JAXBException {
-        if(identityConfig.getStaticConfig().getV11AddBaseUrlExposed()) {
-            return cloud11Service.addBaseURL(request, httpHeaders, baseUrl).build();
-        } else {
-            throw new NotFoundException("Resource Not Found");
-        }
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get endpoint template")
-    @ReportableQueryParams(unsecuredQueryParams = {"serviceName"})
-    @GET
-    @Path("baseURLs/{baseURLId}")
-    public Response getBaseURLById(@Context HttpServletRequest request,
-                                   @PathParam("baseURLId") int baseURLId,
-                                   @QueryParam("serviceName") String serviceName,
-                                   @Context HttpHeaders httpHeaders
-    ) throws IOException {
-        return cloud11Service.getBaseURLById(request, String.valueOf(baseURLId), serviceName, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List enabled endpoints")
-    @ReportableQueryParams(unsecuredQueryParams = {"serviceName"})
-    @GET
-    @Path("baseURLs/enabled")
-    public Response getEnabledBaseURLs(@Context HttpServletRequest request,
-                                       @QueryParam("serviceName") String serviceName,
-                                       @Context HttpHeaders httpHeaders
-    ) throws IOException {
-        return cloud11Service.getEnabledBaseURL(request, serviceName, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Add user")
-    @POST
-    @Path("users")
-    public Response createUser(@Context HttpServletRequest request,
-                               @Context HttpHeaders httpHeaders, @Context UriInfo uriInfo,
-                               User user
-    ) throws IOException, JAXBException {
-        return cloud11Service.createUser(request, httpHeaders, uriInfo, user).build();
-    }
-
     @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user")
     @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserByUsernameAbsolutePathPatternRegex)
     @GET
@@ -190,126 +123,6 @@ public class Cloud11VersionResource {
                             @Context HttpHeaders httpHeaders
     ) throws IOException {
         return cloud11Service.getUser(request, userId, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserByUsernameAbsolutePathPatternRegex)
-    @PUT
-    @Path("users/{userId}")
-    public Response updateUser(@Context HttpServletRequest request,
-                               @PathParam("userId") String userId,
-                               @Context HttpHeaders httpHeaders,
-                               User user) throws IOException, JAXBException {
-        return cloud11Service.updateUser(request, userId, httpHeaders, user).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user enabled")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @GET
-    @Path("users/{userId}/enabled")
-    public Response getUserEnabled(@Context HttpServletRequest request, @PathParam("userId") String userId,
-                                   @Context HttpHeaders httpHeaders) throws IOException {
-        return cloud11Service.getUserEnabled(request, userId, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user enabled status")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @PUT
-    @Path("users/{userId}/enabled")
-    public Response setUserEnabled(@Context HttpServletRequest request, @PathParam("userId") String userId,
-                                   @Context HttpHeaders httpHeaders, UserWithOnlyEnabled user) throws IOException, JAXBException {
-        return cloud11Service.setUserEnabled(request, userId, user, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user api key")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @GET
-    @Path("users/{userId}/key")
-    public Response getUserKey(@Context HttpServletRequest request,
-                               @PathParam("userId") String userId,
-                               @Context HttpHeaders httpHeaders
-    ) throws IOException {
-        return cloud11Service.getUserKey(request, userId, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Update user api key")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @PUT
-    @Path("users/{userId}/key")
-    public Response setUserKey(@Context HttpServletRequest request,
-                               @PathParam("userId") String userId,
-                               @Context HttpHeaders httpHeaders,
-                               UserWithOnlyKey user
-    ) throws IOException, JAXBException {
-        return cloud11Service.setUserKey(request, userId, httpHeaders, user).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get user service catalog")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @GET
-    @Path("users/{userId}/serviceCatalog")
-    public Response getServiceCatalog(@Context HttpServletRequest request,
-                                      @PathParam("userId") String userId,
-                                      @Context HttpHeaders httpHeaders
-    ) throws IOException {
-        return cloud11Service.getServiceCatalog(request, userId, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List user endpoints")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @GET
-    @Path("users/{userId}/baseURLRefs")
-    public Response getBaseURLRefs(@Context HttpServletRequest request,
-                                   @PathParam("userId") String userId,
-                                   @Context HttpHeaders httpHeaders
-    ) throws IOException {
-        return cloud11Service.getBaseURLRefs(request, userId, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Add endpoint to user cloud or files tenant")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @POST
-    @Path("users/{userId}/baseURLRefs")
-    public Response addBaseURLRef(@Context HttpServletRequest request,
-                                  @PathParam("userId") String userId,
-                                  @Context HttpHeaders httpHeaders,
-                                  @Context UriInfo uriInfo,
-                                  BaseURLRef baseUrlRef
-    ) throws IOException, JAXBException {
-        return cloud11Service.addBaseURLRef(request, userId, httpHeaders, uriInfo, baseUrlRef).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Get endpoint for user")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @GET
-    @Path("users/{userId}/baseURLRefs/{baseURLId}")
-    public Response getBaseURLRef(@Context HttpServletRequest request,
-                                  @PathParam("userId") String userId,
-                                  @PathParam("baseURLId") String baseURLId,
-                                  @Context HttpHeaders httpHeaders
-    ) throws IOException {
-        return cloud11Service.getBaseURLRef(request, userId, baseURLId, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 Delete endpoint from user cloud and files tenants")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @DELETE
-    @Path("users/{userId}/baseURLRefs/{baseURLId}")
-    public Response deleteBaseURLRef(@Context HttpServletRequest request,
-                                     @PathParam("userId") String userId,
-                                     @PathParam("baseURLId") String baseURLId,
-                                     @Context HttpHeaders httpHeaders
-    ) throws IOException {
-        return cloud11Service.deleteBaseURLRef(request, userId, baseURLId, httpHeaders).build();
-    }
-
-    @IdentityApi(apiResourceType = ApiResourceType.PRIVATE, name = "v1.1 List user legacy groups")
-    @SecureResourcePath(regExPattern = NewRelicApiEventListener.v11UserResourceAbsolutePathPatternRegex)
-    @GET
-    @Path("users/{userId}/groups")
-    public Response getUserGroups(@Context HttpServletRequest request, @PathParam("userId") String userId,
-                                  @Context HttpHeaders httpHeaders) throws IOException {
-        return cloud11Service.getUserGroups(request, userId, httpHeaders).build();
     }
 
     public void setCloud11Service(DefaultCloud11Service cloud11Service) {

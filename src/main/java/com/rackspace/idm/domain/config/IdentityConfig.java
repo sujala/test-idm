@@ -102,7 +102,6 @@ public class IdentityConfig {
     private static final String INVALID_PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is invalid";
     private static final String MISSING_REQUIRED_PROPERTY_ERROR_LOG_MESSAGE = "Configuration Property '%s' is invalid";
     private static final String MISSING_REQUIRED_PROPERTY_ERROR_RESPONSE_MESSAGE = "This service is currently unavailable in Identity.";
-    public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP = "feature.endpoint.template.type.use.config.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP = "feature.endpoint.template.type.mosso.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP = "feature.endpoint.template.type.nast.mapping";
@@ -787,7 +786,6 @@ public class IdentityConfig {
         defaults.put(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
         defaults.put(PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE);
         defaults.put(KEYCZAR_DN_CONFIG, "ou=keystore,o=configuration,dc=rackspace,dc=com");
-        defaults.put(EXPOSE_V11_ADD_BASE_URL_PROP, true);
         defaults.put(FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, false);
         defaults.put(OTP_ISSUER, "Rackspace");
         defaults.put(OTP_ENTROPY, 25);
@@ -1088,9 +1086,6 @@ public class IdentityConfig {
 
         verifyAndLogStaticProperty(ROLE_ID_RACKER_PROP, REQUIRED);
         verifyAndLogStaticProperty(CLIENT_ID_FOUNDATION_PROP, REQUIRED);
-
-        verifyAndLogStaticProperty(EXPOSE_V11_ADD_BASE_URL_PROP, OPTIONAL);
-
 
         verifyAndLogStaticProperty(LDAP_SERVER_LIST_PROP, REQUIRED);
         verifyAndLogStaticProperty(LDAP_SERVER_USE_SSL_PROP, REQUIRED);
@@ -1488,11 +1483,6 @@ public class IdentityConfig {
         @IdmProp(key = RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME)
         public int reloadableDocsTimeOutInSeconds() {
             return getIntSafely(staticConfiguration, RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME);
-        }
-
-        @IdmProp(key = EXPOSE_V11_ADD_BASE_URL_PROP)
-        public boolean getV11AddBaseUrlExposed() {
-            return getBooleanSafely(staticConfiguration, EXPOSE_V11_ADD_BASE_URL_PROP);
         }
 
         /**

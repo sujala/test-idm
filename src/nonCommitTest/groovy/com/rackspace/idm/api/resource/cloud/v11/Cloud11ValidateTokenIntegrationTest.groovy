@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
+import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_OK
+import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 
 class Cloud11ValidateTokenIntegrationTest extends RootIntegrationTest {
 
@@ -24,8 +26,8 @@ class Cloud11ValidateTokenIntegrationTest extends RootIntegrationTest {
 
     def "Validate user's token within a disabled domain should return 404" () {
         given:
-        def user = utils11.createUser()
-        def domainId = Integer.toString(user.mossoId)
+        def domainId = utils.createDomain()
+        (defaultUser, users) = utils.createDefaultUser(domainId)
         def domain = v1Factory.createDomain().with {
             it.id = domainId
             it.name = domainId
@@ -34,9 +36,7 @@ class Cloud11ValidateTokenIntegrationTest extends RootIntegrationTest {
         }
 
         when:
-        String key = utils11.getUserKey(user).key
-        def user20 = utils.getUserByName(user.id)
-        def authResponse = utils.authenticateApiKey(user20, key)
+        def authResponse = utils.authenticate(defaultUser, DEFAULT_PASSWORD)
         utils.updateDomain(domainId, domain)
         def response = cloud11.validateToken(authResponse.token.id)
 
@@ -44,9 +44,7 @@ class Cloud11ValidateTokenIntegrationTest extends RootIntegrationTest {
         response.status == SC_NOT_FOUND
 
         cleanup:
-        utils.deleteUser(user20)
-        utils.deleteTenantById(String.valueOf(user.mossoId))
-        utils.deleteTenantById(user.nastId)
+        utils.deleteUsers(users)
         utils.deleteDomain(domainId)
     }
 
@@ -77,10 +75,11 @@ class Cloud11ValidateTokenIntegrationTest extends RootIntegrationTest {
     }
 
     def "validate token with userid populated"() {
-        def user = utils11.createUser()
-        AuthData authData = utils11.authenticateWithKey(user.id, user.key)
+        def domainId = utils.createDomain()
+        (defaultUser, users) = utils.createDefaultUser(domainId)
+        def authResponse = utils.authenticate(defaultUser, DEFAULT_PASSWORD)
 
-        def tokenId = authData.token.id
+        def tokenId = authResponse.token.id
 
         when:
         def rawResponse = cloud11.validateToken(tokenId)
@@ -89,5 +88,9 @@ class Cloud11ValidateTokenIntegrationTest extends RootIntegrationTest {
 
         then:
         valResponse.id == tokenId
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
     }
 }

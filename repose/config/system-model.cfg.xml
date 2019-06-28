@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- To configure Repose see: http://wiki.openrepose.org/display/REPOSE/Configuration -->
 <system-model xmlns="http://docs.openrepose.org/repose/system-model/v2.0">
-
-  <repose-cluster id="identity" rewrite-host-header="false">
-
     <nodes>
         <node id="repose_node1" hostname="127.0.0.1" http-port="8080"/>
     </nodes>
@@ -34,6 +31,5 @@
     <destinations>
       <endpoint default="true" hostname="localhost" id="identity" port="8083" protocol="http" root-path="" />
     </destinations>
-  </repose-cluster>
   <tracing-header secondary-plain-text="true"/>
 </system-model>

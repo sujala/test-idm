@@ -7,8 +7,6 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForAuthData
-import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLList
-import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForBaseURLRefList
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtension
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForExtensions
 import com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForServiceCatalog
@@ -133,9 +131,7 @@ class JSONReaderWriterTest extends RootServiceTest {
     }
     @Shared JSONWriterForAuthenticateResponse writerForAuthenticateResponse = new JSONWriterForAuthenticateResponse()
     @Shared JSONWriterForImpersonationResponse writerForImpersonationResponse = new JSONWriterForImpersonationResponse()
-    @Shared JSONWriterForBaseURLList writerForBaseURLList = new JSONWriterForBaseURLList()
     @Shared com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForUser writerForUser11 = new com.rackspace.idm.api.resource.cloud.v11.json.writers.JSONWriterForUser()
-    @Shared JSONWriterForBaseURLRefList writerForBaseURLRefList = new JSONWriterForBaseURLRefList()
     @Shared JSONWriterForRaxAuthDomain writerForDomain = new JSONWriterForRaxAuthDomain()
     @Shared JSONWriterForRaxAuthDomains writerForDomains = new JSONWriterForRaxAuthDomains()
     @Shared JSONWriterForAuthData writerForAuthData = new JSONWriterForAuthData()
@@ -1300,27 +1296,6 @@ class JSONReaderWriterTest extends RootServiceTest {
         t.get(ID) == "id"
     }
 
-    def "create read/writer for baseURLList" () {
-        given:
-        def baseUrl = v1Factory.createBaseUrl()
-        def baseUrlList = new BaseURLList().with {
-            it.baseURL = [baseUrl, baseUrl].asList()
-            it
-        }
-
-        when:
-        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writerForBaseURLList.writeTo(baseUrlList, BaseURLList.class, null, null, null, null, arrayOutputStream)
-        def json = arrayOutputStream.toString()
-        JSONParser parser = new JSONParser();
-        JSONObject outer = (JSONObject) parser.parse(json);
-
-        then:
-        json != null
-        JSONArray a = outer.get(JSONConstants.BASE_URLS)
-        a.size() == 2
-    }
-
     def "create read/writer for v1.1 user" () {
         given:
         def baseUrlRef = v1Factory.createBaseUrlRef()
@@ -1404,33 +1379,6 @@ class JSONReaderWriterTest extends RootServiceTest {
         null | "nast" | 1       | null  | null
     }
 
-    def "create read/writer for baseURLRefList" () {
-        given:
-        def baseUrlRef = v1Factory.createBaseUrlRef()
-        def baseUrlList = new BaseURLRefList().with {
-            it.baseURLRef = [baseUrlRef, baseUrlRef].asList()
-            it
-        }
-
-        when:
-        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writerForBaseURLRefList.writeTo(baseUrlList, BaseURLRefList.class, null, null, null, null, arrayOutputStream)
-        def json = arrayOutputStream.toString()
-        JSONParser parser = new JSONParser();
-        JSONObject outer = (JSONObject) parser.parse(json);
-
-        then:
-        json != null
-        JSONArray a = outer.get(JSONConstants.BASE_URL_REFS)
-        a.size() == 2
-        a[0].id == 1
-        a[0].v1Default == true
-        a[0].href == "href"
-        a[1].id == 1
-        a[1].v1Default == true
-        a[1].href == "href"
-    }
-
     def "create read/writer for domain" () {
         given:
         def domain = v1Factory.createDomain()
@@ -1469,31 +1417,6 @@ class JSONReaderWriterTest extends RootServiceTest {
         ((JSONObject)a[0]).get(ID) == "id"
         ((JSONObject)a[0]).get(NAME) == "name"
         ((JSONObject)a[0]).get(ENABLED) == true
-    }
-
-    def "can write baseUrlRefList"() {
-        when:
-        def baseUrlRefs = new ArrayList<BaseURLRefList>();
-        baseUrlRefs.add(v1Factory.createBaseUrlRef(baseUrlId,publicUrl,v1Default));
-        def baseUrlRefList = new BaseURLRefList();
-        baseUrlRefList.baseURLRef = baseUrlRefs;
-
-        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writerForBaseURLRefList.writeTo(baseUrlRefList, BaseURLRefList.class, null, null, null, null, arrayOutputStream)
-        def json = arrayOutputStream.toString()
-
-        then:
-        JSONParser parser = new JSONParser();
-        JSONObject baseResponse = (JSONObject) parser.parse(json);
-        baseResponse.size() == 1;
-        baseResponse.get("baseURLRefs")[0]["id"] == baseUrlId;
-        baseResponse.get("baseURLRefs")[0]["href"] == publicUrl;
-        baseResponse.get("baseURLRefs")[0]["v1Default"] == v1Default;
-
-        where:
-        baseUrlId = 1;
-        publicUrl = "http://public/";
-        v1Default = false;
     }
 
     def "can writer authData" () {

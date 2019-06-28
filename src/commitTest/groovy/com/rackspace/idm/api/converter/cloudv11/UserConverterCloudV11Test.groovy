@@ -170,21 +170,6 @@ class UserConverterCloudV11Test extends Specification {
         userEntity.baseURLRefs.baseURLRef.get(0).v1Default == v1Default
     }
 
-    def "convert user from jersey object to ldap"() {
-        given:
-        com.rackspacecloud.docs.auth.api.v1.User userEntity = userEntity()
-
-        when:
-        User user = converterCloudV11.fromUser(userEntity)
-
-        then:
-        user.username == userEntity.id
-        user.apiKey == userEntity.key
-        user.mossoId == userEntity.mossoId
-        user.nastId == userEntity.nastId
-        user.enabled == userEntity.enabled
-    }
-
     def user() {
         user("id", "key", 1, "nast", false)
     }

@@ -8,35 +8,6 @@ import testHelpers.RootIntegrationTest
 
 class UserUpdateCloudFeedsIntegrationTest extends RootIntegrationTest {
 
-    def "test v1.1 update username creates only an update cloud feeds event"() {
-        given:
-        def domainId = utils.createDomain()
-        def user = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), domainId)
-
-        when:
-        resetCloudFeedsMock()
-        def userForUpdate = v1Factory.createUser(user.username, null, null, null, true)
-        def response = cloud11.updateUser(user.username, userForUpdate)
-
-        then:
-        response.status == 200
-
-        and: "verify that only 1 event was posted"
-        cloudFeedsMock.verify(
-                testUtils.createFeedsRequest(),
-                VerificationTimes.exactly(1)
-        )
-
-        and: "verify that the UPDATE event was posted"
-        cloudFeedsMock.verify(
-                testUtils.createUserFeedsRequest(user, EventType.UPDATE.name()),
-                VerificationTimes.exactly(1)
-        )
-
-        cleanup:
-        utils.deleteUser(user)
-    }
-
     def "test v2.0 updating an attribute that is not the 'enabled' attribute creates only an update cloud feeds event"() {
         given:
         def domainId = utils.createDomain()

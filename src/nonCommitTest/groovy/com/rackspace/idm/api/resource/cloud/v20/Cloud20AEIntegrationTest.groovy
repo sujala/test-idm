@@ -489,31 +489,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         }
     }
 
-    def "authenticating with AE token and tenantName"() {
-        given:
-        def mossoId = testUtils.getRandomInteger()
-        def username = testUtils.getRandomUUID("user")
-        def apiKey = "0987654231"
-        def user = v1Factory.createUser(username, apiKey, mossoId)
-        def createdUser = cloud11.createUser(user).getEntity(com.rackspacecloud.docs.auth.api.v1.User)
-        def apiUser = cloud20.getUserByName(utils.getServiceAdminToken(), username).getEntity(org.openstack.docs.identity.api.v2.User).value
-        setUserTokenFormat(apiUser, TokenFormatEnum.AE)
-
-        def scopeAccess = cloud20.authenticateApiKey(username, apiKey).getEntity(AuthenticateResponse).value
-        def authRequestContent = v2Factory.createAuthenticationRequest(scopeAccess.token.id, null, mossoId.toString())
-
-        when:
-        def authResponse = cloud20.authenticate(authRequestContent)
-        def scopeAccessResponse = authResponse.getEntity(AuthenticateResponse).value
-
-        then:
-        authResponse.status == 200
-        compareTwoTokens(scopeAccess, scopeAccessResponse)
-
-        cleanup:
-        cloud20.deleteUser(utils.getServiceAdminToken(), createdUser.id)
-    }
-
     def "test global flag combinations"() {
         given:
         def domainId = utils.createDomain()

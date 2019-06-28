@@ -27,12 +27,12 @@ class Cloud20InvalidAuthenticationIntegrationTest extends RootIntegrationTest{
 
         when:
         def response = cloud20.invalidAuthenticatePassword(userAdmin.username, DEFAULT_PASSWORD)
-        def setKeyResponse = cloud11.setUserKey(userAdmin.username, v1Factory.createUserWithOnlyKey(key))
-        def responseApiKey = cloud20.invalidAuthenticateApiKey(userAdmin.username, key)
+        utils.resetApiKey(userAdmin)
+        def apiKey = utils.getUserApiKey(userAdmin).apiKey
+        def responseApiKey = cloud20.invalidAuthenticateApiKey(userAdmin.username, apiKey)
 
         then:
         response.status == 200
-        setKeyResponse.status == 200
         responseApiKey.status == 200
 
         cleanup:

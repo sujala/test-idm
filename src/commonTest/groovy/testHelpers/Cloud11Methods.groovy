@@ -44,11 +44,6 @@ class Cloud11Methods {
         resource.path(path11).path(TOKEN).path(token).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def revokeToken(String token) {
-        initOnUse()
-        resource.path(path11).path(TOKEN).path(token).header("Authorization", getBasicAuth()).delete(ClientResponse)
-    }
-
     def getUserByName(String username) {
         initOnUse()
         resource.path(path11).path(USERS).path(username).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
@@ -64,88 +59,9 @@ class Cloud11Methods {
         resource.path(path11).path(SERVICE_PATH_MOSSO).path(mossoId).header("Authorization", getBasicAuth()).accept(mediaType).get(ClientResponse)
     }
 
-    def getServiceCatalog(String username, String basicAuth = getBasicAuth()) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(SERVICECATALOG).header("Authorization", basicAuth).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def createUser(user) {
-        initOnUse()
-        resource.path(path11).path(USERS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).post(ClientResponse)
-    }
-
-    def updateUser(String username, user, MediaType acceptMediaType = APPLICATION_XML_TYPE, MediaType requestMediaType = APPLICATION_XML_TYPE) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).header("Authorization", getBasicAuth()).accept(acceptMediaType).type(requestMediaType).entity(user).put(ClientResponse)
-    }
-
-    def setUserEnabled(String username, user) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(ENABLED).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
-    }
-
-    def setUserKey(String username, user) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(KEY).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(user).put(ClientResponse)
-    }
-
-    def addBaseUrl(baseUrl, String basicAuth = getBasicAuth()) {
-        initOnUse()
-        resource.path(path11).path(BASE_URLS).header("Authorization", basicAuth).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrl).post(ClientResponse)
-    }
-
-    def addBaseUrlRefs(String username, baseUrlRefs) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(baseUrlRefs).post(ClientResponse)
-    }
-
-    def deleteBaseUrlRefs(String username, String baseUrlRefsId) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).path(baseUrlRefsId).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).delete(ClientResponse)
-    }
-
     def getToken(token) {
         initOnUse()
         resource.path(path11).path(TOKEN).path(token).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def getUserEnabled(String username) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(ENABLED).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def getUserKey(String username) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(KEY).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def getBaseURLRefs(String username) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def getBaseURLs(String serviceName, accept = APPLICATION_XML_TYPE) {
-        initOnUse()
-        def builder = resource.path(path11).path(BASE_URLS)
-        if(serviceName != null) {
-            builder.queryParam("serviceName", serviceName)
-        }
-        builder.header("Authorization", getBasicAuth()).accept(accept).type(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def getGroups(String username, String mediaType = APPLICATION_XML) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(GROUPS).header("Authorization", getBasicAuth()).accept(mediaType).get(ClientResponse)
-    }
-
-    def getUserBaseURLRef(String username, String baseUrlRefId) {
-        initOnUse()
-        resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).path(baseUrlRefId).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def getBaseURLById(String id) {
-        initOnUse()
-        resource.path(path11).path(BASE_URLS).path(id).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
     def String getBasicAuth(username=authUser, password=authPassword) {
