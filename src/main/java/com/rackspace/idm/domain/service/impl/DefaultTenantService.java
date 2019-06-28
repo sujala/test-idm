@@ -426,7 +426,8 @@ public class DefaultTenantService implements TenantService {
      *
      * @return
      */
-    private Set<String> getTenantTypes() {
+    @Override
+    public Set<String> getTenantTypes() {
         PaginatorContext<TenantType> tenantTypes = tenantTypeService.listTenantTypes(0, TENANT_TYPE_SEARCH_LIMIT);
         List<TenantType> typeEntities = tenantTypes.getValueList();
 
@@ -438,7 +439,8 @@ public class DefaultTenantService implements TenantService {
         return inferTenantTypeForTenantId(tenantId, getTenantTypes());
     }
 
-    private String inferTenantTypeForTenantId(String tenantId, Set<String> existingTenantTypes) {
+    @Override
+    public String inferTenantTypeForTenantId(String tenantId, Set<String> existingTenantTypes) {
         if (existingTenantTypes.contains(GlobalConstants.TENANT_TYPE_CLOUD)) {
             try {
                 Integer.parseInt(tenantId);

@@ -64,10 +64,11 @@ public class TenantTypeWhitelistFilter implements SourcedRoleAssignmentsFilter {
             tenantsToHide = new ArrayList<>();
 
             // For each tenant, extract the tenant type and determine if visibility role group exists
+            Set<String> tenantTypes = tenantService.getTenantTypes();
             for (Map.Entry<String, Set<ImmutableClientRole>> tenantToRolesEntry : tenantToRoleMap.entrySet()) {
 
                 String tenantId = tenantToRolesEntry.getKey();
-                String tenantType = tenantService.inferTenantTypeForTenantId(tenantId);
+                String tenantType = tenantService.inferTenantTypeForTenantId(tenantId, tenantTypes);
                 if (StringUtils.isNotEmpty(tenantType)) {
                     Set<String> tenantTypeWhitelistRoles = visibilityGroups.get(tenantType);
 
