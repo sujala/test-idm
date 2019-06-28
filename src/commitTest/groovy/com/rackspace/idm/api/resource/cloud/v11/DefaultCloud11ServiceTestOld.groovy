@@ -139,7 +139,6 @@ public class DefaultCloud11ServiceTestOld extends Specification {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
         user1.setId("userId");
-        when(userConverterCloudV11.fromUser(user)).thenReturn(user1);
         when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
         when(config.getString("serviceName.cloudFiles")).thenReturn("cloudFiles");
         application.setOpenStackType("foo");
@@ -348,61 +347,6 @@ public class DefaultCloud11ServiceTestOld extends Specification {
 
         then:
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    def revokeToken_scopeAccessServiceReturnsNull_returnsNotFoundResponse() {
-        given:
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(null)
-        DefaultCloud11Service spy1 = PowerMockito.spy(defaultCloud11Service)
-        PowerMockito.doReturn(new UserScopeAccess()).when(spy1, "authenticateAndAuthorizeCloudAdminUser", request)
-
-        when:
-        Response.ResponseBuilder returnedResponse = spy1.revokeToken(request, "test", null)
-
-        then:
-        assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404))
-    }
-
-    def revokeToken_scopeAccessServiceReturnsNonUserAccess_returnsNotFoundResponse() {
-        given:
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(new RackerScopeAccess());
-        DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
-        PowerMockito.doReturn(new UserScopeAccess()).when(tempSpy, "authenticateAndAuthorizeCloudAdminUser", request);
-
-        when:
-        Response.ResponseBuilder returnedResponse = tempSpy.revokeToken(request, "test", null);
-
-        then:
-        assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
-    }
-
-    def revokeToken_scopeAccessServiceReturnsExpiredToken_returnsNotFoundResponse() {
-        given:
-        DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
-        PowerMockito.doReturn(new UserScopeAccess()).when(tempSpy, "authenticateAndAuthorizeCloudAdminUser", request);
-        UserScopeAccess userScopeAccessMock = mock(UserScopeAccess.class);
-        when(userScopeAccessMock.isAccessTokenExpired(Matchers.<DateTime>anyObject())).thenReturn(true);
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(userScopeAccessMock);
-
-        when:
-        Response.ResponseBuilder returnedResponse = tempSpy.revokeToken(request, "test", null);
-
-        then:
-        assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
-    }
-
-    def revokeToken_userScopeAccess_revokeToken() {
-        given:
-        DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
-        PowerMockito.doReturn(new UserScopeAccess()).when(tempSpy, "authenticateAndAuthorizeCloudAdminUser", request);
-        UserScopeAccess userScopeAccessMock = mock(UserScopeAccess.class);
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(userScopeAccessMock);
-
-        when:
-        tempSpy.revokeToken(request, "test", null);
-
-        then:
-        verify(tokenRevocationService).revokeToken(anyString());
     }
 
     def authenticateCloudAdminUserForGetRequests_callsAuthHeaderHelper_parseBasicParams_throwsCloudAdminAuthorizationException() {

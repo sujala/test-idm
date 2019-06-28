@@ -61,7 +61,7 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
         given:
         def response = cloud10.authenticate(username, "thisismykey")
         String token = response.headers.get("X-Auth-Token")[0]
-        cloud11.revokeToken(token)
+        cloud20.revokeToken(token)
 
         when:
         def startTime = new DateTime()
@@ -136,7 +136,7 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
     def authAndExpire(String username, String key) {
         def token = cloud10.authenticate(username, key).headers.get("X-Auth-Token")[0]
         def validateResponseOne = cloud20.validateToken(adminToken, token)
-        cloud11.revokeToken(token)
+        cloud20.revokeToken(token)
 
         def expiration = validateResponseOne.getEntity(AuthenticateResponse).value.token.expires
         return expiration.toGregorianCalendar().getTime()

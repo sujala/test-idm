@@ -58,9 +58,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         given:
         def v20Username = "v20Username" + testUtils.getRandomUUID()
         def v20User = v2Factory.createUserForCreate(v20Username, "displayName", "testemail@rackspace.com", null, "ORD", testUtils.getRandomUUID(), "Password1")
-        def randomMosso = 10000000 + new Random().nextInt(1000000)
-        def v11Username = "v11Username" + testUtils.getRandomUUID()
-        def v11User = v1Factory.createUser(v11Username, "1234567890", randomMosso, null, null)
 
         when: "creating the user in v2.0"
         cloud20.createUser(identityAdminToken, v20User)
@@ -69,16 +66,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         then: "the user is enabled"
         v20CreatedUser.enabled == true
 
-        when: "creating the user in v1.1"
-        cloud11.createUser(v11User)
-        def v11CreatedUser = utils.getUserByName(v11Username)
-
-        then: "the user is enabled"
-        v11CreatedUser.enabled == true
-
         cleanup:
         utils.deleteUser(v20CreatedUser)
-        utils.deleteUser(v11CreatedUser)
     }
 
     def "creating users sends a user CREATE event"() {
@@ -99,19 +88,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         and: "assert correct event is sent"
         cloudFeedsMock.verify(
                 testUtils.createUserFeedsRequest(createdUserV20, EventType.CREATE),
-                VerificationTimes.exactly(1)
-        )
-
-        when: "creating the user in v1.1"
-        response = cloud11.createUser(v11User)
-        def createdUserV11 = response.getEntity(com.rackspacecloud.docs.auth.api.v1.User)
-
-        then: "assert 201 created"
-        response.status == HttpStatus.SC_CREATED
-
-        and: "assert correct event is sent"
-        cloudFeedsMock.verify(
-                testUtils.createUserFeedsRequest(createdUserV11, EventType.CREATE),
                 VerificationTimes.exactly(1)
         )
     }
@@ -200,27 +176,11 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         !tenants.tenant.isEmpty()
         try { tenants.tenant.find({t -> t.id.equals(randomPrefix+domainId) && userEntity.getNastId() == t.id}) != null } catch (Exception e) {}
 
-        when: "Create user in v11"
-        def v11username = "v11Username" + testUtils.getRandomUUID()
-        def v11MossoId = testUtils.getRandomInteger()
-        def v11user = v1Factory.createUser(v11username, "apiKey", v11MossoId)
-        cloud11.createUser(v11user)
-        def v11UserEntity = userService.getUser(v11username)
-        Tenants v11tenants = cloud20.getDomainTenants(identityAdminToken, v11MossoId as String).getEntity(Tenants).value
-
-        then: "nast tenant is prefixed with property value"
-        !v11tenants.tenant.isEmpty()
-        try { v11tenants.tenant.find({t -> t.id.equals(randomPrefix+(v11MossoId as String)) && v11UserEntity.getNastId() == t.id}) != null } catch (Exception e) {}
-
         cleanup:
         try { cloud20.deleteUser(identityAdminToken, userEntity.id) } catch (Exception e) {}
-        try { cloud20.deleteUser(identityAdminToken, v11UserEntity.id) } catch (Exception e) {}
         try { cloud20.deleteTenant(identityAdminToken, tenants.tenant[0].id) } catch (Exception e) {}
         try { cloud20.deleteTenant(identityAdminToken, tenants.tenant[1].id) } catch (Exception e) {}
-        try { cloud20.deleteTenant(identityAdminToken, v11tenants.tenant[0].id) } catch (Exception e) {}
-        try { cloud20.deleteTenant(identityAdminToken, v11tenants.tenant[1].id) } catch (Exception e) {}
         try { cloud20.deleteDomain(identityAdminToken, domainId) } catch (Exception e) {}
-        try { cloud20.deleteDomain(identityAdminToken, v11MossoId as String) } catch (Exception e) {}
     }
 
     def "disabled default tenants are not assigned to a user when making the create user in one call"() {
@@ -301,24 +261,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         cloud20.deleteUser(identityAdminToken, userEntity.id)
         cloud20.deleteDomain(identityAdminToken, domainId)
-    }
-
-    def "tenants ARE created for create user v1.1 calls"() {
-        given:
-        def username = "v20Username" + testUtils.getRandomUUID()
-        def randomMosso = 10000000 + new Random().nextInt(1000000)
-        def v11User = v1Factory.createUser(username, "1234567890", randomMosso, null, true)
-        cloud11.createUser(v11User)
-        def userEntity = userService.getUser(username)
-
-        when:
-        def tenants = cloud20.getDomainTenants(identityAdminToken, userEntity.domainId).getEntity(Tenants).value
-
-        then:
-        !tenants.tenant.isEmpty()
-
-        cleanup:
-        cloud20.deleteUser(utils.getServiceAdminToken(), userEntity.id)
     }
 
     def "Do not allow more than one userAdmin per domain" () {

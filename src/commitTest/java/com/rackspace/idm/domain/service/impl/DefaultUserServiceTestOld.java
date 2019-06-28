@@ -200,17 +200,6 @@ public class DefaultUserServiceTestOld {
         assertThat("password", result.toString().length(), not(0));
     }
 
-    @Test (expected = BadRequestException.class)
-    public void validateUserEmailAddress_notValidEmail_throwsBadRequest() throws Exception {
-        Pattern pat = new Pattern();
-        pat.setRegex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]+");
-        pat.setErrMsg("Some Error");
-        when(patternDao.getPattern(anyString())).thenReturn(pat);
-        User user = new User();
-        user.setEmail("badEmail");
-        defaultUserService.addUserv11(user);
-    }
-
     @Test
     public void getUserByScopeAccess_impersonatedScopeAccessIdIsNull_returnsUser() throws Exception {
         User user = new User();

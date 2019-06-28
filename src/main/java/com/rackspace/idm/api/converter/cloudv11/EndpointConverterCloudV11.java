@@ -60,30 +60,6 @@ public class EndpointConverterCloudV11 {
         return baseUrl;
     }
 
-    public CloudBaseUrl toBaseUrlDO(BaseURL baseURL) {
-        if (baseURL == null) {
-            return null;
-        }
-        CloudBaseUrl url = new CloudBaseUrl();
-        url.setAdminUrl(baseURL.getAdminURL());
-        url.setBaseUrlId(String.valueOf(baseURL.getId()));
-        if (baseURL.getUserType() != null) {
-            url.setBaseUrlType(baseURL.getUserType().toString());
-        }
-        url.setDef(baseURL.isDefault());
-        url.setInternalUrl(baseURL.getInternalURL());
-        url.setPublicUrl(baseURL.getPublicURL());
-        url.setRegion(baseURL.getRegion());
-        url.setServiceName(baseURL.getServiceName());
-        url.setEnabled(baseURL.isEnabled());
-        if(String.valueOf(baseURL.getUserType()).equals("NAST")){
-            url.setOpenstackType("object-store");
-        }else{
-            url.setOpenstackType("compute");
-        }
-        return url;
-    }
-
     public BaseURLRef toBaseUrlRef(CloudEndpoint endpoint) {
         if (endpoint == null || endpoint.getBaseUrl() == null) {
             return null;

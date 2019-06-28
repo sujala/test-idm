@@ -2,12 +2,14 @@
 import ddt
 import pytest
 from qe_coverage.opencafe_decorators import tags, unless_coverage
-from random import randrange
 from tests.api.utils import header_validation
+from tests.api.utils import func_helper
 
 from tests.api.v1_1 import base
-from tests.api.v1_1 import requests
 from tests.package.johny import constants as const
+
+from tests.package.johny.v2.models import requests
+from tests.api.v2.models import responses as responses
 
 
 @ddt.ddt
@@ -25,27 +27,54 @@ class TestAuthAndValidationV11(base.TestBaseV1):
     @unless_coverage
     def setUp(self):
         super(TestAuthAndValidationV11, self).setUp()
-        self.user_info = self.create_user_get_info()
         self.user_ids = []
-        self.user_ids.append(self.user_info['id'])
+        self.tenant_ids = []
+        self.user_info = self.create_user_get_info()
 
     def create_user_get_info(self):
-        user_id = self.generate_random_string(pattern=const.USER_NAME_PATTERN)
-        key = self.generate_random_string(pattern=const.API_KEY_PATTERN)
-        mosso_id = randrange(start=const.CONTACT_ID_MIN,
-                             stop=const.CONTACT_ID_MAX)
-        enabled = True
+        # Create a userAdmin with tenantId
+        username = self.generate_random_string(
+            pattern=const.USER_ADMIN_PATTERN)
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client_v2)
+        input_data = {'email': const.EMAIL_RANDOM,
+                      'secret_qa': {
+                          const.SECRET_QUESTION: self.generate_random_string(
+                              pattern=const.LOWER_CASE_LETTERS),
+                          const.SECRET_ANSWER: self.generate_random_string(
+                              pattern=const.UPPER_CASE_LETTERS)},
+                      'domain_id': domain_id}
+        req_obj = requests.UserAdd(user_name=username, **input_data)
 
-        auth_obj = requests.User(id=user_id, key=key, mossoId=mosso_id,
-                                 enabled=enabled)
-        resp = self.identity_admin_client.add_user(request_object=auth_obj)
+        resp = self.identity_admin_client_v2.add_user(request_object=req_obj)
         self.assertEqual(resp.status_code, 201)
-        userId = resp.entity.id
-        apiKey = resp.entity.key
-        mossoId = resp.entity.mossoId
-        nastId = resp.entity.nastId
-        return {'id': userId, 'key': apiKey, 'mosso_id': mossoId,
-                'nast_id': nastId}
+        create_user_with_tenant_resp = responses.User(resp.json())
+        self.user_ids.append(create_user_with_tenant_resp.id)
+        self.domain_id = domain_id
+
+        password = resp.json()[const.USER][const.NS_PASSWORD]
+
+        # Get user's tenant ID
+        auth_obj = requests.AuthenticateWithPassword(user_name=username,
+                                                     password=password)
+        resp = self.identity_admin_client_v2.get_auth_token(
+            request_object=auth_obj)
+        self.assertEqual(resp.status_code, 200)
+        auth_user_pass_resp = responses.Access(resp.json())
+        self.tenant_ids.append(auth_user_pass_resp.access.token.tenant.id)
+
+        user_id = create_user_with_tenant_resp.id
+
+        # Get apikey
+        resp = self.identity_admin_client_v2.get_api_key(user_id)
+        self.assertEqual(resp.status_code, 200)
+        api_key = (resp.json()[const.NS_API_KEY_CREDENTIALS]
+                   [const.API_KEY])
+
+        return {'id': create_user_with_tenant_resp.user_name,
+                'key': api_key,
+                'mosso_id': domain_id,
+                'nast_id': const.NAST_PREFIX + domain_id}
 
     def validate_resp_token(self, token):
         resp = self.identity_admin_client.validate_token(token_id=token)
@@ -198,8 +227,18 @@ class TestAuthAndValidationV11(base.TestBaseV1):
 
     @unless_coverage
     def tearDown(self):
-        for id_ in self.user_ids:
-            self.identity_admin_client.delete_user(user_id=id_)
+        for user_id in self.user_ids:
+            resp = self.identity_admin_client_v2.delete_user(user_id=user_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(user_id))
+        for tenant_id in self.tenant_ids:
+            resp = self.identity_admin_client_v2.delete_tenant(
+                tenant_id=tenant_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Tenant with ID {0} failed to delete'.format(
+                    tenant_id))
         super(TestAuthAndValidationV11, self).tearDown()
 
     @classmethod

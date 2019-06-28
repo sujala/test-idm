@@ -204,44 +204,6 @@ class ValidatorTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "validate v11 user"(){
-        given:
-        User user = new User();
-        user.mossoId = 98765
-        userService.getUserByTenantId(String.valueOf(user.mossoId)) >> null
-
-        when:
-        validator.validate11User(user)
-
-        then:
-        true
-    }
-
-    def "validate v11 user when mossoId not specified"(){
-        given:
-        User user = new User();
-        user.mossoId = null
-
-        when:
-        validator.validate11User(user)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validate v11 user when another user with same mossoId already exists"(){
-        given:
-        User user = new User();
-        user.mossoId = 98765
-        userService.getUserByTenantId(String.valueOf(user.mossoId)) >>  new com.rackspace.idm.domain.entity.User()
-
-        when:
-        validator.validate11User(user)
-
-        then:
-        thrown(BadRequestException)
-    }
-
     def "Validate username: bad pattern"(){
         given:
         Pattern patterns = pattern("username", "[a-zA-Z0-9-_.@asdfsadf24232%^&*","Username has invalid characters.","pattern for invalid characters");

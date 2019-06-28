@@ -638,21 +638,6 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def "v1.1 created user returns non-null group/roles in v2 getUserByName call" () {
-        given:
-        com.rackspacecloud.docs.auth.api.v1.User user11 = utils11.createUser()
-
-        when:
-        def org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user11.getId())
-
-        then:
-        user20.getGroups() == null
-        user20.getRoles() == null
-
-        cleanup:
-        if (user20 != null) utils.deleteUsers(user20)
-    }
-
     def "Verify values on create one user call" () {
         given:
         def domainId = utils.createDomain()

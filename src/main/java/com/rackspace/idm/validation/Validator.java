@@ -92,10 +92,6 @@ public class Validator {
         return checkPatternNoException(EMAIL, email);
     }
 
-    public void validate11User(com.rackspacecloud.docs.auth.api.v1.User user) {
-        validateMossoId(user.getMossoId());
-    }
-
     public void validateUser(com.rackspace.idm.domain.entity.User user) {
         validateUsername(user.getUsername());
         validatePassword(user.getPassword());
@@ -280,32 +276,6 @@ public class Validator {
                     throw new BadRequestException("group '" + groupId + "' does not exist");
                 }
             }
-        }
-    }
-
-    private void validateMossoId(Integer mossoId) {
-        if (mossoId == null || mossoId.equals(0)) {
-            String errorMsg = "Expecting mossoId";
-            logger.warn(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
-
-        User user = userService.getUserByTenantId(String.valueOf(mossoId));
-        if (user != null) {
-            throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
-        }
-    }
-
-    public void validateBaseUrl(BaseURL baseUrl) {
-        if (StringUtils.isBlank(baseUrl.getServiceName())) {
-            String errMsg = "'serviceName' is a required attribute";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-        if (StringUtils.isBlank(baseUrl.getPublicURL())) {
-            String errMsg = "'publicURL' is a required attribute";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
         }
     }
 

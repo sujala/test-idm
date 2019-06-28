@@ -21,21 +21,6 @@ public class UserConverterCloudV11 {
     private static final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
     private Logger logger = LoggerFactory.getLogger(UserConverterCloudV11.class);
 
-    public com.rackspace.idm.domain.entity.User fromUser(com.rackspacecloud.docs.auth.api.v1.User user) {
-        
-        com.rackspace.idm.domain.entity.User userDO = new com.rackspace.idm.domain.entity.User();
-        userDO.setUsername(user.getId());
-        userDO.setMossoId(user.getMossoId());
-        userDO.setNastId(user.getNastId());
-        userDO.setApiKey(user.getKey());
-        userDO.setEnabled(user.isEnabled());
-
-        //for now the domain id via a v1.1 call, is actually the mosso id
-        userDO.setDomainId(user.getMossoId().toString().trim());
-
-        return userDO;
-    }
-    
     public com.rackspacecloud.docs.auth.api.v1.User toCloudV11User(User user, List<OpenstackEndpoint> endpoints) {
         
         com.rackspacecloud.docs.auth.api.v1.User jaxbUser = toCloudV11User(user);
