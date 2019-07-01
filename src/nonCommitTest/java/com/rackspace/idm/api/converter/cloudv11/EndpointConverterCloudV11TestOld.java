@@ -100,12 +100,6 @@ public class EndpointConverterCloudV11TestOld {
     }
 
     @Test
-    public void toBaseUrlDO_baseUrlIsNull_returnsNull() throws Exception {
-        CloudBaseUrl url = endpointConverterCloudV11.toBaseUrlDO(null);
-        assertThat("url", url, equalTo(null));
-    }
-
-    @Test
     public void toBaseUrlRef_CloudEndpointIsNull_returnsNull() throws Exception {
         CloudEndpoint cloudEndpoint = null;
         BaseURLRef ref = endpointConverterCloudV11.toBaseUrlRef(cloudEndpoint);

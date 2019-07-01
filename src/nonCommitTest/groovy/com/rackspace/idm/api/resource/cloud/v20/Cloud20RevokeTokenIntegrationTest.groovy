@@ -176,7 +176,7 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
         assert tokenFormatSelector.formatForExistingToken(aeToken) == TokenFormat.AE
 
         when: "revoke all tokens by userid"
-        cloud11.revokeToken(aeToken)
+        cloud20.revokeToken(aeToken)
         tokenRevocationService.revokeAllTokensForEndUser(identityAdmin.id)
 
         then:

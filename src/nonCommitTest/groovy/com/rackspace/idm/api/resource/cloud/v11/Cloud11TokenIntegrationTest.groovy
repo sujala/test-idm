@@ -20,59 +20,6 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
     @Autowired
     ScopeAccessService scopeAccessService
 
-    def "Authenticate user within a disable domain should return 403" () {
-        given:
-        def user = utils11.createUser()
-        org.openstack.docs.identity.api.v2.User user20 = utils.getUserByName(user.id)
-        def domainId = String.valueOf(user.mossoId)
-        def domain = v1Factory.createDomain().with {
-            it.id = domainId
-            it.name = domainId
-            it.enabled = false
-            it
-        }
-
-        when:
-        utils11.authenticateWithKey(user.id, user.key)
-        utils.updateDomain(domainId, domain)
-
-        def cred = v1Factory.createUserKeyCredentials(user.id, user.key)
-        def response = cloud11.authenticate(cred)
-
-        def mossoCred = v1Factory.createMossoCredentials(user.mossoId, user.key)
-        def mossoResponse = cloud11.adminAuthenticate(mossoCred)
-
-        def nastCred = v1Factory.createNastCredentials(user.nastId, user.key)
-        def nastResponse = cloud11.adminAuthenticate(nastCred)
-
-        then:
-        response.status ==  SC_FORBIDDEN
-        mossoResponse.status ==  SC_FORBIDDEN
-        nastResponse.status ==  SC_FORBIDDEN
-
-        cleanup:
-        utils.deleteUser(user20)
-        utils.deleteTenantById(String.valueOf(user.mossoId))
-        utils.deleteTenantById(user.nastId)
-        utils.deleteDomain(domainId)
-    }
-
-    /**
-     *  Produce tokens that contain userRsId.
-     *
-     */
-    def "auth produces token with populated userRsId"() {
-        def user = utils11.createUser()
-        AuthData authData = utils11.authenticateWithKey(user.id, user.key)
-
-        when:
-        UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(authData.token.id)
-
-        then:
-        token != null
-        token.userRsId != null
-    }
-
     @Unroll
     def "auth v1.1 returns X-Tenant-Id header - featureEnabled: #featureEnabled, accept: #accept, request: #request"() {
         given:

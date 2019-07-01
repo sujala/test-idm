@@ -161,37 +161,6 @@ public class DefaultUserService implements UserService {
     private IdmCommonUtils idmCommonUtils;
 
     @Override
-    public void addUserv11(User user) {
-        logger.info("Adding User: {}", user);
-
-        validator.validateUser(user);
-
-        Domain domain = createDomainIfItDoesNotExist(user.getDomainId());
-        createDefaultDomainTenantsIfNecessary(domain);
-        checkMaxNumberOfUsersInDomain(user.getDomainId());
-
-        setPasswordIfNotProvided(user);
-        setApiKeyIfNotProvided(user);
-        setRegionIfNotProvided(user, domain);
-
-        //hack alert!! code requires the user object to have the nastid attribute set. this attribute
-        //should no longer be required as users have roles on a tenant instead. once this happens, remove
-        user.setNastId(getNastTenantId(user.getDomainId()));
-        user.setEncryptionVersion(propertiesService.getValue(ENCRYPTION_VERSION_ID));
-        user.setSalt(cryptHelper.generateSalt());
-        user.setEnabled(user.getEnabled() == null ? true : user.getEnabled());
-
-        userDao.addUser(user);
-
-        atomHopperClient.asyncPost(user, FeedsUserStatusEnum.CREATE, MDC.get(Audit.GUUID));
-
-        assignUserRoles(user, false);
-
-        // Update domain's userAdminDN after the user has been created.
-        domainService.updateDomainUserAdminDN(user);
-    }
-
-    @Override
     public void addIdentityAdminV20(User user) {
         addUserV20(user, false, false, false);
     }

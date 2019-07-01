@@ -63,7 +63,7 @@ services:
       CUSTOMER_IDENTITY_SERVICE_PORT: 8083
       IDENTITY_PORT: 8083
     volumes:
-      - ../repose/config:/etc/repose
+      - ../repose/config:/etc/repose-build/config
     network_mode: "service:network"
 
   testenv:

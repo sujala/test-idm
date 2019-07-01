@@ -6,7 +6,7 @@
       <allow host="127.0.0.1" />
    </allowed-hosts>
    <port-config>
-     <port port="9898" cluster="identity" />
+     <port port="9898"/>
    </port-config>
 </distributed-datastore>
 

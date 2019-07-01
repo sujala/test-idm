@@ -19,8 +19,6 @@ import java.util.List;
 
 public interface UserService {
 
-    void addUserv11(User user);
-
     void addIdentityAdminV20(User user);
 
     void addSubUserV20(User user, boolean isCreateUserOneCall);

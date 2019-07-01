@@ -106,8 +106,8 @@ class TenantTypeWhitelistFilterTest extends RootServiceTest {
         1 * reloadableConfig.getTenantTypeRoleWhitelistFilterMap() >> [a:[] as Set]
 
         // The tenant type of each tenentId is retrieved
-        1 * tenantService.inferTenantTypeForTenantId(t1) >> null
-        1 * tenantService.inferTenantTypeForTenantId(t2) >> null
+        1 * tenantService.inferTenantTypeForTenantId(t1, _) >> null
+        1 * tenantService.inferTenantTypeForTenantId(t2, _) >> null
 
         and: "Assignments are the same when no tenants are hidden"
         finalAssignments == originalAssignments
@@ -137,7 +137,7 @@ class TenantTypeWhitelistFilterTest extends RootServiceTest {
         SourcedRoleAssignments originalAssignments = new SourcedRoleAssignments(user)
 
         // All tenants require role2 to be assigned
-        tenantService.inferTenantTypeForTenantId(_) >> tType1
+        tenantService.inferTenantTypeForTenantId(_, _) >> tType1
         reloadableConfig.getTenantTypeRoleWhitelistFilterMap() >> [(tType1):[role2.name] as Set]
 
         originalAssignments.addUserSourcedAssignment(role1, RoleAssignmentType.DOMAIN, [t1, t2] as Set)
@@ -167,9 +167,9 @@ class TenantTypeWhitelistFilterTest extends RootServiceTest {
         originalAssignments.addUserSourcedAssignment(role2, RoleAssignmentType.DOMAIN, [t2,t3] as Set)
         originalAssignments.addUserSourcedAssignment(role3, RoleAssignmentType.TENANT, [t1,t2,t3] as Set)
 
-        tenantService.inferTenantTypeForTenantId(t1) >> tType1
-        tenantService.inferTenantTypeForTenantId(t2) >> null
-        tenantService.inferTenantTypeForTenantId(t3) >> tType2
+        tenantService.inferTenantTypeForTenantId(t1, _) >> tType1
+        tenantService.inferTenantTypeForTenantId(t2, _) >> null
+        tenantService.inferTenantTypeForTenantId(t3, _) >> tType2
 
         when:
         def finalAssignments = service.apply(originalAssignments)
@@ -197,9 +197,9 @@ class TenantTypeWhitelistFilterTest extends RootServiceTest {
 
         originalAssignments.addUserSourcedAssignment(role3, RoleAssignmentType.TENANT, [t1,t2,t3] as Set)
 
-        tenantService.inferTenantTypeForTenantId(t1) >> tType1
-        tenantService.inferTenantTypeForTenantId(t2) >> null
-        tenantService.inferTenantTypeForTenantId(t3) >> tType2
+        tenantService.inferTenantTypeForTenantId(t1, _) >> tType1
+        tenantService.inferTenantTypeForTenantId(t2, _) >> null
+        tenantService.inferTenantTypeForTenantId(t3, _) >> tType2
 
         reloadableConfig.getTenantTypeRoleWhitelistFilterMap() >> whitelist
 

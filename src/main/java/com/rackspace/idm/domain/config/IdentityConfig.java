@@ -102,7 +102,6 @@ public class IdentityConfig {
     private static final String INVALID_PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is invalid";
     private static final String MISSING_REQUIRED_PROPERTY_ERROR_LOG_MESSAGE = "Configuration Property '%s' is invalid";
     private static final String MISSING_REQUIRED_PROPERTY_ERROR_RESPONSE_MESSAGE = "This service is currently unavailable in Identity.";
-    public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP = "feature.endpoint.template.type.use.config.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP = "feature.endpoint.template.type.mosso.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP = "feature.endpoint.template.type.nast.mapping";
@@ -239,8 +238,6 @@ public class IdentityConfig {
     public static final String FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP = "feature.return.json.specific.cloud.version";
     public static final boolean FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT = true;
 
-    public static final String FEATURE_REUSE_JAXB_CONTEXT = "feature.reuse.jaxb.context";
-    public static final boolean FEATURE_REUSE_JAXB_CONTEXT_DEFAULT = true;
 
     public static final String MAX_CA_DIRECTORY_PAGE_SIZE_PROP = "max.ca.directory.page.size";
     public static final int MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT = 1000;
@@ -789,7 +786,6 @@ public class IdentityConfig {
         defaults.put(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
         defaults.put(PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE);
         defaults.put(KEYCZAR_DN_CONFIG, "ou=keystore,o=configuration,dc=rackspace,dc=com");
-        defaults.put(EXPOSE_V11_ADD_BASE_URL_PROP, true);
         defaults.put(FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, false);
         defaults.put(OTP_ISSUER, "Rackspace");
         defaults.put(OTP_ENTROPY, 25);
@@ -848,7 +844,6 @@ public class IdentityConfig {
         defaults.put(PURGE_TRRS_OBSOLETE_AFTER_PROP, PURGE_TRRS_OBSOLETE_AFTER_DEFAULT);
 
         defaults.put(FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT);
-        defaults.put(FEATURE_REUSE_JAXB_CONTEXT, FEATURE_REUSE_JAXB_CONTEXT_DEFAULT);
 
         defaults.put(MAX_CA_DIRECTORY_PAGE_SIZE_PROP, MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT);
 
@@ -1091,9 +1086,6 @@ public class IdentityConfig {
 
         verifyAndLogStaticProperty(ROLE_ID_RACKER_PROP, REQUIRED);
         verifyAndLogStaticProperty(CLIENT_ID_FOUNDATION_PROP, REQUIRED);
-
-        verifyAndLogStaticProperty(EXPOSE_V11_ADD_BASE_URL_PROP, OPTIONAL);
-
 
         verifyAndLogStaticProperty(LDAP_SERVER_LIST_PROP, REQUIRED);
         verifyAndLogStaticProperty(LDAP_SERVER_USE_SSL_PROP, REQUIRED);
@@ -1491,11 +1483,6 @@ public class IdentityConfig {
         @IdmProp(key = RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME)
         public int reloadableDocsTimeOutInSeconds() {
             return getIntSafely(staticConfiguration, RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME);
-        }
-
-        @IdmProp(key = EXPOSE_V11_ADD_BASE_URL_PROP)
-        public boolean getV11AddBaseUrlExposed() {
-            return getBooleanSafely(staticConfiguration, EXPOSE_V11_ADD_BASE_URL_PROP);
         }
 
         /**
@@ -2328,10 +2315,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP);
         }
 
-        @IdmProp(key = FEATURE_REUSE_JAXB_CONTEXT, versionAdded = "3.3.3", description = "Whether or not to reuse JAXBContext across threads rather than creating new one for each use which causes a memory leak. This feature is only here to revert to existing functinality if required.")
-        public boolean reuseJaxbContext() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_REUSE_JAXB_CONTEXT);
-        }
 
         @IdmProp(key = MAX_CA_DIRECTORY_PAGE_SIZE_PROP, versionAdded = "3.5.0", description = "The maximum page size allowed to query the directory for. This property should be set to match the maximum query size as configured on " +
                 "the CA directory side. It should also be noted that this property will also impact other services through the API. For example, the API call used for deleting TRRs will limit how many TRRs can be deleted in a single request based upon this configuration.")

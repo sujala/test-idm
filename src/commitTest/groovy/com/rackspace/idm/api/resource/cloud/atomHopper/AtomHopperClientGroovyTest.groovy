@@ -231,7 +231,7 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
     }
 
     @Unroll
-    def "Entity consumed regardless of feature flag controls reusing jaxbcontext. When #setting" () {
+    def "Entity consumed as per #setting" () {
         given:
         setupMock(client)
         CloseableHttpResponse response = Mock()
@@ -249,7 +249,6 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
-        client.identityConfig.getReloadableConfig().reuseJaxbContext() >> true
         client.postToken(user, "revokedToken")
 
         then:
@@ -560,7 +559,6 @@ class AtomHopperClientGroovyTest extends RootServiceTest {
         mockDefaultTenantService(client)
         mockIdentityConfig(client)
 
-        reloadableConfig.reuseJaxbContext() >> false
 
         httpClient = Mock()
         client.httpClient = httpClient

@@ -9,6 +9,7 @@ import com.rackspace.idm.exception.NotFoundException;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface TenantService {
 
@@ -662,6 +663,27 @@ public interface TenantService {
      *
      */
     String inferTenantTypeForTenantId(String tenantId);
+
+    /**
+     * Temporary service to infer the tenant type based on a passed in set of available tenant types. This is a temporary
+     * service. It should not be used for any other service to allow it to easily removed in the future.
+     * @param tenantId
+     * @param existingTenantTypes
+     * @deprecated
+     * @return
+     */
+    @Deprecated
+    String inferTenantTypeForTenantId(String tenantId, Set<String> existingTenantTypes);
+
+    /**
+     * Temporary service to retrieve the list of tenant types in the same manner as used internaally by the service.
+     * This is a temporary service that breaks encapsulation and must not be used for any other code so it can easily be
+     * removed in the future.
+     * @deprecated
+     * @return
+     */
+    @Deprecated
+    Set<String> getTenantTypes();
 
     /**
      * Returns the set of Identity managed roles associated with the Racker. This includes implicit roles the user
