@@ -365,7 +365,11 @@ class TestPhonePinOnUser(base.TestBaseV2):
             )
         )
         self.assertEqual(verify_resp.status_code, 200)
-        self.assertTrue(verify_resp.json()[const.RAX_AUTH_VERIFY_PIN_RESULT])
+        self.assertEqual(
+            verify_resp.json()[const.RAX_AUTH_VERIFY_PIN_RESULT][
+                const.AUTHENTICATED],
+            True,
+        )
 
     @unless_coverage
     @base.base.log_tearDown_error
