@@ -58,6 +58,10 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.Constants.DEFAULT_BROKER_IDP_URI
+import static com.rackspace.idm.Constants.DEFAULT_IDP_ID
+import static com.rackspace.idm.Constants.IDP_V2_DOMAIN_ID
+import static com.rackspace.idm.Constants.IDP_V2_DOMAIN_URI
 import static com.rackspace.idm.Constants.IDP_V2_RACKER_PRIVATE_KEY
 import static com.rackspace.idm.Constants.IDP_V2_RACKER_PUBLIC_KEY
 import static com.rackspace.idm.SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
@@ -1653,32 +1657,6 @@ class Cloud20Utils {
         getPropsResponse.getEntity(IdmPropertyList).properties.first()
     }
 
-    UserForAuthenticateResponse createFederatedUser(String domainId, mediaType = APPLICATION_XML_TYPE) {
-        AuthenticateResponse samlAuthResponse = createFederatedUserForAuthResponse(domainId, mediaType)
-        def user = samlAuthResponse.user
-        return user
-    }
-  
-    def createFederatedUserForAuthResponse(String domainId, mediaType = APPLICATION_XML_TYPE) {
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def username = testUtils.getRandomUUID("samlUser")
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
-        def samlResponse = methods.samlAuthenticate(samlAssertion, mediaType)
-        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
-        return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
-    }
-
-    def authenticateV1FederatedUser(HashMap<String, List<String>> attributes, boolean apply_rcn_roles = true, mediaType = APPLICATION_XML_TYPE) {
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def username = testUtils.getRandomUUID("samlUser")
-
-        // Uses the v1 way of creating a SAML Response to auth with
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, attributes)
-        def samlResponse = methods.federatedAuthenticate(samlAssertion, apply_rcn_roles, GlobalConstants.FEDERATION_API_V1_0, mediaType)
-        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
-        return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
-    }
-
     AuthenticateResponse authenticateFederatedUser(String domainId, Set<String> groupNames = [], Set<String> roleNames = [], String username = "fedUser${RandomStringUtils.randomAlphanumeric(8)}") {
         def samlRequest = new FederatedDomainAuthGenerationRequest().with {
             it.domainId = domainId
@@ -1787,9 +1765,9 @@ class Cloud20Utils {
         return user.phonePin
     }
 
-    def deleteFederatedUserQuietly(username) {
+    def deleteFederatedUserQuietly(username, identityProviderId = IDP_V2_DOMAIN_ID) {
         try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, identityProviderId)
             if (federatedUser != null) {
                 federatedUserRepository.deleteObject(federatedUser)
             }
@@ -1799,7 +1777,7 @@ class Cloud20Utils {
         }
     }
 
-    def createFedRequest(def userAdmin, def brokerIssuer, def originIssuer) {
+    def createFedRequest(def userAdmin, def brokerIssuer = DEFAULT_BROKER_IDP_URI, def originIssuer = IDP_V2_DOMAIN_URI) {
         new FederatedDomainAuthGenerationRequest().with {
             it.domainId = userAdmin.domainId
             it.validitySeconds = 100
@@ -1810,6 +1788,19 @@ class Cloud20Utils {
             it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
             it.username = UUID.randomUUID().toString()
             it.roleNames = [] as Set
+            it
+        }
+    }
+
+    FederatedRackerAuthGenerationRequest createFederatedRackerRequest(username = "fedUser${RandomStringUtils.randomAlphanumeric(8)}", groupNames = null, authContextRefClass = PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS) {
+        return new FederatedRackerAuthGenerationRequest().with {
+            it.validitySeconds = 1000
+            it.brokerIssuer = Constants.DEFAULT_BROKER_IDP_URI
+            it.originIssuer = Constants.IDP_V2_RACKER_URI
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = authContextRefClass
+            it.username = username
+            it.groupNames = groupNames
             it
         }
     }

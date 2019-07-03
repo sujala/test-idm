@@ -111,7 +111,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GLOBAL_ROOT_DELEGATION_AGREEMENT_CREATION_PROP, flag)
 
         if (callerToken == "fedUserToken"){
-            callerToken = utils.createFederatedUserForAuthResponse(sharedUserAdmin.domainId).token.id
+            callerToken = utils.authenticateFederatedUser(sharedUserAdmin.domainId).token.id
         }
 
         if (callerToken == "rackerImpersonationToken") {
@@ -357,7 +357,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
     }
 
     def "Fed user can create/get/delete basic root delegation agreement for self"() {
-        def fedAuthResponse = utils.createFederatedUserForAuthResponse(sharedUserAdmin.domainId)
+        def fedAuthResponse = utils.authenticateFederatedUser(sharedUserAdmin.domainId)
         def fedUser = utils.getUserById(fedAuthResponse.user.id)
         def token = fedAuthResponse.token.id
 
@@ -799,7 +799,7 @@ class RootDelegationAgreementCrudRestIntegrationTest extends RootIntegrationTest
         utils.addRoleToUser(userManage, Constants.USER_MANAGE_ROLE_ID)
         def userManageToken = utils.getToken(userManage.username)
 
-        def fedUserResponse = utils.createFederatedUserForAuthResponse(userAdmin.domainId)
+        def fedUserResponse = utils.authenticateFederatedUser(userAdmin.domainId)
         def fedUserToken = fedUserResponse.token.id
 
         def userGroup = utils.createUserGroup(userAdmin.domainId)

@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
@@ -11,6 +12,7 @@ import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
@@ -22,8 +24,23 @@ import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
 import testHelpers.saml.SamlProducer
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
+import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
+import static com.rackspace.idm.Constants.DEFAULT_BROKER_IDP_URI
+import static com.rackspace.idm.Constants.IDP_V2_DOMAIN_ID
+import static com.rackspace.idm.Constants.IDP_V2_DOMAIN_URI
+import static com.rackspace.idm.Constants.IDP_V2_RACKER_PRIVATE_KEY
+import static com.rackspace.idm.Constants.IDP_V2_RACKER_PUBLIC_KEY
+import static com.rackspace.idm.Constants.IDP_V2_RACKER_URI
+import static com.rackspace.idm.Constants.RACKER
+import static com.rackspace.idm.Constants.getDEFAULT_BROKER_IDP_PRIVATE_KEY
+import static com.rackspace.idm.Constants.getDEFAULT_BROKER_IDP_PUBLIC_KEY
+import static com.rackspace.idm.Constants.getDEFAULT_BROKER_IDP_URI
 import static com.rackspace.idm.Constants.getDEFAULT_PASSWORD
+import static com.rackspace.idm.Constants.getIDP_V2_DOMAIN_PRIVATE_KEY
+import static com.rackspace.idm.Constants.getIDP_V2_DOMAIN_PUBLIC_KEY
+import static com.rackspace.idm.Constants.getIDP_V2_DOMAIN_URI
 import static com.rackspace.idm.Constants.getSCOPE_SETUP_MFA
 
 class DevOpsResourceIntegrationTest extends RootIntegrationTest {
@@ -272,26 +289,12 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         def analyzeAdminToken = utils.getToken(identityAdmin.username)
         utils.addRoleToUser(identityAdmin, Constants.IDENTITY_ANALYZE_TOKEN_ROLE_ID)
 
-        def domainId = utils.createDomain()
-        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
-        def idpCredential = SamlCredentialUtils.generateX509Credential()
-        def samlProducer = new SamlProducer(idpCredential)
-        def pubCertPemString = SamlCredentialUtils.getCertificateAsPEMString(idpCredential.entityCertificate)
-        def issuer = UUID.randomUUID().toString()
-        def idpUrl = UUID.randomUUID().toString()
-        IdentityProvider idp
-
-        def pubCerts = v2Factory.createPublicCertificate(pubCertPemString)
-        def publicCertificates = v2Factory.createPublicCertificates(pubCerts)
-
-        def idpData = v2Factory.createIdentityProvider(issuer, "test", idpUrl, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL, null).with {
-            it.publicCertificates = publicCertificates
-            it
-        }
-        idp = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpData).getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider)
-
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, RandomStringUtils.randomAscii(25), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
-        def federationResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        def userAdmin = utils.createCloudAccount()
+        def federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(DEFAULT_BROKER_IDP_PUBLIC_KEY, DEFAULT_BROKER_IDP_PRIVATE_KEY, IDP_V2_DOMAIN_PUBLIC_KEY, IDP_V2_DOMAIN_PRIVATE_KEY)
+        def fedRequest = utils.createFedRequest(userAdmin, DEFAULT_BROKER_IDP_URI, IDP_V2_DOMAIN_URI)
+        def samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
+        def federationResponse = samlResponse.getEntity(AuthenticateResponse).value
         def federatedUser = utils.getUserById(federationResponse.user.id)
         def federatedUserToken = federationResponse.token.id
 
@@ -313,7 +316,7 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         entity.user.id == federatedUser.id
         entity.user.username == federatedUser.username
         entity.user.type == "FEDERATED_USER"
-        entity.user.domain == domainId
+        entity.user.domain == userAdmin.domainId
         entity.user.enabled == true
         entity.user.domainEnabled == true
         entity.user.federatedIdp == federatedUser.federatedIdp
@@ -349,7 +352,7 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         entity.impersonatedUser.id == federatedUser.id
         entity.impersonatedUser.username == federatedUser.username
         entity.impersonatedUser.type == "FEDERATED_USER"
-        entity.impersonatedUser.domain == domainId
+        entity.impersonatedUser.domain == userAdmin.domainId
         entity.impersonatedUser.enabled == true
         entity.impersonatedUser.domainEnabled == true
         entity.impersonatedUser.federatedIdp == federatedUser.federatedIdp
@@ -366,7 +369,7 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(userAdmin)
         utils.deleteUser(identityAdmin)
-        utils.deleteIdentityProvider(idp)
+        utils.deleteFederatedUserQuietly(fedRequest.username)
     }
 
     @Unroll
@@ -375,27 +378,17 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         def identityAdmin = utils.createIdentityAdmin()
         def analyzeAdminToken = utils.getToken(identityAdmin.username)
         utils.addRoleToUser(identityAdmin, Constants.IDENTITY_ANALYZE_TOKEN_ROLE_ID)
+        def brokerCred = SamlCredentialUtils.generateX509Credential()
+        def brokerIdp = utils.createIdentityProviderWithCred(utils.identityAdminToken, IdentityProviderFederationTypeEnum.BROKER, brokerCred)
+        def originCred = SamlCredentialUtils.generateX509Credential()
+        def originIdp = utils.createIdentityProviderWithCred(utils.identityAdminToken, IdentityProviderFederationTypeEnum.DOMAIN, originCred)
 
-        def domainId = utils.createDomain()
-        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
-        def idpCredential = SamlCredentialUtils.generateX509Credential()
-        def samlProducer = new SamlProducer(idpCredential)
-        def pubCertPemString = SamlCredentialUtils.getCertificateAsPEMString(idpCredential.entityCertificate)
-        def issuer = UUID.randomUUID().toString()
-        def idpUrl = UUID.randomUUID().toString()
-        IdentityProvider idp
-
-        def pubCerts = v2Factory.createPublicCertificate(pubCertPemString)
-        def publicCertificates = v2Factory.createPublicCertificates(pubCerts)
-
-        def idpData = v2Factory.createIdentityProvider(issuer, "blah", idpUrl, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL, null).with {
-            it.publicCertificates = publicCertificates
-            it
-        }
-        idp = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpData).getEntity(IdentityProvider)
-
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, RandomStringUtils.randomAscii(25), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
-        def federationResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        def userAdmin = utils.createCloudAccount()
+        def federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(brokerCred, originCred)
+        def fedRequest = utils.createFedRequest(userAdmin, brokerIdp.issuer, originIdp.issuer)
+        def samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
+        def federationResponse = samlResponse.getEntity(AuthenticateResponse).value
         def federatedUser = utils.getUserById(federationResponse.user.id)
         def federatedUserToken = federationResponse.token.id
 
@@ -403,7 +396,7 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
             it.enabled = false
             it
         }
-        cloud20.updateIdentityProvider(utils.getServiceAdminToken(), idp.id, idpRequest)
+        cloud20.updateIdentityProvider(utils.getServiceAdminToken(), originIdp.id, idpRequest)
 
         when: "subject token passed is revoked as the idp is disabled"
         def response = devops.analyzeToken(analyzeAdminToken, federatedUserToken)
@@ -423,17 +416,19 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         entity.user.id == federatedUser.id
         entity.user.username == federatedUser.username
         entity.user.type == "FEDERATED_USER"
-        entity.user.domain == domainId
+        entity.user.domain == userAdmin.domainId
         entity.user.enabled == true
         entity.user.domainEnabled == true
 
         entity.trrs.size == 1
-        entity.trrs[0].identityProviderId == idp.id
+        entity.trrs[0].identityProviderId == originIdp.id
 
         cleanup:
         utils.deleteUser(userAdmin)
         utils.deleteUser(identityAdmin)
-        utils.deleteIdentityProvider(idp)
+        utils.deleteFederatedUserQuietly(fedRequest.username, originIdp.id)
+        utils.deleteIdentityProviderQuietly(utils.serviceAdminToken, originIdp.id)
+        utils.deleteIdentityProviderQuietly(utils.serviceAdminToken, brokerIdp.id)
     }
 
     @Unroll
@@ -443,13 +438,22 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         def analyzeAdminToken = utils.getToken(identityAdmin.username)
         utils.addRoleToUser(identityAdmin, Constants.IDENTITY_ANALYZE_TOKEN_ROLE_ID)
 
-        def username = Constants.RACKER
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedRacker(Constants.RACKER_IDP_URI, username, 100);
-
-        AuthenticateResponse rackerAuthResponse = utils.authenticateRacker(username, Constants.RACKER_PASSWORD)
-
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
-        def federatedRackerToken = samlResponse.token.id
+        def federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(DEFAULT_BROKER_IDP_PUBLIC_KEY, DEFAULT_BROKER_IDP_PRIVATE_KEY, IDP_V2_RACKER_PUBLIC_KEY, IDP_V2_RACKER_PRIVATE_KEY)
+        def fedRequest = new FederatedDomainAuthGenerationRequest().with {
+            it.validitySeconds = 100
+            it.brokerIssuer = DEFAULT_BROKER_IDP_URI
+            it.originIssuer = IDP_V2_RACKER_URI
+            it.email = Constants.DEFAULT_FED_EMAIL
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = RACKER
+            it.roleNames = [] as Set
+            it
+        }
+        def samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
+        def federationResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def federatedRackerToken = federationResponse.token.id
 
         when: "valid x-auth-token and valid subject token is passed"
         def response = devops.analyzeToken(analyzeAdminToken, federatedRackerToken)
@@ -467,7 +471,7 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         entity.token.token == federatedRackerToken
         entity.token.type == "RACKER"
 
-        entity.user.username == samlResponse.user.name
+        entity.user.username == federationResponse.user.name
         entity.user.type == "RACKER"
         entity.user.enabled == true
 

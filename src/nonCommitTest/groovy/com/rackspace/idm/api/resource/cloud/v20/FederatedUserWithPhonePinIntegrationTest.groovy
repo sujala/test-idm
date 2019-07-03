@@ -119,40 +119,6 @@ class FederatedUserWithPhonePinIntegrationTest extends RootIntegrationTest {
         }
     }
 
-    def "SAML assertion 1.0 - Create a federated user with phone PIN"() {
-        given:
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "test@rackspace.com"
-
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, sharedUserAdmin.domainId, null, email)
-
-        when:
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-
-        then:
-        samlResponse.status == HttpServletResponse.SC_OK
-
-        when:
-        def authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def fedUser = federatedUserRepository.getUserById(authResponse.user.id)
-
-        then:
-        assert fedUser.phonePin != null
-        assert fedUser.encryptedPhonePin != null
-        assert fedUser.salt != null
-        assert fedUser.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
-        assert fedUser.phonePin.isNumber()
-
-        cleanup:
-        try {
-            deleteFederatedUserQuietly(username)
-        } catch (Exception ex) {
-            // Eat
-        }
-    }
-
-
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)

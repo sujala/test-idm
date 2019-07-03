@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
-import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.IdentityUserService
@@ -13,9 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
+import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.Constants.*
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import static org.apache.http.HttpStatus.*
 
@@ -44,7 +45,7 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
 
     def setup() {
         identityAdmin = utils.createIdentityAdmin()
-        utils.addRoleToUser(identityAdmin, Constants.IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
+        utils.addRoleToUser(identityAdmin, IDENTITY_RS_TENANT_ADMIN_ROLE_ID)
         identityAdminToken = utils.getToken(identityAdmin.username)
     }
 
@@ -124,12 +125,13 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
         def requestId = UUID.randomUUID().toString()
 
         // Create federated user
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def username = testUtils.getRandomUUID("samlUser")
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, userAdmin.domainId, null)
+        def fedRequest = utils.createFedRequest(userAdmin, DEFAULT_BROKER_IDP_URI, IDP_V2_DOMAIN_URI)
+        FederatedDomainAuthRequestGenerator federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(DEFAULT_BROKER_IDP_PUBLIC_KEY, DEFAULT_BROKER_IDP_PRIVATE_KEY, IDP_V2_DOMAIN_PUBLIC_KEY, IDP_V2_DOMAIN_PRIVATE_KEY)
+
 
         when: "saml auth"
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion, APPLICATION_XML, APPLICATION_XML, requestId)
+        def samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion), APPLICATION_XML, APPLICATION_XML, requestId)
         def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
         def endUser = identityUserService.getEndUserById(samlAuthResponse.value.user.id)
 
@@ -148,7 +150,7 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
 
         when: "saml auth of existing federated user with no changes"
         resetCloudFeedsMock()
-        samlResponse = cloud20.samlAuthenticate(samlAssertion, APPLICATION_XML, APPLICATION_XML, requestId)
+        samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion), APPLICATION_XML, APPLICATION_XML, requestId)
 
         then: "assert 200"
         samlResponse.status == SC_OK
@@ -169,23 +171,24 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
 
         when: "updating federated user's email"
         resetCloudFeedsMock()
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, userAdmin.domainId, null, "test@mail.com");
-        samlResponse = cloud20.samlAuthenticate(samlAssertion, APPLICATION_XML, APPLICATION_XML, requestId)
+        fedRequest.email = "test@mail.com"
+        samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion), APPLICATION_XML, APPLICATION_XML, requestId)
 
         then:
         samlResponse.status == SC_OK
 
         and: "verify no event feeds"
-        // NOTE: no event feed is sent when the federated user's email is updated.
         cloudFeedsMock.verify(
                 testUtils.createV3UserFeedsRequest(endUser, EventType.UPDATE, FeedsUserStatusEnum.UPDATE, requestId),
-                VerificationTimes.exactly(0)
+                VerificationTimes.exactly(1)
         )
 
         when: "add role to existing federated user"
         resetCloudFeedsMock()
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, userAdmin.domainId, [Constants.ROLE_RBAC1_NAME], "test@mail.com");
-        samlResponse = cloud20.samlAuthenticate(samlAssertion, APPLICATION_XML, APPLICATION_XML, requestId)
+        fedRequest.roleNames = [ROLE_RBAC1_NAME]
+        samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion), APPLICATION_XML, APPLICATION_XML, requestId)
 
         then:
         samlResponse.status == SC_OK
@@ -197,7 +200,7 @@ class FeedsV3UserEventIntegrationTest extends RootIntegrationTest {
         )
 
         cleanup:
-        utils.logoutFederatedUser(endUser.username)
+        utils.deleteFederatedUserQuietly(endUser.username)
         utils.deleteUserQuietly(userAdmin)
         utils.deleteDomain(userAdmin.domainId)
     }

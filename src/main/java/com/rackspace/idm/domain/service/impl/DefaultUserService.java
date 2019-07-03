@@ -1554,7 +1554,10 @@ public class DefaultUserService implements UserService {
                     Thread.sleep(Math.min(delay, identityConfig.getReloadableConfig().getFederatedDeletionMaxDelay()));
                     final FederatedUser federatedUser = federatedUserDao.getSingleExpiredFederatedUser();
                     if (federatedUser != null) {
-                        federationHandler.deleteFederatedUser(federatedUser);
+                        // Delete federated user
+                        identityUserService.deleteUser(federatedUser);
+                        //send atom hopper feed showing deletion of this user
+                        atomHopperClient.asyncPost(federatedUser, FeedsUserStatusEnum.DELETED, MDC.get(Audit.GUUID));
                         deleted++;
                     } else {
                         i = repeat;

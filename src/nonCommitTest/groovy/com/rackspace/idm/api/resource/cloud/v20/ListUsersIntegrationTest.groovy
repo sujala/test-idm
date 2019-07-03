@@ -30,16 +30,9 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
 
     def "federated user can call list users"() {
         given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def samlToken = authResponse.token.id
+        def userAdmin = utils.createCloudAccount()
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        def samlToken = samlResponse.token.id
 
         when: "list users with federated user's token"
         def listUsersResponse = cloud20.listUsers(samlToken)
@@ -47,98 +40,77 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         then: "request successful and only contains the federated user"
         listUsersResponse.status == 200
         def userList = listUsersResponse.getEntity(UserList).value
-        userList.user.id.contains(authResponse.user.id)
+        userList.user.id.contains(samlResponse.user.id)
         userList.user.size() == 1
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteUserQuietly(userAdmin)
     }
 
     def "user admin cannot see federated users that are not in their domain"() {
         given:
-
-        def domainId1 = utils.createDomain()
-        def domainId2 = utils.createDomain()
-        def username1 = testUtils.getRandomUUID("userForSaml")
-        def username2 = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion1 = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username1, expSecs, domainId1, null, email);
-        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username2, expSecs, domainId2, null, email);
-        def userAdmin1, userAdmin2, users1, users2
-        (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId1)
-        (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
-        def adminToken1 = utils.getToken(userAdmin1.username)
-        def adminToken2 = utils.getToken(userAdmin2.username)
-        def samlResponse1 = cloud20.samlAuthenticate(samlAssertion1)
-        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
-        def AuthenticateResponse authResponse1 = samlResponse1.getEntity(AuthenticateResponse).value
-        def AuthenticateResponse authResponse2 = samlResponse2.getEntity(AuthenticateResponse).value
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def userAdmin2 = utils.createCloudAccount()
+        def userAdminToken2 = utils.getToken(userAdmin2.username)
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        def samlResponse2 = utils.authenticateFederatedUser(userAdmin2.domainId)
 
         when: "list users with first user admin token"
-        def listUsersResponse = cloud20.listUsers(adminToken1)
+        def listUsersResponse = cloud20.listUsers(userAdminToken)
 
         then: "request is successful"
         listUsersResponse.status == 200
         def userList1 = listUsersResponse.getEntity(UserList).value
 
         and: "contains the federated user from domain"
-        userList1.user.id.contains(authResponse1.user.id)
+        userList1.user.id.contains(samlResponse.user.id)
 
         and: "does not contain the federated user from other domains"
-        !userList1.user.id.contains(authResponse2.user.id)
+        !userList1.user.id.contains(samlResponse2.user.id)
 
         when: "list users with other user admin token"
-        listUsersResponse = cloud20.listUsers(adminToken2)
+        listUsersResponse = cloud20.listUsers(userAdminToken2)
 
         then: "request is successful"
         listUsersResponse.status == 200
         def userList2 = listUsersResponse.getEntity(UserList).value
 
         and: "contains the federated user from domain"
-        userList2.user.id.contains(authResponse2.user.id)
+        userList2.user.id.contains(samlResponse2.user.id)
 
         and: "does not contain the federated user from other domains"
-        !userList2.user.id.contains(authResponse1.user.id)
+        !userList2.user.id.contains(samlResponse.user.id)
 
         cleanup:
-        deleteFederatedUserQuietly(username1)
-        deleteFederatedUserQuietly(username2)
-        utils.deleteUsers(users1)
-        utils.deleteUsers(users2)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteFederatedUserQuietly(samlResponse2.user.name)
+        utils.deleteUsersQuietly([userAdmin, userAdmin2])
     }
 
     @Unroll
     def "user admin with federated user in domain see federated user in list users call - accept: #accept"() {
         given:
-
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def adminToken = utils.getToken(userAdmin.username)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def userAdmin = utils.createCloudAccount()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
 
         when: "list users with user admin token"
-        List<User> userList = utils.listUsers(adminToken, accept)
+        List<User> userList = utils.listUsers(userAdminToken, accept)
 
         then: "contains the federated user"
-        User fedUser = userList.find() {it.id == authResponse.user.id}
+        User fedUser = userList.find() {it.id == samlResponse.user.id}
         fedUser != null
-        fedUser.federatedIdp == Constants.DEFAULT_IDP_URI
+        fedUser.federatedIdp == Constants.IDP_V2_DOMAIN_URI
 
         and: "contains the user-admin"
         userList.id.contains(userAdmin.id)
         userList.size() == 2
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteUserQuietly(userAdmin)
 
         where:
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -146,25 +118,19 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
 
     def "identity and service admins are able to see federated users and provisioned users in the list user call"() {
         given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def userAdmin = utils.createCloudAccount()
         def userAdminToken = utils.getToken(userAdmin.username)
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+
         def disabledUser = utils.createUser(userAdminToken, testUtils.getRandomUUID(), userAdmin.domainId)
         utils.disableUser(disabledUser)
 
         def serviceAdmin = utils.createServiceAdmin()
         def serviceAdminToken = utils.getToken(serviceAdmin.username)
-        utils.addUserToDomain(serviceAdminToken, serviceAdmin.id, domainId)
+        utils.addUserToDomain(serviceAdminToken, serviceAdmin.id, userAdmin.domainId)
 
         def identityAdmin = utils.createIdentityAdmin()
-        utils.addUserToDomain(serviceAdminToken, identityAdmin.id, domainId)
+        utils.addUserToDomain(serviceAdminToken, identityAdmin.id, userAdmin.domainId)
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
         when: "list users with service admin token"
@@ -175,7 +141,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def userList = listUsersResponse.getEntity(UserList).value
 
         and: "contains the federated user"
-        userList.user.id.contains(authResponse.user.id)
+        userList.user.id.contains(samlResponse.user.id)
 
         and: "contains the user-admin"
         userList.user.id.contains(userAdmin.id)
@@ -191,7 +157,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def userList2 = listUsersResponse.getEntity(UserList).value
 
         and: "contains the federated user"
-        userList2.user.id.contains(authResponse.user.id)
+        userList2.user.id.contains(samlResponse.user.id)
 
         and: "contains the user-admin"
         userList2.user.id.contains(userAdmin.id)
@@ -200,41 +166,33 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         userList2.user.id.contains(disabledUser.id)
 
         when: "list users in domain"
-        def usersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, "VERIFIED").getEntity(UserList).value
+        def usersInDomain = cloud20.listUsersInDomain(identityAdminToken, userAdmin.domainId, "VERIFIED").getEntity(UserList).value
 
         then: "see federated user"
-        usersInDomain.user.id.contains(authResponse.user.id)
+        usersInDomain.user.id.contains(samlResponse.user.id)
 
         when: "list enabled users in domain"
-        def enabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, "VERIFIED", true).getEntity(UserList).value
+        def enabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, userAdmin.domainId, "VERIFIED", true).getEntity(UserList).value
 
         then: "see federated user"
-        enabledUsersInDomain.user.id.contains(authResponse.user.id)
+        enabledUsersInDomain.user.id.contains(samlResponse.user.id)
 
         when: "list disabled users in domain"
-        def disabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, "VERIFIED",false).getEntity(UserList).value
+        def disabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, userAdmin.domainId, "VERIFIED",false).getEntity(UserList).value
 
         then: "no federated user"
-        !disabledUsersInDomain.user.id.contains(authResponse.user.id)
+        !disabledUsersInDomain.user.id.contains(samlResponse.user.id)
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUser(disabledUser)
-        utils.deleteUsers(users)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteUsersQuietly([disabledUser, userAdmin])
     }
 
     @Ignore("This test will currently fail due to federated users not being deleted when a domain is disabled. This test should pass once these updates are made")
     def "federated users in disabled domain are not returned in list users call"() {
         given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def userAdmin = utils.createCloudAccount()
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
         def serviceAdminToken = utils.getServiceAdminToken()
 
         when: "list users"
@@ -245,7 +203,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def userList = listUsersResponse.getEntity(UserList).value
 
         and: "contains the federated user"
-        userList.user.id.contains(authResponse.user.id)
+        userList.user.id.contains(samlResponse.user.id)
 
         and: "contains the user-admin"
         userList.user.id.contains(userAdmin.id)
@@ -264,30 +222,25 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def userList2 = listUsersResponse.getEntity(UserList).value
 
         and: "does not contain the federated user"
-        !userList2.user.id.contains(authResponse.user.id)
+        !userList2.user.id.contains(samlResponse.user.id)
 
         and: "contains the user-admin"
         userList2.user.id.contains(userAdmin.id)
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteUserQuietly(userAdmin)
     }
 
     @Ignore("This test will currently fail due to federated users not being deleted when a domain has its last user admin disabled. This test should pass once these updates are made")
     def "federated users with all user admins in domain are disabled should not be returned in list users call"() {
         given:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, userAdmin2, users, users2
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        (userAdmin2, users2) = utils.createUserAdmin(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+
+        def userAdmin = utils.createCloudAccount()
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        def userAdmin2 = utils.createCloudAccount()
+
         def serviceAdminToken = utils.getServiceAdminToken()
 
         when: "list users"
@@ -298,7 +251,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def userList = listUsersResponse.getEntity(UserList).value
 
         and: "contains the federated user"
-        userList.user.id.contains(authResponse.user.id)
+        userList.user.id.contains(samlResponse.user.id)
 
         and: "contains the first user-admin"
         userList.user.id.contains(userAdmin.id)
@@ -315,7 +268,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def userList2 = listUsersResponse.getEntity(UserList).value
 
         and: "contains the federated user"
-        userList2.user.id.contains(authResponse.user.id)
+        userList2.user.id.contains(samlResponse.user.id)
 
         and: "does not contain the first user-admin"
         !userList2.user.id.contains(userAdmin.id)
@@ -332,7 +285,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def userList3 = listUsersResponse.getEntity(UserList).value
 
         and: "does not contain the federated user"
-        !userList3.user.id.contains(authResponse.user.id)
+        !userList3.user.id.contains(samlResponse.user.id)
 
         and: "does not contain the first user-admin"
         !userList3.user.id.contains(userAdmin.id)
@@ -341,9 +294,8 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         !userList3.user.id.contains(userAdmin2.id)
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-        utils.deleteUsers(users2)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteUsersQuietly([userAdmin, userAdmin2])
         staticIdmConfiguration.reset()
     }
 
@@ -351,25 +303,16 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
     def "list users in domain returns federated and provisioned users: accept = #accept"() {
         given:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
-        def domainId = utils.createDomain()
-        def domainId2 = utils.createDomain()
-        def username = testUtils.getRandomUUID("userForSaml")
-        def username2 = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username2, expSecs, domainId2, null, email);
-        def userAdmin, userAdmin2, users, users2
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def AuthenticateResponse authResponse2 = samlResponse2.getEntity(AuthenticateResponse).value
+
+        def userAdmin = utils.createCloudAccount()
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        def userAdmin2 = utils.createCloudAccount()
+        def samlResponse2 = utils.authenticateFederatedUser(userAdmin2.domainId)
+
         def serviceAdminToken = utils.getServiceAdminToken()
 
         when: "list users with domain id (not specifying enabled flag)"
-        def response = cloud20.getUsersByDomainId(serviceAdminToken, domainId, accept)
+        def response = cloud20.getUsersByDomainId(serviceAdminToken, userAdmin.domainId, accept)
 
         then: "the request was successful"
         response.status == 200
@@ -386,33 +329,33 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         and: "returns the federated user for the domain"
         def federatedUser
         for (def curUser : userList) {
-            if (curUser.id == authResponse.user.id) {
+            if (curUser.id == samlResponse.user.id) {
                 federatedUser = curUser
             }
         }
-        userIds.contains(authResponse.user.id)
+        userIds.contains(samlResponse.user.id)
 
         and: "federated user has the RAX-AUTH:federatedIdp attribute"
         if(accept == MediaType.APPLICATION_XML_TYPE) {
-            assert federatedUser.federatedIdp == Constants.DEFAULT_IDP_URI
+            assert federatedUser.federatedIdp == Constants.IDP_V2_DOMAIN_URI
         } else {
-            assert federatedUser.'RAX-AUTH:federatedIdp' == Constants.DEFAULT_IDP_URI
+            assert federatedUser.'RAX-AUTH:federatedIdp' == Constants.IDP_V2_DOMAIN_URI
         }
 
         and: "returns the provisioned user for the domain"
         userIds.contains(userAdmin.id)
 
         and: "does not return the provisioned user in the other domain"
-        !userIds.contains(authResponse2.user.id)
+        !userIds.contains(samlResponse2.user.id)
 
         and: "does not return the federated user in the other domain"
         !userIds.contains(userAdmin2.id)
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        deleteFederatedUserQuietly(username2)
-        utils.deleteUsers(users)
-        utils.deleteUsers(users2)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteFederatedUserQuietly(samlResponse2.user.name)
+        utils.deleteUsersQuietly([userAdmin, userAdmin2])
+        staticIdmConfiguration.reset()
 
         where:
         accept | _
@@ -424,25 +367,16 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
     def "list users in domain and with enabled returns federated and provisioned users: accept = #accept"() {
         given:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
-        def domainId = utils.createDomain()
-        def domainId2 = utils.createDomain()
-        def username = testUtils.getRandomUUID("userForSaml")
-        def username2 = testUtils.getRandomUUID("userForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username2, expSecs, domainId2, null, email);
-        def userAdmin, userAdmin2, users, users2
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def AuthenticateResponse authResponse2 = samlResponse2.getEntity(AuthenticateResponse).value
+
+        def userAdmin = utils.createCloudAccount()
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        def userAdmin2 = utils.createCloudAccount()
+        def samlResponse2 = utils.authenticateFederatedUser(userAdmin2.domainId)
+
         def serviceAdminToken = utils.getServiceAdminToken()
 
         when: "list users with domain id"
-        def response = cloud20.getUsersByDomainIdAndEnabledFlag(serviceAdminToken, domainId, true, accept)
+        def response = cloud20.getUsersByDomainIdAndEnabledFlag(serviceAdminToken, userAdmin.domainId, true, accept)
 
         then: "the request was successful"
         response.status == 200
@@ -459,33 +393,33 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         and: "returns the federated user for the domain"
         def federatedUser
         for (def curUser : userList) {
-            if (curUser.id == authResponse.user.id) {
+            if (curUser.id == samlResponse.user.id) {
                 federatedUser = curUser
             }
         }
-        userIds.contains(authResponse.user.id)
+        userIds.contains(samlResponse.user.id)
 
         and: "federated user has the RAX-AUTH:federatedIdp attribute"
         if(accept == MediaType.APPLICATION_XML_TYPE) {
-            assert federatedUser.federatedIdp == Constants.DEFAULT_IDP_URI
+            assert federatedUser.federatedIdp == Constants.IDP_V2_DOMAIN_URI
         } else {
-            assert federatedUser.'RAX-AUTH:federatedIdp' == Constants.DEFAULT_IDP_URI
+            assert federatedUser.'RAX-AUTH:federatedIdp' == Constants.IDP_V2_DOMAIN_URI
         }
 
         and: "returns the provisioned user for the domain"
         userIds.contains(userAdmin.id)
 
         and: "does not return the provisioned user in the other domain"
-        !userIds.contains(authResponse2.user.id)
+        !userIds.contains(samlResponse2.user.id)
 
         and: "does not return the federated user in the other domain"
         !userIds.contains(userAdmin2.id)
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        deleteFederatedUserQuietly(username2)
-        utils.deleteUsers(users)
-        utils.deleteUsers(users2)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteFederatedUserQuietly(samlResponse2.user.name)
+        utils.deleteUsersQuietly([userAdmin, userAdmin2])
+        staticIdmConfiguration.reset()
 
         where:
         accept | _
@@ -936,17 +870,5 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         userList.user.addAll(new JsonSlurper().parseText(response.getEntity(String))["users"])
 
         return userList
-    }
-
-    def deleteFederatedUserQuietly(username) {
-        try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
-            if (federatedUser != null) {
-                federatedUserRepository.deleteUser(federatedUser)
-            }
-        } catch (Exception e) {
-            //eat but log
-            LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", username), e)
-        }
     }
 }

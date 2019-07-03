@@ -257,7 +257,7 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         def user = utils.createUser(utils.getIdentityAdminToken(), username, domainId)
         def userGroup = utils.createUserGroup(domainId)
         def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
-        def federatedUser = utils.createFederatedUser(domainId)
+        def federatedUser = utils.authenticateFederatedUser(domainId).user
 
         when:
         def response = cloud20.addUserToUserGroup(token, domainId, userGroup.id, federatedUser.id)
@@ -908,7 +908,7 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         def user = utils.createUser(utils.getIdentityAdminToken(), username, domainId)
         def userGroup = utils.createUserGroup(domainId)
         def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
-        def federatedUser = utils.createFederatedUser(domainId)
+        def federatedUser = utils.authenticateFederatedUser(domainId).user
 
         when:
         def response = cloud20.removeUserFromUserGroup(token, domainId, userGroup.id, federatedUser.id)

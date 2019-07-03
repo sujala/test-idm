@@ -168,64 +168,10 @@ class VerifyPhonePinForFedUserIntegrationTest extends RootIntegrationTest {
         accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
-    @Unroll
-    def "SAML assertion 1.0 - Verify phone pin for a federated user; media = #accept"() {
-        given:
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, Constants.DEFAULT_SAML_EXP_SECS, sharedUserAdmin.domainId, null, "test@rackspace.com")
-
-        when:
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def fedUserId = authResponse.user.id
-        FederatedUser fedUser = federatedUserRepository.getUserById(fedUserId)
-
-        then:
-        assert samlResponse.status == SC_OK
-
-        when: "verify phone pin with default identityAdminToken that has got identity:phone-pin-admin added to it"
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = fedUser.phonePin
-            it
-        }
-        def response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, phonePin)
-
-        then:
-        assert response.status == SC_OK
-
-        when: "verify phone pin with SAML auth token"
-        response = cloud20.verifyPhonePin(authResponse.token.id, fedUserId, phonePin)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
-
-        when: "verify phone pin with incorrect phone pin"
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin incorrectPhonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {
-            it.pin = "12345433"
-            it
-        }
-        response = cloud20.verifyPhonePin(utils.getIdentityAdminToken(), fedUserId, incorrectPhonePin)
-
-        then: "Returns 200 response"
-        response.status == SC_OK
-
-        and: "Response is appropriate"
-        VerifyPhonePinResult result = response.getEntity(VerifyPhonePinResult)
-        !result.authenticated
-        result.failureCode == "PP-003"
-        result.failureMessage == "Incorrect Phone PIN."
-
-        cleanup:
-        utils.deleteFederatedUserQuietly(username)
-
-        where:
-        accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
-    }
-
     def "Locking a phone pin sends an email only when the phone pin becomes locked" () {
         given:
         def userAdmin = utils.createGenericUserAdmin()
-        def fedUserId = utils.createFederatedUser(userAdmin.domainId).id
+        def fedUserId = utils.authenticateFederatedUser(userAdmin.domainId).user.id
         def fedUserEntity = identityUserService.getFederatedUserById(fedUserId)
         def pin = fedUserEntity.phonePin
         com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin phonePin = new com.rackspace.docs.identity.api.ext.rax_auth.v1.PhonePin().with {

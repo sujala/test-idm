@@ -11,17 +11,6 @@ import java.util.List;
 public interface FederatedIdentityService {
 
     /**
-     * Authenticate federated user via 1.0 of API.
-     *
-     * @param samlResponse
-     * @return
-     * @throws ServiceUnavailableException
-     * @deprecated Use @{link processV2SamlResponse}
-     */
-    @Deprecated
-    SamlAuthResponse processSamlResponse(Response samlResponse) throws ServiceUnavailableException;
-
-    /**
      * Process v2 API version
      *
      * @param samlResponse

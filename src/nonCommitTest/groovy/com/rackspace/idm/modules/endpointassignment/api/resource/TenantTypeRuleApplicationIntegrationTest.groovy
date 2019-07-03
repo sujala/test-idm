@@ -83,14 +83,6 @@ class TenantTypeRuleApplicationIntegrationTest extends RootIntegrationTest {
         endpointList.endpoint.publicURL.find() { url -> url == inferredEndpoint1 } == expectedEndpoint1
         endpointList.endpoint.publicURL.find() { url -> url == inferredEndpoint2 } == expectedEndpoint2
 
-        when: "v1 federated auth"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, RandomStringUtils.randomAscii(25), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
-        AuthenticateResponse federationResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
-
-        then:
-        federationResponse.serviceCatalog.service.endpoint.publicURL.flatten().find { url -> url == inferredEndpoint2 } == expectedEndpoint2
-        federationResponse.serviceCatalog.service.endpoint.publicURL.flatten().find { url -> url == inferredEndpoint1 } == expectedEndpoint1
-
         when: "v2 federated auth"
         def v2AuthRequest = new FederatedDomainAuthGenerationRequest().with {
             it.domainId = domainId

@@ -1,16 +1,22 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.service.FederatedIdentityService
+import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.mockserver.verify.VerificationTimes
+import org.opensaml.security.credential.Credential
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
 import testHelpers.saml.SamlProducer
+import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
@@ -23,67 +29,69 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
     @Unroll
     def "test full key rotation for identity provider - request: #requestContentType"() {
         given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def idpManager = utils.createIdentityProviderManager()
-        def idpManagerToken = utils.getToken(idpManager.username)
-        def idp = utils.createIdentityProvider(idpManagerToken)
 
-        def keyPair1 = SamlCredentialUtils.generateKeyPair()
-        def cert1 = SamlCredentialUtils.generateCertificate(keyPair1)
-        def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cert1)
-        def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
-        def samlProducer1 = new SamlProducer(SamlCredentialUtils.generateX509Credential(cert1, keyPair1))
+        //add identity provider w/ 2 keys
+        Credential cred1 = SamlCredentialUtils.generateX509Credential()
+        Credential cred2 = SamlCredentialUtils.generateX509Credential()
+        IdentityProvider originIdp = createIdentityProvider(IdentityProviderFederationTypeEnum.DOMAIN)
 
-        def keyPair2 = SamlCredentialUtils.generateKeyPair()
-        def cert2 = SamlCredentialUtils.generateCertificate(keyPair2)
-        def pubCertPemString2 = SamlCredentialUtils.getCertificateAsPEMString(cert2)
-        def pubCerts2 = v2Factory.createPublicCertificate(pubCertPemString2)
-        def samlProducer2 = new SamlProducer(SamlCredentialUtils.generateX509Credential(cert2, keyPair2))
+        // Add Origin with certs
+        def pubCertPemStringOrigin1 = SamlCredentialUtils.getCertificateAsPEMString(cred1.entityCertificate)
+        def pubCertsOrigin1 = v2Factory.createPublicCertificate(pubCertPemStringOrigin1)
 
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def pubCertPemStringOrigin2 = SamlCredentialUtils.getCertificateAsPEMString(cred2.entityCertificate)
+        def pubCertsOrigin2 = v2Factory.createPublicCertificate(pubCertPemStringOrigin2)
+
+        // Add broker with certs
+        Credential brokerIdpCredential = SamlCredentialUtils.generateX509Credential()
+        IdentityProvider brokerIdp = createIdentityProvider(IdentityProviderFederationTypeEnum.BROKER)
+        def pubCertPemStringBroker = SamlCredentialUtils.getCertificateAsPEMString(brokerIdpCredential.entityCertificate)
+        def pubCertsBroker = v2Factory.createPublicCertificate(pubCertPemStringBroker)
+        response = cloud20.createIdentityProviderCertificates(utils.serviceAdminToken, brokerIdp.id, pubCertsBroker)
+        assert response.status == HttpStatus.SC_NO_CONTENT
+
+        def userAdmin = utils.createCloudAccount()
+        def fedRequest = utils.createFedRequest(userAdmin, brokerIdp.issuer, originIdp.issuer)
 
         when: "add the first cert to the IDP"
         resetCloudFeedsMock()
-        def response = cloud20.createIdentityProviderCertificates(idpManagerToken, idp.id, pubCerts1, requestContentType)
+        def response = cloud20.createIdentityProviderCertificates(utils.serviceAdminToken, originIdp.id, pubCertsOrigin1, requestContentType)
 
         then: "success"
         response.status == HttpServletResponse.SC_NO_CONTENT
 
         and: "only one event was posted"
+        def idpEntity = federatedIdentityService.getIdentityProvider(originIdp.id)
         cloudFeedsMock.verify(
                 testUtils.createFeedsRequest(),
                 VerificationTimes.exactly(1)
         )
 
         and: "the event was an UPDATE event for the IDP"
-        def idpEntity = federatedIdentityService.getIdentityProviderByIssuer(idp.issuer)
         cloudFeedsMock.verify(
                 testUtils.createIdpFeedsRequest(idpEntity, EventType.UPDATE),
                 VerificationTimes.exactly(1)
         )
 
         when: "get the IDP"
-        def identityProviderResponse = utils.getIdentityProvider(idpManagerToken, idp.id)
+        def identityProviderResponse = utils.getIdentityProvider(utils.serviceAdminToken, originIdp.id)
 
         then: "the cert is shown on the IDP and has a generated ID"
-        def createdCert = identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemString1}
+        def createdCert = identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemStringOrigin1}
         createdCert != null
         createdCert.id != null
 
         when: "auth user for IDP"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer1);
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        FederatedDomainAuthRequestGenerator federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(brokerIdpCredential, cred1)
+        def samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then: "success"
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "add the second cert to the IDP"
         resetCloudFeedsMock()
-        response = cloud20.createIdentityProviderCertificates(idpManagerToken, idp.id, pubCerts2, requestContentType)
+        response = cloud20.createIdentityProviderCertificates(utils.serviceAdminToken, originIdp.id, pubCertsOrigin2)
 
         then: "success"
         response.status == HttpServletResponse.SC_NO_CONTENT
@@ -101,26 +109,27 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         )
 
         when: "get the IDP"
-        identityProviderResponse = utils.getIdentityProvider(idpManagerToken, idp.id)
+        identityProviderResponse = utils.getIdentityProvider(utils.serviceAdminToken, originIdp.id)
 
         then: "the both certs are shown on the IDP and both have generated IDs"
-        def createdCert1 = identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemString1}
-        def createdCert2 = identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemString2}
+        def createdCert1 = identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemStringOrigin1}
+        def createdCert2 = identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemStringOrigin2}
         createdCert1 != null
         createdCert.id != null
         createdCert2 != null
         createdCert.id != null
 
         when: "auth user for IDP using second cert"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer2);
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(brokerIdpCredential, cred2)
+        samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then: "success"
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "delete the first cert"
         resetCloudFeedsMock()
-        def deleteCertsResponse = cloud20.deleteIdentityProviderCertificates(idpManagerToken, idp.id, createdCert1.id, requestContentType)
+        def deleteCertsResponse = cloud20.deleteIdentityProviderCertificates(utils.serviceAdminToken, originIdp.id, createdCert1.id, requestContentType)
 
         then: "success"
         deleteCertsResponse.status == HttpServletResponse.SC_NO_CONTENT
@@ -138,31 +147,33 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         )
 
         when: "get the IDP"
-        identityProviderResponse = utils.getIdentityProvider(idpManagerToken, idp.id)
+        identityProviderResponse = utils.getIdentityProvider(utils.serviceAdminToken, originIdp.id)
 
         then: "the first cert is no longer on the IDP"
-        identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemString1} == null
+        identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemStringOrigin1} == null
 
         and: "the second cert is still on the IDP"
-        identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemString2} != null
+        identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemStringOrigin2} != null
 
         when: "auth user for IDP using first cert"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer1);
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(brokerIdpCredential, cred1)
+        samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then: "error, invalid cert"
         samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
 
         when: "auth user for IDP using second cert"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer2);
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(brokerIdpCredential, cred2)
+        samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then: "success"
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "delete the second cert"
         resetCloudFeedsMock()
-        deleteCertsResponse = cloud20.deleteIdentityProviderCertificates(idpManagerToken, idp.id, createdCert2.id, requestContentType)
+        deleteCertsResponse = cloud20.deleteIdentityProviderCertificates(utils.serviceAdminToken, originIdp.id, createdCert2.id, requestContentType)
 
         then: "success"
         deleteCertsResponse.status == HttpServletResponse.SC_NO_CONTENT
@@ -180,22 +191,23 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         )
 
         when: "get the IDP"
-        identityProviderResponse = utils.getIdentityProvider(idpManagerToken, idp.id)
+        identityProviderResponse = utils.getIdentityProvider(utils.serviceAdminToken, originIdp.id)
 
         then: "the IDP no longer has any certs"
         identityProviderResponse.publicCertificates == null
 
         when: "auth user for IDP using second cert"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer2);
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(brokerIdpCredential, cred2)
+        samlAssertion = federatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        samlResponse = cloud20.samlAuthenticate(federatedDomainAuthRequestGenerator.convertResponseToString(samlAssertion))
 
         then: "error, invalid cert"
         samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
 
         cleanup:
-        utils.deleteIdentityProvider(idp)
-        utils.deleteUser(idpManager)
-        utils.deleteUsers(users)
+        utils.deleteIdentityProviderQuietly(utils.serviceAdminToken, originIdp.id)
+        utils.deleteIdentityProviderQuietly(utils.serviceAdminToken, brokerIdp.id)
+        utils.deleteUserQuietly(userAdmin)
 
         where:
         requestContentType | _
@@ -448,6 +460,11 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         requestContentType | _
         MediaType.APPLICATION_XML_TYPE | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def createIdentityProvider(IdentityProviderFederationTypeEnum type) {
+        def idp = v2Factory.createIdentityProvider(UUID.randomUUID().toString(), "blah", UUID.randomUUID().toString(), type, ApprovedDomainGroupEnum.GLOBAL, null)
+        utils.createIdentityProvider(utils.serviceAdminToken, idp)
     }
 
 }

@@ -58,7 +58,7 @@ class ResetPhonePinForUserIntegrationTest extends RootIntegrationTest {
         (identityAdminSecondDomain, userAdminSecondDomain, userManagerSecondDomain, defaultUserSecondDomain) = utils.createUsers(domainId2)
         usersSecondDomain = [defaultUserSecondDomain, userManagerSecondDomain, userAdminSecondDomain, identityAdminSecondDomain]
 
-        def fedAuthResponse = utils.createFederatedUserForAuthResponse(domainId)
+        def fedAuthResponse = utils.authenticateFederatedUser(domainId)
         def fedUser = fedAuthResponse.user
         def fedUserToken = fedAuthResponse.token.id
 

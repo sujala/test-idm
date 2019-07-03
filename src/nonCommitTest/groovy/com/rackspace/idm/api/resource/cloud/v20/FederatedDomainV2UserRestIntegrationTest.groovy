@@ -104,6 +104,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
     @Shared org.openstack.docs.identity.api.v2.User sharedUserAdmin
     @Shared org.openstack.docs.identity.api.v2.Tenant sharedUserAdminCloudTenant
     @Shared org.openstack.docs.identity.api.v2.Tenant sharedUserAdminFilesTenant
+
     @Shared
     FederatedDomainAuthRequestGenerator sharedFederatedDomainAuthRequestGenerator
 

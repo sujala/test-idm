@@ -31,6 +31,8 @@ import testHelpers.saml.SamlFactory
 import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
 
 import static com.rackspace.idm.Constants.IDENTITY_SERVICE_ID
+import static com.rackspace.idm.Constants.IDP_V2_DOMAIN_URI
+import static com.rackspace.idm.Constants.IDP_V2_RACKER_URI
 import static com.rackspace.idm.ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE
 import static com.rackspace.idm.ErrorCodes.ERROR_CODE_ROLE_ASSIGNMENT_FORBIDDEN_ASSIGNMENT_MSG_PATTERN
 
@@ -111,14 +113,13 @@ class DeleteClientRoleIntegrationTest extends RootIntegrationTest {
         }
         def responseRole = cloud20.createRole(utils.getIdentityAdminToken(), role)
         def gRole = responseRole.getEntity(Role).value
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("samlUser")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, [gRole.name])
-        utils.createUserAdminWithTenants(domainId)
+
+        def userAdmin = utils.createCloudAccount()
+        def fedRequest = utils.createFedRequest(userAdmin, Constants.DEFAULT_BROKER_IDP_URI, IDP_V2_DOMAIN_URI)
+        fedRequest.roleNames = [gRole.name]
 
         when: "creating a saml user under a user-admin with a non-propagating role"
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        def samlResponse = utils.authenticateV2FederatedUser(fedRequest)
 
         then: "the non-propagating role is not shown in the response"
         samlResponse.user.roles.role.id.contains(gRole.id)
@@ -240,7 +241,7 @@ class DeleteClientRoleIntegrationTest extends RootIntegrationTest {
         def delegationAgreementDomain2DefaultUser = utils.createDelegationAgreementWithUserAsDelegate(utils.getToken(userAdmin2.username), userAdmin2.domainId, defaultUserDomain2.id)
 
         // Create Fed User
-        AuthenticateResponse fedUser2AuthResponse = utils.createFederatedUserForAuthResponse(userAdmin2.domainId)
+        AuthenticateResponse fedUser2AuthResponse = utils.authenticateFederatedUser(userAdmin2.domainId)
         def fedUser2Id = fedUser2AuthResponse.user.id
 
         // Create delegation agreement for Federated user

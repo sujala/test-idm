@@ -644,7 +644,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         def daTokenDomain2DefaultUser = utils.getDelegationAgreementToken(defaultUserDomain2.username, delegationAgreementDomain2DefaultUser.id)
 
         // Create Fed User
-        AuthenticateResponse fedUser2AuthResponse = utils.createFederatedUserForAuthResponse(userAdmin2.domainId)
+        AuthenticateResponse fedUser2AuthResponse = utils.authenticateFederatedUser(userAdmin2.domainId)
         def fedUser2Id = fedUser2AuthResponse.user.id
         def fedUser2Token = fedUser2AuthResponse.token.id
 
@@ -793,7 +793,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         def userAdmin = utils.createCloudAccount()
 
         // Create federated user
-        def fedUser = utils.createFederatedUser(userAdmin.domainId)
+        def fedUser = utils.authenticateFederatedUser(userAdmin.domainId).user
 
         // grab token
         def iaToken = utils.getIdentityAdminToken()
@@ -835,7 +835,7 @@ class ListUserEffectiveRolesWithSourcesIntegrationTest extends RootIntegrationTe
         def serviceAdminToken = utils.getServiceAdminToken()
 
         // Create federated user
-        def fedUser = utils.createFederatedUser(userAdmin.domainId)
+        def fedUser = utils.authenticateFederatedUser(userAdmin.domainId).user
 
         // create multiple tenants
         def tenant1 = utils.createTenantInDomain(domainId)

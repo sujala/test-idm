@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
-import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -12,23 +11,26 @@ import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.IdentityUserService
-
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import testHelpers.saml.SamlFactory
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
+import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
-import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
 
+import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+import static org.apache.http.HttpStatus.*
 import static org.mockito.Matchers.anyString
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.when
 
 class AuthenticationIntegrationTest extends RootIntegrationTest {
 
@@ -61,24 +63,19 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
     def "authenticate with federated user's token does not modify a federated user's tokens"() {
         given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("samlUser")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, [].asList());
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def userAdminEntity = identityUserService.getEndUserById(userAdmin.id)
+        def userAdmin = utils.createCloudAccount()
 
+        def username = "fedUser${RandomStringUtils.randomAlphanumeric(8)}"
         //authenticate as the federated user twice
-        def samlResponse1 = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
-        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        def samlResponse1 = utils.authenticateFederatedUser(userAdmin.domainId, null, null, username)
+        def samlResponse2 = utils.authenticateFederatedUser(userAdmin.domainId, null, null, username)
 
         //expire the federate user's second token
         def validTokenId = samlResponse1.token.id
         def expiredTokenId = samlResponse2.token.id
 
         when: "authenticate as federated user using valid token and MOSSO tenant"
-        def authRequest = v2Factory.createTokenAuthenticationRequest(validTokenId, "" + userAdminEntity.mossoId, null)
+        def authRequest = v2Factory.createTokenAuthenticationRequest(validTokenId, "" + userAdmin.domainId, null)
         def response = cloud20.authenticate(authRequest)
         def responesData = response.getEntity(AuthenticateResponse).value
 
@@ -87,94 +84,105 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         and: "expired token not deleted"
         scopeAccessDao.getScopeAccessByAccessToken(expiredTokenId) != null
-        verifyTenantContainedInServiceCatalog(responesData, userAdminEntity.mossoId, Constants.MOSSO_V1_DEF_US)
+        verifyTenantContainedInServiceCatalog(responesData, userAdmin.domainId, MOSSO_V1_DEF_US)
 
         when: "authenticate as federated user using valid token and NAST tenant"
-        authRequest = v2Factory.createTokenAuthenticationRequest(validTokenId, userAdminEntity.nastId, null)
+        def nastId = utils.getNastTenant(userAdmin.domainId)
+        authRequest = v2Factory.createTokenAuthenticationRequest(validTokenId, nastId, null)
         response = cloud20.authenticate(authRequest)
         responesData = response.getEntity(AuthenticateResponse).value
 
         then: "success and service catalog contains NAST tenant"
         response.status == 200
-        verifyTenantContainedInServiceCatalog(responesData, userAdminEntity.nastId, Constants.NAST_V1_DEF_US)
+        verifyTenantContainedInServiceCatalog(responesData, nastId, NAST_V1_DEF_US)
 
         and: "expired token not deleted"
         scopeAccessDao.getScopeAccessByAccessToken(expiredTokenId) != null
 
         cleanup:
-        utils.deleteUsers(users)
-        deleteFederatedUser(username)
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteFederatedUserQuietly(username)
     }
 
     def "[CIDMDEV-5286:CIDMDEV-5305] Test if the user count limit is reached, we get a 400 error (per domain)"() {
         given:
-        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_REG, Constants.DEFAULT_IDP_URI), 1)
-        def domainId = utils.createDomain()
-        def domainId2 = utils.createDomain()
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_REG, IDP_V2_DOMAIN_URI), 1)
+        FederatedDomainAuthRequestGenerator federatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(DEFAULT_BROKER_IDP_PUBLIC_KEY, DEFAULT_BROKER_IDP_PRIVATE_KEY, IDP_V2_DOMAIN_PUBLIC_KEY, IDP_V2_DOMAIN_PRIVATE_KEY)
+
+
+        def userAdmin = utils.createCloudAccount()
+        def userAdmin2 = utils.createCloudAccount()
+
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def username2 = testUtils.getRandomUUID("userSecondForSaml")
         def username3 = testUtils.getRandomUUID("userAdminForSaml2")
         def username4 = testUtils.getRandomUUID("userSecondForSaml2")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def email2 = "fedIntTest2@invalid.rackspace.com"
-        def email3 = "fedIntTest3@invalid.rackspace.com"
-        def email4 = "fedIntTest4@invalid.rackspace.com"
 
-        //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username2, expSecs, domainId, null, email2);
-        def samlAssertion3 = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username3, expSecs, domainId2, null, email3);
-        def samlAssertion4 = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username4, expSecs, domainId2, null, email4);
+        def request = getFederatedDomainAuthGenerationRequest(userAdmin.domainId, username)
+        def inputSamlResponseStr = federatedDomainAuthRequestGenerator.convertResponseToString(federatedDomainAuthRequestGenerator.createSignedSAMLResponse(request))
 
-        def userAdmin, users, userAdmin2, users2
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
+        def request2 = getFederatedDomainAuthGenerationRequest(userAdmin.domainId, username2)
+        def inputSamlResponseStr2 = federatedDomainAuthRequestGenerator.convertResponseToString(federatedDomainAuthRequestGenerator.createSignedSAMLResponse(request2))
+
+        def request3 = getFederatedDomainAuthGenerationRequest(userAdmin2.domainId, username3)
+        def inputSamlResponseStr3 = federatedDomainAuthRequestGenerator.convertResponseToString(federatedDomainAuthRequestGenerator.createSignedSAMLResponse(request3))
+
+        def request4 = getFederatedDomainAuthGenerationRequest(userAdmin2.domainId, username4)
+        def inputSamlResponseStr4 = federatedDomainAuthRequestGenerator.convertResponseToString(federatedDomainAuthRequestGenerator.createSignedSAMLResponse(request4))
 
         when:
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
-        def samlResponse3 = cloud20.samlAuthenticate(samlAssertion3)
-        def samlResponse4 = cloud20.samlAuthenticate(samlAssertion4)
+        def samlResponse = cloud20.authenticateV2FederatedUser(inputSamlResponseStr)
+        def samlResponse2 = cloud20.authenticateV2FederatedUser(inputSamlResponseStr2)
+        def samlResponse3 = cloud20.authenticateV2FederatedUser(inputSamlResponseStr3)
+        def samlResponse4 = cloud20.authenticateV2FederatedUser(inputSamlResponseStr4)
+
 
         then: "Response contains appropriate status"
-        samlResponse.status == HttpServletResponse.SC_OK
-        samlResponse2.status == HttpServletResponse.SC_BAD_REQUEST
-        samlResponse3.status == HttpServletResponse.SC_OK
-        samlResponse4.status == HttpServletResponse.SC_BAD_REQUEST
+        samlResponse.status == SC_OK
+        samlResponse2.status == SC_FORBIDDEN // NOTE: Fed V2 returns forbidden when max users for domain in IDP is reached
+        samlResponse3.status == SC_OK
+        samlResponse4.status == SC_FORBIDDEN // NOTE: Fed V2 returns forbidden when max users for domain in IDP is reached
 
         cleanup:
-        deleteFederatedUser(username)
-        deleteFederatedUser(username2)
-        deleteFederatedUser(username3)
-        deleteFederatedUser(username4)
-        utils.deleteUsers(users)
-        utils.deleteUsers(users2)
-        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_REG, Constants.DEFAULT_IDP_URI), Integer.MAX_VALUE)
+        utils.deleteFederatedUserQuietly(username)
+        utils.deleteFederatedUserQuietly(username3)
+        utils.deleteUsersQuietly([userAdmin, userAdmin2])
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_REG, IDP_V2_DOMAIN_URI), Integer.MAX_VALUE)
+    }
+
+    FederatedDomainAuthGenerationRequest getFederatedDomainAuthGenerationRequest(String domainId, String username = "fedUser${RandomStringUtils.randomAlphanumeric(8)}") {
+        return new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = domainId
+            it.validitySeconds = 1000
+            it.brokerIssuer = DEFAULT_BROKER_IDP_URI
+            it.originIssuer = IDP_V2_DOMAIN_URI
+            it.email = DEFAULT_FED_EMAIL
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass = PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = username
+            it.roleNames = []
+            it.groupNames = []
+            it
+        }
     }
 
     def "authenticate with federated user's token and invalid tenant gives error"() {
         given:
-        def domainId = utils.createDomain()
+        def userAdmin = utils.createCloudAccount()
         def username = testUtils.getRandomUUID("samlUser")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, [].asList());
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId, null, null, username)
         def token = samlResponse.token.id
-        def userAdminEntity = identityUserService.getEndUserById(userAdmin.id)
 
         when: "authenticate with federated user token and tenant that does not belong to the user"
-        def authRequest = v2Factory.createTokenAuthenticationRequest(token, "" + (userAdminEntity.mossoId - 1), null)
+        def authRequest = v2Factory.createTokenAuthenticationRequest(token, "invalid" + (userAdmin.domainId - 1), null)
         def response = cloud20.authenticate(authRequest)
 
         then: "an error is returned"
         response.status == 401
 
         cleanup:
-        utils.deleteUsers(users)
-        deleteFederatedUser(username)
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteFederatedUserQuietly(username)
     }
 
     @Unroll
@@ -224,7 +232,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         def role = utils.createRole()
 
         when: "auth w/o a tenant"
-        def response = cloud20.authenticate(userAdminOneTenant.username, Constants.DEFAULT_PASSWORD)
+        def response = cloud20.authenticate(userAdminOneTenant.username, DEFAULT_PASSWORD)
 
         then: "no X-Tenant-Id in response"
         response.status == 200
@@ -232,7 +240,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "add tenant to user"
         utils.addRoleToUserOnTenant(userAdminOneTenant, tenant, role.id)
-        response = cloud20.authenticate(userAdminOneTenant.username, Constants.DEFAULT_PASSWORD)
+        response = cloud20.authenticate(userAdminOneTenant.username, DEFAULT_PASSWORD)
 
         then: "returns the single tenant in the response"
         response.status == 200
@@ -241,7 +249,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "disable the only tenant and auth again"
         utils.updateTenant(tenant.id, false)
-        response = cloud20.authenticate(userAdminOneTenant.username, Constants.DEFAULT_PASSWORD)
+        response = cloud20.authenticate(userAdminOneTenant.username, DEFAULT_PASSWORD)
 
         then: "returns the single tenant in the response"
         response.status == 200
@@ -253,7 +261,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         def newTenant = utils.createTenant()
         utils.addRoleToUserOnTenant(userAdminOneTenant, newTenant, role.id)
         10.times {
-            responses << cloud20.authenticate(userAdminOneTenant.username, Constants.DEFAULT_PASSWORD)
+            responses << cloud20.authenticate(userAdminOneTenant.username, DEFAULT_PASSWORD)
         }
 
         then: "an arbitrary tenant is returned in the header"
@@ -269,7 +277,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         tenantsReturned.unique().size() == 1
 
         when: "auth w/ cloud user"
-        response = cloud20.authenticate(cloudUserAdmin.username, Constants.DEFAULT_PASSWORD)
+        response = cloud20.authenticate(cloudUserAdmin.username, DEFAULT_PASSWORD)
 
         then: "returns the mosso tenant in the headers"
         response.status == 200
@@ -279,7 +287,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         when: "add another role to the cloud user & auth specifying that tenant"
         utils.updateTenant(tenant.id, true)
         utils.addRoleToUserOnTenant(cloudUserAdmin, tenant, role.id)
-        def authRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(cloudUserAdmin.username, Constants.DEFAULT_PASSWORD, tenant.id)
+        def authRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(cloudUserAdmin.username, DEFAULT_PASSWORD, tenant.id)
         response = cloud20.authenticate(authRequest)
 
         then: "the response contains the X-Tenant-Id set to the specified tenant"
@@ -307,7 +315,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         utils.addRoleToUser(user, originalRole.id)
 
         when: "Auth"
-        AuthenticateResponse responseV20 = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD)
+        AuthenticateResponse responseV20 = utils.authenticate(user.username, DEFAULT_PASSWORD)
 
         then: "User has role"
         responseV20.user.roles.role.find {it.name == originalRole.name} != null
@@ -316,7 +324,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         ClientRole updatedRole = applicationRoleDao.getClientRole(originalRole.id)
         updatedRole.setName(RandomStringUtils.randomAlphabetic(10))
         applicationRoleDao.updateClientRole(updatedRole)
-        responseV20 = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD)
+        responseV20 = utils.authenticate(user.username, DEFAULT_PASSWORD)
 
         then:
         // The role name should be the old value as the client role was cached during initial auth
@@ -338,7 +346,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         def apiKey = utils.getUserApiKey(userAdmin).apiKey
 
         when: "auth v2.0"
-        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
+        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
         AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
 
         then:
@@ -360,7 +368,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         response.status == 200
 
         when: "auth v1.1 password (auth-admin)"
-        response = cloud11.adminAuthenticate(v1Factory.createPasswordCredentials(userAdmin.username, Constants.DEFAULT_PASSWORD))
+        response = cloud11.adminAuthenticate(v1Factory.createPasswordCredentials(userAdmin.username, DEFAULT_PASSWORD))
 
         then:
         response.status == 200
@@ -383,7 +391,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
         when: "auth w/ password"
-        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, request, accept)
+        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD, request, accept)
 
         then:
         response.status == 200
@@ -407,7 +415,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "auth w/ mfa"
         utils.setUpAndEnableUserForMultiFactorSMS(utils.getToken(userAdmin.username), userAdmin)
-        response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, request, accept)
+        response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD, request, accept)
         def sessionIdHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
         def sessionId = testUtils.extractSessionIdFromWwwAuthenticateHeader(sessionIdHeader)
         def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
@@ -419,7 +427,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         assertSessionInactivityTimeout(response, accept, identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString())
 
         when: "auth w/ impersonation token and tenant"
-        def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), userAdmin)
+        def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD), userAdmin)
         response = cloud20.authenticateTokenAndTenant(impersonationToken, domainId, false, request, accept)
 
         then:
@@ -450,7 +458,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
         when: "auth w/ password"
-        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, request, accept)
+        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD, request, accept)
 
         then:
         response.status == 200
@@ -474,7 +482,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "auth w/ mfa"
         utils.setUpAndEnableUserForMultiFactorSMS(utils.getToken(userAdmin.username), userAdmin)
-        response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, request, accept)
+        response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD, request, accept)
         def sessionIdHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
         def sessionId = testUtils.extractSessionIdFromWwwAuthenticateHeader(sessionIdHeader)
         def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
@@ -486,7 +494,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         assertSessionInactivityTimeout(response, accept, domainDuration.toString())
 
         when: "auth w/ impersonation token and tenant"
-        def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), userAdmin)
+        def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD), userAdmin)
         response = cloud20.authenticateTokenAndTenant(impersonationToken, domainId, false, request, accept)
 
         then:
@@ -523,12 +531,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         return responseContainsAllEndpoints
     }
 
-    def deleteFederatedUser(username) {
-        def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
-        if(federatedUser != null) ldapFederatedUserRepository.deleteObject(federatedUser)
-    }
-
-    def void assertSessionInactivityTimeout(response, contentType, expectedSessionInactivityTimeout) {
+    void assertSessionInactivityTimeout(response, contentType, expectedSessionInactivityTimeout) {
         def returnedSessionInactivityTimeout
         if (contentType == MediaType.APPLICATION_XML_TYPE) {
             def parsedResponse = response.getEntity(AuthenticateResponse).value

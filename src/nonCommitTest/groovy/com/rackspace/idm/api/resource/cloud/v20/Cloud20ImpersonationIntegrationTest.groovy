@@ -166,17 +166,10 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @Unroll
     def "impersonate federated user as identity admin; request=#requestContentType, accept=#acceptContentType"() {
         given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def samlToken = authResponse.token.id
-        def federatedUser = utils.getUserById(authResponse.getUser().getId())
+        def userAdmin = utils.createCloudAccount()
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        def samlToken = samlResponse.token.id
+        def federatedUser = utils.getUserById(samlResponse.user.id)
 
         when: "impersonate the federated user"
         def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
@@ -199,8 +192,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         impersonatedToken.accessTokenString != samlToken
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
 
         where:
         requestContentType              | acceptContentType
@@ -213,17 +207,10 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @Unroll
     def "impersonate federated user as racker: request=#requestContentType, accept=#acceptContentType"() {
         given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def samlToken = authResponse.token.id
-        def federatedUser = utils.getUserById(authResponse.getUser().getId())
+        def userAdmin = utils.createCloudAccount()
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        def samlToken = samlResponse.token.id
+        def federatedUser = utils.getUserById(samlResponse.user.id)
         def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
 
         when: "impersonate the federated user"
@@ -241,8 +228,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         impersonatedToken.accessTokenString != samlToken
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
 
         where:
         requestContentType              | acceptContentType
@@ -381,16 +369,10 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
     def "impersonate with invalid IDP returns 404"() {
         given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def federatedUser = utils.getUserById(authResponse.getUser().getId())
+        def userAdmin = utils.createCloudAccount()
+        def samlResponse = utils.authenticateFederatedUser(userAdmin.domainId)
+        def samlToken = samlResponse.token.id
+        def federatedUser = utils.getUserById(samlResponse.user.id)
 
         when:
         federatedUser.federatedIdp = "invalid"
@@ -400,8 +382,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         impersonationResponse.status == 404
 
         cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
+        utils.deleteFederatedUserQuietly(samlResponse.user.name)
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteTestDomainQuietly(userAdmin.domainId)
     }
 
     def "impersonate with invalid username returns 404"() {
@@ -787,7 +770,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         return response
     }
 
-    def User createUserWithTokenExpirationDate(DateTime tokenExpirationDate, boolean disableUserAtEnd = false, List<String> tokenAuthBy = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD)) {
+    User createUserWithTokenExpirationDate(DateTime tokenExpirationDate, boolean disableUserAtEnd = false, List<String> tokenAuthBy = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD)) {
         User defaultUser = utils.createUser(userAdminToken)
 
         //make sure all tokens are expired (they should be, but verify just the same)
@@ -804,7 +787,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         return defaultUser
     }
 
-    def void disableUser(User user) {
+    void disableUser(User user) {
         User updateUser = new User().with {
             it.id = user.id
             it.enabled = false
@@ -813,23 +796,11 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.updateUser(updateUser)
     }
 
-    def void assertDateFallsWithinFudgeFactor(DateTime expectedDate, DateTime actualDate) {
+    void assertDateFallsWithinFudgeFactor(DateTime expectedDate, DateTime actualDate) {
         DateTime fudgedLowerBound = expectedDate.minusMinutes(LATENCY_FUDGE_AMOUNT_MINUTES)
         DateTime fudgedUpperBound = expectedDate.plusMinutes(LATENCY_FUDGE_AMOUNT_MINUTES)
 
         assert actualDate.isAfter(fudgedLowerBound) && actualDate.isBefore(fudgedUpperBound);
-    }
-
-    def deleteFederatedUserQuietly(username) {
-        try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)
-            if (federatedUser != null) {
-                federatedUserRepository.deleteObject(federatedUser)
-            }
-        } catch (Exception e) {
-            //eat but log
-            LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", username), e)
-        }
     }
 
     def assertImpersonatedToken(token) {
