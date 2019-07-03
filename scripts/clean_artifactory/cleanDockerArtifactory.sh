@@ -8,7 +8,7 @@ fi
 ARTIFACTORY=$1
 PASSWORD=$2
 DO_NOT_DELETE_FILE=$3
-DOCKER_REPOS="ca-directory cloud-feeds cloud-identity dynamodb edirectory openldap postfix repose terminator"
+DOCKER_REPOS="ca-directory cloud-feeds cloud-identity dynamodb edirectory openldap postfix repose terminator active-directory customer-identity"
 
 list_image_tags() {
     image=$1
