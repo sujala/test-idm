@@ -16,6 +16,7 @@ class TestDomainTypeAttribute(base.TestBaseV2):
     set to `true` in 3.30.0 and then removed in 3.31.0.
     """
     FEATURE_FLAG = 'feature.enabled.use.domain.type.on.new.user.creation'
+    FEATURE_FLAG_UPDATE_USER = 'feature.enable.use.domain.type.for.update.user'
 
     @classmethod
     @unless_coverage
@@ -23,6 +24,8 @@ class TestDomainTypeAttribute(base.TestBaseV2):
         super(TestDomainTypeAttribute, cls).setUpClass()
         cls.feature_enabled = cls.devops_client.get_feature_flag(
                                                  cls.FEATURE_FLAG)
+        cls.update_user_feature_enabled = cls.devops_client.get_feature_flag(
+                                                 cls.FEATURE_FLAG_UPDATE_USER)
         req_obj = requests.Domain(
             domain_name=cls.generate_random_string(const.DOMAIN_PATTERN),
             description=cls.generate_random_string(const.DOMAIN_PATTERN),
@@ -61,11 +64,15 @@ class TestDomainTypeAttribute(base.TestBaseV2):
         return super().get_role_id_by_name(cls.service_admin_client, role_name)
 
     @tags('positive', 'p0', 'regression')
-    def test_add_user_for_region_validation(self):
+    def test_add_user_and_update_user_for_region_validation(self):
         if not self.feature_enabled:
             raise unittest.SkipTest("Skipping due to feature flag %s=%s"
                                     % (self.FEATURE_FLAG,
                                        self.feature_enabled))
+        if not self.update_user_feature_enabled:
+            raise unittest.SkipTest("Skipping due to feature flag %s=%s"
+                                    % (self.FEATURE_FLAG_UPDATE,
+                                       self.update_user_feature_enabled))
         """
         CID-1876 : Use domain type for region validation in v2.0 add user.
         """
@@ -86,6 +93,26 @@ class TestDomainTypeAttribute(base.TestBaseV2):
         user_id = resp.json()[const.USER][const.ID]
         self.user_ids.append(user_id)
 
+        """
+        CID-1879 : Use domain type for region validation in v2.0 update user.
+        """
+        # Update region to DFW
+        update_req = requests.UserUpdate(default_region='DFW')
+        update_resp = self.identity_admin_client.update_user(
+            user_id=user_id,
+            request_object=update_req)
+        self.assertEqual(update_resp.status_code, 200)
+
+        # Update region to Invalid
+        update_req = requests.UserUpdate(default_region='LON')
+        update_resp = self.identity_admin_client.update_user(
+            user_id=user_id,
+            request_object=update_req)
+        self.assertEqual(update_resp.status_code, 400)
+        self.assertEqual(
+            update_resp.json()[const.BAD_REQUEST][const.MESSAGE],
+            "Invalid defaultRegion value, accepted values are: ORD, DFW.")
+
         # when domain_type is RACKSPACE_CLOUD_UK
         user_name = self.generate_random_string()
         password = self.generate_random_string(pattern=const.PASSWORD_PATTERN)
@@ -102,6 +129,19 @@ class TestDomainTypeAttribute(base.TestBaseV2):
             'LON')
         user_id = resp.json()[const.USER][const.ID]
         self.user_ids.append(user_id)
+
+        """
+        CID-1879 : Use domain type for region validation in v2.0 update user.
+        """
+        # Update region to Invalid
+        update_req = requests.UserUpdate(default_region='ORD')
+        update_resp = self.identity_admin_client.update_user(
+            user_id=user_id,
+            request_object=update_req)
+        self.assertEqual(update_resp.status_code, 400)
+        self.assertEqual(
+            update_resp.json()[const.BAD_REQUEST][const.MESSAGE],
+            "Invalid defaultRegion value, accepted values are: LON.")
 
     @tags('positive', 'p0', 'regression')
     def test_default_region_is_appropriate_for_domain_type(self):
