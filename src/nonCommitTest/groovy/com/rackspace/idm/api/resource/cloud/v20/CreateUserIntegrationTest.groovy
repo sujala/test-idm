@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.BaseUser
+import com.rackspace.idm.domain.entity.CloudRegion
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.*
@@ -2066,8 +2067,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         given:
         // Setup region
         def defaultRegion = "ORD"
-        if (region.equalsIgnoreCase(GlobalConstants.CLOUD_REGION_UK)) {
-            staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+        if (region.equalsIgnoreCase(CloudRegion.UK.getName())) {
+            staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, CloudRegion.UK.getName())
             defaultRegion = "LON"
         }
 
@@ -2141,14 +2142,14 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def v1UserB = utils11.getUserByName(userB.username)
 
         then: "assert endpoint v1 defaults on user A (this user should have v1 defaults set for both US and UK"
-        if (region == GlobalConstants.CLOUD_REGION_US) {
+        if (region == CloudRegion.US.getName()) {
             utils11.validateV1Default(v1UserA.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_US, Constants.NAST_V1_DEF_US)
         } else {
             utils11.validateV1Default(v1UserA.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_UK, Constants.NAST_V1_DEF_UK)
         }
 
         and: "assert that user B only has v1 defaults set when using the US region. Legacy logic does not have UK v1 default configs."
-        if (region == GlobalConstants.CLOUD_REGION_US) {
+        if (region == CloudRegion.US.getName()) {
             utils11.validateV1Default(v1UserB.baseURLRefs.baseURLRef, Constants.MOSSO_V1_DEF_US, Constants.NAST_V1_DEF_US)
         } else {
             !v1UserB.baseURLRefs.baseURLRef.v1Default.contains(true)
@@ -2165,7 +2166,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
 
         where:
-        region << [GlobalConstants.CLOUD_REGION_UK, GlobalConstants.CLOUD_REGION_US]
+        region << [CloudRegion.UK.getName(), CloudRegion.US.getName()]
     }
 
     @Unroll
@@ -2216,7 +2217,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
     def "test that v2 add user set default region based on flag feature.enabled.use.domain.type.on.new.user.creation"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_US)
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, CloudRegion.US.getName())
 
         // Enabled feature
         IdentityProperty identityProperty = new IdentityProperty()
@@ -2239,7 +2240,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
 
         when: "create user-admin without default region and feature disabled "
-        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, CloudRegion.UK.getName())
 
         identityProperty.value = false
         devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
@@ -2259,7 +2260,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
 
         when: "create user-admin with default region and feature enabled"
-        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, CloudRegion.UK.getName())
 
         identityProperty.value = true
         devops.updateIdentityProperty(identityAdminToken, Constants.REPO_PROP_FEATURE_ENABLE_USE_DOMAIN_TYPE_ON_NEW_USER_CREATION_ID, identityProperty)
@@ -2292,7 +2293,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
     def "test v2 add user region validation based on flag feature.enabled.use.domain.type.on.new.user.creation"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_US)
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, CloudRegion.US.getName())
 
         // Enabled feature
         IdentityProperty identityProperty = new IdentityProperty()
@@ -2314,7 +2315,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         userA.defaultRegion == "ORD"
 
         when: "create user-admin with default region feature disabled"
-        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, CloudRegion.UK.getName())
 
         // Disable feature
         identityProperty.value = false
@@ -2335,7 +2336,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
 
         when: "create user-admin with invalid region and feature enabled"
-        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, CloudRegion.UK.getName())
 
         // Enabled feature
         identityProperty.value = true

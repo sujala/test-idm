@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.*;
@@ -419,12 +418,12 @@ public class DefaultEndpointService implements EndpointService {
     public boolean doesBaseUrlBelongToCloudRegion(CloudBaseUrl baseUrl, Domain domain) {
         if (domain == null
                 || domain.getType() == null
-                || !(domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK)
-                || domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_US))) {
+                || !(domain.getType().equalsIgnoreCase(DomainType.RACKSPACE_CLOUD_UK.getName())
+                || domain.getType().equalsIgnoreCase(DomainType.RACKSPACE_CLOUD_US.getName()))) {
             return false;
         }
 
-        boolean isUKCloudRegion = domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK);
+        boolean isUKCloudRegion = DomainType.RACKSPACE_CLOUD_UK.getName().equalsIgnoreCase(domain.getType());
 
         return doesBaseUrlBelongToCloudRegion(baseUrl, isUKCloudRegion);
     }
@@ -486,7 +485,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     private boolean isUkCloudRegion() {
-        return GlobalConstants.CLOUD_REGION_UK.equalsIgnoreCase(identityConfig.getStaticConfig().getCloudRegion());
+        return CloudRegion.UK.getName().equalsIgnoreCase(identityConfig.getStaticConfig().getCloudRegion());
     }
 
     public enum BaseUrlToRegionMappingStrategy {

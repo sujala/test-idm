@@ -4,7 +4,6 @@ import com.google.common.collect.Iterables;
 import com.rackspace.docs.event.identity.user.credential.CredentialTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum;
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData;
@@ -73,7 +72,7 @@ public class DefaultUserService implements UserService {
     static final String NAST_BASE_URL_TYPE = "NAST";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
+    private final Logger deleteUserLogger = LoggerFactory.getLogger(DELETE_USER_LOG_NAME);
 
     @Autowired
     private ScopeAccessService scopeAccessService;
@@ -1334,7 +1333,7 @@ public class DefaultUserService implements UserService {
                     DomainSubUserDefaults domainSubUserDefaults = createSubUserService.calculateDomainSubUserDefaults(delegationAgreement.getDomainId());
                     user = new ProvisionedUserDelegate(domainSubUserDefaults, delegationAgreement, realUser);
                 }
-            } else if (CollectionUtils.isNotEmpty(userScopeAccess.getAuthenticatedBy()) && userScopeAccess.getAuthenticatedBy().contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)) {
+            } else if (CollectionUtils.isNotEmpty(userScopeAccess.getAuthenticatedBy()) && userScopeAccess.getAuthenticatedBy().contains(AUTHENTICATED_BY_FEDERATION)) {
                 //will be a federated user  (FederatedUser)
                 user = federatedUserDao.getUserByToken(userScopeAccess);
             } else {
@@ -1625,13 +1624,13 @@ public class DefaultUserService implements UserService {
      * If the domain type is something else (including null), the cloud region is US.
      */
     public String inferCloudBasedOnDomainType(String domainType) {
-        if (GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US.equalsIgnoreCase(domainType)) {
-            return CLOUD_REGION.US.toString();
+        if (DomainType.RACKSPACE_CLOUD_US.getName().equalsIgnoreCase(domainType)) {
+            return CloudRegion.US.getName();
         }
-        if (GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK.equalsIgnoreCase(domainType)) {
-            return CLOUD_REGION.UK.toString();
+        if (DomainType.RACKSPACE_CLOUD_UK.getName().equalsIgnoreCase(domainType)) {
+            return CloudRegion.UK.getName();
         }
-        return CLOUD_REGION.US.toString();
+        return CloudRegion.US.getName();
     }
 
     private Domain createDomainIfItDoesNotExist(String domainId) {
@@ -1759,7 +1758,7 @@ public class DefaultUserService implements UserService {
         try {
             Tenant mossoTenant = createTenant(mossoId, domain, MOSSO_BASE_URL_TYPE);
             if (identityConfig.getReloadableConfig().shouldSetDefaultTenantTypeOnCreation()) {
-                mossoTenant.getTypes().add(GlobalConstants.TENANT_TYPE_CLOUD);
+                mossoTenant.getTypes().add(TENANT_TYPE_CLOUD);
             }
             createTenantForDomain(mossoTenant);
         } catch (DuplicateException e) {
@@ -1771,7 +1770,7 @@ public class DefaultUserService implements UserService {
         try {
             Tenant nastTenant = createTenant(nastId, domain, NAST_BASE_URL_TYPE);
             if (identityConfig.getReloadableConfig().shouldSetDefaultTenantTypeOnCreation()) {
-                nastTenant.getTypes().add(GlobalConstants.TENANT_TYPE_FILES);
+                nastTenant.getTypes().add(TENANT_TYPE_FILES);
             }
             createTenantForDomain(nastTenant);
         } catch (DuplicateException e) {
@@ -1843,13 +1842,13 @@ public class DefaultUserService implements UserService {
         String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
         String baseUrlType = baseUrl.getBaseUrlType();
 
-        if(baseUrlType.equals(MOSSO) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_US)) {
+        if(baseUrlType.equals(MOSSO) && domain.getType().equalsIgnoreCase(DomainType.RACKSPACE_CLOUD_US.getName())) {
             v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUs());
-        } else if(baseUrlType.equals(NAST) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_US)) {
+        } else if(baseUrlType.equals(NAST) && domain.getType().equalsIgnoreCase(DomainType.RACKSPACE_CLOUD_US.getName())) {
             v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultFilesEndpointsUs());
-        } else if(baseUrlType.equals(MOSSO) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK)) {
+        } else if(baseUrlType.equals(MOSSO) && domain.getType().equalsIgnoreCase(DomainType.RACKSPACE_CLOUD_UK.getName())) {
             v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultCloudEndpointsUk());
-        } else if(baseUrlType.equals(NAST) && domain.getType().equalsIgnoreCase(DOMAIN_TYPE_RACKSPACE_CLOUD_UK)) {
+        } else if(baseUrlType.equals(NAST) && domain.getType().equalsIgnoreCase(DomainType.RACKSPACE_CLOUD_UK.getName())) {
             v1defaultList = new ArrayList<>(identityConfig.getReloadableConfig().getV1DefaultFilesEndpointsUk());
         }
 

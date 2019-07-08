@@ -1,8 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.CloudBaseUrl
+import com.rackspace.idm.domain.entity.CloudRegion
+import com.rackspace.idm.domain.entity.DomainType
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Region
 import com.rackspace.idm.exception.BadRequestException
@@ -116,7 +117,7 @@ class DefaultRegionServiceTest extends RootServiceTest {
         def selectedRegion = "ORD"
 
         def domain = entityFactory.createDomain().with {
-            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+            it.type = DomainType.RACKSPACE_CLOUD_UK
             it
         }
         def user = entityFactory.createUser().with {
@@ -150,9 +151,9 @@ class DefaultRegionServiceTest extends RootServiceTest {
 
         1 * scopeAccessService.getOpenstackEndpointsForUser(user) >> []
         1 * domainService.getDomain(user.getDomainId()) >> domain
-        1 * userService.inferCloudBasedOnDomainType(domain.getType()) >> GlobalConstants.CLOUD_REGION.US.toString()
+        1 * userService.inferCloudBasedOnDomainType(domain.getType()) >> CloudRegion.US.getName()
         1 * endpointService.getBaseUrlsByServiceName(CLOUD_SERVERS_OPENSTACK) >> [cloudBaseUrl]
-        1 * cloudRegionService.getRegions(_) >> [entityFactory.createRegion(selectedRegion, GlobalConstants.CLOUD_REGION.US.toString())]
+        1 * cloudRegionService.getRegions(_) >> [entityFactory.createRegion(selectedRegion, CloudRegion.US.getName())]
     }
 
     def "validateComputeRegionForUser: error check"() {
@@ -160,7 +161,7 @@ class DefaultRegionServiceTest extends RootServiceTest {
         def selectedRegion = "ORD"
 
         def domain = entityFactory.createDomain().with {
-            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
+            it.type = DomainType.RACKSPACE_CLOUD_UK
             it
         }
         def user = entityFactory.createUser().with {
@@ -194,9 +195,9 @@ class DefaultRegionServiceTest extends RootServiceTest {
 
         1 * scopeAccessService.getOpenstackEndpointsForUser(user) >> []
         1 * domainService.getDomain(user.getDomainId()) >> domain
-        1 * userService.inferCloudBasedOnDomainType(domain.getType()) >> GlobalConstants.CLOUD_REGION.US.toString()
+        1 * userService.inferCloudBasedOnDomainType(domain.getType()) >> CloudRegion.US.getName()
         1 * endpointService.getBaseUrlsByServiceName(CLOUD_SERVERS_OPENSTACK) >> [cloudBaseUrl]
-        1 * cloudRegionService.getRegions(_) >> [entityFactory.createRegion(selectedRegion, GlobalConstants.CLOUD_REGION.UK.toString())]
+        1 * cloudRegionService.getRegions(_) >> [entityFactory.createRegion(selectedRegion, CloudRegion.UK.getName())]
     }
 
     def createApplication() {

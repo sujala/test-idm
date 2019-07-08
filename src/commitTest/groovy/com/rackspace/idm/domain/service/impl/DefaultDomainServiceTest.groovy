@@ -1,7 +1,8 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
-import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.entity.DomainPrefix
+import com.rackspace.idm.domain.entity.DomainType
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.util.IdmCommonUtils
@@ -553,16 +554,16 @@ class DefaultDomainServiceTest extends RootServiceTest {
         identityConfig.getReloadableConfig().isFeatureInferDomainTypeEnabled() >> true
 
         where:
-        domainId                                         | cloudRegion  | expectedType
-        "1234"                                           | "US"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
-        "-1234"                                          | "US"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
-        "1234"                                           | "UK"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
-        "-1234"                                          | "UK"         | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
-        "1234"                                           | "INVALID"    | GlobalConstants.DOMAIN_TYPE_UNKNOWN
-        "${GlobalConstants.DOMAIN_PREFIX_DATAPIPE}1234"  | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_DATAPIPE
-        "${GlobalConstants.DOMAIN_PREFIX_DEDICATED}1234" | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_DEDICATED
-        "1234567890" * 2                                 | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_UNKNOWN
-        "something:abc"                                  | "NOT_USED"   | GlobalConstants.DOMAIN_TYPE_UNKNOWN
+        domainId                                  | cloudRegion | expectedType
+        "1234"                                    | "US"        | DomainType.RACKSPACE_CLOUD_US.getName()
+        "-1234"                                   | "US"        | DomainType.RACKSPACE_CLOUD_US.getName()
+        "1234"                                    | "UK"        | DomainType.RACKSPACE_CLOUD_UK.getName()
+        "-1234"                                   | "UK"        | DomainType.RACKSPACE_CLOUD_UK.getName()
+        "1234"                                    | "INVALID"   | DomainType.UNKNOWN.getName()
+        "${DomainPrefix.DATAPIPE.getName()}1234"  | "NOT_USED"  | DomainType.DATAPIPE.getName()
+        "${DomainPrefix.DEDICATED.getName()}1234" | "NOT_USED"  | DomainType.DEDICATED.getName()
+        "1234567890" * 2                          | "NOT_USED"  | DomainType.UNKNOWN.getName()
+        "something:abc"                           | "NOT_USED"  | DomainType.UNKNOWN.getName()
     }
 
 }

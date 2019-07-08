@@ -6,10 +6,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.DomainType
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
@@ -37,6 +37,7 @@ import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.Constants.getUSER_MANAGE_ROLE_ID
 import static javax.servlet.http.HttpServletResponse.*
 import static testHelpers.IdmAssert.*
+import static com.rackspace.idm.GlobalConstants.*
 
 class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
@@ -2391,8 +2392,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         // Build domain entity
         def domainId = RandomStringUtils.randomNumeric(6)
-        def specifiedType = GlobalConstants.DOMAIN_TYPE_DATAPIPE
-        def inferredType = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        def specifiedType = GlobalConstants.DOMAIN_TYPE.DATAPIPE.toString()
+        def inferredType = GlobalConstants.DOMAIN_TYPE.RACKSPACE_CLOUD_US.toString()
         def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
             it.type = specifiedType // set the type to something other than the inferred type
             it
@@ -2466,7 +2467,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         // Build domain entity
         def domainId = RandomStringUtils.randomNumeric(6)
         def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
-            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US.toLowerCase()
+            it.type = DomainType.RACKSPACE_CLOUD_US.getName().toLowerCase()
             it
         }
 
@@ -2480,12 +2481,12 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domain.name == domainEntity.name
         domain.id == domainEntity.id
         domain.enabled
-        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        domain.type == DomainType.RACKSPACE_CLOUD_US.getName()
 
         when: "update domain with type"
         def createdDomain = utils.createDomainEntity(RandomStringUtils.randomNumeric(6))
         domainEntity = new Domain().with {
-            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US.toLowerCase()
+            it.type = DomainType.RACKSPACE_CLOUD_US.getName().toLowerCase()
             it
         }
         response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
@@ -2494,7 +2495,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_OK
 
-        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        domain.type == DomainType.RACKSPACE_CLOUD_US.getName()
 
         cleanup:
         utils.deleteUserQuietly(identityAdmin)
@@ -2554,8 +2555,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def identityAdminToken = utils.getToken(identityAdmin.username)
 
         // Build domain entity
-        def inferredType = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
-        def specifiedType = GlobalConstants.DOMAIN_TYPE_DATAPIPE
+        def inferredType = DomainType.RACKSPACE_CLOUD_US.getName()
+        def specifiedType = DomainType.DATAPIPE.getName()
         def domainEntity = new Domain().with {
             it.type = specifiedType
             it
@@ -2614,7 +2615,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         // Build domain entity
         def domainEntity = new Domain().with {
-            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+            it.type = DomainType.RACKSPACE_CLOUD_US.getName()
             it
         }
         def createdDomain = utils.createDomainEntity(RandomStringUtils.randomNumeric(6))
@@ -2629,7 +2630,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domain.name == createdDomain.name
         domain.id == createdDomain.id
         domain.enabled
-        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        domain.type == DomainType.RACKSPACE_CLOUD_US.getName()
 
         cleanup:
         utils.deleteUserQuietly(identityAdmin)
@@ -2679,7 +2680,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST, "Invalid value for domain type. Acceptable values are: [RACKSPACE_CLOUD_US, RACKSPACE_CLOUD_UK, DEDICATED, RACKSPACE, DATAPIPE, UNKNOWN]")
 
         when: "update domain - existing type on domain"
-        domainEntity.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
+        domainEntity.type = DomainType.RACKSPACE_CLOUD_UK.getName()
         response = cloud20.updateDomain(identityAdminToken, createdDomain.id, domainEntity)
 
         then:
@@ -2819,7 +2820,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     def void assertDomainDoesNotContainTenant(domainId, tenantId) {
         def domainTenantResponse = cloud20.getDomainTenants(utils.getServiceAdminToken(), domainId)
         if (domainTenantResponse.status == HttpStatus.SC_NOT_FOUND) {
-            IdmAssert.assertOpenStackV2FaultResponse(domainTenantResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN)
+            IdmAssert.assertOpenStackV2FaultResponse(domainTenantResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN)
         } else {
             assert domainTenantResponse.getEntity(Tenants).value.tenant.find {it.id == tenantId} == null
         }

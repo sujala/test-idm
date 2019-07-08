@@ -4,6 +4,7 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.DomainType
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.User
@@ -418,7 +419,7 @@ class UpdateUserServiceTest  extends RootServiceTest {
     def "updateUser: updating user's region calls correct services - feature.enable.use.domain.type.for.update.user = #flag"(){
         given:
         Domain domain = entityFactory.createDomain().with {
-            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+            it.type = DomainType.RACKSPACE_CLOUD_US
             it
         }
         UserForCreate userToUpdate = createUserForUpdateApi("1").with {
@@ -468,7 +469,7 @@ class UpdateUserServiceTest  extends RootServiceTest {
     def "updateUser: error check - feature.enable.use.domain.type.for.update.user = true"(){
         given:
         Domain domain = entityFactory.createDomain().with {
-            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+            it.type = DomainType.RACKSPACE_CLOUD_US
             it
         }
         UserForCreate userToUpdate = createUserForUpdateApi("1").with {

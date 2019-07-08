@@ -5,12 +5,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.idm.Constants
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.CredentialChangeEventData
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedsUserStatusEnum
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.api.security.IdentityRole
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.domain.entity.*
@@ -24,13 +22,14 @@ import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.UserDisabledException
 import com.rackspace.idm.validation.Validator
-import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
+
+import static com.rackspace.idm.GlobalConstants.*
 
 class DefaultUserServiceTest extends RootServiceTest {
     @Shared DefaultUserService service
@@ -1205,7 +1204,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         user.phonePin != null
         user.phonePin.isNumber()
-        user.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
+        user.phonePin.size() == PHONE_PIN_SIZE
 
         when: "create another user with the same PIN length"
 
@@ -1219,7 +1218,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         user1.phonePin != null
         user1.phonePin.isNumber()
-        user1.phonePin.size() == GlobalConstants.PHONE_PIN_SIZE
+        user1.phonePin.size() == PHONE_PIN_SIZE
     }
 
     def "addUserV20: Generate phone PIN on creation if not provided"() {
@@ -1613,7 +1612,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     def "attachEndpointsToTenant: test repository feature flag 'feature.enabled.use.domain.type.on.new.user.creation' - enabled = #enabled"() {
         given:
         def domain = entityFactory.createDomain().with {
-            it.type = GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+            it.type = DomainType.RACKSPACE_CLOUD_US.getName()
             it
         }
         def tenant = entityFactory.createTenant().with {
@@ -1724,10 +1723,10 @@ class DefaultUserServiceTest extends RootServiceTest {
         cloudRegion.equalsIgnoreCase(expectedRegion)
 
         where:
-        expectedRegion | domainType
-        GlobalConstants.CLOUD_REGION.UK.toString() | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
-        GlobalConstants.CLOUD_REGION.US.toString() | GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
-        GlobalConstants.CLOUD_REGION.US.toString() | null
+        expectedRegion           | domainType
+        CloudRegion.UK.getName() | DomainType.RACKSPACE_CLOUD_UK.getName()
+        CloudRegion.US.getName() | DomainType.RACKSPACE_CLOUD_US.getName()
+        CloudRegion.US.getName() | null
     }
 
 

@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.GlobalConstants
+
+import com.rackspace.idm.domain.entity.CloudRegion
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Tenant
@@ -186,27 +187,27 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         doesBaseUrlBelongToCloudRegionResult == service.doesBaseUrlBelongToCloudRegion(baseUrl)
 
         where:
-        cloudRegion      |  baseUrlID | baseUrlrsRegion | doesBaseUrlBelongToCloudRegionResult
-        CLOUD_REGION_US  |  -1000     |  null           | true
-        CLOUD_REGION_US  |  999       |  null           | true
-        CLOUD_REGION_US  |  1000      |  null           | false
-        CLOUD_REGION_US  |  500       |  "DFW"          | true
-        CLOUD_REGION_US  |  10000     |  "DFW"          | true
-        CLOUD_REGION_US  |  10000     |   "LON"         | false
-        CLOUD_REGION_US  |  200       |   "LON"         | false
-        CLOUD_REGION_UK  |  -1000     |   null          | false
-        CLOUD_REGION_UK  |  999       |   null          | false
-        CLOUD_REGION_UK  |  1000      |   null          | true
-        CLOUD_REGION_UK  |  500       |   "DFW"         | false
-        CLOUD_REGION_UK  |  10000     |   "DFW"         | false
-        CLOUD_REGION_UK  |  10000     |   "LON"         | true
-        CLOUD_REGION_UK  |  200       |   "LON"         | true
-        CLOUD_REGION_US  |  -1000     |   "DEFAULT"     | true
-        CLOUD_REGION_US  |  999       |   "DEFAULT"     | true
-        CLOUD_REGION_US  |  1000      |   "DEFAULT"     | false
-        CLOUD_REGION_UK  |  -1000     |   "DEFAULT"     | false
-        CLOUD_REGION_UK  |  999       |   "DEFAULT"     | false
-        CLOUD_REGION_UK  |  1000      |   "DEFAULT"     | true
+        cloudRegion    |  baseUrlID | baseUrlrsRegion | doesBaseUrlBelongToCloudRegionResult
+        CloudRegion.US |  -1000     |  null           | true
+        CloudRegion.US |  999       |  null           | true
+        CloudRegion.US |  1000      |  null           | false
+        CloudRegion.US |  500       |  "DFW"          | true
+        CloudRegion.US |  10000     |  "DFW"          | true
+        CloudRegion.US |  10000     |   "LON"         | false
+        CloudRegion.US |  200       |   "LON"         | false
+        CloudRegion.UK |  -1000     |   null          | false
+        CloudRegion.UK |  999       |   null          | false
+        CloudRegion.UK |  1000      |   null          | true
+        CloudRegion.UK |  500       |   "DFW"         | false
+        CloudRegion.UK |  10000     |   "DFW"         | false
+        CloudRegion.UK |  10000     |   "LON"         | true
+        CloudRegion.UK |  200       |   "LON"         | true
+        CloudRegion.US |  -1000     |   "DEFAULT"     | true
+        CloudRegion.US |  999       |   "DEFAULT"     | true
+        CloudRegion.US |  1000      |   "DEFAULT"     | false
+        CloudRegion.UK |  -1000     |   "DEFAULT"     | false
+        CloudRegion.UK |  999       |   "DEFAULT"     | false
+        CloudRegion.UK |  1000      |   "DEFAULT"     | true
     }
 
     @Unroll
@@ -287,11 +288,11 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         1 * config.getString(DefaultEndpointService.FEATURE_BASEURL_TO_REGION_MAPPING_STRATEGY) >> "rsregion"
 
         where:
-        region | cloudRegion     | result
-        "US"   | CLOUD_REGION_US | true
-        "LON"  | CLOUD_REGION_UK | true
-        "US"   | CLOUD_REGION_UK | false
-        "LON"  | CLOUD_REGION_US | false
+        region | cloudRegion    | result
+        "US"   | CloudRegion.US | true
+        "LON"  | CloudRegion.UK | true
+        "US"   | CloudRegion.UK | false
+        "LON"  | CloudRegion.US | false
     }
 
 }
