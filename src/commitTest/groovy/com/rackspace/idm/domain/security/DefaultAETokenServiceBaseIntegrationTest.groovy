@@ -6,6 +6,10 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.encrypters.KeyCzarAuthenticatedMessageProvider
 import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator
+import com.rackspace.idm.domain.security.tokencache.AETokenCache
+import com.rackspace.idm.domain.security.tokencache.ConfigExpiry
+import com.rackspace.idm.domain.security.tokencache.TokenCacheConfigJson
+import com.rackspace.idm.domain.security.tokencache.TokenCacheConfigJsonTest
 import com.rackspace.idm.domain.security.tokenproviders.TokenProvider
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.GlobalAuthTokenProvider
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
@@ -45,8 +49,9 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
 
     @Shared IdentityConfig.RepositoryConfig repositoryConfig
 
-    AETokenRevocationService aeTokenRevocationService
+    @Shared AETokenCache aeTokenCache
 
+    AETokenRevocationService aeTokenRevocationService
 
     def setupSpec() {
         crypterLocator = new ClasspathKeyCzarCrypterLocator();
@@ -85,9 +90,11 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         globalAuthTokenProvider.identityConfig = identityConfig
 
         //AE Cache
-        AETokenCache aeTokenCache = new AETokenCache()
+        aeTokenCache = new AETokenCache()
         aeTokenCache.identityConfig = identityConfig
         aeTokenCache.ticker = new FakeTicker()
+        aeTokenCache.configExpiry = new ConfigExpiry()
+        aeTokenCache.configExpiry.identityConfig = identityConfig
         aeTokenCache.init()
 
         List<TokenProvider> tokenProviders = [globalAuthTokenProvider]
@@ -103,12 +110,38 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         // it didn't work... recreating the revocationService for each feature method does allow me to set the expectations
         // from within the feature method though so switched to that.
         aeTokenRevocationService = Mock()
-        aeTokenService.aeTokenCache.aeTokenRevocationService = aeTokenRevocationService
+        aeTokenService.aeTokenCache.aeTokenService = aeTokenService
         aeTokenService.aeTokenRevocationService = aeTokenRevocationService
 
         // For each test, reset the repository config
         repositoryConfig = Mock(IdentityConfig.RepositoryConfig)
         identityConfig.repositoryConfig = repositoryConfig
+
+        // empty cache for each service
+        aeTokenCache.invalidateCache()
+    }
+
+    def setTokenCaching(boolean enable) {
+        TokenCacheConfigJson currentConfig = repositoryConfig.getTokenCacheConfiguration()
+
+        if (currentConfig == null) {
+            currentConfig = TokenCacheConfigJson.fromJson(IdentityConfig.TOKEN_CACHE_CONFIG_DEFAULT)
+        }
+
+        TokenCacheConfigJson updated = new TokenCacheConfigJson(enable, currentConfig.getMaxSize(), currentConfig.getCacheableUsers())
+        repositoryConfig.getTokenCacheConfiguration() >> updated
+    }
+
+    def disableTokenCaching() {
+        setTokenCaching(false)
+    }
+
+    def enableTokenCaching() {
+        setTokenCaching(true)
+    }
+
+    def setTokenCachingConfig(String json) {
+        repositoryConfig.getTokenCacheConfiguration() >> TokenCacheConfigJson.fromJson(json)
     }
 
     def void validateScopeAccessesEqual(ScopeAccess original, ScopeAccess toValidate) {

@@ -1253,6 +1253,14 @@ cn: identity:v2_0_list_users_global
 description: Allows a user to list users for any domain
 rsWeight: 50
 
+dn: rsId=cacheadminj345897adsf,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:rs-cache-admin
+description: Whether a given user is authorized to manage identity caches
+rsWeight: 50
+
 dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
  4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole
@@ -6018,6 +6026,17 @@ rsReloadable: TRUE
 rsSearchable: TRUE
 description: The default policy used when creating an IDP
 rsPropertyValue: {"mapping": {"rules": [{"local": {"user": {"domain": "{D}","name":   "{D}","email": "{D}","roles":  "{D}","expire": "{D}"}}}],"version": "RAX-1"}}
+
+dn: rsId=a21d8b34f1e498995c5c3be192ed666,ou=properties,ou=cloud,o=configur
+ ation,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+cn: token.cache.config
+rsIdmVersion: 3.34.0
+rsPropertyValueType: JSON
+rsReloadable: TRUE
+rsSearchable: TRUE
+description: The config for caching user tokens to reissue if user authenticates again
+rsPropertyValue: {"tokenCacheConfig":{"enabled":false,"maxSize":10000,"cacheableUsers":[]}}
 
 dn: rsId=9eba81bfbcf14f1a94f8de935eb1adc5,ou=properties,ou=cloud,o=configura
  tion,dc=rackspace,dc=com

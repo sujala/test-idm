@@ -15,6 +15,7 @@ public enum IdentityRole {
     , GET_USER_ROLES_GLOBAL("identity:get-user-roles-global")
     , GET_USER_GROUPS_GLOBAL("identity:get-user-groups-global")
     , REPOSE_STANDARD("identity:repose-standard")
+    , IDENTITY_CACHE_ADMIN("identity:rs-cache-admin")
     , IDENTITY_PROVIDER_MANAGER("identity:identity-provider-manager")
     , IDENTITY_PROVIDER_READ_ONLY("identity:identity-provider-read-only")
     , IDENTITY_MFA_ADMIN("identity:mfa-admin")

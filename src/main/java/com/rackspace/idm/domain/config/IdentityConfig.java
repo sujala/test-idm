@@ -6,6 +6,7 @@ import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
 import com.rackspace.idm.domain.entity.ReadableIdentityProperty;
+import com.rackspace.idm.domain.security.tokencache.TokenCacheConfigJson;
 import com.rackspace.idm.domain.service.IdentityPropertyService;
 import com.rackspace.idm.event.NewRelicCustomAttributesEnum;
 import com.rackspace.idm.exception.MissingRequiredConfigIdmException;
@@ -158,14 +159,8 @@ public class IdentityConfig {
     public static final String RACKER_IMPERSONATE_ROLE_NAME_PROP = "racker.impersonate.role";
     public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
 
-    public static final String FEATURE_CACHE_AE_TOKENS_PROP = "feature.cache.ae.tokens";
-    public static final boolean FEATURE_CACHE_AE_TOKENS_DEFAULT = false;
-
     public static final String CACHED_AE_TOKEN_TTL_SECONDS_PROP = "cached.ae.token.ttl.seconds";
     public static final int CACHED_AE_TOKEN_TTL_SECONDS_DEFAULT = 60;
-
-    public static final String CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP = "cached.ae.token.cache.concurrency.level";
-    public static final int CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_DEFAULT = 50;
 
     public static final String CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP = "cached.ae.token.cache.max.size";
     public static final int CACHED_AE_TOKEN_CACHE_MAX_SIZE_DEFAULT = 10000;
@@ -641,6 +636,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_PROP = "feature.enable.use.domain.type.for.update.user";
     public static final boolean FEATURE_ENABLE_USE_DOMAIN_TYPE_FOR_UPDATE_USER_DEFAULT = false;
 
+    public static final String TOKEN_CACHE_CONFIG_PROP = "token.cache.config";
+    public static final String TOKEN_CACHE_CONFIG_DEFAULT = "{\"tokenCacheConfig\":{\"enabled\":false,\"maxSize\":10000,\"cacheableUsers\":[]}}";
+
     /**
      * Opentracing properties
      */
@@ -804,10 +802,8 @@ public class IdentityConfig {
         defaults.put(SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
-        defaults.put(FEATURE_CACHE_AE_TOKENS_PROP, FEATURE_CACHE_AE_TOKENS_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_TTL_SECONDS_PROP, CACHED_AE_TOKEN_TTL_SECONDS_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP, CACHED_AE_TOKEN_CACHE_MAX_SIZE_DEFAULT);
-        defaults.put(CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP, CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP, CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, CACHED_AE_TOKEN_CACHE_RECORD_STATS_DEFAULT);
         defaults.put(FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME, FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT);
@@ -1049,6 +1045,8 @@ public class IdentityConfig {
 
         // Password validation service default
         defaults.put(FEATURE_ENABLE_PASSWORD_VALIDATION_SERVICES_PROP, FEATURE_ENABLE_PASSWORD_VALIDATION_SERVICES_DEFAULT);
+
+        defaults.put(TOKEN_CACHE_CONFIG_PROP, TOKEN_CACHE_CONFIG_DEFAULT);
 
         return defaults;
     }
@@ -2029,11 +2027,6 @@ public class IdentityConfig {
             return getStringSafely(reloadableConfiguration, IDENTITY_ROLE_TENANT_DEFAULT);
         }
 
-        @IdmProp(key = FEATURE_CACHE_AE_TOKENS_PROP, versionAdded = "3.0.1")
-        public Boolean cacheAETokens() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_CACHE_AE_TOKENS_PROP);
-        }
-
         @IdmProp(key = FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP, versionAdded = "3.17.1", description = "Whether or not to use the value supplied in the X-Request-Id header as the log transaction id. If set to false (or set to true but the header is null or blank), Identity generates a GUUID for the transaction id.")
         public boolean isFeatureUseReposeRequestIdEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USE_REPOSE_REQUEST_ID_PROP);
@@ -2129,11 +2122,6 @@ public class IdentityConfig {
         @IdmProp(key = CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP, versionAdded = "3.0.3", description = "The initial capacity of the AE Token cache. A higher value prevents unnecessary resizing later at the cost of more upfront memory")
         public int cachedAETokenCacheInitialCapacity() {
             return getIntSafely(reloadableConfiguration, CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP);
-        }
-
-        @IdmProp(key = CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP, versionAdded = "3.0.3", description = "The concurrency level of the AE Token cache. Should roughly how many threads will attempt to concurrently update the cache.")
-        public int cachedAETokenCacheConcurrencyLevel() {
-            return getIntSafely(reloadableConfiguration, CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP);
         }
 
         @IdmProp(key = CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, versionAdded = "3.0.3", description = "Whether the AE Token cache will record stats.")
@@ -2886,6 +2874,18 @@ public class IdentityConfig {
                 domainIds = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(rawValue);
             }
             return domainIds;
+        }
+
+        @IdmProp(key = TOKEN_CACHE_CONFIG_PROP)
+        public TokenCacheConfigJson getTokenCacheConfiguration() {
+            String rawValue = getRepositoryStringSafely(TOKEN_CACHE_CONFIG_PROP);
+
+            try {
+                return TokenCacheConfigJson.fromJson(rawValue);
+            } catch (Exception e) {
+                logger.error("Error parsing token.cache.config repository property. Using default configuration to disable all token caching until the error is corrected. An updated configuration will be used within a minute.", e);
+                return TokenCacheConfigJson.fromJson(TOKEN_CACHE_CONFIG_DEFAULT);
+            }
         }
 
         /**

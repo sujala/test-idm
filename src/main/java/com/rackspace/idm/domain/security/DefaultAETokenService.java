@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.security.tokencache.AETokenCache;
 import com.rackspace.idm.domain.security.tokenproviders.TokenProvider;
 import com.rackspace.idm.domain.service.AETokenRevocationService;
 import org.apache.commons.lang.Validate;
@@ -60,8 +61,8 @@ public class DefaultAETokenService implements AETokenService {
         TokenProvider provider = findFirstTokenProviderThatSupportsCreatingTokenFor(user, token);
 
         String marshalledToken = null;
-        if (identityConfig.getReloadableConfig().cacheAETokens()) {
-            marshalledToken = aeTokenCache.marshallTokenForUserWithProvider(user, token, provider);
+        if (identityConfig.getRepositoryConfig().getTokenCacheConfiguration().isEnabled() && aeTokenCache.isTokenCacheableForUser(user, token)) {
+            marshalledToken = aeTokenCache.getOrCreateTokenForUser(user, token, provider);
         } else {
             marshalledToken = provider.marshallTokenForUser(user, token);
         }
@@ -81,6 +82,29 @@ public class DefaultAETokenService implements AETokenService {
 
         ScopeAccess access = provider.unmarshallToken(webSafeToken);
         if (access != null && aeTokenRevocationService.isTokenRevoked(access)) {
+            LOG.debug(String.format("Token '%s' was revoked at some point and is no longer valid", webSafeToken));
+            access = null;
+        }
+        return access;
+    }
+
+    @Override
+    public ScopeAccess unmarshallTokenAndValidate(String webSafeToken) {
+        ScopeAccess access = null;
+        try {
+            TokenProvider provider = findFirstTokenProviderThatSupportsTokenScheme(webSafeToken);
+            access = provider.unmarshallToken(webSafeToken);
+        } catch (UnmarshallTokenException e) {
+            LOG.debug(String.format("Token '%s' could not be unmarshalled and is not valid", webSafeToken), e);
+            return null;
+        }
+
+        if (access == null) {
+            LOG.debug(String.format("Token '%s' could not be unmarshalled to a scope access and is not valid", webSafeToken));
+        } else if (access.isAccessTokenExpired()) {
+            LOG.debug(String.format("Token '%s' has expired and is no longer valid", webSafeToken));
+            access = null;
+        } else if (aeTokenRevocationService.isTokenRevoked(access)) {
             LOG.debug(String.format("Token '%s' was revoked at some point and is no longer valid", webSafeToken));
             access = null;
         }

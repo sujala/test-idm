@@ -40,18 +40,19 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
     }
 
     @Unroll
-    def "marshall/unmarshall fully populated impersonation token for impersonator of type #methodDesc; enableDomainTokens: #enableDomainTokens"() {
+    def "marshall/unmarshall fully populated impersonation token for impersonator of type #user.getClass().getName(). cache: #cache; enableDomainTokens: #enableDomainTokens"() {
         repositoryConfig.shouldWriteDomainTokens() >> enableDomainTokens
         repositoryConfig.shouldReadDomainTokens() >> enableDomainTokens
+        setTokenCaching(cache)
 
-        ImpersonatedScopeAccess originalSA = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
+        ImpersonatedScopeAccess originalSA = createImpersonatedToken(user, impersonatedUser).with {
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
             it.authenticationDomainId = RandomStringUtils.randomAlphabetic(32)
             return it
         }
 
         when:
-        String webSafeToken = aeTokenService.marshallTokenForUser(impersonatorUser, originalSA)
+        String webSafeToken = aeTokenService.marshallTokenForUser(user, originalSA)
 
         then:
         validateWebSafeToken(webSafeToken)
@@ -64,20 +65,18 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
         validateImpersonationScopeAccessesEqual(originalSA, (ImpersonatedScopeAccess) unmarshalledScopeAccess)
 
         where:
-        impersonatorUser | enableDomainTokens | methodDesc
-        impersonatorProvisionedUser | true | "Provisioned User"
-        impersonatorProvisionedUser | false | "Provisioned User"
-        impersonatorRackerUser | true | "Racker"
-        impersonatorRackerUser | false | "Racker"
+        [user, cache, enableDomainTokens] << [[impersonatorProvisionedUser, impersonatorRackerUser],[true, false], [true, false]].combinations()
     }
 
     @Unroll
-    def "maximize length of marshalling impersonation token for impersonator of type #methodDesc"() {
+    def "maximize length of marshalling impersonation token for impersonator of type #user.getClass().getName(). cache: #cache"() {
+        setTokenCaching(cache)
+
         ImpersonatedScopeAccess originalSA =  new ImpersonatedScopeAccess().with {
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
             it.rsImpersonatingRsId = impersonatedUser.id
-            it.userRsId = impersonatorUser.id
+            it.userRsId = user.id
             it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
@@ -86,7 +85,7 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
         }
 
         when:
-        String webSafeToken = aeTokenService.marshallTokenForUser(impersonatorUser, originalSA)
+        String webSafeToken = aeTokenService.marshallTokenForUser(user, originalSA)
 
         then:
         validateWebSafeToken(webSafeToken)
@@ -99,18 +98,18 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
         validateImpersonationScopeAccessesEqual(originalSA, (ImpersonatedScopeAccess) unmarshalledScopeAccess)
 
         where:
-        impersonatorUser | methodDesc
-        impersonatorProvisionedUser | "Provisioned User"
-        impersonatorRackerUser | "Racker"
+        [user, cache] << [[impersonatorProvisionedUser, impersonatorRackerUser], [true, false]].combinations()
     }
 
     @Unroll
-    def "marshallTokenForUser() - regenerates impersonation token for impersonator of type #methodDesc"() {
+    def "marshallTokenForUser() - regenerates impersonation token for impersonator of type #user.getClass().getName(). cache: #cache"() {
+        setTokenCaching(cache)
+
         ImpersonatedScopeAccess originalSA =  new ImpersonatedScopeAccess().with {
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
             it.rsImpersonatingRsId = impersonatedUser.id
-            it.userRsId = impersonatorUser.id
+            it.userRsId = user.id
             it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
@@ -127,7 +126,7 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
         originalSA.setImpersonatingToken(usa.getAccessTokenString())
 
         when:
-        String webSafeToken = aeTokenService.marshallTokenForUser(impersonatorUser, originalSA)
+        String webSafeToken = aeTokenService.marshallTokenForUser(user, originalSA)
 
         then:
         validateWebSafeToken(webSafeToken)
@@ -141,48 +140,46 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
         validateImpersonationScopeAccessesEqual(originalSA, (ImpersonatedScopeAccess) unmarshalledScopeAccess)
 
         where:
-        impersonatorUser | methodDesc
-        impersonatorProvisionedUser | "Provisioned User"
-        impersonatorRackerUser | "Racker"
+        [user, cache] << [[impersonatorProvisionedUser, impersonatorRackerUser], [true, false]].combinations()
     }
 
 
     @Unroll
-    def "marshall impersonated scope access with impersonator of type #methodDesc - errors thrown appropriately"() {
+    def "marshall impersonated scope access with impersonator of type  #user.getClass().getName(). cache: #cache - errors thrown appropriately"() {
         when: "null impersonator userId in token"
-        ImpersonatedScopeAccess impersonatedScopeAccess = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
+        setTokenCaching(cache)
+
+        ImpersonatedScopeAccess impersonatedScopeAccess = createImpersonatedToken(user, impersonatedUser).with {
             it.userRsId = null
             return it
         }
-        aeTokenService.marshallTokenForUser(impersonatorUser, impersonatedScopeAccess)
+        aeTokenService.marshallTokenForUser(user, impersonatedScopeAccess)
 
         then:
         thrown(IllegalArgumentException)
 
         when: "null impersonated userId in token"
-        impersonatedScopeAccess = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
+        impersonatedScopeAccess = createImpersonatedToken(user, impersonatedUser).with {
             it.rsImpersonatingRsId = null
             return it
         }
-        aeTokenService.marshallTokenForUser(impersonatorUser, impersonatedScopeAccess)
+        aeTokenService.marshallTokenForUser(user, impersonatedScopeAccess)
 
         then:
         thrown(IllegalArgumentException)
 
         when: "token userId does not match provided user"
-        impersonatedScopeAccess = createImpersonatedToken(impersonatorUser, impersonatedUser).with {
+        impersonatedScopeAccess = createImpersonatedToken(user, impersonatedUser).with {
             it.userRsId += "blah"
             return it
         }
-        aeTokenService.marshallTokenForUser(impersonatorUser, impersonatedScopeAccess)
+        aeTokenService.marshallTokenForUser(user, impersonatedScopeAccess)
 
         then:
         thrown(IllegalArgumentException)
 
         where:
-        impersonatorUser | methodDesc
-        impersonatorProvisionedUser | "Provisioned User"
-        impersonatorRackerUser | "Racker"
+        [user, cache] << [[impersonatorProvisionedUser, impersonatorRackerUser], [true, false]].combinations()
     }
 
     def createImpersonatedToken(BaseUser impersonator, User impersonated, String tokenString =  UUID.randomUUID().toString(), Date expiration = new DateTime().plusDays(1).toDate(), List<String> authBy = [GlobalConstants.AUTHENTICATED_BY_PASSWORD]) {

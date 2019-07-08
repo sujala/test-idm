@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.DefaultAETokenServiceBaseIntegrationTest
 import com.rackspace.idm.domain.security.UnmarshallTokenException
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
+import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.FakeTicker
@@ -49,12 +50,10 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         sampleToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, createUserToken(hardCodedProvisionedUser))
     }
 
-    def setup() {
-        reloadableConfig.setProperty(IdentityConfig.FEATURE_CACHE_AE_TOKENS_PROP, false)
-    }
-
     @Unroll
-    def "marshall/unmarshall fully populated #methodDesc token"() {
+    def "marshall/unmarshall fully populated #hardCodedUser.getClass().getName() token ; #cache"() {
+        setTokenCaching(cache)
+
         ScopeAccess originalUSA = createUserToken(hardCodedUser)
 
         when:
@@ -70,9 +69,57 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         validateScopeAccessesEqual(originalUSA, unmarshalledScopeAccess)
 
         where:
-        hardCodedUser | methodDesc
-        hardCodedProvisionedUser | "Provisioned User"
-        hardCodedRackerUser | "Racker"
+        hardCodedUser | cache | methodDesc
+        hardCodedProvisionedUser | true | "Provisioned User"
+        hardCodedProvisionedUser | false | "Provisioned User"
+        hardCodedRackerUser | true | "Racker"
+        hardCodedRackerUser | false | "Racker"
+    }
+
+    @Unroll
+    def "unmarshallTokenAndValidate: Returns null when token can't be decrypted"() {
+        when:
+        def result = aeTokenService.unmarshallTokenAndValidate("asdf")
+
+        then:
+        result == null
+    }
+
+    @Unroll
+    def "unmarshallTokenAndValidate: Returns null when token is expired"() {
+        // Create expired scope access
+        ScopeAccess expiredToken = createUserToken(hardCodedProvisionedUser).with {
+            it.accessTokenExp = new DateTime().minusHours(1).toDate()
+            it
+        }
+        disableTokenCaching() // Since testing unmarshall, don't need to test with cache
+        String token = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, expiredToken)
+
+        when:
+        def result = aeTokenService.unmarshallTokenAndValidate(token)
+
+        then: "Doesn't check if revoked"
+        0 * aeTokenRevocationService.isTokenRevoked(_)
+
+        and: "Returns null"
+        result == null
+    }
+
+    @Unroll
+    def "unmarshallTokenAndValidate: Returns null when token is revoked"() {
+        // Create expired scope access
+        ScopeAccess validToken = createUserToken(hardCodedProvisionedUser)
+        disableTokenCaching() // Since testing unmarshall, don't need to test with cache
+        String token = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, validToken)
+
+        when:
+        def result = aeTokenService.unmarshallTokenAndValidate(token)
+
+        then: "Checks if revoked"
+        1 * aeTokenRevocationService.isTokenRevoked(_) >> true
+
+        and: "Returns null"
+        result == null
     }
 
     /**
@@ -80,12 +127,13 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
      */
     def "marshall token w/ cache and revocation"() {
         given:
+        String cacheConfig = '{"tokenCacheConfig":{"enabled":true, "maxSize":1000, "cacheableUsers":[{"type":"CID","userIds":["*"],"minimumValidityDuration":"PT10S","maximumCacheDuration":"PT60S","authenticatedByLists":[["PASSWORD","APIKEY"],["PASSWORD"], ["APIKEY"]]}]}}'
+        setTokenCachingConfig(cacheConfig)
+
         ScopeAccess pwdUSA = createUserToken(hardCodedProvisionedUser, Arrays.asList(AuthenticatedByMethodEnum.PASSWORD.value))
         ScopeAccess apiUSA = createUserToken(hardCodedProvisionedUser, Arrays.asList(AuthenticatedByMethodEnum.APIKEY.value))
         ScopeAccess apiPwdUSA = createUserToken(hardCodedProvisionedUser, Arrays.asList(AuthenticatedByMethodEnum.APIKEY.value, AuthenticatedByMethodEnum.PASSWORD.value))
         ScopeAccess pwdApiUSA = createUserToken(hardCodedProvisionedUser, Arrays.asList(AuthenticatedByMethodEnum.PASSWORD.value, AuthenticatedByMethodEnum.APIKEY.value))
-
-        reloadableConfig.setProperty(IdentityConfig.FEATURE_CACHE_AE_TOKENS_PROP, true)
 
         when:
         String firstToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, pwdUSA)
@@ -100,8 +148,8 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         then: "get the first token back"
         secondToken == firstToken
 
-        when: "request a token within cache period, but cached token is revoked"
-        aeTokenRevocationService.isTokenRevoked(secondToken) >> true
+        when: "request a token within cache period, but the cached token itself is revoked"
+        aeTokenRevocationService.isTokenRevoked({it.accessTokenString == secondToken}) >> true
         String thirdToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, pwdUSA)
 
         then: "get a new token"
@@ -115,7 +163,7 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         then: "get the third token back"
         thirdToken == fourthToken
 
-        when: "cached token expires"
+        when: "cached token entry expires"
         ((FakeTicker)aeTokenService.aeTokenCache.ticker).advance(60, TimeUnit.SECONDS)
         String fifthToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, pwdUSA)
 
@@ -143,10 +191,11 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         aeTokenService.unmarshallToken(apiPwdToken) != null
     }
 
-    def "marshallTokenForUser() - maximize provisioned user token length; enableDomainTokens: #enableDomainTokens"() {
-        given:
+    @Unroll
+    def "marshallTokenForUser() - maximize provisioned user token length; cache: #cache; enableDomainTokens: #enableDomainTokens"() {
         repositoryConfig.shouldWriteDomainTokens() >> enableDomainTokens
         repositoryConfig.shouldReadDomainTokens() >> enableDomainTokens
+        setTokenCaching(cache)
 
         UserScopeAccess originalUSA =  new UserScopeAccess().with {
             it.accessTokenString = null //irrelevant
@@ -174,11 +223,13 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         validateUserScopeAccessesEqual(originalUSA, (UserScopeAccess) unmarshalledScopeAccess)
 
         where:
-        enableDomainTokens << [true, false]
+        [cache, enableDomainTokens] << [[true, false], [true, false]].combinations()
     }
 
     @Unroll
-    def "can marshall/unmarshall scope access of type #methodDesc with null token string"() {
+    def "can marshall/unmarshall scope access of type #hardCodedUser.getClass().getName() with null token string. cache: #cache"() {
+        setTokenCaching(cache)
+
         ScopeAccess originalUSA =  createUserToken(hardCodedUser).with {
             it.accessTokenString = null
             return it
@@ -197,13 +248,17 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         validateScopeAccessesEqual(originalUSA, unmarshalledScopeAccess)
 
         where:
-        hardCodedUser | methodDesc
-        hardCodedProvisionedUser | "Provisioned User"
-        hardCodedRackerUser | "Racker"
+        hardCodedUser | cache
+        hardCodedProvisionedUser | true
+        hardCodedProvisionedUser | false
+        hardCodedRackerUser | true
+        hardCodedRackerUser | false
     }
 
     @Unroll
-    def "marshall/unmarshall multiple authby #methodDesc token"() {
+    def "marshall/unmarshall multiple authby #hardCodedUser.getClass().getName() token. cache: #cache"() {
+        setTokenCaching(cache)
+
         ScopeAccess originalUSA = createUserToken(hardCodedUser, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD, GlobalConstants.AUTHENTICATED_BY_PASSCODE))
 
         when: "generate token with multiple auth by"
@@ -220,12 +275,17 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         validateScopeAccessesEqual(originalUSA, unmarshalledScopeAccess)
 
         where:
-        hardCodedUser | methodDesc
-        hardCodedProvisionedUser | "Provisioned User"
-        hardCodedRackerUser | "Racker"
+        hardCodedUser | cache
+        hardCodedProvisionedUser | true
+        hardCodedProvisionedUser | false
+        hardCodedRackerUser | true
+        hardCodedRackerUser | false
     }
 
-    def "marshallTokenForUser throws errors appropriately for provisioned user token"() {
+    @Unroll
+    def "marshallTokenForUser throws errors appropriately for provisioned user token. cache: #cache"() {
+        setTokenCaching(cache)
+
         when: "null userId in token"
         UserScopeAccess originalUSA = createProvisionedUserToken(hardCodedProvisionedUser).with {
             it.userRsId = null
@@ -245,9 +305,15 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
 
         then:
         thrown(IllegalArgumentException)
+
+        where:
+        cache << [true, false]
     }
 
-    def "marshallTokenForUser throws errors appropriately for racker user token"() {
+    @Unroll
+    def "marshallTokenForUser throws errors appropriately for racker user token.  cache: #cache"() {
+        setTokenCaching(cache)
+
         when: "null userId in token"
         ScopeAccess originalUSA = createUserToken(hardCodedRackerUser).with {
             it.rackerId = null
@@ -267,6 +333,9 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
 
         then:
         thrown(IllegalArgumentException)
+
+        where:
+        cache << [true, false]
     }
 
     def "Can unmarshall sampleToken: '#sampleToken'"() {
@@ -278,18 +347,21 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
     }
 
     @Unroll
-    def "Unmarshall throws UnmarshallTokenException when token '#webSafeToken' is truncated to length '#lengthToTest'"() {
+    def "Unmarshall throws UnmarshallTokenException when token '#webSafeToken' is truncated to length '#lengthToTest'. cache: #cache"() {
+        setTokenCaching(cache)
+
         when:
+
         aeTokenService.unmarshallToken(webSafeToken.substring(0,lengthToTest))
 
         then:
         thrown(UnmarshallTokenException)
 
         where:
-        [webSafeToken, lengthToTest] << [[sampleToken], 1..sampleToken.length()-1].combinations()
+        [webSafeToken, lengthToTest, cache] << [[sampleToken], 1..sampleToken.length()-1, [true, false]].combinations()
     }
 
-    def ScopeAccess createUserToken(BaseUser user, List<String> authBy = Arrays.asList(AuthenticatedByMethodEnum.PASSWORD.value)) {
+    ScopeAccess createUserToken(BaseUser user, List<String> authBy = Arrays.asList(AuthenticatedByMethodEnum.PASSWORD.value)) {
         if (user instanceof EndUser) {
             return createProvisionedUserToken((User)user).with {
                 it.authenticatedBy = authBy

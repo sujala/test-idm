@@ -2,9 +2,8 @@ package testHelpers;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.common.annotations.Beta;
-import com.google.common.annotations.GwtCompatible;
-import com.google.common.base.Ticker;
+import com.github.benmanes.caffeine.cache.Ticker;
+import org.apache.commons.lang3.Validate;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -20,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Jige Yu
  * @since 10.0
  */
-public class FakeTicker extends Ticker {
+public class FakeTicker implements Ticker {
 
     private final AtomicLong nanos = new AtomicLong();
     private volatile long autoIncrementStepNanos;
@@ -43,7 +42,7 @@ public class FakeTicker extends Ticker {
      * queried.
      */
     public FakeTicker setAutoIncrementStep(long autoIncrementStep, TimeUnit timeUnit) {
-        checkArgument(autoIncrementStep >= 0, "May not auto-increment by a negative amount");
+        Validate.isTrue(autoIncrementStep >= 0, "May not auto-increment by a negative amount");
         this.autoIncrementStepNanos = timeUnit.toNanos(autoIncrementStep);
         return this;
     }

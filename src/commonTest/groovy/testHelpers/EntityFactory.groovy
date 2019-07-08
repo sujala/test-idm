@@ -460,6 +460,7 @@ class EntityFactory extends Specification {
 
         new UserScopeAccess().with {
             it.accessTokenString = tokenString
+            it.createTimestamp = new Date()
             it.accessTokenExp = expiration
             it.userRsId = userRsId
             it.clientId = clientId
