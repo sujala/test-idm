@@ -706,7 +706,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def response = cloud20.deleteDomain(utils.getServiceAdminToken(), enabledDomainId)
 
         then: "can't delete"
-        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, GlobalConstants.ERROR_MSG_DELETE_ENABLED_DOMAIN)
+        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ERROR_MSG_DELETE_ENABLED_DOMAIN)
 
         when: "delete a disabled domain"
         response = cloud20.deleteDomain(utils.getServiceAdminToken(), disabledDomainId)
@@ -723,7 +723,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def response = cloud20.deleteDomain(utils.getServiceAdminToken(), defaultDomainId)
 
         then:
-        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, GlobalConstants.ERROR_MSG_DELETE_DEFAULT_DOMAIN)
+        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ERROR_MSG_DELETE_DEFAULT_DOMAIN)
     }
 
     def "Delete Domain - reassigns tenants"() {
@@ -2392,8 +2392,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         // Build domain entity
         def domainId = RandomStringUtils.randomNumeric(6)
-        def specifiedType = GlobalConstants.DOMAIN_TYPE.DATAPIPE.toString()
-        def inferredType = GlobalConstants.DOMAIN_TYPE.RACKSPACE_CLOUD_US.toString()
+        def specifiedType = DomainType.DATAPIPE.name
+        def inferredType = DomainType.RACKSPACE_CLOUD_US.name
         def domainEntity = v2Factory.createDomain(domainId, domainId, true).with {
             it.type = specifiedType // set the type to something other than the inferred type
             it

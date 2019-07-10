@@ -14,6 +14,8 @@ import com.rackspace.idm.PatternErrorMessages
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
+import com.rackspace.idm.domain.entity.CloudRegion
+import com.rackspace.idm.domain.entity.DomainType
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.IdentityUserService
@@ -1220,7 +1222,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def domain = utils.getDomain(userAdmin.domainId)
 
         then:
-        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        domain.type == DomainType.RACKSPACE_CLOUD_US.name
 
         when: "update user's region - invalid"
         userForUpdate.defaultRegion = "LON"
@@ -1246,7 +1248,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def identityAdminToken = utils.identityAdminToken
 
         // Set cloud region
-        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, GlobalConstants.CLOUD_REGION_UK)
+        staticIdmConfiguration.setProperty(IdentityConfig.CLOUD_REGION_PROP, CloudRegion.UK.name)
         // Update feature
         IdentityProperty identityProperty = new IdentityProperty()
         identityProperty.value = flag
@@ -1259,7 +1261,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         Region region = new Region().with {
             it.name = "LON2"
             it.enabled = true
-            it.cloud = GlobalConstants.CLOUD_REGION_UK
+            it.cloud = CloudRegion.UK.name
             it.isDefault = false
             it
         }
@@ -1287,7 +1289,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def domain = utils.getDomain(userAdmin.domainId)
 
         then:
-        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_UK
+        domain.type == DomainType.RACKSPACE_CLOUD_UK.name
 
         when: "update user's region - invalid"
         userForUpdate.defaultRegion = "ORD"
@@ -1349,7 +1351,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         def domain = utils.getDomain(userAdmin.domainId)
 
         then:
-        domain.type == GlobalConstants.DOMAIN_TYPE_RACKSPACE_CLOUD_US
+        domain.type == DomainType.RACKSPACE_CLOUD_US.getName()
 
         when: "update user's region back to ORD"
         userForUpdate.defaultRegion = "ORD"
